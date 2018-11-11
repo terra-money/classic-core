@@ -1,0 +1,22 @@
+os:
+  - osx
+
+osx_image:
+  - xcode9.3
+  - xcode9.2
+  - xcode9.1
+  - xcode8.3
+
+language: go
+
+install: true
+
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+
+script:
+    - go get -v -u github.com/golang/dep/cmd/dep
+    - dep ensure -v
+    - go build ledger.go apduWrapper.go
+    - go test
