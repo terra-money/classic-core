@@ -740,7 +740,6 @@
     "github.com/cosmos/cosmos-sdk/x/stake",
     "github.com/cosmos/cosmos-sdk/x/stake/client/cli",
     "github.com/cosmos/cosmos-sdk/x/stake/keeper",
-    "github.com/cosmos/cosmos-sdk/x/stake/querier",
     "github.com/cosmos/cosmos-sdk/x/stake/tags",
     "github.com/cosmos/cosmos-sdk/x/stake/types",
     "github.com/gorilla/mux",

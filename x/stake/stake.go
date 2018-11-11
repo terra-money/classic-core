@@ -2,10 +2,10 @@
 package stake
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/stake/keeper"
-	"github.com/cosmos/cosmos-sdk/x/stake/querier"
-	"github.com/cosmos/cosmos-sdk/x/stake/tags"
-	"github.com/cosmos/cosmos-sdk/x/stake/types"
+	"terra/x/stake/keeper"
+	"terra/x/stake/querier"
+	"terra/x/stake/tags"
+	"terra/x/stake/types"
 )
 
 type (
