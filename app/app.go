@@ -2,22 +2,22 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
-
-	"terra/types"
-
-	"terra/x/auth"
-	"terra/x/bank"
-	"terra/x/ibc"
-	"terra/x/oracle"
-	"terra/x/slashing"
-	"terra/x/stake"
+	"sort"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -27,6 +27,8 @@ import (
 
 const (
 	appName = "TerraApp"
+	// DefaultKeyPass contains the default key password for genesis transactions
+	DefaultKeyPass = "12345678"
 )
 
 // default home directories for expected binaries
@@ -35,92 +37,88 @@ var (
 	DefaultNodeHome = os.ExpandEnv("$HOME/.terrad")
 )
 
-// TerraApp implements an extended ABCI application. It contains a BaseApp,
-// a codec for serialization, KVStore keys for multistore state management, and
-// various mappers and keepers to manage getting, setting, and serializing the
-// integral app types.
+// Extended ABCI application
 type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	// keys to access the multistore
+	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
-	keyIBC           *sdk.KVStoreKey
-	keyFeeCollection *sdk.KVStoreKey
-	keyOracle        *sdk.KVStoreKey
 	keyStake         *sdk.KVStoreKey
+	tkeyStake        *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
+	keyMint          *sdk.KVStoreKey
 	keyDistr         *sdk.KVStoreKey
+	tkeyDistr        *sdk.TransientStoreKey
+	keyGov           *sdk.KVStoreKey
+	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
+	tkeyParams       *sdk.TransientStoreKey
 
-	tkeyStake  *sdk.TransientStoreKey
-	tkeyDistr  *sdk.TransientStoreKey
-	tkeyParams *sdk.TransientStoreKey
-
-	// manage getting and setting accounts
+	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	bankKeeper          bank.Keeper
-	ibcMapper           ibc.Mapper
-	oracleKeeper        oracle.Keeper
 	stakeKeeper         stake.Keeper
-	slashKeeper         slashing.Keeper
+	slashingKeeper      slashing.Keeper
+	mintKeeper          mint.Keeper
 	distrKeeper         distr.Keeper
+	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
 }
 
-// NewTerraApp returns a reference to a new TerraApp given a logger and
-// database. Internally, a codec is created along with all the necessary keys.
-// In addition, all necessary mappers and keepers are created, routes
-// registered, and finally the stores being mounted along with any necessary
-// chain initialization.
-func NewTerraApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
-	// create and register app-level codec for TXs and accounts
+// NewTerraApp returns a reference to an initialized TerraApp.
+func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 	cdc := MakeCodec()
 
-	// create your application type
+	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
+
 	var app = &TerraApp{
+		BaseApp:          bApp,
 		cdc:              cdc,
-		BaseApp:          bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...),
 		keyMain:          sdk.NewKVStoreKey("main"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),
-		keyFeeCollection: sdk.NewKVStoreKey("fee"),
-		keyIBC:           sdk.NewKVStoreKey("ibc"),
-		keyOracle:        sdk.NewKVStoreKey("oracle"),
 		keyStake:         sdk.NewKVStoreKey("stake"),
-		keySlashing:      sdk.NewKVStoreKey("slashing"),
-		keyDistr:         sdk.NewKVStoreKey("distr"),
-		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyStake:        sdk.NewTransientStoreKey("transient_stake"),
+		keyMint:          sdk.NewKVStoreKey("mint"),
+		keyDistr:         sdk.NewKVStoreKey("distr"),
 		tkeyDistr:        sdk.NewTransientStoreKey("transient_distr"),
+		keySlashing:      sdk.NewKVStoreKey("slashing"),
+		keyGov:           sdk.NewKVStoreKey("gov"),
+		keyFeeCollection: sdk.NewKVStoreKey("fee"),
+		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
 	}
 
-	// define and attach the mappers and keepers
+	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
-		cdc,
-		app.keyAccount, // target store
-		func() auth.Account {
-			return &types.AppAccount{}
-		},
+		app.cdc,
+		app.keyAccount,        // target store
+		auth.ProtoBaseAccount, // prototype
 	)
-	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(app.cdc, app.keyFeeCollection)
-	app.bankKeeper = bank.NewBaseTaxKeeper(app.accountKeeper, app.feeCollectionKeeper)
-	app.ibcMapper = ibc.NewMapper(app.cdc, app.keyIBC, app.RegisterCodespace(ibc.DefaultCodespace))
+
+	// add handlers
+	app.bankKeeper = bank.NewBaseKeeper(app.accountKeeper)
+	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
+		app.cdc,
+		app.keyFeeCollection,
+	)
 	app.paramsKeeper = params.NewKeeper(
 		app.cdc,
 		app.keyParams, app.tkeyParams,
 	)
 	stakeKeeper := stake.NewKeeper(
 		app.cdc,
-		app.keyStake,
-		app.tkeyStake,
-		app.bankKeeper,
-		app.paramsKeeper.Subspace(stake.DefaultParamspace),
+		app.keyStake, app.tkeyStake,
+		app.bankKeeper, app.paramsKeeper.Subspace(stake.DefaultParamspace),
 		app.RegisterCodespace(stake.DefaultCodespace),
 	)
-
+	app.mintKeeper = mint.NewKeeper(app.cdc, app.keyMint,
+		app.paramsKeeper.Subspace(mint.DefaultParamspace),
+		&stakeKeeper, app.feeCollectionKeeper,
+	)
 	app.distrKeeper = distr.NewKeeper(
 		app.cdc,
 		app.keyDistr,
@@ -128,94 +126,88 @@ func NewTerraApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseA
 		app.bankKeeper, &stakeKeeper, app.feeCollectionKeeper,
 		app.RegisterCodespace(stake.DefaultCodespace),
 	)
-	app.slashKeeper = slashing.NewKeeper(
+	app.slashingKeeper = slashing.NewKeeper(
 		app.cdc,
 		app.keySlashing,
 		&stakeKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		app.RegisterCodespace(slashing.DefaultCodespace),
 	)
-
-	app.oracleKeeper = oracle.NewKeeper(
-		app.keyOracle,
+	app.govKeeper = gov.NewKeeper(
 		app.cdc,
-		app.stakeKeeper.GetValidatorSet(),
-		sdk.NewDecWithPrec(66, 2),
-		100000,
+		app.keyGov,
+		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
+		app.RegisterCodespace(gov.DefaultCodespace),
 	)
 
 	// register the staking hooks
 	// NOTE: stakeKeeper above are passed by reference,
 	// so that it can be modified like below:
 	app.stakeKeeper = *stakeKeeper.SetHooks(
-		NewHooks(app.distrKeeper.Hooks(), app.slashKeeper.Hooks()))
+		NewHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
 	// register message routes
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
-		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
-		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper)).
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
-		AddRoute("slashing", slashing.NewHandler(app.slashKeeper))
+		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
+		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
+		AddRoute("gov", gov.NewHandler(app.govKeeper))
 
 	app.QueryRouter().
+		AddRoute("gov", gov.NewQuerier(app.govKeeper)).
 		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
 
-	// perform initialization logic
+	// initialize BaseApp
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keyMint, app.keyDistr,
+		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
-
-	// mount the multistore and load the latest state
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
-		app.keySlashing, app.keyFeeCollection)
 	app.MountStoresTransient(app.tkeyParams, app.tkeyStake, app.tkeyDistr)
+	app.SetEndBlocker(app.EndBlocker)
 
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
 
-	app.Seal()
-
 	return app
 }
 
-// MakeCodec creates a new codec codec and registers all the necessary types
-// with the codec.
+// custom tx codec
 func MakeCodec() *codec.Codec {
-	cdc := codec.New()
-
+	var cdc = codec.New()
 	bank.RegisterCodec(cdc)
 	stake.RegisterCodec(cdc)
+	distr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
+	gov.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
 }
 
-// BeginBlocker reflects logic to run before any TXs application are processed
-// by the application.
+// application updates every end block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	tags := slashing.BeginBlocker(ctx, req, app.slashKeeper)
+	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
 
 	// distribute rewards from previous block
 	distr.BeginBlocker(ctx, req, app.distrKeeper)
 
 	// mint new tokens for this new block
-	// mint.BeginBlocker(ctx, app.mintKeeper)
+	mint.BeginBlocker(ctx, app.mintKeeper)
 
 	return abci.ResponseBeginBlock{
 		Tags: tags.ToKVPairs(),
 	}
 }
 
-// EndBlocker reflects logic to run after all TXs are processed by the
-// application.
-func (app *TerraApp) EndBlocker(ctx sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
+// application updates every end block
+// nolint: unparam
+func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
-	tags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	tags := gov.EndBlocker(ctx, app.govKeeper)
 	validatorUpdates := stake.EndBlocker(ctx, app.stakeKeeper)
 
 	return abci.ResponseEndBlock{
@@ -224,61 +216,112 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, _ abci.RequestEndBlock) abci.Re
 	}
 }
 
-// initChainer implements the custom application logic that the BaseApp will
-// invoke upon initialization. In this case, it will take the application's
-// state provided by 'req' and attempt to deserialize said state. The state
-// should contain all the genesis accounts. These accounts will be added to the
-// application's account mapper.
+// custom logic for Terra initialization
 func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
+	// TODO is this now the whole genesis file?
 
-	genesisState := new(types.GenesisState)
-	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
+	var genesisState GenesisState
+	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
 	if err != nil {
-		// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-		panic(err)
+		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
+		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
 
+	// sort by account number to maintain consistency
+	sort.Slice(genesisState.Accounts, func(i, j int) bool {
+		return genesisState.Accounts[i].AccountNumber < genesisState.Accounts[j].AccountNumber
+	})
+	// load the accounts
 	for _, gacc := range genesisState.Accounts {
-		acc, err := gacc.ToAppAccount()
-		if err != nil {
-			// TODO: https://github.com/cosmos/cosmos-sdk/issues/468
-			panic(err)
-		}
-
+		acc := gacc.ToAccount()
 		acc.AccountNumber = app.accountKeeper.GetNextAccountNumber(ctx)
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
 
-	return abci.ResponseInitChain{}
-}
+	// load the initial stake information
+	validators, err := stake.InitGenesis(ctx, app.stakeKeeper, genesisState.StakeData)
+	if err != nil {
+		panic(err) // TODO find a way to do this w/o panics
+	}
 
-// ExportAppStateAndValidators implements custom application logic that exposes
-// various parts of the application's state and set of validators. An error is
-// returned if any step getting the state or set of validators fails.
-func (app *TerraApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := app.NewContext(true, abci.Header{})
-	accounts := []*types.GenesisAccount{}
+	// initialize module-specific stores
+	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
+	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
+	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
+	mint.InitGenesis(ctx, app.mintKeeper, genesisState.MintData)
+	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
+	err = TerraValidateGenesisState(genesisState)
+	if err != nil {
+		panic(err) // TODO find a way to do this w/o panics
+	}
 
-	appendAccountsFn := func(acc auth.Account) bool {
-		account := &types.GenesisAccount{
-			Address: acc.GetAddress(),
-			Coins:   acc.GetCoins(),
+	fmt.Println("**************************************************\n")
+	if len(genesisState.GenTxs) > 0 {
+		for _, genTx := range genesisState.GenTxs {
+			var tx auth.StdTx
+			err = app.cdc.UnmarshalJSON(genTx, &tx)
+			fmt.Println(string(genTx))
+			if err != nil {
+				panic(err)
+			}
+			bz := app.cdc.MustMarshalBinaryLengthPrefixed(tx)
+			res := app.BaseApp.DeliverTx(bz)
+			if !res.IsOK() {
+				panic(res.Log)
+			}
 		}
 
+		validators = app.stakeKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	}
+
+	// sanity check
+	if len(req.Validators) > 0 {
+		if len(req.Validators) != len(validators) {
+			panic(fmt.Errorf("len(RequestInitChain.Validators) != len(validators) (%d != %d)",
+				len(req.Validators), len(validators)))
+		}
+		sort.Sort(abci.ValidatorUpdates(req.Validators))
+		sort.Sort(abci.ValidatorUpdates(validators))
+		for i, val := range validators {
+			if !val.Equal(req.Validators[i]) {
+				panic(fmt.Errorf("validators[%d] != req.Validators[%d] ", i, i))
+			}
+		}
+	}
+
+	return abci.ResponseInitChain{
+		Validators: validators,
+	}
+}
+
+// export the state of terra for a genesis file
+func (app *TerraApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+	ctx := app.NewContext(true, abci.Header{})
+
+	// iterate to get the accounts
+	accounts := []GenesisAccount{}
+	appendAccount := func(acc auth.Account) (stop bool) {
+		account := NewGenesisAccountI(acc)
 		accounts = append(accounts, account)
 		return false
 	}
-
-	app.accountKeeper.IterateAccounts(ctx, appendAccountsFn)
-
-	genState := types.GenesisState{Accounts: accounts}
+	app.accountKeeper.IterateAccounts(ctx, appendAccount)
+	genState := NewGenesisState(
+		accounts,
+		auth.ExportGenesis(ctx, app.feeCollectionKeeper),
+		stake.ExportGenesis(ctx, app.stakeKeeper),
+		mint.ExportGenesis(ctx, app.mintKeeper),
+		distr.ExportGenesis(ctx, app.distrKeeper),
+		gov.ExportGenesis(ctx, app.govKeeper),
+		slashing.ExportGenesis(ctx, app.slashingKeeper),
+	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	return appState, validators, err
+	validators = stake.WriteValidators(ctx, app.stakeKeeper)
+	return appState, validators, nil
 }
 
 //______________________________________________________________________________________________

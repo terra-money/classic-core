@@ -59,7 +59,7 @@ func DefaultParams() Params {
 	return Params{
 		UnbondingTime: defaultUnbondingTime,
 		MaxValidators: 100,
-		BondDenom:     "steak",
+		BondDenom:     "luna",
 	}
 }
 
