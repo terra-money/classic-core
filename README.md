@@ -20,25 +20,17 @@ Ultimately, Terra aims to offer a stability token platform for dApp developers, 
 
 **Note**: Requires [Go 1.10+](https://golang.org/dl/)
 
-## Gaia Testnet
+## Soju Testnet
 
-To join the latest testnet, follow 
-[the guide](./docs/getting-started/join-testnet.md).
-
-For status updates and genesis files, see the
-[testnets repo](https://github.com/cosmos/testnets).
+TODO
 
 ## Install
 
-See the 
-[install instructions](./docs/getting-started/installation.md).
+TODO
 
 ## Quick Start
 
-See the [Cosmos Docs](https://cosmos.network/docs/)
-
-- [Getting started with the SDK](./docs/sdk/core/intro.md)
-- [SDK Examples](/examples)
+TODO
 
 
 ## Terra Motivation & Primer 
