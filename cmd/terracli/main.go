@@ -19,6 +19,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 
+	oraclecmd "terra/x/oracle/client/cli"
+
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	distrcmd "github.com/cosmos/cosmos-sdk/x/distribution/client/cli"
@@ -126,6 +128,7 @@ func main() {
 			govcmd.GetCmdSubmitProposal(cdc),
 			slashingcmd.GetCmdUnjail(cdc),
 			govcmd.GetCmdVote(cdc),
+			oraclecmd.GetPriceFeedCmd(cdc),
 		)...)
 	rootCmd.AddCommand(
 		queryCmd,

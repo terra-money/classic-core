@@ -21,8 +21,8 @@ const (
 	flagVoterAddress = "address"
 )
 
-// VoteCmd will create a send tx and sign it with the given key.
-func VoteCmd(cdc *codec.Codec) *cobra.Command {
+// GetPriceFeedCmd will create a send tx and sign it with the given key.
+func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "oracle",
 		Short: "Submit a vote for the price oracle",

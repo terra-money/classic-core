@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"terra/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -55,6 +56,7 @@ type TerraApp struct {
 	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
+	keyOracle        *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
@@ -66,6 +68,7 @@ type TerraApp struct {
 	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
+	oracleKeeper        oracle.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
@@ -90,6 +93,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		keyFeeCollection: sdk.NewKVStoreKey("fee"),
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
+		keyOracle:        sdk.NewKVStoreKey("oracle"),
 	}
 
 	// define the accountKeeper
@@ -138,6 +142,13 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
 		app.RegisterCodespace(gov.DefaultCodespace),
 	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.keyOracle,
+		cdc,
+		stakeKeeper.GetValidatorSet(),
+		sdk.NewDecWithPrec(66, 2),
+		1000000,
+	)
 
 	// register the staking hooks
 	// NOTE: stakeKeeper above are passed by reference,
@@ -151,7 +162,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
 		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
-		AddRoute("gov", gov.NewHandler(app.govKeeper))
+		AddRoute("gov", gov.NewHandler(app.govKeeper)).
+		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper))
 
 	app.QueryRouter().
 		AddRoute("gov", gov.NewQuerier(app.govKeeper)).
@@ -210,6 +222,8 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	tags := gov.EndBlocker(ctx, app.govKeeper)
 	validatorUpdates := stake.EndBlocker(ctx, app.stakeKeeper)
 
+	tags.AppendTags(oracle.EndBlocker(ctx, app.oracleKeeper))
+
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
 		Tags:             tags,
@@ -256,12 +270,10 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 		panic(err) // TODO find a way to do this w/o panics
 	}
 
-	fmt.Println("**************************************************\n")
 	if len(genesisState.GenTxs) > 0 {
 		for _, genTx := range genesisState.GenTxs {
 			var tx auth.StdTx
 			err = app.cdc.UnmarshalJSON(genTx, &tx)
-			fmt.Println(string(genTx))
 			if err != nil {
 				panic(err)
 			}
