@@ -20,8 +20,8 @@ BINARY?=$(CURDIR)/../bin/terrad
 terracli_BINARY?=$(CURDIR)/../bin/terracli
 
 # Path to the genesis.json and config.toml files to deploy on full nodes.
-GENESISFILE?=$(CURDIR)/../build/genesis.json
-CONFIGFILE?=$(CURDIR)/../build/config.toml
+GENESISFILE?=$(CURDIR)/../bin/genesis.json
+CONFIGFILE?=$(CURDIR)/../bin/config.toml
 
 # Name of application for app deployments
 APP_NAME ?= faucettestnet1
