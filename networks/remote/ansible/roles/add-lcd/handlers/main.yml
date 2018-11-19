@@ -1,0 +1,9 @@
+---
+
+- name: systemctl
+  systemd: name=terracli enabled=yes daemon_reload=yes
+
+- name: restart terracli
+  service: name=terracli state=restarted
+
+

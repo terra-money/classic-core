@@ -1,0 +1,15 @@
+---
+
+- name: Copy binary
+  copy:
+    src: "{{terracli_BINARY}}"
+    dest: /usr/bin/terracli
+    mode: 0755
+  notify: restart terracli
+
+- name: Copy service
+  template:
+    src: terracli.service.j2
+    dest: /etc/systemd/system/terracli.service
+  notify: systemctl
+

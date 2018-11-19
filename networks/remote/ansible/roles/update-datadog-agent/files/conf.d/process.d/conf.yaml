@@ -1,0 +1,15 @@
+init_config:
+
+instances:
+- name: ssh
+  search_string: ['ssh', 'sshd']
+  thresholds:
+    critical: [1, 5]
+- name: terrad
+  search_string: ['terrad']
+  thresholds:
+    critical: [1, 1]
+- name: terracli
+  search_string: ['terracli']
+  thresholds:
+    critical: [1, 1]

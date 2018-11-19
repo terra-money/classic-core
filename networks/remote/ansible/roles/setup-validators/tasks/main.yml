@@ -1,0 +1,78 @@
+---
+
+- name: Ensure keys folder exists locally
+  file: path=keys state=directory
+  connection: local
+  run_once: true
+  become: no
+
+- name: Create terrad user
+  user: name=terrad home=/home/terrad shell=/bin/bash
+
+- name: Copy binary
+  copy:
+    src: "{{BINARY}}"
+    dest: /usr/bin
+    mode: 0755
+
+- name: Copy service file
+  copy: src=terrad.service dest=/etc/systemd/system/terrad.service mode=0755
+  notify: reload systemd
+
+- name: Get node ID
+  command: "cat /etc/nodeid"
+  changed_when: false
+  register: nodeid
+
+- name: Create initial transaction
+  command: "/usr/bin/terrad init gen-tx --name=node{{nodeid.stdout_lines[0]}} --ip={{inventory_hostname}}"
+  register: gentxresult
+  become: yes
+  become_user: terrad
+  args:
+    creates: /home/terrad/.terrad/config/gentx
+
+- name: Get wallet word seed from result of initial transaction locally
+  when: gentxresult["changed"]
+  shell: "echo '{{gentxresult.stdout}}' | python -c 'import json,sys ; print json.loads(\"\".join(sys.stdin.readlines()))[\"app_message\"][\"secret\"]'"
+  changed_when: false
+  register: walletkey
+  connection: local
+
+- name: Write wallet word seed to local files
+  when: gentxresult["changed"]
+  copy: "content={{walletkey.stdout}} dest=keys/node{{nodeid.stdout_lines[0]}}"
+  become: no
+  connection: local
+
+- name: Find gentx file
+  command: "ls /home/terrad/.terrad/config/gentx"
+  changed_when: false
+  register: gentxfile
+
+- name: Clear local gen-tx list
+  file: path=files/ state=absent
+  connection: local
+  run_once: yes
+
+- name: Get gen-tx file
+  fetch:
+    dest: files/
+    src: "/home/terrad/.terrad/config/gentx/{{gentxfile.stdout_lines[0]}}"
+    flat: yes
+
+- name: Compress gathered gen-tx files locally
+  archive: path=files/ exclude_path=files/gen-tx.tgz dest=files/gen-tx.tgz
+  run_once: yes
+  connection: local
+
+- name: Unpack gen-tx archive
+  unarchive: src=files/gen-tx.tgz dest=/home/terrad/.terrad/config/gentx owner=terrad
+
+- name: Generate genesis.json
+  command: "/usr/bin/terrad init --with-txs --name=node{{nodeid.stdout_lines[0]}} --chain-id={{TESTNET_NAME}}"
+  become: yes
+  become_user: terrad
+  args:
+    creates: /home/terrad/.terrad/config/genesis.json
+

@@ -1,0 +1,12 @@
+---
+
+- name: Stop service
+  service: name=terrad state=stopped
+
+- name: Delete files
+  file: "path={{item}} state=absent"
+  with_items:
+  - /usr/bin/terrad
+  - /home/terrad/.terrad
+  - /home/terrad/.terracli
+
