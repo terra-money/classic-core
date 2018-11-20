@@ -9,8 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"terra/x/stake"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -20,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -148,8 +148,15 @@ func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []j
 // NewDefaultGenesisState generates the default state for Terra.
 func NewDefaultGenesisState() GenesisState {
 	return GenesisState{
-		Accounts:     nil,
-		StakeData:    stake.DefaultGenesisState(),
+		Accounts: nil,
+		StakeData: stake.GenesisState{
+			Pool: stake.InitialPool(),
+			Params: stake.Params{
+				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
+				MaxValidators: 100,
+				BondDenom:     "luna",
+			},
+		},
 		MintData:     mint.DefaultGenesisState(),
 		DistrData:    distr.DefaultGenesisState(),
 		GovData:      gov.DefaultGenesisState(),
