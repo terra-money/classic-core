@@ -5,7 +5,7 @@ all: get_tools get_vendor_deps build test
 get_tools:
 	go get github.com/golang/dep/cmd/dep
 
-build:
+build: 
 	go build -o bin/terracli cmd/terracli/main.go && go build -o bin/terrad cmd/terrad/main.go
 
 get_vendor_deps:
@@ -18,6 +18,8 @@ test:
 benchmark:
 	@go test -bench=. $(PACKAGES)
 
+update_gaia_lite_docs:
+	@statik -src=vendor/github.com/cosmos/cosmos-sdk/client/lcd/swagger-ui -dest=vendor/github.com/cosmos/cosmos-sdk/client/lcd -f
 
 ########################################
 ### Local validator nodes using docker and docker-compose
