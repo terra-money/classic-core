@@ -8,6 +8,10 @@ get_tools:
 build:
 	go build -o bin/terracli cmd/terracli/main.go && go build -o bin/terrad cmd/terrad/main.go
 
+install:
+	go install ./cmd/terracli
+	go install ./cmd/terrad
+
 get_vendor_deps:
 	@rm -rf vendor/
 	@dep ensure
