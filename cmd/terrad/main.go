@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"terra/version"
 
 	"github.com/tendermint/tendermint/p2p"
 
@@ -54,6 +55,9 @@ func main() {
 	rootCmd.AddCommand(terraInit.CollectGenTxsCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.TestnetFilesCmd(ctx, cdc, server.AppInit{}))
 	rootCmd.AddCommand(terraInit.GenTxCmd(ctx, cdc))
+
+	// preoccupy the version command (that will be added in server.AddCommands)
+	rootCmd.AddCommand(version.VersionCmd)
 
 	server.AddCommands(ctx, cdc, rootCmd, appInit,
 		newApp, exportAppStateAndTMValidators)
