@@ -13,8 +13,8 @@ build:
 	go build $(BUILD_FLAGS) -o bin/terrad ./cmd/terrad
 
 install:
-	go install ./cmd/terracli
-	go install ./cmd/terrad
+	go install $(BUILD_FLAGS) ./cmd/terracli
+	go install $(BUILD_FLAGS) ./cmd/terrad
 
 get_vendor_deps:
 	@rm -rf vendor/
