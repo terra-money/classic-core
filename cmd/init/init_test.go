@@ -5,9 +5,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"terra/app"
 	"testing"
 	"time"
+
+	"terra/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -29,12 +30,13 @@ func TestInitCmd(t *testing.T) {
 	logger := log.NewNopLogger()
 	cfg, err := tcmd.ParseConfig()
 	require.Nil(t, err)
+
 	ctx := server.NewContext(cfg, logger)
 	cdc := app.MakeCodec()
-	appInit := server.AppInit{
-		AppGenState: mock.AppGenState,
-	}
-	cmd := InitCmd(ctx, cdc, appInit)
+	cmd := InitCmd(ctx, cdc)
+
+	viper.Set(flagMoniker, "terranode-test")
+
 	err = cmd.RunE(nil, nil)
 	require.NoError(t, err)
 }
@@ -54,15 +56,16 @@ func setupClientHome(t *testing.T) func() {
 func TestEmptyState(t *testing.T) {
 	defer server.SetupViper(t)()
 	defer setupClientHome(t)()
+
 	logger := log.NewNopLogger()
 	cfg, err := tcmd.ParseConfig()
 	require.Nil(t, err)
+
 	ctx := server.NewContext(cfg, logger)
 	cdc := app.MakeCodec()
-	appInit := server.AppInit{
-		AppGenState: mock.AppGenStateEmpty,
-	}
-	cmd := InitCmd(ctx, cdc, appInit)
+	viper.Set(flagMoniker, "terranode-test")
+
+	cmd := InitCmd(ctx, cdc)
 	err = cmd.RunE(nil, nil)
 	require.NoError(t, err)
 
@@ -70,6 +73,7 @@ func TestEmptyState(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 	cmd = server.ExportCmd(ctx, cdc, nil)
+
 	err = cmd.RunE(nil, nil)
 	require.NoError(t, err)
 
@@ -106,10 +110,7 @@ func TestStartStandAlone(t *testing.T) {
 	require.Nil(t, err)
 	ctx := server.NewContext(cfg, logger)
 	cdc := app.MakeCodec()
-	appInit := server.AppInit{
-		AppGenState: mock.AppGenState,
-	}
-	initCmd := InitCmd(ctx, cdc, appInit)
+	initCmd := InitCmd(ctx, cdc)
 	err = initCmd.RunE(nil, nil)
 	require.NoError(t, err)
 

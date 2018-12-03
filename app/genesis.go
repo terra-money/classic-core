@@ -12,12 +12,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -35,21 +33,19 @@ type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
 	AuthData     auth.GenesisState     `json:"auth"`
 	StakeData    stake.GenesisState    `json:"stake"`
-	MintData     mint.GenesisState     `json:"mint"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	GovData      gov.GenesisState      `json:"gov"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
-func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stakeData stake.GenesisState, mintData mint.GenesisState,
+func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stakeData stake.GenesisState,
 	distrData distr.GenesisState, govData gov.GenesisState, slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
 		AuthData:     authData,
 		StakeData:    stakeData,
-		MintData:     mintData,
 		DistrData:    distrData,
 		GovData:      govData,
 		SlashingData: slashingData,
@@ -60,8 +56,8 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stak
 type GenesisAccount struct {
 	Address       sdk.AccAddress `json:"address"`
 	Coins         sdk.Coins      `json:"coins"`
-	Sequence      int64          `json:"sequence_number"`
-	AccountNumber int64          `json:"account_number"`
+	Sequence      uint64         `json:"sequence_number"`
+	AccountNumber uint64         `json:"account_number"`
 }
 
 func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
@@ -89,14 +85,6 @@ func (ga *GenesisAccount) ToAccount() (acc *auth.BaseAccount) {
 		Coins:         ga.Coins.Sort(),
 		AccountNumber: ga.AccountNumber,
 		Sequence:      ga.Sequence,
-	}
-}
-
-// get app init parameters for server init command
-func TerraAppInit() server.AppInit {
-
-	return server.AppInit{
-		AppGenState: TerraAppGenStateJSON,
 	}
 }
 
@@ -154,10 +142,9 @@ func NewDefaultGenesisState() GenesisState {
 			Params: stake.Params{
 				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
 				MaxValidators: 100,
-				BondDenom:     "luna",
+				BondDenom:     bondDenom,
 			},
 		},
-		MintData:     mint.DefaultGenesisState(),
 		DistrData:    distr.DefaultGenesisState(),
 		GovData:      gov.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
