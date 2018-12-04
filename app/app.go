@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
@@ -49,7 +48,6 @@ type TerraApp struct {
 	keyStake         *sdk.KVStoreKey
 	tkeyStake        *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
-	keyMint          *sdk.KVStoreKey
 	keyDistr         *sdk.KVStoreKey
 	tkeyDistr        *sdk.TransientStoreKey
 	keyGov           *sdk.KVStoreKey
@@ -64,7 +62,6 @@ type TerraApp struct {
 	bankKeeper          bank.Keeper
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
-	mintKeeper          mint.Keeper
 	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
@@ -85,7 +82,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		keyAccount:       sdk.NewKVStoreKey("acc"),
 		keyStake:         sdk.NewKVStoreKey("stake"),
 		tkeyStake:        sdk.NewTransientStoreKey("transient_stake"),
-		keyMint:          sdk.NewKVStoreKey("mint"),
 		keyDistr:         sdk.NewKVStoreKey("distr"),
 		tkeyDistr:        sdk.NewTransientStoreKey("transient_distr"),
 		keySlashing:      sdk.NewKVStoreKey("slashing"),
@@ -118,10 +114,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.keyStake, app.tkeyStake,
 		app.bankKeeper, app.paramsKeeper.Subspace(stake.DefaultParamspace),
 		app.RegisterCodespace(stake.DefaultCodespace),
-	)
-	app.mintKeeper = mint.NewKeeper(app.cdc, app.keyMint,
-		app.paramsKeeper.Subspace(mint.DefaultParamspace),
-		&stakeKeeper, app.feeCollectionKeeper,
 	)
 	app.distrKeeper = distr.NewKeeper(
 		app.cdc,
@@ -170,7 +162,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
 
 	// initialize BaseApp
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keyMint, app.keyDistr,
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
 		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -206,9 +198,6 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 
 	// distribute rewards from previous block
 	distr.BeginBlocker(ctx, req, app.distrKeeper)
-
-	// mint new tokens for this new block
-	mint.BeginBlocker(ctx, app.mintKeeper)
 
 	return abci.ResponseBeginBlock{
 		Tags: tags.ToKVPairs(),
@@ -263,7 +252,6 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
-	mint.InitGenesis(ctx, app.mintKeeper, genesisState.MintData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
 	err = TerraValidateGenesisState(genesisState)
 	if err != nil {
@@ -323,7 +311,6 @@ func (app *TerraApp) ExportAppStateAndValidators() (appState json.RawMessage, va
 		accounts,
 		auth.ExportGenesis(ctx, app.feeCollectionKeeper),
 		stake.ExportGenesis(ctx, app.stakeKeeper),
-		mint.ExportGenesis(ctx, app.mintKeeper),
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		gov.ExportGenesis(ctx, app.govKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
