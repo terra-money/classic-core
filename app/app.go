@@ -301,7 +301,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 
 	// assert runtime invariants
-	app.assertRuntimeInvariants()
+	// app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{
 		Validators: validators,
