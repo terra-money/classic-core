@@ -2,7 +2,7 @@
 
 - name: Copy binary
   copy:
-    src: "{{terracli_BINARY}}"
+    src: "{{TERRACLI_BINARY}}"
     dest: /usr/bin/terracli
     mode: 0755
   notify: restart terracli

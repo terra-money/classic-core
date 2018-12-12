@@ -1,4 +1,4 @@
 ---
 
-terracli_ADDRESS: tcp://0.0.0.0:1317
+TERRACLI_ADDRESS: tcp://0.0.0.0:1317
 

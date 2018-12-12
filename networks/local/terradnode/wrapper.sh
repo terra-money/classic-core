@@ -7,6 +7,11 @@ BINARY=/terrad/${BINARY:-terrad}
 ID=${ID:-0}
 LOG=${LOG:-terrad.log}
 
+echo "--"
+find /
+echo "--"
+echo $BINARY
+echo "--"
 ##
 ## Assert linux binary
 ##
@@ -23,12 +28,12 @@ fi
 ##
 ## Run binary with all parameters
 ##
-export terradHOME="/terrad/node${ID}/terrad"
+export TERRADHOME="/terrad/node${ID}/terrad"
 
-if [ -d "`dirname ${terradHOME}/${LOG}`" ]; then
-  "$BINARY" --home "$terradHOME" "$@" | tee "${terradHOME}/${LOG}"
+if [ -d "`dirname ${TERRADHOME}/${LOG}`" ]; then
+  "$BINARY" --home "$TERRADHOME" "$@" | tee "${TERRADHOME}/${LOG}"
 else
-  "$BINARY" --home "$terradHOME" "$@"
+  "$BINARY" --home "$TERRADHOME" "$@"
 fi
 
 chmod 777 -R /terrad

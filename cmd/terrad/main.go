@@ -10,8 +10,6 @@ import (
 
 	"terra/app"
 
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -19,10 +17,9 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
-)
 
-const (
-	flagClientHome = "home-client"
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func main() {
@@ -58,8 +55,8 @@ func main() {
 	}
 }
 
-func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	return app.NewTerraApp(logger, db, storeTracer,
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+	return app.NewTerraApp(logger, db, traceStore,
 		baseapp.SetPruning(viper.GetString("pruning")),
 		baseapp.SetMinimumFees(viper.GetString("minimum_fees")),
 	)

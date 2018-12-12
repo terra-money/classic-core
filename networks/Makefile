@@ -16,12 +16,12 @@ SERVERS?=1
 REGION_LIMIT?=1
 
 # Path to terrad for deployment. Must be a Linux binary.
-BINARY?=$(CURDIR)/../bin/terrad
-terracli_BINARY?=$(CURDIR)/../bin/terracli
+BINARY?=$(CURDIR)/../build/terrad
+TERRACLI_BINARY?=$(CURDIR)/../build/terracli
 
 # Path to the genesis.json and config.toml files to deploy on full nodes.
-GENESISFILE?=$(CURDIR)/../bin/genesis.json
-CONFIGFILE?=$(CURDIR)/../bin/config.toml
+GENESISFILE?=$(CURDIR)/../build/genesis.json
+CONFIGFILE?=$(CURDIR)/../build/config.toml
 
 # Name of application for app deployments
 APP_NAME ?= faucettestnet1
@@ -105,8 +105,8 @@ upgrade-seeds: disclaimer
 	#Make sure you have AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or your IAM roles set for AWS API access.
 	@if ! [ -f $(HOME)/.ssh/id_rsa.pub ]; then ssh-keygen ; fi
 	@if [ -z "`file $(BINARY) | grep 'ELF 64-bit'`" ]; then echo "Please build a linux binary using 'make build-linux'." ; false ; fi
-	@if [ -z "`file $(terracli_BINARY) | grep 'ELF 64-bit'`" ]; then echo "Please build a linux binary using 'make build-linux'." ; false ; fi
-	cd remote/ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/ec2.py -l "tag_Environment_$(CLUSTER_NAME)" -u centos -b -e BINARY=$(BINARY) -e terracli_BINARY=$(terracli_BINARY) -e UNSAFE_RESET_ALL=$(UNSAFE_RESET_ALL) upgrade-terra.yml
+	@if [ -z "`file $(TERRACLI_BINARY) | grep 'ELF 64-bit'`" ]; then echo "Please build a linux binary using 'make build-linux'." ; false ; fi
+	cd remote/ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/ec2.py -l "tag_Environment_$(CLUSTER_NAME)" -u centos -b -e BINARY=$(BINARY) -e TERRACLI_BINARY=$(TERRACLI_BINARY) -e UNSAFE_RESET_ALL=$(UNSAFE_RESET_ALL) upgrade-terra.yml
 
 
 list:

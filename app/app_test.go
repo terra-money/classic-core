@@ -5,77 +5,55 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"terra/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
+
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func setGenesis(baseApp *TerraApp, accounts ...*types.AppAccount) (types.GenesisState, error) {
-	genAccts := make([]*types.GenesisAccount, len(accounts))
-	for i, appAct := range accounts {
-		genAccts[i] = types.NewGenesisAccount(appAct)
+func setGenesis(gapp *GaiaApp, accs ...*auth.BaseAccount) error {
+	genaccs := make([]GenesisAccount, len(accs))
+	for i, acc := range accs {
+		genaccs[i] = NewGenesisAccount(acc)
 	}
 
-	genesisState := types.GenesisState{Accounts: genAccts}
-	stateBytes, err := codec.MarshalJSONIndent(baseApp.cdc, genesisState)
+	genesisState := NewGenesisState(
+		genaccs,
+		auth.DefaultGenesisState(),
+		stake.DefaultGenesisState(),
+		mint.DefaultGenesisState(),
+		distr.DefaultGenesisState(),
+		gov.DefaultGenesisState(),
+		slashing.DefaultGenesisState(),
+	)
+
+	stateBytes, err := codec.MarshalJSONIndent(gapp.cdc, genesisState)
 	if err != nil {
-		return types.GenesisState{}, err
+		return err
 	}
 
-	// initialize and commit the chain
-	baseApp.InitChain(abci.RequestInitChain{
-		Validators: []abci.ValidatorUpdate{}, AppStateBytes: stateBytes,
-	})
-	baseApp.Commit()
+	// Initialize the chain
+	vals := []abci.ValidatorUpdate{}
+	gapp.InitChain(abci.RequestInitChain{Validators: vals, AppStateBytes: stateBytes})
+	gapp.Commit()
 
-	return genesisState, nil
+	return nil
 }
 
-func TestGenesis(t *testing.T) {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	db := dbm.NewMemDB()
-	baseApp := NewTerraApp(logger, db)
+func TestGaiadExport(t *testing.T) {
+	db := db.NewMemDB()
+	gapp := NewGaiaApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil)
+	setGenesis(gapp)
 
-	// construct a pubkey and an address for the test account
-	pubkey := ed25519.GenPrivKey().PubKey()
-	addr := sdk.AccAddress(pubkey.Address())
-
-	// construct some test coins
-	coins, err := sdk.ParseCoins("77foocoin,99barcoin")
-	require.Nil(t, err)
-
-	// create an auth.BaseAccount for the given test account and set it's coins
-	baseAcct := auth.NewBaseAccountWithAddress(addr)
-	err = baseAcct.SetCoins(coins)
-	require.Nil(t, err)
-
-	// create a new test AppAccount with the given auth.BaseAccount
-	appAcct := types.NewAppAccount("foobar", baseAcct)
-	genState, err := setGenesis(baseApp, appAcct)
-	require.Nil(t, err)
-
-	// create a context for the BaseApp
-	ctx := baseApp.BaseApp.NewContext(true, abci.Header{})
-	res := baseApp.accountKeeper.GetAccount(ctx, baseAcct.Address)
-	require.Equal(t, appAcct, res)
-
-	// reload app and ensure the account is still there
-	baseApp = NewTerraApp(logger, db)
-
-	stateBytes, err := codec.MarshalJSONIndent(baseApp.cdc, genState)
-	require.Nil(t, err)
-
-	// initialize the chain with the expected genesis state
-	baseApp.InitChain(abci.RequestInitChain{
-		Validators: []abci.ValidatorUpdate{}, AppStateBytes: stateBytes,
-	})
-
-	ctx = baseApp.BaseApp.NewContext(true, abci.Header{})
-	res = baseApp.accountKeeper.GetAccount(ctx, baseAcct.Address)
-	require.Equal(t, appAcct, res)
+	// Making a new app object with the db, so that initchain hasn't been called
+	newGapp := NewGaiaApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil)
+	_, _, err := newGapp.ExportAppStateAndValidators(false)
+	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }

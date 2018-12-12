@@ -36,7 +36,7 @@ in place of an input filename, the command reads from standard input.`,
 		},
 	}
 
-	return cmd
+	return client.PostCommands(cmd)[0]
 }
 
 func readAndUnmarshalStdTx(cdc *amino.Codec, filename string) (stdTx auth.StdTx, err error) {
