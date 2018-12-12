@@ -1,7 +1,6 @@
 package market
 
 import (
-	"encoding/binary"
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

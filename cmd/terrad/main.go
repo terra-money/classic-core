@@ -4,11 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	terraInit "terra/cmd/init"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
-
-	"terra/app"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,6 +13,9 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"terra/app"
+	terraInit "terra/cmd/init"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -65,12 +64,12 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 func exportAppStateAndTMValidators(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	tapp := app.NewTerraApp(logger, db, traceStore)
+	tApp := app.NewTerraApp(logger, db, traceStore)
 	if height != -1 {
-		err := tapp.LoadHeight(height)
+		err := tApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	return tapp.ExportAppStateAndValidators(forZeroHeight)
+	return tApp.ExportAppStateAndValidators(forZeroHeight)
 }
