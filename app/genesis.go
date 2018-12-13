@@ -149,7 +149,22 @@ func NewDefaultGenesisState() GenesisState {
 			},
 		},
 		DistrData:    distr.DefaultGenesisState(),
-		GovData:      gov.DefaultGenesisState(),
+		GovData:      gov.GenesisState{
+			StartingProposalID: 1,
+			DepositParams: gov.DepositParams{
+				MinDeposit:       sdk.Coins{sdk.NewInt64Coin(DefaultBondDenom, 10)},
+				MaxDepositPeriod: time.Duration(172800) * time.Second,
+			},
+			VotingParams: gov.VotingParams{
+				VotingPeriod: time.Duration(172800) * time.Second,
+			},
+			TallyParams: gov.TallyParams{
+				Quorum:            sdk.NewDecWithPrec(334, 3),
+				Threshold:         sdk.NewDecWithPrec(5, 1),
+				Veto:              sdk.NewDecWithPrec(334, 3),
+				GovernancePenalty: sdk.NewDecWithPrec(1, 2),
+			},
+		},
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
