@@ -36,7 +36,7 @@ install:
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrareplay
-	go install $(BUILD_FLAGS) ./cmd/terrakeyuti
+	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
 
 dist:
