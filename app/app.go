@@ -222,7 +222,8 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
 
-	app.assertRuntimeInvariants()
+	// TODO: request fixing it to comsmos guys
+	//app.assertRuntimeInvariants()
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -310,6 +311,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 
 	// assert runtime invariants
+	// TODO: request fixing it to comsmos guys
 	// app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{
