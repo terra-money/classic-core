@@ -7,11 +7,6 @@ BINARY=/terrad/${BINARY:-terrad}
 ID=${ID:-0}
 LOG=${LOG:-terrad.log}
 
-echo "--"
-find /
-echo "--"
-echo $BINARY
-echo "--"
 ##
 ## Assert linux binary
 ##
