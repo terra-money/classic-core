@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"os"
+	"terra/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
@@ -43,7 +45,10 @@ func main() {
 	rootCmd.AddCommand(terraInit.GenTxCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.AddGenesisAccountCmd(ctx, cdc))
 
-	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
+	// preoccupy the version command (that will be added in server.AddCommands) @matthew
+	rootCmd.AddCommand(version.VersionCmd)
+	server.AddCommands(ctx, cdc, rootCmd, appInit,
+		newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "TE", app.DefaultNodeHome)
