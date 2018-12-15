@@ -10,57 +10,28 @@ import (
 //--------------------------------------------------------
 //--------------------------------------------------------
 
-// ReserveParams defines the basic properties of a staking proposal
-type ReserveParams struct {
-	Target Int
-	Cap    Int
-}
-
-// const (
-// 	minReserveRatio = 1.2
-// 	maxReserveRatio = 1.5
-// )
-
-// func (r *ReserveParams) isOverCapitalized(terraCap Int, terraPrice sdk.Rat, lunaPrice sdk.Rat) {
-// 	return terraCap*terraPrice*maxReserveRatio < r.Current*lunaPrice
-// }
-
-// func (r *ReserveParams) isUnderCapitalized(terraCap Int, terraPrice sdk.Rat, lunaPrice sdk.Rat) {
-// 	return terraCap*terraPrice*minReserveRatio > r.Current*lunaPrice
-// }
-
-//--------------------------------------------------------
-//--------------------------------------------------------
-
 // SwapMsg defines the msg of a trader containing terra coin to be
 // swapped with luna coin, or luna coin to be swapped with the terra coin
 type SwapMsg struct {
-	Trader sdk.AccAddress // Address of the trader
-	Coin   sdk.Coin       // Coin to be swapped
+	Trader    sdk.AccAddress // Address of the trader
+	OfferCoin sdk.Coin       // Coin being offered
+	AskDenom  string         // Denom of the coin to swap to
 }
 
-// NewVoteMsg creates a VoteMsg instance
-func NewSwapMsg(traderAddress sdk.AccAddress, coin sdk.Coin) SwapMsg {
-	// coin must not be nil, and only Terra and Luna can be swapped
-	if coin == nil || !isValidCoin(coin) {
-		return nil
-	}
-
+// NewSwapMsg creates a SwapMsg instance
+func NewSwapMsg(traderAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) SwapMsg {
 	return SwapMsg{
-		Trader: traderAddress,
-		Coin:   coin,
+		Trader:    traderAddress,
+		OfferCoin: offerCoin,
+		AskDenom:  askCoin,
 	}
 }
 
-// Type Implements Msg
-func (msg SwapMsg) Type() string {
-	return "market"
-}
+// Route Implements Msg
+func (msg SwapMsg) Route() string { return "market" }
 
-// Get Implements Msg
-func (msg SwapMsg) Get(key interface{}) (value interface{}) {
-	return nil
-}
+// Type implements sdk.Msg
+func (msg SwapMsg) Type() string { return "swap" }
 
 // GetSignBytes Implements Msg
 func (msg SwapMsg) GetSignBytes() []byte {
@@ -73,17 +44,7 @@ func (msg SwapMsg) GetSignBytes() []byte {
 
 // GetSigners Implements Msg
 func (msg SwapMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Voter}
-}
-
-func isValidCoin(coin sdk.Coin) bool {
-	denoms := []string{"terra", "luna"}
-	for _, value := range options {
-		if value == coin.Denom {
-			return true
-		}
-	}
-	return false
+	return []sdk.AccAddress{msg.Trader}
 }
 
 // ValidateBasic Implements Msg
@@ -91,8 +52,13 @@ func (msg SwapMsg) ValidateBasic() sdk.Error {
 	if len(msg.Trader) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Trader.String())
 	}
-	if !isValidCoin(msg.Coin) {
-		return ErrInvalidOption("Invalid coin: " + msg.Coin)
+
+	if msg.OfferCoin.Amount.LT(sdk.ZeroInt()) {
+		return ErrInsufficientSwapCoins(DefaultCodespace, msg.OfferCoin.Amount)
+	}
+
+	if msg.OfferCoin.Denom == msg.AskDenom {
+		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom)
 	}
 
 	return nil
@@ -100,5 +66,5 @@ func (msg SwapMsg) ValidateBasic() sdk.Error {
 
 // String Implements Msg
 func (msg SwapMsg) String() string {
-	return fmt.Sprintf("SwapMsg{%v, %v}", msg.Trader, msg.Coin)
+	return fmt.Sprintf("SwapMsg{trader %v, offer %v, ask %s}", msg.Trader, msg.OfferCoin, msg.AskDenom)
 }

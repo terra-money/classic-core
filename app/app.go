@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"terra/types"
 	"terra/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -59,7 +60,7 @@ type TerraApp struct {
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          bank.Keeper
+	bankKeeper          types.TaxKeeper
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
@@ -100,11 +101,12 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 	)
 
 	// add handlers
-	app.bankKeeper = bank.NewBaseKeeper(app.accountKeeper)
+
 	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
 		app.cdc,
 		app.keyFeeCollection,
 	)
+	app.bankKeeper = types.NewBaseTaxKeeper(app.accountKeeper)
 	app.paramsKeeper = params.NewKeeper(
 		app.cdc,
 		app.keyParams, app.tkeyParams,
@@ -311,6 +313,7 @@ func (app *TerraApp) ExportAppStateAndValidators() (appState json.RawMessage, va
 		accounts,
 		auth.ExportGenesis(ctx, app.feeCollectionKeeper),
 		stake.ExportGenesis(ctx, app.stakeKeeper),
+		oracle.ExportGenesis(ctx, app.oracleKeeper),
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		gov.ExportGenesis(ctx, app.govKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"terra/x/oracle"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,17 +37,20 @@ type GenesisState struct {
 	StakeData    stake.GenesisState    `json:"stake"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	GovData      gov.GenesisState      `json:"gov"`
+	OracleData   oracle.GenesisState   `json:"oracle"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, stakeData stake.GenesisState,
-	distrData distr.GenesisState, govData gov.GenesisState, slashingData slashing.GenesisState) GenesisState {
+	distrData distr.GenesisState, oracleData oracle.GenesisState,
+	govData gov.GenesisState, slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
 		AuthData:     authData,
 		StakeData:    stakeData,
+		OracleData:   oracleData,
 		DistrData:    distrData,
 		GovData:      govData,
 		SlashingData: slashingData,
@@ -155,6 +159,7 @@ func NewDefaultGenesisState() GenesisState {
 			},
 		},
 		DistrData:    distr.DefaultGenesisState(),
+		OracleData:   oracle.DefaultGenesisState(),
 		GovData:      gov.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,

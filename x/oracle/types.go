@@ -7,59 +7,27 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	denomWhiteList = []string{
-		"terra", "luna",
-	}
-)
-
-// PriceVote - struct to store a validator's vote on the price
-type PriceVote struct {
-	Denom  string
-	Price  sdk.Dec
-	Feeder sdk.AccAddress
-	Power  sdk.Dec
-}
-
-// NewPriceVote creates a PriceVote instance
-func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
-	return PriceVote{
-		Denom:  feedMsg.Denom,
-		Price:  feedMsg.Price,
-		Feeder: feedMsg.Feeder,
-		Power:  power,
-	}
-}
-
-// PriceVotes are a collection of Price Votes
-type PriceVotes []PriceVote
-
-func (pv PriceVotes) Len() int {
-	return len(pv)
-}
-func (pv PriceVotes) Swap(i, j int) {
-	pv[i], pv[j] = pv[j], pv[i]
-}
-func (pv PriceVotes) Less(i, j int) bool {
-	return pv[i].Price.LT(pv[j].Price)
-}
+type Whitelist []string
 
 //-------------------------------------------------
 //-------------------------------------------------
 
-// PriceFeedMsg - struct for voting on payloads
+// PriceFeedMsg - struct for voting on payloads. Note that the Price
+// is denominated in Luna. All validators must vote on Terra prices.
 type PriceFeedMsg struct {
-	Denom  string
-	Price  sdk.Dec
-	Feeder sdk.AccAddress
+	Denom        string
+	TargetPrice  sdk.Dec // in Luna
+	CurrentPrice sdk.Dec // in Luna
+	Feeder       sdk.AccAddress
 }
 
 // NewPriceFeedMsg creates a PriceFeedMsg instance
-func NewPriceFeedMsg(denom string, price sdk.Dec, feederAddress sdk.AccAddress) PriceFeedMsg {
+func NewPriceFeedMsg(denom string, targetPrice, currentPrice sdk.Dec, feederAddress sdk.AccAddress) PriceFeedMsg {
 	return PriceFeedMsg{
-		Denom:  denom,
-		Price:  price,
-		Feeder: feederAddress,
+		Denom:        denom,
+		TargetPrice:  targetPrice,
+		CurrentPrice: currentPrice,
+		Feeder:       feederAddress,
 	}
 }
 
@@ -89,21 +57,41 @@ func (msg PriceFeedMsg) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	whiteListed := false
-	for i := 0; i < len(denomWhiteList); i++ {
-		if denomWhiteList[i] == msg.Denom {
-			whiteListed = true
-		}
-	}
-
-	if !whiteListed {
-		sdk.ErrInvalidCoins("Invalid denom for oracle price vote " + msg.Denom)
-	}
-
 	return nil
 }
 
 // String Implements sdk.Msg
 func (msg PriceFeedMsg) String() string {
-	return fmt.Sprintf("PriceFeedMsg{%v, %v, %v}", msg.Feeder, msg.Denom, msg.Price)
+	return fmt.Sprintf("PriceFeedMsg{feeder: %v, denom: %v, target: %v, current: %v}",
+		msg.Feeder, msg.Denom, msg.TargetPrice, msg.CurrentPrice)
+}
+
+//-------------------------------------------------
+//-------------------------------------------------
+
+// PriceVote - struct to store a validator's vote on the price
+type PriceVote struct {
+	FeedMsg PriceFeedMsg
+	Power   sdk.Dec
+}
+
+// NewPriceVote creates a PriceVote instance
+func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
+	return PriceVote{
+		FeedMsg: feedMsg,
+		Power:   power,
+	}
+}
+
+// PriceVotes are a collection of Price Votes
+type PriceVotes []PriceVote
+
+func (pv PriceVotes) Len() int {
+	return len(pv)
+}
+func (pv PriceVotes) Swap(i, j int) {
+	pv[i], pv[j] = pv[j], pv[i]
+}
+func (pv PriceVotes) Less(i, j int) bool {
+	return pv[i].FeedMsg.CurrentPrice.LT(pv[j].FeedMsg.CurrentPrice)
 }

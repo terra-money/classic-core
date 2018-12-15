@@ -1,12 +1,10 @@
 package market
 
 import (
-	"encoding/binary"
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 const (
@@ -30,109 +28,76 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// NewEndBlocker checks proposals and generates a EndBlocker
-func NewEndBlocker(k Keeper) sdk.EndBlocker {
-	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-		newTags := sdk.NewTags()
+// // NewEndBlocker checks proposals and generates a EndBlocker
+// func NewEndBlocker(k Keeper) sdk.EndBlocker {
+// 	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+// 		newTags := sdk.NewTags()
 
-		rp := k.GetReserveParams(ctx)
-		curIssuance := k.GetIssuanceMeta()
-		curFee := k.GetTerraFee()
+// 		return abci.ResponseEndBlock{
+// 			Tags: tags,
+// 		}
+// 	}
+// }
 
-		terraSupply := curIssuance.AmountOf("terra")
-		lunaSupply := curIssuance.AmountOf("luna")
-
-		terraPrice := k.ok.getTerraPrice()
-		lunaPrice := k.ok.getLunaPrice()
-
-		// Time to update fees
-		if feeUpdateTimestamp+feeUpdatePeriod < ctx.BlockHeight {
-			
-			// Overcapitalized
-			if terraSupply*terraPrice*maxReserveRatio < (rp.Cap - lunaSupply)*lunaPrice {
-				newFee := curFee.Sub(sdk.Rat.SetFloat64(0.0002)) // Iteratively decrease 0.2% in tx fees
-				newTags.AppendTag("action", []byte("slashFee"))
-				newTags.AppendTag("newFee", newFee.Bytes())
-				k.SetTerraFee(ctx, newFee)
-			} 
-
-			// Undercapitalized
-			else if terraSupply*terraPrice*minReserveRatio > (rp.Cap - lunaSupply)*lunaPrice {
-				newFee := curFee.Mul(sdk.Rat.SetInt(2))	// Double transaction fees ... TODO: change to something better
-				newTags.AppendTag("action", []byte("hikeFee"))
-				newTags.AppendTag("newFee", newFee.Bytes())
-				k.SetTerraFee(ctx, newFee)
-			}
-
-			// No more collateral ... recap the reserve
-			if lunaSupply > rp.Cap {
-				rp.Target = rp.Cap
-				rp.Cap = rp.Cap.Mul(2)
-				k.SetReserveParams(rp)
-
-				newTags.AppendTags(
-					"action", []byte("dilute"),
-					"cap", reserve.Cap.Bytes(),
-				)
-			} 
-			
-			// Reserve is overcollateralized ... need to refund the reserve
-			else if lunaSupply < rp.Target {
-				// TODO: do seigniorage
-				newTags.AppendTags(
-					"action", []byte("seigniorage"),
-					"cap", (reserve.Target - reserve.Current).Bytes(),
-				)
-			}
-
-			feeUpdateBlockNum = ctx.BlockHeight
-		}
-
-		return abci.ResponseEndBlock{
-			Tags: tags,
-		}
+func lunaExchangeRate(ctx sdk.Context, k Keeper, denom string) sdk.Dec {
+	if denom == "luna" {
+		return sdk.OneDec()
 	}
+
+	return k.ok.GetElect(ctx, denom).FeedMsg.CurrentPrice
 }
 
 // handleVoteMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
-	err := msg.ValidateBasic()
-	if err != nil {
-		return err.Result()
+	tags := sdk.NewTags()
+
+	// If swap msg for not whitelisted denom
+	if !k.ok.WhitelistContains(ctx, msg.OfferCoin.Denom) {
+		return ErrUnknownDenomination(DefaultCodespace, msg.OfferCoin.Denom).Result()
 	}
 
-	var rval sdk.Coin
-	switch msg.Coin.Denom {
-	case "terra":
-		rval = sdk.Coin{Denom: "luna", Amount: msg.Coin.Amount / k.ok.getLunaPrice()}
-	case "luna":
-		rval = sdk.Coin{Denom: "terra", Amount: msg.Coin.Amount * k.ok.getLunaPrice()}
-	default:
-		errMsg := "Unrecognized swap Msg type: " + reflect.TypeOf(msg).Name()
-		return sdk.ErrUnknownRequest(errMsg).Result()
+	offerRate := lunaExchangeRate(ctx, k, msg.OfferCoin.Denom)
+	askRate := lunaExchangeRate(ctx, k, msg.AskDenom)
+
+	retAmount := sdk.NewDecFromInt(msg.OfferCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
+
+	if retAmount.Equal(sdk.ZeroInt()) {
+		// drop in this scenario
+		return ErrInsufficientSwapCoins(DefaultCodespace, msg.OfferCoin.Amount).Result()
+	}
+
+	retCoin := sdk.Coin{
+		Denom:  msg.AskDenom,
+		Amount: retAmount,
 	}
 
 	// Reflect the swap in the trader's wallet
-	tags, swaperr := k.bk.InputOutputCoins(ctx, []Input{bank.NewInput(msg.Trader, sdk.Coins{rval})},
-		[]Output{bank.NewOutput(msg.Trader, sdk.Coins{rval})})
+	swapTags, swapErr := k.bk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(msg.Trader, sdk.Coins{retCoin})},
+		[]bank.Output{bank.NewOutput(msg.Trader, sdk.Coins{msg.OfferCoin})})
 
-	// Update the issuance meta with the swap
-	curIssuance := k.GetIssuanceMeta()
-	curIssuance.Minus(msg.Coin)
-	curIssuance.Plus(rval)
-	k.SetIssuanceMeta(curIssuance)
-
-	if swaperr != nil {
-		return swaperr.Result()
+	if swapErr != nil {
+		return swapErr.Result()
 	}
 
+	tags.AppendTags(swapTags)
+
+	// Update coin supplies
+	offerCoinSupply := k.GetCoinSupply(ctx, msg.OfferCoin.Denom)
+	askCoinSupply := k.GetCoinSupply(ctx, msg.AskDenom)
+
+	k.SetCoinSupply(ctx, msg.OfferCoin.Denom, offerCoinSupply.Sub(msg.OfferCoin.Amount))
+	k.SetCoinSupply(ctx, msg.AskDenom, askCoinSupply.Add(retAmount))
+
 	tags.AppendTags(
-		"action", []byte("swap"),
-		"subject", []byte(msg.Coin.String),
-		"trader", msg.Trader.Bytes(),
+		sdk.NewTags(
+			"action", []byte("swap"),
+			"offer", []byte(msg.OfferCoin.String()),
+			"ask", []byte(retCoin.String()),
+			"trader", msg.Trader.Bytes(),
+		),
 	)
 
 	return sdk.Result{
-		tags,
+		Tags: tags,
 	}
 }

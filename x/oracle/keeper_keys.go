@@ -6,8 +6,11 @@ import (
 
 // nolint
 var (
-	PrefixVote  = []byte{0x00}
-	PrefixElect = []byte{0x01}
+	PrefixVote    = []byte{0x00}
+	PrefixElect   = []byte{0x01}
+	KeyThreshold  = []byte{0x02}
+	KeyVotePeriod = []byte{0x03}
+	KeyWhitelist  = []byte{0x04}
 )
 
 // GetVotePrefix is in format of prefix||denom
