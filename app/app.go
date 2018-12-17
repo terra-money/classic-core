@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
+	"terra/version"
 	"terra/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -177,6 +179,65 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 	}
 
 	return app
+}
+
+// Splits a string path using the delimter '/'.  i.e. "this/is/funny" becomes []string{"this", "is", "funny"}
+func splitPath(requestPath string) (path []string) {
+	path = strings.Split(requestPath, "/")
+	// first element is empty string
+	if len(path) > 0 && path[0] == "" {
+		path = path[1:]
+	}
+	return path
+}
+
+// override BaseApp.Query
+func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+	path := splitPath(req.Path)
+	if len(path) == 0 {
+		msg := "no query path provided"
+		return sdk.ErrUnknownRequest(msg).QueryResult()
+	}
+	switch path[0] {
+	case "app":
+		return handleQueryApp(app, path, req)
+	default:
+		return app.BaseApp.Query(req)
+	}
+}
+
+func handleQueryApp(app *TerraApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
+	if len(path) >= 2 {
+		var result sdk.Result
+		switch path[1] {
+		//case "simulate":
+		//	txBytes := req.Data
+		//	tx, err := app.txDecoder(txBytes)
+		//	if err != nil {
+		//		result = err.Result()
+		//	} else {
+		//		result = app.Simulate(tx)
+		//	}
+		case "version":
+			return abci.ResponseQuery{
+				Code:      uint32(sdk.CodeOK),
+				Codespace: string(sdk.CodespaceRoot),
+				Value:     []byte(version.GetVersion()),
+			}
+		default:
+			result = sdk.ErrUnknownRequest(fmt.Sprintf("Unknown query: %s", path)).Result()
+		}
+
+		// Encode with json
+		value := codec.Cdc.MustMarshalBinaryLengthPrefixed(result)
+		return abci.ResponseQuery{
+			Code:      uint32(sdk.CodeOK),
+			Codespace: string(sdk.CodespaceRoot),
+			Value:     value,
+		}
+	}
+	msg := "Expected second parameter to be either simulate or version, neither was present"
+	return sdk.ErrUnknownRequest(msg).QueryResult()
 }
 
 // custom tx codec

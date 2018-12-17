@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"io"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"io"
+	"terra/version"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,6 +42,9 @@ func main() {
 	rootCmd.AddCommand(terraInit.TestnetFilesCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.GenTxCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.AddGenesisAccountCmd(ctx, cdc))
+
+	// preoccupy the version command (that will be added in server.AddCommands)
+	rootCmd.AddCommand(version.VersionCmd)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
