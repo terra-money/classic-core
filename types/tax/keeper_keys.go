@@ -1,11 +1,11 @@
-package market
+package tax
 
 // nolint
 var (
-	PrefixCoinSupply = []byte("coinsupply")
+	PrefixIssuance = []byte("coinsupply")
 )
 
 // GetCoinSupplyKey is in format of PrefixElect||denom
 func GetCoinSupplyKey(denom string) []byte {
-	return append(PrefixCoinSupply, []byte(denom)...)
+	return append(PrefixIssuance, []byte(denom)...)
 }

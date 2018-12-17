@@ -2,18 +2,11 @@ package market
 
 import (
 	"reflect"
+	"terra/types/assets"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
-
-const (
-	minReserveRatio = 1.2
-	maxReserveRatio = 1.5
-	feeUpdatePeriod = 1209600
-)
-
-var feeUpdateTimestamp = 0
 
 // NewHandler creates a new handler for all market type messages.
 func NewHandler(k Keeper) sdk.Handler {
@@ -28,26 +21,15 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// // NewEndBlocker checks proposals and generates a EndBlocker
-// func NewEndBlocker(k Keeper) sdk.EndBlocker {
-// 	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-// 		newTags := sdk.NewTags()
-
-// 		return abci.ResponseEndBlock{
-// 			Tags: tags,
-// 		}
-// 	}
-// }
-
 func lunaExchangeRate(ctx sdk.Context, k Keeper, denom string) sdk.Dec {
-	if denom == "luna" {
+	if denom == assets.LunaDenom {
 		return sdk.OneDec()
 	}
 
 	return k.ok.GetElect(ctx, denom).FeedMsg.CurrentPrice
 }
 
-// handleVoteMsg handles the logic of a SwapMsg
+// handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	tags := sdk.NewTags()
 
@@ -81,12 +63,8 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 
 	tags.AppendTags(swapTags)
 
-	// Update coin supplies
-	offerCoinSupply := k.GetCoinSupply(ctx, msg.OfferCoin.Denom)
-	askCoinSupply := k.GetCoinSupply(ctx, msg.AskDenom)
-
-	k.SetCoinSupply(ctx, msg.OfferCoin.Denom, offerCoinSupply.Sub(msg.OfferCoin.Amount))
-	k.SetCoinSupply(ctx, msg.AskDenom, askCoinSupply.Add(retAmount))
+	// Send revenues to the treasury
+	k.tk.CollectRevenues(ctx, msg.OfferCoin)
 
 	tags.AppendTags(
 		sdk.NewTags(

@@ -6,12 +6,11 @@ import (
 
 // Oracle errors reserve 1101-1199
 const (
-	DefaultCodespace sdk.CodespaceType = 11
+	DefaultCodespace sdk.CodespaceType = "MARKET"
 
-	CodeInsufficientSwap sdk.CodeType = 1101
-	CodeUnknownDenom     sdk.CodeType = 1102
-	CodeRecursiveSwap    sdk.CodeType = 1103
-	CodeUnknownRequest   sdk.CodeType = sdk.CodeUnknownRequest
+	CodeInsufficientSwap sdk.CodeType = 1
+	CodeUnknownDenom     sdk.CodeType = 2
+	CodeRecursiveSwap    sdk.CodeType = 3
 )
 
 // ----------------------------------------

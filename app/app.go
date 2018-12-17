@@ -1,13 +1,14 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
-	"terra/types"
+	"terra/types/tax"
+	"terra/x/market"
 	"terra/x/oracle"
+	"terra/x/treasury"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,7 +24,6 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -46,6 +46,7 @@ type TerraApp struct {
 	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
+	keyBank          *sdk.KVStoreKey
 	keyStake         *sdk.KVStoreKey
 	tkeyStake        *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
@@ -56,17 +57,21 @@ type TerraApp struct {
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
 	keyOracle        *sdk.KVStoreKey
+	keyTreasury      *sdk.KVStoreKey
+	keyMarket        *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          types.TaxKeeper
+	bankKeeper          tax.TaxKeeper
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
 	oracleKeeper        oracle.Keeper
+	treasuryKeeper      treasury.Keeper
+	marketKeeper        market.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
@@ -80,6 +85,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		BaseApp:          bApp,
 		cdc:              cdc,
 		keyMain:          sdk.NewKVStoreKey("main"),
+		keyBank:          sdk.NewKVStoreKey("bank"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),
 		keyStake:         sdk.NewKVStoreKey("stake"),
 		tkeyStake:        sdk.NewTransientStoreKey("transient_stake"),
@@ -91,6 +97,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
 		keyOracle:        sdk.NewKVStoreKey("oracle"),
+		keyTreasury:      sdk.NewKVStoreKey("treasury"),
+		keyMarket:        sdk.NewKVStoreKey("market"),
 	}
 
 	// define the accountKeeper
@@ -99,14 +107,17 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.keyAccount,        // target store
 		auth.ProtoBaseAccount, // prototype
 	)
-
 	// add handlers
-
 	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
 		app.cdc,
 		app.keyFeeCollection,
 	)
-	app.bankKeeper = types.NewBaseTaxKeeper(app.accountKeeper)
+	app.bankKeeper = tax.NewBaseTaxKeeper(
+		app.keyBank,
+		app.cdc,
+		app.accountKeeper,
+		app.feeCollectionKeeper,
+	)
 	app.paramsKeeper = params.NewKeeper(
 		app.cdc,
 		app.keyParams, app.tkeyParams,
@@ -115,40 +126,48 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.cdc,
 		app.keyStake, app.tkeyStake,
 		app.bankKeeper, app.paramsKeeper.Subspace(stake.DefaultParamspace),
-		app.RegisterCodespace(stake.DefaultCodespace),
+		stake.DefaultCodespace,
 	)
 	app.distrKeeper = distr.NewKeeper(
 		app.cdc,
 		app.keyDistr,
 		app.paramsKeeper.Subspace(distr.DefaultParamspace),
 		app.bankKeeper, &stakeKeeper, app.feeCollectionKeeper,
-		app.RegisterCodespace(stake.DefaultCodespace),
+		stake.DefaultCodespace,
 	)
 	app.slashingKeeper = slashing.NewKeeper(
 		app.cdc,
 		app.keySlashing,
 		&stakeKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
-		app.RegisterCodespace(slashing.DefaultCodespace),
+		slashing.DefaultCodespace,
 	)
 	app.govKeeper = gov.NewKeeper(
 		app.cdc,
 		app.keyGov,
 		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
-		app.RegisterCodespace(gov.DefaultCodespace),
+		gov.DefaultCodespace,
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,
 		cdc,
 		stakeKeeper.GetValidatorSet(),
-		sdk.NewDecWithPrec(66, 2),
-		1000000,
+	)
+	app.treasuryKeeper = treasury.NewKeeper(
+		app.keyTreasury,
+		app.cdc,
+		app.bankKeeper,
+	)
+	app.marketKeeper = market.NewKeeper(
+		app.bankKeeper,
+		app.oracleKeeper,
+		app.treasuryKeeper,
 	)
 
 	// register the staking hooks
 	// NOTE: stakeKeeper above are passed by reference,
 	// so that it can be modified like below:
 	app.stakeKeeper = *stakeKeeper.SetHooks(
-		NewHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
+		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
 	// register message routes
 	app.Router().
@@ -157,15 +176,17 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
 		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
 		AddRoute("gov", gov.NewHandler(app.govKeeper)).
-		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper))
+		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper)).
+		//AddRoute("treasury", treasury.NewHandler(app.treasuryKeeper)).
+		AddRoute("market", market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
 		AddRoute("gov", gov.NewQuerier(app.govKeeper)).
 		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
 
 	// initialize BaseApp
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
-		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams)
+	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
+		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -196,10 +217,16 @@ func MakeCodec() *codec.Codec {
 
 // application updates every end block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
 
-	// distribute rewards from previous block
+	// distribute rewards for the previous block
 	distr.BeginBlocker(ctx, req, app.distrKeeper)
+
+	// slash anyone who double signed.
+	// NOTE: This should happen after distr.BeginBlocker so that
+	// there is nothing left over in the validator fee pool,
+	// so as to keep the CanWithdrawInvariant invariant.
+	// TODO: This should really happen at EndBlocker.
+	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
 
 	return abci.ResponseBeginBlock{
 		Tags: tags.ToKVPairs(),
@@ -211,9 +238,10 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
 	tags := gov.EndBlocker(ctx, app.govKeeper)
-	validatorUpdates := stake.EndBlocker(ctx, app.stakeKeeper)
+	validatorUpdates, endBlockerTags := stake.EndBlocker(ctx, app.stakeKeeper)
+	tags = append(tags, endBlockerTags...)
 
-	tags.AppendTags(oracle.EndBlocker(ctx, app.oracleKeeper))
+	app.assertRuntimeInvariants()
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -221,18 +249,8 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	}
 }
 
-// custom logic for Terra initialization
-func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	stateJSON := req.AppStateBytes
-	// TODO is this now the whole genesis file?
-
-	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
-	if err != nil {
-		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
-		// return sdk.ErrGenesisParse("").TraceCause(err, "")
-	}
-
+// initialize store from a genesis state
+func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 	// sort by account number to maintain consistency
 	sort.Slice(genesisState.Accounts, func(i, j int) bool {
 		return genesisState.Accounts[i].AccountNumber < genesisState.Accounts[j].AccountNumber
@@ -254,7 +272,10 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
+	//oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
+
+	// validate genesis state
 	err = TerraValidateGenesisState(genesisState)
 	if err != nil {
 		panic(err) // TODO find a way to do this w/o panics
@@ -276,6 +297,22 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 
 		validators = app.stakeKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	}
+	return validators
+}
+
+// custom logic for Terra initialization
+func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	stateJSON := req.AppStateBytes
+	// TODO is this now the whole genesis file?
+
+	var genesisState GenesisState
+	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
+	if err != nil {
+		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
+		// return sdk.ErrGenesisParse("").TraceCause(err, "")
+	}
+
+	validators := app.initFromGenesisState(ctx, genesisState)
 
 	// sanity check
 	if len(req.Validators) > 0 {
@@ -292,88 +329,68 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 		}
 	}
 
+	// assert runtime invariants
+	app.assertRuntimeInvariants()
+
 	return abci.ResponseInitChain{
 		Validators: validators,
 	}
 }
 
-// export the state of terra for a genesis file
-func (app *TerraApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := app.NewContext(true, abci.Header{})
-
-	// iterate to get the accounts
-	accounts := []GenesisAccount{}
-	appendAccount := func(acc auth.Account) (stop bool) {
-		account := NewGenesisAccountI(acc)
-		accounts = append(accounts, account)
-		return false
-	}
-	app.accountKeeper.IterateAccounts(ctx, appendAccount)
-	genState := NewGenesisState(
-		accounts,
-		auth.ExportGenesis(ctx, app.feeCollectionKeeper),
-		stake.ExportGenesis(ctx, app.stakeKeeper),
-		oracle.ExportGenesis(ctx, app.oracleKeeper),
-		distr.ExportGenesis(ctx, app.distrKeeper),
-		gov.ExportGenesis(ctx, app.govKeeper),
-		slashing.ExportGenesis(ctx, app.slashingKeeper),
-	)
-	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
-	if err != nil {
-		return nil, nil, err
-	}
-	validators = stake.WriteValidators(ctx, app.stakeKeeper)
-	return appState, validators, nil
+// load a particular height
+func (app *TerraApp) LoadHeight(height int64) error {
+	return app.LoadVersion(height, app.keyMain)
 }
 
 //______________________________________________________________________________________________
 
-// Combined Staking Hooks
-type Hooks struct {
+var _ sdk.StakingHooks = StakingHooks{}
+
+// StakingHooks contains combined distribution and slashing hooks needed for the
+// staking module.
+type StakingHooks struct {
 	dh distr.Hooks
 	sh slashing.Hooks
 }
 
-func NewHooks(dh distr.Hooks, sh slashing.Hooks) Hooks {
-	return Hooks{dh, sh}
+func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks) StakingHooks {
+	return StakingHooks{dh, sh}
 }
 
-var _ sdk.StakingHooks = Hooks{}
-
 // nolint
-func (h Hooks) OnValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorCreated(ctx, valAddr)
 	h.sh.OnValidatorCreated(ctx, valAddr)
 }
-func (h Hooks) OnValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorModified(ctx, valAddr)
 	h.sh.OnValidatorModified(ctx, valAddr)
 }
-func (h Hooks) OnValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorRemoved(ctx, consAddr, valAddr)
 	h.sh.OnValidatorRemoved(ctx, consAddr, valAddr)
 }
-func (h Hooks) OnValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorBonded(ctx, consAddr, valAddr)
 	h.sh.OnValidatorBonded(ctx, consAddr, valAddr)
 }
-func (h Hooks) OnValidatorPowerDidChange(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorPowerDidChange(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorPowerDidChange(ctx, consAddr, valAddr)
 	h.sh.OnValidatorPowerDidChange(ctx, consAddr, valAddr)
 }
-func (h Hooks) OnValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.OnValidatorBeginUnbonding(ctx, consAddr, valAddr)
 	h.sh.OnValidatorBeginUnbonding(ctx, consAddr, valAddr)
 }
-func (h Hooks) OnDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.OnDelegationCreated(ctx, delAddr, valAddr)
 	h.sh.OnDelegationCreated(ctx, delAddr, valAddr)
 }
-func (h Hooks) OnDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.OnDelegationSharesModified(ctx, delAddr, valAddr)
 	h.sh.OnDelegationSharesModified(ctx, delAddr, valAddr)
 }
-func (h Hooks) OnDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+func (h StakingHooks) OnDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.OnDelegationRemoved(ctx, delAddr, valAddr)
 	h.sh.OnDelegationRemoved(ctx, delAddr, valAddr)
 }

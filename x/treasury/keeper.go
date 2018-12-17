@@ -1,9 +1,7 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/x/market"
-	"terra/x/oracle"
+	"terra/types/tax"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,40 +12,20 @@ type Keeper struct {
 	key sdk.StoreKey
 	cdc *codec.Codec
 
-	mk market.Keeper
-	ok oracle.Keeper
+	tk tax.TaxKeeper
 }
 
-var (
-	taxMin = sdk.ZeroDec()
-	taxMax = sdk.NewDecWithPrec(2, 2) // 2%
-)
-
-// GetTaxRate gets the effective stability tax rate. TODO: add substrate
-func (keeper Keeper) GetTaxRate(ctx sdk.Context, denom string) sdk.Dec {
-	debtRatio := keeper.getDebtRatio(ctx)
-
-	return taxMin.Add(taxMax.Sub(taxMin).Mul(debtRatio))
+// NewKeeper constructs a new keeper
+func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, taxKeeper tax.TaxKeeper) Keeper {
+	return Keeper{
+		key: key,
+		cdc: cdc,
+		tk:  taxKeeper,
+	}
 }
-
-// getDebtRatio returns the ratio of debt and luna total issuance.
-func (keeper Keeper) getDebtRatio(ctx sdk.Context) sdk.Dec {
-
-	lunaCurrentIssuance := keeper.mk.GetCoinSupply(ctx, assets.LunaDenom)
-	lunaTargetIssuance := keeper.GetLunaTargetIssuance(ctx)
-
-	lunaDebt := lunaCurrentIssuance.Sub(lunaTargetIssuance)
-
-	return sdk.NewDecFromInt(lunaDebt).Quo(sdk.NewDecFromInt(lunaCurrentIssuance))
-}
-
-// func (keeper Keeper) CollectTax(tax sdk.Coins) {
-// 	debtRatio := keeper.getDebtRatio(ctx)
-
-// }
 
 func (keeper Keeper) CollectRevenues(ctx sdk.Context, revenue sdk.Coin) {
-	debtRatio := keeper.getDebtRatio(ctx)
+	debtRatio := keeper.tk.GetDebtRatio(ctx)
 	budgetSubsidyRate := sdk.OneDec().Sub(debtRatio)
 
 	subsidy := (sdk.NewDecFromInt(revenue.Amount).Mul(budgetSubsidyRate)).RoundInt()
@@ -57,25 +35,6 @@ func (keeper Keeper) CollectRevenues(ctx sdk.Context, revenue sdk.Coin) {
 
 	keeper.SetSubsidyPool(ctx, subsidyPool)
 	// Let the rest of Coins burn
-}
-
-func (keeper Keeper) SetLunaTargetIssuance(ctx sdk.Context, genesisIssuance sdk.Int) {
-	store := ctx.KVStore(keeper.key)
-	key := KeyLunaTargetIssuance
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(genesisIssuance)
-	store.Set(key, bz)
-}
-
-//nolint
-func (keeper Keeper) GetLunaTargetIssuance(ctx sdk.Context) (res sdk.Int) {
-	store := ctx.KVStore(keeper.key)
-	key := KeyLunaTargetIssuance
-	bz := store.Get(key)
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
 }
 
 func (keeper Keeper) SetSubsidyPool(ctx sdk.Context, subsidyPool sdk.Coins) {

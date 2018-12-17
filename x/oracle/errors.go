@@ -6,11 +6,10 @@ import (
 
 // Oracle errors reserve 1101-1199
 const (
-	DefaultCodespace sdk.CodespaceType = 11
+	DefaultCodespace sdk.CodespaceType = "ORACLE"
 
-	CodeNotValidator   sdk.CodeType = 1101
-	CodeUnknownDenom   sdk.CodeType = 1102
-	CodeUnknownRequest sdk.CodeType = sdk.CodeUnknownRequest
+	CodeNotValidator sdk.CodeType = 1
+	CodeUnknownDenom sdk.CodeType = 2
 )
 
 // ----------------------------------------

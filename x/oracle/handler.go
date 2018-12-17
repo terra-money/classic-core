@@ -13,7 +13,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		case PriceFeedMsg:
 			return handlePriceFeedMsg(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
+			errMsg := "Unrecognized oracle Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}

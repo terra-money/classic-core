@@ -2,13 +2,13 @@ package cli
 
 import (
 	"math"
+	"os"
 	"terra/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
 	"github.com/spf13/cobra"
@@ -17,7 +17,8 @@ import (
 
 const (
 	flagDenom        = "denom"
-	flagPrice        = "price"
+	flagTargetPrice  = "targetprice"
+	flagCurrentPrice = "currentprice"
 	flagVoterAddress = "address"
 )
 
@@ -31,7 +32,7 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithCodec(cdc)
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
-				WithAccountDecoder(authcmd.GetAccountDecoder(cdc))
+				WithAccountDecoder(cdc)
 
 			if err := cliCtx.EnsureAccountExists(); err != nil {
 				return err
@@ -46,12 +47,13 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 
 			// parse denom of the coin to be voted on
 			denom := viper.GetString(flagDenom)
-			price := sdk.NewDecWithPrec(int64(math.Round(viper.GetFloat64(flagPrice)*100)), 2)
+			target := sdk.NewDecWithPrec(int64(math.Round(viper.GetFloat64(flagTargetPrice)*100)), 2)
+			current := sdk.NewDecWithPrec(int64(math.Round(viper.GetFloat64(flagCurrentPrice)*100)), 2)
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := oracle.NewPriceFeedMsg(denom, price, voter)
+			msg := oracle.NewPriceFeedMsg(denom, target, current, voter)
 			if cliCtx.GenerateOnly {
-				return utils.PrintUnsignedStdTx(txBldr, cliCtx, []sdk.Msg{msg}, false)
+				return utils.PrintUnsignedStdTx(os.Stdout, txBldr, cliCtx, []sdk.Msg{msg}, false)
 			}
 
 			return utils.CompleteAndBroadcastTxCli(txBldr, cliCtx, []sdk.Msg{msg})
@@ -60,10 +62,12 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagVoterAddress, "", "Validator address of the voter")
 	cmd.Flags().String(flagDenom, "", "Denom of the asset to vote on")
-	cmd.Flags().Float32(flagPrice, 0.0, "Price of the asset denominated in SDR, to 2nd decimal precision")
+	cmd.Flags().Float32(flagTargetPrice, 0.0, "Price of the asset denominated in Luna, to 2nd decimal precision")
+	cmd.Flags().Float32(flagCurrentPrice, 0.0, "Price of the asset denominated in Luna, to 2nd decimal precision")
 
 	cmd.MarkFlagRequired(flagDenom)
-	cmd.MarkFlagRequired(flagPrice)
+	cmd.MarkFlagRequired(flagTargetPrice)
+	cmd.MarkFlagRequired(flagCurrentPrice)
 	cmd.MarkFlagRequired(flagVoterAddress)
 
 	return cmd
