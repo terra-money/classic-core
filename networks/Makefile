@@ -26,7 +26,7 @@ CONFIGFILE?=$(CURDIR)/../build/config.toml
 # Name of application for app deployments
 APP_NAME ?= faucettestnet1
 # Region to deploy VPC and application in AWS
-REGION ?= us-east-2
+REGION ?= ap-northeast-2
 
 all:
 	@echo "There is no all. Only sum of the ones."
