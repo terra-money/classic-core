@@ -23,6 +23,7 @@ examples/basecoin/app/data
 baseapp/data/*
 client/lcd/keys/*
 client/lcd/statik/statik.go
+remote/ansible/testnets
 mytestnet
 
 # Testing
