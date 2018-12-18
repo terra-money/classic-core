@@ -11,8 +11,6 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"strings"
-	"terra/version"
 	"terra/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -181,69 +179,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 	}
 
 	return app
-}
-
-// Create new Query handler to override handleQueryApp to change 'version' command @matthww
-// It's not look so nice. but believe me, it's the best way for now
-
-// Splits a string path using the delimter '/'.  i.e. "this/is/funny" becomes []string{"this", "is", "funny"}
-func splitPath(requestPath string) (path []string) {
-	path = strings.Split(requestPath, "/")
-	// first element is empty string
-	if len(path) > 0 && path[0] == "" {
-		path = path[1:]
-	}
-	return path
-}
-
-// override BaseApp.Query
-func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
-	path := splitPath(req.Path)
-	if len(path) == 0 {
-		msg := "no query path provided"
-		return sdk.ErrUnknownRequest(msg).QueryResult()
-	}
-	switch path[0] {
-	case "app":
-		return handleQueryApp(app, path, req)
-	default:
-		return app.BaseApp.Query(req)
-	}
-}
-
-func handleQueryApp(_ *TerraApp, path []string, _ abci.RequestQuery) (res abci.ResponseQuery) {
-	if len(path) >= 2 {
-		var result sdk.Result
-		switch path[1] {
-		// Diabling simulate call. beacause txDecoder isn't exported.
-		//case "simulate":
-		//	txBytes := req.Data
-		//	tx, err := app.BaseApp.txDecoder(txBytes)
-		//	if err != nil {
-		//		result = err.Result()
-		//	} else {
-		//		result = app.BaseApp.Simulate(tx)
-		//	}
-		case "version":
-			return abci.ResponseQuery{
-				Code:      uint32(sdk.CodeOK),
-				Codespace: string(sdk.CodespaceRoot),
-				Value:     []byte(version.GetVersion()),
-			}
-		default:
-			result = sdk.ErrUnknownRequest(fmt.Sprintf("Unknown query: %s", path)).Result()
-		}
-
-		// Encode with json
-		value := codec.Cdc.MustMarshalBinaryLengthPrefixed(result)
-		return abci.ResponseQuery{
-			Code:      uint32(sdk.CodeOK),
-			Codespace: string(sdk.CodespaceRoot),
-			Value:     value,
-		}
-	}
-	msg := "Expected second parameter to be either simulate or version, neither was present"
-	return sdk.ErrUnknownRequest(msg).QueryResult()
 }
 
 // custom tx codec

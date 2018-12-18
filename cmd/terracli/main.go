@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"net/http"
 	"os"
 	"path"
 
@@ -158,6 +160,12 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 func registerRoutes(rs *lcd.RestServer) {
 	// Disabling swaggerui @matthew
 	// registerSwaggerUI(rs)
+
+	// Reset Mux to override 'version' REST APIs. any better way? @matthew
+	rs.Mux = mux.NewRouter()
+	rs.Mux.HandleFunc("/version", versionRequestHandler).Methods("GET")
+	rs.Mux.HandleFunc("/node_version", lcd.NodeVersionRequestHandler(rs.CliCtx)).Methods("GET")
+
 	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
@@ -167,6 +175,12 @@ func registerRoutes(rs *lcd.RestServer) {
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+}
+
+func versionRequestHandler(w http.ResponseWriter, r *http.Request) {
+	v := version.GetVersion()
+	w.Write([]byte(v))
 }
 
 // Disabling swaggerui @matthew
