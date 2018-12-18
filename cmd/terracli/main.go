@@ -39,8 +39,6 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakeClient "github.com/cosmos/cosmos-sdk/x/stake/client"
 
-	oracleClient "terra/x/oracle/client"
-
 	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
 )
 
@@ -52,6 +50,21 @@ const (
 	storeDist     = "distr"
 )
 
+const (
+	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
+	bech32PrefixAccAddr = "terra"
+	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key
+	bech32PrefixAccPub = "terrapub"
+	// Bech32PrefixValAddr defines the Bech32 prefix of a validator's operator address
+	bech32PrefixValAddr = "terravaloper"
+	// Bech32PrefixValPub defines the Bech32 prefix of a validator's operator public key
+	bech32PrefixValPub = "terravaloperpub"
+	// Bech32PrefixConsAddr defines the Bech32 prefix of a consensus node address
+	bech32PrefixConsAddr = "terravalcons"
+	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key
+	bech32PrefixConsPub = "terravalconspub"
+)
+
 func main() {
 	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
@@ -61,9 +74,9 @@ func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
+	config.SetBech32PrefixForAccount(bech32PrefixAccAddr, bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(bech32PrefixValAddr, bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(bech32PrefixConsAddr, bech32PrefixConsPub)
 	config.Seal()
 
 	// TODO: setup keybase, viper object, etc. to be passed into
@@ -170,7 +183,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	stake.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
