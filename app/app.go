@@ -5,6 +5,12 @@ import (
 	"io"
 	"os"
 	"sort"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
+
 	"strings"
 	"terra/version"
 	"terra/x/oracle"
@@ -19,17 +25,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 const (
 	appName = "TerraApp"
 	// DefaultKeyPass contains the default key password for genesis transactions
-	DefaultKeyPass   = "12345678"
-	DefaultBondDenom = "luna"
+	DefaultKeyPass       = "12345678"
+	DefaultBondDenom     = "luna"
 	DefaultCurrencyDenom = "terra"
 )
 
@@ -181,6 +183,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 	return app
 }
 
+// Create new Query handler to override handleQueryApp to change 'version' command @matthww
+// It's not look so nice. but believe me, it's the best way for now
+
 // Splits a string path using the delimter '/'.  i.e. "this/is/funny" becomes []string{"this", "is", "funny"}
 func splitPath(requestPath string) (path []string) {
 	path = strings.Split(requestPath, "/")
@@ -206,17 +211,18 @@ func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}
 }
 
-func handleQueryApp(app *TerraApp, path []string, req abci.RequestQuery) (res abci.ResponseQuery) {
+func handleQueryApp(_ *TerraApp, path []string, _ abci.RequestQuery) (res abci.ResponseQuery) {
 	if len(path) >= 2 {
 		var result sdk.Result
 		switch path[1] {
+		// Diabling simulate call. beacause txDecoder isn't exported.
 		//case "simulate":
 		//	txBytes := req.Data
-		//	tx, err := app.txDecoder(txBytes)
+		//	tx, err := app.BaseApp.txDecoder(txBytes)
 		//	if err != nil {
 		//		result = err.Result()
 		//	} else {
-		//		result = app.Simulate(tx)
+		//		result = app.BaseApp.Simulate(tx)
 		//	}
 		case "version":
 			return abci.ResponseQuery{
@@ -256,7 +262,6 @@ func MakeCodec() *codec.Codec {
 
 // application updates every end block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-
 
 	// distribute rewards for the previous block
 	distr.BeginBlocker(ctx, req, app.distrKeeper)

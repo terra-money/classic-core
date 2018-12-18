@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -18,12 +20,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 var (
 	// bonded tokens given to genesis validators/accounts
-	freeFermionVal  = int64(100)
+	// freeFermionVal  = int64(100)
 	freeFermionsAcc = sdk.NewInt(150)
 	bondDenom       = DefaultBondDenom
 	currencyDenom   = DefaultCurrencyDenom
@@ -40,9 +41,9 @@ type GenesisState struct {
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
-func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState, 
-stakeData stake.GenesisState,
-	distrData distr.GenesisState, govData gov.GenesisState, 
+func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
+	stakeData stake.GenesisState,
+	distrData distr.GenesisState, govData gov.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
@@ -148,8 +149,8 @@ func NewDefaultGenesisState() GenesisState {
 				BondDenom:     bondDenom,
 			},
 		},
-		DistrData:    distr.DefaultGenesisState(),
-		GovData:      gov.GenesisState{
+		DistrData: distr.DefaultGenesisState(),
+		GovData: gov.GenesisState{
 			StartingProposalID: 1,
 			DepositParams: gov.DepositParams{
 				MinDeposit:       sdk.Coins{sdk.NewInt64Coin(DefaultBondDenom, 10)},
@@ -159,10 +160,9 @@ func NewDefaultGenesisState() GenesisState {
 				VotingPeriod: time.Duration(172800) * time.Second,
 			},
 			TallyParams: gov.TallyParams{
-				Quorum:            sdk.NewDecWithPrec(334, 3),
-				Threshold:         sdk.NewDecWithPrec(5, 1),
-				Veto:              sdk.NewDecWithPrec(334, 3),
-				GovernancePenalty: sdk.NewDecWithPrec(1, 2),
+				Quorum:    sdk.NewDecWithPrec(334, 3),
+				Threshold: sdk.NewDecWithPrec(5, 1),
+				Veto:      sdk.NewDecWithPrec(334, 3),
 			},
 		},
 		SlashingData: slashing.DefaultGenesisState(),

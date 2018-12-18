@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 
-	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"terra/app"
@@ -158,7 +156,8 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 // NOTE: details on the routes added for each module are in the module documentation
 // NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
 func registerRoutes(rs *lcd.RestServer) {
-	registerSwaggerUI(rs)
+	// Disabling swaggerui @matthew
+	// registerSwaggerUI(rs)
 	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
@@ -170,14 +169,15 @@ func registerRoutes(rs *lcd.RestServer) {
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
-func registerSwaggerUI(rs *lcd.RestServer) {
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-	staticServer := http.FileServer(statikFS)
-	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
-}
+// Disabling swaggerui @matthew
+//func registerSwaggerUI(rs *lcd.RestServer) {
+//	statikFS, err := fs.New()
+//	if err != nil {
+//		panic(err)
+//	}
+//	staticServer := http.FileServer(statikFS)
+//	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+//}
 
 func initConfig(cmd *cobra.Command) error {
 	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)

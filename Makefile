@@ -14,7 +14,7 @@ all: get_tools get_vendor_deps install install_examples install_cosmos-sdk-cli t
 get_tools:
 	go get github.com/golang/dep/cmd/dep
 
-build:
+build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
 	go build $(BUILD_FLAGS) -o build/terrad.exe ./cmd/terrad
 	go build $(BUILD_FLAGS) -o build/terracli.exe ./cmd/terracli
@@ -29,10 +29,10 @@ build-linux:
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 update_terra_lite_docs:
-	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
+	# @statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
 
-install:
+install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrareplay

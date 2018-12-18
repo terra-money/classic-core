@@ -2,7 +2,6 @@ package oracle
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // NewHandler returns a handler for "bank" type messages.
@@ -19,44 +18,44 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // NewEndBlocker checks proposals and generates a EndBlocker
-func NewEndBlocker(k Keeper) sdk.EndBlocker {
-	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-		newTags := sdk.NewTags()
+//func NewEndBlocker(k Keeper) sdk.EndBlocker {
+//	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+//		newTags := sdk.NewTags()
+//
+//		// Update price elects
+//		if ctx.BlockHeight()%k.timeout == 0 {
+//
+//			newTags.AppendTag("action", []byte("price_update"))
+//			for _, whiteDenom := range denomWhiteList {
+//				elect, err := k.Elect(ctx, whiteDenom)
+//				if err == nil {
+//					newTags.AppendTag(whiteDenom, []byte(elect.Price.String()))
+//				}
+//			}
+//		}
+//
+//		return abci.ResponseEndBlock{
+//			Tags: newTags,
+//		}
+//	}
+//}
 
-		// Update price elects
-		if ctx.BlockHeight()%k.timeout == 0 {
-
-			newTags.AppendTag("action", []byte("price_update"))
-			for _, whiteDenom := range denomWhiteList {
-				elect, err := k.Elect(ctx, whiteDenom)
-				if err == nil {
-					newTags.AppendTag(whiteDenom, []byte(elect.Price.String()))
-				}
-			}
-		}
-
-		return abci.ResponseEndBlock{
-			Tags: newTags,
-		}
-	}
-}
-
-func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
-	newTags := sdk.NewTags()
+func EndBlocker(ctx sdk.Context, k Keeper) sdk.Tags {
+	resTags := sdk.NewTags()
 
 	// Update price elects
 	if ctx.BlockHeight()%k.timeout == 0 {
 
-		newTags.AppendTag("action", []byte("price_update"))
+		resTags.AppendTag("action", []byte("price_update"))
 		for _, whiteDenom := range denomWhiteList {
 			elect, err := k.Elect(ctx, whiteDenom)
 			if err == nil {
-				newTags.AppendTag(whiteDenom, []byte(elect.Price.String()))
+				resTags.AppendTag(whiteDenom, []byte(elect.Price.String()))
 			}
 		}
 	}
 
-	return newTags
+	return resTags
 }
 
 // Handle is used by other modules to handle Msg
