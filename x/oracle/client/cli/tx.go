@@ -15,15 +15,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	flagDenom        = "denom"
-	flagTargetPrice  = "targetprice"
-	flagCurrentPrice = "currentprice"
-	flagVoterAddress = "address"
-)
-
-// GetPriceFeedCmd will create a send tx and sign it with the given key.
-func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
+// GetCmdPriceVote will create a send tx and sign it with the given key.
+func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "oracle",
 		Short: "Submit a vote for the price oracle",
@@ -34,13 +27,7 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
-			}
-
-			voterStr := viper.GetString(flagVoterAddress)
-
-			voter, err := sdk.AccAddressFromBech32(voterStr)
+			voterAddress, err := cliCtx.GetFromAddress()
 			if err != nil {
 				return err
 			}
@@ -51,7 +38,7 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 			current := sdk.NewDecWithPrec(int64(math.Round(viper.GetFloat64(flagCurrentPrice)*100)), 2)
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := oracle.NewPriceFeedMsg(denom, target, current, voter)
+			msg := oracle.NewPriceFeedMsg(denom, target, current, voterAddress)
 			if cliCtx.GenerateOnly {
 				return utils.PrintUnsignedStdTx(os.Stdout, txBldr, cliCtx, []sdk.Msg{msg}, false)
 			}
@@ -60,15 +47,13 @@ func GetPriceFeedCmd(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flagVoterAddress, "", "Validator address of the voter")
-	cmd.Flags().String(flagDenom, "", "Denom of the asset to vote on")
-	cmd.Flags().Float32(flagTargetPrice, 0.0, "Price of the asset denominated in Luna, to 2nd decimal precision")
-	cmd.Flags().Float32(flagCurrentPrice, 0.0, "Price of the asset denominated in Luna, to 2nd decimal precision")
+	cmd.Flags().AddFlagSet(fsDenom)
+	cmd.Flags().AddFlagSet(fsCurrentPrice)
+	cmd.Flags().AddFlagSet(fsTargetPrice)
 
-	cmd.MarkFlagRequired(flagDenom)
-	cmd.MarkFlagRequired(flagTargetPrice)
 	cmd.MarkFlagRequired(flagCurrentPrice)
-	cmd.MarkFlagRequired(flagVoterAddress)
+	cmd.MarkFlagRequired(flagTargetPrice)
+	cmd.MarkFlagRequired(flagDenom)
 
 	return cmd
 }

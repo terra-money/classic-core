@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"terra/types/assets"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,7 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	"github.com/cosmos/cosmos-sdk/x/stake/client/cli"
-	stakeTypes "github.com/cosmos/cosmos-sdk/x/stake/types"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	defaultAmount                  = "100" + stakeTypes.DefaultBondDenom
+	defaultAmount                  = "100" + assets.LunaDenom
 	defaultCommissionRate          = "0.1"
 	defaultCommissionMaxRate       = "0.2"
 	defaultCommissionMaxChangeRate = "0.01"

@@ -69,7 +69,7 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 	valset := keeper.valset
 
 	// Check the feeder is a validater
-	val := valset.Validator(ctx, sdk.ValAddress(pfm.Feeder.Bytes()))
+	val := valset.Validator(ctx, sdk.ValAddress(pfm.GetSigners()[0].Bytes()))
 	if val == nil {
 		return ErrNotValidator(DefaultCodespace, pfm.Feeder).Result()
 	}
