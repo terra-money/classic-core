@@ -25,8 +25,6 @@ Ultimately, Terra aims to offer a stability token platform for dApp developers, 
 Soju-0002 is online
 [https://github.com/terra-project/testnets](https://github.com/terra-project/testnets)
 
-TODO
-
 ## Install
 
 TODO
