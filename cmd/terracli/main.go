@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gorilla/mux"
+	"net/http"
 	"os"
 	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"terra/app"
@@ -19,38 +23,40 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"terra/version"
 
-	oraclecmd "terra/x/oracle/client/cli"
+	oracle "terra/x/oracle/client/rest"
+
+	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
+	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
+	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	distrcmd "github.com/cosmos/cosmos-sdk/x/distribution/client/cli"
-	govcmd "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	slashingcmd "github.com/cosmos/cosmos-sdk/x/slashing/client/cli"
-	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
+	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
+	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
+	stakeClient "github.com/cosmos/cosmos-sdk/x/stake/client"
 
 	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
 )
 
 const (
-	storeAcc        = "acc"
-	storeGov        = "gov"
-	storeSlashing   = "slashing"
-	storeStake      = "stake"
-	queryRouteStake = "stake"
-)
-
-// rootCmd is the entry point for this binary
-var (
-	rootCmd = &cobra.Command{
-		Use:   "terracli",
-		Short: "Terra light-client",
-	}
+	storeAcc      = "acc"
+	storeGov      = "gov"
+	storeSlashing = "slashing"
+	storeStake    = "stake"
+	storeDist     = "distr"
 )
 
 func main() {
+	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
+
+	// Instantiate the codec for the command line application
 	cdc := app.MakeCodec()
 
+	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
@@ -60,91 +66,37 @@ func main() {
 	// TODO: setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
 	// with the cdc
-	rootCmd.AddCommand(client.ConfigCmd())
 
-	// add standard rpc commands
-	rpc.AddCommands(rootCmd)
-
-	//Add query commands
-	queryCmd := &cobra.Command{
-		Use:     "query",
-		Aliases: []string{"q"},
-		Short:   "Querying subcommands",
-	}
-	queryCmd.AddCommand(
-		rpc.BlockCommand(),
-		rpc.ValidatorCommand(),
-	)
-	tx.AddCommands(queryCmd, cdc)
-	queryCmd.AddCommand(client.LineBreak)
-	queryCmd.AddCommand(client.GetCommands(
-		authcmd.GetAccountCmd(storeAcc, cdc, authcmd.GetAccountDecoder(cdc)),
-		stakecmd.GetCmdQueryDelegation(storeStake, cdc),
-		stakecmd.GetCmdQueryDelegations(storeStake, cdc),
-		stakecmd.GetCmdQueryUnbondingDelegation(storeStake, cdc),
-		stakecmd.GetCmdQueryUnbondingDelegations(storeStake, cdc),
-		stakecmd.GetCmdQueryRedelegation(storeStake, cdc),
-		stakecmd.GetCmdQueryRedelegations(storeStake, cdc),
-		stakecmd.GetCmdQueryValidator(storeStake, cdc),
-		stakecmd.GetCmdQueryValidators(storeStake, cdc),
-		stakecmd.GetCmdQueryValidatorUnbondingDelegations(queryRouteStake, cdc),
-		stakecmd.GetCmdQueryValidatorRedelegations(queryRouteStake, cdc),
-		stakecmd.GetCmdQueryParams(storeStake, cdc),
-		stakecmd.GetCmdQueryPool(storeStake, cdc),
-		govcmd.GetCmdQueryProposal(storeGov, cdc),
-		govcmd.GetCmdQueryProposals(storeGov, cdc),
-		govcmd.GetCmdQueryVote(storeGov, cdc),
-		govcmd.GetCmdQueryVotes(storeGov, cdc),
-		govcmd.GetCmdQueryDeposit(storeGov, cdc),
-		govcmd.GetCmdQueryDeposits(storeGov, cdc),
-		slashingcmd.GetCmdQuerySigningInfo(storeSlashing, cdc),
-	)...)
-
-	//Add tx commands
-	txCmd := &cobra.Command{
-		Use:   "tx",
-		Short: "Transactions subcommands",
+	// Module clients hold cli commnads (tx,query) and lcd routes
+	// TODO: Make the lcd command take a list of ModuleClient
+	mc := []sdk.ModuleClients{
+		govClient.NewModuleClient(storeGov, cdc),
+		distClient.NewModuleClient(storeDist, cdc),
+		stakeClient.NewModuleClient(storeStake, cdc),
+		slashingClient.NewModuleClient(storeSlashing, cdc),
 	}
 
-	//Add auth and bank commands
-	txCmd.AddCommand(
-		client.PostCommands(
-			bankcmd.GetBroadcastCommand(cdc),
-			authcmd.GetSignCommand(cdc, authcmd.GetAccountDecoder(cdc)),
-		)...)
-	txCmd.AddCommand(client.LineBreak)
+	rootCmd := &cobra.Command{
+		Use:   "terracli",
+		Short: "Command line interface for interacting with terrad",
+	}
 
-	txCmd.AddCommand(
-		client.PostCommands(
-			stakecmd.GetCmdCreateValidator(cdc),
-			stakecmd.GetCmdEditValidator(cdc),
-			stakecmd.GetCmdDelegate(cdc),
-			stakecmd.GetCmdRedelegate(storeStake, cdc),
-			stakecmd.GetCmdUnbond(storeStake, cdc),
-			distrcmd.GetCmdWithdrawRewards(cdc),
-			distrcmd.GetCmdSetWithdrawAddr(cdc),
-			govcmd.GetCmdDeposit(cdc),
-			bankcmd.SendTxCmd(cdc),
-			govcmd.GetCmdSubmitProposal(cdc),
-			slashingcmd.GetCmdUnjail(cdc),
-			govcmd.GetCmdVote(cdc),
-			oraclecmd.GetPriceFeedCmd(cdc),
-		)...)
+	// Construct Root Command
 	rootCmd.AddCommand(
-		queryCmd,
-		txCmd,
-		lcd.ServeCommand(cdc),
+		rpc.InitClientCommand(),
+		rpc.StatusCommand(),
+		client.ConfigCmd(),
+		queryCmd(cdc, mc),
+		txCmd(cdc, mc),
 		client.LineBreak,
-	)
-
-	// add proxy, version and key info
-	rootCmd.AddCommand(
+		lcd.ServeCommand(cdc, registerRoutes),
+		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
 	)
 
-	// prepare and add flags
+	// Add flags and prefix all env exposed with GA
 	executor := cli.PrepareMainCmd(rootCmd, "TE", app.DefaultCLIHome)
 	err := initConfig(rootCmd)
 	if err != nil {
@@ -153,10 +105,93 @@ func main() {
 
 	err = executor.Execute()
 	if err != nil {
-		// handle with #870
-		panic(err)
+		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
+		os.Exit(1)
 	}
 }
+
+func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+	queryCmd := &cobra.Command{
+		Use:     "query",
+		Aliases: []string{"q"},
+		Short:   "Querying subcommands",
+	}
+
+	queryCmd.AddCommand(
+		rpc.ValidatorCommand(),
+		rpc.BlockCommand(),
+		tx.SearchTxCmd(cdc),
+		tx.QueryTxCmd(cdc),
+		client.LineBreak,
+		authcmd.GetAccountCmd(storeAcc, cdc),
+	)
+
+	for _, m := range mc {
+		queryCmd.AddCommand(m.GetQueryCmd())
+	}
+
+	return queryCmd
+}
+
+func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+	txCmd := &cobra.Command{
+		Use:   "tx",
+		Short: "Transactions subcommands",
+	}
+
+	txCmd.AddCommand(
+		bankcmd.SendTxCmd(cdc),
+		client.LineBreak,
+		authcmd.GetSignCommand(cdc),
+		bankcmd.GetBroadcastCommand(cdc),
+		client.LineBreak,
+	)
+
+	for _, m := range mc {
+		txCmd.AddCommand(m.GetTxCmd())
+	}
+
+	return txCmd
+}
+
+// registerRoutes registers the routes from the different modules for the LCD.
+// NOTE: details on the routes added for each module are in the module documentation
+// NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
+func registerRoutes(rs *lcd.RestServer) {
+	// Disabling swaggerui @matthew
+	// registerSwaggerUI(rs)
+
+	// Reset Mux to override 'version' REST APIs. any better way? @matthew
+	rs.Mux = mux.NewRouter()
+	rs.Mux.HandleFunc("/version", versionRequestHandler).Methods("GET")
+	rs.Mux.HandleFunc("/node_version", lcd.NodeVersionRequestHandler(rs.CliCtx)).Methods("GET")
+
+	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
+	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
+	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
+	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	stake.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+}
+
+func versionRequestHandler(w http.ResponseWriter, r *http.Request) {
+	v := version.GetVersion()
+	w.Write([]byte(v))
+}
+
+// Disabling swaggerui @matthew
+//func registerSwaggerUI(rs *lcd.RestServer) {
+//	statikFS, err := fs.New()
+//	if err != nil {
+//		panic(err)
+//	}
+//	staticServer := http.FileServer(statikFS)
+//	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+//}
 
 func initConfig(cmd *cobra.Command) error {
 	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)

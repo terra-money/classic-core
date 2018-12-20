@@ -11,6 +11,8 @@ PermissionsStartOnly=true
 ExecStart=/usr/bin/terrad start
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGTERM
+StandardOutput=syslog+console
+StandardError=syslog+console
 
 [Install]
 WantedBy=multi-user.target
