@@ -58,7 +58,7 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewTerraApp(logger, db, traceStore,
+	return app.NewTerraApp(logger, db, traceStore, true,
 		baseapp.SetPruning(viper.GetString("pruning")),
 		baseapp.SetMinimumFees(viper.GetString("minimum_fees")),
 	)
@@ -67,7 +67,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 func exportAppStateAndTMValidators(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	tApp := app.NewTerraApp(logger, db, traceStore)
+	tApp := app.NewTerraApp(logger, db, traceStore, false)
 	if height != -1 {
 		err := tApp.LoadHeight(height)
 		if err != nil {
