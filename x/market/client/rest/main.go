@@ -47,7 +47,7 @@ func SubmitSwapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		}
 
 		baseReq := swapReq.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
+		if !baseReq.ValidateBasic(w, cliCtx) {
 			return
 		}
 

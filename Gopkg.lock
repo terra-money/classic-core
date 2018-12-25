@@ -57,7 +57,7 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:f147eede4b5b5fa2caf3549d0e0f16e541f4ed19fb1e9e590909df0517bdae22"
+  digest = "1:f44610f7074d61520208c12e4a98afc6d58717f41a652803426a054a190a8754"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -125,8 +125,8 @@
     "x/stake/types",
   ]
   pruneopts = "UT"
-  revision = "68019bef65ae4192021ed022aaea62dc97c8ab0b"
-  version = "v0.28.0"
+  revision = "2b3842c58305a4e26d457d3d3bd6cf849ffddcdd"
+  version = "v0.29.0"
 
 [[projects]]
   digest = "1:e8a3550c8786316675ff54ad6f09d265d129c9d986919af7f541afba50d87ce2"
@@ -667,6 +667,28 @@
   version = "v0.3.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:5029d59d89fbc23305dc11ea07f5ce3405ec6b2bbc817e78908686e4a0966e6e"
+  name = "gonum.org/v1/gonum"
+  packages = [
+    "blas",
+    "blas/blas64",
+    "blas/gonum",
+    "floats",
+    "internal/asm/c128",
+    "internal/asm/f32",
+    "internal/asm/f64",
+    "internal/math32",
+    "lapack",
+    "lapack/gonum",
+    "lapack/lapack64",
+    "mat",
+    "stat",
+  ]
+  pruneopts = "UT"
+  revision = "d9936c37d4be019d7a9c56525078beb0bceb90e8"
+
+[[projects]]
   digest = "1:077c1c599507b3b3e9156d17d36e1e61928ee9b53a5b420f10f28ebd4a0b275c"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
@@ -730,6 +752,7 @@
     "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/cmd/gaia/app",
     "github.com/cosmos/cosmos-sdk/codec",
+    "github.com/cosmos/cosmos-sdk/crypto/keys",
     "github.com/cosmos/cosmos-sdk/server",
     "github.com/cosmos/cosmos-sdk/server/mock",
     "github.com/cosmos/cosmos-sdk/tests",
@@ -759,10 +782,10 @@
     "github.com/cosmos/cosmos-sdk/x/stake/client/cli",
     "github.com/cosmos/cosmos-sdk/x/stake/client/rest",
     "github.com/cosmos/cosmos-sdk/x/stake/simulation",
-    "github.com/cosmos/cosmos-sdk/x/stake/types",
     "github.com/gorilla/mux",
     "github.com/rakyll/statik/fs",
     "github.com/spf13/cobra",
+    "github.com/spf13/pflag",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/require",
     "github.com/tendermint/go-amino",
@@ -781,6 +804,7 @@
     "github.com/tendermint/tendermint/privval",
     "github.com/tendermint/tendermint/types",
     "github.com/tendermint/tendermint/types/time",
+    "gonum.org/v1/gonum/stat",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

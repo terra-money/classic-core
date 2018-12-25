@@ -1,147 +1,124 @@
 package oracle
 
 import (
+	"terra/types/assets"
+	"terra/types/util"
+	"terra/x/treasury"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper of the oracle store
 type Keeper struct {
-	key sdk.StoreKey
-	cdc *codec.Codec
-
-	valset sdk.ValidatorSet
+	key        sdk.StoreKey
+	cdc        *codec.Codec
+	tk         treasury.Keeper
+	valset     sdk.ValidatorSet
+	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, valset sdk.ValidatorSet) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
-		key: key,
-		cdc: cdc,
-
-		valset: valset,
+		cdc:        cdc,
+		key:        key,
+		tk:         tk,
+		valset:     valset,
+		paramSpace: paramspace.WithTypeTable(ParamTypeTable()),
 	}
 }
 
-func (keeper Keeper) SetWhitelist(ctx sdk.Context, whitelist Whitelist) {
-	store := ctx.KVStore(keeper.key)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(whitelist)
-	store.Set(KeyWhitelist, bz)
-}
+func (keeper Keeper) getVotes(ctx sdk.Context, denom string) (res []PriceVote) {
+	votes := util.Collect(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetVotePrefix(denom),
+	)
 
-//nolint
-func (keeper Keeper) WhitelistContains(ctx sdk.Context, denom string) bool {
-	store := ctx.KVStore(keeper.key)
-	bz := store.Get(KeyWhitelist)
-	if bz == nil {
-		return false
+	for _, v := range votes {
+		res = append(res, v.(PriceVote))
 	}
-	wl := Whitelist{}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &wl)
-
-	contains := false
-	for _, wDenom := range wl {
-		if wDenom == denom {
-			contains = true
-			break
-		}
-	}
-
-	return contains
-}
-
-//nolint
-func (keeper Keeper) GetWhitelist(ctx sdk.Context) (res Whitelist) {
-	store := ctx.KVStore(keeper.key)
-	bz := store.Get(KeyWhitelist)
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
-}
-
-func (keeper Keeper) SetVotePeriod(ctx sdk.Context, votePeriod sdk.Int) {
-	store := ctx.KVStore(keeper.key)
-
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(votePeriod)
-	store.Set(KeyVotePeriod, bz)
-}
-
-//nolint
-func (keeper Keeper) GetVotePeriod(ctx sdk.Context) (res sdk.Int) {
-	store := ctx.KVStore(keeper.key)
-
-	bz := store.Get(KeyVotePeriod)
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 
 	return
 }
 
-func (keeper Keeper) SetThreshold(ctx sdk.Context, threshold sdk.Dec) {
-	store := ctx.KVStore(keeper.key)
-
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(threshold)
-	store.Set(KeyThreshold, bz)
+func (keeper Keeper) addVote(ctx sdk.Context, vote PriceVote) {
+	util.Set(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetVotePrefix(vote.FeedMsg.Denom),
+		vote,
+	)
 }
 
-//nolint
-func (keeper Keeper) GetThreshold(ctx sdk.Context) (res sdk.Dec) {
-	store := ctx.KVStore(keeper.key)
-	bz := store.Get(KeyThreshold)
-	if bz == nil {
-		return
+func (keeper Keeper) clearVotes(ctx sdk.Context, denom string) {
+	util.Clear(
+		keeper.key,
+		ctx,
+		GetVotePrefix(denom),
+	)
+}
+
+func (keeper Keeper) setPriceTarget(ctx sdk.Context, denom string, targetPrice sdk.Dec) {
+	util.Set(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetTargetPriceKey(denom),
+		targetPrice,
+	)
+}
+
+func (keeper Keeper) setPriceObserved(ctx sdk.Context, denom string, observedPrice sdk.Dec) {
+	util.Set(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetObservedPriceKey(denom),
+		observedPrice,
+	)
+}
+
+func (keeper Keeper) GetPriceTarget(ctx sdk.Context, denom string) sdk.Dec {
+	if denom == assets.LunaDenom {
+		return sdk.OneDec()
 	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
+
+	return util.Get(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetTargetPriceKey(denom),
+	).(sdk.Dec)
 }
 
-func (keeper Keeper) AddVote(ctx sdk.Context, vote PriceVote) {
-	store := ctx.KVStore(keeper.key)
-	key := GetVoteKey(vote.FeedMsg.Denom, vote.FeedMsg.Feeder)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
-	store.Set(key, bz)
-}
-
-func (keeper Keeper) GetAllVotes(ctx sdk.Context, denom string) (res PriceVotes) {
-	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, GetVotePrefix(denom))
-	for ; iter.Valid(); iter.Next() {
-		var pv PriceVote
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &pv)
-		res = append(res, pv)
+func (keeper Keeper) GetPriceObserved(ctx sdk.Context, denom string) sdk.Dec {
+	if denom == assets.LunaDenom {
+		return sdk.OneDec()
 	}
-	iter.Close()
-	return
+
+	return util.Get(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetObservedPriceKey(denom),
+	).(sdk.Dec)
 }
 
-func (keeper Keeper) ClearVotes(ctx sdk.Context) {
-	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixVote)
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
-	iter.Close()
+//______________________________________________________________________
+
+// GetParams get oralce params from the global param store
+func (k Keeper) GetParams(ctx sdk.Context) Params {
+	var params Params
+	k.paramSpace.Get(ctx, ParamStoreKeyParams, &params)
+	return params
 }
 
-func (keeper Keeper) SetElect(ctx sdk.Context, priceVote PriceVote) {
-	store := ctx.KVStore(keeper.key)
-	key := GetElectKey(priceVote.FeedMsg.Denom)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(priceVote)
-	store.Set(key, bz)
-}
-
-//nolint
-func (keeper Keeper) GetElect(ctx sdk.Context, denom string) (res PriceVote) {
-	store := ctx.KVStore(keeper.key)
-	key := GetElectKey(denom)
-	bz := store.Get(key)
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
+// SetParams set oracle params from the global param store
+func (k Keeper) SetParams(ctx sdk.Context, params Params) {
+	k.paramSpace.Set(ctx, ParamStoreKeyParams, &params)
 }

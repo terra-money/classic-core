@@ -36,7 +36,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	).Methods("GET")
 }
 
-//nolint
+//VoteReq ...
 type VoteReq struct {
 	BaseReq      utils.BaseReq `json:"base_req"`
 	TargetPrice  float64       `json:"target_price"`
@@ -74,7 +74,7 @@ func getCurrentHandlerFunction(cdc *codec.Codec, storeName string, cliCtx contex
 		vars := mux.Vars(r)
 		denom := vars[RestVoteDenom]
 
-		res, err := cliCtx.QueryStore(oracle.GetElectKey(denom), storeName)
+		res, err := cliCtx.QueryStore(oracle.GetObservedPriceKey(denom), storeName)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -90,7 +90,7 @@ func getTargetHandlerFunction(cdc *codec.Codec, storeName string, cliCtx context
 		vars := mux.Vars(r)
 		denom := vars[RestVoteDenom]
 
-		res, err := cliCtx.QueryStore(oracle.GetElectKey(denom), storeName)
+		res, err := cliCtx.QueryStore(oracle.GetTargetPriceKey(denom), storeName)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

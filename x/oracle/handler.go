@@ -1,12 +1,13 @@
 package oracle
 
 import (
-	"sort"
+	"fmt"
+	"terra/x/treasury"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// NewHandler returns a handler for "bank" type messages.
+// NewHandler returns a handler for "oracle" type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -19,45 +20,50 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
+// EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	newTags := sdk.NewTags()
 
-	// Update price elects
-	if sdk.NewInt(ctx.BlockHeight()).Mod(k.GetVotePeriod(ctx)).Equal(sdk.ZeroInt()) {
-		whitelist := k.GetWhitelist(ctx)
+	votePeriod := k.GetParams(ctx).VotePeriod
+	voteThreshold := k.GetParams(ctx).VoteThreshold
+	whitelist := k.GetParams(ctx).Whitelist
+
+	// Tally vote for oracle prices
+	if sdk.NewInt(ctx.BlockHeight()).Mod(votePeriod).Equal(sdk.ZeroInt()) {
 		newTags.AppendTag("action", []byte("price_update"))
 		for _, denom := range whitelist {
 
-			votes := k.GetAllVotes(ctx, denom)
-			votePower := sdk.ZeroDec()
-			for _, vote := range votes {
-				votePower.Add(vote.Power)
-			}
+			votes := k.getVotes(ctx, denom)
+			votePower := getTotalVotePower(votes)
 
 			// Not enough validators have voted, skip
-			if votePower.LT(k.valset.TotalPower(ctx).Mul(k.GetThreshold(ctx))) {
+			if votePower.LT(k.valset.TotalPower(ctx).Mul(voteThreshold)) {
 				newTags.AppendTag(denom, []byte("no confidence"))
 				continue
 			}
 
-			// Sort votes by price
-			sort.Sort(votes)
+			// Get weighted median prices, and faithful respondants
+			targetMode, observedMode, rewardees := tallyVotes(votes)
 
-			medPower := sdk.ZeroDec()
-			median := PriceVote{}
-			for i := 0; i < len(votes); i++ {
-				medPower.Add(votes[i].Power)
+			// Clear stale votes
+			k.clearVotes(ctx, denom)
 
-				// Get the weighted median of the votes
-				if medPower.GTE(votePower.Mul(sdk.NewDecWithPrec(5, 1))) {
-					median = votes[i]
-				}
+			// Set the Target and Observed prices for the asset
+			k.setPriceTarget(ctx, denom, targetMode)
+			k.setPriceObserved(ctx, denom, observedMode)
+
+			// Pay out rewardees
+			// TODO: handle cases where the reward is too small
+			rewardeePower := getTotalVotePower(rewardees)
+			for _, recipient := range rewardees {
+				k.tk.AddClaim(ctx, treasury.Claim{
+					Account: recipient.FeedMsg.Feeder,
+					Weight:  recipient.Power.Quo(rewardeePower),
+				})
 			}
 
-			k.SetElect(ctx, median)
-			k.ClearVotes(ctx)
-
-			newTags.AppendTag(denom, []byte(median.FeedMsg.CurrentPrice.String()))
+			newTags.AppendTag(denom, []byte(fmt.Sprintf("target %v observed %v rewardees %v",
+				targetMode, observedMode, rewardees)))
 		}
 	}
 
@@ -75,7 +81,7 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 	}
 
 	// Check the vote is for a whitelisted asset
-	whitelist := keeper.GetWhitelist(ctx)
+	whitelist := keeper.GetParams(ctx).Whitelist
 	contains := false
 	for _, denom := range whitelist {
 		if denom == pfm.Denom {
@@ -87,8 +93,9 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 		return ErrUnknownDenomination(DefaultCodespace, pfm.Denom).Result()
 	}
 
+	// Add the vote to the store
 	priceVote := NewPriceVote(pfm, val.GetPower())
-	keeper.AddVote(ctx, priceVote)
+	keeper.addVote(ctx, priceVote)
 
 	return sdk.Result{}
 }

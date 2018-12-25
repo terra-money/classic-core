@@ -10,5 +10,11 @@ const (
 	CNYDenom   = "cny"
 	JPYDenom   = "jpy"
 	EURDenom   = "eur"
-	GDPDenom   = "gbp"
+	GBPDenom   = "gbp"
 )
+
+func GetAllDenoms() []string {
+	return []string{
+		TerraDenom, USDDenom, KRWDenom, SDRDenom, CNYDenom, JPYDenom, EURDenom, GBPDenom,
+	}
+}

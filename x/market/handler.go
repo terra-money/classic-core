@@ -2,10 +2,8 @@ package market
 
 import (
 	"reflect"
-	"terra/types/assets"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // NewHandler creates a new handler for all market type messages.
@@ -21,51 +19,22 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func lunaExchangeRate(ctx sdk.Context, k Keeper, denom string) sdk.Dec {
-	if denom == assets.LunaDenom {
-		return sdk.OneDec()
-	}
-
-	return k.ok.GetElect(ctx, denom).FeedMsg.CurrentPrice
-}
-
 // handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	tags := sdk.NewTags()
 
-	// If swap msg for not whitelisted denom
-	if !k.ok.WhitelistContains(ctx, msg.OfferCoin.Denom) {
-		return ErrUnknownDenomination(DefaultCodespace, msg.OfferCoin.Denom).Result()
-	}
-
-	offerRate := lunaExchangeRate(ctx, k, msg.OfferCoin.Denom)
-	askRate := lunaExchangeRate(ctx, k, msg.AskDenom)
-
-	retAmount := sdk.NewDecFromInt(msg.OfferCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
-
-	if retAmount.Equal(sdk.ZeroInt()) {
-		// drop in this scenario
-		return ErrInsufficientSwapCoins(DefaultCodespace, msg.OfferCoin.Amount).Result()
-	}
-
-	retCoin := sdk.Coin{
-		Denom:  msg.AskDenom,
-		Amount: retAmount,
+	retCoin, err := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
+	if err != nil {
+		return err.Result()
 	}
 
 	// Reflect the swap in the trader's wallet
-	swapTags, swapErr := k.bk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(msg.Trader, sdk.Coins{retCoin})},
-		[]bank.Output{bank.NewOutput(msg.Trader, sdk.Coins{msg.OfferCoin})})
-
+	swapTags, swapErr := k.tk.RequestTrade(ctx, msg.Trader, msg.OfferCoin, retCoin)
 	if swapErr != nil {
 		return swapErr.Result()
 	}
 
 	tags.AppendTags(swapTags)
-
-	// Send revenues to the treasury
-	k.tk.CollectRevenues(ctx, msg.OfferCoin)
-
 	tags.AppendTags(
 		sdk.NewTags(
 			"action", []byte("swap"),

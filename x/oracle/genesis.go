@@ -6,65 +6,36 @@ import (
 
 // GenesisState - all distribution state that must be provided at genesis
 type GenesisState struct {
-	VoteThreshold sdk.Dec    `json:"vote_threshold"`
-	VotePeriod    sdk.Int    `json:"vote_period"`
-	GenesisElects PriceVotes `json:"genesis_elects"`
+	Params Params `json:"params"` // inflation params
 }
 
-// NewGenesisState generates a new oracle genesis state
-func NewGenesisState(voteThreshold sdk.Dec, votePeriod sdk.Int, genElects PriceVotes) GenesisState {
+func NewGenesisState(params Params) GenesisState {
 	return GenesisState{
-		VoteThreshold: voteThreshold,
-		VotePeriod:    votePeriod,
-		GenesisElects: genElects,
+		Params: params,
 	}
 }
 
-// DefaultGenesisState get raw genesis raw message for testing
+// get raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
-
-	return NewGenesisState(
-		sdk.NewDecWithPrec(66, 2), // 66%
-		sdk.NewInt(1000000),       // TODO: calibrate paramter
-		PriceVotes{
-			PriceVote{
-				FeedMsg: PriceFeedMsg{
-					Denom:        "sdr",
-					TargetPrice:  sdk.NewDecWithPrec(1, 0),
-					CurrentPrice: sdk.NewDecWithPrec(1, 0),
-					Feeder:       nil,
-				},
-				Power: sdk.ZeroDec(),
-			},
-		},
-	)
+	return GenesisState{
+		Params: DefaultParams(),
+	}
 }
 
-// Init store state from genesis data
+// new oracle genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-	keeper.SetThreshold(ctx, data.VoteThreshold)
-	keeper.SetVotePeriod(ctx, data.VotePeriod)
-
-	genesisWhitelist := Whitelist{}
-	for _, vote := range data.GenesisElects {
-		genesisWhitelist = append(genesisWhitelist, vote.FeedMsg.Denom)
-
-		keeper.SetElect(ctx, vote)
-	}
-	keeper.SetWhitelist(ctx, genesisWhitelist)
+	keeper.SetParams(ctx, data.Params)
 }
 
-// ExportGenesis returns a GenesisState for a given context and keeper
+// ExportGenesis returns a GenesisState for a given context and keeper. The
+// GenesisState will contain the pool, and validator/delegator distribution info's
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
-	threshold := keeper.GetThreshold(ctx)
-	voteperiod := keeper.GetVotePeriod(ctx)
+	params := keeper.GetParams(ctx)
+	return NewGenesisState(params)
+}
 
-	electList := PriceVotes{}
-	whitelist := keeper.GetWhitelist(ctx)
-	for _, wDenom := range whitelist {
-		elect := keeper.GetElect(ctx, wDenom)
-		electList = append(electList, elect)
-	}
-
-	return NewGenesisState(threshold, voteperiod, electList)
+// ValidateGenesis validates the provided oracle genesis state to ensure the
+// expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
+func ValidateGenesis(data GenesisState) error {
+	return validateParams(data.Params)
 }

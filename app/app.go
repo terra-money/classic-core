@@ -63,7 +63,7 @@ type TerraApp struct {
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          tax.TaxKeeper
+	bankKeeper          tax.Keeper
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
@@ -112,7 +112,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.cdc,
 		app.keyFeeCollection,
 	)
-	app.bankKeeper = tax.NewBaseTaxKeeper(
+	app.bankKeeper = tax.NewBaseKeeper(
 		app.keyBank,
 		app.cdc,
 		app.accountKeeper,
@@ -147,18 +147,20 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOpti
 		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
 		gov.DefaultCodespace,
 	)
-	app.oracleKeeper = oracle.NewKeeper(
-		app.keyOracle,
-		cdc,
-		stakeKeeper.GetValidatorSet(),
-	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
+		app.feeCollectionKeeper,
+	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.keyOracle,
+		cdc,
+		app.treasuryKeeper,
+		stakeKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 	app.marketKeeper = market.NewKeeper(
-		app.bankKeeper,
 		app.oracleKeeper,
 		app.treasuryKeeper,
 	)
@@ -240,6 +242,9 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	tags := gov.EndBlocker(ctx, app.govKeeper)
 	validatorUpdates, endBlockerTags := stake.EndBlocker(ctx, app.stakeKeeper)
 	tags = append(tags, endBlockerTags...)
+
+	oracleBlockerTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	tags = append(tags, oracleBlockerTags...)
 
 	app.assertRuntimeInvariants()
 

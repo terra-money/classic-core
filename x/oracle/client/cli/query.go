@@ -20,7 +20,7 @@ func GetCmdQueryPrice(storeName string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			key := oracle.GetElectKey(denom)
+			key := oracle.GetObservedPriceKey(denom)
 			bz, err := cliCtx.QueryStore(key, storeName)
 			if err != nil {
 				return err
@@ -31,7 +31,7 @@ func GetCmdQueryPrice(storeName string, cdc *codec.Codec) *cobra.Command {
 			res := oracle.PriceVote{}
 			cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 
-			fmt.Println(res.FeedMsg.CurrentPrice.String())
+			fmt.Println(res.FeedMsg.ObservedPrice.String())
 
 			return nil
 		},
@@ -51,7 +51,7 @@ func GetCmdQueryTarget(storeName string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			key := oracle.GetElectKey(denom)
+			key := oracle.GetTargetPriceKey(denom)
 			bz, err := cliCtx.QueryStore(key, storeName)
 			if err != nil {
 				return err
@@ -128,7 +128,7 @@ func GetCmdQueryWhitelist(storeName string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			res := oracle.Whitelist{}
+			res := []string{}
 			cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 
 			for _, denom := range res {

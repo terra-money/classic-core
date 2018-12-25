@@ -4,10 +4,82 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gonum.org/v1/gonum/stat"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Whitelist []string
+const (
+	OracleDecPrec = 2
+)
+
+//-------------------------------------------------
+//-------------------------------------------------
+
+// PriceVote - struct to store a validator's vote on the price
+type PriceVote struct {
+	FeedMsg PriceFeedMsg
+	Power   sdk.Dec
+}
+
+// NewPriceVote creates a PriceVote instance
+func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
+	return PriceVote{
+		FeedMsg: feedMsg,
+		Power:   power,
+	}
+}
+
+func getTotalVotePower(votes []PriceVote) sdk.Dec {
+	votePower := sdk.ZeroDec()
+	for _, vote := range votes {
+		votePower.Add(vote.Power)
+	}
+
+	return votePower
+}
+
+func decToFloat64(a sdk.Dec) float64 {
+	// roundup
+	b := a.MulInt(sdk.NewInt(10 ^ OracleDecPrec))
+	c := b.TruncateInt64()
+
+	return float64(c) / (10 ^ OracleDecPrec)
+}
+
+func float64ToDec(a float64) sdk.Dec {
+	b := int64(a * (10 ^ OracleDecPrec))
+	return sdk.NewDecWithPrec(b, 2)
+}
+
+func tallyVotes(votes []PriceVote) (targetMode sdk.Dec, observedMode sdk.Dec, rewardees []PriceVote) {
+	vTarget := make([]float64, len(votes))
+	vPower := make([]float64, len(votes))
+	vObserved := make([]float64, len(votes))
+
+	for _, vote := range votes {
+		vPower = append(vPower, decToFloat64(vote.Power))
+		vTarget = append(vTarget, decToFloat64(vote.FeedMsg.TargetPrice))
+		vObserved = append(vObserved, decToFloat64(vote.FeedMsg.ObservedPrice))
+	}
+
+	tmode, _ := stat.Mode(vTarget, vPower)
+	omode, _ := stat.Mode(vObserved, vPower)
+
+	tsd := stat.StdDev(vTarget, vPower)
+	osd := stat.StdDev(vTarget, vPower)
+
+	for i, vote := range votes {
+		if vTarget[i] >= tmode-tsd && vTarget[i] <= tmode+tsd &&
+			vObserved[i] >= omode-osd && vObserved[i] <= omode+osd {
+			rewardees = append(rewardees, vote)
+		}
+	}
+
+	targetMode = float64ToDec(tmode)
+	observedMode = float64ToDec(omode)
+	return
+}
 
 //-------------------------------------------------
 //-------------------------------------------------
@@ -15,19 +87,19 @@ type Whitelist []string
 // PriceFeedMsg - struct for voting on payloads. Note that the Price
 // is denominated in Luna. All validators must vote on Terra prices.
 type PriceFeedMsg struct {
-	Denom        string
-	TargetPrice  sdk.Dec // in Luna
-	CurrentPrice sdk.Dec // in Luna
-	Feeder       sdk.AccAddress
+	Denom         string
+	TargetPrice   sdk.Dec // in Luna
+	ObservedPrice sdk.Dec // in Luna
+	Feeder        sdk.AccAddress
 }
 
 // NewPriceFeedMsg creates a PriceFeedMsg instance
-func NewPriceFeedMsg(denom string, targetPrice, currentPrice sdk.Dec, feederAddress sdk.AccAddress) PriceFeedMsg {
+func NewPriceFeedMsg(denom string, targetPrice, observedPrice sdk.Dec, feederAddress sdk.AccAddress) PriceFeedMsg {
 	return PriceFeedMsg{
-		Denom:        denom,
-		TargetPrice:  targetPrice,
-		CurrentPrice: currentPrice,
-		Feeder:       feederAddress,
+		Denom:         denom,
+		TargetPrice:   targetPrice,
+		ObservedPrice: observedPrice,
+		Feeder:        feederAddress,
 	}
 }
 
@@ -62,36 +134,6 @@ func (msg PriceFeedMsg) ValidateBasic() sdk.Error {
 
 // String Implements sdk.Msg
 func (msg PriceFeedMsg) String() string {
-	return fmt.Sprintf("PriceFeedMsg{feeder: %v, denom: %v, target: %v, current: %v}",
-		msg.Feeder, msg.Denom, msg.TargetPrice, msg.CurrentPrice)
-}
-
-//-------------------------------------------------
-//-------------------------------------------------
-
-// PriceVote - struct to store a validator's vote on the price
-type PriceVote struct {
-	FeedMsg PriceFeedMsg
-	Power   sdk.Dec
-}
-
-// NewPriceVote creates a PriceVote instance
-func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
-	return PriceVote{
-		FeedMsg: feedMsg,
-		Power:   power,
-	}
-}
-
-// PriceVotes are a collection of Price Votes
-type PriceVotes []PriceVote
-
-func (pv PriceVotes) Len() int {
-	return len(pv)
-}
-func (pv PriceVotes) Swap(i, j int) {
-	pv[i], pv[j] = pv[j], pv[i]
-}
-func (pv PriceVotes) Less(i, j int) bool {
-	return pv[i].FeedMsg.CurrentPrice.LT(pv[j].FeedMsg.CurrentPrice)
+	return fmt.Sprintf("PriceFeedMsg{feeder: %v, denom: %v, target: %v, observed: %v}",
+		msg.Feeder, msg.Denom, msg.TargetPrice, msg.ObservedPrice)
 }
