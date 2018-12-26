@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"terra/types/util"
 	"terra/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -26,9 +28,9 @@ func main() {
 	cdc := app.MakeCodec()
 
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
+	config.SetBech32PrefixForAccount(util.Bech32PrefixAccAddr, util.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(util.Bech32PrefixValAddr, util.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(util.Bech32PrefixConsAddr, util.Bech32PrefixConsPub)
 	config.Seal()
 
 	ctx := server.NewDefaultContext()
@@ -50,7 +52,7 @@ func main() {
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "TE", app.DefaultNodeHome)
+	executor := cli.PrepareBaseCmd(rootCmd, "GA", app.DefaultNodeHome)
 	err := executor.Execute()
 	if err != nil {
 		// handle with #870

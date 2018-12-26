@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"terra/types/assets"
 	"time"
 
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -26,8 +27,6 @@ var (
 	// bonded tokens given to genesis validators/accounts
 	// freeFermionVal  = int64(100)
 	freeFermionsAcc = sdk.NewInt(150)
-	bondDenom       = DefaultBondDenom
-	currencyDenom   = DefaultCurrencyDenom
 )
 
 // State to Unmarshal
@@ -126,7 +125,7 @@ func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []j
 	for _, acc := range genesisState.Accounts {
 		// create the genesis account, give'm few steaks and a buncha token with there name
 		for _, coin := range acc.Coins {
-			if coin.Denom == bondDenom {
+			if coin.Denom == assets.LunaDenom {
 				stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens.
 					Add(sdk.NewDecFromInt(coin.Amount)) // increase the supply
 			}
@@ -146,7 +145,7 @@ func NewDefaultGenesisState() GenesisState {
 			Params: stake.Params{
 				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
 				MaxValidators: 100,
-				BondDenom:     bondDenom,
+				BondDenom:     assets.LunaDenom,
 			},
 		},
 		DistrData: distr.DefaultGenesisState(),
@@ -332,8 +331,8 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{
-		sdk.NewCoin(currencyDenom, sdk.NewInt(1000)),
-		sdk.NewCoin(bondDenom, freeFermionsAcc),
+		sdk.NewCoin(assets.KRWDenom, sdk.NewInt(1000)),
+		sdk.NewCoin(assets.LunaDenom, freeFermionsAcc),
 	}
 
 	coins.Sort()

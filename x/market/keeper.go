@@ -2,12 +2,12 @@ package market
 
 import (
 	"terra/x/oracle"
+	"terra/x/treasury"
+
+	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	amino "github.com/tendermint/go-amino"
 )
 
 //nolint
@@ -15,93 +15,54 @@ type Keeper struct {
 	storeKey  sdk.StoreKey      // Key to our module's store
 	codespace sdk.CodespaceType // Reserves space for error codes
 	cdc       *codec.Codec      // Codec to encore/decode structs
-
-	bk bank.Keeper              // Read & write terra & luna balance
-	ok oracle.Keeper            // Read terra & luna prices
-	fk auth.FeeCollectionKeeper // Set & get terra & luna fees
+	ok        oracle.Keeper     // Read terra & luna prices
+	tk        treasury.Keeper   // Pay mint revenues to the treasury
+	bk        bank.Keeper
 }
 
 // NewKeeper crates a new keeper with write and read access
-func NewKeeper(cdc *amino.Codec, marketKey sdk.StoreKey, bk bank.Keeper,
-	ok oracle.Keeper, fk auth.FeeCollectionKeeper, codespace sdk.CodespaceType,
-	rp ReserveParams, genesisBalance sdk.Coins, initTerraFee sdk.Rat) Keeper {
-	k = Keeper{
-		storeKey:  marketKey,
-		cdc:       cdc,
-		bk:        bk,
-		ok:        ok,
-		fk:        fk,
-		codespace: codespace,
+func NewKeeper(
+	ok oracle.Keeper,
+	tk treasury.Keeper,
+	bk bank.Keeper,
+) Keeper {
+	return Keeper{
+		ok: ok,
+		tk: tk,
+		bk: bk,
+	}
+}
+
+func whitelistContains(ctx sdk.Context, k Keeper, denom string) bool {
+	whitelist := k.ok.GetParams(ctx).Whitelist
+	for _, w := range whitelist {
+		if w == denom {
+			return true
+		}
+	}
+	return false
+}
+
+func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
+	// If swap msg for not whitelisted denom
+	if !whitelistContains(ctx, k, offerCoin.Denom) {
+		return sdk.Coin{}, ErrUnknownDenomination(DefaultCodespace, offerCoin.Denom)
 	}
 
-	// Starting tx fee must not be zero
-	if initTerraFee.IsZero {
-		panic(error)
+	offerRate := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
+	askRate := k.ok.GetPriceObserved(ctx, askDenom)
+
+	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
+
+	if retAmount.Equal(sdk.ZeroInt()) {
+		// drop in this scenario
+		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
 
-	k.SetIssuanceMeta(genesisBalance)
-	k.SetReserveParams(rp)
-	k.SetTerraFee(initTerraFee)
-
-	return k
-}
-
-// GetReserveParams retrieves the parameters for the reserve
-func (mk Keeper) GetReserveParams(ctx sdk.Context) ReserveParams {
-	store := ctx.KVStore(mk.key)
-	bz := store.Get(GetReserveParamsKey())
-	if bz == nil {
-		panic(error)
+	retCoin := sdk.Coin{
+		Denom:  askDenom,
+		Amount: retAmount,
 	}
 
-	rp := &(ReserveParams)
-	fck.cdc.MustUnmarshalBinary(bz, rp)
-	return *rp
-}
-
-// SetReserveParams sets parameters for the reserve
-func (mk Keeper) SetReserveParams(ctx sdk.Context, rp ReserveParams) {
-	store := ctx.KVStore(mk.storeKey)
-	bz := k.cdc.MustMarshalBinary(rp)
-	store.Set(GetReserveParamsKey(), bz)
-}
-
-// GetTerraFee gets the currently effective Terra tx fee
-func (mk Keeper) GetTerraFee(ctx sdk.Context) sdk.Rat {
-	store := ctx.KVStore(mk.storeKey)
-	bz := store.Get(KeyTerraFee)
-	if bz == nil {
-		panic(error)
-	}
-
-	tf := &(sdk.Rat)
-	fck.cdc.MustUnmarshalBinary(bz, tf)
-	return tf
-}
-
-// SetTerraFee records the currently effective Terra tx fee
-func (mk Keeper) SetTerraFee(ctx sdk.Context, tf sdk.Rat) {
-	store := ctx.KVStore(mk.storeKey)
-	bz := k.cdc.MustMarshalBinary(tf)
-	store.Set(KeyTerraFee, bz)
-}
-
-// GetIssuanceMeta gets the current mint params of Terra and Luna
-func (mk Keeper) GetIssuanceMeta(ctx sdk.Context) sdk.Coins {
-	store := ctx.KVStore(mk.storeKey)
-	bz := store.Get(KeyIssuanceMeta)
-	if bz == nil {
-		panic(error)
-	}
-
-	im := &(sdk.Coins)
-	fck.cdc.MustUnmarshalBinary(bz, im)
-	return *im
-}
-
-// SetIssuanceMeta sets the current mint params of Terra and Luna
-func (mk Keeper) SetIssuanceMeta(ctx sdk.Context, im sdk.Coins) {
-	store := ctx.KVStore(mk.storeKey)
-	bz := k.cdc.MustMarshalBinary(im)
-	store.Set(KeyIssuanceMeta, bz)
+	return retCoin, nil
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"terra/types/assets"
 
 	"terra/app"
 
@@ -49,9 +50,7 @@ func TestnetFilesCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		Short: "Initialize files for a Terrad testnet",
 		Long: `testnet will create "v" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
-
 Note, strict routability for addresses is turned off in the config file.
-
 Example:
 	terrad testnet --v 4 --output-dir ./output --starting-ip-address 192.168.10.2
 	`,
@@ -187,18 +186,18 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 
 		keyPass := ""
 		if len(viper.GetString(flagPredefinedNodes)) > 0 {
-		buf := client.BufferStdin()
-		prompt := fmt.Sprintf(
-			"Password for account '%s' (default %s):", nodeDirName, app.DefaultKeyPass,
-		)
+			buf := client.BufferStdin()
+			prompt := fmt.Sprintf(
+				"Password for account '%s' (default %s):", nodeDirName, app.DefaultKeyPass,
+			)
 
 			keyPass, err = client.GetPassword(prompt, buf)
-		if err != nil && keyPass != "" {
-			// An error was returned that either failed to read the password from
-			// STDIN or the given password is not empty but failed to meet minimum
-			// length requirements.
-			return err
-		}
+			if err != nil && keyPass != "" {
+				// An error was returned that either failed to read the password from
+				// STDIN or the given password is not empty but failed to meet minimum
+				// length requirements.
+				return err
+			}
 		}
 
 		if keyPass == "" {
@@ -227,15 +226,15 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 		accs = append(accs, app.GenesisAccount{
 			Address: addr,
 			Coins: sdk.Coins{
-				sdk.NewInt64Coin(app.DefaultCurrencyDenom, 1000),
-				sdk.NewInt64Coin(app.DefaultBondDenom, 150),
+				sdk.NewInt64Coin(assets.TerraDenom, 1000),
+				sdk.NewInt64Coin(assets.LunaDenom, 150),
 			},
 		})
 
 		msg := stake.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
-			sdk.NewInt64Coin(app.DefaultBondDenom, 100),
+			sdk.NewInt64Coin(assets.LunaDenom, 100),
 			stake.NewDescription(nodeDirName, "", "", ""),
 			stake.NewCommissionMsg(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		)

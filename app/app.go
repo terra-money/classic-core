@@ -5,13 +5,10 @@ import (
 	"io"
 	"os"
 	"sort"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
-	"github.com/tendermint/tendermint/libs/log"
-
+	"terra/types/tax"
+	"terra/x/market"
 	"terra/x/oracle"
+	"terra/x/treasury"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,6 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 const (
@@ -47,6 +48,7 @@ type TerraApp struct {
 	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
+	keyBank          *sdk.KVStoreKey
 	keyStake         *sdk.KVStoreKey
 	tkeyStake        *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
@@ -57,17 +59,21 @@ type TerraApp struct {
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
 	keyOracle        *sdk.KVStoreKey
+	keyTreasury      *sdk.KVStoreKey
+	keyMarket        *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          bank.Keeper
+	bankKeeper          tax.Keeper
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
 	oracleKeeper        oracle.Keeper
+	treasuryKeeper      treasury.Keeper
+	marketKeeper        market.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
@@ -81,6 +87,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		BaseApp:          bApp,
 		cdc:              cdc,
 		keyMain:          sdk.NewKVStoreKey("main"),
+		keyBank:          sdk.NewKVStoreKey("bank"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),
 		keyStake:         sdk.NewKVStoreKey("stake"),
 		tkeyStake:        sdk.NewTransientStoreKey("transient_stake"),
@@ -92,6 +99,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
 		keyOracle:        sdk.NewKVStoreKey("oracle"),
+		keyTreasury:      sdk.NewKVStoreKey("treasury"),
+		keyMarket:        sdk.NewKVStoreKey("market"),
 	}
 
 	// define the accountKeeper
@@ -100,12 +109,16 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.keyAccount,        // target store
 		auth.ProtoBaseAccount, // prototype
 	)
-
 	// add handlers
-	app.bankKeeper = bank.NewBaseKeeper(app.accountKeeper)
 	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
 		app.cdc,
 		app.keyFeeCollection,
+	)
+	app.bankKeeper = tax.NewBaseKeeper(
+		app.keyBank,
+		app.cdc,
+		app.accountKeeper,
+		app.feeCollectionKeeper,
 	)
 	app.paramsKeeper = params.NewKeeper(
 		app.cdc,
@@ -136,20 +149,30 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
 		gov.DefaultCodespace,
 	)
+	app.treasuryKeeper = treasury.NewKeeper(
+		app.keyTreasury,
+		app.cdc,
+		app.bankKeeper,
+		app.feeCollectionKeeper,
+	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,
 		cdc,
+		app.treasuryKeeper,
 		stakeKeeper.GetValidatorSet(),
-		sdk.NewDecWithPrec(66, 2),
-		1000000,
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
+	app.marketKeeper = market.NewKeeper(
+		app.oracleKeeper,
+		app.treasuryKeeper,
+		app.bankKeeper,
 	)
 
 	// register the staking hooks
 	// NOTE: The stakeKeeper above is passed by reference, so that it can be
 	// modified like below:
 	app.stakeKeeper = *stakeKeeper.SetHooks(
-		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
-	)
+		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
 	// register message routes
 	app.Router().
@@ -158,7 +181,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
 		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
 		AddRoute("gov", gov.NewHandler(app.govKeeper)).
-		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper))
+		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper)).
+		//AddRoute("treasury", treasury.NewHandler(app.treasuryKeeper)).
+		AddRoute("market", market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
 		AddRoute("gov", gov.NewQuerier(app.govKeeper)).
@@ -166,7 +191,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// initialize BaseApp
 	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
-		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams)
+		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -226,7 +251,7 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	tags = append(tags, oracleTags...)
 
 	// TODO: request fixing it to comsmos guys
-	//app.assertRuntimeInvariants()
+	app.assertRuntimeInvariants()
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -257,6 +282,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
+	//oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
 
 	// validate genesis state
@@ -284,7 +310,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	return validators
 }
 
-// custom logic for terra initialization
+// custom logic for Terra initialization
 func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 	// TODO is this now the whole genesis file?
@@ -314,8 +340,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 
 	// assert runtime invariants
-	// TODO: request fixing it to comsmos guys
-	// app.assertRuntimeInvariants()
+	app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{
 		Validators: validators,

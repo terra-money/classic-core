@@ -4,11 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"terra/types/util"
 
 	"github.com/tendermint/tendermint/libs/bech32"
 )
 
-var bech32Prefixes = []string{"cosmos", "cosmospub", "cosmosvaloper", "cosmosvaloperpub", "cosmosvalcons", "cosmosvalconspub"}
+var bech32Prefixes = []string{util.Bech32PrefixAccAddr, util.Bech32PrefixAccPub, util.Bech32PrefixValAddr, util.Bech32PrefixValPub, util.Bech32PrefixConsAddr, util.Bech32PrefixConsPub}
 
 func main() {
 	if len(os.Args) < 2 {
