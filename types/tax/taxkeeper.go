@@ -2,6 +2,7 @@ package tax
 
 import (
 	"fmt"
+	"terra/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -18,12 +19,18 @@ const (
 	costAddCoins      sdk.Gas = 10
 )
 
+// Tax related variables
+var (
+	taxRateMin = sdk.ZeroDec()
+	taxRateMax = sdk.NewDecWithPrec(2, 2) // 2%
+)
+
 // Keeper defines a module interface that facilitates the transfer of coins
 // between accounts.
 type Keeper interface {
 	bank.Keeper
-	SetTaxRate(ctx sdk.Context, denom string, taxRate sdk.Dec)
 	GetIssuance(ctx sdk.Context, denom string) sdk.Int
+	GetDebtRatio(ctx sdk.Context) sdk.Dec
 }
 
 var _ Keeper = (*BaseKeeper)(nil)
@@ -148,22 +155,9 @@ func (keeper BaseKeeper) calculateTaxes(ctx sdk.Context, principal sdk.Coins) sd
 	return taxes
 }
 
-// SetTaxRate sets the currently effective tax rate for {denom}
-func (keeper BaseKeeper) SetTaxRate(ctx sdk.Context, denom string, taxRate sdk.Dec) {
-	store := ctx.KVStore(keeper.key)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(taxRate)
-	store.Set(GetTaxRateKey(), bz)
-}
-
 // getTaxRate gets the currently effective tax rate for {denom}
 func (keeper BaseKeeper) getTaxRate(ctx sdk.Context, denom string) (res sdk.Dec) {
-	store := ctx.KVStore(keeper.key)
-	bz := store.Get(GetTaxRateKey())
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
+	return taxRateMin.Add(taxRateMax.Sub(taxRateMin).Mul(keeper.GetDebtRatio(ctx)))
 }
 
 // setIssuance sets the total issuance of the coin with {denom}
@@ -182,6 +176,16 @@ func (keeper BaseKeeper) GetIssuance(ctx sdk.Context, denom string) (res sdk.Int
 	}
 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	return
+}
+
+// GetDebtRatio gets the current debt of the system
+func (keeper BaseKeeper) GetDebtRatio(ctx sdk.Context) sdk.Dec {
+	lunaCurrentIssuance := keeper.GetIssuance(ctx, assets.LunaDenom)
+	lunaTargetIssuance := sdk.NewInt(assets.LunaTargetIssuance)
+
+	lunaDebt := lunaCurrentIssuance.Sub(lunaTargetIssuance)
+
+	return sdk.NewDecFromInt(lunaDebt).Quo(sdk.NewDecFromInt(lunaCurrentIssuance))
 }
 
 func getCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress) sdk.Coins {
@@ -218,7 +222,10 @@ func hasCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt s
 func subtractCoins(ctx sdk.Context, keeper BaseKeeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costSubtractCoins, "subtractCoins")
 	oldCoins := getCoins(ctx, keeper.am, addr)
-	newCoins := oldCoins.Minus(amt)
+	newCoins, hasNeg := oldCoins.SafeMinus(amt)
+	if hasNeg {
+		return amt, nil, sdk.ErrInsufficientCoins(fmt.Sprintf("%s < %s", oldCoins, amt))
+	}
 
 	// Update issuance
 	for _, coin := range amt {
@@ -227,9 +234,6 @@ func subtractCoins(ctx sdk.Context, keeper BaseKeeper, addr sdk.AccAddress, amt 
 		keeper.setIssuance(ctx, coin.Denom, issuance)
 	}
 
-	if !newCoins.IsNotNegative() {
-		return amt, nil, sdk.ErrInsufficientCoins(fmt.Sprintf("%s < %s", oldCoins, amt))
-	}
 	err := setCoins(ctx, keeper.am, addr, newCoins)
 	tags := sdk.NewTags("sender", []byte(addr.String()))
 	return newCoins, tags, err

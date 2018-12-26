@@ -4,6 +4,8 @@ import (
 	"terra/x/oracle"
 	"terra/x/treasury"
 
+	"github.com/cosmos/cosmos-sdk/x/bank"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -15,16 +17,19 @@ type Keeper struct {
 	cdc       *codec.Codec      // Codec to encore/decode structs
 	ok        oracle.Keeper     // Read terra & luna prices
 	tk        treasury.Keeper   // Pay mint revenues to the treasury
+	bk        bank.Keeper
 }
 
 // NewKeeper crates a new keeper with write and read access
 func NewKeeper(
 	ok oracle.Keeper,
 	tk treasury.Keeper,
+	bk bank.Keeper,
 ) Keeper {
 	return Keeper{
 		ok: ok,
 		tk: tk,
+		bk: bk,
 	}
 }
 

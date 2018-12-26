@@ -6,16 +6,9 @@ import (
 	"terra/types/util"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
-// Tax related variables
-var (
-	taxRateMin = sdk.ZeroDec()
-	taxRateMax = sdk.NewDecWithPrec(2, 2) // 2%
 )
 
 // Keeper of the treasury store
@@ -42,26 +35,11 @@ func (keeper Keeper) PayTax(ctx sdk.Context, revenue sdk.Coins) {
 	keeper.fk.AddCollectedFees(ctx, revenue)
 }
 
-func (keeper Keeper) RequestTrade(ctx sdk.Context, trader sdk.AccAddress, outputCoin sdk.Coin, inputcoin sdk.Coin) (sdk.Tags, sdk.Error) {
-	// Reflect the swap in the trader's wallet
-	swapTags, swapErr := keeper.tk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(trader, sdk.Coins{inputcoin})},
-		[]bank.Output{bank.NewOutput(trader, sdk.Coins{outputCoin})})
-
-	if swapErr == nil {
-		if outputCoin.Denom == assets.LunaDenom {
-			keeper.PayMintIncome(ctx, sdk.Coins{outputCoin})
-
-			taxRate := taxRateMin.Add(taxRateMax.Sub(taxRateMin).Mul(keeper.GetDebtRatio(ctx)))
-			keeper.tk.SetTaxRate(ctx, inputcoin.Denom, taxRate)
-		}
-	}
-
-	// burn the rest
-	return swapTags, swapErr
-}
-
 func (keeper Keeper) PayMintIncome(ctx sdk.Context, revenue sdk.Coins) {
-	keeper.deposit(ctx, revenue)
+	if revenue[0].Denom == assets.LunaDenom {
+		keeper.deposit(ctx, revenue)
+	}
+	// Burn otherwise
 }
 
 func (keeper Keeper) AddClaim(ctx sdk.Context, claim Claim) {
@@ -85,6 +63,10 @@ func (keeper Keeper) AddClaim(ctx sdk.Context, claim Claim) {
 		claim,
 	)
 }
+
+//---------------------------------------
+//---------------------------------------
+//---------------------------------------
 
 func (keeper Keeper) deposit(ctx sdk.Context, funds sdk.Coins) {
 	incomePool := util.Get(
@@ -144,14 +126,4 @@ func (keeper Keeper) clearClaims(ctx sdk.Context) {
 		ctx,
 		PrefixClaim,
 	)
-}
-
-// GetDebtRatio gets the current debt of the system
-func (keeper Keeper) GetDebtRatio(ctx sdk.Context) sdk.Dec {
-	lunaCurrentIssuance := keeper.tk.GetIssuance(ctx, assets.LunaDenom)
-	lunaTargetIssuance := lunaCurrentIssuance // TODO: remove into genesis.json or sth
-
-	lunaDebt := lunaCurrentIssuance.Sub(lunaTargetIssuance)
-
-	return sdk.NewDecFromInt(lunaDebt).Quo(sdk.NewDecFromInt(lunaCurrentIssuance))
 }

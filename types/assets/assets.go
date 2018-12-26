@@ -11,6 +11,8 @@ const (
 	JPYDenom   = "jpy"
 	EURDenom   = "eur"
 	GBPDenom   = "gbp"
+
+	LunaTargetIssuance = 10 ^ 9
 )
 
 func GetAllDenoms() []string {
