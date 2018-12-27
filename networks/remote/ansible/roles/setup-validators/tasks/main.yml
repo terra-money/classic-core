@@ -34,7 +34,7 @@
     msg: "{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}"
 
 - name: Create remote testnet configurations
-  command: "{{BINARY}} testnet --seed --output-dir={{playbook_dir}}/testnets/{{TESTNET_NAME}} --chain-id={{TESTNET_NAME}} --predefined-nodes=\"{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}\""
+  command: "{{BINARY}} testnet --output-dir={{playbook_dir}}/testnets/{{TESTNET_NAME}} --chain-id={{TESTNET_NAME}} --predefined-nodes=\"{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}\""
   connection: local
   become: no
   run_once: true
