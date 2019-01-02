@@ -34,7 +34,7 @@
     msg: "{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}"
 
 - name: Create remote testnet configurations
-  command: "{{BINARY}} testnet --seed --output-dir={{playbook_dir}}/testnets/{{TESTNET_NAME}} --chain-id={{TESTNET_NAME}} --predefined-nodes=\"{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}\""
+  command: "{{BINARY}} testnet --output-dir={{playbook_dir}}/testnets/{{TESTNET_NAME}} --chain-id={{TESTNET_NAME}} --predefined-nodes=\"{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}\""
   connection: local
   become: no
   run_once: true
@@ -59,10 +59,8 @@
     mode: 0755
     recurse: yes
 
-- name: Initialize with genesis.json
-  command: "/usr/bin/terrad init --moniker=node{{nodeid.stdout_lines[0]}} --chain-id={{TESTNET_NAME}}"
+- name: Update genesis.json to add faucet address
+  command: "/usr/bin/terrad add-genesis-account {{FAUCET_ADDRESS}} {{FAUCET_COINS}}"
   become: yes
   become_user: terrad
-  args:
-    creates: /home/terrad/.terrad/config/genesis.json
 
