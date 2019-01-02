@@ -1,15 +1,31 @@
 package treasury
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import "fmt"
 
 // nolint
 var (
 	KeyLunaTargetIssuance = []byte{0x01}
-	KeyIncomePool         = []byte{0x02}
-	PrefixClaim           = []byte{0x03}
+	KeyIncomePool         = []byte("income_pool")
+	PrefixClaim           = []byte("claim")
+	PrefixShare           = []byte("share")
 )
 
-// GetClaimKey is in format of prefixclaim||accaddress
-func GetClaimKey(account sdk.AccAddress) []byte {
-	return append(PrefixClaim, []byte(account.String())...)
+// GetIncomePoolKey returns the key for the income pool
+func GetIncomePoolKey() []byte {
+	return KeyIncomePool
+}
+
+// GetShareKey is in format of prefixshare:shareID
+func GetShareKey(shareID string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", PrefixShare, shareID))
+}
+
+// GetClaimsForSharePrefix is in format of prefixclaim:shareID
+func GetClaimsForSharePrefix(shareID string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", PrefixClaim, shareID))
+}
+
+// GetClaimKey is in format of prefixclaim:shareID:claimID
+func GetClaimKey(shareID string, claimID string) []byte {
+	return []byte(fmt.Sprintf("%s:%s:%s", PrefixClaim, shareID, claimID))
 }
