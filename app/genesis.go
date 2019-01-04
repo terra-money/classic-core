@@ -166,6 +166,7 @@ func NewDefaultGenesisState() GenesisState {
 				Veto:      sdk.NewDecWithPrec(334, 3),
 			},
 		},
+		OracleData: oracle.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
