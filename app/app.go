@@ -191,7 +191,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// initialize BaseApp
 	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
-		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury)
+		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyBank, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -282,7 +282,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
-	//oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
+	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
 
 	// validate genesis state
@@ -340,7 +340,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 
 	// assert runtime invariants
-	app.assertRuntimeInvariants()
+	//app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{
 		Validators: validators,
