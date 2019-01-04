@@ -251,7 +251,7 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	tags = append(tags, oracleTags...)
 
 	// TODO: request fixing it to comsmos guys
-	app.assertRuntimeInvariants()
+	//app.assertRuntimeInvariants()
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
