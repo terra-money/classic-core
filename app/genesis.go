@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"terra/types/assets"
+	"terra/x/oracle"
 	"time"
 
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -36,6 +37,7 @@ type GenesisState struct {
 	StakeData    stake.GenesisState    `json:"stake"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	GovData      gov.GenesisState      `json:"gov"`
+	OracleData   oracle.GenesisState   `json:"oracle"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
