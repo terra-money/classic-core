@@ -11,12 +11,11 @@ import (
 
 // query endpoints supported by the budgeternance Querier
 const (
-	QueryParams   = "params"
-	QueryPrograms = "programs"
-	QueryProgram  = "program"
-	QueryVotes    = "votes"
-	QueryVote     = "vote"
-	QueryTally    = "tally"
+	QueryParams  = "params"
+	QueryProgram = "program"
+	QueryVotes   = "votes"
+	QueryVote    = "vote"
+	QueryTally   = "tally"
 
 	ParamVoting   = "voting"
 	ParamTallying = "tallying"
@@ -27,8 +26,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case QueryParams:
 			return queryParams(ctx, path[1:], req, keeper)
-		case QueryPrograms:
-			return queryPrograms(ctx, path[1:], req, keeper)
 		case QueryProgram:
 			return queryProgram(ctx, path[1:], req, keeper)
 		case QueryVotes:
@@ -44,22 +41,11 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	switch path[0] {
-	case ParamVoting:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetVotingParams(ctx))
-		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-		}
-		return bz, nil
-	case ParamTallying:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetTallyParams(ctx))
-		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-		}
-		return bz, nil
-	default:
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("%s is not a valid query request path", req.Path))
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetParams(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
 }
 
 // Params for queries:
@@ -86,42 +72,12 @@ func queryProgram(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	program := keeper.GetProgram(ctx, params.ProgramID)
-	if program == nil {
-		return nil, ErrUnknownProgram(DefaultCodespace, params.ProgramID)
+	program, err := keeper.GetProgram(ctx, params.ProgramID)
+	if err != nil {
+		return nil, ErrProgramNotFound(params.ProgramID)
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, program)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-// Params for query 'custom/budget/deposit'
-type QueryDepositParams struct {
-	ProgramID uint64
-	Depositor sdk.AccAddress
-}
-
-// creates a new instance of QueryDepositParams
-func NewQueryDepositParams(ProgramID uint64, depositor sdk.AccAddress) QueryDepositParams {
-	return QueryDepositParams{
-		ProgramID: ProgramID,
-		Depositor: depositor,
-	}
-}
-
-// nolint: unparam
-func queryDeposit(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryDepositParams
-	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
-	}
-
-	deposit, _ := keeper.GetDeposit(ctx, params.ProgramID, params.Depositor)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, deposit)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -168,21 +124,12 @@ func queryTally(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 
 	ProgramID := params.ProgramID
 
-	program := keeper.GetProgram(ctx, ProgramID)
-	if program == nil {
-		return nil, ErrUnknownProgram(DefaultCodespace, ProgramID)
+	program, err := keeper.GetProgram(ctx, ProgramID)
+	if err != nil {
+		return nil, ErrProgramNotFound(ProgramID)
 	}
 
-	var tallyResult TallyResult
-
-	if program.GetStatus() == StatusDepositPeriod {
-		tallyResult = EmptyTallyResult()
-	} else if program.GetStatus() == StatusPassed || program.GetStatus() == StatusRejected {
-		tallyResult = program.GetTallyResult()
-	} else {
-		// program is in voting period
-		_, tallyResult = tally(ctx, keeper, program)
-	}
+	tallyResult := program.TallyResult
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, tallyResult)
 	if err != nil {
@@ -200,48 +147,19 @@ func queryVotes(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	var votes []Vote
-	votesIterator := keeper.GetVotes(ctx, params.ProgramID)
+	var votes []string
+	votesIterator := sdk.KVStorePrefixIterator(ctx.KVStore(keeper.key), PrefixVote)
 	for ; votesIterator.Valid(); votesIterator.Next() {
-		vote := Vote{}
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(votesIterator.Value(), &vote)
-		votes = append(votes, vote)
+		var key string
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(votesIterator.Key(), &key)
+
+		var option string
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(votesIterator.Value(), &option)
+		votes = append(votes, fmt.Sprintf("%s:%s:%s", key, option))
 	}
+	votesIterator.Close()
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, votes)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-// Params for query 'custom/budget/program'
-type QueryProgramParams struct {
-	Voter        sdk.AccAddress
-	ProgramState ProgramState
-	Limit        uint64
-}
-
-// creates a new instance of QueryProgramParams
-func NewQueryProgramParams(state ProgramState, limit uint64, voter) QueryProgramParams {
-	return QueryProgramParams{
-		Voter:        voter,
-		ProgramState: state,
-		Limit:        limit,
-	}
-}
-
-// nolint: unparam
-func queryPrograms(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryProgramsParams
-	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
-	}
-
-	Programs := keeper.GetProgramsFiltered(ctx, params.Voter, params.Depositor, params.ProgramStatus, params.Limit)
-
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, Programs)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

@@ -10,6 +10,9 @@ import (
 	"sort"
 	"strings"
 	"terra/types/assets"
+	"terra/x/budget"
+	"terra/x/oracle"
+	"terra/x/treasury"
 	"time"
 
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -18,7 +21,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 )
@@ -35,14 +37,19 @@ type GenesisState struct {
 	AuthData     auth.GenesisState     `json:"auth"`
 	StakeData    stake.GenesisState    `json:"stake"`
 	DistrData    distr.GenesisState    `json:"distr"`
-	GovData      gov.GenesisState      `json:"gov"`
+	TreasuryData treasury.GenesisState `json:"treasury"`
+	BudgetData   budget.GenesisState   `json:"treasury"`
+	OracleData   oracle.GenesisState   `json:"oracle"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 	stakeData stake.GenesisState,
-	distrData distr.GenesisState, govData gov.GenesisState,
+	distrData distr.GenesisState,
+	oracleData oracle.GenesisState,
+	budgetData budget.GenesisState,
+	treasuryData treasury.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
@@ -50,7 +57,9 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 		AuthData:     authData,
 		StakeData:    stakeData,
 		DistrData:    distrData,
-		GovData:      govData,
+		OracleData:   oracleData,
+		TreasuryData: treasuryData,
+		BudgetData:   budgetData,
 		SlashingData: slashingData,
 	}
 }
@@ -148,22 +157,10 @@ func NewDefaultGenesisState() GenesisState {
 				BondDenom:     assets.LunaDenom,
 			},
 		},
-		DistrData: distr.DefaultGenesisState(),
-		GovData: gov.GenesisState{
-			StartingProposalID: 1,
-			DepositParams: gov.DepositParams{
-				MinDeposit:       sdk.Coins{sdk.NewInt64Coin(assets.LunaDenom, 10)},
-				MaxDepositPeriod: time.Duration(172800) * time.Second,
-			},
-			VotingParams: gov.VotingParams{
-				VotingPeriod: time.Duration(172800) * time.Second,
-			},
-			TallyParams: gov.TallyParams{
-				Quorum:    sdk.NewDecWithPrec(334, 3),
-				Threshold: sdk.NewDecWithPrec(5, 1),
-				Veto:      sdk.NewDecWithPrec(334, 3),
-			},
-		},
+		DistrData:    distr.DefaultGenesisState(),
+		BudgetData:   budget.DefaultGenesisState(),
+		OracleData:   oracle.DefaultGenesisState(),
+		TreasuryData: treasury.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
@@ -191,7 +188,15 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 	if err != nil {
 		return err
 	}
-	err = gov.ValidateGenesis(genesisState.GovData)
+	err = oracle.ValidateGenesis(genesisState.OracleData)
+	if err != nil {
+		return err
+	}
+	err = budget.ValidateGenesis(genesisState.BudgetData)
+	if err != nil {
+		return err
+	}
+	err = treasury.ValidateGenesis(genesisState.TreasuryData)
 	if err != nil {
 		return err
 	}

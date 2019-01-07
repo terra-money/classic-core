@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"terra/types/assets"
 	"terra/x/treasury"
+	"time"
 
 	"terra/x/budget/tags"
 
@@ -40,13 +41,11 @@ func NewHandler(k Keeper) sdk.Handler {
 func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	resTags = sdk.NewTags()
 
-	// Clean out expired inactive programs 
+	// Clean out expired inactive programs
 	inactiveIterator := k.InactiveProgramQueueIterator(ctx, ctx.BlockHeader().Time)
 	for ; inactiveIterator.Valid(); inactiveIterator.Next() {
 		var programID uint64
-
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Value(), &programID)
-		program := k.GetProgram(ctx, programID)
 
 		k.RemoveFromInactiveProgramQueue(ctx, ctx.BlockHeader().Time, programID)
 		k.DeleteProgram(ctx, programID)
@@ -56,11 +55,11 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	}
 	inactiveIterator.Close()
 
-	// Add claims to re-weight claims in accordance with voting results 
-	if ctx.BlockHeight()%k.GetParams(ctx).VotePeriod == 0 {
-		programIterator := sdk.KVStorePrefixIterator(k.key, PrefixProgram)
+	// Add claims to re-weight claims in accordance with voting results
+	if ctx.BlockHeight()%int64(k.GetParams(ctx).VotePeriod) == 0 {
+		programIterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.key), PrefixProgram)
 		for ; programIterator.Valid(); programIterator.Next() {
-			
+
 			var programID uint64
 			var program Program
 			k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Key(), &programID)
@@ -87,7 +86,7 @@ func handleSubmitProgramMsg(ctx sdk.Context, k Keeper, msg SubmitProgramMsg) sdk
 	// If deposit is sufficient
 	if msg.Deposit.AmountOf(assets.TerraDenom).GT(sdk.NewInt(k.GetParams(ctx).MinDeposit)) {
 		// Subtract coins from the submitter balance and updates it
-		_, _, err := k.ck.SubtractCoins(ctx, msg.Submitter, msg.Deposit)
+		_, _, err := k.bk.SubtractCoins(ctx, msg.Submitter, msg.Deposit)
 		if err != nil {
 			return err.Result()
 		}
@@ -97,7 +96,7 @@ func handleSubmitProgramMsg(ctx sdk.Context, k Keeper, msg SubmitProgramMsg) sdk
 			msg.Description,
 			msg.Submitter,
 			msg.Executor,
-			ctx.BlockHeight(),
+			time.Now(),
 			msg.Deposit)
 
 		programID := k.NewProgramID(ctx)
@@ -121,16 +120,16 @@ func handleWithdrawProgramMsg(ctx sdk.Context, k Keeper, msg WithdrawProgramMsg)
 		return ErrProgramNotFound(msg.ProgramID).Result()
 	}
 
-	// Only submitters can withdraw the program submission 
-	if program.Submitter != msg.Submitter {
-		return ErrInvalidSubmissiter().Result
+	// Only submitters can withdraw the program submission
+	if program.Submitter.Equals(msg.Submitter) {
+		return ErrInvalidSubmissiter(msg.Submitter).Result()
 	}
 
 	// Refund the deposit
-	k.RefundDeposit(ctx, msg.Submitter)
+	k.RefundDeposit(ctx, msg.ProgramID)
 
 	// Only allow inactive programs to be withdrawn
-	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotingPeriod)
+	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
 	if k.ProgramExistsInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID) {
 		k.RemoveFromInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID)
 	}
@@ -152,11 +151,6 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 		return ErrProgramNotFound(msg.ProgramID).Result()
 	}
 
-	// Voting period is closed
-	if ctx.BlockHeight() > program.SubmitBlock+k.GetParams(ctx).VotePeriod {
-		return ErrVotingPeriodClosed().Result()
-	}
-
 	// Check the voter is a validater
 	val := k.valset.Validator(ctx, sdk.ValAddress(program.Submitter))
 	if val == nil {
@@ -172,29 +166,27 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 	// update new vote
 	err = program.updateTally(msg.Option, val.GetPower())
 
-	// Needs to be activated 
-	if ProgramExistsInactiveProgramQueue(ctx, program.getVotingEndTime(k.GetParams(ctx).VotePeriod), msg.ProgramID) {
+	// Needs to be activated
+	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
+	if k.ProgramExistsInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID) {
 		if program.weight().GT(k.GetParams(ctx).ActiveThreshold) {
 			// Refund deposit
 			k.RefundDeposit(ctx, msg.ProgramID)
 
-			k.RemoveFromInactiveProgramQueue(ctx, endTime, msg.ProgramID)
+			k.RemoveFromInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID)
 		}
-	} 
-	
-	// Needs to be legacied
-	else if program.weight().LT(k.GetParams(ctx).LegacyThreshold) {
+	} else if program.weight().LT(k.GetParams(ctx).LegacyThreshold) {
 		k.DeleteProgram(ctx, msg.ProgramID)
 		// Burn the deposit
 	}
-	
-	// TODO: why does the vote need to be stored? 
+
+	// TODO: why does the vote need to be stored?
 	k.SetVote(ctx, msg.ProgramID, msg.Voter, msg.Option)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Action, tags.ActionProgramVote,
-			tags.ProgramID, int64ToBytes(msg.ProgramID),
+			tags.ProgramID, uint64ToBytes(msg.ProgramID),
 			tags.Voter, msg.Voter.Bytes(),
 			tags.Option, []byte(msg.Option),
 		),

@@ -17,7 +17,7 @@ const (
 	NoVote      ProgramVote = "no"
 	AbstainVote ProgramVote = "abstain"
 
-	ActiveProgramState   ProgramState = "Inactive"
+	InactiveProgramState ProgramState = "Inactive"
 	RejectedProgramState ProgramState = "Rejected"
 	LegacyProgramState   ProgramState = "Legacy"
 	ActiveProgramState   ProgramState = "Active"
@@ -52,7 +52,7 @@ func NewProgram(
 	}
 }
 
-func (p *Program) getVotingEndTime(votingPeriod time.Time) {
+func (p *Program) getVotingEndTime(votingPeriod time.Duration) time.Time {
 	return p.SubmitTime.Add(votingPeriod)
 }
 
@@ -69,7 +69,7 @@ func (p *Program) updateTally(option ProgramVote, power sdk.Dec) sdk.Error {
 		p.TallyResult.Abstain = p.TallyResult.Abstain.Add(power)
 		return nil
 	default:
-		return ErrInvalidOption("Invalid option: " + option)
+		return ErrInvalidOption("Invalid option: " + string(option))
 	}
 }
 
@@ -118,7 +118,7 @@ func (msg SubmitProgramMsg) GetSignBytes() []byte {
 
 // Implements Msg
 func (msg SubmitProgramMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.Address{msg.Submitter}
+	return []sdk.AccAddress{msg.Submitter}
 }
 
 // Implements Msg
@@ -189,8 +189,8 @@ type WithdrawProgramMsg struct {
 }
 
 // NewVoteMsg creates a VoteMsg instance
-func NewWithdrawProgramMsg(programID int64, submitter sdk.AccAddress) WithdrawProgramMsg {
-	return VoteMsg{
+func NewWithdrawProgramMsg(programID uint64, submitter sdk.AccAddress) WithdrawProgramMsg {
+	return WithdrawProgramMsg{
 		ProgramID: programID,
 		Submitter: submitter,
 	}
@@ -213,7 +213,7 @@ func (msg WithdrawProgramMsg) GetSignBytes() []byte {
 
 // Implements Msg
 func (msg WithdrawProgramMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.Address{msg.Submitter}
+	return []sdk.AccAddress{msg.Submitter}
 }
 
 // Implements Msg
@@ -241,7 +241,7 @@ type VoteMsg struct {
 }
 
 // NewVoteMsg creates a VoteMsg instance
-func NewVoteMsg(ProgramID int64, option ProgramVote, voter sdk.AccAddress) VoteMsg {
+func NewVoteMsg(programID uint64, option ProgramVote, voter sdk.AccAddress) VoteMsg {
 	// by default a nil option is an abstention
 	switch option {
 	case YesVote:
@@ -251,7 +251,7 @@ func NewVoteMsg(ProgramID int64, option ProgramVote, voter sdk.AccAddress) VoteM
 		option = AbstainVote
 	}
 	return VoteMsg{
-		ProgramID: ProgramID,
+		ProgramID: programID,
 		Option:    option,
 		Voter:     voter,
 	}
@@ -274,7 +274,7 @@ func (msg VoteMsg) GetSignBytes() []byte {
 
 // Implements Msg
 func (msg VoteMsg) GetSigners() []sdk.AccAddress {
-	return []sdk.Address{msg.Voter}
+	return []sdk.AccAddress{msg.Voter}
 }
 
 func isValidOption(option ProgramVote) bool {
@@ -297,9 +297,9 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidProgramID("ProgramID cannot be negative")
 	}
 	if !isValidOption(msg.Option) {
-		return ErrInvalidOption("Invalid voting option: " + msg.Option)
+		return ErrInvalidOption("Invalid voting option: " + string(msg.Option))
 	}
-	if len(strings.TrimSpace(msg.Option)) <= 0 {
+	if len(strings.TrimSpace(string(msg.Option))) <= 0 {
 		return ErrInvalidOption("Option can't be blank")
 	}
 

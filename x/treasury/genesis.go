@@ -41,10 +41,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // ExportGenesis returns a GenesisState for a given context and keeper. The
 // GenesisState will contain the pool, and validator/delegator distribution info's
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
-	oracleShare := keeper.GetShare(ctx, OracleShareID)
-	debtShare := keeper.GetShare(ctx, DebtShareID)
-	BudgetShare := keeper.GetShare(ctx, BudgetShareID)
-	return NewGenesisState(oracleShare.GetWeight(), debtShare.GetWeight(), BudgetShare.GetWeight())
+	oracleShare, _ := keeper.GetShare(ctx, OracleShareID)
+	debtShare, _ := keeper.GetShare(ctx, DebtShareID)
+	budgetShare, _ := keeper.GetShare(ctx, BudgetShareID)
+	return NewGenesisState(oracleShare.GetWeight(), debtShare.GetWeight(), budgetShare.GetWeight())
 }
 
 // ValidateGenesis validates the provided oracle genesis state to ensure the

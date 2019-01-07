@@ -2,20 +2,21 @@ package budget
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Params oracle parameters
 type Params struct {
-	ActiveThreshold sdk.Dec `json:"active_threshold"` // threshold of vote that will transition a program open -> active budget queue
-	LegacyThreshold sdk.Dec `json:"legacy_threshold"` // threshold of vote that will transition a program active -> legacy budget queue
-	VotePeriod      int64   `json:"vote_period"`      // vote period
-	MinDeposit      int64   `json:"min_deposit"`
+	ActiveThreshold sdk.Dec       `json:"active_threshold"` // threshold of vote that will transition a program open -> active budget queue
+	LegacyThreshold sdk.Dec       `json:"legacy_threshold"` // threshold of vote that will transition a program active -> legacy budget queue
+	VotePeriod      time.Duration `json:"vote_period"`      // vote period
+	MinDeposit      int64         `json:"min_deposit"`
 }
 
 // NewParams creates a new param instance
-func NewParams(activeThreshold sdk.Dec, legacyThreshold sdk.Dec, votePeriod int64, minDeposit int64) Params {
+func NewParams(activeThreshold sdk.Dec, legacyThreshold sdk.Dec, votePeriod time.Duration, minDeposit int64) Params {
 	return Params{
 		ActiveThreshold: activeThreshold,
 		LegacyThreshold: legacyThreshold,
@@ -41,7 +42,7 @@ func validateParams(params Params) error {
 	if params.LegacyThreshold.LT(sdk.ZeroDec()) {
 		return fmt.Errorf("budget legacy threshold should be greater than 0, is %s", params.LegacyThreshold.String())
 	}
-	if params.VotePeriod.LT(sdk.ZeroInt()) {
+	if params.VotePeriod < 0 {
 		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())
 	}
 	return nil

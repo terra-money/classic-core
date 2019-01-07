@@ -172,6 +172,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	buget.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func registerSwaggerUI(rs *lcd.RestServer) {
