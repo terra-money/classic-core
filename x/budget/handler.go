@@ -133,6 +133,7 @@ func handleWithdrawProgramMsg(ctx sdk.Context, k Keeper, msg WithdrawProgramMsg)
 	if k.ProgramExistsInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID) {
 		k.RemoveFromInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID)
 	}
+	program.State = LegacyProgramState
 	k.DeleteProgram(ctx, msg.ProgramID)
 
 	return sdk.Result{
@@ -174,8 +175,13 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 			k.RefundDeposit(ctx, msg.ProgramID)
 
 			k.RemoveFromInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID)
+
+			program.State = ActiveProgramState
+			k.SetProgram(ctx, msg.ProgramID, program)
 		}
 	} else if program.weight().LT(k.GetParams(ctx).LegacyThreshold) {
+		program.State = InactiveProgramState
+
 		k.DeleteProgram(ctx, msg.ProgramID)
 		// Burn the deposit
 	}

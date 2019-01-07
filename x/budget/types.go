@@ -32,6 +32,7 @@ type Program struct {
 	SubmitTime  time.Time      `json:"submit_time"` // Block height from which the Program is open for votations
 	Deposit     sdk.Coins      `json:"deposit"`     // Coins deposited in escrow
 	TallyResult TallyResult    `json:"tally_result"`
+	State       ProgramState   `json:"state"`
 }
 
 // NewProgram validates deposit and creates a new Program
@@ -48,6 +49,7 @@ func NewProgram(
 		Submitter:   submitter,
 		SubmitTime:  submitTime,
 		Deposit:     deposit,
+		State:       InactiveProgramState,
 		TallyResult: EmptyTallyResult(),
 	}
 }
@@ -90,7 +92,7 @@ type SubmitProgramMsg struct {
 }
 
 // NewSubmitProgramMsg submits a message with a new Program
-func NewSubmitProgramMsg(title string, description string, votingWindow int64, deposit sdk.Coins,
+func NewSubmitProgramMsg(title string, description string, deposit sdk.Coins,
 	submitter sdk.AccAddress, executor sdk.AccAddress) SubmitProgramMsg {
 	return SubmitProgramMsg{
 		Title:       title,
