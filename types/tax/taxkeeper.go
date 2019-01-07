@@ -172,6 +172,7 @@ func (keeper BaseKeeper) GetIssuance(ctx sdk.Context, denom string) (res sdk.Int
 	store := ctx.KVStore(keeper.key)
 	bz := store.Get(GetCoinSupplyKey(denom))
 	if bz == nil {
+		res = sdk.ZeroInt()
 		return
 	}
 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)

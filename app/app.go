@@ -189,7 +189,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
 
 	// initialize BaseApp
-	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
+	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr, app.keyBank,
 		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury, app.keyBudget)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
