@@ -41,7 +41,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakeClient "github.com/cosmos/cosmos-sdk/x/stake/client"
 
-	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
+	_ "terra/client/lcd/statik"
 )
 
 const (
