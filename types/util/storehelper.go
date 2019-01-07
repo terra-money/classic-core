@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func Get(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte) (res Value) {
+func Get(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte) (res interface{}) {
 	store := ctx.KVStore(dbKey)
 	bz := store.Get(storeKey)
 	if bz == nil {
@@ -15,11 +15,11 @@ func Get(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte)
 	return
 }
 
-func Collect(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storePrefix []byte) (res []Value) {
+func Collect(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storePrefix []byte) (res []interface{}) {
 	store := ctx.KVStore(dbKey)
 	iter := sdk.KVStorePrefixIterator(store, storePrefix)
 	for ; iter.Valid(); iter.Next() {
-		var v Value
+		var v interface{}
 		cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &v)
 		res = append(res, v)
 	}
@@ -27,7 +27,7 @@ func Collect(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storePrefix 
 	return
 }
 
-func Set(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte, value Value) {
+func Set(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte, value interface{}) {
 	store := ctx.KVStore(dbKey)
 	bz := cdc.MustMarshalBinaryLengthPrefixed(value)
 	store.Set(storeKey, bz)
@@ -45,7 +45,4 @@ func Clear(dbKey sdk.StoreKey, ctx sdk.Context, storePrefix []byte) {
 		store.Delete(iter.Key())
 	}
 	iter.Close()
-}
-
-type Value interface {
 }

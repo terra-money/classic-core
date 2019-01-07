@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Proposal defines the basic propierties of a staking proposal
+// Proposal defines the basic properties of a staking proposal
 type Proposal struct {
 	Title       string      `json:"title"`        // Title of the proposal
 	Description string      `json:"description"`  // Description of the proposal
@@ -83,10 +83,10 @@ func (pq ProposalQueue) isEmpty() bool {
 
 //SubmitProposalMsg defines a message to create a proposal
 type SubmitProposalMsg struct {
-	Title       string      // Title of the proposal
-	Description string      // Description of the proposal
-	Deposit     sdk.Coins   // Deposit paid by submitter. Must be > MinDeposit to enter voting period
-	Submitter   sdk.Address // Address of the submitter
+	Title       string         // Title of the proposal
+	Description string         // Description of the proposal
+	Deposit     sdk.Coins      // Deposit paid by submitter. Must be > MinDeposit to enter voting period
+	Submitter   sdk.AccAddress // Address of the submitter
 }
 
 // NewSubmitProposalMsg submits a message with a new proposal

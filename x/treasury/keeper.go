@@ -5,8 +5,6 @@ import (
 	"terra/types/tax"
 	"terra/types/util"
 
-	"github.com/cosmos/cosmos-sdk/x/auth"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -17,113 +15,118 @@ type Keeper struct {
 	cdc *codec.Codec
 
 	tk tax.Keeper
-	fk auth.FeeCollectionKeeper
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
-	taxKeeper tax.Keeper, fk auth.FeeCollectionKeeper) Keeper {
+	taxKeeper tax.Keeper) Keeper {
 	return Keeper{
 		key: key,
 		cdc: cdc,
 		tk:  taxKeeper,
-		fk:  fk,
 	}
 }
 
-func (keeper Keeper) PayTax(ctx sdk.Context, revenue sdk.Coins) {
-	keeper.fk.AddCollectedFees(ctx, revenue)
+// Logic for shares
+//------------------------------------
+//------------------------------------
+//------------------------------------
+
+func (k Keeper) GetShare(ctx sdk.Context, shareID string) Share {
+	return util.Get(k.key, k.cdc, ctx, GetShareKey(shareID)).(Share)
 }
 
-func (keeper Keeper) PayMintIncome(ctx sdk.Context, revenue sdk.Coins) {
-	if revenue[0].Denom == assets.LunaDenom {
-		keeper.deposit(ctx, revenue)
+func (k Keeper) ResetShares(ctx sdk.Context, shares []Share) sdk.Error {
+	// Ensure the weights sum to below 1
+	totalWeight := sdk.ZeroDec()
+	for _, share := range shares {
+		totalWeight.Add(share.GetWeight())
 	}
-	// Burn otherwise
-}
-
-func (keeper Keeper) AddClaim(ctx sdk.Context, claim Claim) {
-	prevClaim := util.Get(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		GetClaimKey(claim.Account),
-	)
-
-	if prevClaim != nil {
-		prevClaim := prevClaim.(Claim)
-		claim.Weight = prevClaim.Weight.Add(claim.Weight)
+	if totalWeight.GT(sdk.OneDec()) {
+		return ErrExcessiveWeight(DefaultCodespace, totalWeight)
 	}
 
-	util.Set(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		GetClaimKey(claim.Account),
-		claim,
-	)
-}
+	// Clear existing shares
+	util.Clear(k.key, ctx, PrefixShare)
 
-//---------------------------------------
-//---------------------------------------
-//---------------------------------------
-
-func (keeper Keeper) deposit(ctx sdk.Context, funds sdk.Coins) {
-	incomePool := util.Get(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		KeyIncomePool,
-	).(sdk.Coins)
-
-	incomePool = incomePool.Plus(funds)
-
-	util.Set(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		KeyIncomePool,
-		incomePool,
-	)
-}
-
-func (keeper Keeper) withdraw(ctx sdk.Context, funds sdk.Coins) {
-	incomePool := util.Get(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		KeyIncomePool,
-	).(sdk.Coins)
-
-	incomePool = incomePool.Minus(funds)
-
-	util.Set(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		KeyIncomePool,
-		incomePool,
-	)
-}
-
-func (keeper Keeper) getClaims(ctx sdk.Context) (res []Claim) {
-	claims := util.Collect(
-		keeper.key,
-		keeper.cdc,
-		ctx,
-		PrefixClaim,
-	)
-
-	for _, c := range claims {
-		res = append(res, c.(Claim))
+	// Set shares to the store
+	for _, share := range shares {
+		util.Set(k.key, k.cdc, ctx, GetShareKey(share.ID()), share)
 	}
-	return
+
+	return nil
 }
 
-func (keeper Keeper) clearClaims(ctx sdk.Context) {
-	util.Clear(
-		keeper.key,
-		ctx,
-		PrefixClaim,
-	)
+func dividePool(ratio sdk.Dec, pool sdk.Coins) sdk.Coins {
+	if len(pool) != 1 {
+		return nil
+	}
+
+	return sdk.Coins{sdk.NewCoin(pool[0].Denom, ratio.MulInt(pool[0].Amount).TruncateInt())}
+}
+
+func (k Keeper) SettleShares(ctx sdk.Context) {
+	shares := util.Collect(k.key, k.cdc, ctx, PrefixShare)
+
+	incomePool := util.Get(k.key, k.cdc, ctx, KeyIncomePool).(sdk.Coins)
+	residualPool := incomePool
+
+	for _, share := range shares {
+		share := share.(Share)
+		sharePool := dividePool(share.GetWeight(), incomePool)
+
+		claims := util.Collect(k.key, k.cdc, ctx, GetClaimsForSharePrefix(share.ID()))
+
+		totalWeight := sdk.ZeroDec()
+		for _, c := range claims {
+			c := c.(Claim)
+			totalWeight = totalWeight.Add(c.GetWeight())
+		}
+
+		// Settle claims with others
+		for _, c := range claims {
+			c := c.(Claim)
+			adjustedWeight := c.GetWeight().Quo(totalWeight)
+			claimCoin := dividePool(adjustedWeight, sharePool)
+			c.Settle(ctx, k.tk, claimCoin)
+
+			residualPool.Minus(claimCoin)
+
+			util.Delete(k.key, ctx, GetClaimKey(share.ID(), c.ID()))
+		}
+	}
+
+	// Set remaining coins as the remaining income pool
+	util.Set(k.key, k.cdc, ctx, KeyIncomePool, residualPool)
+}
+
+// Logic for Income Pool
+//------------------------------------
+//------------------------------------
+//------------------------------------
+
+// AddIncome adds income to the treasury module
+func (k Keeper) AddIncome(ctx sdk.Context, income sdk.Coins) sdk.Error {
+
+	taxDenom := income[0].Denom
+
+	// Error if income is not paid in Terra tokens
+	if taxDenom != assets.TerraDenom {
+		return ErrWrongTaxDenomination(DefaultCodespace, taxDenom)
+	}
+
+	incomePool := util.Get(k.key, k.cdc, ctx, KeyIncomePool).(sdk.Coins)
+	incomePool = incomePool.Plus(income)
+
+	util.Set(k.key, k.cdc, ctx, KeyIncomePool, incomePool)
+	return nil
+}
+
+// Logic for Claims
+//------------------------------------
+//------------------------------------
+//------------------------------------
+
+func (k Keeper) AddClaim(ctx sdk.Context, claim Claim) {
+	util.Set(k.key, k.cdc, ctx, GetClaimKey(claim.ShareID(), claim.ID()), claim)
 }
