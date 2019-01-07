@@ -32,8 +32,9 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
 //------------------------------------
 //------------------------------------
 
-func (k Keeper) GetShare(ctx sdk.Context, shareID string) Share {
-	return util.Get(k.key, k.cdc, ctx, GetShareKey(shareID)).(Share)
+func (k Keeper) GetShare(ctx sdk.Context, shareID string) (res Share, err sdk.Error) {
+	share, err := util.Get(k.key, k.cdc, ctx, GetShareKey(shareID))
+	return share.(Share), err
 }
 
 func (k Keeper) ResetShares(ctx sdk.Context, shares []Share) sdk.Error {
@@ -91,8 +92,6 @@ func (k Keeper) SettleShares(ctx sdk.Context) {
 			c.Settle(ctx, k.tk, claimCoin)
 
 			residualPool.Minus(claimCoin)
-
-			util.Delete(k.key, ctx, GetClaimKey(share.ID(), c.ID()))
 		}
 	}
 

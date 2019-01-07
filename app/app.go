@@ -29,9 +29,8 @@ import (
 const (
 	appName = "TerraApp"
 	// DefaultKeyPass contains the default key password for genesis transactions
-	DefaultKeyPass       = "12345678"
-	DefaultBondDenom     = "luna"
-	DefaultCurrencyDenom = "terra"
+	DefaultKeyPass    = "12345678"
+	CalibrationPeriod = 1000000
 )
 
 // default home directories for expected binaries
@@ -153,7 +152,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
-		app.feeCollectionKeeper,
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,

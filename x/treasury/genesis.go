@@ -8,33 +8,33 @@ import (
 
 // GenesisState - all distribution state that must be provided at genesis
 type GenesisState struct {
-	OracleShare  Share `json:"oracle_share"`  // oracle share
-	DebtShare    Share `json:"debt_share"`    // debt share
-	SubsidyShare Share `json:"subsidy_share"` // subsidy share
+	OracleShare Share `json:"oracle_share"` // oracle share
+	DebtShare   Share `json:"debt_share"`   // debt share
+	BudgetShare Share `json:"budget_share"` // budget share
 }
 
 // NewGenesisState - new treasury genesis state instance
-func NewGenesisState(oracleWeight sdk.Dec, debtWeight sdk.Dec, subsidyWeight sdk.Dec) GenesisState {
+func NewGenesisState(oracleWeight sdk.Dec, debtWeight sdk.Dec, budgetWeight sdk.Dec) GenesisState {
 	return GenesisState{
-		OracleShare:  NewBaseShare(OracleShareID, oracleWeight),
-		DebtShare:    NewBaseShare(DebtShareID, debtWeight),
-		SubsidyShare: NewBaseShare(SubsidyShareID, subsidyWeight),
+		OracleShare: NewBaseShare(OracleShareID, oracleWeight),
+		DebtShare:   NewBaseShare(DebtShareID, debtWeight),
+		BudgetShare: NewBaseShare(BudgetShareID, budgetWeight),
 	}
 }
 
 // DefaultGenesisState - get raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		OracleShare:  NewBaseShare(OracleShareID, sdk.NewDecWithPrec(10, 2)),
-		DebtShare:    NewBaseShare(DebtShareID, sdk.ZeroDec()),
-		SubsidyShare: NewBaseShare(SubsidyShareID, sdk.NewDecWithPrec(90, 2)),
+		OracleShare: NewBaseShare(OracleShareID, sdk.NewDecWithPrec(10, 2)),
+		DebtShare:   NewBaseShare(DebtShareID, sdk.ZeroDec()),
+		BudgetShare: NewBaseShare(BudgetShareID, sdk.NewDecWithPrec(90, 2)),
 	}
 }
 
 // InitGenesis creates the new treasury genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.ResetShares(ctx, []Share{
-		data.OracleShare, data.DebtShare, data.SubsidyShare,
+		data.OracleShare, data.DebtShare, data.BudgetShare,
 	})
 }
 
@@ -43,8 +43,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	oracleShare := keeper.GetShare(ctx, OracleShareID)
 	debtShare := keeper.GetShare(ctx, DebtShareID)
-	subsidyShare := keeper.GetShare(ctx, SubsidyShareID)
-	return NewGenesisState(oracleShare.GetWeight(), debtShare.GetWeight(), subsidyShare.GetWeight())
+	BudgetShare := keeper.GetShare(ctx, BudgetShareID)
+	return NewGenesisState(oracleShare.GetWeight(), debtShare.GetWeight(), BudgetShare.GetWeight())
 }
 
 // ValidateGenesis validates the provided oracle genesis state to ensure the
@@ -52,9 +52,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 func ValidateGenesis(data GenesisState) error {
 	oracleWeight := data.OracleShare.GetWeight()
 	debtWeight := data.DebtShare.GetWeight()
-	subsidyWeight := data.SubsidyShare.GetWeight()
+	budgetWeight := data.BudgetShare.GetWeight()
 
-	sane := oracleWeight.Add(debtWeight).Add(subsidyWeight).Equal(sdk.OneDec())
+	sane := oracleWeight.Add(debtWeight).Add(budgetWeight).Equal(sdk.OneDec())
 	if !sane {
 		return fmt.Errorf("Share weights should sum to one")
 	}

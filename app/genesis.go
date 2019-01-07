@@ -152,7 +152,7 @@ func NewDefaultGenesisState() GenesisState {
 		GovData: gov.GenesisState{
 			StartingProposalID: 1,
 			DepositParams: gov.DepositParams{
-				MinDeposit:       sdk.Coins{sdk.NewInt64Coin(DefaultBondDenom, 10)},
+				MinDeposit:       sdk.Coins{sdk.NewInt64Coin(assets.LunaDenom, 10)},
 				MaxDepositPeriod: time.Duration(172800) * time.Second,
 			},
 			VotingParams: gov.VotingParams{
