@@ -153,7 +153,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
-		app.feeCollectionKeeper,
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,
