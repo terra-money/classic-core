@@ -56,10 +56,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 			// TODO: handle cases where the reward is too small
 			rewardeePower := getTotalVotePower(rewardees)
 			for _, recipient := range rewardees {
-				k.tk.AddClaim(ctx, treasury.Claim{
-					Account: recipient.FeedMsg.Feeder,
-					Weight:  recipient.Power.Quo(rewardeePower),
-				})
+
+				k.tk.AddClaim(ctx, treasury.NewBaseClaim(
+					treasury.OracleShareID,
+					recipient.Power.Quo(rewardeePower),
+					recipient.FeedMsg.Feeder,
+				),
+				)
 			}
 
 			newTags.AppendTag(denom, []byte(fmt.Sprintf("target %v observed %v rewardees %v",

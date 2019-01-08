@@ -24,8 +24,8 @@ const (
 // GetSwapCmd will create and send a SwapMsg
 func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "swap",
-		Short: "Atomically swap [offerDenom] asset with [askDenom] asset",
+		Use:   "swap offerCoin [offerCoin] askDenom [askDenom]",
+		Short: "Atomically swap [offerCoin] asset with [askDenom] asset",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithCodec(cdc)
