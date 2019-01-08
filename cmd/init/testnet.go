@@ -37,6 +37,9 @@ var (
 	flagStartingIPAddress = "starting-ip-address"
 
 	flagPredefinedNodes = "predefined-nodes"
+
+	flagFaucet      = "faucet"
+	flagFaucetCoins = "faucet-coins"
 )
 
 const nodeDirPerm = 0755
@@ -81,6 +84,11 @@ Example:
 		"Genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(flagPredefinedNodes, "",
 		"Predefined node list, using this will override --starting-ip-address, --node-dir-prefix and --v (ex. \"node101@192.168.0.1,node102@192.168.0.22,node103@192.168.0.56\")")
+
+	cmd.Flags().String(flagFaucet, "",
+		"Faucet address")
+	cmd.Flags().String(flagFaucetCoins, "",
+		"Coins to add to faucet account")
 
 	return cmd
 }
@@ -255,6 +263,25 @@ func initTestnet(config *cfg.Config, cdc *codec.Codec) error {
 			_ = os.RemoveAll(outDir)
 			return err
 		}
+	}
+
+	// add faucet account
+	faucet := viper.GetString(flagFaucet)
+	if faucet != "" {
+		faucetAddr, err := sdk.AccAddressFromBech32(faucet)
+		if err != nil {
+			return err
+		}
+		faucetCoins, err := sdk.ParseCoins(viper.GetString(flagFaucetCoins))
+		if err != nil {
+			return err
+		}
+		faucetCoins.Sort()
+
+		accs = append(accs, app.GenesisAccount{
+			Address: faucetAddr,
+			Coins:   faucetCoins,
+		})
 	}
 
 	if err := initGenFiles(cdc, chainID, accs, genFiles, numValidators); err != nil {
