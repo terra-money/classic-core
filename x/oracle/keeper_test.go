@@ -1,134 +1,239 @@
 package oracle
 
-// import (
-// 	"testing"
+import (
+	"terra/types/assets"
+	"testing"
 
-// 	codec "github.com/cosmos/cosmos-sdk/codec"
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/stretchr/testify/require"
-// 	abci "github.com/tendermint/tendermint/abci/types"
-// 	"github.com/tendermint/tendermint/libs/log"
-// )
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+)
 
-// func TestOracleSetup(t *testing.T) {
+func TestGetSetPrice(t *testing.T) {
+	mapp, keeper, _, _, _, _ := getMockApp(t, 5)
+	mapp.BeginBlock(abci.RequestBeginBlock{})
+	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+
+	// New context. There should be no price.
+	tp := keeper.GetPriceTarget(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(sdk.ZeroDec()))
+
+	op := keeper.GetPriceObserved(ctx, assets.TerraDenom)
+	require.True(t, op.Equal(sdk.ZeroDec()))
+
+	terraTargetPrice := sdk.NewDecWithPrec(166, 2)
+	keeper.setPriceTarget(ctx, assets.TerraDenom, terraTargetPrice)
+
+	terraObservedPrice := sdk.NewDecWithPrec(174, 2)
+	keeper.setPriceObserved(ctx, assets.TerraDenom, terraObservedPrice)
+
+	tp = keeper.GetPriceTarget(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(terraTargetPrice))
+
+	op = keeper.GetPriceObserved(ctx, assets.TerraDenom)
+	require.True(t, op.Equal(terraObservedPrice))
+}
+
+// func TestIncrementProposalNumber(t *testing.T) {
+// 	mapp, keeper, _, _, _, _ := getMockApp(t, 0)
+// 	mapp.BeginBlock(abci.RequestBeginBlock{})
+// 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+
+// 	keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	proposal6 := keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+
+// 	require.Equal(t, uint64(6), proposal6.GetProposalID())
+// }
+
+// func TestActivateVotingPeriod(t *testing.T) {
+// 	mapp, keeper, _, _, _, _ := getMockApp(t, 0)
+// 	mapp.BeginBlock(abci.RequestBeginBlock{})
+// 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+
+// 	proposal := keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+
+// 	require.True(t, proposal.GetVotingStartTime().Equal(time.Time{}))
+
+// 	keeper.activateVotingPeriod(ctx, proposal)
+
+// 	require.True(t, proposal.GetVotingStartTime().Equal(ctx.BlockHeader().Time))
+
+// 	activeIterator := keeper.ActiveProposalQueueIterator(ctx, proposal.GetVotingEndTime())
+// 	require.True(t, activeIterator.Valid())
+// 	var proposalID uint64
+// 	keeper.cdc.UnmarshalBinaryLengthPrefixed(activeIterator.Value(), &proposalID)
+// 	require.Equal(t, proposalID, proposal.GetProposalID())
+// 	activeIterator.Close()
+// }
+
+// func TestDeposits(t *testing.T) {
+// 	mapp, keeper, _, addrs, _, _ := getMockApp(t, 2)
+// 	SortAddresses(addrs)
+// 	mapp.BeginBlock(abci.RequestBeginBlock{})
+// 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+
+// 	proposal := keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	proposalID := proposal.GetProposalID()
+
+// 	fourSteak := sdk.Coins{sdk.NewInt64Coin(stakeTypes.DefaultBondDenom, 4)}
+// 	fiveSteak := sdk.Coins{sdk.NewInt64Coin(stakeTypes.DefaultBondDenom, 5)}
+
+// 	addr0Initial := keeper.ck.GetCoins(ctx, addrs[0])
+// 	addr1Initial := keeper.ck.GetCoins(ctx, addrs[1])
+
+// 	// require.True(t, addr0Initial.IsEqual(sdk.Coins{sdk.NewInt64Coin(stakeTypes.DefaultBondDenom, 42)}))
+// 	require.Equal(t, sdk.Coins{sdk.NewInt64Coin(stakeTypes.DefaultBondDenom, 42)}, addr0Initial)
+
+// 	require.True(t, proposal.GetTotalDeposit().IsEqual(sdk.Coins{}))
+
+// 	// Check no deposits at beginning
+// 	deposit, found := keeper.GetDeposit(ctx, proposalID, addrs[1])
+// 	require.False(t, found)
+// 	require.True(t, keeper.GetProposal(ctx, proposalID).GetVotingStartTime().Equal(time.Time{}))
+
+// 	// Check first deposit
+// 	err, votingStarted := keeper.AddDeposit(ctx, proposalID, addrs[0], fourSteak)
+// 	require.Nil(t, err)
+// 	require.False(t, votingStarted)
+// 	deposit, found = keeper.GetDeposit(ctx, proposalID, addrs[0])
+// 	require.True(t, found)
+// 	require.Equal(t, fourSteak, deposit.Amount)
+// 	require.Equal(t, addrs[0], deposit.Depositor)
+// 	require.Equal(t, fourSteak, keeper.GetProposal(ctx, proposalID).GetTotalDeposit())
+// 	require.Equal(t, addr0Initial.Minus(fourSteak), keeper.ck.GetCoins(ctx, addrs[0]))
+
+// 	// Check a second deposit from same address
+// 	err, votingStarted = keeper.AddDeposit(ctx, proposalID, addrs[0], fiveSteak)
+// 	require.Nil(t, err)
+// 	require.False(t, votingStarted)
+// 	deposit, found = keeper.GetDeposit(ctx, proposalID, addrs[0])
+// 	require.True(t, found)
+// 	require.Equal(t, fourSteak.Plus(fiveSteak), deposit.Amount)
+// 	require.Equal(t, addrs[0], deposit.Depositor)
+// 	require.Equal(t, fourSteak.Plus(fiveSteak), keeper.GetProposal(ctx, proposalID).GetTotalDeposit())
+// 	require.Equal(t, addr0Initial.Minus(fourSteak).Minus(fiveSteak), keeper.ck.GetCoins(ctx, addrs[0]))
+
+// 	// Check third deposit from a new address
+// 	err, votingStarted = keeper.AddDeposit(ctx, proposalID, addrs[1], fourSteak)
+// 	require.Nil(t, err)
+// 	require.True(t, votingStarted)
+// 	deposit, found = keeper.GetDeposit(ctx, proposalID, addrs[1])
+// 	require.True(t, found)
+// 	require.Equal(t, addrs[1], deposit.Depositor)
+// 	require.Equal(t, fourSteak, deposit.Amount)
+// 	require.Equal(t, fourSteak.Plus(fiveSteak).Plus(fourSteak), keeper.GetProposal(ctx, proposalID).GetTotalDeposit())
+// 	require.Equal(t, addr1Initial.Minus(fourSteak), keeper.ck.GetCoins(ctx, addrs[1]))
+
+// 	// Check that proposal moved to voting period
+// 	require.True(t, keeper.GetProposal(ctx, proposalID).GetVotingStartTime().Equal(ctx.BlockHeader().Time))
+
+// 	// Test deposit iterator
+// 	depositsIterator := keeper.GetDeposits(ctx, proposalID)
+// 	require.True(t, depositsIterator.Valid())
+// 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(depositsIterator.Value(), &deposit)
+// 	require.Equal(t, addrs[0], deposit.Depositor)
+// 	require.Equal(t, fourSteak.Plus(fiveSteak), deposit.Amount)
+// 	depositsIterator.Next()
+// 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(depositsIterator.Value(), &deposit)
+// 	require.Equal(t, addrs[1], deposit.Depositor)
+// 	require.Equal(t, fourSteak, deposit.Amount)
+// 	depositsIterator.Next()
+// 	require.False(t, depositsIterator.Valid())
+// 	depositsIterator.Close()
+
+// 	// Test Refund Deposits
+// 	deposit, found = keeper.GetDeposit(ctx, proposalID, addrs[1])
+// 	require.True(t, found)
+// 	require.Equal(t, fourSteak, deposit.Amount)
+// 	keeper.RefundDeposits(ctx, proposalID)
+// 	deposit, found = keeper.GetDeposit(ctx, proposalID, addrs[1])
+// 	require.False(t, found)
+// 	require.Equal(t, addr0Initial, keeper.ck.GetCoins(ctx, addrs[0]))
+// 	require.Equal(t, addr1Initial, keeper.ck.GetCoins(ctx, addrs[1]))
 
 // }
 
-// func TestAddVote(t *testing.T) {
-// 	// Case 1: Incorrect denoms have been added
+// func TestVotes(t *testing.T) {
+// 	mapp, keeper, _, addrs, _, _ := getMockApp(t, 2)
+// 	SortAddresses(addrs)
+// 	mapp.BeginBlock(abci.RequestBeginBlock{})
+// 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
 
+// 	proposal := keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
+// 	proposalID := proposal.GetProposalID()
+
+// 	proposal.SetStatus(StatusVotingPeriod)
+// 	keeper.SetProposal(ctx, proposal)
+
+// 	// Test first vote
+// 	keeper.AddVote(ctx, proposalID, addrs[0], OptionAbstain)
+// 	vote, found := keeper.GetVote(ctx, proposalID, addrs[0])
+// 	require.True(t, found)
+// 	require.Equal(t, addrs[0], vote.Voter)
+// 	require.Equal(t, proposalID, vote.ProposalID)
+// 	require.Equal(t, OptionAbstain, vote.Option)
+
+// 	// Test change of vote
+// 	keeper.AddVote(ctx, proposalID, addrs[0], OptionYes)
+// 	vote, found = keeper.GetVote(ctx, proposalID, addrs[0])
+// 	require.True(t, found)
+// 	require.Equal(t, addrs[0], vote.Voter)
+// 	require.Equal(t, proposalID, vote.ProposalID)
+// 	require.Equal(t, OptionYes, vote.Option)
+
+// 	// Test second vote
+// 	keeper.AddVote(ctx, proposalID, addrs[1], OptionNoWithVeto)
+// 	vote, found = keeper.GetVote(ctx, proposalID, addrs[1])
+// 	require.True(t, found)
+// 	require.Equal(t, addrs[1], vote.Voter)
+// 	require.Equal(t, proposalID, vote.ProposalID)
+// 	require.Equal(t, OptionNoWithVeto, vote.Option)
+
+// 	// Test vote iterator
+// 	votesIterator := keeper.GetVotes(ctx, proposalID)
+// 	require.True(t, votesIterator.Valid())
+// 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(votesIterator.Value(), &vote)
+// 	require.True(t, votesIterator.Valid())
+// 	require.Equal(t, addrs[0], vote.Voter)
+// 	require.Equal(t, proposalID, vote.ProposalID)
+// 	require.Equal(t, OptionYes, vote.Option)
+// 	votesIterator.Next()
+// 	require.True(t, votesIterator.Valid())
+// 	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(votesIterator.Value(), &vote)
+// 	require.True(t, votesIterator.Valid())
+// 	require.Equal(t, addrs[1], vote.Voter)
+// 	require.Equal(t, proposalID, vote.ProposalID)
+// 	require.Equal(t, OptionNoWithVeto, vote.Option)
+// 	votesIterator.Next()
+// 	require.False(t, votesIterator.Valid())
+// 	votesIterator.Close()
 // }
 
-// func TestVoteElection(t *testing.T) {
-// 	// Case 1: Insufficient votes to reach majority
+// func TestProposalQueues(t *testing.T) {
+// 	mapp, keeper, _, _, _, _ := getMockApp(t, 0)
+// 	mapp.BeginBlock(abci.RequestBeginBlock{})
+// 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+// 	mapp.InitChainer(ctx, abci.RequestInitChain{})
 
-// 	// Case 2: Sufficient votes have been offered
+// 	// create test proposals
+// 	proposal := keeper.NewTextProposal(ctx, "Test", "description", ProposalTypeText)
 
-// 	// Case 3: Check that stale votes don't effect consensus
-// }
+// 	inactiveIterator := keeper.InactiveProposalQueueIterator(ctx, proposal.GetDepositEndTime())
+// 	require.True(t, inactiveIterator.Valid())
+// 	var proposalID uint64
+// 	keeper.cdc.UnmarshalBinaryLengthPrefixed(inactiveIterator.Value(), &proposalID)
+// 	require.Equal(t, proposalID, proposal.GetProposalID())
+// 	inactiveIterator.Close()
 
-// func BenchmarkAccountMapperGetAccountFound(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
+// 	keeper.activateVotingPeriod(ctx, proposal)
 
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		mapper.GetAccount(ctx, sdk.AccAddress(arr))
-// 	}
-// }
-
-// func BenchmarkAccountMapperGetAccountFoundWithCoins(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
-
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	coins := sdk.Coins{
-// 		sdk.NewCoin("LTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("ETH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("XRP", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BCH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("EOS", sdk.NewInt(1000)),
-// 	}
-
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		acc.SetCoins(coins)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		mapper.GetAccount(ctx, sdk.AccAddress(arr))
-// 	}
-// }
-
-// func BenchmarkAccountMapperSetAccount(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
-
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	b.ResetTimer()
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-// }
-
-// func BenchmarkAccountMapperSetAccountWithCoins(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
-
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	coins := sdk.Coins{
-// 		sdk.NewCoin("LTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("ETH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("XRP", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BCH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("EOS", sdk.NewInt(1000)),
-// 	}
-
-// 	b.ResetTimer()
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		acc.SetCoins(coins)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
+// 	activeIterator := keeper.ActiveProposalQueueIterator(ctx, proposal.GetVotingEndTime())
+// 	require.True(t, activeIterator.Valid())
+// 	keeper.cdc.UnmarshalBinaryLengthPrefixed(activeIterator.Value(), &proposalID)
+// 	require.Equal(t, proposalID, proposal.GetProposalID())
+// 	activeIterator.Close()
 // }

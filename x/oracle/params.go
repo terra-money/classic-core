@@ -40,7 +40,7 @@ func validateParams(params Params) error {
 		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())
 	}
 	if params.VoteThreshold.LT(sdk.NewDecWithPrec(33, 2)) {
-		return fmt.Errorf("oracle parameter VoteThreshold must be greater than 33%")
+		return fmt.Errorf("oracle parameter VoteThreshold must be greater than 33 percent")
 	}
 	return nil
 }

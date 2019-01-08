@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gonum.org/v1/gonum/stat"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -28,57 +26,6 @@ func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
 		FeedMsg: feedMsg,
 		Power:   power,
 	}
-}
-
-func getTotalVotePower(votes []PriceVote) sdk.Dec {
-	votePower := sdk.ZeroDec()
-	for _, vote := range votes {
-		votePower.Add(vote.Power)
-	}
-
-	return votePower
-}
-
-func decToFloat64(a sdk.Dec) float64 {
-	// roundup
-	b := a.MulInt(sdk.NewInt(10 ^ OracleDecPrec))
-	c := b.TruncateInt64()
-
-	return float64(c) / (10 ^ OracleDecPrec)
-}
-
-func float64ToDec(a float64) sdk.Dec {
-	b := int64(a * (10 ^ OracleDecPrec))
-	return sdk.NewDecWithPrec(b, 2)
-}
-
-func tallyVotes(votes []PriceVote) (targetMode sdk.Dec, observedMode sdk.Dec, rewardees []PriceVote) {
-	vTarget := make([]float64, len(votes))
-	vPower := make([]float64, len(votes))
-	vObserved := make([]float64, len(votes))
-
-	for _, vote := range votes {
-		vPower = append(vPower, decToFloat64(vote.Power))
-		vTarget = append(vTarget, decToFloat64(vote.FeedMsg.TargetPrice))
-		vObserved = append(vObserved, decToFloat64(vote.FeedMsg.ObservedPrice))
-	}
-
-	tmode, _ := stat.Mode(vTarget, vPower)
-	omode, _ := stat.Mode(vObserved, vPower)
-
-	tsd := stat.StdDev(vTarget, vPower)
-	osd := stat.StdDev(vTarget, vPower)
-
-	for i, vote := range votes {
-		if vTarget[i] >= tmode-tsd && vTarget[i] <= tmode+tsd &&
-			vObserved[i] >= omode-osd && vObserved[i] <= omode+osd {
-			rewardees = append(rewardees, vote)
-		}
-	}
-
-	targetMode = float64ToDec(tmode)
-	observedMode = float64ToDec(omode)
-	return
 }
 
 //-------------------------------------------------
