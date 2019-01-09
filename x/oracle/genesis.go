@@ -4,9 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GenesisState - all distribution state that must be provided at genesis
+// GenesisState - all oracle state that must be provided at genesis
 type GenesisState struct {
-	Params Params `json:"params"` // inflation params
+	Params Params `json:"params"` // oracle params
 }
 
 func NewGenesisState(params Params) GenesisState {

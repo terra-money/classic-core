@@ -9,9 +9,9 @@ import (
 
 // Params oracle parameters
 type Params struct {
-	Whitelist     []string `json:"whitelist"`      // type of coin to mint
-	VotePeriod    sdk.Int  `json:"vote_period"`    // maximum annual change in inflation rate
-	VoteThreshold sdk.Dec  `json:"vote_threshold"` // maximum inflation rate
+	Whitelist     []string `json:"whitelist"`      // whitelisted oracle denoms
+	VotePeriod    sdk.Int  `json:"vote_period"`    // voting period; tallys and reward claim period
+	VoteThreshold sdk.Dec  `json:"vote_threshold"` // minimum stake power threshold to clear vote
 }
 
 // NewParams creates a new param instance

@@ -20,7 +20,7 @@ func GetCmdQueryPrice(storeName string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			key := oracle.GetObservedPriceKey(denom)
+			key := oracle.KeyObservedPrice(denom)
 			bz, err := cliCtx.QueryStore(key, storeName)
 			if err != nil {
 				return err
@@ -51,7 +51,7 @@ func GetCmdQueryTarget(storeName string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			key := oracle.GetTargetPriceKey(denom)
+			key := oracle.KeyTargetPrice(denom)
 			bz, err := cliCtx.QueryStore(key, storeName)
 			if err != nil {
 				return err
@@ -86,7 +86,7 @@ func GetCmdQueryVote(storeName string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			key := oracle.GetVoteKey(denom, voterAddress)
+			key := oracle.KeyVote(denom, voterAddress)
 			bz, err := cliCtx.QueryStore(key, storeName)
 			if err != nil {
 				return err

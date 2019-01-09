@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// Precision of Oracle vote
 	OracleDecPrec = 2
 )
 
@@ -72,8 +73,20 @@ func (msg PriceFeedMsg) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements sdk.Msg
 func (msg PriceFeedMsg) ValidateBasic() sdk.Error {
+	if len(msg.Denom) == 0 {
+		return ErrUnknownDenomination(DefaultCodespace, "")
+	}
+
 	if len(msg.Feeder) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if msg.TargetPrice.LTE(sdk.ZeroDec()) {
+		return ErrInvalidPrice(DefaultCodespace, msg.TargetPrice)
+	}
+
+	if msg.ObservedPrice.LTE(sdk.ZeroDec()) {
+		return ErrInvalidPrice(DefaultCodespace, msg.ObservedPrice)
 	}
 
 	return nil

@@ -58,7 +58,7 @@ func getVoteHandlerFunction(cdc *codec.Codec, storeName string, cliCtx context.C
 			return
 		}
 
-		res, err := cliCtx.QueryStore(oracle.GetVoteKey(denom, voterAcc.GetAddress()), storeName)
+		res, err := cliCtx.QueryStore(oracle.KeyVote(denom, voterAcc.GetAddress()), storeName)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -74,7 +74,7 @@ func getCurrentHandlerFunction(cdc *codec.Codec, storeName string, cliCtx contex
 		vars := mux.Vars(r)
 		denom := vars[RestVoteDenom]
 
-		res, err := cliCtx.QueryStore(oracle.GetObservedPriceKey(denom), storeName)
+		res, err := cliCtx.QueryStore(oracle.KeyObservedPrice(denom), storeName)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -90,7 +90,7 @@ func getTargetHandlerFunction(cdc *codec.Codec, storeName string, cliCtx context
 		vars := mux.Vars(r)
 		denom := vars[RestVoteDenom]
 
-		res, err := cliCtx.QueryStore(oracle.GetTargetPriceKey(denom), storeName)
+		res, err := cliCtx.QueryStore(oracle.KeyTargetPrice(denom), storeName)
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

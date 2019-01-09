@@ -32,21 +32,39 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sd
 //-----------------------------------
 // Votes logic
 
-func (keeper Keeper) getVoteIterator(ctx sdk.Context, denom string) (iterator sdk.Iterator) {
-	store := ctx.KVStore(keeper.key)
-	iterator = sdk.KVStorePrefixIterator(store, GetVotePrefix(denom))
+func (keeper Keeper) getVotes(ctx sdk.Context, denom string) (votes []PriceVote) {
+	handler := func(vote PriceVote) (stop bool) {
+		votes = append(votes, vote)
+		return false
+	}
+	keeper.iterateVotes(ctx, denom, handler)
+
 	return
+}
+
+// Iterate over votes
+func (keeper Keeper) iterateVotes(ctx sdk.Context, denom string, handler func(vote PriceVote) (stop bool)) {
+	store := ctx.KVStore(keeper.key)
+	iter := sdk.KVStorePrefixIterator(store, PrefixVote(denom))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote PriceVote
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
 }
 
 func (keeper Keeper) addVote(ctx sdk.Context, vote PriceVote) {
 	store := ctx.KVStore(keeper.key)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
-	store.Set(GetVoteKey(vote.FeedMsg.Denom, vote.FeedMsg.Feeder), bz)
+	store.Set(KeyVote(vote.FeedMsg.Denom, vote.FeedMsg.Feeder), bz)
 }
 
 func (keeper Keeper) deleteVote(ctx sdk.Context, vote PriceVote) {
 	store := ctx.KVStore(keeper.key)
-	store.Delete(GetVoteKey(vote.FeedMsg.Denom, vote.FeedMsg.Feeder))
+	store.Delete(KeyVote(vote.FeedMsg.Denom, vote.FeedMsg.Feeder))
 }
 
 //-----------------------------------
@@ -55,13 +73,13 @@ func (keeper Keeper) deleteVote(ctx sdk.Context, vote PriceVote) {
 func (keeper Keeper) setPriceTarget(ctx sdk.Context, denom string, targetPrice sdk.Dec) {
 	store := ctx.KVStore(keeper.key)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(targetPrice)
-	store.Set(GetTargetPriceKey(denom), bz)
+	store.Set(KeyTargetPrice(denom), bz)
 }
 
 func (keeper Keeper) setPriceObserved(ctx sdk.Context, denom string, observedPrice sdk.Dec) {
 	store := ctx.KVStore(keeper.key)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(observedPrice)
-	store.Set(GetObservedPriceKey(denom), bz)
+	store.Set(KeyObservedPrice(denom), bz)
 }
 
 func (keeper Keeper) GetPriceTarget(ctx sdk.Context, denom string) (targetPrice sdk.Dec) {
@@ -70,7 +88,7 @@ func (keeper Keeper) GetPriceTarget(ctx sdk.Context, denom string) (targetPrice 
 	}
 
 	store := ctx.KVStore(keeper.key)
-	b := store.Get(GetTargetPriceKey(denom))
+	b := store.Get(KeyTargetPrice(denom))
 	if b == nil {
 		return sdk.ZeroDec()
 	}
@@ -84,7 +102,7 @@ func (keeper Keeper) GetPriceObserved(ctx sdk.Context, denom string) (observedPr
 	}
 
 	store := ctx.KVStore(keeper.key)
-	b := store.Get(GetObservedPriceKey(denom))
+	b := store.Get(KeyObservedPrice(denom))
 	if b == nil {
 		return sdk.ZeroDec()
 	}

@@ -2,162 +2,114 @@ package oracle
 
 import (
 	"terra/types/assets"
-	"terra/types/tax"
-	"terra/x/treasury"
 	"testing"
-	"time"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/mock"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/stake"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto"
-	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
-// initialize the mock application for this module
-func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, stake.Keeper, []sdk.AccAddress, []crypto.PubKey, []crypto.PrivKey) {
-	mapp := mock.NewApp()
+func TestOracle(t *testing.T) {
+	mapp, keeper, sk, addrs, pubKeys, _ := getMockApp(t, 5)
+	mapp.BeginBlock(abci.RequestBeginBlock{})
 
-	stake.RegisterCodec(mapp.Cdc)
-	//RegisterCodec(mapp.Cdc)
+	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
 
-	keyGlobalParams := sdk.NewKVStoreKey("params")
-	tkeyGlobalParams := sdk.NewTransientStoreKey("transient_params")
-	keyStake := sdk.NewKVStoreKey("stake")
-	tkeyStake := sdk.NewTransientStoreKey("transient_stake")
-	keyTreasury := sdk.NewKVStoreKey("treasury")
-	keyOracle := sdk.NewKVStoreKey("oracle")
-	keyBank := sdk.NewKVStoreKey("bank")
-	keyFeeCollection := sdk.NewKVStoreKey("fee")
+	//Set up validators
+	stakeHandler := stake.NewHandler(sk)
+	for i := 0; i < len(addrs); i++ {
+		valCreateMsg := stake.NewMsgCreateValidator(
+			sdk.ValAddress(addrs[i].Bytes()), pubKeys[i],
+			sdk.NewInt64Coin(assets.LunaDenom, 10), stake.Description{},
+			stake.NewCommissionMsg(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+		)
 
-	pk := params.NewKeeper(mapp.Cdc, keyGlobalParams, tkeyGlobalParams)
-	fck := auth.NewFeeCollectionKeeper(mapp.Cdc, keyFeeCollection)
-	ck := tax.NewBaseKeeper(keyBank, mapp.Cdc, mapp.AccountKeeper, fck)
-	sk := stake.NewKeeper(mapp.Cdc, keyStake, tkeyStake, ck, pk.Subspace(stake.DefaultParamspace), stake.DefaultCodespace)
-	tk := treasury.NewKeeper(keyTreasury, mapp.Cdc, ck)
-	keeper := NewKeeper(keyOracle, mapp.Cdc, tk, sk.GetValidatorSet(), pk.Subspace(DefaultParamspace))
+		res := stakeHandler(ctx, valCreateMsg)
+		require.True(t, res.IsOK())
 
-	mapp.Router().AddRoute("oracle", NewHandler(keeper))
-	//mapp.QueryRouter().AddRoute("oracle", NewQuerier(keeper))
-
-	genAccs, addrs, pubKeys, privKeys := mock.CreateGenAccounts(numGenAccs, sdk.Coins{sdk.NewInt64Coin(assets.LunaDenom, 42)})
-
-	mapp.SetEndBlocker(getEndBlocker(keeper))
-	mapp.SetInitChainer(getInitChainer(mapp, keeper, sk, addrs, pubKeys))
-
-	require.NoError(t, mapp.CompleteSetup(keyStake, tkeyStake,
-		keyTreasury,
-		keyOracle, keyBank, keyFeeCollection,
-		keyGlobalParams, tkeyGlobalParams))
-
-	mock.SetGenesis(mapp, genAccs)
-
-	return mapp, keeper, sk, addrs, pubKeys, privKeys
-}
-
-// gov and stake endblocker
-func getEndBlocker(keeper Keeper) sdk.EndBlocker {
-	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-		tags := EndBlocker(ctx, keeper)
-		return abci.ResponseEndBlock{
-			Tags: tags,
-		}
+		validator, _ := sk.GetValidator(ctx, sdk.ValAddress(addrs[i].Bytes()))
+		validator.UpdateStatus(sk.GetPool(ctx), sdk.Bonded)
 	}
-}
+	_ = sk.ApplyAndReturnValidatorSetUpdates(ctx)
 
-// oracle and stake initchainer
-func getInitChainer(mapp *mock.App, keeper Keeper, stakeKeeper stake.Keeper, addrs []sdk.AccAddress, pubKeys []crypto.PubKey) sdk.InitChainer {
-	return func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-		mapp.InitChainer(ctx, req)
+	// Set up prices
+	targetPrice := sdk.NewDecWithPrec(88, 2)
+	observedPrice := sdk.NewDecWithPrec(77, 2)
 
-		defaultDescription := stake.Description{
-			Moniker:  "",
-			Identity: "",
-			Website:  "",
-			Details:  "",
-		}
+	h := NewHandler(keeper)
 
-		stakeGenesis := stake.GenesisState{
-			Pool: stake.InitialPool(),
-			Params: stake.Params{
-				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
-				MaxValidators: 100,
-				BondDenom:     assets.LunaDenom,
-			},
-			Validators: []stake.Validator{
-				stake.NewValidator(sdk.ValAddress(addrs[0].Bytes()), pubKeys[0], defaultDescription),
-				stake.NewValidator(sdk.ValAddress(addrs[1].Bytes()), pubKeys[1], defaultDescription),
-				stake.NewValidator(sdk.ValAddress(addrs[2].Bytes()), pubKeys[2], defaultDescription),
-			},
-		}
-		stakeGenesis.Pool.LooseTokens = sdk.NewDec(100000)
+	// Case 0: non-oracle message being sent fails
+	msg := bank.MsgSend{}
+	res := h(ctx, msg)
+	require.False(t, res.IsOK())
 
-		validators, err := stake.InitGenesis(ctx, stakeKeeper, stakeGenesis)
-		if err != nil {
-			panic(err)
-		}
-		InitGenesis(ctx, keeper, DefaultGenesisState())
-		return abci.ResponseInitChain{
-			Validators: validators,
-		}
+	// Case 1: Normal pricefeedmsg submission goes through
+	pfm := PriceFeedMsg{
+		Denom:         assets.KRWDenom,
+		TargetPrice:   targetPrice,
+		ObservedPrice: observedPrice,
+		Feeder:        addrs[0],
 	}
+	res = h(ctx, pfm)
+	require.True(t, res.IsOK())
+
+	// Case 1: a non-validator sending an oracle message fails
+	_, randoAddrs := mock.GeneratePrivKeyAddressPairs(1)
+	pfm.Feeder = randoAddrs[0]
+
+	res = h(ctx, pfm)
+	require.False(t, res.IsOK())
+
+	// Case 2: sending a message for a non-whitelisted coin fails
+	pfm.Feeder = addrs[0]
+	pfm.Denom = "sketchyCoin"
+	res = h(ctx, pfm)
+	require.False(t, res.IsOK())
+
+	// Case 3: less than the threshold has signs, msg fails
+	pfm.Denom = assets.KRWDenom
+	res = h(ctx, pfm)
+
+	ctx = ctx.WithBlockHeight(1)
+
+	require.Equal(t, sdk.ZeroDec(), keeper.GetPriceTarget(ctx, assets.KRWDenom))
+
+	// Case 5: more than the threshold signs, msg succeeds
+	//fmt.Printf("Block height : %d\n", ctx.BlockHeight())
+	pfm.Feeder = addrs[1]
+	res = h(ctx, pfm)
+	pfm.Feeder = addrs[2]
+	res = h(ctx, pfm)
+	pfm.Feeder = addrs[3]
+	res = h(ctx, pfm)
+	pfm.Feeder = addrs[4]
+	res = h(ctx, pfm)
+
+	// votes := keeper.getVotes(ctx, assets.KRWDenom)
+	// for _, vote := range votes {
+	// 	fmt.Printf("%v \n", vote)
+	// }
+
+	// vals := sk.GetValidators(ctx, 10)
+	// for _, v := range vals {
+	// 	fmt.Printf("%v %v %v %v\n", v, v.GetPower(), v.GetTokens(), v.Status)
+	// }
+
+	ctx = ctx.WithBlockHeight(2)
+	EndBlocker(ctx, keeper)
+
+	//fmt.Printf("Block height : %d \n", ctx.BlockHeight())
+	require.Equal(t, targetPrice, keeper.GetPriceTarget(ctx, assets.KRWDenom))
+	require.Equal(t, observedPrice, keeper.GetPriceObserved(ctx, assets.KRWDenom))
+
+	// Case 6: one of the previously signed validators are kicked out, msg should now fail
+
+	// Case 7: more than the threshold signs, the msg now succeeds
 }
-
-func defaultContext(keys ...sdk.StoreKey) sdk.Context {
-	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
-	for _, key := range keys {
-		cms.MountStoreWithDB(key, sdk.StoreTypeIAVL, db)
-	}
-	cms.LoadLatestVersion()
-	ctx := sdk.NewContext(cms, abci.Header{}, false, nil)
-	return ctx
-}
-
-// func TestOracle(t *testing.T) {
-// 	mapp, keeper, _, addrs, _, _ := getMockApp(t, 5)
-// 	ctx := mapp.Contex
-
-// 	//valset := sk.GetValidatorSet()
-
-// 	h := NewHandler(keeper)
-
-// 	// Case 0: non-oracle message being sent fails
-// 	msg := bank.MsgSend{}
-// 	res := h(mapp.Con, msg)
-// 	require.False(t, res.IsOK())
-
-// 	// Case 1: Normal pricefeedmsg submission goes through
-// 	pfm := PriceFeedMsg{
-// 		Denom:         assets.KRWDenom,
-// 		TargetPrice:   sdk.OneDec(),
-// 		ObservedPrice: sdk.OneDec(),
-// 		Feeder:        addrs[0],
-// 	}
-// 	res = h(ctx, pfm)
-// 	require.True(t, res.IsOK())
-
-// 	// Case 1: a non-validator sending an oracle message fails
-
-// 	// msg := Msg{seqOracle{0, 0}, []byte("randomguy")}
-// 	// res := h(ctx, msg)
-
-// 	// Case 2: sending a message for a non-whitelisted coin fails
-
-// 	// Case 3: less than the threshold has signs, msg fails
-
-// 	// Case 4: double signing, msg fails
-
-// 	// Case 5: more than the threshold signs, msg succeeds
-
-// 	// Case 6: one of the previously signed validators are kicked out, msg should now fail
-
-// 	// Case 7: more than the threshold signs, the msg now succeeds
 
 // 	// cdc := makeCodec()
 

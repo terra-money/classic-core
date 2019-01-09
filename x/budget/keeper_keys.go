@@ -21,7 +21,7 @@ var (
 
 // GenerateProgramKey creates a key of the form "Programs"|{state}|{ProgramID}
 func KeyProgram(programID uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", KeyProgram, programID))
+	return []byte(fmt.Sprintf("%s:%d", PrefixProgram, programID))
 }
 
 // Key for getting a specific vote from the store

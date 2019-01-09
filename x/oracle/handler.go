@@ -2,7 +2,6 @@ package oracle
 
 import (
 	"fmt"
-	"terra/x/treasury"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gonum.org/v1/gonum/stat"
@@ -34,7 +33,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		newTags.AppendTag("action", []byte("price_update"))
 		for _, denom := range whitelist {
 
-			votes := getVotesForDenom(k, ctx, denom)
+			votes := k.getVotes(ctx, denom)
 			votePower := getTotalVotePower(votes)
 
 			// Not enough validators have voted, skip
@@ -45,6 +44,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 
 			// Get weighted median prices, and faithful respondants
 			targetMode, observedMode, rewardees := tallyVotes(votes)
+			fmt.Printf("%v %v %v\n", targetMode, observedMode, rewardees)
 
 			// Clear stale votes
 			clearVotesForDenom(k, ctx, denom)
@@ -55,16 +55,16 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 
 			// Pay out rewardees
 			// TODO: handle cases where the reward is too small
-			rewardeePower := getTotalVotePower(rewardees)
-			for _, recipient := range rewardees {
+			// rewardeePower := getTotalVotePower(rewardees)
+			// for _, recipient := range rewardees {
 
-				k.tk.AddClaim(ctx, treasury.NewBaseClaim(
-					treasury.OracleShareID,
-					recipient.Power.Quo(rewardeePower),
-					recipient.FeedMsg.Feeder,
-				),
-				)
-			}
+			// 	k.tk.AddClaim(ctx, treasury.NewBaseClaim(
+			// 		treasury.OracleShareID,
+			// 		recipient.Power.Quo(rewardeePower),
+			// 		recipient.FeedMsg.Feeder,
+			// 	),
+			// 	)
+			// }
 
 			newTags.AppendTag(denom, []byte(fmt.Sprintf("target %v observed %v rewardees %v",
 				targetMode, observedMode, rewardees)))
@@ -108,33 +108,18 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 //------------------------------------------
 // Util functions
 
-func getVotesForDenom(k Keeper, ctx sdk.Context, denom string) (votes []PriceVote) {
-	voteIterator := k.getVoteIterator(ctx, denom)
-	for ; voteIterator.Valid(); voteIterator.Next() {
-		var vote PriceVote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(voteIterator.Value(), &vote)
-
-		votes = append(votes, vote)
-	}
-	voteIterator.Close()
-	return votes
-}
-
 func clearVotesForDenom(k Keeper, ctx sdk.Context, denom string) {
-	voteIterator := k.getVoteIterator(ctx, denom)
-	for ; voteIterator.Valid(); voteIterator.Next() {
-		var vote PriceVote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(voteIterator.Value(), &vote)
-
+	handler := func(vote PriceVote) (stop bool) {
 		k.deleteVote(ctx, vote)
+		return false
 	}
-	voteIterator.Close()
+	k.iterateVotes(ctx, denom, handler)
 }
 
 func getTotalVotePower(votes []PriceVote) sdk.Dec {
 	votePower := sdk.ZeroDec()
 	for _, vote := range votes {
-		votePower.Add(vote.Power)
+		votePower = votePower.Add(vote.Power)
 	}
 
 	return votePower
@@ -154,15 +139,17 @@ func float64ToDec(a float64) sdk.Dec {
 }
 
 func tallyVotes(votes []PriceVote) (targetMode sdk.Dec, observedMode sdk.Dec, rewardees []PriceVote) {
-	vTarget := make([]float64, len(votes))
-	vPower := make([]float64, len(votes))
-	vObserved := make([]float64, len(votes))
+	var vTarget []float64
+	var vPower []float64
+	var vObserved []float64
 
 	for _, vote := range votes {
 		vPower = append(vPower, decToFloat64(vote.Power))
 		vTarget = append(vTarget, decToFloat64(vote.FeedMsg.TargetPrice))
 		vObserved = append(vObserved, decToFloat64(vote.FeedMsg.ObservedPrice))
 	}
+
+	fmt.Printf("%v %v\n", vPower, vTarget)
 
 	tmode, _ := stat.Mode(vTarget, vPower)
 	omode, _ := stat.Mode(vObserved, vPower)
