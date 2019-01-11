@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"terra/app"
@@ -40,8 +40,11 @@ import (
 	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakeClient "github.com/cosmos/cosmos-sdk/x/stake/client"
-
 	_ "terra/client/lcd/statik"
+
+	marketClient "terra/x/market/client"
+	oracleClient "terra/x/oracle/client"
+	treasuryClient "terra/x/treasury/client"
 )
 
 const (
@@ -50,6 +53,9 @@ const (
 	storeSlashing = "slashing"
 	storeStake    = "stake"
 	storeDist     = "distr"
+	storeOracle   = "oracle"
+	storeMarket   = "market"
+	storeTreasury = "treasury"
 )
 
 func main() {
@@ -77,6 +83,9 @@ func main() {
 		distClient.NewModuleClient(storeDist, cdc),
 		stakeClient.NewModuleClient(storeStake, cdc),
 		slashingClient.NewModuleClient(storeSlashing, cdc),
+		oracleClient.NewModuleClient(storeOracle, cdc),
+		marketClient.NewModuleClient(storeMarket, cdc),
+		treasuryClient.NewModuleClient(storeTreasury, cdc),
 	}
 
 	rootCmd := &cobra.Command{

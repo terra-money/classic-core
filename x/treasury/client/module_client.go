@@ -37,5 +37,5 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 
 // The treasury module returns no TX commands.
 func (mc ModuleClient) GetTxCmd() *cobra.Command {
-	&cobra.Command{Hidden: true}
+	return &cobra.Command{Hidden: true}
 }

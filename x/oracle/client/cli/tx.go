@@ -22,7 +22,7 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Short: "Submit a vote for the price oracle",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithCodec(cdc)
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)

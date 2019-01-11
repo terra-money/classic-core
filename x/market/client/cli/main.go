@@ -28,7 +28,7 @@ func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Atomically swap [offerCoin] asset with [askDenom] asset",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithCodec(cdc)
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
