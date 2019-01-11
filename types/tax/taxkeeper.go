@@ -126,18 +126,18 @@ func (keeper BaseKeeper) InputOutputCoins(ctx sdk.Context, inputs []bank.Input, 
 
 	for _, out := range outputs {
 
+		_, tags, err := addCoins(ctx, keeper, out.Address, out.Coins)
+		if err != nil {
+			return nil, err
+		}
+		allTags = allTags.AppendTags(tags)
+
 		taxes := keeper.calculateTaxes(ctx, out.Coins)
 		_, taxTags, err := subtractCoins(ctx, keeper, out.Address, taxes)
 		if err != nil {
 			return nil, err
 		}
 		allTags = allTags.AppendTags(taxTags)
-
-		_, tags, err := addCoins(ctx, keeper, out.Address, out.Coins)
-		if err != nil {
-			return nil, err
-		}
-		allTags = allTags.AppendTags(tags)
 	}
 
 	return allTags, nil
@@ -225,7 +225,7 @@ func subtractCoins(ctx sdk.Context, keeper BaseKeeper, addr sdk.AccAddress, amt 
 	oldCoins := getCoins(ctx, keeper.am, addr)
 	newCoins, hasNeg := oldCoins.SafeMinus(amt)
 	if hasNeg {
-		return amt, nil, sdk.ErrInsufficientCoins(fmt.Sprintf("%s < %s", oldCoins, amt))
+		return amt, nil, sdk.ErrInsufficientCoins(fmt.Sprintf("%s : %s", oldCoins, amt))
 	}
 
 	// Update issuance

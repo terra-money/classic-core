@@ -40,7 +40,7 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	tags.AppendTags(swapTags)
 
 	// Pay gains to the treasury
-	k.tk.AddIncome(ctx, sdk.Coins{msg.OfferCoin})
+	_ = k.tk.AddIncome(ctx, sdk.Coins{msg.OfferCoin})
 
 	tags.AppendTags(
 		sdk.NewTags(
