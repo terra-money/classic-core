@@ -10,7 +10,8 @@ import (
 
 // nolint
 var (
-	prefixVote          = []byte("vote")
+	prefixTargetVote    = []byte("target_vote")
+	prefixObservedVote  = []byte("observed_vote")
 	prefixTargetPrice   = []byte("target_price")
 	prefixObservedPrice = []byte("observed_price")
 	KeyWhitelist        = []byte("whitelist")
@@ -19,15 +20,29 @@ var (
 	ParamStoreKeyParams = []byte("params")
 )
 
-// PrefixVote is in format of prefix||denom
-func PrefixVote(denom string) []byte {
-	return []byte(fmt.Sprintf("%s:%s", prefixVote, denom))
+// PrefixTargetVote is in format of prefix||denom
+func PrefixTargetVote(denom string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixTargetVote, denom))
 }
 
-// KeyVote Key is in format of PrefixVote||denom||voter.AccAddress
-func KeyVote(denom string, voter sdk.AccAddress) []byte {
+// KeyTargetVote Key is in format of PrefixVote||denom||voter.AccAddress
+func KeyTargetVote(denom string, voter sdk.AccAddress) []byte {
 	return bytes.Join([][]byte{
-		prefixVote,
+		prefixTargetVote,
+		[]byte(denom),
+		voter.Bytes(),
+	}, KeyDelimiter)
+}
+
+// prefixObservedVote is in format of prefix||denom
+func PrefixObservedVote(denom string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixObservedVote, denom))
+}
+
+// KeyObservedVote Key is in format of PrefixVote||denom||voter.AccAddress
+func KeyObservedVote(denom string, voter sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{
+		prefixObservedVote,
 		[]byte(denom),
 		voter.Bytes(),
 	}, KeyDelimiter)

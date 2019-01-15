@@ -11,9 +11,9 @@ import (
 
 // Keeper of the oracle store
 type Keeper struct {
-	key        sdk.StoreKey
-	cdc        *codec.Codec
-	tk         treasury.Keeper
+	key sdk.StoreKey
+	cdc *codec.Codec
+
 	valset     sdk.ValidatorSet
 	paramSpace params.Subspace
 }
@@ -21,9 +21,9 @@ type Keeper struct {
 // NewKeeper constructs a new keeper
 func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		key:        key,
-		tk:         tk,
+		cdc: cdc,
+		key: key,
+
 		valset:     valset,
 		paramSpace: paramspace.WithTypeTable(ParamTypeTable()),
 	}
@@ -32,20 +32,30 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sd
 //-----------------------------------
 // Votes logic
 
-func (keeper Keeper) getVotes(ctx sdk.Context, denom string) (votes []PriceVote) {
+func (keeper Keeper) getTargetVotes(ctx sdk.Context, denom string) (votes PriceBallot) {
 	handler := func(vote PriceVote) (stop bool) {
 		votes = append(votes, vote)
 		return false
 	}
-	keeper.iterateVotes(ctx, denom, handler)
+	keeper.iterateTargetVotes(ctx, denom, handler)
+
+	return
+}
+
+func (keeper Keeper) getObservedVotes(ctx sdk.Context, denom string) (votes PriceBallot) {
+	handler := func(vote PriceVote) (stop bool) {
+		votes = append(votes, vote)
+		return false
+	}
+	keeper.iterateObservedVotes(ctx, denom, handler)
 
 	return
 }
 
 // Iterate over votes
-func (keeper Keeper) iterateVotes(ctx sdk.Context, denom string, handler func(vote PriceVote) (stop bool)) {
+func (keeper Keeper) iterateTargetVotes(ctx sdk.Context, denom string, handler func(vote PriceVote) (stop bool)) {
 	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixVote(denom))
+	iter := sdk.KVStorePrefixIterator(store, PrefixTargetVote(denom))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var vote PriceVote
@@ -56,15 +66,40 @@ func (keeper Keeper) iterateVotes(ctx sdk.Context, denom string, handler func(vo
 	}
 }
 
-func (keeper Keeper) addVote(ctx sdk.Context, vote PriceVote) {
+// Iterate over votes
+func (keeper Keeper) iterateObservedVotes(ctx sdk.Context, denom string, handler func(vote PriceVote) (stop bool)) {
 	store := ctx.KVStore(keeper.key)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
-	store.Set(KeyVote(vote.FeedMsg.Denom, vote.FeedMsg.Feeder), bz)
+	iter := sdk.KVStorePrefixIterator(store, PrefixObservedVote(denom))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote PriceVote
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
 }
 
-func (keeper Keeper) deleteVote(ctx sdk.Context, vote PriceVote) {
+func (keeper Keeper) addTargetVote(ctx sdk.Context, vote PriceVote) {
 	store := ctx.KVStore(keeper.key)
-	store.Delete(KeyVote(vote.FeedMsg.Denom, vote.FeedMsg.Feeder))
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
+	store.Set(KeyTargetVote(vote.Denom, vote.Voter), bz)
+}
+
+func (keeper Keeper) addObservedVote(ctx sdk.Context, vote PriceVote) {
+	store := ctx.KVStore(keeper.key)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(vote)
+	store.Set(KeyObservedVote(vote.Denom, vote.Voter), bz)
+}
+
+func (keeper Keeper) deleteTargetVote(ctx sdk.Context, vote PriceVote) {
+	store := ctx.KVStore(keeper.key)
+	store.Delete(KeyTargetVote(vote.Denom, vote.Voter))
+}
+
+func (keeper Keeper) deleteObservedVote(ctx sdk.Context, vote PriceVote) {
+	store := ctx.KVStore(keeper.key)
+	store.Delete(KeyObservedVote(vote.Denom, vote.Voter))
 }
 
 //-----------------------------------

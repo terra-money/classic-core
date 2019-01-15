@@ -15,23 +15,6 @@ const (
 //-------------------------------------------------
 //-------------------------------------------------
 
-// PriceVote - struct to store a validator's vote on the price
-type PriceVote struct {
-	FeedMsg PriceFeedMsg
-	Power   sdk.Dec
-}
-
-// NewPriceVote creates a PriceVote instance
-func NewPriceVote(feedMsg PriceFeedMsg, power sdk.Dec) PriceVote {
-	return PriceVote{
-		FeedMsg: feedMsg,
-		Power:   power,
-	}
-}
-
-//-------------------------------------------------
-//-------------------------------------------------
-
 // PriceFeedMsg - struct for voting on payloads. Note that the Price
 // is denominated in Luna. All validators must vote on Terra prices.
 type PriceFeedMsg struct {
