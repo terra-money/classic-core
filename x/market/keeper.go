@@ -6,18 +6,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 //nolint
 type Keeper struct {
-	storeKey  sdk.StoreKey      // Key to our module's store
-	codespace sdk.CodespaceType // Reserves space for error codes
-	cdc       *codec.Codec      // Codec to encore/decode structs
-	ok        oracle.Keeper     // Read terra & luna prices
-	tk        treasury.Keeper   // Pay mint revenues to the treasury
-	bk        bank.Keeper
+	storeKey sdk.StoreKey    // Key to our module's store
+	ok       oracle.Keeper   // Read terra & luna prices
+	tk       treasury.Keeper // Pay mint revenues to the treasury
+	bk       bank.Keeper
 }
 
 // NewKeeper crates a new keeper with write and read access
@@ -43,20 +40,23 @@ func whitelistContains(ctx sdk.Context, k Keeper, denom string) bool {
 	return false
 }
 
+// SwapCoins swaps the offerCoin for the requisite amount of coins of the askDenom
+// at the Target exchange rate for both the offered and asked coins.
+// Returns an error if the ask is not registered.
 func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
 	// If swap msg for not whitelisted denom
 	if !whitelistContains(ctx, k, offerCoin.Denom) {
 		return sdk.Coin{}, ErrUnknownDenomination(DefaultCodespace, offerCoin.Denom)
 	}
 
-	offerRate, tErr := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
-	if tErr != nil {
-		panic(tErr)
+	offerRate := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
+	if offerRate.Equal(sdk.ZeroDec()) {
+		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
 
-	askRate, oErr := k.ok.GetPriceObserved(ctx, askDenom)
-	if oErr != nil {
-		panic(oErr)
+	askRate := k.ok.GetPriceTarget(ctx, askDenom)
+	if askRate.Equal(sdk.ZeroDec()) {
+		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
 	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()

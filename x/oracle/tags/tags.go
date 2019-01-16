@@ -1,6 +1,6 @@
 package tags
 
-// Governance tags
+// Oracle tags
 var (
 	ActionPriceUpdate   = []byte("price-update")
 	ActionVoteSubmitted = []byte("vote-submitted")

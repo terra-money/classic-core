@@ -33,8 +33,14 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
 //------------------------------------
 
 func (k Keeper) GetShare(ctx sdk.Context, shareID string) (res Share, err sdk.Error) {
-	share, err := util.Get(k.key, k.cdc, ctx, GetShareKey(shareID))
-	return share.(Share), err
+	store := ctx.KVStore(k.key)
+	bz := store.Get(GetShareKey(shareID))
+	if bz == nil {
+		err = ErrNoShareFound(DefaultCodespace, shareID)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	return
 }
 
 func (k Keeper) ResetShares(ctx sdk.Context, shares []Share) sdk.Error {
@@ -67,40 +73,65 @@ func dividePool(ratio sdk.Dec, pool sdk.Coins) sdk.Coins {
 }
 
 func (k Keeper) SettleShares(ctx sdk.Context) {
-	shares := util.Collect(k.key, k.cdc, ctx, PrefixShare)
+	incomePool := k.getIncomePool(ctx)
 
-	incomePool, err := k.getIncomePool(ctx)
-	if err != nil {
-		panic(err)
-	}
+	store := ctx.KVStore(k.key)
 
-	residualPool := incomePool
+	shareIter := sdk.KVStorePrefixIterator(store, PrefixShare)
+	for ; shareIter.Valid(); shareIter.Next() {
+		var share Share
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(shareIter.Value(), &share)
 
-	for _, share := range shares {
-		share := share.(Share)
-		sharePool := dividePool(share.GetWeight(), incomePool)
+		claimIter := sdk.KVStorePrefixIterator(store, GetClaimsForSharePrefix(share.ID()))
+		for ; claimIter.Valid(); claimIter.Next() {
+			var claim Claim
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(claimIter.Value(), &claim)
 
-		claims := util.Collect(k.key, k.cdc, ctx, GetClaimsForSharePrefix(share.ID()))
+			claimWeight := share.GetWeight().Mul(claim.GetWeight())
+			claimCoin := dividePool(claimWeight, incomePool)
+			claim.Settle(ctx, k.tk, claimCoin)
 
-		totalWeight := sdk.ZeroDec()
-		for _, c := range claims {
-			c := c.(Claim)
-			totalWeight = totalWeight.Add(c.GetWeight())
+			store.Delete(claimIter.Key())
 		}
+		claimIter.Close()
 
-		// Settle claims with others
-		for _, c := range claims {
-			c := c.(Claim)
-			adjustedWeight := c.GetWeight().Quo(totalWeight)
-			claimCoin := dividePool(adjustedWeight, sharePool)
-			c.Settle(ctx, k.tk, claimCoin)
-
-			residualPool.Minus(claimCoin)
-		}
 	}
+	shareIter.Close()
 
-	// Set remaining coins as the remaining income pool
-	util.Set(k.key, k.cdc, ctx, KeyIncomePool, residualPool)
+	// shares := util.Collect(k.key, k.cdc, ctx, PrefixShare)
+
+	// incomePool, err := k.getIncomePool(ctx)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// residualPool := incomePool
+
+	// for _, share := range shares {
+	// 	share := share.(Share)
+	// 	sharePool := dividePool(share.GetWeight(), incomePool)
+
+	// 	claims := util.Collect(k.key, k.cdc, ctx, GetClaimsForSharePrefix(share.ID()))
+
+	// 	totalWeight := sdk.ZeroDec()
+	// 	for _, c := range claims {
+	// 		c := c.(Claim)
+	// 		totalWeight = totalWeight.Add(c.GetWeight())
+	// 	}
+
+	// 	// Settle claims with others
+	// 	for _, c := range claims {
+	// 		c := c.(Claim)
+	// 		adjustedWeight := c.GetWeight().Quo(totalWeight)
+	// 		claimCoin := dividePool(adjustedWeight, sharePool)
+	// 		c.Settle(ctx, k.tk, claimCoin)
+
+	// 		residualPool.Minus(claimCoin)
+	// 	}
+	// }
+
+	// // Set remaining coins as the remaining income pool
+	// util.Set(k.key, k.cdc, ctx, KeyIncomePool, residualPool)
 }
 
 // Logic for Income Pool
@@ -109,32 +140,27 @@ func (k Keeper) SettleShares(ctx sdk.Context) {
 //------------------------------------
 
 // AddIncome adds income to the treasury module
-func (k Keeper) AddIncome(ctx sdk.Context, income sdk.Coins) sdk.Error {
-
-	taxDenom := income[0].Denom
-
-	// Error if income is not paid in Terra tokens
-	if taxDenom != assets.TerraDenom {
-		return ErrWrongTaxDenomination(DefaultCodespace, taxDenom)
-	}
-
-	incomePool, err := k.getIncomePool(ctx)
-	if err != nil {
-		return err
-	}
+func (k Keeper) AddIncome(ctx sdk.Context, income sdk.Coins) {
+	incomePool := k.getIncomePool(ctx)
 	incomePool = incomePool.Plus(income)
 
-	util.Set(k.key, k.cdc, ctx, KeyIncomePool, incomePool)
-	return nil
-}
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(incomePool)
+	store.Set(KeyIncomePool, bz)
 
-func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins, err sdk.Error) {
-	incomePool, err := util.Get(k.key, k.cdc, ctx, KeyIncomePool)
-	if err != nil {
-		return
+	if incomePool.AmountOf(assets.LunaDenom).GT(sdk.ZeroInt()) {
+
 	}
 
-	res = incomePool.(sdk.Coins)
+}
+
+func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins) {
+	store := ctx.KVStore(k.key)
+	bz := store.Get(KeyIncomePool)
+	if bz == nil {
+		panic(nil)
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	return
 }
 
@@ -144,5 +170,7 @@ func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins, err sdk.Error) {
 //------------------------------------
 
 func (k Keeper) AddClaim(ctx sdk.Context, claim Claim) {
-	util.Set(k.key, k.cdc, ctx, GetClaimKey(claim.ShareID(), claim.ID()), claim)
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
+	store.Set(GetClaimKey(claim.ShareID(), claim.ID()), bz)
 }

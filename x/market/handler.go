@@ -3,6 +3,8 @@ package market
 import (
 	"reflect"
 
+	"terra/x/market/tags"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
@@ -14,7 +16,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		case SwapMsg:
 			return handleSwapMsg(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized swap Msg type: " + reflect.TypeOf(msg).Name()
+			errMsg := "Unrecognized market Msg type: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -22,8 +24,6 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
-	tags := sdk.NewTags()
-
 	retCoin, err := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
 	if err != nil {
 		return err.Result()
@@ -37,21 +37,17 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 		return swapErr.Result()
 	}
 
-	tags.AppendTags(swapTags)
+	swapTags.AppendTags(swapTags)
 
 	// Pay gains to the treasury
 	k.tk.AddIncome(ctx, sdk.Coins{msg.OfferCoin})
 
-	tags.AppendTags(
-		sdk.NewTags(
-			"action", []byte("swap"),
-			"offer", []byte(msg.OfferCoin.String()),
-			"ask", []byte(retCoin.String()),
-			"trader", msg.Trader.Bytes(),
-		),
-	)
-
 	return sdk.Result{
-		Tags: tags,
+		Tags: sdk.NewTags(
+			sdk.TagAction, tags.ActionSwap,
+			tags.Offer, []byte(msg.OfferCoin.String()),
+			tags.Ask, []byte(retCoin.String()),
+			tags.Trader, msg.Trader.Bytes(),
+		),
 	}
 }

@@ -6,10 +6,11 @@ import (
 
 // Oracle errors reserve 1101-1199
 const (
-	DefaultCodespace sdk.CodespaceType = "TREASURY"
+	DefaultCodespace sdk.CodespaceType = "treasury"
 
 	CodeWrongTaxDenom   sdk.CodeType = 1
 	CodeExcessiveWeight sdk.CodeType = 2
+	CodeNoShareFound    sdk.CodeType = 3
 )
 
 // ----------------------------------------
@@ -23,4 +24,8 @@ func ErrWrongTaxDenomination(codespace sdk.CodespaceType, denom string) sdk.Erro
 // ErrExcessiveWeight called when a claim is added with an excessive weight (total > 1)
 func ErrExcessiveWeight(codespace sdk.CodespaceType, weight sdk.Dec) sdk.Error {
 	return sdk.NewError(codespace, CodeExcessiveWeight, weight.String())
+}
+
+func ErrNoShareFound(codespace sdk.CodespaceType, shareID string) sdk.Error {
+	return sdk.NewError(codespace, CodeNoShareFound, shareID)
 }
