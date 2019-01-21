@@ -30,6 +30,15 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sd
 	}
 }
 
+func (keeper Keeper) getVote(ctx sdk.Context, denom string, address sdk.AccAddress) PriceVote {
+	return util.Get(
+		keeper.key,
+		keeper.cdc,
+		ctx,
+		GetVoteKey(denom, address),
+	).(PriceVote)
+}
+
 func (keeper Keeper) getVotes(ctx sdk.Context, denom string) (res []PriceVote) {
 	votes := util.Collect(
 		keeper.key,
@@ -50,7 +59,7 @@ func (keeper Keeper) addVote(ctx sdk.Context, vote PriceVote) {
 		keeper.key,
 		keeper.cdc,
 		ctx,
-		GetVotePrefix(vote.FeedMsg.Denom),
+		GetVoteKey(vote.FeedMsg.Denom, vote.FeedMsg.Feeder),
 		vote,
 	)
 }
