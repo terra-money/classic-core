@@ -43,17 +43,21 @@ func NewFeedDaemon(cdc *codec.Codec) (*FeedDaemon, error) {
 
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "feed-server")
 
+	url := viper.GetString(flagDataSourceURL)
+	filename := viper.GetString(flagDataSourceFile)
+	fixedData := viper.GetString(flagDataSourceFixed)
+
 	var src Source
-	if viper.IsSet(flagDataSourceURL) {
-		src = URLSource{viper.GetString(flagDataSourceURL)}
+	if url != "" {
+		src = URLSource{url}
 
-	} else if viper.IsSet(flagDataSourceFile) {
-		src = FileSource{viper.GetString(flagDataSourceFile)}
+	} else if filename != "" {
+		src = FileSource{filename}
 
-	} else if viper.IsSet(flagDataSourceFixed) {
+	} else if fixedData != "" {
 		var err error
 
-		src, err = CreateJsonSource(viper.GetString(flagDataSourceFixed))
+		src, err = CreateJsonSource(fixedData)
 		if err != nil {
 			return nil, err
 		}
@@ -81,6 +85,8 @@ func votePrice(price Price, cdc *codec.Codec) error {
 		return err
 	}
 
+
+
 	target := sdk.NewDecWithPrec(int64(math.Round(price.TargetPrice*100)), 2)
 	current := sdk.NewDecWithPrec(int64(math.Round(price.CurrentPrice*100)), 2)
 
@@ -101,6 +107,8 @@ func (fd *FeedDaemon) voteAll(cdc *codec.Codec) error {
 	}
 
 	for _, price := range prices {
+		fd.log.Debug("Voting price for %s to the current is %s and the target is %s", price.Denom, price.CurrentPrice, price.TargetPrice)
+
 		err := votePrice(price, cdc)
 
 		if err != nil {
@@ -124,15 +132,20 @@ func (fd *FeedDaemon) Start() (err error) {
 		close(shutdown)
 	})
 
+	fd.log.Info("Feeder is started")
 	go func() {
 	loop:
 		for {
+			fd.log.Info("Updating prices")
+			err := fd.voteAll(fd.CliCtx.Codec)
+			if err != nil {
+				fd.log.Error(err.Error())
+			}
+
+			fd.log.Info(fmt.Sprintf("Sleepign while %s", interval.String()))
+
 			select {
 			case <-time.After(interval):
-				err := fd.voteAll(fd.CliCtx.Codec)
-				if err != nil {
-					fd.log.Error(err.Error())
-				}
 
 			case <-shutdown: // triggered on the stop signal
 				break loop   // exit
@@ -172,6 +185,14 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 	viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode))
 	viper.BindPFlag(client.FlagChainID, cmd.Flags().Lookup(client.FlagChainID))
 	viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode))
+
+	cmd.Flags().Duration(flagUpdateInterval, 60*10, "Feeding interval (Duration format)")
+	cmd.Flags().String(flagDataSourceURL, "", "The URL, return JSON data which contains price data on GET request")
+	cmd.Flags().String(flagDataSourceFile, "", "The JSON file that is contains price data")
+	cmd.Flags().String(flagDataSourceFixed, "", "Fixed JSON string as a source")
+
+	cmd.Flags().String(client.FlagFrom, "", "Name or address of private key with which to sign")
+	cmd.MarkFlagRequired(client.FlagFrom)
 
 	return cmd
 }
