@@ -165,7 +165,6 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 	}
 
 	//
-	cmd.Flags().String(client.FlagListenAddr, "tcp://localhost:1317", "The address for the server to listen on")
 	cmd.Flags().String(client.FlagChainID, "", "Chain ID of Tendermint node")
 	cmd.Flags().String(client.FlagNode, "tcp://localhost:26657", "Address of the node to connect to")
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
