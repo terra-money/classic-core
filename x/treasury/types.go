@@ -28,26 +28,27 @@ type Share interface {
 }
 
 type BaseShare struct {
-	Share
-	id     string
-	weight sdk.Dec
+	Id     string  `json:"id"`
+	Weight sdk.Dec `json:"weight"`
 }
+
+var _ (Share) = (*BaseShare)(nil)
 
 func NewBaseShare(id string, weight sdk.Dec) BaseShare {
 	return BaseShare{
-		id:     id,
-		weight: weight,
+		Id:     id,
+		Weight: weight,
 	}
 }
 
 // GetWeight returns the weight for the BaseShare.
 func (bs BaseShare) GetWeight() sdk.Dec {
-	return bs.weight
+	return bs.Weight
 }
 
 // ID returns the weight for the BaseShare.
 func (bs BaseShare) ID() string {
-	return bs.id
+	return bs.Id
 }
 
 //------------------------------------
