@@ -26,6 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	budget "terra/x/budget/client/rest"
 	market "terra/x/market/client/rest"
 	oracle "terra/x/oracle/client/rest"
 
@@ -183,6 +184,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	budget.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func registerSwaggerUI(rs *lcd.RestServer) {

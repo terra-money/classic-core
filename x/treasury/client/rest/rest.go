@@ -43,10 +43,10 @@ func queryShareHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
 			break
 		case treasury.DebtShareID:
 			break
-		case treasury.SubsidyShareID:
+		case treasury.BudgetShareID:
 			break
 		default:
-			err := errors.New("shareID not one of 'oracle' 'debt' 'subsidy'")
+			err := errors.New("shareID not one of 'oracle' 'debt' 'budget'")
 			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

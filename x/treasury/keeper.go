@@ -32,8 +32,9 @@ func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
 //------------------------------------
 //------------------------------------
 
-func (k Keeper) GetShare(ctx sdk.Context, shareID string) Share {
-	return util.Get(k.key, k.cdc, ctx, GetShareKey(shareID)).(Share)
+func (k Keeper) GetShare(ctx sdk.Context, shareID string) (res Share, err sdk.Error) {
+	share, err := util.Get(k.key, k.cdc, ctx, GetShareKey(shareID))
+	return share.(Share), err
 }
 
 func (k Keeper) ResetShares(ctx sdk.Context, shares []Share) sdk.Error {
@@ -68,7 +69,11 @@ func dividePool(ratio sdk.Dec, pool sdk.Coins) sdk.Coins {
 func (k Keeper) SettleShares(ctx sdk.Context) {
 	shares := util.Collect(k.key, k.cdc, ctx, PrefixShare)
 
-	incomePool := util.Get(k.key, k.cdc, ctx, KeyIncomePool).(sdk.Coins)
+	incomePool, err := k.getIncomePool(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	residualPool := incomePool
 
 	for _, share := range shares {
@@ -91,8 +96,6 @@ func (k Keeper) SettleShares(ctx sdk.Context) {
 			c.Settle(ctx, k.tk, claimCoin)
 
 			residualPool.Minus(claimCoin)
-
-			util.Delete(k.key, ctx, GetClaimKey(share.ID(), c.ID()))
 		}
 	}
 
@@ -115,11 +118,24 @@ func (k Keeper) AddIncome(ctx sdk.Context, income sdk.Coins) sdk.Error {
 		return ErrWrongTaxDenomination(DefaultCodespace, taxDenom)
 	}
 
-	incomePool := util.Get(k.key, k.cdc, ctx, KeyIncomePool).(sdk.Coins)
+	incomePool, err := k.getIncomePool(ctx)
+	if err != nil {
+		return err
+	}
 	incomePool = incomePool.Plus(income)
 
 	util.Set(k.key, k.cdc, ctx, KeyIncomePool, incomePool)
 	return nil
+}
+
+func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins, err sdk.Error) {
+	incomePool, err := util.Get(k.key, k.cdc, ctx, KeyIncomePool)
+	if err != nil {
+		return
+	}
+
+	res = incomePool.(sdk.Coins)
+	return
 }
 
 // Logic for Claims

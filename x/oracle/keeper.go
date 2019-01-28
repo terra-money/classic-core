@@ -92,30 +92,34 @@ func (keeper Keeper) setPriceObserved(ctx sdk.Context, denom string, observedPri
 	)
 }
 
-func (keeper Keeper) GetPriceTarget(ctx sdk.Context, denom string) sdk.Dec {
+func (keeper Keeper) GetPriceTarget(ctx sdk.Context, denom string) (res sdk.Dec, err sdk.Error) {
 	if denom == assets.LunaDenom {
-		return sdk.OneDec()
+		return sdk.OneDec(), nil
 	}
 
-	return util.Get(
+	tPrice, err := util.Get(
 		keeper.key,
 		keeper.cdc,
 		ctx,
 		GetTargetPriceKey(denom),
-	).(sdk.Dec)
+	)
+
+	return tPrice.(sdk.Dec), err
 }
 
-func (keeper Keeper) GetPriceObserved(ctx sdk.Context, denom string) sdk.Dec {
+func (keeper Keeper) GetPriceObserved(ctx sdk.Context, denom string) (res sdk.Dec, err sdk.Error) {
 	if denom == assets.LunaDenom {
-		return sdk.OneDec()
+		return sdk.OneDec(), nil
 	}
 
-	return util.Get(
+	oPrice, err := util.Get(
 		keeper.key,
 		keeper.cdc,
 		ctx,
 		GetObservedPriceKey(denom),
-	).(sdk.Dec)
+	)
+
+	return oPrice.(sdk.Dec), err
 }
 
 //______________________________________________________________________

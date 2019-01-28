@@ -3,13 +3,14 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"terra/x/budget"
 	"terra/x/oracle"
+	"terra/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	stake "github.com/cosmos/cosmos-sdk/x/stake"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -41,8 +42,9 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool) (
 		auth.ExportGenesis(ctx, app.feeCollectionKeeper),
 		stake.ExportGenesis(ctx, app.stakeKeeper),
 		distr.ExportGenesis(ctx, app.distrKeeper),
-		gov.ExportGenesis(ctx, app.govKeeper),
 		oracle.ExportGenesis(ctx, app.oracleKeeper),
+		budget.ExportGenesis(ctx, app.budgetKeeper),
+		treasury.ExportGenesis(ctx, app.treasuryKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
 	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
