@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"terra/client/feeder"
 
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
@@ -102,6 +103,7 @@ func main() {
 		txCmd(cdc, mc),
 		client.LineBreak,
 		lcd.ServeCommand(cdc, registerRoutes),
+		feeder.ServeCommand(cdc),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,

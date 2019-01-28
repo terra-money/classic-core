@@ -44,7 +44,7 @@ type GenesisState struct {
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 	stakeData stake.GenesisState,
-	distrData distr.GenesisState, govData gov.GenesisState,
+	distrData distr.GenesisState, govData gov.GenesisState,oracleData oracle.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
@@ -53,6 +53,7 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 		StakeData:    stakeData,
 		DistrData:    distrData,
 		GovData:      govData,
+		OracleData:   oracleData,
 		SlashingData: slashingData,
 	}
 }
