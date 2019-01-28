@@ -11,8 +11,8 @@ const (
 	// OracleShareID - Share ID for the Oracle module
 	OracleShareID = "share_oracle"
 
-	// SubsidyShareID - Share ID for the Subsidy module
-	SubsidyShareID = "share_subsidy"
+	// BudgetShareID - Share ID for the budget module
+	BudgetShareID = "share_budget"
 
 	// DebtShareID - Share ID for the Debt module
 	DebtShareID = "share_debt"

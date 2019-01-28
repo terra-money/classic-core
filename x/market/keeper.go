@@ -49,8 +49,15 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 		return sdk.Coin{}, ErrUnknownDenomination(DefaultCodespace, offerCoin.Denom)
 	}
 
-	offerRate := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
-	askRate := k.ok.GetPriceObserved(ctx, askDenom)
+	offerRate, tErr := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
+	if tErr != nil {
+		panic(tErr)
+	}
+
+	askRate, oErr := k.ok.GetPriceObserved(ctx, askDenom)
+	if oErr != nil {
+		panic(oErr)
+	}
 
 	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
 
