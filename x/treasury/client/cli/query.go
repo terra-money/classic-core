@@ -47,7 +47,7 @@ func GetCmdQueryAssets(storeName string, cdc *codec.Codec) *cobra.Command {
 func GetCmdQueryShare(storeName string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "share [shareID]",
-		Short: "Query the share corresponding to [shareID] and fetch attendant claims. Share ID is one of 'oracle', 'debt', and 'subsidy'",
+		Short: "Query the share corresponding to [shareID] and fetch attendant claims. Share ID is one of 'oracle', 'debt', and 'budget'",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

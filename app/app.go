@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"terra/types/tax"
+	"terra/x/budget"
 	"terra/x/market"
 	"terra/x/oracle"
 	"terra/x/treasury"
@@ -29,9 +30,7 @@ import (
 const (
 	appName = "TerraApp"
 	// DefaultKeyPass contains the default key password for genesis transactions
-	DefaultKeyPass       = "12345678"
-	DefaultBondDenom     = "luna"
-	DefaultCurrencyDenom = "terra"
+	DefaultKeyPass = "12345678"
 )
 
 // default home directories for expected binaries
@@ -54,13 +53,13 @@ type TerraApp struct {
 	keySlashing      *sdk.KVStoreKey
 	keyDistr         *sdk.KVStoreKey
 	tkeyDistr        *sdk.TransientStoreKey
-	keyGov           *sdk.KVStoreKey
 	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
 	keyOracle        *sdk.KVStoreKey
 	keyTreasury      *sdk.KVStoreKey
 	keyMarket        *sdk.KVStoreKey
+	keyBudget        *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
@@ -69,11 +68,11 @@ type TerraApp struct {
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
-	govKeeper           gov.Keeper
 	paramsKeeper        params.Keeper
 	oracleKeeper        oracle.Keeper
 	treasuryKeeper      treasury.Keeper
 	marketKeeper        market.Keeper
+	budgetKeeper        budget.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
@@ -94,13 +93,13 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyDistr:         sdk.NewKVStoreKey("distr"),
 		tkeyDistr:        sdk.NewTransientStoreKey("transient_distr"),
 		keySlashing:      sdk.NewKVStoreKey("slashing"),
-		keyGov:           sdk.NewKVStoreKey("gov"),
 		keyFeeCollection: sdk.NewKVStoreKey("fee"),
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
 		keyOracle:        sdk.NewKVStoreKey("oracle"),
 		keyTreasury:      sdk.NewKVStoreKey("treasury"),
 		keyMarket:        sdk.NewKVStoreKey("market"),
+		keyBudget:        sdk.NewKVStoreKey("budget"),
 	}
 
 	// define the accountKeeper
@@ -143,12 +142,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakeKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
-	app.govKeeper = gov.NewKeeper(
-		app.cdc,
-		app.keyGov,
-		app.paramsKeeper, app.paramsKeeper.Subspace(gov.DefaultParamspace), app.bankKeeper, &stakeKeeper,
-		gov.DefaultCodespace,
-	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
@@ -166,6 +159,14 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.treasuryKeeper,
 		app.bankKeeper,
 	)
+	app.budgetKeeper = budget.NewKeeper(
+		app.keyBudget,
+		app.cdc, app.bankKeeper,
+		app.treasuryKeeper,
+		stake.DefaultCodespace,
+		stakeKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(budget.DefaultParamspace),
+	)
 
 	// register the staking hooks
 	// NOTE: The stakeKeeper above is passed by reference, so that it can be
@@ -179,18 +180,17 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
 		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
-		AddRoute("gov", gov.NewHandler(app.govKeeper)).
 		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper)).
-		//AddRoute("treasury", treasury.NewHandler(app.treasuryKeeper)).
+		AddRoute("budget", budget.NewHandler(app.budgetKeeper)).
 		AddRoute("market", market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		AddRoute("gov", gov.NewQuerier(app.govKeeper)).
+		AddRoute("budget", budget.NewQuerier(app.budgetKeeper)).
 		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
 
 	// initialize BaseApp
-	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr,
-		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyBank, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury)
+	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr, app.keyBank,
+		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury, app.keyBudget)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -243,11 +243,16 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 // nolint: unparam
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
-	tags := gov.EndBlocker(ctx, app.govKeeper)
-	validatorUpdates, endBlockerTags := stake.EndBlocker(ctx, app.stakeKeeper)
-	tags = append(tags, endBlockerTags...)
+	validatorUpdates, tags := stake.EndBlocker(ctx, app.stakeKeeper)
+
 	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
+
+	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	tags = append(tags, budgetTags...)
+
+	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
+	tags = append(tags, treasuryTags...)
 
 	// TODO: request fixing it to comsmos guys
 	//app.assertRuntimeInvariants()
@@ -280,7 +285,8 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	// initialize module-specific stores
 	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
-	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
+	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
+	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
 	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
 	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
 

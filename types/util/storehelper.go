@@ -1,14 +1,17 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func Get(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte) (res interface{}) {
+func Get(dbKey sdk.StoreKey, cdc *codec.Codec, ctx sdk.Context, storeKey []byte) (res interface{}, err sdk.Error) {
 	store := ctx.KVStore(dbKey)
 	bz := store.Get(storeKey)
 	if bz == nil {
+		err = sdk.ErrInternal(fmt.Sprintf("No item found for key %v", storeKey))
 		return
 	}
 	cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
