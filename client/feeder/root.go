@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -75,7 +76,7 @@ func NewFeedDaemon(cdc *codec.Codec) (*FeedDaemon, error) {
 	}, nil
 }
 
-func votePrice(price Price, cdc *codec.Codec) error {
+func votePrice(price Price, cdc *codec.Codec, passphrase string) error {
 
 	txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 	cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
@@ -84,8 +85,6 @@ func votePrice(price Price, cdc *codec.Codec) error {
 	if err != nil {
 		return err
 	}
-
-
 
 	target := sdk.NewDecWithPrec(int64(math.Round(price.TargetPrice*100)), 2)
 	current := sdk.NewDecWithPrec(int64(math.Round(price.CurrentPrice*100)), 2)
@@ -96,20 +95,20 @@ func votePrice(price Price, cdc *codec.Codec) error {
 		return utils.PrintUnsignedStdTx(os.Stdout, txBldr, cliCtx, []sdk.Msg{msg}, false)
 	}
 
-	return utils.CompleteAndBroadcastTxCli(txBldr, cliCtx, []sdk.Msg{msg})
+	return CompleteAndBroadcastTxCliWithPassphrase(txBldr, cliCtx, []sdk.Msg{msg}, passphrase)
 
 }
 
-func (fd *FeedDaemon) voteAll(cdc *codec.Codec) error {
+func (fd *FeedDaemon) voteAll(cdc *codec.Codec, passphrase string) error {
 	prices, err := fd.source.getData()
 	if err != nil {
 		return err
 	}
 
 	for _, price := range prices {
-		fd.log.Debug("Voting price for %s to the current is %s and the target is %s", price.Denom, price.CurrentPrice, price.TargetPrice)
+		fd.log.Info(fmt.Sprintf("Voting for \"%s\", current is %f, target is %f", price.Denom, price.CurrentPrice, price.TargetPrice))
 
-		err := votePrice(price, cdc)
+		err := votePrice(price, cdc, passphrase)
 
 		if err != nil {
 			fd.log.Error(err.Error())
@@ -132,12 +131,22 @@ func (fd *FeedDaemon) Start() (err error) {
 		close(shutdown)
 	})
 
+	name, err := fd.CliCtx.GetFromName()
+	if err != nil {
+		return err
+	}
+
+	passphrase, err := keys.GetPassphrase(name)
+	if err != nil {
+		return err
+	}
+
 	fd.log.Info("Feeder is started")
 	go func() {
 	loop:
 		for {
 			fd.log.Info("Updating prices")
-			err := fd.voteAll(fd.CliCtx.Codec)
+			err := fd.voteAll(fd.CliCtx.Codec, passphrase)
 			if err != nil {
 				fd.log.Error(err.Error())
 			}
@@ -148,7 +157,7 @@ func (fd *FeedDaemon) Start() (err error) {
 			case <-time.After(interval):
 
 			case <-shutdown: // triggered on the stop signal
-				break loop   // exit
+				break loop // exit
 			}
 		}
 	}()
