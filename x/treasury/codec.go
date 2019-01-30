@@ -5,6 +5,7 @@ import "github.com/cosmos/cosmos-sdk/codec"
 // Register concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*Share)(nil), nil)
+	cdc.RegisterConcrete(&BaseShare{}, "treasury/BaseSahre", nil)
 }
 
 var msgCdc = codec.New()

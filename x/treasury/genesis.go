@@ -8,9 +8,9 @@ import (
 
 // GenesisState - all distribution state that must be provided at genesis
 type GenesisState struct {
-	OracleShare BaseShare `json:"oracle_share"` // oracle share
-	DebtShare   BaseShare `json:"debt_share"`   // debt share
-	BudgetShare BaseShare `json:"budget_share"` // budget share
+	OracleShare Share `json:"oracle_share"` // oracle share
+	DebtShare   Share `json:"debt_share"`   // debt share
+	BudgetShare Share `json:"budget_share"` // budget share
 }
 
 // NewGenesisState - new treasury genesis state instance
@@ -33,7 +33,7 @@ func DefaultGenesisState() GenesisState {
 
 // InitGenesis creates the new treasury genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-	keeper.ResetShares(ctx, []Share{
+	_ = keeper.ResetShares(ctx, []Share{
 		data.OracleShare, data.DebtShare, data.BudgetShare,
 	})
 }
