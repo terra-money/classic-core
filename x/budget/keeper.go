@@ -18,7 +18,7 @@ type Keeper struct {
 	cdc       *codec.Codec      // Codec to encore/decode structs
 	valset    sdk.ValidatorSet  // Needed to compute voting power.
 
-	bk         bank.Keeper
+	bk         bank.Keeper // Needed to handle deposits. This module onlyl requires read/writes to Atom balance
 	tk         treasury.Keeper
 	paramSpace params.Subspace
 }

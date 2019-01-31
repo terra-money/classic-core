@@ -30,26 +30,24 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	}
 
 	// Reflect the swap in the trader's wallet
-	ioTags, ioErr := k.bk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(msg.Trader, sdk.Coins{retCoin})},
+	swapTags, swapErr := k.bk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(msg.Trader, sdk.Coins{retCoin})},
 		[]bank.Output{bank.NewOutput(msg.Trader, sdk.Coins{msg.OfferCoin})})
 
-	if ioErr != nil {
-		return ioErr.Result()
+	if swapErr != nil {
+		return swapErr.Result()
 	}
 
-	swapTags := ioTags.AppendTags(
-		sdk.NewTags(
-			sdk.TagAction, tags.ActionSwap,
-			tags.Offer, []byte(msg.OfferCoin.String()),
-			tags.Ask, []byte(retCoin.String()),
-			tags.Trader, msg.Trader.Bytes(),
-		),
-	)
+	swapTags.AppendTags(swapTags)
 
 	// Pay gains to the treasury
 	k.tk.AddIncome(ctx, sdk.Coins{msg.OfferCoin})
 
 	return sdk.Result{
-		Tags: swapTags,
+		Tags: sdk.NewTags(
+			sdk.TagAction, tags.ActionSwap,
+			tags.Offer, []byte(msg.OfferCoin.String()),
+			tags.Ask, []byte(retCoin.String()),
+			tags.Trader, msg.Trader.Bytes(),
+		),
 	}
 }

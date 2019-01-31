@@ -29,6 +29,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 
 	treasuryQueryCmd.AddCommand(client.GetCommands(
 		treasuryCli.GetCmdQueryAssets(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryShare(mc.storeKey, mc.cdc),
 	)...)
 
 	return treasuryQueryCmd
@@ -36,5 +37,5 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 
 // The treasury module returns no TX commands.
 func (mc ModuleClient) GetTxCmd() *cobra.Command {
-	return &cobra.Command{Hidden: true}
+	&cobra.Command{Hidden: true}
 }

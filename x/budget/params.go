@@ -43,7 +43,7 @@ func validateParams(params Params) error {
 		return fmt.Errorf("budget legacy threshold should be greater than 0, is %s", params.LegacyThreshold.String())
 	}
 	if params.VotePeriod < 0 {
-		return fmt.Errorf("budget parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())
+		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())
 	}
 	return nil
 }
