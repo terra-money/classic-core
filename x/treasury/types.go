@@ -32,7 +32,7 @@ type BaseShare struct {
 	Weight sdk.Dec `json:"weight"`
 }
 
-var _ Share = (*BaseShare)(nil)
+var _ (Share) = (*BaseShare)(nil)
 
 func NewBaseShare(id string, weight sdk.Dec) BaseShare {
 	return BaseShare{
