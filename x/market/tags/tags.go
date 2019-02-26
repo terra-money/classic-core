@@ -4,7 +4,9 @@ package tags
 var (
 	ActionSwap = []byte("swap-coins")
 
-	Offer  = "offer"
-	Ask    = "ask"
-	Trader = "trader"
+	OfferDenom  = "offer-denom"
+	OfferAmount = "offer-amount"
+	AskDenom    = "ask-denom"
+	AskAmount   = "ask-amount"
+	Trader      = "trader"
 )

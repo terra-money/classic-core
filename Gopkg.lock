@@ -2,22 +2,6 @@
 
 
 [[projects]]
-  digest = "1:7736fc6da04620727f8f3aa2ced8d77be8e074a302820937aa5993848c769b27"
-  name = "github.com/ZondaX/hid-go"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "48b08affede2cea076a3cf13b2e3f72ed262b743"
-  version = "v0.4.0"
-
-[[projects]]
-  digest = "1:1ba351898f7efc68c7c9ff3145b920e478f716b077fdaaf06b967c5d883fa988"
-  name = "github.com/ZondaX/ledger-go"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c3225ab10c2f53397d4aa419a588466493572b22"
-  version = "v0.4.0"
-
-[[projects]]
   branch = "master"
   digest = "1:09a7f74eb6bb3c0f14d8926610c87f569c5cff68e978d30e9a3540aeb626fdf0"
   name = "github.com/bartekn/go-bip39"
@@ -42,12 +26,11 @@
   version = "v0.1.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:093bf93a65962e8191e3e8cd8fc6c363f83d43caca9739c906531ba7210a9904"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   pruneopts = "UT"
-  revision = "7d2daa5bfef28c5e282571bc06416516936115ee"
+  revision = "ed77733ec07dfc8a513741138419b8d9d3de9d2d"
 
 [[projects]]
   digest = "1:386de157f7d19259a7f9c81f26ce011223ce0f090353c1152ffdf730d7d10ac2"
@@ -57,7 +40,7 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:f44610f7074d61520208c12e4a98afc6d58717f41a652803426a054a190a8754"
+  digest = "1:dd43e4be231c016dd1a851d2431359c07460c3b1554b83ff9520214dcd243ed5"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -66,6 +49,7 @@
     "client/keys",
     "client/lcd",
     "client/lcd/statik",
+    "client/rest",
     "client/rpc",
     "client/tx",
     "client/utils",
@@ -80,21 +64,35 @@
     "server/config",
     "server/mock",
     "store",
+    "store/cachekv",
+    "store/cachemulti",
+    "store/dbadapter",
+    "store/errors",
+    "store/gaskv",
+    "store/iavl",
+    "store/prefix",
+    "store/rootmulti",
+    "store/tracekv",
+    "store/transient",
+    "store/types",
     "tests",
     "types",
+    "types/rest",
     "version",
     "x/auth",
+    "x/auth/client",
     "x/auth/client/cli",
     "x/auth/client/rest",
     "x/auth/client/txbuilder",
     "x/bank",
-    "x/bank/client",
     "x/bank/client/cli",
     "x/bank/client/rest",
     "x/bank/simulation",
     "x/distribution",
     "x/distribution/client",
     "x/distribution/client/cli",
+    "x/distribution/client/common",
+    "x/distribution/client/rest",
     "x/distribution/keeper",
     "x/distribution/simulation",
     "x/distribution/tags",
@@ -114,19 +112,20 @@
     "x/slashing/client",
     "x/slashing/client/cli",
     "x/slashing/client/rest",
-    "x/stake",
-    "x/stake/client",
-    "x/stake/client/cli",
-    "x/stake/client/rest",
-    "x/stake/keeper",
-    "x/stake/querier",
-    "x/stake/simulation",
-    "x/stake/tags",
-    "x/stake/types",
+    "x/slashing/tags",
+    "x/staking",
+    "x/staking/client",
+    "x/staking/client/cli",
+    "x/staking/client/rest",
+    "x/staking/keeper",
+    "x/staking/querier",
+    "x/staking/simulation",
+    "x/staking/tags",
+    "x/staking/types",
   ]
   pruneopts = "UT"
-  revision = "2b3842c58305a4e26d457d3d3bd6cf849ffddcdd"
-  version = "v0.29.0"
+  revision = "906e9509cfcae3330584416c8b8e9cfe6c8d2766"
+  version = "v0.32.0"
 
 [[projects]]
   digest = "1:e8a3550c8786316675ff54ad6f09d265d129c9d986919af7f541afba50d87ce2"
@@ -142,6 +141,14 @@
   pruneopts = "UT"
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  digest = "1:fed20bf7f0da387c96d4cfc140a95572e5aba4bb984beb7de910e090ae39849b"
+  name = "github.com/ethereum/go-ethereum"
+  packages = ["crypto/secp256k1"]
+  pruneopts = "UT"
+  revision = "c942700427557e3ff6de3aaf6b916e2f056c1ec2"
+  version = "v1.8.23"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -318,13 +325,6 @@
   pruneopts = "UT"
   revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
   version = "v1.1.2"
-
-[[projects]]
-  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
-  name = "github.com/otiai10/copy"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "7e9a647135a142c2669943d4a4d29be015ce9392"
 
 [[projects]]
   digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
@@ -524,11 +524,12 @@
   version = "v0.12.0"
 
 [[projects]]
-  digest = "1:23c49a2a0f3f8a8258982bbb1567d60d74253c18a454dbe4189126f7e94834e6"
+  digest = "1:89f6fe8d02b427996828fbf43720ed1297a2e92c930b98dd302767b5ad796579"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
     "abci/example/code",
+    "abci/example/counter",
     "abci/example/kvstore",
     "abci/server",
     "abci/types",
@@ -589,15 +590,31 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "v0.27.0"
+  revision = "v0.30.0"
 
 [[projects]]
-  digest = "1:a7485b2a69f996923f9d3406a9a853fd8eb31818515e985a830d71f88f6a925b"
+  digest = "1:b73f5e117bc7c6e8fc47128f20db48a873324ad5cfeeebfc505e85c58682b5e4"
+  name = "github.com/zondax/hid"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "302fd402163c34626286195dfa9adac758334acc"
+  version = "v0.9.0"
+
+[[projects]]
+  digest = "1:fca24169988a61ea725d1326de30910d8049fe68bcbc194d28803f9a76dda380"
   name = "github.com/zondax/ledger-cosmos-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d4aed6d929a703bb555a2d79fe9c470afe61f648"
-  version = "v0.9.2"
+  revision = "69fdb8ce5e5b9d9c3b22b9248e117b231d4f06dd"
+  version = "v0.9.7"
+
+[[projects]]
+  digest = "1:f8e4c0b959174a1fa5946b12f1f2ac7ea5651bef20a9e4a8dac55dbffcaa6cd6"
+  name = "github.com/zondax/ledger-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "69c15f1333a9b6866e5f66096561c7d138894bc5"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:6f6dc6060c4e9ba73cf28aa88f12a69a030d3d19d518ef8e931879eaa099628d"
@@ -785,39 +802,42 @@
     "github.com/cosmos/cosmos-sdk/x/gov",
     "github.com/cosmos/cosmos-sdk/x/gov/client",
     "github.com/cosmos/cosmos-sdk/x/gov/client/rest",
+    "github.com/cosmos/cosmos-sdk/x/mint",
+    "github.com/cosmos/cosmos-sdk/x/mock",
     "github.com/cosmos/cosmos-sdk/x/mock/simulation",
     "github.com/cosmos/cosmos-sdk/x/params",
     "github.com/cosmos/cosmos-sdk/x/slashing",
     "github.com/cosmos/cosmos-sdk/x/slashing/client",
     "github.com/cosmos/cosmos-sdk/x/slashing/client/rest",
-    "github.com/cosmos/cosmos-sdk/x/stake",
-    "github.com/cosmos/cosmos-sdk/x/stake/client",
-    "github.com/cosmos/cosmos-sdk/x/stake/client/cli",
-    "github.com/cosmos/cosmos-sdk/x/stake/client/rest",
-    "github.com/cosmos/cosmos-sdk/x/stake/simulation",
+    "github.com/cosmos/cosmos-sdk/x/staking",
+    "github.com/cosmos/cosmos-sdk/x/staking/client",
+    "github.com/cosmos/cosmos-sdk/x/staking/client/cli",
+    "github.com/cosmos/cosmos-sdk/x/staking/client/rest",
+    "github.com/cosmos/cosmos-sdk/x/staking/simulation",
+    "github.com/cosmos/cosmos-sdk/x/staking/types",
     "github.com/gorilla/mux",
+    "github.com/pkg/errors",
     "github.com/rakyll/statik/fs",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "github.com/spf13/viper",
+    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/server",
     "github.com/tendermint/tendermint/abci/types",
-    "github.com/tendermint/tendermint/blockchain",
     "github.com/tendermint/tendermint/cmd/tendermint/commands",
     "github.com/tendermint/tendermint/config",
     "github.com/tendermint/tendermint/crypto",
     "github.com/tendermint/tendermint/crypto/ed25519",
     "github.com/tendermint/tendermint/crypto/secp256k1",
+    "github.com/tendermint/tendermint/libs/bech32",
     "github.com/tendermint/tendermint/libs/cli",
     "github.com/tendermint/tendermint/libs/common",
     "github.com/tendermint/tendermint/libs/db",
     "github.com/tendermint/tendermint/libs/log",
     "github.com/tendermint/tendermint/p2p",
     "github.com/tendermint/tendermint/privval",
-    "github.com/tendermint/tendermint/proxy",
-    "github.com/tendermint/tendermint/state",
     "github.com/tendermint/tendermint/types",
     "github.com/tendermint/tendermint/types/time",
     "gonum.org/v1/gonum/stat",

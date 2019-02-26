@@ -12,19 +12,19 @@ import (
 
 // PriceVote - struct to store a validator's vote on the price
 type PriceVote struct {
-	Price  sdk.Dec
-	Denom  string
-	Weight sdk.Dec
-	Voter  sdk.AccAddress
+	Price sdk.Dec        `json:"price"` // Price of Luna in target fiat currency
+	Denom string         `json:"denom"` // Ticker name of target fiat currency
+	Power sdk.Int        `json:"power"` // Total bonded tokens of validator
+	Voter sdk.AccAddress `json:"voter"` // account address of validator
 }
 
 // NewPriceVote creates a PriceVote instance
-func NewPriceVote(price sdk.Dec, denom string, weight sdk.Dec, voter sdk.AccAddress) PriceVote {
+func NewPriceVote(price sdk.Dec, denom string, power sdk.Int, voter sdk.AccAddress) PriceVote {
 	return PriceVote{
-		Price:  price,
-		Denom:  denom,
-		Weight: weight,
-		Voter:  voter,
+		Price: price,
+		Denom: denom,
+		Power: power,
+		Voter: voter,
 	}
 }
 
@@ -45,10 +45,10 @@ func (pb PriceBallot) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 
-func (pb PriceBallot) totalPower() sdk.Dec {
-	sumWeight := sdk.ZeroDec()
+func (pb PriceBallot) totalPower() sdk.Int {
+	sumWeight := sdk.ZeroInt()
 	for _, v := range pb {
-		sumWeight = sumWeight.Add(v.Weight)
+		sumWeight = sumWeight.Add(v.Power)
 	}
 	return sumWeight
 }
@@ -72,14 +72,14 @@ func (pb PriceBallot) weightedMedian() (i int64, mod PriceVote) {
 	}
 
 	voterTotalPower := pb.totalPower()
-	sumWeight := sdk.ZeroDec()
+	sumWeight := sdk.ZeroInt()
 	for _, v := range pb {
-		if sumWeight.GTE(voterTotalPower.QuoInt(sdk.NewInt(2))) {
+		if sumWeight.GTE(voterTotalPower.Div(sdk.NewInt(2))) {
 			break
 		}
 
 		i++
-		sumWeight = sumWeight.Add(v.Weight)
+		sumWeight = sumWeight.Add(v.Power)
 		mod = v
 	}
 

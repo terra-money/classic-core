@@ -2,7 +2,7 @@ package oracle
 
 import (
 	"terra/types/assets"
-	"terra/types/tax"
+	"terra/x/pay"
 	"terra/x/treasury"
 	"testing"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 
@@ -19,15 +19,15 @@ import (
 )
 
 // initialize the mock application for this module
-func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, stake.Keeper, []sdk.AccAddress, []crypto.PubKey, []crypto.PrivKey) {
+func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, staking.Keeper, []sdk.AccAddress, []crypto.PubKey, []crypto.PrivKey) {
 	mapp := mock.NewApp()
 
-	stake.RegisterCodec(mapp.Cdc)
+	staking.RegisterCodec(mapp.Cdc)
 
 	keyGlobalParams := sdk.NewKVStoreKey("params")
 	tkeyGlobalParams := sdk.NewTransientStoreKey("transient_params")
-	keyStake := sdk.NewKVStoreKey("stake")
-	tkeyStake := sdk.NewTransientStoreKey("transient_stake")
+	keystaking := sdk.NewKVStoreKey("staking")
+	tkeystaking := sdk.NewTransientStoreKey("transient_staking")
 	keyTreasury := sdk.NewKVStoreKey("treasury")
 	keyOracle := sdk.NewKVStoreKey("oracle")
 	keyBank := sdk.NewKVStoreKey("bank")
@@ -35,9 +35,9 @@ func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, stake.Keeper, 
 
 	pk := params.NewKeeper(mapp.Cdc, keyGlobalParams, tkeyGlobalParams)
 	fck := auth.NewFeeCollectionKeeper(mapp.Cdc, keyFeeCollection)
-	ck := tax.NewBaseKeeper(keyBank, mapp.Cdc, mapp.AccountKeeper, fck)
-	sk := stake.NewKeeper(mapp.Cdc, keyStake, tkeyStake, ck, pk.Subspace(stake.DefaultParamspace), stake.DefaultCodespace)
-	tk := treasury.NewKeeper(keyTreasury, mapp.Cdc, ck)
+	ck := pay.NewKeeper(keyBank, mapp.Cdc, mapp.AccountKeeper, fck)
+	sk := staking.NewKeeper(mapp.Cdc, keystaking, tkeystaking, ck, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	tk := treasury.NewKeeper(keyTreasury, mapp.Cdc, ck, pk.Subspace(treasury.DefaultParamspace))
 	keeper := NewKeeper(keyOracle, mapp.Cdc, tk, sk.GetValidatorSet(), pk.Subspace(DefaultParamspace))
 
 	mapp.Router().AddRoute("oracle", NewHandler(keeper))
@@ -45,7 +45,7 @@ func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, stake.Keeper, 
 	mapp.SetEndBlocker(getEndBlocker(keeper))
 	mapp.SetInitChainer(getInitChainer(mapp, keeper, sk))
 
-	require.NoError(t, mapp.CompleteSetup(keyStake, tkeyStake,
+	require.NoError(t, mapp.CompleteSetup(keystaking, tkeystaking,
 		keyTreasury,
 		keyOracle, keyBank, keyFeeCollection,
 		keyGlobalParams, tkeyGlobalParams))
@@ -57,41 +57,41 @@ func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, stake.Keeper, 
 	return mapp, keeper, sk, addrs, pubKeys, privKeys
 }
 
-// oracle and stake endblocker
+// oracle and staking endblocker
 func getEndBlocker(keeper Keeper) sdk.EndBlocker {
 	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-		_, _, _, tags := EndBlocker(ctx, keeper)
+		_, _, tags := EndBlocker(ctx, keeper)
 		return abci.ResponseEndBlock{
 			Tags: tags,
 		}
 	}
 }
 
-// oracle and stake initchainer
-func getInitChainer(mapp *mock.App, keeper Keeper, stakeKeeper stake.Keeper) sdk.InitChainer {
+// oracle and staking initchainer
+func getInitChainer(mapp *mock.App, keeper Keeper, stakingKeeper staking.Keeper) sdk.InitChainer {
 	return func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 		mapp.InitChainer(ctx, req)
 
-		stakeGenesis := stake.GenesisState{
-			Pool: stake.InitialPool(),
-			Params: stake.Params{
+		stakingGenesis := staking.GenesisState{
+			Pool: staking.InitialPool(),
+			Params: staking.Params{
 				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
 				MaxValidators: 100,
 				BondDenom:     assets.LunaDenom,
 			},
 		}
-		stakeGenesis.Pool.LooseTokens = sdk.NewDec(100000)
+		stakingGenesis.Pool.NotBondedTokens = sdk.NewInt(100000)
 
-		validators, err := stake.InitGenesis(ctx, stakeKeeper, stakeGenesis)
+		validators, err := staking.InitGenesis(ctx, stakingKeeper, stakingGenesis)
 		if err != nil {
 			panic(err)
 		}
 
 		InitGenesis(ctx, keeper, GenesisState{
 			Params: NewParams(
-				assets.GetAllDenoms(),
 				sdk.NewInt(1),             // one block
 				sdk.NewDecWithPrec(66, 2), // 66%
+				sdk.NewInt(10),
 			),
 		})
 

@@ -11,16 +11,14 @@ import (
 	"terra/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/tendermint/tendermint/libs/cli"
-
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/mock"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	abciServer "github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
-
-	"github.com/spf13/viper"
 )
 
 func TestInitCmd(t *testing.T) {
@@ -35,10 +33,7 @@ func TestInitCmd(t *testing.T) {
 	cdc := app.MakeCodec()
 	cmd := InitCmd(ctx, cdc)
 
-	viper.Set(flagMoniker, "terranode-test")
-
-	err = cmd.RunE(nil, nil)
-	require.NoError(t, err)
+	require.NoError(t, cmd.RunE(nil, []string{"terranode-test"}))
 }
 
 func setupClientHome(t *testing.T) func() {
@@ -63,11 +58,9 @@ func TestEmptyState(t *testing.T) {
 
 	ctx := server.NewContext(cfg, logger)
 	cdc := app.MakeCodec()
-	viper.Set(flagMoniker, "terranode-test")
 
 	cmd := InitCmd(ctx, cdc)
-	err = cmd.RunE(nil, nil)
-	require.NoError(t, err)
+	require.NoError(t, cmd.RunE(nil, []string{"terranode-test"}))
 
 	old := os.Stdout
 	r, w, _ := os.Pipe()
@@ -87,7 +80,6 @@ func TestEmptyState(t *testing.T) {
 	w.Close()
 	os.Stdout = old
 	out := <-outC
-	require.Contains(t, out, "WARNING: State is not initialized")
 	require.Contains(t, out, "genesis_time")
 	require.Contains(t, out, "chain_id")
 	require.Contains(t, out, "consensus_params")
@@ -102,7 +94,6 @@ func TestStartStandAlone(t *testing.T) {
 		os.RemoveAll(home)
 	}()
 	viper.Set(cli.HomeFlag, home)
-	viper.Set(client.FlagName, "moniker")
 	defer setupClientHome(t)()
 
 	logger := log.NewNopLogger()
@@ -111,8 +102,7 @@ func TestStartStandAlone(t *testing.T) {
 	ctx := server.NewContext(cfg, logger)
 	cdc := app.MakeCodec()
 	initCmd := InitCmd(ctx, cdc)
-	err = initCmd.RunE(nil, nil)
-	require.NoError(t, err)
+	require.NoError(t, initCmd.RunE(nil, []string{"terranode-test"}))
 
 	app, err := mock.NewApp(home, logger)
 	require.Nil(t, err)

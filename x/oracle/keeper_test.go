@@ -15,26 +15,17 @@ func TestPrice(t *testing.T) {
 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
 
 	// New context. There should be no price.
-	tp := keeper.GetPriceTarget(ctx, assets.TerraDenom)
-	require.True(t, tp.Equal(sdk.ZeroDec()))
+	tp, err := keeper.GetPrice(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(sdk.ZeroDec()) && err != nil)
 
-	op := keeper.GetPriceObserved(ctx, assets.TerraDenom)
-	require.True(t, op.Equal(sdk.ZeroDec()))
+	terraPrice := sdk.NewDecWithPrec(166, 2)
+	keeper.setPrice(ctx, assets.TerraDenom, terraPrice)
 
-	terraTargetPrice := sdk.NewDecWithPrec(166, 2)
-	keeper.setPriceTarget(ctx, assets.TerraDenom, terraTargetPrice)
-
-	terraObservedPrice := sdk.NewDecWithPrec(174, 2)
-	keeper.setPriceObserved(ctx, assets.TerraDenom, terraObservedPrice)
-
-	tp = keeper.GetPriceTarget(ctx, assets.TerraDenom)
-	require.True(t, tp.Equal(terraTargetPrice))
-
-	op = keeper.GetPriceObserved(ctx, assets.TerraDenom)
-	require.True(t, op.Equal(terraObservedPrice))
+	tp, err = keeper.GetPrice(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(terraPrice) && err == nil)
 }
 
-func TestTargetVotes(t *testing.T) {
+func TestVotes(t *testing.T) {
 	mapp, keeper, _, addrs, _, _ := getMockApp(t, 3)
 	mapp.BeginBlock(abci.RequestBeginBlock{})
 	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
@@ -44,98 +35,44 @@ func TestTargetVotes(t *testing.T) {
 		vote := NewPriceVote(
 			sdk.NewDecWithPrec(int64(i)+1, 0),
 			assets.TerraDenom,
-			sdk.NewDecWithPrec(10, 2),
+			sdk.OneInt(),
 			addrs[i],
 		)
 		votes = append(votes, vote)
 	}
 
-	keeper.addTargetVote(ctx, votes[0])
+	keeper.addVote(ctx, votes[0])
 
-	// Should be one TargetVote in total
-	targetVotes := keeper.getTargetVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 1, len(targetVotes))
+	// Should be one vote in total
+	terraVotes := keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 1, len(votes))
 
-	// Should still be one TargetVote in total
-	keeper.addTargetVote(ctx, votes[0])
-	targetVotes = keeper.getTargetVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 1, len(targetVotes))
+	// Add the same vote; Should still be one vote in total
+	keeper.addVote(ctx, votes[0])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 1, len(votes))
 
-	// Zero TargetVotes for an unrelated denom
-	keeper.addTargetVote(ctx, votes[0])
-	targetVotes = keeper.getTargetVotes(ctx, assets.KRWDenom)
-	require.Equal(t, 0, len(targetVotes))
+	// Zero votes for an unrelated denom
+	krwVotes := keeper.getVotes(ctx)[assets.KRWDenom]
+	require.Equal(t, 0, len(krwVotes))
 
-	// Should now be three TargetVotes in total
-	keeper.addTargetVote(ctx, votes[1])
-	keeper.addTargetVote(ctx, votes[2])
-	targetVotes = keeper.getTargetVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 3, len(targetVotes))
+	// Should now be three votes in total
+	keeper.addVote(ctx, votes[1])
+	keeper.addVote(ctx, votes[2])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 3, len(terraVotes))
 
-	// Should now be two TargetVotes
-	keeper.deleteTargetVote(ctx, votes[0])
-	targetVotes = keeper.getTargetVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 2, len(targetVotes))
+	// Should now be two votes
+	keeper.deleteVote(ctx, votes[0])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 2, len(votes))
 
-	// Should now be zero TargetVotes
-	deleter := func(TargetVote PriceVote) (stop bool) {
-		keeper.deleteTargetVote(ctx, TargetVote)
+	// Should now be zero votes
+	deleter := func(vote PriceVote) (stop bool) {
+		keeper.deleteVote(ctx, vote)
 		return false
 	}
-	keeper.iterateTargetVotes(ctx, assets.TerraDenom, deleter)
-	targetVotes = keeper.getTargetVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 0, len(targetVotes))
-}
-
-func TestObservedVotes(t *testing.T) {
-	mapp, keeper, _, addrs, _, _ := getMockApp(t, 3)
-	mapp.BeginBlock(abci.RequestBeginBlock{})
-	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
-
-	votes := []PriceVote{}
-	for i := 0; i < 3; i++ {
-		vote := NewPriceVote(
-			sdk.NewDecWithPrec(int64(i)+1, 0),
-			assets.TerraDenom,
-			sdk.NewDecWithPrec(10, 2),
-			addrs[i],
-		)
-		votes = append(votes, vote)
-	}
-
-	keeper.addObservedVote(ctx, votes[0])
-
-	// Should be one ObservedVote in total
-	observedVotes := keeper.getObservedVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 1, len(observedVotes))
-
-	// Should still be one ObservedVote in total
-	keeper.addObservedVote(ctx, votes[0])
-	observedVotes = keeper.getObservedVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 1, len(observedVotes))
-
-	// Zero ObservedVotes for an unrelated denom
-	keeper.addObservedVote(ctx, votes[0])
-	observedVotes = keeper.getObservedVotes(ctx, assets.KRWDenom)
-	require.Equal(t, 0, len(observedVotes))
-
-	// Should now be three ObservedVotes in total
-	keeper.addObservedVote(ctx, votes[1])
-	keeper.addObservedVote(ctx, votes[2])
-	observedVotes = keeper.getObservedVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 3, len(observedVotes))
-
-	// Should now be two ObservedVotes
-	keeper.deleteObservedVote(ctx, votes[0])
-	observedVotes = keeper.getObservedVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 2, len(observedVotes))
-
-	// Should now be zero ObservedVotes
-	deleter := func(observedVote PriceVote) (stop bool) {
-		keeper.deleteObservedVote(ctx, observedVote)
-		return false
-	}
-	keeper.iterateObservedVotes(ctx, assets.TerraDenom, deleter)
-	observedVotes = keeper.getObservedVotes(ctx, assets.TerraDenom)
-	require.Equal(t, 0, len(observedVotes))
+	keeper.iterateVotes(ctx, deleter)
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 0, len(votes))
 }

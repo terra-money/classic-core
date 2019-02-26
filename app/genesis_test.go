@@ -13,8 +13,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/stake"
-	stakeTypes "github.com/cosmos/cosmos-sdk/x/stake/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakeTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var (

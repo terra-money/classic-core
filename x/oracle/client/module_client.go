@@ -26,8 +26,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	}
 	oracleQueryCmd.AddCommand(client.GetCommands(
 		cli.GetCmdQueryPrice(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryTarget(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryVote(mc.storeKey, mc.cdc),
+		cli.GetCmdQueryVotes(mc.storeKey, mc.cdc),
 		cli.GetCmdQueryWhitelist(mc.storeKey, mc.cdc),
 	)...)
 

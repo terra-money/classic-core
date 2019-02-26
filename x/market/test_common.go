@@ -2,7 +2,6 @@ package market
 
 import (
 	"terra/types/assets"
-	"terra/types/tax"
 	"terra/x/oracle"
 	"terra/x/treasury"
 	"testing"
@@ -12,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 

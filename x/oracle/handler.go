@@ -20,59 +20,84 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (targetPrices map[string]sdk.Dec,
-	observedPrices map[string]sdk.Dec,
-	rewardees []PriceVote,
-	resTags sdk.Tags) {
+func EndBlocker(ctx sdk.Context, k Keeper) (prices map[string]sdk.Dec, rewardees map[string]sdk.Int, resTags sdk.Tags) {
 
-	targetPrices = map[string]sdk.Dec{}
-	observedPrices = map[string]sdk.Dec{}
-	votePeriod := k.GetParams(ctx).VotePeriod
-	voteThreshold := k.GetParams(ctx).VoteThreshold
-	whitelist := k.GetParams(ctx).Whitelist
+	params := k.GetParams(ctx)
+	votes := k.getVotes(ctx)
 
 	// Tally vote for oracle prices
-	if sdk.NewInt(ctx.BlockHeight()).Mod(votePeriod).Equal(sdk.ZeroInt()) {
-		resTags = resTags.AppendTag(sdk.TagAction, tags.ActionPriceUpdate)
-		for _, denom := range whitelist {
-
-			targetVotes := k.getTargetVotes(ctx, denom)
-			observedVotes := k.getObservedVotes(ctx, denom)
-			votePower := targetVotes.totalPower() // should be same for observed
+	if sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt()) {
+		for denom, filVotes := range votes {
+			votePower := filVotes.totalPower()
 
 			// Not enough validators have voted, skip
-			if votePower.LT(k.valset.TotalPower(ctx).Mul(voteThreshold)) {
-				resTags = resTags.AppendTag(denom, tags.ActionTallyDropped)
+			thresholdVotes := params.VoteThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
+			if votePower.LT(thresholdVotes) {
+
+				resTags = resTags.AppendTags(
+					sdk.NewTags(
+						tags.Action, tags.ActionTallyDropped,
+						tags.Denom, []byte(denom),
+					),
+				)
+
+				dropCounter := k.getDropCounter(ctx, denom)
+				if dropCounter.GT(params.DropThreshold) {
+
+					// Too many drops, blacklist currency
+					k.deletePrice(ctx, denom)
+					k.deleteDropCounter(ctx, denom)
+
+					resTags = resTags.AppendTags(
+						sdk.NewTags(
+							tags.Action, tags.ActionBlacklist,
+							tags.Denom, []byte(denom),
+						),
+					)
+
+				} else {
+					dropCounter = dropCounter.Add(sdk.OneInt())
+					k.setDropCounter(ctx, denom, dropCounter)
+				}
+
 				continue
 			}
 
 			// Get weighted median prices, and faithful respondants
-			targetMod, tRewardees := targetVotes.tally()
-			observedMod, oRewardees := observedVotes.tally()
+			mod, loyalVotes := filVotes.tally()
 
-			targetPrices[denom] = targetMod
-			observedPrices[denom] = observedMod
+			prices[denom] = mod
+			for _, lv := range loyalVotes {
+				voterAddrStr := lv.Voter.String()
+				rewardees[voterAddrStr] = rewardees[voterAddrStr].Add(lv.Power)
+			}
 
-			rewardees = append(rewardees, tRewardees...)
-			rewardees = append(rewardees, oRewardees...)
+			// Emit whitelist tag if the price is coming in for the first time
+			_, err := k.GetPrice(ctx, denom)
+			if err != nil {
+				resTags = resTags.AppendTags(
+					sdk.NewTags(
+						tags.Action, tags.ActionWhitelist,
+						tags.Denom, []byte(denom),
+					),
+				)
+			}
 
-			// Clear all votes
-			k.iterateTargetVotes(ctx, denom, func(vote PriceVote) (stop bool) { k.deleteTargetVote(ctx, vote); return false })
-			k.iterateObservedVotes(ctx, denom, func(vote PriceVote) (stop bool) { k.deleteObservedVote(ctx, vote); return false })
+			// Set the price for the asset
+			k.setPrice(ctx, denom, mod)
 
-			// Set the Target and Observed prices for the asset
-			k.setPriceTarget(ctx, denom, targetMod)
-			k.setPriceObserved(ctx, denom, observedMod)
-
+			// Emit price update tag
 			resTags = resTags.AppendTags(
 				sdk.NewTags(
-					sdk.TagAction, tags.ActionPriceUpdate,
+					tags.Action, tags.ActionPriceUpdate,
 					tags.Denom, []byte(denom),
-					tags.TargetPrice, targetMod.Bytes(),
-					tags.ObservedPrice, observedMod.Bytes(),
+					tags.Price, mod.Bytes(),
 				),
 			)
 		}
+
+		// Clear all votes
+		k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })
 	}
 
 	return
@@ -89,34 +114,17 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 		return ErrNotValidator(DefaultCodespace, pfm.Feeder).Result()
 	}
 
-	// Check the vote is for a whitelisted asset
-	whitelist := keeper.GetParams(ctx).Whitelist
-	contains := false
-	for _, denom := range whitelist {
-		if denom == pfm.Denom {
-			contains = true
-			break
-		}
-	}
-	if !contains {
-		return ErrUnknownDenomination(DefaultCodespace, pfm.Denom).Result()
-	}
-
 	// Add the vote to the store
-	targetVote := NewPriceVote(pfm.TargetPrice, pfm.Denom, val.GetPower(), signer)
-	keeper.addTargetVote(ctx, targetVote)
-
-	observedVote := NewPriceVote(pfm.ObservedPrice, pfm.Denom, val.GetPower(), signer)
-	keeper.addObservedVote(ctx, observedVote)
+	vote := NewPriceVote(pfm.Price, pfm.Denom, val.GetBondedTokens(), signer)
+	keeper.addVote(ctx, vote)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			sdk.TagAction, tags.ActionVoteSubmitted,
+			tags.Action, tags.ActionVoteSubmitted,
 			tags.Denom, []byte(pfm.Denom),
 			tags.Voter, pfm.Feeder.Bytes(),
-			tags.Power, val.GetPower().Bytes(),
-			tags.TargetPrice, pfm.TargetPrice.Bytes(),
-			tags.ObservedPrice, pfm.ObservedPrice.Bytes(),
+			tags.Power, val.GetBondedTokens(),
+			tags.Price, pfm.Price.Bytes(),
 		),
 	}
 }

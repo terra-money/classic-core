@@ -1,12 +1,11 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/types/tax"
-	"terra/types/util"
+	"terra/x/pay"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper of the treasury store
@@ -14,149 +13,34 @@ type Keeper struct {
 	key sdk.StoreKey
 	cdc *codec.Codec
 
-	tk tax.Keeper
+	pk pay.Keeper
+
+	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
-	taxKeeper tax.Keeper) Keeper {
+	pk pay.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
-		key: key,
-		cdc: cdc,
-		tk:  taxKeeper,
+		key:        key,
+		cdc:        cdc,
+		pk:         pk,
+		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
 	}
 }
 
-// Logic for shares
-//------------------------------------
-//------------------------------------
-//------------------------------------
-
-func (k Keeper) GetShare(ctx sdk.Context, shareID string) (res Share, err sdk.Error) {
+// SetRewardWeight sets the ratio of the treasury that goes to mining rewards, i.e.
+// supply of Luna that is burned.
+func (k Keeper) SetRewardWeight(ctx sdk.Context, weight sdk.Dec) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(GetShareKey(shareID))
-	if bz == nil {
-		err = ErrNoShareFound(DefaultCodespace, shareID)
-		return
-	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(weight)
+	store.Set(KeyRewardWeight, bz)
 }
 
-func (k Keeper) ResetShares(ctx sdk.Context, shares []Share) sdk.Error {
-	// Ensure the weights sum to below 1
-	totalWeight := sdk.ZeroDec()
-	for _, share := range shares {
-		totalWeight.Add(share.GetWeight())
-	}
-	if totalWeight.GT(sdk.OneDec()) {
-		return ErrExcessiveWeight(DefaultCodespace, totalWeight)
-	}
-
-	// Clear existing shares
-	util.Clear(k.key, ctx, PrefixShare)
-
-	// Set shares to the store
-	for _, share := range shares {
-		util.Set(k.key, k.cdc, ctx, GetShareKey(share.ID()), share)
-	}
-
-	return nil
-}
-
-func dividePool(ratio sdk.Dec, pool sdk.Coins) sdk.Coins {
-	if len(pool) != 1 {
-		return nil
-	}
-
-	return sdk.Coins{sdk.NewCoin(pool[0].Denom, ratio.MulInt(pool[0].Amount).TruncateInt())}
-}
-
-func (k Keeper) SettleShares(ctx sdk.Context) {
-	incomePool := k.getIncomePool(ctx)
-
+// GetRewardWeight returns the mining reward weight
+func (k Keeper) GetRewardWeight(ctx sdk.Context) (res sdk.Dec) {
 	store := ctx.KVStore(k.key)
-
-	shareIter := sdk.KVStorePrefixIterator(store, PrefixShare)
-	for ; shareIter.Valid(); shareIter.Next() {
-		var share Share
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(shareIter.Value(), &share)
-
-		claimIter := sdk.KVStorePrefixIterator(store, GetClaimsForSharePrefix(share.ID()))
-		for ; claimIter.Valid(); claimIter.Next() {
-			var claim Claim
-			k.cdc.MustUnmarshalBinaryLengthPrefixed(claimIter.Value(), &claim)
-
-			claimWeight := share.GetWeight().Mul(claim.GetWeight())
-			claimCoin := dividePool(claimWeight, incomePool)
-			claim.Settle(ctx, k.tk, claimCoin)
-
-			store.Delete(claimIter.Key())
-		}
-		claimIter.Close()
-
-	}
-	shareIter.Close()
-
-	// shares := util.Collect(k.key, k.cdc, ctx, PrefixShare)
-
-	// incomePool, err := k.getIncomePool(ctx)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// residualPool := incomePool
-
-	// for _, share := range shares {
-	// 	share := share.(Share)
-	// 	sharePool := dividePool(share.GetWeight(), incomePool)
-
-	// 	claims := util.Collect(k.key, k.cdc, ctx, GetClaimsForSharePrefix(share.ID()))
-
-	// 	totalWeight := sdk.ZeroDec()
-	// 	for _, c := range claims {
-	// 		c := c.(Claim)
-	// 		totalWeight = totalWeight.Add(c.GetWeight())
-	// 	}
-
-	// 	// Settle claims with others
-	// 	for _, c := range claims {
-	// 		c := c.(Claim)
-	// 		adjustedWeight := c.GetWeight().Quo(totalWeight)
-	// 		claimCoin := dividePool(adjustedWeight, sharePool)
-	// 		c.Settle(ctx, k.tk, claimCoin)
-
-	// 		residualPool.Minus(claimCoin)
-	// 	}
-	// }
-
-	// // Set remaining coins as the remaining income pool
-	// util.Set(k.key, k.cdc, ctx, KeyIncomePool, residualPool)
-}
-
-// Logic for Income Pool
-//------------------------------------
-//------------------------------------
-//------------------------------------
-
-// AddIncome adds income to the treasury module
-func (k Keeper) AddIncome(ctx sdk.Context, income sdk.Coins) {
-	incomePool := k.getIncomePool(ctx)
-	incomePool = incomePool.Plus(income)
-
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(incomePool)
-	store.Set(KeyIncomePool, bz)
-
-	if incomePool.AmountOf(assets.LunaDenom).GT(sdk.ZeroInt()) {
-
-	}
-
-}
-
-func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins) {
-	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyIncomePool)
+	bz := store.Get(KeyRewardWeight)
 	if bz == nil {
 		panic(nil)
 	}
@@ -164,13 +48,35 @@ func (k Keeper) getIncomePool(ctx sdk.Context) (res sdk.Coins) {
 	return
 }
 
-// Logic for Claims
-//------------------------------------
-//------------------------------------
-//------------------------------------
-
-func (k Keeper) AddClaim(ctx sdk.Context, claim Claim) {
+// GetIssuance gets the current supply of a coin with denom
+func (k Keeper) GetIssuance(ctx sdk.Context, denom string) (res sdk.Int) {
 	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
-	store.Set(GetClaimKey(claim.ShareID(), claim.ID()), bz)
+	bz := store.Get(KeyIssuance(denom))
+	if bz == nil {
+		panic(nil)
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	return
+}
+
+// SetIssuance sets the issuance of the coin
+func (k Keeper) SetIssuance(ctx sdk.Context, denom string, issuance sdk.Int) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+	store.Set(KeyIssuance(denom), bz)
+}
+
+//______________________________________________________________________
+// Params logic
+
+// GetParams get treasury params from the global param store
+func (k Keeper) GetParams(ctx sdk.Context) Params {
+	var params Params
+	k.paramSpace.Get(ctx, ParamStoreKeyParams, &params)
+	return params
+}
+
+// SetParams set treasury params from the global param store
+func (k Keeper) SetParams(ctx sdk.Context, params Params) {
+	k.paramSpace.Set(ctx, ParamStoreKeyParams, &params)
 }

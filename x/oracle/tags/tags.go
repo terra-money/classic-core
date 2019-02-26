@@ -1,15 +1,20 @@
 package tags
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // Oracle tags
 var (
-	ActionPriceUpdate   = []byte("price-update")
-	ActionVoteSubmitted = []byte("vote-submitted")
-	ActionTallyDropped  = []byte("tally-dropped")
+	ActionPriceUpdate   = "price-update"
+	ActionVoteSubmitted = "vote-submitted"
+	ActionTallyDropped  = "tally-dropped"
+	ActionWhitelist     = "blacklist"
+	ActionBlacklist     = "blacklist"
 
-	DropTally     = "drop"
-	Denom         = "denom"
-	Voter         = "voter"
-	Power         = "power"
-	TargetPrice   = "target-price"
-	ObservedPrice = "observed-price"
+	Action = sdk.TagAction
+	Denom  = "denom"
+	Voter  = "voter"
+	Power  = "power"
+	Price  = "price"
 )

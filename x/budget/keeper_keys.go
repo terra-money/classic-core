@@ -16,7 +16,7 @@ var (
 	KeyNextProgramID           = []byte("newProgramID")
 	PrefixInactiveProgramQueue = []byte("inactiveProgramQueue")
 	ParamStoreKeyParams        = []byte("params")
-	DefaultParamspace          = "oracle"
+	DefaultParamspace          = "budget"
 )
 
 // GenerateProgramKey creates a key of the form "Programs"|{state}|{ProgramID}
@@ -47,8 +47,8 @@ func KeyInactiveProgramQueueProgram(endTime time.Time, programID uint64) []byte 
 }
 
 // ParamTable for budget module
-func ParamTypeTable() params.TypeTable {
-	return params.NewTypeTable(
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable(
 		ParamStoreKeyParams, Params{},
 	)
 }

@@ -25,19 +25,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 		Short: "Querying commands for the market module",
 	}
 	marketQueryCmd.AddCommand(client.GetCommands(
-	// cli.GetCmdQueryDelegation(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryDelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryUnbondingDelegation(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryUnbondingDelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryRedelegation(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryRedelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryValidator(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryValidators(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryValidatorDelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryValidatorUnbondingDelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryValidatorRedelegations(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryParams(mc.storeKey, mc.cdc),
-	// cli.GetCmdQueryPool(mc.storeKey, mc.cdc)
+		cli.GetCmdQueryHistory(mc.storeKey, mc.cdc),
 	)...)
 
 	return marketQueryCmd
@@ -48,7 +36,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	marketTxCmd := &cobra.Command{
 		Use:   "market",
-		Short: "Staking transaction subcommands",
+		Short: "Market transaction subcommands",
 	}
 
 	marketTxCmd.AddCommand(client.PostCommands(

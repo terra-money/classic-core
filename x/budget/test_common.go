@@ -14,7 +14,7 @@ package budget
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
 // 	"github.com/cosmos/cosmos-sdk/x/auth"
 // 	"github.com/cosmos/cosmos-sdk/x/bank"
-// 	"github.com/cosmos/cosmos-sdk/x/stake"
+// 	"github.com/cosmos/cosmos-sdk/x/staking"
 // )
 
 // // dummy addresses used for testing
