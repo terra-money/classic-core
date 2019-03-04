@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"reflect"
 	"terra/types/assets"
-	"terra/x/treasury"
 	"time"
 
 	"terra/x/budget/tags"
@@ -38,9 +37,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
-	resTags = sdk.NewTags()
-
+func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags, claims map[string]sdk.Int) {
 	// Clean out expired inactive programs
 	inactiveIterator := k.InactiveProgramQueueIterator(ctx, ctx.BlockHeader().Time)
 	for ; inactiveIterator.Valid(); inactiveIterator.Next() {
@@ -65,20 +62,24 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 			k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Key(), &programID)
 			k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Value(), &program)
 
-			k.tk.AddClaim(ctx, treasury.NewClaim(
-				ctx.BlockHeight(),
-				treasury.BudgetClaimClass,
-				sdk.NewDecFromInt(program.weight()),
-				program.Executor,
-			))
+			claimantAddr := program.Executor.String()
+			claims[claimantAddr] = claims[claimantAddr].Add(program.weight())
 
-			resTags = resTags.AppendTag(tags.ProgramID, string(programID))
+			resTags = resTags.AppendTags(
+				sdk.NewTags(
+					tags.Action, tags.ActionProgramGranted,
+					tags.ProgramID, string(programID),
+					tags.Submitter, program.Submitter.String(),
+					tags.Executor, program.Executor.String(),
+					tags.Weight, program.weight().String(),
+				),
+			)
 		}
 
 		programIterator.Close()
 	}
 
-	return resTags
+	return
 }
 
 // handleVoteMsg handles the logic of a SubmitProgramMsg

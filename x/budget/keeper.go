@@ -1,7 +1,6 @@
 package budget
 
 import (
-	"terra/x/treasury"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,8 +16,8 @@ type Keeper struct {
 	cdc       *codec.Codec      // Codec to encore/decode structs
 	valset    sdk.ValidatorSet  // Needed to compute voting power.
 
-	bk         bank.Keeper // Needed to handle deposits. This module onlyl requires read/writes to Atom balance
-	tk         treasury.Keeper
+	bk bank.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
+	//tk         treasury.Keeper
 	paramSpace params.Subspace
 }
 
@@ -26,7 +25,6 @@ type Keeper struct {
 func NewKeeper(key sdk.StoreKey,
 	cdc *codec.Codec,
 	bk bank.Keeper,
-	tk treasury.Keeper,
 	codespace sdk.CodespaceType,
 	valset sdk.ValidatorSet,
 	paramspace params.Subspace) Keeper {
@@ -34,7 +32,6 @@ func NewKeeper(key sdk.StoreKey,
 		key:        key,
 		cdc:        cdc,
 		bk:         bk,
-		tk:         tk,
 		valset:     valset,
 		codespace:  codespace,
 		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),

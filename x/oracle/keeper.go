@@ -2,7 +2,6 @@ package oracle
 
 import (
 	"terra/types/assets"
-	"terra/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,7 +18,7 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, tk treasury.Keeper, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,

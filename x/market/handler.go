@@ -6,6 +6,7 @@ import (
 	"terra/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // NewHandler creates a new handler for all market type messages.
@@ -23,15 +24,18 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
-	retCoin, err := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
-	if err != nil {
-		return err.Result()
+	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
+	if swapErr != nil {
+		return swapErr.Result()
 	}
 
-	// Pay gains to the treasury
-	k.tk.AddIncome(ctx, msg.OfferCoin)
+	input := bank.Input{Address: msg.Trader, Coins: sdk.Coins{swapCoin}}
+	output := bank.Output{Address: msg.Trader, Coins: sdk.Coins{msg.OfferCoin}}
 
-	reqTags, reqErr := k.tk.RequestFunds(ctx, retCoin, msg.Trader)
+	// Record seigniorage
+	k.recordSeigniorage(ctx, sdk.Coins{swapCoin})
+
+	reqTags, reqErr := k.pk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
 	if reqErr != nil {
 		return reqErr.Result()
 	}
@@ -41,8 +45,8 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 			sdk.TagAction, tags.ActionSwap,
 			tags.OfferDenom, []byte(msg.OfferCoin.Denom),
 			tags.OfferAmount, msg.OfferCoin.Amount,
-			tags.AskDenom, []byte(retCoin.Denom),
-			tags.AskAmount, retCoin.Amount,
+			tags.AskDenom, []byte(swapCoin.Denom),
+			tags.AskAmount, swapCoin.Amount,
 			tags.Trader, msg.Trader.Bytes(),
 		),
 	)

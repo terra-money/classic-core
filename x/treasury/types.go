@@ -6,12 +6,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type ClaimClass byte
+
 const (
 	// RouterKey is they name of the treasury module
 	RouterKey = "treasury"
 
-	OracleClaimClass = iota
-	BudgetClaimClass
+	OracleClaimClass ClaimClass = iota
+	BudgetClaimClass ClaimClass = iota
+	MinerClaimClass  ClaimClass = iota
 )
 
 //------------------------------------
@@ -21,15 +24,15 @@ const (
 // Claim is an interface that directs its rewards to an attached bank account.
 type Claim struct {
 	id        string
-	class     byte
+	class     ClaimClass
 	weight    sdk.Dec
 	recipient sdk.AccAddress
 }
 
 // NewClaim generates a Claim instance.
-func NewClaim(blockheight int64, class byte, weight sdk.Dec, recipient sdk.AccAddress) Claim {
+func NewClaim(class ClaimClass, weight sdk.Dec, recipient sdk.AccAddress) Claim {
 	return Claim{
-		id:        GenerateClaimID(blockheight, class, recipient),
+		id:        GenerateClaimID(class, recipient),
 		class:     class,
 		weight:    weight,
 		recipient: recipient,
@@ -37,8 +40,8 @@ func NewClaim(blockheight int64, class byte, weight sdk.Dec, recipient sdk.AccAd
 }
 
 // GenerateClaimID generates an id for a Claim.
-func GenerateClaimID(blockheight int64, class byte, recipient sdk.AccAddress) string {
-	return fmt.Sprintf("%d:%d:%s", blockheight, class, recipient.String())
+func GenerateClaimID(class ClaimClass, recipient sdk.AccAddress) string {
+	return fmt.Sprintf("%d:%s", class, recipient.String())
 }
 
 // Settle the Claim by adsding {allotcation} alloted coins to the recipient account.

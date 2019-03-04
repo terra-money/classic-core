@@ -20,10 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -37,7 +34,7 @@ var (
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
 	AuthData     auth.GenesisState     `json:"auth"`
-	StakeData    stake.GenesisState    `json:"stake"`
+	StakingData  staking.GenesisState  `json:"staking"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	TreasuryData treasury.GenesisState `json:"treasury"`
 	BudgetData   budget.GenesisState   `json:"treasury"`
@@ -47,7 +44,7 @@ type GenesisState struct {
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
-	stakeData stake.GenesisState,
+	stakingData staking.GenesisState,
 	distrData distr.GenesisState,
 	oracleData oracle.GenesisState,
 	budgetData budget.GenesisState,
@@ -57,7 +54,7 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 	return GenesisState{
 		Accounts:     accounts,
 		AuthData:     authData,
-		StakeData:    stakeData,
+		StakingData:  stakingData,
 		DistrData:    distrData,
 		OracleData:   oracleData,
 		TreasuryData: treasuryData,
@@ -208,9 +205,9 @@ func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []j
 func NewDefaultGenesisState() GenesisState {
 	return GenesisState{
 		Accounts: nil,
-		StakeData: stake.GenesisState{
-			Pool: stake.InitialPool(),
-			Params: stake.Params{
+		StakingData: staking.GenesisState{
+			Pool: staking.InitialPool(),
+			Params: staking.Params{
 				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
 				MaxValidators: 100,
 				BondDenom:     assets.LunaDenom,
@@ -242,19 +239,13 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 	if err := auth.ValidateGenesis(genesisState.AuthData); err != nil {
 		return err
 	}
-	if err := bank.ValidateGenesis(genesisState.BankData); err != nil {
-		return err
-	}
+	// if err := bank.ValidateGenesis(genesisState.BankData); err != nil {
+	// 	return err
+	// }
 	if err := staking.ValidateGenesis(genesisState.StakingData); err != nil {
 		return err
 	}
-	if err := mint.ValidateGenesis(genesisState.MintData); err != nil {
-		return err
-	}
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
-		return err
-	}
-	if err := gov.ValidateGenesis(genesisState.GovData); err != nil {
 		return err
 	}
 
@@ -411,7 +402,7 @@ func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{
 		sdk.NewCoin(assets.SDRDenom, sdk.NewInt(1000)),
-		sdk.NewCoin(assets.LunaDenom, freeTokensPerAcc),
+		sdk.NewCoin(assets.LunaDenom, sdk.NewInt(100)),
 	}
 
 	coins.Sort()

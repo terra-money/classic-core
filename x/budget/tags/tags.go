@@ -12,6 +12,7 @@ var (
 	ActionProgramRejected  = "program-rejected"
 	ActionProgramSubmitted = "program-submitted"
 	ActionProgramVote      = "program-vote"
+	ActionProgramGranted   = "program-grant"
 
 	Action            = sdk.TagAction
 	Submitter         = "submitter"
@@ -19,5 +20,6 @@ var (
 	VotingPeriodStart = "voting-period-start"
 	Executor          = "executor"
 	Voter             = "voter"
+	Weight            = "weight"
 	Option            = "option"
 )

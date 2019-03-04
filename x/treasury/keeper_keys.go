@@ -14,10 +14,8 @@ const (
 // nolint
 var (
 	KeyRewardWeight = []byte("reward_weight")
-	KeyIncomePool   = []byte("income_pool")
-
-	PrefixIssuance = []byte("issuance")
-	PrefixClaim    = []byte("claim")
+	//KeyIncomePool   = []byte("income_pool")
+	PrefixClaim = []byte("claim")
 
 	ParamStoreKeyParams = []byte("params")
 )
@@ -25,11 +23,6 @@ var (
 // KeyClaim is in format of prefixclaim:claimType:claimID
 func KeyClaim(claimID string) []byte {
 	return []byte(fmt.Sprintf("%s:%s", PrefixClaim, claimID))
-}
-
-// KeyIssuance is in format of PrefixIssuance:denom
-func KeyIssuance(denom string) []byte {
-	return []byte(fmt.Sprintf("%s:%s", PrefixIssuance, denom))
 }
 
 // ParamKeyTable for treasury module

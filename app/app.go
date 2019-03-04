@@ -63,7 +63,7 @@ type TerraApp struct {
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          tax.Keeper
+	bankKeeper          pay.Keeper
 	stakingKeeper       staking.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
@@ -104,7 +104,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
-		app.keyAccount,        // target store
+		app.keyAccount, // target store
+		app.paramsKeeper.Subspace(auth.DefaultParamspace),
 		auth.ProtoBaseAccount, // prototype
 	)
 	// add handlers
@@ -141,27 +142,27 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
+	app.marketKeeper = market.NewKeeper(
+		app.oracleKeeper,
+		app.bankKeeper,
+	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
+		app.marketKeeper,
+		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,
 		cdc,
-		app.treasuryKeeper,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
-	app.marketKeeper = market.NewKeeper(
-		app.oracleKeeper,
-		app.treasuryKeeper,
-		app.bankKeeper,
-	)
+
 	app.budgetKeeper = budget.NewKeeper(
 		app.keyBudget,
 		app.cdc, app.bankKeeper,
-		app.treasuryKeeper,
 		staking.DefaultCodespace,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
@@ -195,7 +196,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
-	app.MountStoresTransient(app.tkeyParams, app.tkeyStaking, app.tkeyDistr)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -251,11 +251,12 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 	_, rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
+	app.treasuryKeeper.ProcessClaims(ctx, treasury.OracleClaimClass, rewardees)
 
-	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	claimants, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
+	app.treasuryKeeper.ProcessClaims(ctx, treasury.BudgetClaimClass, claimants)
 
-	treasury.ProcessOracleRewardees(ctx, app.treasuryKeeper, rewardees)
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
 

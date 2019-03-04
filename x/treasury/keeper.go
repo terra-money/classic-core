@@ -1,7 +1,11 @@
 package treasury
 
 import (
+	"terra/types/assets"
+	"terra/types/util"
+	"terra/x/market"
 	"terra/x/pay"
+	"terra/x/treasury/tags"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,17 +18,19 @@ type Keeper struct {
 	cdc *codec.Codec
 
 	pk pay.Keeper
+	mk market.Keeper
 
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
-	pk pay.Keeper, paramspace params.Subspace) Keeper {
+	pk pay.Keeper, mk market.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		key:        key,
 		cdc:        cdc,
 		pk:         pk,
+		mk:         mk,
 		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
 	}
 }
@@ -48,22 +54,79 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// GetIssuance gets the current supply of a coin with denom
-func (k Keeper) GetIssuance(ctx sdk.Context, denom string) (res sdk.Int) {
+// Logic for Claims
+//------------------------------------
+//------------------------------------
+//------------------------------------
+
+// AddClaim adds a funding claim to the treasury. Settled around once a month.
+func (k Keeper) addClaim(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyIssuance(denom))
-	if bz == nil {
-		panic(nil)
+	claimKey := KeyClaim(claim.id)
+
+	if bz := store.Get(claimKey); bz != nil {
+		var prevClaim Claim
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, prevClaim)
+
+		claim.weight = claim.weight.Add(prevClaim.weight)
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
+	store.Set(KeyClaim(claim.id), bz)
+}
+
+// AddClaim adds a funding claim to the treasury. Settled around once a month.
+func (k Keeper) ProcessClaims(ctx sdk.Context, class ClaimClass, rewardees map[string]sdk.Dec) {
+	for rAddrStr, rewardWeight := range rewardees {
+		addr, err := sdk.AccAddressFromBech32(rAddrStr)
+		if err != nil {
+			continue
+		}
+
+		k.addClaim(ctx, NewClaim(class, rewardWeight, addr))
+	}
+}
+
+func getRewardPools(ctx sdk.Context, k Keeper) (claimPools map[ClaimClass]sdk.Int) {
+	totalPool := k.mk.GetSeigniorage(ctx, util.GetEpoch(ctx)).AmountOf(assets.LunaDenom)
+
+	minerWeight := k.GetRewardWeight(ctx)
+	claimWeight := sdk.OneDec().Sub(minerWeight)
+
+	claimPools[MinerClaimClass] = minerWeight.MulInt(totalPool).TruncateInt()
+
+	for class, share := range k.GetParams(ctx).ClaimShares {
+		claimPools[class] = claimWeight.MulInt(totalPool).Mul(share).TruncateInt()
+	}
 	return
 }
 
-// SetIssuance sets the issuance of the coin
-func (k Keeper) SetIssuance(ctx sdk.Context, denom string, issuance sdk.Int) {
+// settleClaims distributes the current treasury to the registered claims, and deletes all claims from the store.
+func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
+	claimPools := getRewardPools(ctx, k)
+
 	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-	store.Set(KeyIssuance(denom), bz)
+	claimIter := sdk.KVStorePrefixIterator(store, PrefixClaim)
+	for ; claimIter.Valid(); claimIter.Next() {
+		var claim Claim
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(claimIter.Value(), &claim)
+
+		claim.Settle(ctx, k, sdk.Coins{
+			sdk.NewCoin(assets.LunaDenom,
+				claim.weight.MulInt(claimPools[claim.class]).TruncateInt(),
+			),
+		})
+
+		store.Delete(claimIter.Key())
+	}
+	claimIter.Close()
+
+	return sdk.NewTags(
+		tags.Action, tags.ActionSettle,
+		tags.MinerReward, claimPools[MinerClaimClass],
+		tags.Oracle, claimPools[OracleClaimClass],
+		tags.Budget, claimPools[BudgetClaimClass],
+	)
 }
 
 //______________________________________________________________________
