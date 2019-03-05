@@ -1,31 +1,33 @@
 package treasury
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/x/params"
+)
+
+const (
+	//nolint default paramspace for treasury keeper
+	DefaultParamspace = "treasury"
+)
 
 // nolint
 var (
-	KeyLunaTargetIssuance = []byte{0x01}
-	KeyIncomePool         = []byte("income_pool")
-	PrefixClaim           = []byte("claim")
-	PrefixShare           = []byte("share")
+	KeyRewardWeight = []byte("reward_weight")
+	//KeyIncomePool   = []byte("income_pool")
+	PrefixClaim = []byte("claim")
+
+	ParamStoreKeyParams = []byte("params")
 )
 
-// GetIncomePoolKey returns the key for the income pool
-func GetIncomePoolKey() []byte {
-	return KeyIncomePool
+// KeyClaim is in format of prefixclaim:claimType:claimID
+func KeyClaim(claimID string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", PrefixClaim, claimID))
 }
 
-// GetShareKey is in format of prefixshare:shareID
-func GetShareKey(shareID string) []byte {
-	return []byte(fmt.Sprintf("%s:%s", PrefixShare, shareID))
-}
-
-// GetClaimsForSharePrefix is in format of prefixclaim:shareID
-func GetClaimsForSharePrefix(shareID string) []byte {
-	return []byte(fmt.Sprintf("%s:%s", PrefixClaim, shareID))
-}
-
-// GetClaimKey is in format of prefixclaim:shareID:claimID
-func GetClaimKey(shareID string, claimID string) []byte {
-	return []byte(fmt.Sprintf("%s:%s:%s", PrefixClaim, shareID, claimID))
+// ParamKeyTable for treasury module
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable(
+		ParamStoreKeyParams, Params{},
+	)
 }

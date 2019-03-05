@@ -4,13 +4,12 @@ import (
 	"encoding/binary"
 	"reflect"
 	"terra/types/assets"
-	"terra/x/treasury"
 	"time"
 
 	"terra/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 func uint64ToBytes(i uint64) []byte {
@@ -38,9 +37,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
-	resTags = sdk.NewTags()
-
+func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags, claims map[string]sdk.Int) {
 	// Clean out expired inactive programs
 	inactiveIterator := k.InactiveProgramQueueIterator(ctx, ctx.BlockHeader().Time)
 	for ; inactiveIterator.Valid(); inactiveIterator.Next() {
@@ -51,7 +48,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		k.DeleteProgram(ctx, programID)
 
 		resTags = resTags.AppendTag(tags.Action, tags.ActionProgramDropped)
-		resTags = resTags.AppendTag(tags.ProgramID, []byte(string(programID)))
+		resTags = resTags.AppendTag(tags.ProgramID, string(programID))
 	}
 	inactiveIterator.Close()
 
@@ -65,19 +62,24 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 			k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Key(), &programID)
 			k.cdc.MustUnmarshalBinaryLengthPrefixed(inactiveIterator.Value(), &program)
 
-			k.tk.AddClaim(ctx, treasury.NewBaseClaim(
-				treasury.BudgetShareID,
-				program.weight(),
-				program.Executor,
-			))
+			claimantAddr := program.Executor.String()
+			claims[claimantAddr] = claims[claimantAddr].Add(program.weight())
 
-			resTags = resTags.AppendTag(tags.ProgramID, []byte(string(programID)))
+			resTags = resTags.AppendTags(
+				sdk.NewTags(
+					tags.Action, tags.ActionProgramGranted,
+					tags.ProgramID, string(programID),
+					tags.Submitter, program.Submitter.String(),
+					tags.Executor, program.Executor.String(),
+					tags.Weight, program.weight().String(),
+				),
+			)
 		}
 
 		programIterator.Close()
 	}
 
-	return resTags
+	return
 }
 
 // handleVoteMsg handles the logic of a SubmitProgramMsg
@@ -155,22 +157,24 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 	// Check the voter is a validater
 	val := k.valset.Validator(ctx, sdk.ValAddress(program.Submitter))
 	if val == nil {
-		return stake.ErrNoDelegatorForAddress(DefaultCodespace).Result()
+		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
 	}
 
 	// Override existing vote
 	oldOption, err := k.GetVote(ctx, msg.ProgramID, msg.Voter)
 	if err != nil {
-		program.updateTally(oldOption, val.GetPower().Neg())
+		program.updateTally(oldOption, val.GetBondedTokens().Neg())
 	}
 
 	// update new vote
-	err = program.updateTally(msg.Option, val.GetPower())
+	err = program.updateTally(msg.Option, val.GetBondedTokens())
 
 	// Needs to be activated
 	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
 	if k.ProgramExistsInactiveProgramQueue(ctx, votingEndTime, msg.ProgramID) {
-		if program.weight().GT(k.GetParams(ctx).ActiveThreshold) {
+
+		activationThreshold := k.GetParams(ctx).ActiveThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
+		if program.weight().GT(activationThreshold) {
 			// Refund deposit
 			k.RefundDeposit(ctx, msg.ProgramID)
 
@@ -179,11 +183,14 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 			program.State = ActiveProgramState
 			k.SetProgram(ctx, msg.ProgramID, program)
 		}
-	} else if program.weight().LT(k.GetParams(ctx).LegacyThreshold) {
-		program.State = InactiveProgramState
+	} else {
+		legacyThreshold := k.GetParams(ctx).LegacyThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
+		if program.weight().LT(legacyThreshold) {
+			program.State = InactiveProgramState
 
-		k.DeleteProgram(ctx, msg.ProgramID)
-		// Burn the deposit
+			k.DeleteProgram(ctx, msg.ProgramID)
+			// Burn the deposit
+		}
 	}
 
 	// TODO: why does the vote need to be stored?

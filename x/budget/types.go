@@ -9,6 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// RouterKey is they name of the budget module
+const RouterKey = "budget"
+
 type ProgramVote string
 type ProgramState string
 
@@ -59,7 +62,7 @@ func (p *Program) getVotingEndTime(votingPeriod time.Duration) time.Time {
 }
 
 // updateTally updates the counter for each of the available options
-func (p *Program) updateTally(option ProgramVote, power sdk.Dec) sdk.Error {
+func (p *Program) updateTally(option ProgramVote, power sdk.Int) sdk.Error {
 	switch option {
 	case YesVote:
 		p.TallyResult.Yes = p.TallyResult.Yes.Add(power)
@@ -75,7 +78,7 @@ func (p *Program) updateTally(option ProgramVote, power sdk.Dec) sdk.Error {
 	}
 }
 
-func (p *Program) weight() sdk.Dec {
+func (p *Program) weight() sdk.Int {
 	return p.TallyResult.Yes.Sub(p.TallyResult.No)
 }
 
@@ -143,7 +146,7 @@ func (msg SubmitProgramMsg) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidCoins("Deposit is not valid")
 	}
 
-	if !msg.Deposit.IsPositive() {
+	if !msg.Deposit.IsAllPositive() {
 		return sdk.ErrInvalidCoins("Deposit cannot be negative")
 	}
 
@@ -159,17 +162,17 @@ func (msg SubmitProgramMsg) String() string {
 
 // TallyResult Tally Results
 type TallyResult struct {
-	Yes     sdk.Dec `json:"yes"`
-	Abstain sdk.Dec `json:"abstain"`
-	No      sdk.Dec `json:"no"`
+	Yes     sdk.Int `json:"yes"`
+	Abstain sdk.Int `json:"abstain"`
+	No      sdk.Int `json:"no"`
 }
 
 // checks if two proposals are equal
 func EmptyTallyResult() TallyResult {
 	return TallyResult{
-		Yes:     sdk.ZeroDec(),
-		Abstain: sdk.ZeroDec(),
-		No:      sdk.ZeroDec(),
+		Yes:     sdk.ZeroInt(),
+		Abstain: sdk.ZeroInt(),
+		No:      sdk.ZeroInt(),
 	}
 }
 

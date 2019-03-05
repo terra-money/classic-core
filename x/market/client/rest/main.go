@@ -1,9 +1,11 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 	"terra/x/market"
+	"terra/x/market/client"
+
+	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
@@ -12,37 +14,36 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// REST Variable names
-// nolint
-const (
-	RestOfferCoin = "offerCoin"
-	RestAskDenom  = "askDenom"
-	storeName     = "market"
-)
-
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	// POST /vote/{denom}
-	r.HandleFunc(fmt.Sprintf("market/swap/{%s}/ask/{%s}", RestOfferCoin, RestAskDenom),
-		SubmitSwapHandlerFunction(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc("market/swap", submitSwapHandlerFunction(cdc, cliCtx)).Methods("POST")
+
+	r.HandleFunc("market/history", queryHistoryHandlerFunction(cdc, cliCtx)).Methods("GET")
 }
 
 //nolint
 type SwapReq struct {
-	BaseReq        utils.BaseReq `json:"base_req"`
-	OfferDenom     string        `json:"offer_denom"`
-	OfferAmount    sdk.Int       `json:"offer_amount"`
-	AskDenom       string        `json:"ask_denom"`
-	SwapperAddress string        `json:"swapper_address"`
+	BaseReq       utils.BaseReq  `json:"base_req"`
+	OfferCoin     sdk.Coin       `json:"offer_coin"`
+	AskDenom      string         `json:"ask_denom"`
+	TraderAddress sdk.AccAddress `json:"trader_address"`
 }
 
-// SubmitSwapHandlerFunction handles a POST vote request
-func SubmitSwapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+//nolint
+type HistoryReq struct {
+	BaseReq       utils.BaseReq  `json:"base_req"`
+	OfferDenom    string         `json:"offer_denom"`
+	AskDenom      string         `json:"ask_denom"`
+	TraderAddress sdk.AccAddress `json:"trader_address"`
+}
+
+// submitSwapHandlerFunction handles a POST vote request
+func submitSwapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		swapReq := SwapReq{}
-		err := utils.ReadRESTReq(w, r, cdc, &swapReq)
+		err := rest.ReadRESTReq(w, r, cdc, &swapReq)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -51,23 +52,40 @@ func SubmitSwapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
-		swapAddr, err := cliCtx.GetFromAddress()
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		offerCoin := sdk.NewCoin(swapReq.OfferDenom, swapReq.OfferAmount)
-		askDenom := swapReq.AskDenom
-
 		// create the message
-		msg := market.NewSwapMsg(swapAddr, offerCoin, askDenom)
+		msg := market.NewSwapMsg(swapReq.TraderAddress, swapReq.OfferCoin, swapReq.AskDenom)
 		err = msg.ValidateBasic()
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.CompleteAndBroadcastTxREST(w, r, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
+		rest.CompleteAndBroadcastTxREST(w, r, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
+	}
+}
+
+func queryHistoryHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		histReq := HistoryReq{}
+		err := rest.ReadRESTReq(w, r, cdc, &histReq)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := client.QueryHistoryParams{
+			TraderAddress: histReq.TraderAddress,
+			AskDenom:      histReq.AskDenom,
+			OfferDenom:    histReq.OfferDenom,
+		}
+
+		res, err := client.QueryHistoryByTxQuery(cdc, cliCtx, params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}
 }

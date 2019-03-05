@@ -6,12 +6,13 @@ import (
 
 // Governance tags
 var (
-	ActionProgramWithdrawn = []byte("program-withdrawn")
-	ActionProgramDropped   = []byte("program-dropped")
-	ActionProgramPassed    = []byte("program-passed")
-	ActionProgramRejected  = []byte("program-rejected")
-	ActionProgramSubmitted = []byte("program-submitted")
-	ActionProgramVote      = []byte("program-vote")
+	ActionProgramWithdrawn = "program-withdrawn"
+	ActionProgramDropped   = "program-dropped"
+	ActionProgramPassed    = "program-passed"
+	ActionProgramRejected  = "program-rejected"
+	ActionProgramSubmitted = "program-submitted"
+	ActionProgramVote      = "program-vote"
+	ActionProgramGranted   = "program-grant"
 
 	Action            = sdk.TagAction
 	Submitter         = "submitter"
@@ -19,5 +20,6 @@ var (
 	VotingPeriodStart = "voting-period-start"
 	Executor          = "executor"
 	Voter             = "voter"
+	Weight            = "weight"
 	Option            = "option"
 )

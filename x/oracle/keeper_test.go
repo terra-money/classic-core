@@ -1,134 +1,78 @@
 package oracle
 
-// import (
-// 	"testing"
+import (
+	"terra/types/assets"
+	"testing"
 
-// 	codec "github.com/cosmos/cosmos-sdk/codec"
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/stretchr/testify/require"
-// 	abci "github.com/tendermint/tendermint/abci/types"
-// 	"github.com/tendermint/tendermint/libs/log"
-// )
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+)
 
-// func TestOracleSetup(t *testing.T) {
+func TestPrice(t *testing.T) {
+	mapp, keeper, _, _, _, _ := getMockApp(t, 5)
+	mapp.BeginBlock(abci.RequestBeginBlock{})
+	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
 
-// }
+	// New context. There should be no price.
+	tp, err := keeper.GetPrice(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(sdk.ZeroDec()) && err != nil)
 
-// func TestAddVote(t *testing.T) {
-// 	// Case 1: Incorrect denoms have been added
+	terraPrice := sdk.NewDecWithPrec(166, 2)
+	keeper.setPrice(ctx, assets.TerraDenom, terraPrice)
 
-// }
+	tp, err = keeper.GetPrice(ctx, assets.TerraDenom)
+	require.True(t, tp.Equal(terraPrice) && err == nil)
+}
 
-// func TestVoteElection(t *testing.T) {
-// 	// Case 1: Insufficient votes to reach majority
+func TestVotes(t *testing.T) {
+	mapp, keeper, _, addrs, _, _ := getMockApp(t, 3)
+	mapp.BeginBlock(abci.RequestBeginBlock{})
+	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
 
-// 	// Case 2: Sufficient votes have been offered
+	votes := []PriceVote{}
+	for i := 0; i < 3; i++ {
+		vote := NewPriceVote(
+			sdk.NewDecWithPrec(int64(i)+1, 0),
+			assets.TerraDenom,
+			sdk.OneInt(),
+			addrs[i],
+		)
+		votes = append(votes, vote)
+	}
 
-// 	// Case 3: Check that stale votes don't effect consensus
-// }
+	keeper.addVote(ctx, votes[0])
 
-// func BenchmarkAccountMapperGetAccountFound(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
+	// Should be one vote in total
+	terraVotes := keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 1, len(votes))
 
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
+	// Add the same vote; Should still be one vote in total
+	keeper.addVote(ctx, votes[0])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 1, len(votes))
 
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
+	// Zero votes for an unrelated denom
+	krwVotes := keeper.getVotes(ctx)[assets.KRWDenom]
+	require.Equal(t, 0, len(krwVotes))
 
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		mapper.GetAccount(ctx, sdk.AccAddress(arr))
-// 	}
-// }
+	// Should now be three votes in total
+	keeper.addVote(ctx, votes[1])
+	keeper.addVote(ctx, votes[2])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 3, len(terraVotes))
 
-// func BenchmarkAccountMapperGetAccountFoundWithCoins(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
+	// Should now be two votes
+	keeper.deleteVote(ctx, votes[0])
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 2, len(votes))
 
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	coins := sdk.Coins{
-// 		sdk.NewCoin("LTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("ETH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("XRP", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BCH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("EOS", sdk.NewInt(1000)),
-// 	}
-
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		acc.SetCoins(coins)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-
-// 	b.ResetTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		mapper.GetAccount(ctx, sdk.AccAddress(arr))
-// 	}
-// }
-
-// func BenchmarkAccountMapperSetAccount(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
-
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	b.ResetTimer()
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-// }
-
-// func BenchmarkAccountMapperSetAccountWithCoins(b *testing.B) {
-// 	ms, capKey, _ := setupMultiStore()
-// 	cdc := codec.New()
-// 	RegisterBaseAccount(cdc)
-
-// 	// make context and mapper
-// 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
-// 	mapper := NewAccountKeeper(cdc, capKey, ProtoBaseAccount)
-
-// 	coins := sdk.Coins{
-// 		sdk.NewCoin("LTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BTC", sdk.NewInt(1000)),
-// 		sdk.NewCoin("ETH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("XRP", sdk.NewInt(1000)),
-// 		sdk.NewCoin("BCH", sdk.NewInt(1000)),
-// 		sdk.NewCoin("EOS", sdk.NewInt(1000)),
-// 	}
-
-// 	b.ResetTimer()
-// 	// assumes b.N < 2**24
-// 	for i := 0; i < b.N; i++ {
-// 		arr := []byte{byte((i & 0xFF0000) >> 16), byte((i & 0xFF00) >> 8), byte(i & 0xFF)}
-// 		addr := sdk.AccAddress(arr)
-// 		acc := mapper.NewAccountWithAddress(ctx, addr)
-// 		acc.SetCoins(coins)
-// 		mapper.SetAccount(ctx, acc)
-// 	}
-// }
+	// Should now be zero votes
+	deleter := func(vote PriceVote) (stop bool) {
+		keeper.deleteVote(ctx, vote)
+		return false
+	}
+	keeper.iterateVotes(ctx, deleter)
+	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
+	require.Equal(t, 0, len(votes))
+}

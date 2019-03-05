@@ -1,5 +1,7 @@
 package init
 
+// DONTCOVER
+
 import (
 	"bytes"
 	"fmt"
@@ -7,12 +9,17 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"terra/types/assets"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/common"
+
 	"terra/app"
+	"terra/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -23,18 +30,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	"github.com/cosmos/cosmos-sdk/x/stake/client/cli"
-	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/crypto"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 )
 
-const (
-	defaultAmount                  = "100" + assets.LunaDenom
+var (
+	defaultTokens                  = sdk.TokensFromTendermintPower(100)
+	defaultAmount                  = defaultTokens.String() + assets.LunaDenom
 	defaultCommissionRate          = "0.1"
 	defaultCommissionMaxRate       = "0.2"
 	defaultCommissionMaxChangeRate = "0.01"
+	defaultMinSelfDelegation       = "1"
 )
 
 // GenTxCmd builds the terrad gentx command.
@@ -52,7 +57,8 @@ following delegation and commission default parameters:
 	commission rate:             %s
 	commission max rate:         %s
 	commission max change rate:  %s
-`, defaultAmount, defaultCommissionRate, defaultCommissionMaxRate, defaultCommissionMaxChangeRate),
+	minimum self delegation:     %s
+`, defaultAmount, defaultCommissionRate, defaultCommissionMaxRate, defaultCommissionMaxChangeRate, defaultMinSelfDelegation),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			config := ctx.Config
@@ -61,12 +67,19 @@ following delegation and commission default parameters:
 			if err != nil {
 				return err
 			}
-			ip, err := server.ExternalIP()
-			if err != nil {
-				return err
+
+			// Read --nodeID, if empty take it from priv_validator.json
+			if nodeIDString := viper.GetString(cli.FlagNodeID); nodeIDString != "" {
+				nodeID = nodeIDString
 			}
 
-			genDoc, err := loadGenesisDoc(cdc, config.GenesisFile())
+			ip := viper.GetString(cli.FlagIP)
+			if ip == "" {
+				fmt.Fprintf(os.Stderr, "couldn't retrieve an external IP; "+
+					"the tx's memo field will be unset")
+			}
+
+			genDoc, err := LoadGenesisDoc(cdc, config.GenesisFile())
 			if err != nil {
 				return err
 			}
@@ -76,7 +89,7 @@ following delegation and commission default parameters:
 				return err
 			}
 
-			kb, err := keys.GetKeyBaseFromDir(viper.GetString(flagClientHome))
+			kb, err := keys.NewKeyBaseFromDir(viper.GetString(flagClientHome))
 			if err != nil {
 				return err
 			}
@@ -113,14 +126,15 @@ following delegation and commission default parameters:
 			// Run terrad tx create-validator
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			cliCtx, txBldr, msg, err := cli.BuildCreateValidatorMsg(cliCtx, txBldr)
+			txBldr, msg, err := cli.BuildCreateValidatorMsg(cliCtx, txBldr)
 			if err != nil {
 				return err
 			}
 
 			// write the unsigned transaction to the buffer
 			w := bytes.NewBuffer([]byte{})
-			if err := utils.PrintUnsignedStdTx(w, txBldr, cliCtx, []sdk.Msg{msg}, true); err != nil {
+			cliCtx = cliCtx.WithOutput(w)
+			if err = utils.PrintUnsignedStdTx(txBldr, cliCtx, []sdk.Msg{msg}, true); err != nil {
 				return err
 			}
 
@@ -137,9 +151,12 @@ following delegation and commission default parameters:
 			}
 
 			// Fetch output file name
-			outputDocument, err := makeOutputFilepath(config.RootDir, nodeID)
-			if err != nil {
-				return err
+			outputDocument := viper.GetString(client.FlagOutputDocument)
+			if outputDocument == "" {
+				outputDocument, err = makeOutputFilepath(config.RootDir, nodeID)
+				if err != nil {
+					return err
+				}
 			}
 
 			if err := writeSignedGenTx(cdc, outputDocument, signedTx); err != nil {
@@ -151,10 +168,17 @@ following delegation and commission default parameters:
 		},
 	}
 
+	ip, _ := server.ExternalIP()
+
 	cmd.Flags().String(tmcli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(flagClientHome, app.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagName, "", "name of private key with which to sign the gentx")
+	cmd.Flags().String(client.FlagOutputDocument, "",
+		"write the genesis transaction JSON document to the given file instead of the default location")
+	cmd.Flags().String(cli.FlagIP, ip, "The node's public IP")
+	cmd.Flags().String(cli.FlagNodeID, "", "The node's NodeID")
 	cmd.Flags().AddFlagSet(cli.FsCommissionCreate)
+	cmd.Flags().AddFlagSet(cli.FsMinSelfDelegation)
 	cmd.Flags().AddFlagSet(cli.FsAmount)
 	cmd.Flags().AddFlagSet(cli.FsPk)
 	cmd.MarkFlagRequired(client.FlagName)
@@ -163,7 +187,7 @@ following delegation and commission default parameters:
 
 func accountInGenesis(genesisState app.GenesisState, key sdk.AccAddress, coins sdk.Coins) error {
 	accountIsInGenesis := false
-	bondDenom := genesisState.StakeData.Params.BondDenom
+	bondDenom := genesisState.StakingData.Params.BondDenom
 
 	// Check if the account is in genesis
 	for _, acc := range genesisState.Accounts {
@@ -173,8 +197,8 @@ func accountInGenesis(genesisState app.GenesisState, key sdk.AccAddress, coins s
 			// Ensure account contains enough funds of default bond denom
 			if coins.AmountOf(bondDenom).GT(acc.Coins.AmountOf(bondDenom)) {
 				return fmt.Errorf(
-					"Account %v is in genesis, but the only has %v%v available to stake, not %v%v",
-					key, acc.Coins.AmountOf(bondDenom), bondDenom, coins.AmountOf(bondDenom), bondDenom,
+					"account %v is in genesis, but it only has %v%v available to stake, not %v%v",
+					key.String(), acc.Coins.AmountOf(bondDenom), bondDenom, coins.AmountOf(bondDenom), bondDenom,
 				)
 			}
 			accountIsInGenesis = true
@@ -186,7 +210,7 @@ func accountInGenesis(genesisState app.GenesisState, key sdk.AccAddress, coins s
 		return nil
 	}
 
-	return fmt.Errorf("Account %s in not in the app_state.accounts array of genesis.json", key)
+	return fmt.Errorf("account %s in not in the app_state.accounts array of genesis.json", key)
 }
 
 func prepareFlagsForTxCreateValidator(config *cfg.Config, nodeID, ip, chainID string,
@@ -197,7 +221,7 @@ func prepareFlagsForTxCreateValidator(config *cfg.Config, nodeID, ip, chainID st
 	viper.Set(cli.FlagNodeID, nodeID)                              // --node-id
 	viper.Set(cli.FlagIP, ip)                                      // --ip
 	viper.Set(cli.FlagPubKey, sdk.MustBech32ifyConsPub(valPubKey)) // --pubkey
-	viper.Set(cli.FlagGenesisFormat, true)                         // --genesis-format
+	viper.Set(client.FlagGenerateOnly, true)                       // --genesis-format
 	viper.Set(cli.FlagMoniker, config.Moniker)                     // --moniker
 	if config.Moniker == "" {
 		viper.Set(cli.FlagMoniker, viper.GetString(client.FlagName))
@@ -213,6 +237,9 @@ func prepareFlagsForTxCreateValidator(config *cfg.Config, nodeID, ip, chainID st
 	}
 	if viper.GetString(cli.FlagCommissionMaxChangeRate) == "" {
 		viper.Set(cli.FlagCommissionMaxChangeRate, defaultCommissionMaxChangeRate)
+	}
+	if viper.GetString(cli.FlagMinSelfDelegation) == "" {
+		viper.Set(cli.FlagMinSelfDelegation, defaultMinSelfDelegation)
 	}
 }
 

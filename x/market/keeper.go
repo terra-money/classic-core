@@ -1,10 +1,9 @@
 package market
 
 import (
+	"terra/types/util"
 	"terra/x/oracle"
-	"terra/x/treasury"
-
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"terra/x/pay"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,64 +11,59 @@ import (
 
 //nolint
 type Keeper struct {
-	storeKey  sdk.StoreKey      // Key to our module's store
-	codespace sdk.CodespaceType // Reserves space for error codes
-	cdc       *codec.Codec      // Codec to encore/decode structs
-	ok        oracle.Keeper     // Read terra & luna prices
-	tk        treasury.Keeper   // Pay mint revenues to the treasury
-	bk        bank.Keeper
+	key sdk.StoreKey
+	cdc *codec.Codec
+
+	ok oracle.Keeper // Read terra & luna prices
+	pk pay.Keeper
 }
 
 // NewKeeper crates a new keeper with write and read access
-func NewKeeper(
-	ok oracle.Keeper,
-	tk treasury.Keeper,
-	bk bank.Keeper,
-) Keeper {
+func NewKeeper(ok oracle.Keeper, pk pay.Keeper) Keeper {
 	return Keeper{
 		ok: ok,
-		tk: tk,
-		bk: bk,
+		pk: pk,
 	}
-}
-
-func whitelistContains(ctx sdk.Context, k Keeper, denom string) bool {
-	whitelist := k.ok.GetParams(ctx).Whitelist
-	for _, w := range whitelist {
-		if w == denom {
-			return true
-		}
-	}
-	return false
 }
 
 func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
-	// If swap msg for not whitelisted denom
-	if !whitelistContains(ctx, k, offerCoin.Denom) {
-		return sdk.Coin{}, ErrUnknownDenomination(DefaultCodespace, offerCoin.Denom)
+	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
+	if err != nil {
+		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
 
-	offerRate, tErr := k.ok.GetPriceTarget(ctx, offerCoin.Denom)
-	if tErr != nil {
-		panic(tErr)
-	}
-
-	askRate, oErr := k.ok.GetPriceObserved(ctx, askDenom)
-	if oErr != nil {
-		panic(oErr)
+	askRate, err := k.ok.GetPrice(ctx, askDenom)
+	if err != nil {
+		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
 	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
-
 	if retAmount.Equal(sdk.ZeroInt()) {
 		// drop in this scenario
 		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
 
-	retCoin := sdk.Coin{
-		Denom:  askDenom,
-		Amount: retAmount,
-	}
-
+	retCoin := sdk.Coin{Denom: askDenom, Amount: retAmount}
 	return retCoin, nil
+}
+
+func (k Keeper) recordSeigniorage(ctx sdk.Context, seigniorage sdk.Coins) {
+	currentEpoch := util.GetEpoch(ctx)
+	pool := k.GetSeigniorage(ctx, currentEpoch)
+	pool = pool.Plus(seigniorage)
+
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(seigniorage)
+	store.Set(KeySeigniorage(currentEpoch), bz)
+}
+
+func (k Keeper) GetSeigniorage(ctx sdk.Context, epoch sdk.Int) (res sdk.Coins) {
+	store := ctx.KVStore(k.key)
+	bz := store.Get(KeySeigniorage(epoch))
+	if bz == nil {
+		res = sdk.Coins{}
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	return
 }

@@ -18,12 +18,10 @@ build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
 	go build $(BUILD_FLAGS) -o build/terrad.exe ./cmd/terrad
 	go build $(BUILD_FLAGS) -o build/terracli.exe ./cmd/terracli
-	go build $(BUILD_FLAGS) -o build/terrareplay.exe ./cmd/terrareplay
 	go build $(BUILD_FLAGS) -o build/terrakeyutil.exe ./cmd/terrakeyutil
 else
 	go build $(BUILD_FLAGS) -o build/terrad ./cmd/terrad
 	go build $(BUILD_FLAGS) -o build/terracli ./cmd/terracli
-	go build $(BUILD_FLAGS) -o build/terrareplay ./cmd/terrareplay
 	go build $(BUILD_FLAGS) -o build/terrakeyutil ./cmd/terrakeyutil
 endif
 
@@ -37,7 +35,6 @@ update_terra_lite_docs:
 install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
-	go install $(BUILD_FLAGS) ./cmd/terrareplay
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
 

@@ -3,6 +3,8 @@ package market
 import (
 	"reflect"
 
+	"terra/x/market/tags"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
@@ -14,7 +16,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		case SwapMsg:
 			return handleSwapMsg(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized swap Msg type: " + reflect.TypeOf(msg).Name()
+			errMsg := "Unrecognized market Msg type: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -22,36 +24,34 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
-	tags := sdk.NewTags()
-
-	retCoin, err := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
-	if err != nil {
-		return err.Result()
-	}
-
-	// Reflect the swap in the trader's wallet
-	swapTags, swapErr := k.bk.InputOutputCoins(ctx, []bank.Input{bank.NewInput(msg.Trader, sdk.Coins{retCoin})},
-		[]bank.Output{bank.NewOutput(msg.Trader, sdk.Coins{msg.OfferCoin})})
-
+	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
 	if swapErr != nil {
 		return swapErr.Result()
 	}
 
-	tags.AppendTags(swapTags)
+	input := bank.Input{Address: msg.Trader, Coins: sdk.Coins{swapCoin}}
+	output := bank.Output{Address: msg.Trader, Coins: sdk.Coins{msg.OfferCoin}}
 
-	// Pay gains to the treasury
-	k.tk.AddIncome(ctx, sdk.Coins{msg.OfferCoin})
+	// Record seigniorage
+	k.recordSeigniorage(ctx, sdk.Coins{swapCoin})
 
-	tags.AppendTags(
+	reqTags, reqErr := k.pk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
+	if reqErr != nil {
+		return reqErr.Result()
+	}
+
+	reqTags = reqTags.AppendTags(
 		sdk.NewTags(
-			"action", []byte("swap"),
-			"offer", []byte(msg.OfferCoin.String()),
-			"ask", []byte(retCoin.String()),
-			"trader", msg.Trader.Bytes(),
+			sdk.TagAction, tags.ActionSwap,
+			tags.OfferDenom, []byte(msg.OfferCoin.Denom),
+			tags.OfferAmount, msg.OfferCoin.Amount,
+			tags.AskDenom, []byte(swapCoin.Denom),
+			tags.AskAmount, swapCoin.Amount,
+			tags.Trader, msg.Trader.Bytes(),
 		),
 	)
 
 	return sdk.Result{
-		Tags: tags,
+		Tags: reqTags,
 	}
 }

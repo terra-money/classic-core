@@ -6,10 +6,11 @@ import (
 
 // Oracle errors reserve 1101-1199
 const (
-	DefaultCodespace sdk.CodespaceType = "ORACLE"
+	DefaultCodespace sdk.CodespaceType = "oracle"
 
 	CodeNotValidator sdk.CodeType = 1
 	CodeUnknownDenom sdk.CodeType = 2
+	CodeInvalidPrice sdk.CodeType = 3
 )
 
 // ----------------------------------------
@@ -23,4 +24,9 @@ func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error
 // ErrNotValidator called when the signer of a Msg is not a validator
 func ErrNotValidator(codespace sdk.CodespaceType, address sdk.AccAddress) sdk.Error {
 	return sdk.NewError(codespace, CodeNotValidator, address.String())
+}
+
+// ErrInvalidPrice called when the price submitted is not valid
+func ErrInvalidPrice(codespace sdk.CodespaceType, price sdk.Dec) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidPrice, price.String())
 }

@@ -5,10 +5,10 @@ import (
 	"io"
 	"os"
 	"sort"
-	"terra/types/tax"
 	"terra/x/budget"
 	"terra/x/market"
 	"terra/x/oracle"
+	"terra/x/pay"
 	"terra/x/treasury"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,10 +17,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
-	"github.com/cosmos/cosmos-sdk/x/stake"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -48,8 +47,8 @@ type TerraApp struct {
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
 	keyBank          *sdk.KVStoreKey
-	keyStake         *sdk.KVStoreKey
-	tkeyStake        *sdk.TransientStoreKey
+	keyStaking       *sdk.KVStoreKey
+	tkeyStaking      *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
 	keyDistr         *sdk.KVStoreKey
 	tkeyDistr        *sdk.TransientStoreKey
@@ -64,8 +63,8 @@ type TerraApp struct {
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          tax.Keeper
-	stakeKeeper         stake.Keeper
+	bankKeeper          pay.Keeper
+	stakingKeeper       staking.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
 	paramsKeeper        params.Keeper
@@ -88,8 +87,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyMain:          sdk.NewKVStoreKey("main"),
 		keyBank:          sdk.NewKVStoreKey("bank"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),
-		keyStake:         sdk.NewKVStoreKey("stake"),
-		tkeyStake:        sdk.NewTransientStoreKey("transient_stake"),
+		keyStaking:       sdk.NewKVStoreKey("staking"),
+		tkeyStaking:      sdk.NewTransientStoreKey("transient_staking"),
 		keyDistr:         sdk.NewKVStoreKey("distr"),
 		tkeyDistr:        sdk.NewTransientStoreKey("transient_distr"),
 		keySlashing:      sdk.NewKVStoreKey("slashing"),
@@ -105,7 +104,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
-		app.keyAccount,        // target store
+		app.keyAccount, // target store
+		app.paramsKeeper.Subspace(auth.DefaultParamspace),
 		auth.ProtoBaseAccount, // prototype
 	)
 	// add handlers
@@ -113,7 +113,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.cdc,
 		app.keyFeeCollection,
 	)
-	app.bankKeeper = tax.NewBaseKeeper(
+	app.bankKeeper = pay.NewBaseKeeper(
 		app.keyBank,
 		app.cdc,
 		app.accountKeeper,
@@ -123,78 +123,79 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.cdc,
 		app.keyParams, app.tkeyParams,
 	)
-	stakeKeeper := stake.NewKeeper(
+	stakingKeeper := staking.NewKeeper(
 		app.cdc,
-		app.keyStake, app.tkeyStake,
-		app.bankKeeper, app.paramsKeeper.Subspace(stake.DefaultParamspace),
-		stake.DefaultCodespace,
+		app.keyStaking, app.tkeyStaking,
+		app.bankKeeper, app.paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
 	)
 	app.distrKeeper = distr.NewKeeper(
 		app.cdc,
 		app.keyDistr,
 		app.paramsKeeper.Subspace(distr.DefaultParamspace),
-		app.bankKeeper, &stakeKeeper, app.feeCollectionKeeper,
+		app.bankKeeper, &stakingKeeper, app.feeCollectionKeeper,
 		distr.DefaultCodespace,
 	)
 	app.slashingKeeper = slashing.NewKeeper(
 		app.cdc,
 		app.keySlashing,
-		&stakeKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
+		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
+	)
+	app.marketKeeper = market.NewKeeper(
+		app.oracleKeeper,
+		app.bankKeeper,
 	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
+		app.marketKeeper,
+		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.keyOracle,
 		cdc,
-		app.treasuryKeeper,
-		stakeKeeper.GetValidatorSet(),
+		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
-	app.marketKeeper = market.NewKeeper(
-		app.oracleKeeper,
-		app.treasuryKeeper,
-		app.bankKeeper,
-	)
+
 	app.budgetKeeper = budget.NewKeeper(
 		app.keyBudget,
 		app.cdc, app.bankKeeper,
-		app.treasuryKeeper,
-		stake.DefaultCodespace,
-		stakeKeeper.GetValidatorSet(),
+		staking.DefaultCodespace,
+		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
 
 	// register the staking hooks
-	// NOTE: The stakeKeeper above is passed by reference, so that it can be
+	// NOTE: The stakingKeeper above is passed by reference, so that it can be
 	// modified like below:
-	app.stakeKeeper = *stakeKeeper.SetHooks(
+	app.stakingKeeper = *stakingKeeper.SetHooks(
 		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
 	// register message routes
 	app.Router().
-		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
-		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
-		AddRoute("distr", distr.NewHandler(app.distrKeeper)).
-		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
-		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper)).
-		AddRoute("budget", budget.NewHandler(app.budgetKeeper)).
-		AddRoute("market", market.NewHandler(app.marketKeeper))
+		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
+		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
+		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
+		AddRoute(oracle.RouterKey, oracle.NewHandler(app.oracleKeeper)).
+		AddRoute(budget.RouterKey, budget.NewHandler(app.budgetKeeper)).
+		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		AddRoute("budget", budget.NewQuerier(app.budgetKeeper)).
-		AddRoute("stake", stake.NewQuerier(app.stakeKeeper, app.cdc))
+		//AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper)).
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
+		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper))
 
 	// initialize BaseApp
-	app.MountStores(app.keyMain, app.keyAccount, app.keyStake, app.keyDistr, app.keyBank,
+	app.MountStores(app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr, app.keyBank,
 		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury, app.keyBudget)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
-	app.MountStoresTransient(app.tkeyParams, app.tkeyStake, app.tkeyDistr)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -211,11 +212,14 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	bank.RegisterCodec(cdc)
-	stake.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
 	distr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
-	gov.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
+	oracle.RegisterCodec(cdc)
+	budget.RegisterCodec(cdc)
+	market.RegisterCodec(cdc)
+	treasury.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
@@ -243,13 +247,15 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 // nolint: unparam
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 
-	validatorUpdates, tags := stake.EndBlocker(ctx, app.stakeKeeper)
+	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 
-	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	_, rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
+	app.treasuryKeeper.ProcessClaims(ctx, treasury.OracleClaimClass, rewardees)
 
-	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	claimants, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
+	app.treasuryKeeper.ProcessClaims(ctx, treasury.BudgetClaimClass, claimants)
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
@@ -265,34 +271,34 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 // initialize store from a genesis state
 func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
-	// sort by account number to maintain consistency
-	sort.Slice(genesisState.Accounts, func(i, j int) bool {
-		return genesisState.Accounts[i].AccountNumber < genesisState.Accounts[j].AccountNumber
-	})
+	genesisState.Sanitize()
+
 	// load the accounts
 	for _, gacc := range genesisState.Accounts {
 		acc := gacc.ToAccount()
-		acc.AccountNumber = app.accountKeeper.GetNextAccountNumber(ctx)
+		acc = app.accountKeeper.NewAccount(ctx, acc) // set account number
 		app.accountKeeper.SetAccount(ctx, acc)
 	}
 
-	// load the initial stake information
-	validators, err := stake.InitGenesis(ctx, app.stakeKeeper, genesisState.StakeData)
+	// initialize distribution (must happen before staking)
+	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
+
+	// load the initial staking information
+	validators, err := staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
 	if err != nil {
 		panic(err) // TODO find a way to do this w/o panics
 	}
 
 	// initialize module-specific stores
-	auth.InitGenesis(ctx, app.feeCollectionKeeper, genesisState.AuthData)
-	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakeData)
+	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
+	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
 	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
 	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
 	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
-	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
 
 	// validate genesis state
-	err = TerraValidateGenesisState(genesisState)
-	if err != nil {
+	if err := TerraValidateGenesisState(genesisState); err != nil {
 		panic(err) // TODO find a way to do this w/o panics
 	}
 
@@ -310,7 +316,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 			}
 		}
 
-		validators = app.stakeKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+		validators = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	}
 	return validators
 }
@@ -373,39 +379,43 @@ func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks) StakingHooks {
 }
 
 // nolint
-func (h StakingHooks) OnValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorCreated(ctx, valAddr)
-	h.sh.OnValidatorCreated(ctx, valAddr)
+func (h StakingHooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorCreated(ctx, valAddr)
+	h.sh.AfterValidatorCreated(ctx, valAddr)
 }
-func (h StakingHooks) OnValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorModified(ctx, valAddr)
-	h.sh.OnValidatorModified(ctx, valAddr)
+func (h StakingHooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
+	h.dh.BeforeValidatorModified(ctx, valAddr)
+	h.sh.BeforeValidatorModified(ctx, valAddr)
 }
-func (h StakingHooks) OnValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorRemoved(ctx, consAddr, valAddr)
-	h.sh.OnValidatorRemoved(ctx, consAddr, valAddr)
+func (h StakingHooks) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorRemoved(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorRemoved(ctx, consAddr, valAddr)
 }
-func (h StakingHooks) OnValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorBonded(ctx, consAddr, valAddr)
-	h.sh.OnValidatorBonded(ctx, consAddr, valAddr)
+func (h StakingHooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorBonded(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorBonded(ctx, consAddr, valAddr)
 }
-func (h StakingHooks) OnValidatorPowerDidChange(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorPowerDidChange(ctx, consAddr, valAddr)
-	h.sh.OnValidatorPowerDidChange(ctx, consAddr, valAddr)
+func (h StakingHooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
 }
-func (h StakingHooks) OnValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.dh.OnValidatorBeginUnbonding(ctx, consAddr, valAddr)
-	h.sh.OnValidatorBeginUnbonding(ctx, consAddr, valAddr)
+func (h StakingHooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationCreated(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationCreated(ctx, delAddr, valAddr)
 }
-func (h StakingHooks) OnDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-	h.dh.OnDelegationCreated(ctx, delAddr, valAddr)
-	h.sh.OnDelegationCreated(ctx, delAddr, valAddr)
+func (h StakingHooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 }
-func (h StakingHooks) OnDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-	h.dh.OnDelegationSharesModified(ctx, delAddr, valAddr)
-	h.sh.OnDelegationSharesModified(ctx, delAddr, valAddr)
+func (h StakingHooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 }
-func (h StakingHooks) OnDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-	h.dh.OnDelegationRemoved(ctx, delAddr, valAddr)
-	h.sh.OnDelegationRemoved(ctx, delAddr, valAddr)
+func (h StakingHooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterDelegationModified(ctx, delAddr, valAddr)
+	h.sh.AfterDelegationModified(ctx, delAddr, valAddr)
+}
+func (h StakingHooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
+	h.dh.BeforeValidatorSlashed(ctx, valAddr, fraction)
+	h.sh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 }
