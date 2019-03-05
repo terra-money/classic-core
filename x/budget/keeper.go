@@ -9,6 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
+// StoreKey is string representation of the store key for budget
+const StoreKey = "budget"
+
 // nolint
 type Keeper struct {
 	key       sdk.StoreKey      // Key to our module's store

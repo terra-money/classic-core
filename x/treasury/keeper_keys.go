@@ -13,10 +13,8 @@ const (
 
 // nolint
 var (
-	KeyRewardWeight = []byte("reward_weight")
-	//KeyIncomePool   = []byte("income_pool")
-	PrefixClaim = []byte("claim")
-
+	KeyRewardWeight     = []byte("reward_weight")
+	PrefixClaim         = []byte("claim")
 	ParamStoreKeyParams = []byte("params")
 )
 

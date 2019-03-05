@@ -33,8 +33,8 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/tally", RestProgramID), queryTallyOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/Programs/{%s}/votes", RestProgramID), queryVotesOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/Programs/{%s}/votes/{%s}", RestProgramID, RestVoter), queryVoteHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes", RestProgramID), queryVotesOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes/{%s}", RestProgramID, RestVoter), queryVoteHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
 type postProgramReq struct {
@@ -137,21 +137,6 @@ func voteHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc
 		utils.CompleteAndBroadcastTxREST(w, r, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
 	}
 }
-
-// func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		vars := mux.Vars(r)
-// 		paramType := vars[RestParamsType]
-
-// 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/budget/%s/%s", budget.QueryParams, paramType), nil)
-// 		if err != nil {
-// 			utils.WriteErrorResponse(w, http.StatusNotFound, err.Error())
-// 			return
-// 		}
-
-// 		utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
-// 	}
-// }
 
 func queryProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -37,7 +37,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags, claims map[string]sdk.Int) {
+func EndBlocker(ctx sdk.Context, k Keeper) (claims map[string]sdk.Int, resTags sdk.Tags) {
 	// Clean out expired inactive programs
 	inactiveIterator := k.InactiveProgramQueueIterator(ctx, ctx.BlockHeader().Time)
 	for ; inactiveIterator.Valid(); inactiveIterator.Next() {
@@ -86,7 +86,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags, claims map[string]
 func handleSubmitProgramMsg(ctx sdk.Context, k Keeper, msg SubmitProgramMsg) sdk.Result {
 
 	// If deposit is sufficient
-	if msg.Deposit.AmountOf(assets.TerraDenom).GT(sdk.NewInt(k.GetParams(ctx).MinDeposit)) {
+	if msg.Deposit.AmountOf(assets.SDRDenom).GT(sdk.NewInt(k.GetParams(ctx).MinDeposit)) {
 		// Subtract coins from the submitter balance and updates it
 		_, _, err := k.bk.SubtractCoins(ctx, msg.Submitter, msg.Deposit)
 		if err != nil {

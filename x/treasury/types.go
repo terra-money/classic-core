@@ -14,7 +14,6 @@ const (
 
 	OracleClaimClass ClaimClass = iota
 	BudgetClaimClass ClaimClass = iota
-	MinerClaimClass  ClaimClass = iota
 )
 
 //------------------------------------
@@ -42,10 +41,4 @@ func NewClaim(class ClaimClass, weight sdk.Dec, recipient sdk.AccAddress) Claim 
 // GenerateClaimID generates an id for a Claim.
 func GenerateClaimID(class ClaimClass, recipient sdk.AccAddress) string {
 	return fmt.Sprintf("%d:%s", class, recipient.String())
-}
-
-// Settle the Claim by adsding {allotcation} alloted coins to the recipient account.
-func (c Claim) Settle(ctx sdk.Context, k Keeper, allocation sdk.Coins) sdk.Error {
-	_, _, err := k.pk.AddCoins(ctx, c.recipient, allocation)
-	return err
 }

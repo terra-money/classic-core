@@ -17,37 +17,40 @@ type Params struct {
 	RewardMin sdk.Dec `json:"reward_min"` // percentage floor on miner rewards for seigniorage. Defaults to 0.1.
 	RewardMax sdk.Dec `json:"reward_max"` // percentage cap on miner rewards for seigniorage. Defaults to 0.9
 
-	ClaimShares map[ClaimClass]sdk.Dec `json:"claim_share"`
+	EpochLong  sdk.Int `json:"epoch_long"`
+	EpochShort sdk.Int `json:"epoch_short"`
 
-	SettlementPeriod sdk.Int `json:"settlement_period"`
+	OracleClaimShare sdk.Dec `json:"oracle_share"`
+	BudgetClaimShare sdk.Dec `json:"budget_share"`
 }
 
 // NewParams creates a new param instance
-func NewParams(taxRateMin, taxRateMax, rewardMin, rewardMax sdk.Dec,
-	claimShares map[ClaimClass]sdk.Dec, settlementPeriod sdk.Int, taxCap sdk.Coin) Params {
+func NewParams(taxRateMin, taxRateMax, rewardMin, rewardMax, oracleClaimShare, budgetClaimShare sdk.Dec,
+	epochLong, epochShort sdk.Int, taxCap sdk.Coin) Params {
 	return Params{
 		TaxRateMin:       taxRateMin,
 		TaxRateMax:       taxRateMax,
 		TaxCap:           taxCap,
 		RewardMin:        rewardMin,
 		RewardMax:        rewardMax,
-		ClaimShares:      claimShares,
-		SettlementPeriod: settlementPeriod,
+		OracleClaimShare: oracleClaimShare,
+		BudgetClaimShare: budgetClaimShare,
+		EpochLong:        epochLong,
+		EpochShort:       epochShort,
 	}
 }
 
 // DefaultParams creates default treasury module parameters
 func DefaultParams() Params {
 	return NewParams(
-		sdk.NewDecWithPrec(1, 3), // 0.1%
-		sdk.NewDecWithPrec(2, 2), // 2%
-		sdk.NewDecWithPrec(5, 2), // 5%
-		sdk.NewDecWithPrec(9, 1), // 90%
-		map[ClaimClass]sdk.Dec{
-			OracleClaimClass: sdk.NewDecWithPrec(1, 1), // 10%
-			BudgetClaimClass: sdk.NewDecWithPrec(9, 1), // 90%
-		},
-		sdk.NewInt(3000000),                        // Approx. 1 month
+		sdk.NewDecWithPrec(1, 3),                   // 0.1%
+		sdk.NewDecWithPrec(2, 2),                   // 2%
+		sdk.NewDecWithPrec(5, 2),                   // 5%
+		sdk.NewDecWithPrec(9, 1),                   // 90%
+		sdk.NewDecWithPrec(1, 1),                   // 10%
+		sdk.NewDecWithPrec(9, 1),                   // 90%
+		sdk.NewInt(52),                             // Approx. 1 year
+		sdk.NewInt(4),                              // Approx. 1 month
 		sdk.NewCoin(assets.SDRDenom, sdk.OneInt()), // 1 TerraSDR as cap
 	)
 }
@@ -71,12 +74,8 @@ func validateParams(params Params) error {
 		return fmt.Errorf("treasury parameter RewardMin must be >= 0, is %s", params.RewardMin.String())
 	}
 
-	shareSum := sdk.ZeroDec()
-	for _, share := range params.ClaimShares {
-		shareSum.Add(share)
-	}
-
-	if shareSum.Equal(sdk.OneDec()) {
+	shareSum := params.OracleClaimShare.Add(params.BudgetClaimShare)
+	if !shareSum.Equal(sdk.OneDec()) {
 		return fmt.Errorf("treasury parameter ClaimShares must sum to 1, but sums to %s", shareSum.String())
 	}
 

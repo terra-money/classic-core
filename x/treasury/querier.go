@@ -1,73 +1,91 @@
 package treasury
 
-// import (
-// 	"github.com/cosmos/cosmos-sdk/codec"
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/cosmos/cosmos-sdk/x/staking/types"
-// 	abci "github.com/tendermint/tendermint/abci/types"
-// )
+import (
+	"terra/types/assets"
 
-// // query endpoints supported by the treasury Querier
-// const (
-// 	QueryMiningRewardWeight = "mingReward"
-// 	QueryTaxRate            = "taxRate"
-// 	QueryIncomePool         = "incomePool"
-// 	QueryOutstandingClaims  = "outstandingClaims"
-// 	QueryParameters         = "parameters"
-// )
+	"github.com/cosmos/cosmos-sdk/codec"
 
-// // creates a querier for staking REST endpoints
-// func NewQuerier(k Keeper, cdc *codec.Codec) sdk.Querier {
-// 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
-// 		switch path[0] {
-// 		case QueryMiningRewardWeight:
-// 			return queryMiningRewardWeight(ctx, cdc, k)
-// 		case QueryTaxRate:
-// 			return queryValidator(ctx, cdc, req, k)
-// 		case QueryIncomePool:
-// 			return queryValidatorDelegations(ctx, cdc, req, k)
-// 		case QueryOutstandingClaims:
-// 			return queryValidatorUnbondingDelegations(ctx, cdc, req, k)
-// 		case QueryParameters:
-// 			return queryParameters(ctx, cdc, k)
-// 		default:
-// 			return nil, sdk.ErrUnknownRequest("unknown treasury query endpoint")
-// 		}
-// 	}
-// }
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+)
 
-// // defines the params for the following queries:
-// // - 'custom/staking/delegation'
-// // - 'custom/staking/unbondingDelegation'
-// // - 'custom/staking/delegatorValidator'
-// type QueryBondsParams struct {
-// 	DelegatorAddr sdk.AccAddress
-// 	ValidatorAddr sdk.ValAddress
-// }
+// query endpoints supported by the governance Querier
+const (
+	QueryTaxRate         = "tax_rate"
+	QueryTaxCap          = "tax_cap"
+	QueryRewardWeight    = "reward_weight"
+	QueryTreasuryBalance = "balance"
+	QueryParams          = "params"
+)
 
-// func NewQueryBondsParams(delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress) QueryBondsParams {
-// 	return QueryBondsParams{
-// 		DelegatorAddr: delegatorAddr,
-// 		ValidatorAddr: validatorAddr,
-// 	}
-// }
+// NewQuerier is the module level router for state queries
+func NewQuerier(keeper Keeper) sdk.Querier {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+		switch path[0] {
+		case QueryTaxRate:
+			return queryTaxRate(ctx, req, keeper)
+		case QueryTaxCap:
+			return queryTaxCap(ctx, path[1:], req, keeper)
+		case QueryRewardWeight:
+			return queryRewardWeight(ctx, req, keeper)
+		case QueryTreasuryBalance:
+			return queryTreasuryBalance(ctx, req, keeper)
+		case QueryParams:
+			return queryParams(ctx, req, keeper)
+		default:
+			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
+		}
+	}
+}
 
-// func queryMiningRewardWeight(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, k keep.Keeper) (res []byte, err sdk.Error) {
-// 	var params QueryValidatorParams
+// nolint: unparam
+func queryTaxRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	taxRate := keeper.pk.GetTaxRate(ctx)
 
-// 	errRes := cdc.UnmarshalJSON(req.Data, &params)
-// 	if errRes != nil {
-// 		return []byte{}, sdk.ErrUnknownAddress("")
-// 	}
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxRate)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
 
-// 	validator, found := k.GetValidator(ctx, params.ValidatorAddr)
-// 	if !found {
-// 		return []byte{}, types.ErrNoValidatorFound(types.DefaultCodespace)
-// 	}
+// nolint: unparam
+func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	denom := path[0]
 
-// 	res, errRes = codec.MarshalJSONIndent(cdc, validator)
-// 	if errRes != nil {
-// 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", errRes.Error()))
-// 	}
-// 	return res, nil
-// }
+	taxCap := keeper.pk.GetTaxCap(ctx, denom)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+// nolint: unparam
+func queryRewardWeight(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	rewardWeight := keeper.GetRewardWeight(ctx)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, rewardWeight)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+// nolint: unparam
+func queryTreasuryBalance(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	pool := keeper.dk.GetFeePool(ctx).CommunityPool
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool.AmountOf(assets.LunaDenom))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetParams(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}

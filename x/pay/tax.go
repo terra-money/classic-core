@@ -43,7 +43,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (res sdk.Int) {
 
 func (k Keeper) recordTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	currentEpoch := util.GetEpoch(ctx)
-	proceeds := k.GetTaxProceeds(ctx, currentEpoch)
+	proceeds := k.PeekTaxProceeds(ctx, currentEpoch)
 	proceeds = proceeds.Plus(taxProceeds)
 
 	store := ctx.KVStore(k.key)
@@ -51,7 +51,7 @@ func (k Keeper) recordTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	store.Set(KeyTaxProceeds(currentEpoch), bz)
 }
 
-func (k Keeper) GetTaxProceeds(ctx sdk.Context, epoch sdk.Int) (res sdk.Coins) {
+func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch sdk.Int) (res sdk.Coins) {
 	store := ctx.KVStore(k.key)
 	bz := store.Get(KeyTaxProceeds(epoch))
 	if bz == nil {

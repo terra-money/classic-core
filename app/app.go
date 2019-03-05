@@ -84,21 +84,20 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	var app = &TerraApp{
 		BaseApp:          bApp,
 		cdc:              cdc,
-		keyMain:          sdk.NewKVStoreKey("main"),
-		keyBank:          sdk.NewKVStoreKey("bank"),
-		keyAccount:       sdk.NewKVStoreKey("acc"),
-		keyStaking:       sdk.NewKVStoreKey("staking"),
-		tkeyStaking:      sdk.NewTransientStoreKey("transient_staking"),
-		keyDistr:         sdk.NewKVStoreKey("distr"),
-		tkeyDistr:        sdk.NewTransientStoreKey("transient_distr"),
-		keySlashing:      sdk.NewKVStoreKey("slashing"),
-		keyFeeCollection: sdk.NewKVStoreKey("fee"),
-		keyParams:        sdk.NewKVStoreKey("params"),
-		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
-		keyOracle:        sdk.NewKVStoreKey("oracle"),
-		keyTreasury:      sdk.NewKVStoreKey("treasury"),
-		keyMarket:        sdk.NewKVStoreKey("market"),
-		keyBudget:        sdk.NewKVStoreKey("budget"),
+		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
+		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
+		keyDistr:         sdk.NewKVStoreKey(distr.StoreKey),
+		tkeyDistr:        sdk.NewTransientStoreKey(distr.TStoreKey),
+		keySlashing:      sdk.NewKVStoreKey(slashing.StoreKey),
+		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:       sdk.NewTransientStoreKey(params.TStoreKey),
+		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
+		keyTreasury:      sdk.NewKVStoreKey(treasury.StoreKey),
+		keyMarket:        sdk.NewKVStoreKey(market.StoreKey),
+		keyBudget:        sdk.NewKVStoreKey(budget.StoreKey),
 	}
 
 	// define the accountKeeper
@@ -113,7 +112,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.cdc,
 		app.keyFeeCollection,
 	)
-	app.bankKeeper = pay.NewBaseKeeper(
+	app.bankKeeper = pay.NewKeeper(
 		app.keyBank,
 		app.cdc,
 		app.accountKeeper,
@@ -145,12 +144,14 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.marketKeeper = market.NewKeeper(
 		app.oracleKeeper,
 		app.bankKeeper,
+		app.distrKeeper,
 	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
 		app.bankKeeper,
 		app.marketKeeper,
+		app.distrKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.oracleKeeper = oracle.NewKeeper(
@@ -159,7 +160,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
-
 	app.budgetKeeper = budget.NewKeeper(
 		app.keyBudget,
 		app.cdc, app.bankKeeper,
@@ -185,14 +185,19 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		//AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper)).
 		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
-		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper))
+		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
+		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.budgetKeeper)).
+		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper)).
+		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
-	app.MountStores(app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr, app.keyBank,
-		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket, app.keyOracle, app.keyTreasury, app.keyBudget)
+	app.MountStores(
+		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr, app.keyBank,
+		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket,
+		app.keyOracle, app.keyTreasury, app.keyBudget,
+	)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -246,7 +251,6 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 // application updates every end block
 // nolint: unparam
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-
 	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 
 	_, rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
@@ -358,7 +362,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 }
 
-// load a particular height
+// LoadHeight loads a particular height
 func (app *TerraApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }

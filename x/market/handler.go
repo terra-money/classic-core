@@ -22,6 +22,12 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
+func recordSeigniorage(ctx sdk.Context, k Keeper, seigniorage sdk.Coin) {
+	feePool := k.dk.GetFeePool(ctx)
+	feePool.CommunityPool = feePool.CommunityPool.Plus(sdk.DecCoins{sdk.NewDecCoinFromCoin(seigniorage)})
+	k.dk.SetFeePool(ctx, feePool)
+}
+
 // handleSwapMsg handles the logic of a SwapMsg
 func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
@@ -33,7 +39,7 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	output := bank.Output{Address: msg.Trader, Coins: sdk.Coins{msg.OfferCoin}}
 
 	// Record seigniorage
-	k.recordSeigniorage(ctx, sdk.Coins{swapCoin})
+	recordSeigniorage(ctx, k, swapCoin)
 
 	reqTags, reqErr := k.pk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
 	if reqErr != nil {
