@@ -24,12 +24,12 @@ const (
 type Claim struct {
 	id        string
 	class     ClaimClass
-	weight    sdk.Dec
+	weight    sdk.Int
 	recipient sdk.AccAddress
 }
 
 // NewClaim generates a Claim instance.
-func NewClaim(class ClaimClass, weight sdk.Dec, recipient sdk.AccAddress) Claim {
+func NewClaim(class ClaimClass, weight sdk.Int, recipient sdk.AccAddress) Claim {
 	return Claim{
 		id:        GenerateClaimID(class, recipient),
 		class:     class,
