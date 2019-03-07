@@ -30,10 +30,11 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	treasuryQueryCmd.AddCommand(client.GetCommands(
 		treasuryCli.GetCmdQueryTaxRate(mc.storeKey, mc.cdc),
 		treasuryCli.GetCmdQueryTaxCap(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryActiveClaims(mc.storeKey, mc.cdc)
-		treasuryCli.GetCmdQueryMiningWeight(mc.storeKey, mc.cdc)
-		treasuryCli.GetCmdQueryBalance(mc.storeKey, mc.cdc)
-		treasuryCli.GetCmdQueryParams(mc.storeKey, mc.cdc)
+		treasuryCli.GetCmdQueryIssuance(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryActiveClaims(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryMiningWeight(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryBalance(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryParams(mc.storeKey, mc.cdc),
 	)...)
 
 	return treasuryQueryCmd

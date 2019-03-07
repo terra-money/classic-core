@@ -23,6 +23,7 @@ const (
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc("/treasury/taxrate", queryTaxRateHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/taxcap/{%s}", RestDenom), queryTaxCapHandlerFunction(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/issuance/{%s}", RestDenom), queryIssuanceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/treasury/miningweight", queryMiningWeightHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/treasury/balance", queryBalanceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/treasury/activeclaims", queryActiveClaimsHandlerFunction(cdc, cliCtx)).Methods("GET")
@@ -47,6 +48,21 @@ func queryTaxCapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) htt
 		denom := vars[RestDenom]
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryTaxCap, denom), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+	}
+}
+
+func queryIssuanceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		denom := vars[RestDenom]
+
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryIssuance, denom), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

@@ -12,7 +12,7 @@ type Params struct {
 	ActiveThreshold sdk.Dec       `json:"active_threshold"` // threshold of vote that will transition a program open -> active budget queue
 	LegacyThreshold sdk.Dec       `json:"legacy_threshold"` // threshold of vote that will transition a program active -> legacy budget queue
 	VotePeriod      time.Duration `json:"vote_period"`      // vote period
-	MinDeposit      int64         `json:"min_deposit"`
+	MinDeposit      int64         `json:"min_deposit"`      // Minimum deposit in TerraSDR
 }
 
 // NewParams creates a new param instance

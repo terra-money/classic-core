@@ -2,6 +2,7 @@ package treasury
 
 import (
 	"terra/types/assets"
+	"terra/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -18,6 +19,7 @@ const (
 	QueryActiveClaims       = "active-claims"
 	QueryRewards            = "rewards"
 	QueryParams             = "params"
+	QueryIssuance           = "issuance"
 
 	defaultPage  = 1
 	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
@@ -37,6 +39,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryTreasuryBalance(ctx, req, keeper)
 		case QueryActiveClaims:
 			return queryActiveClaims(ctx, req, keeper)
+		case QueryIssuance:
+			return queryIssunace(ctx, path[1:], req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
 		default:
@@ -60,6 +64,17 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 	denom := path[0]
 	taxCap := keeper.pk.GetTaxCap(ctx, denom)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+// nolint: unparam
+func queryIssunace(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	denom := path[0]
+	issuance := keeper.pk.GetIssuance(ctx, denom, util.GetEpoch(ctx))
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

@@ -68,7 +68,35 @@ $ terracli query treasury taxcap krw
 	return cmd
 }
 
-// GetCmdQueryActive implements the query active command.
+// GetCmdQueryIssuance implements the query issuance command.
+func GetCmdQueryIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "issuance [denom]",
+		Short: "Query the current issuance of the [denom] asset",
+		Long: strings.TrimSpace(`
+Query the current issuance of the [denom] asset. 
+
+$ terracli query treasury issuance krw
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			denom := viper.GetString(flagDenom)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryIssuance, denom), nil)
+			if err != nil {
+				return err
+			}
+
+			var issuance sdk.Int
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &issuance)
+			return cliCtx.PrintOutput(issuance)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryActiveClaims implements the query activeclaims command.
 func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "activeclaims",
