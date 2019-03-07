@@ -1,15 +1,14 @@
 package cli
 
 import (
-	"net/http"
 	"strings"
 	"terra/x/market"
+	"terra/x/market/client/util"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
 	"github.com/spf13/cobra"
@@ -49,7 +48,7 @@ $ terracli market swap --offerCoin="1000krw" --askDenom="usd"
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := market.NewSwapMsg(fromAddress, offerCoin, askDenom)
-			err := msg.ValidateBasic()
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
@@ -83,25 +82,29 @@ Return item count paginated by units of 30 values.
 			offerDenom := viper.GetString(flagOfferDenom)
 			askDenom := viper.GetString(flagAskDenom)
 
-			params := client.QueryHistoryParams{
+			params := util.QueryHistoryParams{
 				TraderAddress: traderAddress,
 				AskDenom:      askDenom,
 				OfferDenom:    offerDenom,
 			}
 
 			traderAddrStr := viper.GetString(flagTraderAddress)
-			traderAddress, err := cliCtx.GetAccount([]byte(traderAddrStr))
+			account, err := cliCtx.GetAccount([]byte(traderAddrStr))
 			if err == nil {
-				params.TraderAddress = traderAddress
+				params.TraderAddress = account.GetAddress()
 			}
 
-			res, err := client.QueryHistoryByTxQuery(cdc, cliCtx, params)
+			res, err := util.QueryHistoryByTxQuery(cdc, cliCtx, params)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
+				return err
 			}
 
-			return cliCtx.PrintOutput(res)
+			var swaps market.SwapHistory
+			err = cdc.UnmarshalJSON(res, &swaps)
+			if err != nil {
+				return err
+			}
+			return cliCtx.PrintOutput(swaps)
 		},
 	}
 	return cmd

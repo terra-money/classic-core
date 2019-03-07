@@ -81,3 +81,23 @@ func validateParams(params Params) error {
 
 	return nil
 }
+
+func (params Params) String() string {
+	return fmt.Sprintf(`Treasury Params:
+  Tax Rate Min: %s
+  Tax Rate Max: %s
+ 
+  Tax Cap: %s
+
+  Mining Reward Weight Min: %v
+  Mining Reward Weight Max: %v
+
+  Oracle Reward Weight: %v
+  Budget Reward Weight: %v 
+
+  Epoch Long: %v 
+  Epoch Short %v
+  `, params.TaxRateMin, params.TaxRateMax, params.TaxCap,
+		params.RewardMin, params.RewardMax, params.EpochLong,
+		params.EpochShort)
+}

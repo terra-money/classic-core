@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 	"terra/x/treasury"
 
 	"github.com/spf13/cobra"
@@ -13,86 +14,150 @@ import (
 )
 
 const (
-	flagShareID = "shareID"
+	flagDenom = "denom"
 )
 
-// GetCmdQueryAssets implements the query price command.
-func GetCmdQueryAssets(storeName string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTaxRate implements the query taxrate command.
+func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "assets",
-		Short: "Query the current size of the Treasury asssets in Terra",
+		Use:   "taxrate",
+		Short: "Query the current stability tax rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			bz, err := cliCtx.QueryStore(treasury.GetIncomePoolKey(), storeName)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryTaxRate), nil)
 			if err != nil {
 				return err
-			} else if len(bz) == 0 {
-				panic("No income pool found")
 			}
 
-			res := sdk.Coins{}
-			cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-
-			fmt.Println(res[0].Amount)
-
-			return nil
+			var taxRate sdk.Dec
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &taxRate)
+			return cliCtx.PrintOutput(taxRate)
 		},
 	}
 
 	return cmd
 }
 
-// GetCmdQueryShare implements the query price command.
-func GetCmdQueryShare(storeName string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTaxCap implements the query taxcap command.
+func GetCmdQueryTaxCap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "share [shareID]",
-		Short: "Query the share corresponding to [shareID] and fetch attendant claims. Share ID is one of 'oracle', 'debt', and 'budget'",
+		Use:   "taxcap [denom]",
+		Short: "Query the current stability tax cap of the [denom] asset",
+		Long: strings.TrimSpace(`
+Query the current stability tax cap of the [denom] asset. 
+The stability tax levied on a tx is at most tax cap, regardless of the size of the transaction. 
+
+$ terracli query treasury taxcap krw
+`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			shareId := viper.GetString(flagShareID)
-			key := treasury.GetShareKey(shareId)
-			bz, err := cliCtx.QueryStore(key, storeName)
-			if err != nil {
-				return err
-			} else if len(bz) == 0 {
-				return fmt.Errorf("No share found with id %s", shareId)
-			}
-
-			var share treasury.Share
-			cdc.MustUnmarshalBinaryLengthPrefixed(bz, &share)
-
-			fmt.Printf("Share id: %s weight: %f ", shareId, share.GetWeight())
-
-			// fetch claims
-			claimKey := treasury.GetClaimsForSharePrefix(shareId)
-			claimBytes, err := cliCtx.QueryStore(claimKey, storeName)
+			denom := viper.GetString(flagDenom)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryTaxCap, denom), nil)
 			if err != nil {
 				return err
 			}
 
-			var matchingClaims []treasury.Claim
-			err = cdc.UnmarshalJSON(claimBytes, &matchingClaims)
-			if err != nil {
-				return err
-			}
-
-			if len(matchingClaims) == 0 {
-				fmt.Println("No matching claims found")
-				return nil
-			}
-
-			for _, claim := range matchingClaims {
-				fmt.Printf("  %f - %s\n", claim.GetWeight(), claim.ID())
-			}
-
-			return nil
+			var price sdk.Dec
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &price)
+			return cliCtx.PrintOutput(price)
 		},
 	}
 
-	cmd.Flags().String(flagShareID, "", "id of the share to query")
-	cmd.MarkFlagRequired(flagShareID)
+	return cmd
+}
+
+// GetCmdQueryActive implements the query active command.
+func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "activeclaims",
+		Short: "Query claims that have yet to be redeemed by the treasury",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryActiveClaims), nil)
+			if err != nil {
+				return err
+			}
+
+			var claims treasury.Claims
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &claims)
+			return cliCtx.PrintOutput(claims)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryMiningWeight implements the query miningweight command.
+func GetCmdQueryMiningWeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "miningweight",
+		Short: "Query the current mining weight",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryMiningRewardWeight), nil)
+			if err != nil {
+				return err
+			}
+
+			var miningWeight sdk.Dec
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &miningWeight)
+			return cliCtx.PrintOutput(miningWeight)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryBalance implements the query balance command.
+func GetCmdQueryBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "balance",
+		Short: "Query the current Treasury balance",
+		Long: strings.TrimSpace(`
+Query the current Treasury balance, denominated in TerraSDR. 
+Balance clears periodically to satisfy claims registered with the Treasury. 
+
+$ terracli query treasury balance
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryBalance), nil)
+			if err != nil {
+				return err
+			}
+
+			var balance sdk.Int
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &balance)
+			return cliCtx.PrintOutput(balance)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryParams implements the query params command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the current Treasury params",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryParams), nil)
+			if err != nil {
+				return err
+			}
+
+			var params treasury.Params
+			cdc.MustUnmarshalJSON(res, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
 
 	return cmd
 }

@@ -71,3 +71,13 @@ func (msg SwapMsg) ValidateBasic() sdk.Error {
 func (msg SwapMsg) String() string {
 	return fmt.Sprintf("SwapMsg{trader %v, offer %v, ask %s}", msg.Trader, msg.OfferCoin, msg.AskDenom)
 }
+
+type SwapHistory []SwapMsg
+
+// String implements fmt.Stringer interface
+func (swaps SwapHistory) String() (out string) {
+	for _, swap := range swaps {
+		out += fmt.Sprintf("\n  %s", swap.String())
+	}
+	return
+}

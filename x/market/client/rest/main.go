@@ -74,7 +74,7 @@ func queryHistoryHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Han
 			return
 		}
 
-		params := client.QueryHistoryParams{
+		params := market.QueryHistoryParams{
 			TraderAddress: histReq.TraderAddress,
 			AskDenom:      histReq.AskDenom,
 			OfferDenom:    histReq.OfferDenom,

@@ -11,11 +11,16 @@ import (
 
 // query endpoints supported by the governance Querier
 const (
-	QueryTaxRate         = "tax_rate"
-	QueryTaxCap          = "tax_cap"
-	QueryRewardWeight    = "reward_weight"
-	QueryTreasuryBalance = "balance"
-	QueryParams          = "params"
+	QueryTaxRate            = "tax-rate"
+	QueryTaxCap             = "tax-cap"
+	QueryMiningRewardWeight = "mining-reward-weight"
+	QueryBalance            = "balance"
+	QueryActiveClaims       = "active-claims"
+	QueryRewards            = "rewards"
+	QueryParams             = "params"
+
+	defaultPage  = 1
+	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
 // NewQuerier is the module level router for state queries
@@ -26,10 +31,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryTaxRate(ctx, req, keeper)
 		case QueryTaxCap:
 			return queryTaxCap(ctx, path[1:], req, keeper)
-		case QueryRewardWeight:
-			return queryRewardWeight(ctx, req, keeper)
-		case QueryTreasuryBalance:
+		case QueryMiningRewardWeight:
+			return queryMiningRewardWeight(ctx, req, keeper)
+		case QueryBalance:
 			return queryTreasuryBalance(ctx, req, keeper)
+		case QueryActiveClaims:
+			return queryActiveClaims(ctx, req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
 		default:
@@ -41,7 +48,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 // nolint: unparam
 func queryTaxRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	taxRate := keeper.pk.GetTaxRate(ctx)
-
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxRate)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -52,7 +58,6 @@ func queryTaxRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 // nolint: unparam
 func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
-
 	taxCap := keeper.pk.GetTaxCap(ctx, denom)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
 	if err != nil {
@@ -62,7 +67,7 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 }
 
 // nolint: unparam
-func queryRewardWeight(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryMiningRewardWeight(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	rewardWeight := keeper.GetRewardWeight(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rewardWeight)
 	if err != nil {
@@ -76,6 +81,20 @@ func queryTreasuryBalance(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	pool := keeper.dk.GetFeePool(ctx).CommunityPool
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool.AmountOf(assets.LunaDenom))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryActiveClaims(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	claims := []Claim{}
+	keeper.iterateClaims(ctx, func(claim Claim) (stop bool) {
+		claims = append(claims, claim)
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, claims)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -28,7 +29,19 @@ func NewPriceVote(price sdk.Dec, denom string, power sdk.Int, voter sdk.AccAddre
 	}
 }
 
+func (pv PriceVote) String() string {
+	return fmt.Sprintf("PriceVote{ Denom %s, Voter %s, Power %v, Price %v }", pv.Denom, pv.Voter, pv.Power, pv.Price)
+}
+
 type PriceBallot []PriceVote
+
+// String implements fmt.Stringer interface
+func (pb PriceBallot) String() (out string) {
+	for _, pv := range pb {
+		out += fmt.Sprintf("\n  %s", pv.String())
+	}
+	return
+}
 
 // Len implements sort.Interface
 func (pb PriceBallot) Len() int {

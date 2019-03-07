@@ -65,7 +65,7 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context) (res sdk.Dec) {
 
 func (k Keeper) addClaim(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.key)
-	claimKey := KeyClaim(claim.id)
+	claimKey := KeyClaim(claim.ID())
 
 	// If the recipient has an existing claim in the same class, add to the previous claim
 	if bz := store.Get(claimKey); bz != nil {
@@ -106,7 +106,7 @@ func (k Keeper) sumClaims(ctx sdk.Context, class ClaimClass) (weightSumForClass 
 func (k Keeper) clearClaims(ctx sdk.Context) {
 	store := ctx.KVStore(k.key)
 	k.iterateClaims(ctx, func(claim Claim) (stop bool) {
-		claimKey := KeyClaim(claim.id)
+		claimKey := KeyClaim(claim.ID())
 		store.Delete(claimKey)
 		return false
 	})

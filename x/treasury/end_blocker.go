@@ -147,7 +147,7 @@ func (k Keeper) ProcessClaims(ctx sdk.Context, class ClaimClass, rewardees map[s
 	}
 }
 
-func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []Claim) (remainder sdk.DecCoins) {
+func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []Claim) (remainder sdk.DecCoins, classTags sdk.Tags) {
 	store := ctx.KVStore(k.key)
 	for _, claim := range cClaims {
 		claimWeightInDec := sdk.NewDecFromInt(claim.weight)
@@ -169,7 +169,17 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		k.pk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
 		remainder = remainder.Plus(sdk.DecCoins{dust})
 
-		store.Delete(KeyClaim(claim.id))
+		// We are now done with the claim; remove it from the store
+		store.Delete(KeyClaim(claim.ID()))
+
+		classTags = classTags.AppendTags(
+			sdk.NewTags(
+				tags.Action, tags.ActionReward,
+				tags.Rewardee, claim.recipient,
+				tags.Amount, rewardInSDR,
+				tags.Class, claim.class,
+			),
+		)
 	}
 	return
 }
@@ -195,8 +205,11 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 	budgetClaimWeightSum, budgetClaims := k.sumClaims(ctx, BudgetClaimClass)
 
 	// Reward claims
-	oracleRemainder := k.settleClaimsForClass(ctx, oracleReward, oracleClaimWeightSum, oracleClaims)
-	budgetRemainder := k.settleClaimsForClass(ctx, budgetReward, budgetClaimWeightSum, budgetClaims)
+	oracleRemainder, oracleTags := k.settleClaimsForClass(ctx, oracleReward, oracleClaimWeightSum, oracleClaims)
+	budgetRemainder, budgetTags := k.settleClaimsForClass(ctx, budgetReward, budgetClaimWeightSum, budgetClaims)
+
+	settleTags = settleTags.AppendTags(oracleTags)
+	settleTags = settleTags.AppendTags(budgetTags)
 
 	// Add the remainder back to the community pool
 	totalPool.CommunityPool = oracleRemainder.Plus(budgetRemainder)

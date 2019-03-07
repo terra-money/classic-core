@@ -22,23 +22,36 @@ const (
 
 // Claim is an interface that directs its rewards to an attached bank account.
 type Claim struct {
-	id        string
-	class     ClaimClass
-	weight    sdk.Int
-	recipient sdk.AccAddress
+	class     ClaimClass     `json:"class"`
+	weight    sdk.Int        `json:"weight"`
+	recipient sdk.AccAddress `json:"recipient"`
 }
 
 // NewClaim generates a Claim instance.
 func NewClaim(class ClaimClass, weight sdk.Int, recipient sdk.AccAddress) Claim {
 	return Claim{
-		id:        GenerateClaimID(class, recipient),
 		class:     class,
 		weight:    weight,
 		recipient: recipient,
 	}
 }
 
-// GenerateClaimID generates an id for a Claim.
-func GenerateClaimID(class ClaimClass, recipient sdk.AccAddress) string {
-	return fmt.Sprintf("%d:%s", class, recipient.String())
+// ID returns the id of the claim
+func (c Claim) ID() string {
+	return fmt.Sprintf("%d:%s", c.class, c.recipient.String())
+}
+
+func (c Claim) String() string {
+	return fmt.Sprintf("Claim{class: %v, weight: %v, recipient: %v}",
+		c.class, c.weight, c.recipient)
+}
+
+// Claims is a collection of Claim
+type Claims []Claim
+
+func (c Claims) String() (out string) {
+	for _, claim := range c {
+		out += fmt.Sprintf("\n  %s", claim.String())
+	}
+	return out
 }
