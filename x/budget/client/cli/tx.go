@@ -2,8 +2,8 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"strconv"
+	"terra/types/assets"
 
 	"github.com/pkg/errors"
 
@@ -27,24 +27,26 @@ const (
 	flagTitle       = "title"
 	flagDescription = "description"
 	flagDeposit     = "deposit"
+	flagExecutor    = "execitpr"
 	flagVoter       = "voter"
 	flagOption      = "option"
-	flagState       = "state"
 	flagNumLimit    = "limit"
-	flagPrgram      = "program"
+	flagProgram     = "program"
+	flagProgramID   = "program-id"
 )
 
 type program struct {
 	Title       string
 	Description string
-	Type        string
 	Deposit     string
+	Executor    string
 }
 
 var programFlags = []string{
 	flagTitle,
 	flagDescription,
 	flagDeposit,
+	flagExecutor,
 }
 
 // GetCmdSubmitProgram implements submitting a program transaction command.
@@ -61,14 +63,15 @@ where program.json contains:
 
 {
   "title": "Test program",
-  "description": "My awesome program",
-  "type": "Text",
+  "description": "My awesome program (include a website link for impact)",
+  "submitter": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
+  "executor": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
   "deposit": "10terra"
 }
 
 is equivalent to
 
-$ terracli budget submit-program --title="Test program" --description="My awesome program" --type="Text" --deposit="10test" --from mykey
+$ terracli budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			program, err := parseSubmitProgramFlags()
@@ -82,53 +85,44 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				WithAccountDecoder(cdc)
 
 			// Get from address
-			from, err := cliCtx.GetFromAddress()
-			if err != nil {
-				return err
-			}
+			from := cliCtx.GetFromAddress()
 
 			// Pull associated account
-			account, err := cliCtx.GetAccount(from)
+			submitter, err := cliCtx.GetAccount(from)
 			if err != nil {
 				return err
 			}
 
 			// Find deposit amount
-			amount, err := sdk.ParseCoins(program.Deposit)
+			amount, err := sdk.ParseCoin(program.Deposit)
 			if err != nil {
 				return err
 			}
 
 			// ensure account has enough coins
-			if !account.GetCoins().IsAllGTE(amount) {
+			if !submitter.GetCoins().AmountOf(assets.SDRDenom).GTE(amount.Amount) {
 				return errors.Errorf("Address %s doesn't have enough coins to pay for this transaction.", from)
 			}
 
-			ProgramType, err := budget.ProgramTypeFromString(program.Type)
+			executor, err := cliCtx.GetAccount([]byte(program.Executor))
 			if err != nil {
 				return err
 			}
 
-			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, from, amount)
+			msg := budget.NewSubmitProgramMsg(program.Title, program.Description, amount, submitter.GetAddress(), executor.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			if cliCtx.GenerateOnly {
-				return utils.PrintUnsignedStdTx(os.Stdout, txBldr, cliCtx, []sdk.Msg{msg}, false)
-			}
-
-			// Build and sign the transaction, then broadcast to Tendermint
-			// programID must be returned, and it is a part of response.
-			cliCtx.PrintResponse = true
-			return utils.CompleteAndBroadcastTxCli(txBldr, cliCtx, []sdk.Msg{msg})
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
 		},
 	}
 
 	cmd.Flags().String(flagTitle, "", "title of program")
-	cmd.Flags().String(flagDescription, "", "description of program")
+	cmd.Flags().String(flagDescription, "", "(optional) description of program")
 	cmd.Flags().String(flagDeposit, "", "deposit of program")
+	cmd.Flags().String(flagExecutor, "", "executor of program")
 	cmd.Flags().String(flagProgram, "", "program file path (if this path is given, other program flags are ignored)")
 
 	return cmd
@@ -142,6 +136,7 @@ func parseSubmitProgramFlags() (*program, error) {
 		program.Title = viper.GetString(flagTitle)
 		program.Description = viper.GetString(flagDescription)
 		program.Deposit = viper.GetString(flagDeposit)
+		program.Executor = viper.GetString(flagExecutor)
 		return program, nil
 	}
 
@@ -169,9 +164,12 @@ func GetCmdVote(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote [program-id] [option]",
 		Args:  cobra.ExactArgs(2),
-		Short: "Vote for an active program, options: yes/no/no_with_veto/abstain",
+		Short: "Vote for an active program, options: yes or no",
 		Long: strings.TrimSpace(`
-Submit a vote for an acive program. You can find the program-id by running terracli query budget programs:
+Submit a vote for an active program. 
+
+You can find the program-id of active programs by running terracli query budget actives
+You can find the program-id of inactive (candidate) programs by running terracli query budget candidates
 
 $ terracli tx budget vote 1 yes --from mykey
 `),
@@ -182,10 +180,7 @@ $ terracli tx budget vote 1 yes --from mykey
 				WithAccountDecoder(cdc)
 
 			// Get voting address
-			from, err := cliCtx.GetFromAddress()
-			if err != nil {
-				return err
-			}
+			from := cliCtx.GetFromAddress()
 
 			// validate that the program id is a uint
 			programID, err := strconv.ParseUint(args[0], 10, 64)
@@ -193,34 +188,61 @@ $ terracli tx budget vote 1 yes --from mykey
 				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", args[0])
 			}
 
-			// check to see if the program is in the store
-			_, err = queryProgram(programID, cliCtx, cdc, queryRoute)
-			if err != nil {
-				return fmt.Errorf("Failed to fetch program-id %d: %s", programID, err)
-			}
-
 			// Find out which vote option user chose
-			byteVoteOption, err := budget.VoteOptionFromString(govClientUtils.NormalizeVoteOption(args[1]))
-			if err != nil {
-				return err
+			var option bool
+			if args[1] == "yes" {
+				option = true
 			}
 
 			// Build vote message and run basic validation
-			msg := budget.NewMsgVote(from, programID, byteVoteOption)
+			msg := budget.NewVoteMsg(programID, option, from)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			// If generate only print the transaction
-			if cliCtx.GenerateOnly {
-				return utils.PrintUnsignedStdTx(os.Stdout, txBldr, cliCtx, []sdk.Msg{msg}, false)
-			}
-
-			// Build and sign the transaction, then broadcast to a Tendermint node.
-			return utils.CompleteAndBroadcastTxCli(txBldr, cliCtx, []sdk.Msg{msg})
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
 		},
 	}
 
+	return cmd
+}
+
+// GetCmdVote implements creating a new vote command.
+func GetCmdWithdrawProgram(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw [program-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "withdraw a program from consideration",
+		Long: strings.TrimSpace(`
+Withdraw a program from consideration. The deposit is only refunded if the program is already in the active set. 
+
+$ terracli tx budget withdraw 1 
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().
+				WithCodec(cdc).
+				WithAccountDecoder(cdc)
+
+			// Get voting address
+			from := cliCtx.GetFromAddress()
+
+			// validate that the program id is a uint
+			programID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", args[0])
+			}
+
+			// Build vote message and run basic validation
+			msg := budget.NewWithdrawProgramMsg(programID, from)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+		},
+	}
 	return cmd
 }

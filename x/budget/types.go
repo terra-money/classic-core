@@ -40,6 +40,7 @@ func NewProgram(
 		Title:       title,
 		Description: description,
 		Submitter:   submitter,
+		Executor:    executor,
 		SubmitTime:  submitTime,
 		Deposit:     deposit,
 		Tally:       sdk.ZeroInt(),
@@ -57,6 +58,12 @@ func (p *Program) updateTally(option bool, power sdk.Int) {
 	} else {
 		p.Tally = p.Tally.Sub(power)
 	}
+}
+
+// String implements fmt.Stringer
+func (p Program) String() string {
+	return fmt.Sprintf("Program{ Title: %s, Description: %s, Submitter: %v, Executor: %v, SubmitTime: %v, Deposit: %v}",
+		p.Title, p.Description, p.Submitter, p.Executor, p.SubmitTime, p.Deposit)
 }
 
 //--------------------------------------------------------

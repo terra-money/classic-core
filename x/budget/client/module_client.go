@@ -26,10 +26,9 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	}
 	budgetQueryCmd.AddCommand(client.GetCommands(
 		cli.GetCmdQueryProgram(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryPrograms(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryVote(mc.storeKey, mc.cdc),
+		cli.GetCmdQueryActives(mc.storeKey, mc.cdc),
+		cli.GetCmdQueryCandidates(mc.storeKey, mc.cdc),
 		cli.GetCmdQueryVotes(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryTally(mc.storeKey, mc.cdc),
 		cli.GetCmdQueryParams(mc.storeKey, mc.cdc),
 	)...)
 
@@ -45,7 +44,8 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	}
 
 	budgetTxCmd.AddCommand(client.PostCommands(
-		cli.GetCmdSubmitProposal(mc.cdc),
+		cli.GetCmdSubmitProgram(mc.cdc),
+		cli.GetCmdWithdrawProgram(mc.cdc),
 		cli.GetCmdVote(mc.cdc),
 	)...)
 

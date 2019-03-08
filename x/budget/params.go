@@ -53,3 +53,12 @@ func validateParams(params Params) error {
 	}
 	return nil
 }
+
+func (params Params) String() string {
+	return fmt.Sprintf(`Budget Params:
+	ActiveThreshold: %s
+	LegacyThreshold: %s
+	VotePeriod: %s
+	MinDeposit: %s
+  `, params.ActiveThreshold, params.LegacyThreshold, params.VotePeriod, params.MinDeposit)
+}

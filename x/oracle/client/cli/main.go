@@ -190,7 +190,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom [usd]
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
-		Short: "Query the current Treasury params",
+		Short: "Query the current Oracle params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

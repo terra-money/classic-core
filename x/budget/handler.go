@@ -18,7 +18,7 @@ func uint64ToBytes(i uint64) []byte {
 	return b
 }
 
-// NewHandler creates a new handler for all simple_gov type messages.
+// NewHandler creates a new handler for all budget type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
@@ -28,7 +28,6 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleWithdrawProgramMsg(ctx, k, msg)
 		case VoteMsg:
 			return handleVoteMsg(ctx, k, msg)
-
 		default:
 			errMsg := "Unrecognized budget Msg type: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
