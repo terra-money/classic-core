@@ -10,20 +10,11 @@ import (
 )
 
 // RouterKey is they name of the budget module
-const RouterKey = "budget"
-
-type ProgramVote string
-type ProgramState string
-
 const (
-	YesVote     ProgramVote = "yes"
-	NoVote      ProgramVote = "no"
-	AbstainVote ProgramVote = "abstain"
+	RouterKey = "budget"
 
-	InactiveProgramState ProgramState = "Inactive"
-	RejectedProgramState ProgramState = "Rejected"
-	LegacyProgramState   ProgramState = "Legacy"
-	ActiveProgramState   ProgramState = "Active"
+	// QuerierRoute is the querier route for budget
+	QuerierRoute = "budget"
 )
 
 // Program defines the basic properties of a staking Program
@@ -33,9 +24,8 @@ type Program struct {
 	Submitter   sdk.AccAddress `json:"submitter"`   // Validator address of the proposer
 	Executor    sdk.AccAddress `json:"executor"`    // Account address of the executor
 	SubmitTime  time.Time      `json:"submit_time"` // Block height from which the Program is open for votations
-	Deposit     sdk.Coins      `json:"deposit"`     // Coins deposited in escrow
-	TallyResult TallyResult    `json:"tally_result"`
-	State       ProgramState   `json:"state"`
+	Deposit     sdk.Coin       `json:"deposit"`     // Coins deposited in escrow
+	Tally       sdk.Int        `json:"tally_result"`
 }
 
 // NewProgram validates deposit and creates a new Program
@@ -45,15 +35,14 @@ func NewProgram(
 	submitter sdk.AccAddress,
 	executor sdk.AccAddress,
 	submitTime time.Time,
-	deposit sdk.Coins) Program {
+	deposit sdk.Coin) Program {
 	return Program{
 		Title:       title,
 		Description: description,
 		Submitter:   submitter,
 		SubmitTime:  submitTime,
 		Deposit:     deposit,
-		State:       InactiveProgramState,
-		TallyResult: EmptyTallyResult(),
+		Tally:       sdk.ZeroInt(),
 	}
 }
 
@@ -62,24 +51,12 @@ func (p *Program) getVotingEndTime(votingPeriod time.Duration) time.Time {
 }
 
 // updateTally updates the counter for each of the available options
-func (p *Program) updateTally(option ProgramVote, power sdk.Int) sdk.Error {
-	switch option {
-	case YesVote:
-		p.TallyResult.Yes = p.TallyResult.Yes.Add(power)
-		return nil
-	case NoVote:
-		p.TallyResult.No = p.TallyResult.No.Add(power)
-		return nil
-	case AbstainVote:
-		p.TallyResult.Abstain = p.TallyResult.Abstain.Add(power)
-		return nil
-	default:
-		return ErrInvalidOption("Invalid option: " + string(option))
+func (p *Program) updateTally(option bool, power sdk.Int) {
+	if option {
+		p.Tally = p.Tally.Add(power)
+	} else {
+		p.Tally = p.Tally.Sub(power)
 	}
-}
-
-func (p *Program) weight() sdk.Int {
-	return p.TallyResult.Yes.Sub(p.TallyResult.No)
 }
 
 //--------------------------------------------------------
@@ -89,13 +66,13 @@ func (p *Program) weight() sdk.Int {
 type SubmitProgramMsg struct {
 	Title       string         // Title of the Program
 	Description string         // Description of the Program
-	Deposit     sdk.Coins      // Deposit paid by submitter. Must be > MinDeposit to enter voting period
+	Deposit     sdk.Coin       // Deposit paid by submitter. Must be > MinDeposit to enter voting period
 	Submitter   sdk.AccAddress // Address of the submitter
 	Executor    sdk.AccAddress // Address of the executor
 }
 
 // NewSubmitProgramMsg submits a message with a new Program
-func NewSubmitProgramMsg(title string, description string, deposit sdk.Coins,
+func NewSubmitProgramMsg(title string, description string, deposit sdk.Coin,
 	submitter sdk.AccAddress, executor sdk.AccAddress) SubmitProgramMsg {
 	return SubmitProgramMsg{
 		Title:       title,
@@ -142,12 +119,8 @@ func (msg SubmitProgramMsg) ValidateBasic() sdk.Error {
 		return ErrInvalidDescription()
 	}
 
-	if !msg.Deposit.IsValid() {
+	if !msg.Deposit.IsPositive() {
 		return sdk.ErrInvalidCoins("Deposit is not valid")
-	}
-
-	if !msg.Deposit.IsAllPositive() {
-		return sdk.ErrInvalidCoins("Deposit cannot be negative")
 	}
 
 	return nil
@@ -155,32 +128,6 @@ func (msg SubmitProgramMsg) ValidateBasic() sdk.Error {
 
 func (msg SubmitProgramMsg) String() string {
 	return fmt.Sprintf("SubmitProgramMsg{%v, %v}", msg.Title, msg.Description)
-}
-
-//--------------------------------------------------------
-//--------------------------------------------------------
-
-// TallyResult Tally Results
-type TallyResult struct {
-	Yes     sdk.Int `json:"yes"`
-	Abstain sdk.Int `json:"abstain"`
-	No      sdk.Int `json:"no"`
-}
-
-// checks if two proposals are equal
-func EmptyTallyResult() TallyResult {
-	return TallyResult{
-		Yes:     sdk.ZeroInt(),
-		Abstain: sdk.ZeroInt(),
-		No:      sdk.ZeroInt(),
-	}
-}
-
-// checks if two proposals are equal
-func (resultA TallyResult) Equals(resultB TallyResult) bool {
-	return (resultA.Yes.Equal(resultB.Yes) &&
-		resultA.Abstain.Equal(resultB.Abstain) &&
-		resultA.No.Equal(resultB.No))
 }
 
 //--------------------------------------------------------
@@ -241,20 +188,12 @@ func (msg WithdrawProgramMsg) String() string {
 // specific Program
 type VoteMsg struct {
 	ProgramID uint64         // ID of the Program
-	Option    ProgramVote    // Option chosen by voter
+	Option    bool           // Option chosen by voter
 	Voter     sdk.AccAddress // Address of the voter
 }
 
 // NewVoteMsg creates a VoteMsg instance
-func NewVoteMsg(programID uint64, option ProgramVote, voter sdk.AccAddress) VoteMsg {
-	// by default a nil option is an abstention
-	switch option {
-	case YesVote:
-	case NoVote:
-		break
-	default:
-		option = AbstainVote
-	}
+func NewVoteMsg(programID uint64, option bool, voter sdk.AccAddress) VoteMsg {
 	return VoteMsg{
 		ProgramID: programID,
 		Option:    option,
@@ -282,17 +221,6 @@ func (msg VoteMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Voter}
 }
 
-func isValidOption(option ProgramVote) bool {
-	switch option {
-	case YesVote:
-	case NoVote:
-	case AbstainVote:
-		return true
-	}
-
-	return false
-}
-
 // Implements Msg
 func (msg VoteMsg) ValidateBasic() sdk.Error {
 	if len(msg.Voter) == 0 {
@@ -300,12 +228,6 @@ func (msg VoteMsg) ValidateBasic() sdk.Error {
 	}
 	if msg.ProgramID <= 0 {
 		return ErrInvalidProgramID("ProgramID cannot be negative")
-	}
-	if !isValidOption(msg.Option) {
-		return ErrInvalidOption("Invalid voting option: " + string(msg.Option))
-	}
-	if len(strings.TrimSpace(string(msg.Option))) <= 0 {
-		return ErrInvalidOption("Option can't be blank")
 	}
 
 	return nil

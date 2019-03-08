@@ -189,8 +189,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
 		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.treasuryKeeper)).
-		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper))
-	//AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
+		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper)).
+		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
 	app.MountStores(

@@ -1,6 +1,9 @@
 package budget
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,22 +12,25 @@ import (
 
 // query endpoints supported by the governance Querier
 const (
-	QueryPrice  = "price"
-	QueryVotes  = "votes"
-	QueryActive = "active"
-	QueryParams = "params"
+	QueryProgram       = "program"
+	QueryVotes         = "votes"
+	QueryActiveList    = "active-list"
+	QueryCandidateList = "candidate-list"
+	QueryParams        = "params"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case QueryPrice:
-			return queryPrice(ctx, path[1:], req, keeper)
-		case QueryActive:
-			return queryActive(ctx, req, keeper)
+		case QueryProgram:
+			return queryProgram(ctx, path[1:], req, keeper)
 		case QueryVotes:
 			return queryVotes(ctx, req, keeper)
+		case QueryActiveList:
+			return queryActiveList(ctx, req, keeper)
+		case QueryCandidateList:
+			return queryCandidateList(ctx, req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
 		default:
@@ -34,32 +40,20 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 // nolint: unparam
-func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	denom := path[0]
-
-	price, err := keeper.GetPrice(ctx, denom)
-
-	if err != nil {
-		return []byte{}, ErrUnknownDenomination(DefaultCodespace, denom)
+func queryProgram(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	programIDStr := path[0]
+	programIDInt, strConvertError := strconv.Atoi(programIDStr)
+	if strConvertError != nil {
+		return nil, sdk.ErrInternal("ProgramID must be a valid int")
 	}
 
-	return price.Bytes(), nil
-}
-
-// nolint: unparam
-func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	denoms := []string{}
-
-	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixPrice)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var denom string
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &denom)
-		denoms = append(denoms, denom)
+	programID := uint64(programIDInt)
+	program, pErr := keeper.GetProgram(ctx, programID)
+	if pErr != nil {
+		return nil, pErr
 	}
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, program)
 	if err != nil {
 		panic("could not marshal result to JSON")
 	}
@@ -68,57 +62,112 @@ func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 }
 
 // Params for query 'custom/oracle/votes'
-type QueryVoteParams struct {
-	Voter sdk.AccAddress
-	Denom string
+type QueryVotesParams struct {
+	Voter     sdk.AccAddress
+	ProgramID uint64
 }
 
 // creates a new instance of QueryVoteParams
-func NewQueryVoteParams(voter sdk.AccAddress, denom string) QueryVoteParams {
-	return QueryVoteParams{
-		Voter: voter,
-		Denom: denom,
+func NewQueryVotesParams(voter sdk.AccAddress, programID uint64) QueryVotesParams {
+	return QueryVotesParams{
+		Voter:     voter,
+		ProgramID: programID,
 	}
 }
 
 // nolint: unparam
 func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryVoteParams
+	var params QueryVotesParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := PriceBallot{}
-	votes := keeper.getVotes(ctx)
+	filteredVotes := []VoteMsg{}
 
-	for _, ballot := range votes {
-		for _, vote := range ballot {
-			if len(params.Denom) != 0 && len(params.Voter) != 0 {
-				if vote.Denom == params.Denom && vote.Voter.Equals(params.Voter) {
-					filteredVotes = append(filteredVotes, vote)
-				}
+	store := ctx.KVStore(keeper.key)
+	iter := sdk.KVStorePrefixIterator(store, PrefixVote)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var option bool
+		var metaData string
+		var programID uint64
+		var voterAddress sdk.AccAddress
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &metaData)
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &option)
 
-			} else if len(params.Denom) != 0 {
-				if vote.Denom == params.Denom {
-					filteredVotes = append(filteredVotes, vote)
-				}
-			} else if len(params.Voter) != 0 {
-				if vote.Voter.Equals(params.Voter) {
-					filteredVotes = append(filteredVotes, vote)
-				}
-			} else {
-				myVote := keeper.getVote(ctx, params.Denom, params.Voter)
-				filteredVotes = append(filteredVotes, myVote)
-			}
+		metaStrs := strings.Split(metaData, ":")
+		programIDInt, err := strconv.Atoi(metaStrs[1])
+		if err != nil {
+			panic(err)
+		}
+		programID = uint64(programIDInt)
+
+		voterAddress, err = sdk.AccAddressFromBech32(metaStrs[2])
+		if err != nil {
+			panic(err)
 		}
 
+		include := true
+		if params.ProgramID != 0 && params.ProgramID != programID {
+			include = false
+		}
+
+		if len(params.Voter) != 0 && !(params.Voter.Equals(voterAddress)) {
+			include = false
+		}
+
+		if !include {
+			continue
+		}
+
+		vote := NewVoteMsg(programID, option, voterAddress)
+		filteredVotes = append(filteredVotes, vote)
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		panic("could not marshal result to JSON")
 	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+
+	programs := []Program{}
+	keeper.IterateActivePrograms(ctx, func(programID uint64, program Program) (stop bool) {
+		programs = append(programs, program)
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
+	if err != nil {
+		panic("could not marshal result to JSON")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+
+	programs := []Program{}
+	store := ctx.KVStore(keeper.key)
+	iter := sdk.KVStorePrefixIterator(store, PrefixCandidateQueue)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var program Program
+		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
+		programs = append(programs, program)
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
+	if err != nil {
+		panic("could not marshal result to JSON")
+	}
+
 	return bz, nil
 }
 
