@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"io"
 	"terra/types/util"
-	"terra/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/store"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,14 +46,13 @@ func main() {
 	rootCmd.AddCommand(terraInit.TestnetFilesCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.GenTxCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.AddGenesisAccountCmd(ctx, cdc))
-
-	// preoccupy the version command (that will be added in server.AddCommands)
-	rootCmd.AddCommand(version.VersionCmd)
+	rootCmd.AddCommand(terraInit.ValidateGenesisCmd(ctx, cdc))
+	rootCmd.AddCommand(client.NewCompletionCmd(rootCmd, true))
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "GA", app.DefaultNodeHome)
+	executor := cli.PrepareBaseCmd(rootCmd, "TE", app.DefaultNodeHome)
 	err := executor.Execute()
 	if err != nil {
 		// handle with #870
@@ -61,21 +61,24 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewTerraApp(logger, db, traceStore, true,
-		baseapp.SetPruning(viper.GetString("pruning")),
-		baseapp.SetMinimumFees(viper.GetString("minimum_fees")),
+	return app.NewTerraApp(
+		logger, db, traceStore, true,
+		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
+		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 	)
 }
 
 func exportAppStateAndTMValidators(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool,
+	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	tApp := app.NewTerraApp(logger, db, traceStore, false)
 	if height != -1 {
+		tApp := app.NewTerraApp(logger, db, traceStore, false)
 		err := tApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
+		return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	return tApp.ExportAppStateAndValidators(forZeroHeight)
+	tApp := app.NewTerraApp(logger, db, traceStore, true)
+	return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

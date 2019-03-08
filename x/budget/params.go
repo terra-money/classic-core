@@ -27,10 +27,12 @@ func NewParams(activeThreshold sdk.Dec, legacyThreshold sdk.Dec, votePeriod time
 
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
+
+	defaultVotePeriod, _ := time.ParseDuration("730h") // 1 month
 	return NewParams(
-		sdk.NewDecWithPrec(10, 2),
-		sdk.NewDecWithPrec(0, 2),
-		1209600,
+		sdk.NewDecWithPrec(1, 1), // 10%
+		sdk.NewDecWithPrec(0, 2), // 0%
+		defaultVotePeriod,
 		100,
 	)
 }
@@ -40,7 +42,7 @@ func validateParams(params Params) error {
 		return fmt.Errorf("budget active threshold should be greater than 0, is %s", params.ActiveThreshold.String())
 	}
 	if params.LegacyThreshold.LT(sdk.ZeroDec()) {
-		return fmt.Errorf("budget legacy threshold should be greater than 0, is %s", params.LegacyThreshold.String())
+		return fmt.Errorf("budget legacy threshold should be greater than or equal to 0, is %s", params.LegacyThreshold.String())
 	}
 	if params.VotePeriod < 0 {
 		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())

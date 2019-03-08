@@ -17,6 +17,13 @@ import (
 	"terra/types/util"
 
 	"terra/version"
+	"terra/x/budget"
+	budgetClient "terra/x/budget/client"
+	"terra/x/market"
+	marketClient "terra/x/market/client"
+	"terra/x/oracle"
+	oracleClient "terra/x/oracle/client"
+	"terra/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -24,33 +31,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	budget "terra/x/budget/client/rest"
-	market "terra/x/market/client/rest"
-	oracle "terra/x/oracle/client/rest"
+	at "github.com/cosmos/cosmos-sdk/x/auth"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	sl "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
-	stake "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
+	st "github.com/cosmos/cosmos-sdk/x/staking"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
 	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
-	stakeClient "github.com/cosmos/cosmos-sdk/x/staking/client"
+	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
 	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
-)
-
-const (
-	storeAcc      = "acc"
-	storeGov      = "gov"
-	storeSlashing = "slashing"
-	storeStake    = "stake"
-	storeDist     = "distr"
 )
 
 func main() {
@@ -74,10 +71,13 @@ func main() {
 	// Module clients hold cli commnads (tx,query) and lcd routes
 	// TODO: Make the lcd command take a list of ModuleClient
 	mc := []sdk.ModuleClients{
-		govClient.NewModuleClient(storeGov, cdc),
-		distClient.NewModuleClient(storeDist, cdc),
-		stakeClient.NewModuleClient(storeStake, cdc),
-		slashingClient.NewModuleClient(storeSlashing, cdc),
+		distClient.NewModuleClient(distcmd.StoreKey, cdc),
+		stakingClient.NewModuleClient(st.StoreKey, cdc),
+		slashingClient.NewModuleClient(sl.StoreKey, cdc),
+		oracleClient.NewModuleClient(oracle.StoreKey, cdc),
+		treasuryClient.NewModuleClient(treasury.StoreKey, cdc),
+		budgetClient.NewModuleClient(budget.StoreKey, cdc),
+		marketClient.NewModuleClient(market.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -85,11 +85,16 @@ func main() {
 		Short: "Command line interface for interacting with terrad",
 	}
 
+	// Add --chain-id to persistent flags and mark it required
+	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
+		return initConfig(rootCmd)
+	}
+
 	// Construct Root Command
 	rootCmd.AddCommand(
-		rpc.InitClientCommand(),
 		rpc.StatusCommand(),
-		client.ConfigCmd(),
+		client.ConfigCmd(app.DefaultCLIHome),
 		queryCmd(cdc, mc),
 		txCmd(cdc, mc),
 		client.LineBreak,
@@ -98,16 +103,13 @@ func main() {
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
+		client.NewCompletionCmd(rootCmd, true),
 	)
 
 	// Add flags and prefix all env exposed with GA
 	executor := cli.PrepareMainCmd(rootCmd, "TE", app.DefaultCLIHome)
-	err := initConfig(rootCmd)
-	if err != nil {
-		panic(err)
-	}
 
-	err = executor.Execute()
+	err := executor.Execute()
 	if err != nil {
 		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
 		os.Exit(1)
@@ -122,12 +124,12 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	queryCmd.AddCommand(
-		rpc.ValidatorCommand(),
+		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
 		tx.SearchTxCmd(cdc),
 		tx.QueryTxCmd(cdc),
 		client.LineBreak,
-		authcmd.GetAccountCmd(storeAcc, cdc),
+		authcmd.GetAccountCmd(at.StoreKey, cdc),
 	)
 
 	for _, m := range mc {
@@ -147,7 +149,9 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 		bankcmd.SendTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
-		bankcmd.GetBroadcastCommand(cdc),
+		authcmd.GetMultiSignCommand(cdc),
+		authcmd.GetBroadcastCommand(cdc),
+		authcmd.GetEncodeCommand(cdc),
 		client.LineBreak,
 	)
 
@@ -166,14 +170,12 @@ func registerRoutes(rs *lcd.RestServer) {
 	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
+	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	stake.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, distcmd.StoreKey)
+	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	budget.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func registerSwaggerUI(rs *lcd.RestServer) {
@@ -184,21 +186,6 @@ func registerSwaggerUI(rs *lcd.RestServer) {
 	staticServer := http.FileServer(statikFS)
 	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
 }
-
-func versionRequestHandler(w http.ResponseWriter, r *http.Request) {
-	v := version.GetVersion()
-	w.Write([]byte(v))
-}
-
-// Disabling swaggerui @matthew
-//func registerSwaggerUI(rs *lcd.RestServer) {
-//	statikFS, err := fs.New()
-//	if err != nil {
-//		panic(err)
-//	}
-//	staticServer := http.FileServer(statikFS)
-//	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
-//}
 
 func initConfig(cmd *cobra.Command) error {
 	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
@@ -214,7 +201,9 @@ func initConfig(cmd *cobra.Command) error {
 			return err
 		}
 	}
-
+	if err := viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID)); err != nil {
+		return err
+	}
 	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
 		return err
 	}

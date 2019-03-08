@@ -18,10 +18,11 @@ import (
 //nolint
 const (
 	RestVoteDenom  = "denom"
-	RestVoter      = "voteraddress"
+	RestVoter      = "voter"
 	RestPrice      = "price"
 	RestParamsType = "params"
-	queryRoute     = "oracle"
+
+	queryRoute = "oracle"
 )
 
 // RegisterRoutes registers staking-related REST handlers to a router

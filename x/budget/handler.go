@@ -99,10 +99,12 @@ func handleSubmitProgramMsg(ctx sdk.Context, k Keeper, msg SubmitProgramMsg) sdk
 			msg.Submitter,
 			msg.Executor,
 			time.Now(),
-			msg.Deposit)
+			msg.Deposit,
+		)
 
 		programID := k.NewProgramID(ctx)
 		k.SetProgram(ctx, programID, program)
+
 		return sdk.Result{
 			Tags: sdk.NewTags(
 				tags.Action, tags.ActionProgramSubmitted,
@@ -143,6 +145,7 @@ func handleWithdrawProgramMsg(ctx sdk.Context, k Keeper, msg WithdrawProgramMsg)
 			tags.Action, tags.ActionProgramWithdrawn,
 			tags.ProgramID, msg.ProgramID,
 			tags.Submitter, msg.Submitter.Bytes(),
+			tags.Executor, program.Executor.Bytes(),
 		),
 	}
 }
@@ -186,7 +189,7 @@ func handleVoteMsg(ctx sdk.Context, k Keeper, msg VoteMsg) sdk.Result {
 	} else {
 		legacyThreshold := k.GetParams(ctx).LegacyThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
 		if program.weight().LT(legacyThreshold) {
-			program.State = InactiveProgramState
+			program.State = LegacyProgramState
 
 			k.DeleteProgram(ctx, msg.ProgramID)
 			// Burn the deposit

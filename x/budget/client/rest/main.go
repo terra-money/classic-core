@@ -29,7 +29,7 @@ const (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc("/budget/program", postProgramHandlerFn(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/vote", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/tally", RestProgramID), queryTallyOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")

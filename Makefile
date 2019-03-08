@@ -9,7 +9,7 @@ GOTOOLS = \
 	github.com/alecthomas/gometalinter \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: get_tools get_vendor_deps install install_examples install_cosmos-sdk-cli test_lint test
+all: get_tools get_vendor_deps install test_lint test
 
 get_tools:
 	go get github.com/golang/dep/cmd/dep
@@ -94,52 +94,11 @@ godocs:
 
 test: test_unit
 
-test_cli:
-	@go test -p 4 `go list github.com/cosmos/cosmos-sdk/cmd/gaia/cli_test` -tags=cli_test
-
-test_examples:
-	@go test -count 1 -p 1 `go list github.com/cosmos/cosmos-sdk/docs/examples/basecoin/cli_test` -tags=cli_test
-	@go test -count 1 -p 1 `go list github.com/cosmos/cosmos-sdk/docs/examples/democoin/cli_test` -tags=cli_test
-
 test_unit:
 	@VERSION=$(VERSION) go test $(PACKAGES_NOSIMULATION)
 
 test_race:
 	@VERSION=$(VERSION) go test -race $(PACKAGES_NOSIMULATION)
-
-test_sim_gaia_nondeterminism:
-	@echo "Running nondeterminism test..."
-	@go test ./cmd/gaia/app -run TestAppStateDeterminism -SimulationEnabled=true -v -timeout 10m
-
-test_sim_gaia_fast:
-	@echo "Running quick Terra simulation. This may take several minutes..."
-	@go test ./cmd/gaia/app -run TestFullTerraSimulation -SimulationEnabled=true -SimulationNumBlocks=1000 -SimulationBlockSize=200 -SimulationCommit=true -SimulationSeed=99 -v -timeout 24h
-
-test_sim_gaia_import_export:
-	@echo "Running Terra import/export simulation. This may take several minutes..."
-	@bash scripts/multisim.sh 50 TestTerraImportExport
-
-test_sim_gaia_simulation_after_import:
-	@echo "Running Terra simulation-after-import. This may take several minutes..."
-	@bash scripts/multisim.sh 50 TestTerraSimulationAfterImport
-
-test_sim_gaia_multi_seed:
-	@echo "Running multi-seed Terra simulation. This may take awhile!"
-	@bash scripts/multisim.sh 400 TestFullTerraSimulation
-
-SIM_NUM_BLOCKS ?= 500
-SIM_BLOCK_SIZE ?= 200
-SIM_COMMIT ?= true
-test_sim_gaia_benchmark:
-	@echo "Running Terra benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
-	@go test -benchmem -run=^$$ github.com/cosmos/cosmos-sdk/cmd/gaia/app -bench ^BenchmarkFullTerraSimulation$$  -SimulationEnabled=true -SimulationNumBlocks=$(SIM_NUM_BLOCKS) -SimulationBlockSize=$(SIM_BLOCK_SIZE) -SimulationCommit=$(SIM_COMMIT) -timeout 24h
-
-test_sim_gaia_profile:
-	@echo "Running Terra benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
-	@go test -benchmem -run=^$$ github.com/cosmos/cosmos-sdk/cmd/gaia/app -bench ^BenchmarkFullTerraSimulation$$ -SimulationEnabled=true -SimulationNumBlocks=$(SIM_NUM_BLOCKS) -SimulationBlockSize=$(SIM_BLOCK_SIZE) -SimulationCommit=$(SIM_COMMIT) -timeout 24h -cpuprofile cpu.out -memprofile mem.out
-
-test_cover:
-	@export VERSION=$(VERSION); bash tests/test_cover.sh
 
 test_lint:
 	gometalinter --config=tools/gometalinter.json ./...
@@ -199,9 +158,8 @@ localnet-stop:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build build_cosmos-sdk-cli build_examples install install_examples install_cosmos-sdk-cli install_debug dist \
+.PHONY: build build_cosmos-sdk-cli build_examples install install_debug dist \
 check_tools check_dev_tools get_dev_tools get_vendor_deps draw_deps test test_cli test_unit \
 test_cover test_lint benchmark devdoc_init devdoc devdoc_save devdoc_update \
 build-linux build-docker-terradnode localnet-start localnet-stop \
-format check-ledger test_sim_terra_nondeterminism test_sim_modules test_sim_terra_fast \
-test_sim_terra_multi_seed test_sim_terra_import_export update_tools update_dev_tools
+format check-ledger update_tools update_dev_tools
