@@ -33,6 +33,8 @@ const (
 	flagNumLimit    = "limit"
 	flagProgram     = "program"
 	flagProgramID   = "program-id"
+
+	queryRoute = "budget"
 )
 
 type program struct {
@@ -160,7 +162,7 @@ func parseSubmitProgramFlags() (*program, error) {
 }
 
 // GetCmdVote implements creating a new vote command.
-func GetCmdVote(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote [program-id] [option]",
 		Args:  cobra.ExactArgs(2),
@@ -209,7 +211,7 @@ $ terracli tx budget vote 1 yes --from mykey
 }
 
 // GetCmdVote implements creating a new vote command.
-func GetCmdWithdrawProgram(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdWithdrawProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw [program-id]",
 		Args:  cobra.ExactArgs(1),
