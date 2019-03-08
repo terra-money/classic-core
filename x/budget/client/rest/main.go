@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"terra/x/budget"
+	"terra/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
+	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -23,62 +25,114 @@ const (
 	RestVoter         = "voter"
 	RestProgramStatus = "status"
 	RestNumLimit      = "limit"
-	storeName         = "budget"
+
+	queryRoute = "budget"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	r.HandleFunc("/budget/program", postProgramHandlerFn(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc("/budget/program/submit", submitProgramHandlerFn(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/withdraw", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/vote", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/tally", RestProgramID), queryTallyOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes", RestProgramID), queryVotesOnProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes/{%s}", RestProgramID, RestVoter), queryVoteHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/actives", RestProgramID), queryActivesHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/candidates", RestProgramID), queryCandidatesHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes/{%s}", RestProgramID, RestVoter), queryVotesHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/budget/params", queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
-type postProgramReq struct {
-	BaseReq     utils.BaseReq  `json:"base_req"`
-	Title       string         `json:"title"`        //  Title of the Program
-	Description string         `json:"description"`  //  Description of the Program
-	ProgramType string         `json:"Program_type"` //  Type of Program. Initial set {PlainTextProgram, SoftwareUpgradeProgram}
-	Submitter   sdk.AccAddress `json:"submitter"`    //  Address of the submitter
-	Executor    sdk.AccAddress `json:"executor"`     //  Address of the executor
-	Deposit     sdk.Coins      `json:"deposit"`      // Coins to add to the Program's deposit
+type submitProgramReq struct {
+	BaseReq     rest.BaseReq   `json:"base_req"`
+	Title       string         `json:"title"`       //  Title of the Program
+	Description string         `json:"description"` //  Description of the Program
+	Submitter   sdk.AccAddress `json:"submitter"`   //  Address of the submitter
+	Executor    sdk.AccAddress `json:"executor"`    //  Address of the executor
+	Deposit     sdk.Coin       `json:"deposit"`     // Coins to add to the Program's deposit
 }
 
 type voteReq struct {
-	BaseReq utils.BaseReq  `json:"base_req"`
+	BaseReq rest.BaseReq   `json:"base_req"`
 	Voter   sdk.AccAddress `json:"voter"`  //  address of the voter
-	Option  string         `json:"option"` //  option from OptionSet chosen by the voter
+	Option  bool           `json:"option"` //  option from OptionSet chosen by the voter
 }
 
-func postProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+type withdrawReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+}
+
+func submitProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req postProgramReq
-		err := utils.ReadRESTReq(w, r, cdc, &req)
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		var req submitProgramReq
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			return
 		}
 
-		cliCtx = cliCtx.WithGenerateOnly(req.BaseReq.GenerateOnly)
-		cliCtx = cliCtx.WithSimulation(req.BaseReq.Simulate)
-
 		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w, cliCtx) {
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress := cliCtx.GetFromAddress()
+		if !req.Submitter.Equals(fromAddress) {
+			rest.WriteErrorResponse(w, http.StatusUnauthorized, "Must use own address")
 			return
 		}
 
 		// create the message
 		msg := budget.NewSubmitProgramMsg(req.Title, req.Description, req.Deposit, req.Submitter, req.Executor)
-		err = msg.ValidateBasic()
+		err := msg.ValidateBasic()
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.CompleteAndBroadcastTxREST(w, r, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
+		if req.BaseReq.GenerateOnly {
+			clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+			return
+		}
+
+		clientrest.CompleteAndBroadcastTxREST(w, cliCtx, req.BaseReq, []sdk.Msg{msg}, cdc)
+	}
+}
+
+func withdrawProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		strProgramID := vars[RestProgramID]
+
+		if len(strProgramID) == 0 {
+			err := errors.New("programID required but not specified")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		programID, ok := rest.ParseUint64OrReturnBadRequest(w, strProgramID)
+		if !ok {
+			return
+		}
+
+		var req withdrawReq
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
+			return
+		}
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress := cliCtx.GetFromAddress()
+
+		// create the message
+		msg := budget.NewWithdrawProgramMsg(programID, fromAddress)
+		err := msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		clientrest.CompleteAndBroadcastTxREST(w, cliCtx, req.BaseReq, []sdk.Msg{msg}, cdc)
 	}
 }
 
@@ -89,52 +143,34 @@ func voteHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc
 
 		if len(strProgramID) == 0 {
 			err := errors.New("programID required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		programID, ok := utils.ParseUint64OrReturnBadRequest(w, strProgramID)
+		programID, ok := rest.ParseUint64OrReturnBadRequest(w, strProgramID)
 		if !ok {
 			return
 		}
 
 		var req voteReq
-		err := utils.ReadRESTReq(w, r, cdc, &req)
-		if err != nil {
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			return
 		}
-
-		cliCtx = cliCtx.WithGenerateOnly(req.BaseReq.GenerateOnly)
-		cliCtx = cliCtx.WithSimulation(req.BaseReq.Simulate)
 
 		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w, cliCtx) {
+		if !baseReq.ValidateBasic(w) {
 			return
-		}
-
-		// TODO: check option and validate
-		var voteOption budget.ProgramVote
-		switch req.Option {
-		case "yes":
-			voteOption = budget.YesVote
-			break
-		case "no":
-			voteOption = budget.NoVote
-			break
-		default:
-			voteOption = budget.AbstainVote
-			break
 		}
 
 		// create the message
-		msg := budget.NewVoteMsg(programID, voteOption, req.Voter)
-		err = msg.ValidateBasic()
+		msg := budget.NewVoteMsg(programID, req.Option, req.Voter)
+		err := msg.ValidateBasic()
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		utils.CompleteAndBroadcastTxREST(w, r, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
+		clientrest.CompleteAndBroadcastTxREST(w, cliCtx, req.BaseReq, []sdk.Msg{msg}, cdc)
 	}
 }
 
@@ -145,165 +181,99 @@ func queryProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Han
 
 		if len(strProgramID) == 0 {
 			err := errors.New("programID required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		programID, ok := utils.ParseUint64OrReturnBadRequest(w, strProgramID)
-		if !ok {
-			return
-		}
-
-		params := budget.NewQueryProgramParams(programID)
-
-		bz, err := cdc.MarshalJSON(params)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, budget.QueryProgram, strProgramID), nil)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		res, err := cliCtx.QueryWithData("custom/budget/Program", bz)
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}
 }
 
-func queryVoteHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryActivesHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		strProgramID := vars[RestProgramID]
-		bechVoterAddr := vars[RestVoter]
-
-		if len(strProgramID) == 0 {
-			err := errors.New("ProgramId required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		ProgramID, ok := utils.ParseUint64OrReturnBadRequest(w, strProgramID)
-		if !ok {
-			return
-		}
-
-		if len(bechVoterAddr) == 0 {
-			err := errors.New("voter address required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		voterAddr, err := sdk.AccAddressFromBech32(bechVoterAddr)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryActiveList), nil)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		params := budget.NewQueryVoteParams(ProgramID, voterAddr)
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+	}
+}
 
-		bz, err := cdc.MarshalJSON(params)
+func queryCandidatesHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryCandidateList), nil)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		res, err := cliCtx.QueryWithData("custom/budget/vote", bz)
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}
 }
 
 // todo: Split this functionality into helper functions to remove the above
-func queryVotesOnProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryVotesHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		strProgramID := vars[RestProgramID]
+		strVoterAddr := vars[RestVoter]
 
-		if len(strProgramID) == 0 {
-			err := errors.New("ProgramId required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		params := budget.QueryVotesParams{}
+
+		if len(strProgramID) != 0 {
+			programID, ok := rest.ParseUint64OrReturnBadRequest(w, strProgramID)
+			if !ok {
+				err := errors.New("programID must be an unsigned int")
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			params.ProgramID = programID
 		}
 
-		ProgramID, ok := utils.ParseUint64OrReturnBadRequest(w, strProgramID)
-		if !ok {
-			return
-		}
+		if len(strVoterAddr) != 0 {
+			voterAcc, err := sdk.AccAddressFromBech32(strVoterAddr)
+			if err != nil {
+				err := errors.New("voteraccount malformed")
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 
-		params := budget.NewQueryProgramParams(ProgramID)
+			params.Voter = voterAcc
+		}
 
 		bz, err := cdc.MarshalJSON(params)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err := cliCtx.QueryWithData("custom/budget/Program", bz)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryVotes), bz)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		var program budget.Program
-		if err := cdc.UnmarshalJSON(res, &program); err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// For inactive Programs we must query the txs directly to get the votes
-		// as they're no longer in state.
-		if !(program.State == budget.InactiveProgramState || program.State == budget.ActiveProgramState) {
-			//res, err = gcutils.QueryVotesByTxQuery(cdc, cliCtx, params)
-		} else {
-			res, err = cliCtx.QueryWithData("custom/budget/votes", bz)
-		}
-
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}
 }
 
-// todo: Split this functionality into helper functions to remove the above
-func queryTallyOnProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		strProgramID := vars[RestProgramID]
 
-		if len(strProgramID) == 0 {
-			err := errors.New("ProgramId required but not specified")
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		ProgramID, ok := utils.ParseUint64OrReturnBadRequest(w, strProgramID)
-		if !ok {
-			return
-		}
-
-		params := budget.NewQueryProgramParams(ProgramID)
-
-		bz, err := cdc.MarshalJSON(params)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryParams), nil)
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		res, err := cliCtx.QueryWithData("custom/budget/tally", bz)
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		utils.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}
 }
