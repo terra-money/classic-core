@@ -1,39 +1,43 @@
 # Terra Money
-![banner](docs/graphics/terra-sdk-img.png)
+![banner](docs/terra-sdk-img.png)
 
-<!-- [![version](https://img.shields.io/github/tag/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/releases/latest)
-[![CircleCI](https://circleci.com/gh/cosmos/cosmos-sdk/tree/master.svg?style=shield)](https://circleci.com/gh/cosmos/cosmos-sdk/tree/master)
-[![codecov](https://codecov.io/gh/cosmos/cosmos-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmos/cosmos-sdk)
-[![Go Report Card](https://goreportcard.com/badge/github.com/cosmos/cosmos-sdk)](https://goreportcard.com/report/github.com/cosmos/cosmos-sdk)
-[![license](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/blob/master/LICENSE)
-[![LoC](https://tokei.rs/b1/github/cosmos/cosmos-sdk)](https://github.com/cosmos/cosmos-sdk)
-[![API Reference](https://godoc.org/github.com/cosmos/cosmos-sdk?status.svg
-)](https://godoc.org/github.com/cosmos/cosmos-sdk)
-[![riot.im](https://img.shields.io/badge/riot.im-JOIN%20CHAT-green.svg)](https://riot.im/app/#/room/#cosmos-sdk:matrix.org) -->
+The Terra Protocol facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies. 
 
+Key features are: 
+- A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY. 
+- Stability achieved by creating mining incentives that are countercyclical to Terra demand
+- Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna 
+- Zero-spread atomic swap amongst Terra currencies. 
 
-Terra is a new payment network that uses economic growth in its underlying currency to fund transaction discounts. It is able to do this by reallocating money supply growth to benefit retail consumers instead of to central banks. The value proposition to the end-user is simple: we offer you the same checkout / payment UX you've become accustomed to with KakaoPay and Stripe, but at a 5-8% discounts made possible by Terra's blockchain monetary policy. 
+The Terra Protocol builds on [Tendermint](https://github.com/tendermint/tendermint) consensus and the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) toolkits. Please make sure to study these projects as well if you are not already familiar. 
 
-Ultimately, Terra aims to offer a stability token platform for dApp developers, called STability-as-a-Service (STaaS) that will allow for the creation of multiple classes of price-stable cryptocurrencies. 
-
-**WARNING**: Terra is pre-alpha software, and should not be used for real transactions. Breaking changes will come regularly.  
+**WARNING**: Terra is pre-launch software, and should not be used for real transactions. Breaking changes will come regularly.  
 
 **Note**: Requires [Go 1.10+](https://golang.org/dl/)
 
-## Soju Testnet
+## Status
 
-Soju-0002 is online
-[https://github.com/terra-project/testnets](https://github.com/terra-project/testnets)
+### Network
 
-## Install
+Public Testnet Soju-0002 is online. [Testnets](https://github.com/terra-project/testnets)
 
-TODO
+Currently the Columbus Public mainnet is being prepared for launch. 
 
-## Quick Start
+### Terra Alliance
 
-TODO
+The current state of the Terra Alliance (businesses gearing to adopt Terra upon launch) is summarized [here](https://medium.com/terra-money/state-of-the-terra-alliance-d7f3ff8f6411?fbclid=IwAR2xyZ2sRi_gTHeNPH8tL_VoXpvmDq3sdWMwXaSQCAbHhQGhIEx-yHxWRio)
 
 
-## Terra Motivation & Primer 
+## Community & Contributions
 
-See the white paper on www.terra.money.
+Community channels actively being managed are here: 
+- [Website](https://terra.money/) 
+- [Telegram](https://t.me/terra_announcements) 
+- [Twitter](https://twitter.com/terra_money)
+- [YouTube](https://goo.gl/3G4T1z)
+
+We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money). 
+
+## Documentations
+
+See the [docs](./docs) and the [White paper](https://terra.money/static/Terra_White_Paper.pdf).
