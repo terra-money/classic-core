@@ -13,8 +13,7 @@ const RouterKey = "market"
 //--------------------------------------------------------
 //--------------------------------------------------------
 
-// SwapMsg defines the msg of a trader containing terra coin to be
-// swapped with luna coin, or luna coin to be swapped with the terra coin
+// SwapMsg contains a swap request
 type SwapMsg struct {
 	Trader    sdk.AccAddress // Address of the trader
 	OfferCoin sdk.Coin       // Coin being offered

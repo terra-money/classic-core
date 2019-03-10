@@ -6,33 +6,70 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) SetTaxRate(ctx sdk.Context, rate sdk.Dec) {
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(rate)
-	store.Set(KeyTaxRate, bz)
-}
+// payTax charges the stability tax on SendCoin and InputOutputCoins.
+func (k Keeper) payTax(ctx sdk.Context, taxPayer sdk.AccAddress, principal sdk.Coins) (taxes sdk.Coins, taxTags sdk.Tags, err sdk.Error) {
+	for _, coin := range principal {
+		taxRate := k.GetTaxRate(ctx)
+		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).RoundInt()
+		taxCap := k.GetTaxCap(ctx, coin.Denom)
+		if taxDue.GT(taxCap) {
+			taxDue = taxCap
+		}
 
-func (k Keeper) GetTaxRate(ctx sdk.Context) (res sdk.Dec) {
-	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyTaxRate)
-	if bz == nil {
-		res = sdk.NewDecWithPrec(1, 3)
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+		taxCoin := sdk.Coins{sdk.NewCoin(coin.Denom, taxDue)}
+
+		_, payTags, err := subtractCoins(ctx, k.ak, taxPayer, taxCoin)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		taxTags = taxTags.AppendTags(payTags)
+		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
+		k.fk.AddCollectedFees(ctx, taxCoin)
 	}
+
+	// Record tax income; can be retrieved by PeekTaxIncome
+	currentEpoch := util.GetEpoch(ctx)
+	proceeds := k.PeekTaxProceeds(ctx, currentEpoch)
+	proceeds = proceeds.Plus(taxes)
+
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(proceeds)
+	store.Set(keyTaxProceeds(currentEpoch), bz)
 
 	return
 }
 
+// SetTaxRate sets the tax rate; called from the treasury.
+func (k Keeper) SetTaxRate(ctx sdk.Context, rate sdk.Dec) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(rate)
+	store.Set(keyTaxRate, bz)
+}
+
+// GetTaxRate gets the tax rate
+func (k Keeper) GetTaxRate(ctx sdk.Context) (res sdk.Dec) {
+	store := ctx.KVStore(k.key)
+	bz := store.Get(keyTaxRate)
+	if bz == nil {
+		res = sdk.ZeroDec()
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+	return
+}
+
+// SetTaxCap sets the Tax Cap. Denominated in integer units of the reference {denom}
 func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cap)
-	store.Set(KeyTaxCap(denom), bz)
+	store.Set(keyTaxCap(denom), bz)
 }
 
+// GetTaxCap gets the Tax Cap. Denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (res sdk.Int) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyTaxRate)
+	bz := store.Get(keyTaxCap(denom))
 	if bz == nil {
 		res = sdk.ZeroInt()
 	} else {
@@ -41,39 +78,14 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (res sdk.Int) {
 	return
 }
 
-func (k Keeper) recordTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
-	currentEpoch := util.GetEpoch(ctx)
-	proceeds := k.PeekTaxProceeds(ctx, currentEpoch)
-	proceeds = proceeds.Plus(taxProceeds)
-
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(proceeds)
-	store.Set(KeyTaxProceeds(currentEpoch), bz)
-}
-
+// PeekTaxProceeds peeks the total amount of taxes that have been collected in the given epoch.
 func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch sdk.Int) (res sdk.Coins) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyTaxProceeds(epoch))
+	bz := store.Get(keyTaxProceeds(epoch))
 	if bz == nil {
 		res = sdk.Coins{}
 	} else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	}
 	return
-}
-
-func calculateTaxes(ctx sdk.Context, keeper Keeper, principal sdk.Coins) sdk.Coins {
-	taxes := sdk.Coins{}
-	for _, coin := range principal {
-		taxRate := keeper.GetTaxRate(ctx)
-		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).RoundInt()
-		taxCap := keeper.GetTaxCap(ctx, coin.Denom)
-		if taxDue.GT(taxCap) {
-			taxDue = taxCap
-		}
-
-		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
-	}
-
-	return taxes
 }

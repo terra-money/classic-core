@@ -7,31 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 )
 
-func (k Keeper) setIssuance(ctx sdk.Context, denom string, issuance sdk.Int) {
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-	store.Set(KeyIssuance(denom, util.GetEpoch(ctx)), bz)
-}
-
-func (k Keeper) subtractIssuance(ctx sdk.Context, coins sdk.Coins) {
-	for _, coin := range coins {
-		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
-		issuance = issuance.Sub(coin.Amount)
-		k.setIssuance(ctx, coin.Denom, issuance)
-	}
-}
-
-func (k Keeper) addIssuance(ctx sdk.Context, coins sdk.Coins) {
-	for _, coin := range coins {
-		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
-		issuance = issuance.Add(coin.Amount)
-		k.setIssuance(ctx, coin.Denom, issuance)
-	}
-}
-
+// GetIssuance fetches the total issuance count of the coin matching {denom}. If the {epoch} applies
+// to a previous period, fetches the last stored snapshot issuance of the coin. For virgin calls,
+// iterates through the accountkeeper and computes the genesis issuance.
 func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyIssuance(denom, util.GetEpoch(ctx)))
+	bz := store.Get(keyIssuance(denom, util.GetEpoch(ctx)))
 	if bz == nil {
 		if epoch.Equal(sdk.ZeroInt()) {
 			countIssuance := func(acc auth.Account) (stop bool) {
@@ -48,4 +29,29 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 	}
 
 	return
+}
+
+// sets the issuance in the store
+func (k Keeper) setIssuance(ctx sdk.Context, denom string, issuance sdk.Int) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+	store.Set(keyIssuance(denom, util.GetEpoch(ctx)), bz)
+}
+
+// convinience function. substracts the issuance counter in the store.
+func (k Keeper) subtractIssuance(ctx sdk.Context, coins sdk.Coins) {
+	for _, coin := range coins {
+		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
+		issuance = issuance.Sub(coin.Amount)
+		k.setIssuance(ctx, coin.Denom, issuance)
+	}
+}
+
+// convinience function. adds to the issuance counter in the store.
+func (k Keeper) addIssuance(ctx sdk.Context, coins sdk.Coins) {
+	for _, coin := range coins {
+		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
+		issuance = issuance.Add(coin.Amount)
+		k.setIssuance(ctx, coin.Denom, issuance)
+	}
 }

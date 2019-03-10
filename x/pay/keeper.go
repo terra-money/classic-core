@@ -19,7 +19,6 @@ type Keeper struct {
 
 	ak auth.AccountKeeper
 	fk auth.FeeCollectionKeeper
-	//paramSpace params.Subspace
 }
 
 // NewKeeper returns a new Keeper
@@ -65,13 +64,10 @@ func (keeper Keeper) SendCoins(
 	ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
-	taxes := calculateTaxes(ctx, keeper, amt)
-	_, taxTags, err := subtractCoins(ctx, keeper.ak, fromAddr, taxes)
-	if err != nil {
-		return nil, err
+	_, taxTags, taxErr := keeper.payTax(ctx, fromAddr, amt)
+	if taxErr != nil {
+		return nil, taxErr
 	}
-	keeper.fk.AddCollectedFees(ctx, taxes)
-	keeper.recordTaxProceeds(ctx, taxes)
 
 	_, subTags, err := subtractCoins(ctx, keeper.ak, fromAddr, amt)
 	if err != nil {
@@ -101,14 +97,10 @@ func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []bank.Input, outp
 	}
 
 	for _, out := range outputs {
-
-		taxes := calculateTaxes(ctx, keeper, out.Coins)
-		_, taxTags, err := subtractCoins(ctx, keeper.ak, out.Address, taxes)
-		if err != nil {
-			return nil, err
+		_, taxTags, taxErr := keeper.payTax(ctx, out.Address, out.Coins)
+		if taxErr != nil {
+			return nil, taxErr
 		}
-		keeper.fk.AddCollectedFees(ctx, taxes)
-		keeper.recordTaxProceeds(ctx, taxes)
 		allTags = allTags.AppendTags(taxTags)
 
 		_, tags, err := addCoins(ctx, keeper.ak, out.Address, out.Coins)
