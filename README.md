@@ -1,9 +1,9 @@
 # Terra Money
 ![banner](docs/terra-sdk-img.png)
 
-The Terra Protocol facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies. 
+**[The Terra Protocol](https://www.terra.money)** facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies. 
 
-Key features are: 
+**[Key features]**: 
 - A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY. 
 - Stability achieved by creating mining incentives that are countercyclical to Terra demand
 - Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna 
@@ -19,9 +19,10 @@ The Terra Protocol builds on [Tendermint](https://github.com/tendermint/tendermi
 
 ### Network
 
-Public Testnet Soju-0002 is online. [Testnets](https://github.com/terra-project/testnets)
+Public Testnet Soju-0002 is online. Currently the Columbus Public mainnet is being prepared for launch. 
 
-Currently the Columbus Public mainnet is being prepared for launch. 
+[Testnets](https://github.com/terra-project/testnets) contains latest updates to the testnet. 
+
 
 ### Terra Alliance
 
