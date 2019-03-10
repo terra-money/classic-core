@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -41,7 +40,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 	genState := NewGenesisState(
 		accounts,
 		auth.ExportGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper),
-		bank.ExportGenesis(ctx, app.bankKeeper),
+		//bank.ExportGenesis(ctx, app.bankKeeper),
 		staking.ExportGenesis(ctx, app.stakingKeeper),
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		oracle.ExportGenesis(ctx, app.oracleKeeper),

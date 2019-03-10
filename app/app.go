@@ -100,6 +100,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyBudget:        sdk.NewKVStoreKey(budget.StoreKey),
 	}
 
+	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams)
+
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -194,8 +196,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// initialize BaseApp
 	app.MountStores(
-		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr, app.keyBank,
-		app.keySlashing, app.keyFeeCollection, app.keyParams, app.keyMarket,
+		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr,
+		app.keySlashing, app.keyFeeCollection, app.keyParams,
+		app.tkeyParams, app.tkeyStaking, app.tkeyDistr, app.keyMarket,
 		app.keyOracle, app.keyTreasury, app.keyBudget,
 	)
 	app.SetInitChainer(app.initChainer)
@@ -295,7 +298,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 
 	// initialize module-specific stores
 	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
-	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	//bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
 	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
 	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
@@ -313,6 +316,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 			if err != nil {
 				panic(err)
 			}
+
 			bz := app.cdc.MustMarshalBinaryLengthPrefixed(tx)
 			res := app.BaseApp.DeliverTx(bz)
 			if !res.IsOK() {

@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -33,9 +32,9 @@ var (
 
 // State to Unmarshal
 type GenesisState struct {
-	Accounts     []GenesisAccount      `json:"accounts"`
-	AuthData     auth.GenesisState     `json:"auth"`
-	BankData     bank.GenesisState     `json:"bank"`
+	Accounts []GenesisAccount  `json:"accounts"`
+	AuthData auth.GenesisState `json:"auth"`
+	//BankData     bank.GenesisState     `json:"bank"`
 	StakingData  staking.GenesisState  `json:"staking"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	TreasuryData treasury.GenesisState `json:"treasury"`
@@ -46,7 +45,7 @@ type GenesisState struct {
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
-	bankData bank.GenesisState,
+	//bankData bank.GenesisState,
 	stakingData staking.GenesisState,
 	distrData distr.GenesisState,
 	oracleData oracle.GenesisState,
@@ -55,9 +54,9 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
-		Accounts:     accounts,
-		AuthData:     authData,
-		BankData:     bankData,
+		Accounts: accounts,
+		AuthData: authData,
+		//BankData:     bankData,
 		StakingData:  stakingData,
 		DistrData:    distrData,
 		OracleData:   oracleData,
@@ -222,8 +221,8 @@ func NewDefaultGenesisState() GenesisState {
 				BondDenom:     assets.LunaDenom,
 			},
 		},
-		DistrData:    distrGenState,
-		BankData:     bank.DefaultGenesisState(),
+		DistrData: distrGenState,
+		//BankData:     bank.DefaultGenesisState(),
 		BudgetData:   budget.DefaultGenesisState(),
 		OracleData:   oracle.DefaultGenesisState(),
 		TreasuryData: treasury.DefaultGenesisState(),
@@ -249,9 +248,9 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 	if err := auth.ValidateGenesis(genesisState.AuthData); err != nil {
 		return err
 	}
-	if err := bank.ValidateGenesis(genesisState.BankData); err != nil {
-		return err
-	}
+	// if err := bank.ValidateGenesis(genesisState.BankData); err != nil {
+	// 	return err
+	// }
 	if err := staking.ValidateGenesis(genesisState.StakingData); err != nil {
 		return err
 	}

@@ -14,6 +14,9 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 	store := ctx.KVStore(k.key)
 	bz := store.Get(keyIssuance(denom, util.GetEpoch(ctx)))
 	if bz == nil {
+
+		// Genesis epoch; nothing exists in store so we must read it
+		// from accountkeeper
 		if epoch.Equal(sdk.ZeroInt()) {
 			countIssuance := func(acc auth.Account) (stop bool) {
 				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
@@ -22,6 +25,8 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 			k.ak.IterateAccounts(ctx, countIssuance)
 			k.setIssuance(ctx, denom, issuance)
 		} else {
+
+			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
 		}
 	} else {
