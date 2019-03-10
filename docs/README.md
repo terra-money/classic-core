@@ -14,7 +14,7 @@ Welcome to the Terra Protocol github. The Terra Protocol facilitates the creatio
 
 - [Specifications](./spec/README.md): Specifications of modules and other parts of the Terra Protocol.  
 - [SDK API Reference](https://godoc.org/github.com/terra-project/terra): Godocs of the Terra Protocol
-- [REST API spec](https://cosmos.network/rpc/): List of endpoints to interact with a `columbus` full-node through REST.
+- [REST API spec](https://terra.money/rpc/): List of endpoints to interact with a `columbus` full-node through REST.
 
 ## Understanding the Protocol
 

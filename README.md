@@ -3,7 +3,8 @@
 
 **[The Terra Protocol](https://www.terra.money)** facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies. 
 
-**[Key features]**: 
+**Key features:**
+
 - A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY. 
 - Stability achieved by creating mining incentives that are countercyclical to Terra demand
 - Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna 
@@ -39,6 +40,6 @@ Community channels actively being managed are here:
 
 We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money). 
 
-## Documentations
+## Documentation
 
 See the [docs](./docs) and the [White paper](https://terra.money/static/Terra_White_Paper.pdf).
