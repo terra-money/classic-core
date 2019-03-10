@@ -17,14 +17,10 @@ import (
 	"terra/types/util"
 
 	"terra/version"
-	"terra/x/budget"
 	budgetClient "terra/x/budget/client"
-	"terra/x/market"
 	marketClient "terra/x/market/client"
-	"terra/x/oracle"
 	oracleClient "terra/x/oracle/client"
 	treasuryClient "terra/x/oracle/client"
-	"terra/x/treasury"
 
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
@@ -36,6 +32,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
+
+	budget "terra/x/budget/client/rest"
+	market "terra/x/market/client/rest"
+	oracle "terra/x/oracle/client/rest"
+	treasury "terra/x/treasury/client/rest"
+
+	bud "terra/x/budget"
+	mkt "terra/x/market"
+	ora "terra/x/oracle"
+	tre "terra/x/treasury"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
@@ -78,10 +84,10 @@ func main() {
 		distClient.NewModuleClient(distcmd.StoreKey, cdc),
 		stakingClient.NewModuleClient(st.StoreKey, cdc),
 		slashingClient.NewModuleClient(sl.StoreKey, cdc),
-		oracleClient.NewModuleClient(oracle.StoreKey, cdc),
-		treasuryClient.NewModuleClient(treasury.StoreKey, cdc),
-		budgetClient.NewModuleClient(budget.StoreKey, cdc),
-		marketClient.NewModuleClient(market.StoreKey, cdc),
+		oracleClient.NewModuleClient(ora.StoreKey, cdc),
+		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
+		budgetClient.NewModuleClient(bud.StoreKey, cdc),
+		marketClient.NewModuleClient(mkt.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -180,6 +186,10 @@ func registerRoutes(rs *lcd.RestServer) {
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	treasury.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	budget.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func registerSwaggerUI(rs *lcd.RestServer) {
