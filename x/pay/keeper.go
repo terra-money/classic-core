@@ -19,7 +19,6 @@ type Keeper struct {
 
 	ak auth.AccountKeeper
 	fk auth.FeeCollectionKeeper
-	//paramSpace params.Subspace
 }
 
 // NewKeeper returns a new Keeper
@@ -36,25 +35,46 @@ func NewKeeper(
 	}
 }
 
+// SubtractCoins subtracts amt from the coins at the addr.
+func (keeper Keeper) SubtractCoins(
+	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+) (sdk.Coins, sdk.Tags, sdk.Error) {
+	coins, tags, err := subtractCoins(ctx, keeper.ak, addr, amt)
+	if err != nil {
+		keeper.subtractIssuance(ctx, amt)
+	}
+
+	return coins, tags, nil
+}
+
+// AddCoins adds amt to the coins at the addr.
+func (keeper Keeper) AddCoins(
+	ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins,
+) (sdk.Coins, sdk.Tags, sdk.Error) {
+	coins, tags, err := addCoins(ctx, keeper.ak, addr, amt)
+	if err != nil {
+		keeper.addIssuance(ctx, amt)
+	}
+
+	return coins, tags, nil
+}
+
 // SendCoins moves coins from one account to another
 func (keeper Keeper) SendCoins(
 	ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins,
 ) (sdk.Tags, sdk.Error) {
 
-	taxes := calculateTaxes(ctx, keeper, amt)
-	_, taxTags, err := subtractCoins(ctx, keeper, fromAddr, taxes)
-	if err != nil {
-		return nil, err
+	_, taxTags, taxErr := keeper.payTax(ctx, fromAddr, amt)
+	if taxErr != nil {
+		return nil, taxErr
 	}
-	keeper.fk.AddCollectedFees(ctx, taxes)
-	keeper.recordTaxProceeds(ctx, taxes)
 
-	_, subTags, err := subtractCoins(ctx, keeper, fromAddr, amt)
+	_, subTags, err := subtractCoins(ctx, keeper.ak, fromAddr, amt)
 	if err != nil {
 		return nil, err
 	}
 
-	_, addTags, err := addCoins(ctx, keeper, toAddr, amt)
+	_, addTags, err := addCoins(ctx, keeper.ak, toAddr, amt)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +89,7 @@ func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []bank.Input, outp
 	allTags := sdk.EmptyTags()
 
 	for _, in := range inputs {
-		_, tags, err := subtractCoins(ctx, keeper, in.Address, in.Coins)
+		_, tags, err := subtractCoins(ctx, keeper.ak, in.Address, in.Coins)
 		if err != nil {
 			return nil, err
 		}
@@ -77,17 +97,13 @@ func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []bank.Input, outp
 	}
 
 	for _, out := range outputs {
-
-		taxes := calculateTaxes(ctx, keeper, out.Coins)
-		_, taxTags, err := subtractCoins(ctx, keeper, out.Address, taxes)
-		if err != nil {
-			return nil, err
+		_, taxTags, taxErr := keeper.payTax(ctx, out.Address, out.Coins)
+		if taxErr != nil {
+			return nil, taxErr
 		}
-		keeper.fk.AddCollectedFees(ctx, taxes)
-		keeper.recordTaxProceeds(ctx, taxes)
 		allTags = allTags.AppendTags(taxTags)
 
-		_, tags, err := addCoins(ctx, keeper, out.Address, out.Coins)
+		_, tags, err := addCoins(ctx, keeper.ak, out.Address, out.Coins)
 		if err != nil {
 			return nil, err
 		}
@@ -97,35 +113,35 @@ func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []bank.Input, outp
 	return allTags, nil
 }
 
-func getCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress) sdk.Coins {
-	acc := k.ak.GetAccount(ctx, addr)
+func getCoins(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress) sdk.Coins {
+	acc := ak.GetAccount(ctx, addr)
 	if acc == nil {
 		return sdk.Coins{}
 	}
 	return acc.GetCoins()
 }
 
-func setCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins) sdk.Error {
-	acc := k.ak.GetAccount(ctx, addr)
+func setCoins(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) sdk.Error {
+	acc := ak.GetAccount(ctx, addr)
 	if acc == nil {
-		acc = k.ak.NewAccountWithAddress(ctx, addr)
+		acc = ak.NewAccountWithAddress(ctx, addr)
 	}
 	err := acc.SetCoins(amt)
 	if err != nil {
 		// Handle w/ #870
 		panic(err)
 	}
-	k.ak.SetAccount(ctx, acc)
+	ak.SetAccount(ctx, acc)
 	return nil
 }
 
 // HasCoins returns whether or not an account has at least amt coins.
 func hasCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins) bool {
-	return getCoins(ctx, k, addr).IsAllGTE(amt)
+	return getCoins(ctx, k.ak, addr).IsAllGTE(amt)
 }
 
-func getAccount(ctx sdk.Context, k Keeper, addr sdk.AccAddress) auth.Account {
-	return k.ak.GetAccount(ctx, addr)
+func getAccount(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress) auth.Account {
+	return ak.GetAccount(ctx, addr)
 }
 
 func setAccount(ctx sdk.Context, k Keeper, acc auth.Account) {
@@ -135,10 +151,10 @@ func setAccount(ctx sdk.Context, k Keeper, acc auth.Account) {
 // subtractCoins subtracts amt coins from an account with the given address addr.
 //
 // CONTRACT: If the account is a vesting account, the amount has to be spendable.
-func subtractCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
+func subtractCoins(ctx sdk.Context, ak auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
 	oldCoins, spendableCoins := sdk.Coins{}, sdk.Coins{}
 
-	acc := getAccount(ctx, k, addr)
+	acc := getAccount(ctx, ak, addr)
 	if acc != nil {
 		oldCoins = acc.GetCoins()
 		spendableCoins = acc.SpendableCoins(ctx.BlockHeader().Time)
@@ -154,16 +170,15 @@ func subtractCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins
 	}
 
 	newCoins := oldCoins.Minus(amt) // should not panic as spendable coins was already checked
-	err := setCoins(ctx, k, addr, newCoins)
-	k.subtractIssuance(ctx, amt)
+	err := setCoins(ctx, ak, addr, newCoins)
 	tags := sdk.NewTags(bank.TagKeySender, addr.String())
 
 	return newCoins, tags, err
 }
 
 // AddCoins adds amt to the coins at the addr.
-func addCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
-	oldCoins := getCoins(ctx, k, addr)
+func addCoins(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, sdk.Tags, sdk.Error) {
+	oldCoins := getCoins(ctx, am, addr)
 	newCoins := oldCoins.Plus(amt)
 
 	if newCoins.IsAnyNegative() {
@@ -172,8 +187,7 @@ func addCoins(ctx sdk.Context, k Keeper, addr sdk.AccAddress, amt sdk.Coins) (sd
 		)
 	}
 
-	err := setCoins(ctx, k, addr, newCoins)
-	k.addIssuance(ctx, amt)
+	err := setCoins(ctx, am, addr, newCoins)
 	tags := sdk.NewTags(bank.TagKeyRecipient, addr.String())
 
 	return newCoins, tags, err
@@ -187,12 +201,12 @@ func sendCoins(ctx sdk.Context, k Keeper, fromAddr sdk.AccAddress, toAddr sdk.Ac
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
 
-	_, subTags, err := subtractCoins(ctx, k, fromAddr, amt)
+	_, subTags, err := subtractCoins(ctx, k.ak, fromAddr, amt)
 	if err != nil {
 		return nil, err
 	}
 
-	_, addTags, err := addCoins(ctx, k, toAddr, amt)
+	_, addTags, err := addCoins(ctx, k.ak, toAddr, amt)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +226,7 @@ func inputOutputCoins(ctx sdk.Context, k Keeper, inputs []bank.Input, outputs []
 	allTags := sdk.EmptyTags()
 
 	for _, in := range inputs {
-		_, tags, err := subtractCoins(ctx, k, in.Address, in.Coins)
+		_, tags, err := subtractCoins(ctx, k.ak, in.Address, in.Coins)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +234,7 @@ func inputOutputCoins(ctx sdk.Context, k Keeper, inputs []bank.Input, outputs []
 	}
 
 	for _, out := range outputs {
-		_, tags, err := addCoins(ctx, k, out.Address, out.Coins)
+		_, tags, err := addCoins(ctx, k.ak, out.Address, out.Coins)
 		if err != nil {
 			return nil, err
 		}

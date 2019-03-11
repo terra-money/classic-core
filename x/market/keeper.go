@@ -1,13 +1,16 @@
 package market
 
 import (
-	"terra/types/util"
 	"terra/x/oracle"
 	"terra/x/pay"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 )
+
+// StoreKey is string representation of the store key for market
+const StoreKey = "market"
 
 //nolint
 type Keeper struct {
@@ -16,13 +19,14 @@ type Keeper struct {
 
 	ok oracle.Keeper // Read terra & luna prices
 	pk pay.Keeper
+	dk distribution.Keeper
 }
 
-// NewKeeper crates a new keeper with write and read access
-func NewKeeper(ok oracle.Keeper, pk pay.Keeper) Keeper {
+func NewKeeper(ok oracle.Keeper, pk pay.Keeper, dk distribution.Keeper) Keeper {
 	return Keeper{
 		ok: ok,
 		pk: pk,
+		dk: dk,
 	}
 }
 
@@ -47,23 +51,18 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 	return retCoin, nil
 }
 
-func (k Keeper) recordSeigniorage(ctx sdk.Context, seigniorage sdk.Coins) {
-	currentEpoch := util.GetEpoch(ctx)
-	pool := k.GetSeigniorage(ctx, currentEpoch)
-	pool = pool.Plus(seigniorage)
-
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(seigniorage)
-	store.Set(KeySeigniorage(currentEpoch), bz)
-}
-
-func (k Keeper) GetSeigniorage(ctx sdk.Context, epoch sdk.Int) (res sdk.Coins) {
-	store := ctx.KVStore(k.key)
-	bz := store.Get(KeySeigniorage(epoch))
-	if bz == nil {
-		res = sdk.Coins{}
-		return
+func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
+	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
+	if err != nil {
+		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
+
+	askRate, err := k.ok.GetPrice(ctx, askDenom)
+	if err != nil {
+		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
+	}
+
+	retAmount := offerCoin.Amount.Mul(offerRate).Quo(askRate)
+	retCoin := sdk.NewDecCoinFromDec(askDenom, retAmount)
+	return retCoin, nil
 }

@@ -92,6 +92,15 @@ $ terracli query oracle price krw
 	return cmd
 }
 
+type DenomList []string
+
+func (dl DenomList) String() (out string) {
+	for _, denom := range dl {
+		out += fmt.Sprintf("\n %s", denom)
+	}
+	return
+}
+
 // GetCmdQueryActive implements the query active command.
 func GetCmdQueryActive(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -110,10 +119,9 @@ $ terracli query oracle active
 				return err
 			}
 
-			actives := []string{}
+			var actives DenomList
 			cdc.MustUnmarshalBinaryLengthPrefixed(res, &actives)
-
-			return cliCtx.PrintOutput(strings.Join(actives[:], ","))
+			return cliCtx.PrintOutput(actives)
 		},
 	}
 	return cmd
@@ -174,6 +182,28 @@ returns oracle votes submitted by terrad8duyufdshs... for denom [usd]
 
 	cmd.Flags().String(flagDenom, "", "(optional) filter by votes matching the denom")
 	cmd.Flags().String(flagVoter, "", "(optional) filter by votes by voter")
+
+	return cmd
+}
+
+// GetCmdQueryParams implements the query params command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the current Oracle params",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryParams), nil)
+			if err != nil {
+				return err
+			}
+
+			var params oracle.Params
+			cdc.MustUnmarshalJSON(res, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
 
 	return cmd
 }

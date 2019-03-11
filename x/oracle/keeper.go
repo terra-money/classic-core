@@ -8,6 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
+// StoreKey is string representation of the store key for oracle
+const StoreKey = "oracle"
+
 // Keeper of the oracle store
 type Keeper struct {
 	key sdk.StoreKey

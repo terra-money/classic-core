@@ -127,7 +127,12 @@ func ErrMinimumDeposit() sdk.Error {
 }
 
 // nolint
-func ErrInvalidSubmissiter(submitter sdk.AccAddress) sdk.Error {
+func ErrDepositDenom() sdk.Error {
+	return newError(DefaultCodespace, CodeInvalidDeposit, "Deposit should be paid in TerraSDR")
+}
+
+// nolint
+func ErrInvalidSubmitter(submitter sdk.AccAddress) sdk.Error {
 	return newError(DefaultCodespace, CodeInvalidSubmitter, fmt.Sprintf("Submitter does not match %s", submitter))
 }
 

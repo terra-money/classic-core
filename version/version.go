@@ -2,4 +2,4 @@
 package version
 
 // GitCommit set by build flags
-var Version = ""
+var Version = "1.0"

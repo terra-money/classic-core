@@ -7,7 +7,7 @@ import (
 // Governance tags
 var (
 	ActionProgramWithdrawn = "program-withdrawn"
-	ActionProgramDropped   = "program-dropped"
+	ActionProgramLegacied  = "program-legacied"
 	ActionProgramPassed    = "program-passed"
 	ActionProgramRejected  = "program-rejected"
 	ActionProgramSubmitted = "program-submitted"

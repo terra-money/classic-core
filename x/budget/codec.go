@@ -12,7 +12,6 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(WithdrawProgramMsg{}, "budget/WithdrawProgramMsg", nil)
 	cdc.RegisterConcrete(VoteMsg{}, "budget/VoteMsg", nil)
 
-	cdc.RegisterConcrete(&TallyResult{}, "budget/TallyResult", nil)
 	cdc.RegisterConcrete(&Program{}, "budget/Program", nil)
 }
 

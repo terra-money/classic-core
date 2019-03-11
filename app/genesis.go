@@ -32,8 +32,9 @@ var (
 
 // State to Unmarshal
 type GenesisState struct {
-	Accounts     []GenesisAccount      `json:"accounts"`
-	AuthData     auth.GenesisState     `json:"auth"`
+	Accounts []GenesisAccount  `json:"accounts"`
+	AuthData auth.GenesisState `json:"auth"`
+	//BankData     bank.GenesisState     `json:"bank"`
 	StakingData  staking.GenesisState  `json:"staking"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	TreasuryData treasury.GenesisState `json:"treasury"`
@@ -44,6 +45,7 @@ type GenesisState struct {
 }
 
 func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
+	//bankData bank.GenesisState,
 	stakingData staking.GenesisState,
 	distrData distr.GenesisState,
 	oracleData oracle.GenesisState,
@@ -52,8 +54,9 @@ func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
 	return GenesisState{
-		Accounts:     accounts,
-		AuthData:     authData,
+		Accounts: accounts,
+		AuthData: authData,
+		//BankData:     bankData,
 		StakingData:  stakingData,
 		DistrData:    distrData,
 		OracleData:   oracleData,
@@ -203,6 +206,11 @@ func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []j
 
 // NewDefaultGenesisState generates the default state for Terra.
 func NewDefaultGenesisState() GenesisState {
+
+	// remove community tax
+	distrGenState := distr.DefaultGenesisState()
+	distrGenState.CommunityTax = sdk.ZeroDec()
+
 	return GenesisState{
 		Accounts: nil,
 		StakingData: staking.GenesisState{
@@ -213,7 +221,8 @@ func NewDefaultGenesisState() GenesisState {
 				BondDenom:     assets.LunaDenom,
 			},
 		},
-		DistrData:    distr.DefaultGenesisState(),
+		DistrData: distrGenState,
+		//BankData:     bank.DefaultGenesisState(),
 		BudgetData:   budget.DefaultGenesisState(),
 		OracleData:   oracle.DefaultGenesisState(),
 		TreasuryData: treasury.DefaultGenesisState(),

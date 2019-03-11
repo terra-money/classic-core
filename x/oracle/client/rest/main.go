@@ -18,10 +18,11 @@ import (
 //nolint
 const (
 	RestVoteDenom  = "denom"
-	RestVoter      = "voteraddress"
+	RestVoter      = "voter"
 	RestPrice      = "price"
 	RestParamsType = "params"
-	queryRoute     = "oracle"
+
+	queryRoute = "oracle"
 )
 
 // RegisterRoutes registers staking-related REST handlers to a router
@@ -67,6 +68,11 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 		// create the message
 		msg := oracle.NewPriceFeedMsg(req.Denom, price, fromAddress)
+		err := msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		if req.BaseReq.GenerateOnly {
 			clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})

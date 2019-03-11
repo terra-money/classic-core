@@ -9,38 +9,44 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
+// nolint
 var (
-	KeyDelimiter               = []byte(":")
-	PrefixProgram              = []byte("program")
-	PrefixVote                 = []byte("vote")
-	KeyNextProgramID           = []byte("newProgramID")
-	PrefixInactiveProgramQueue = []byte("inactiveProgramQueue")
-	ParamStoreKeyParams        = []byte("params")
-	DefaultParamspace          = "budget"
+	KeyDelimiter         = []byte(":")
+	PrefixProgram        = []byte("program")
+	PrefixVote           = []byte("vote")
+	KeyNextProgramID     = []byte("new-program-id")
+	PrefixCandidateQueue = []byte("candidate-queue")
+	ParamStoreKeyParams  = []byte("params")
+	DefaultParamspace    = "budget"
 )
 
-// GenerateProgramKey creates a key of the form "Programs"|{state}|{ProgramID}
+// KeyProgram creates a key of the form "Programs"|{state}|{ProgramID}
 func KeyProgram(programID uint64) []byte {
 	return []byte(fmt.Sprintf("%s:%d", PrefixProgram, programID))
 }
 
 // Key for getting a specific vote from the store
 func KeyVote(programID uint64, voterAddr sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("%s:%d:%d", PrefixVote, programID, voterAddr))
+	return []byte(fmt.Sprintf("%s:%d:%s", PrefixVote, programID, voterAddr))
+}
+
+// Key for getting a specific vote from the store
+func PrefixVoteForProgram(programID uint64) []byte {
+	return []byte(fmt.Sprintf("%s:%d", PrefixVote, programID))
 }
 
 // Returns the key for a programID in the activeprogramQueue
-func PrefixInactiveProgramQueueTime(endTime time.Time) []byte {
+func PrefixCandidateQueueTime(endTime time.Time) []byte {
 	return bytes.Join([][]byte{
-		PrefixInactiveProgramQueue,
+		PrefixCandidateQueue,
 		sdk.FormatTimeBytes(endTime),
 	}, KeyDelimiter)
 }
 
 // Returns the key for a programID in the activeprogramQueue
-func KeyInactiveProgramQueueProgram(endTime time.Time, programID uint64) []byte {
+func KeyCandidate(endTime time.Time, programID uint64) []byte {
 	return bytes.Join([][]byte{
-		PrefixInactiveProgramQueue,
+		PrefixCandidateQueue,
 		sdk.FormatTimeBytes(endTime),
 		sdk.Uint64ToBigEndian(programID),
 	}, KeyDelimiter)

@@ -6,25 +6,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-//nolint
 var (
-	KeyTaxRate        = []byte("tax_rate")
-	PrefixTaxProceeds = []byte("tax_proceeds")
-	PrefixTaxCap      = []byte("tax_cap")
-	PrefixIssuance    = []byte("issuance")
+	keyTaxRate        = []byte("tax_rate")
+	prefixTaxProceeds = []byte("tax_proceeds")
+	prefixTaxCap      = []byte("tax_cap")
+	prefixIssuance    = []byte("issuance")
 )
 
-// KeyTaxProceeds is in format of PrefixTaxProceeds:denom
-func KeyTaxProceeds(epoch sdk.Int) []byte {
-	return []byte(fmt.Sprintf("%s:%s", PrefixTaxProceeds, epoch))
+func keyTaxProceeds(epoch sdk.Int) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixTaxProceeds, epoch))
 }
 
-// KeyTaxCap is in format of PrefixTaxCap:denom
-func KeyTaxCap(denom string) []byte {
-	return []byte(fmt.Sprintf("%s:%s", PrefixTaxCap, denom))
+func keyTaxCap(denom string) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixTaxCap, denom))
 }
 
-// KeyIssuance is in format of PrefixIssuance:denom
-func KeyIssuance(denom string, epoch sdk.Int) []byte {
-	return []byte(fmt.Sprintf("%s:%s:%s", PrefixIssuance, denom, epoch))
+func keyIssuance(denom string, epoch sdk.Int) []byte {
+	return []byte(fmt.Sprintf("%s:%s:%s", prefixIssuance, denom, epoch))
 }

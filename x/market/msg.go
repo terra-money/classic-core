@@ -13,8 +13,7 @@ const RouterKey = "market"
 //--------------------------------------------------------
 //--------------------------------------------------------
 
-// SwapMsg defines the msg of a trader containing terra coin to be
-// swapped with luna coin, or luna coin to be swapped with the terra coin
+// SwapMsg contains a swap request
 type SwapMsg struct {
 	Trader    sdk.AccAddress // Address of the trader
 	OfferCoin sdk.Coin       // Coin being offered
@@ -70,4 +69,14 @@ func (msg SwapMsg) ValidateBasic() sdk.Error {
 // String Implements Msg
 func (msg SwapMsg) String() string {
 	return fmt.Sprintf("SwapMsg{trader %v, offer %v, ask %s}", msg.Trader, msg.OfferCoin, msg.AskDenom)
+}
+
+type SwapHistory []SwapMsg
+
+// String implements fmt.Stringer interface
+func (swaps SwapHistory) String() (out string) {
+	for _, swap := range swaps {
+		out += fmt.Sprintf("\n  %s", swap.String())
+	}
+	return
 }

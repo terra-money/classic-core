@@ -44,3 +44,11 @@ func validateParams(params Params) error {
 	}
 	return nil
 }
+
+func (params Params) String() string {
+	return fmt.Sprintf(`Oracle Params:
+  VotePeriod: %s
+  VoteThreshold: %s
+  DropThresdhold: %s
+  `, params.VotePeriod, params.VoteThreshold, params.DropThreshold)
+}
