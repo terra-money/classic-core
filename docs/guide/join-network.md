@@ -159,4 +159,4 @@ terrad export --height [height] --for-zero-height > [filename].json
 
 ## Upgrade to Validator Node
 
-You now have an active full node. What's the next step? You can upgrade your full node to become a Terra Validator. The top 100 validators have the ability to propose new blocks to the Terra network. Continue onto [the Validator Setup](./setup-validator.md).
+You now have an active full node. What's the next step? You can upgrade your full node to become a Terra Validator. The top 100 validators have the ability to propose new blocks to the Terra network. Continue onto [the Validator Setup](./validators.md).

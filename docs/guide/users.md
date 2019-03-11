@@ -47,7 +47,7 @@ The funds stored in an account are controlled by the private key. This private k
 The address is a public string with a human-readable prefix (e.g. `cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg`) that identifies your account. When someone wants to send you funds, they send it to your address. It is computationally infeasible to find the private key associated with a given address. 
 
 
-### Redeem Luna tokens from pre-launch contribution 
+### Redeem Luna from the sale
 
 If you participated in the fundraiser, you should be in possession of a 12-words mnemonic. Newly generated mnemonics use 24 words, but 12-word mnemonics are also compatible with all the Cosmos tools. 
 
@@ -249,15 +249,6 @@ terracli query staking delegation <delegatorAddress> <validatorAddress>
 
 // query the rewards of a delegator given a delegator address (e.g. cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
 terracli query distr rewards <delegatorAddress> 
-
-// query all proposals currently open for depositing
-terracli query gov proposals --status deposit_period
-
-// query all proposals currently open for voting
-terracli query gov proposals --status voting_period
-
-// query a proposal given its proposalID
-terracli query gov proposal <proposalID>
 ```
 
 For more commands, just type:

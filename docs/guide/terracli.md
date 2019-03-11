@@ -309,7 +309,7 @@ Please refer to the [Validator Setup](../validators/validator-setup.md) section 
 
 #### Delegate to a Validator
 
-On the upcoming mainnet, you can delegate `luna` to a validator. These [delegators](/resources/delegators-faq) can receive part of the validator's fee revenue. Refer to 
+On the upcoming mainnet, you can delegate `luna` to a validator. These [delegators](/resources/delegators-faq) can receive part of the validator's fee revenue.
 
 ##### Query Validators
 
@@ -327,11 +327,11 @@ terracli query staking validator <account_cosmosval>
 
 #### Bond Tokens
 
-On the testnet, we delegate `steak` instead of `luna`. Here's how you can bond tokens to a testnet validator (_i.e._ delegate):
+On the testnet, we delegate `luna`. Here's how you can bond tokens to a testnet validator (_i.e._ delegate):
 
 ```bash
 terracli tx staking delegate \
-  --amount=10steak \
+  --amount=10luna \
   --validator=<validator> \
   --from=<key_name> \
   --chain-id=<chain_id>
@@ -348,7 +348,7 @@ where `[name]` is the name of the key you specified when you initialized `terrad
 While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
 
 ::: tip Note
-Don't use more `steak` thank you have! You can always get more by using the [Faucet](https://faucetcosmos.network/)!
+Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucetcosmos.network/)!
 :::
 
 ##### Query Delegations
