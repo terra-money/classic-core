@@ -44,7 +44,8 @@ type GenesisState struct {
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
-func NewGenesisState(accounts []GenesisAccount, authData auth.GenesisState,
+func NewGenesisState(accounts []GenesisAccount,
+	authData auth.GenesisState,
 	//bankData bank.GenesisState,
 	stakingData staking.GenesisState,
 	distrData distr.GenesisState,
@@ -213,6 +214,7 @@ func NewDefaultGenesisState() GenesisState {
 
 	return GenesisState{
 		Accounts: nil,
+		AuthData: auth.DefaultGenesisState(),
 		StakingData: staking.GenesisState{
 			Pool: staking.InitialPool(),
 			Params: staking.Params{

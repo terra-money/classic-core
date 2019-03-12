@@ -10,6 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
+const (
+	StoreKey = "bank"
+)
+
 // Keeper manages transfers between accounts. It implements the Keeper interface.
 type Keeper struct {
 	bank.Keeper

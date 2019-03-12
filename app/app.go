@@ -85,6 +85,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		BaseApp:          bApp,
 		cdc:              cdc,
 		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyBank:          sdk.NewKVStoreKey(pay.StoreKey),
 		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
 		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
 		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
@@ -187,16 +188,17 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
-		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		//AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
+		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.treasuryKeeper)).
 		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper)).
 		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
 	app.MountStores(
-		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr,
+		app.keyMain, app.keyAccount, app.keyBank, app.keyStaking, app.keyDistr,
 		app.keySlashing, app.keyFeeCollection, app.keyParams,
 		app.tkeyParams, app.tkeyStaking, app.tkeyDistr, app.keyMarket,
 		app.keyOracle, app.keyTreasury, app.keyBudget,

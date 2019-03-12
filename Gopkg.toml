@@ -44,7 +44,7 @@
 
 [[override]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "v0.33.0"
+  version = "=v0.33.0"
 
 [[constraint]]
   name = "github.com/zondax/ledger-cosmos-go"
