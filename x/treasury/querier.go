@@ -51,7 +51,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 // nolint: unparam
 func queryTaxRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	taxRate := keeper.pk.GetTaxRate(ctx)
+	taxRate := keeper.GetTaxRate(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxRate)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -62,7 +62,7 @@ func queryTaxRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 // nolint: unparam
 func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
-	taxCap := keeper.pk.GetTaxCap(ctx, denom)
+	taxCap := keeper.GetTaxCap(ctx, denom)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -73,7 +73,7 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 // nolint: unparam
 func queryIssunace(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
-	issuance := keeper.pk.GetIssuance(ctx, denom, util.GetEpoch(ctx))
+	issuance := keeper.GetIssuance(ctx, denom, util.GetEpoch(ctx))
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
