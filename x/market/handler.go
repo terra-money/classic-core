@@ -41,7 +41,7 @@ func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
 	// Record seigniorage
 	recordSeigniorage(ctx, k, swapCoin)
 
-	reqTags, reqErr := k.pk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
+	reqTags, reqErr := k.bk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
 	if reqErr != nil {
 		return reqErr.Result()
 	}

@@ -2,10 +2,10 @@ package market
 
 import (
 	"terra/x/oracle"
-	"terra/x/pay"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
 )
 
@@ -18,14 +18,14 @@ type Keeper struct {
 	cdc *codec.Codec
 
 	ok oracle.Keeper // Read terra & luna prices
-	pk pay.Keeper
+	bk bank.Keeper
 	dk distribution.Keeper
 }
 
-func NewKeeper(ok oracle.Keeper, pk pay.Keeper, dk distribution.Keeper) Keeper {
+func NewKeeper(ok oracle.Keeper, bk bank.Keeper, dk distribution.Keeper) Keeper {
 	return Keeper{
 		ok: ok,
-		pk: pk,
+		bk: bk,
 		dk: dk,
 	}
 }

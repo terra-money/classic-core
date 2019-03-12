@@ -16,7 +16,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		resTags = k.settleClaims(ctx)
 
 		tax := updateTaxes(ctx, k)
-		k.pk.SetTaxRate(ctx, tax)
+		k.SetTaxRate(ctx, tax)
 
 		updateTaxCaps(ctx, k)
 
@@ -46,7 +46,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 func updateTaxes(ctx sdk.Context, k Keeper) sdk.Dec {
 	params := k.GetParams(ctx)
 
-	taxOld := k.pk.GetTaxRate(ctx)
+	taxOld := k.GetTaxRate(ctx)
 
 	mrlLong := mrl(ctx, k, params.EpochLong)
 	mrlShort := mrl(ctx, k, params.EpochShort)
@@ -63,7 +63,7 @@ func updateTaxes(ctx sdk.Context, k Keeper) sdk.Dec {
 }
 
 func updateTaxCaps(ctx sdk.Context, k Keeper) {
-	taxProceeds := k.pk.PeekTaxProceeds(ctx, util.GetEpoch(ctx))
+	taxProceeds := k.PeekTaxProceeds(ctx, util.GetEpoch(ctx))
 	taxCap := k.GetParams(ctx).TaxCap
 
 	for _, coin := range taxProceeds {
@@ -74,7 +74,7 @@ func updateTaxCaps(ctx sdk.Context, k Keeper) {
 			taxCapForDenom.Amount = sdk.OneInt()
 		}
 
-		k.pk.SetTaxCap(ctx, coin.Denom, taxCapForDenom.Amount)
+		k.SetTaxCap(ctx, coin.Denom, taxCapForDenom.Amount)
 	}
 }
 
@@ -102,7 +102,7 @@ func updateRewardWeight(ctx sdk.Context, k Keeper) sdk.Dec {
 func translateFees(ctx sdk.Context, k Keeper) sdk.Coin {
 	feeSum := sdk.NewCoin(assets.SDRDenom, sdk.ZeroInt())
 
-	taxProceeds := k.pk.PeekTaxProceeds(ctx, util.GetEpoch(ctx))
+	taxProceeds := k.PeekTaxProceeds(ctx, util.GetEpoch(ctx))
 	for _, proceed := range taxProceeds {
 		translation, err := k.mk.SwapCoins(ctx, proceed, assets.SDRDenom)
 		if err != nil {
@@ -125,7 +125,7 @@ func mrl(ctx sdk.Context, k Keeper, epochs sdk.Int) (res sdk.Dec) {
 			break
 		}
 
-		numLuna := k.pk.GetIssuance(ctx, assets.LunaDenom, epoch)
+		numLuna := k.GetIssuance(ctx, assets.LunaDenom, epoch)
 		taxProceeds := translateFees(ctx, k)
 		marginalProceeds := sdk.NewDecFromInt(taxProceeds.Amount).QuoInt(numLuna)
 		sum = sum.Add(marginalProceeds)
@@ -166,7 +166,7 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		rewardInSDRInt, dust := rewardInSDR.TruncateDecimal()
 
 		// credit the recipient's account with the reward
-		k.pk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
+		k.bk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
 		remainder = remainder.Plus(sdk.DecCoins{dust})
 
 		// We are now done with the claim; remove it from the store

@@ -46,7 +46,6 @@ type TerraApp struct {
 	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
-	keyBank          *sdk.KVStoreKey
 	keyStaking       *sdk.KVStoreKey
 	tkeyStaking      *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
@@ -63,7 +62,7 @@ type TerraApp struct {
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	bankKeeper          pay.Keeper
+	bankKeeper          bank.Keeper
 	stakingKeeper       staking.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
@@ -114,11 +113,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.cdc,
 		app.keyFeeCollection,
 	)
-	app.bankKeeper = pay.NewKeeper(
-		app.keyBank,
-		app.cdc,
+	app.bankKeeper = bank.NewBaseKeeper(
 		app.accountKeeper,
-		app.feeCollectionKeeper,
+		app.paramsKeeper.Subspace(bank.DefaultParamspace),
+		bank.DefaultCodespace,
 	)
 	app.paramsKeeper = params.NewKeeper(
 		app.cdc,
@@ -178,7 +176,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// register message routes
 	app.Router().
-		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(bank.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
 		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
 		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
 		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
@@ -187,9 +185,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
-		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		//AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
+		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.treasuryKeeper)).
 		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper)).
 		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
@@ -298,7 +297,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 
 	// initialize module-specific stores
 	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
-	//bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
 	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
 	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
