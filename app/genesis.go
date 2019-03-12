@@ -39,7 +39,7 @@ type GenesisState struct {
 	StakingData  staking.GenesisState  `json:"staking"`
 	DistrData    distr.GenesisState    `json:"distr"`
 	TreasuryData treasury.GenesisState `json:"treasury"`
-	BudgetData   budget.GenesisState   `json:"treasury"`
+	BudgetData   budget.GenesisState   `json:"budget"`
 	OracleData   oracle.GenesisState   `json:"oracle"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`

@@ -13,6 +13,7 @@ all: get_tools get_vendor_deps install test_lint test
 
 get_tools:
 	go get github.com/golang/dep/cmd/dep
+	go get github.com/rakyll/statik
 
 build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
@@ -29,7 +30,7 @@ build-linux:
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 update_terra_lite_docs:
-	# @statik -src=client/lcd/swagger-ui -dest=client/lcd -f
+	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
 
 install: update_terra_lite_docs
@@ -148,7 +149,7 @@ build-docker-terradnode:
 
 # Run a 4-node testnet locally
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 4 -o . --starting-ip-address 192.168.10.2  --faucet terra1pw8nf7k4p26wtam3agpggfwte0vfeaekf9n5wz --faucet-coins 10000luna,10000terra,100usd,100krw; fi
 	docker-compose up -d
 
 # Stop testnet

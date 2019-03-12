@@ -151,9 +151,9 @@ func (k Keeper) RefundDeposit(ctx sdk.Context, programID uint64) (err sdk.Error)
 
 // GetParams get oralce params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
-	var params Params
-	k.paramSpace.Get(ctx, ParamStoreKeyParams, &params)
-	return params
+	var resultParams Params
+	k.paramSpace.Get(ctx, ParamStoreKeyParams, &resultParams)
+	return resultParams
 }
 
 // SetParams set oracle params from the global param store

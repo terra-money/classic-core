@@ -17,6 +17,7 @@ build
 tools/bin/*
 examples/build/*
 docs/_build
+client/lcd/statik/statik.go
 
 # Data - ideally these don't exist
 examples/basecoin/app/data
