@@ -1,9 +1,10 @@
-// Package bank contains a forked version of the bank module. It only contains
-// a modified message handler to support a very limited form of transfers during
-// mainnet launch -- MsgMultiSend messages.
+// Package pay contains a forked version of the bank module. It only contains
+// a modified message handler to support the payement of stability taxes.
 //
-// NOTE: This fork should be removed entirely once transfers are enabled and
-// the Gaia router should be reset to using the original bank module handler.
+// Taxes are of the fomula: min(principal * taxRate, taxCap).
+// TaxCap and taxRate are stored by the treasury module.
+// Should transactions fail midway, taxes are still paid and non-refundable.
+
 package pay
 
 import (
@@ -15,16 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
-
-// var (
-// 	uatomDenom    = "uatom"
-// 	atomsToUatoms = int64(1000000)
-
-// 	// BurnedCoinsAccAddr represents the burn account address used for
-// 	// MsgMultiSend message during the period for which transfers are disabled.
-// 	// Its Bech32 address is cosmos1x4p90uuy63fqzsheamn48vq88q3eusykf0a69v.
-// 	BurnedCoinsAccAddr = sdk.AccAddress(crypto.AddressHash([]byte("bankBurnedCoins")))
-// )
 
 // NewHandler returns a handler for "bank" type messages.
 func NewHandler(k bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper) sdk.Handler {
@@ -73,12 +64,11 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 	}
 
 	tags := sdk.NewTags()
-	for _, output := range msg.Outputs {
-		taxTags, taxErr := payTax(ctx, k, tk, fk, output.Address, output.Coins)
+	for _, input := range msg.Inputs {
+		taxTags, taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
 		if taxErr != nil {
 			return taxErr.Result()
 		}
-
 		tags = tags.AppendTags(taxTags)
 	}
 
@@ -93,14 +83,16 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 	}
 }
 
-// payTax charges the stability tax on SendCoin and InputOutputCoins.
+// payTax charges the stability tax on MsgSend and MsgMultiSend.
 func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper,
 	taxPayer sdk.AccAddress, principal sdk.Coins) (taxTags sdk.Tags, err sdk.Error) {
 
 	taxes := sdk.Coins{}
 	for _, coin := range principal {
 		taxRate := tk.GetTaxRate(ctx)
-		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).RoundInt()
+		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
+
+		// If tax due is greater than the tax cap, cap!
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)
 		if taxDue.GT(taxCap) {
 			taxDue = taxCap
