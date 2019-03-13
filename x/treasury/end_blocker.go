@@ -50,6 +50,11 @@ func updateTaxes(ctx sdk.Context, k Keeper) sdk.Dec {
 
 	mrlLong := mrl(ctx, k, params.EpochLong)
 	mrlShort := mrl(ctx, k, params.EpochShort)
+
+	if mrlShort.IsZero() {
+		mrlShort = sdk.OneDec()
+	}
+
 	taxNew := taxOld.Mul(mrlLong).Quo(mrlShort)
 
 	// Clamp within bounds
@@ -85,6 +90,11 @@ func updateRewardWeight(ctx sdk.Context, k Keeper) sdk.Dec {
 
 	mrlLong := mrl(ctx, k, params.EpochLong)
 	mrlShort := mrl(ctx, k, params.EpochShort)
+
+	if mrlLong.IsZero() {
+		mrlLong = sdk.OneDec()
+	}
+
 	delta := sdk.OneDec().Sub(mrlShort.Quo(mrlLong))
 
 	weightNew := weightOld.Add(delta)
@@ -166,7 +176,7 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		rewardInSDRInt, dust := rewardInSDR.TruncateDecimal()
 
 		// credit the recipient's account with the reward
-		k.bk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
+		_, _, _ = k.bk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
 		remainder = remainder.Plus(sdk.DecCoins{dust})
 
 		// We are now done with the claim; remove it from the store
@@ -217,8 +227,8 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	return sdk.NewTags(
 		tags.Action, tags.ActionSettle,
-		tags.MinerReward, minerRewards,
-		tags.Oracle, oracleReward,
-		tags.Budget, budgetReward,
+		tags.MinerReward, minerRewards.String(),
+		tags.Oracle, oracleReward.String(),
+		tags.Budget, budgetReward.String(),
 	)
 }

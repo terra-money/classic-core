@@ -1,6 +1,7 @@
 package treasury
 
 import (
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"terra/types/util"
 	"terra/x/market"
 
@@ -20,6 +21,7 @@ type Keeper struct {
 	key sdk.StoreKey
 	cdc *codec.Codec
 
+	ak auth.AccountKeeper
 	bk bank.Keeper
 	mk market.Keeper
 	dk distribution.Keeper
@@ -28,11 +30,12 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(key sdk.StoreKey, cdc *codec.Codec,
+func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, ak auth.AccountKeeper,
 	bk bank.Keeper, mk market.Keeper, dk distribution.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		key:        key,
 		cdc:        cdc,
+		ak:         ak,
 		bk:         bk,
 		mk:         mk,
 		dk:         dk,
@@ -53,7 +56,8 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context) (res sdk.Dec) {
 	store := ctx.KVStore(k.key)
 	bz := store.Get(KeyRewardWeight)
 	if bz == nil {
-		panic(nil)
+		rewardParams := k.GetParams(ctx)
+		return rewardParams.RewardMin
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	return
@@ -119,9 +123,9 @@ func (k Keeper) clearClaims(ctx sdk.Context) {
 
 // GetParams get treasury params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
-	var params Params
-	k.paramSpace.Get(ctx, ParamStoreKeyParams, &params)
-	return params
+	var resultParams Params
+	k.paramSpace.Get(ctx, ParamStoreKeyParams, &resultParams)
+	return resultParams
 }
 
 // SetParams set treasury params from the global param store
@@ -143,14 +147,14 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 		// Genesis epoch; nothing exists in store so we must read it
 		// from accountkeeper
 		if epoch.Equal(sdk.ZeroInt()) {
-			// countIssuance := func(acc auth.Account) (stop bool) {
-			// 	issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
-			// 	return false
-			// }
-			//k.ak.IterateAccounts(ctx, countIssuance)
-			//k.setIssuance(ctx, denom, issuance)
+			issuance = sdk.ZeroInt()
+			countIssuance := func(acc auth.Account) (stop bool) {
+				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
+				return false
+			}
+			k.ak.IterateAccounts(ctx, countIssuance)
+			k.setIssuance(ctx, denom, issuance)
 		} else {
-
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
 		}

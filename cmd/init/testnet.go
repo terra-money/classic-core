@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 
@@ -40,6 +41,11 @@ var (
 	flagNodeDaemonHome    = "node-daemon-home"
 	flagNodeCliHome       = "node-cli-home"
 	flagStartingIPAddress = "starting-ip-address"
+
+	flagPredefinedNodes = "predefined-nodes"
+
+	flagFaucet      = "faucet"
+	flagFaucetCoins = "faucet-coins"
 )
 
 const nodeDirPerm = 0755
@@ -89,17 +95,63 @@ Example:
 		server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", assets.LunaDenom),
 		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)",
 	)
+	cmd.Flags().String(flagPredefinedNodes, "",
+		"Predefined node list, using this will override --starting-ip-address, --node-dir-prefix and --v (ex. \"node101@192.168.0.1,node102@192.168.0.22,node103@192.168.0.56\")")
+
+	cmd.Flags().String(flagFaucet, "",
+		"Faucet address")
+	cmd.Flags().String(flagFaucetCoins, "",
+		"Coins to add to faucet account")
 
 	return cmd
 }
 
+type Node struct {
+	Name string
+	Ip   string
+}
+
+func makeNodes() ([]Node, error) {
+	predefined := viper.GetString(flagPredefinedNodes)
+
+	if len(predefined) > 0 {
+		// parse predefined nodes information
+		re, _ := regexp.Compile("[\\s,]*(\\w+)@([\\d.]+)[\\s,]*")
+		groups := re.FindAllStringSubmatch(viper.GetString(flagPredefinedNodes), -1)
+
+		nodes := make([]Node, len(groups))
+		for i, item := range groups {
+			nodes[i] = Node{item[1], item[2]}
+		}
+
+		return nodes, nil
+	}
+
+	// manipulate names & ips from startingIPAddress
+	startingIPAddr := viper.GetString(flagStartingIPAddress)
+	NumValidators := viper.GetInt(flagNumValidators)
+
+	nodes := make([]Node, NumValidators)
+	for i := 0; i < NumValidators; i++ {
+		ip, err := calculateIP(startingIPAddr, i)
+		if err != nil {
+			return nil, err
+		}
+		nodes[i] = Node{fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i), ip}
+	}
+	return nodes, nil
+}
+
 func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
-	var chainID string
+	nodes, err := makeNodes()
+	if err != nil {
+		return err
+	}
 
 	outDir := viper.GetString(flagOutputDir)
-	numValidators := viper.GetInt(flagNumValidators)
+	numValidators := len(nodes)
 
-	chainID = viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(client.FlagChainID)
 	if chainID == "" {
 		chainID = "chain-" + cmn.RandStr(6)
 	}
@@ -118,7 +170,7 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < numValidators; i++ {
-		nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
+		nodeDirName := nodes[i].Name
 		nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
 		nodeCliHomeName := viper.GetString(flagNodeCliHome)
 		nodeDir := filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
@@ -142,12 +194,7 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		monikers = append(monikers, nodeDirName)
 		config.Moniker = nodeDirName
 
-		ip, err := getIP(i, viper.GetString(flagStartingIPAddress))
-		if err != nil {
-			_ = os.RemoveAll(outDir)
-			return err
-		}
-
+		ip := nodes[i].Ip
 		nodeIDs[i], valPubKeys[i], err = InitializeNodeValidatorFiles(config)
 		if err != nil {
 			_ = os.RemoveAll(outDir)
@@ -157,17 +204,20 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
 		genFiles = append(genFiles, config.GenesisFile())
 
-		buf := client.BufferStdin()
-		prompt := fmt.Sprintf(
-			"Password for account '%s' (default %s):", nodeDirName, app.DefaultKeyPass,
-		)
+		keyPass := ""
+		if len(viper.GetString(flagPredefinedNodes)) > 0 {
+			buf := client.BufferStdin()
+			prompt := fmt.Sprintf(
+				"Password for account '%s' (default %s):", nodeDirName, app.DefaultKeyPass,
+			)
 
-		keyPass, err := client.GetPassword(prompt, buf)
-		if err != nil && keyPass != "" {
-			// An error was returned that either failed to read the password from
-			// STDIN or the given password is not empty but failed to meet minimum
-			// length requirements.
-			return err
+			keyPass, err = client.GetPassword(prompt, buf)
+			if err != nil && keyPass != "" {
+				// An error was returned that either failed to read the password from
+				// STDIN or the given password is not empty but failed to meet minimum
+				// length requirements.
+				return err
+			}
 		}
 
 		if keyPass == "" {
@@ -242,13 +292,32 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		srvconfig.WriteConfigFile(terraConfigFilePath, terraConfig)
 	}
 
+	// add faucet account
+	faucet := viper.GetString(flagFaucet)
+	if faucet != "" {
+		faucetAddr, err := sdk.AccAddressFromBech32(faucet)
+		if err != nil {
+			return err
+		}
+		faucetCoins, err := sdk.ParseCoins(viper.GetString(flagFaucetCoins))
+		if err != nil {
+			return err
+		}
+		faucetCoins.Sort()
+
+		accs = append(accs, app.GenesisAccount{
+			Address: faucetAddr,
+			Coins:   faucetCoins,
+		})
+	}
+
 	if err := initGenFiles(cdc, chainID, accs, genFiles, numValidators); err != nil {
 		return err
 	}
 
-	err := collectGenFiles(
+	err = collectGenFiles(
 		cdc, config, chainID, monikers, nodeIDs, valPubKeys, numValidators,
-		outDir, viper.GetString(flagNodeDirPrefix), viper.GetString(flagNodeDaemonHome),
+		outDir, nodes, viper.GetString(flagNodeDaemonHome),
 	)
 	if err != nil {
 		return err
@@ -290,14 +359,14 @@ func initGenFiles(
 func collectGenFiles(
 	cdc *codec.Codec, config *tmconfig.Config, chainID string,
 	monikers, nodeIDs []string, valPubKeys []crypto.PubKey,
-	numValidators int, outDir, nodeDirPrefix, nodeDaemonHomeName string,
+	numValidators int, outDir string, nodes []Node, nodeDaemonHomeName string,
 ) error {
 
 	var appState json.RawMessage
 	genTime := tmtime.Now()
 
 	for i := 0; i < numValidators; i++ {
-		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
+		nodeDirName := nodes[i].Name
 		nodeDir := filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
 		gentxsDir := filepath.Join(outDir, "gentxs")
 		moniker := monikers[i]
@@ -333,27 +402,6 @@ func collectGenFiles(
 	}
 
 	return nil
-}
-
-func getIP(i int, startingIPAddr string) (string, error) {
-	var (
-		ip  string
-		err error
-	)
-
-	if len(startingIPAddr) == 0 {
-		ip, err = server.ExternalIP()
-		if err != nil {
-			return "", err
-		}
-	} else {
-		ip, err = calculateIP(startingIPAddr, i)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return ip, nil
 }
 
 func writeFile(name string, dir string, contents []byte) error {

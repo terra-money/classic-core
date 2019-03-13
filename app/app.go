@@ -149,6 +149,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.keyTreasury,
 		app.cdc,
+		app.accountKeeper,
 		app.bankKeeper,
 		app.marketKeeper,
 		app.distrKeeper,

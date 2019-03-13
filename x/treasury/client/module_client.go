@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/spf13/cobra"
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 
 	treasuryCli "terra/x/treasury/client/cli"
 
@@ -42,5 +42,5 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 
 // The treasury module returns no TX commands.
 func (mc ModuleClient) GetTxCmd() *cobra.Command {
-	&cobra.Command{Hidden: true}
+	return &cobra.Command{Hidden: true}
 }
