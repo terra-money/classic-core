@@ -57,7 +57,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
+	_ "terra/client/lcd/statik"
 )
 
 func main() {
