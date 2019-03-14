@@ -28,7 +28,7 @@
   command: "echo node{{nodeid.stdout}}@{{inventory_hostname}}"
   register: nodeinfo
 
-- name : debug dump of node informations
+- name: debug dump of node informations
   run_once: true
   debug:
     msg: "{{ groups[ansible_limit] |  map('extract', hostvars, ['nodeinfo', 'stdout']) | join(',') }}"
@@ -44,6 +44,16 @@
 - name: Copy testnet node configurations
   copy:
     src: "{{playbook_dir}}/testnets/{{TESTNET_NAME}}/node{{nodeid.stdout_lines[0]}}/terrad/config"
+    dest: "/home/terrad/.terrad"
+    mode: 0755
+    owner: terrad
+    group: terrad
+    directory_mode: yes
+    force: yes
+
+- name: Copy testnet node data
+  copy:
+    src: "{{playbook_dir}}/testnets/{{TESTNET_NAME}}/node{{nodeid.stdout_lines[0]}}/terrad/data"
     dest: "/home/terrad/.terrad"
     mode: 0755
     owner: terrad
