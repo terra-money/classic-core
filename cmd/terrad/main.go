@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"terra/types/util"
+	"terra/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -48,6 +49,9 @@ func main() {
 	rootCmd.AddCommand(terraInit.AddGenesisAccountCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.ValidateGenesisCmd(ctx, cdc))
 	rootCmd.AddCommand(client.NewCompletionCmd(rootCmd, true))
+
+	// preempting version command
+	rootCmd.AddCommand(version.VersionCmd)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 

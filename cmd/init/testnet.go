@@ -205,7 +205,7 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		genFiles = append(genFiles, config.GenesisFile())
 
 		keyPass := ""
-		if len(viper.GetString(flagPredefinedNodes)) > 0 {
+		if !viper.IsSet(flagPredefinedNodes) {
 			buf := client.BufferStdin()
 			prompt := fmt.Sprintf(
 				"Password for account '%s' (default %s):", nodeDirName, app.DefaultKeyPass,
