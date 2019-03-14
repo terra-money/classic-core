@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"terra/version"
 	"terra/x/budget"
 	"terra/x/market"
 	"terra/x/oracle"
@@ -214,6 +215,20 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	}
 
 	return app
+}
+
+// Overide query function in baseapp to change result of "/app/version" query.
+func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+
+	if req.Path == "/app/version" {
+		return abci.ResponseQuery{
+			Code:      uint32(sdk.CodeOK),
+			Codespace: string(sdk.CodespaceRoot),
+			Value:     []byte(version.Version),
+		}
+	}
+
+	return app.BaseApp.Query(req)
 }
 
 // custom tx codec
