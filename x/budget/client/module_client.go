@@ -33,7 +33,6 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	)...)
 
 	return budgetQueryCmd
-
 }
 
 // GetTxCmd returns the transaction commands for this module

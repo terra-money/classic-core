@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"terra/app"
@@ -57,7 +57,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
+	_ "terra/client/lcd/statik"
 )
 
 func main() {
@@ -172,10 +172,19 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return txCmd
 }
 
+// cli version REST handler endpoint
+func CLIVersionRequestHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte(fmt.Sprintf("{\"version\": \"%s\"}", version.Version)))
+}
+
 // registerRoutes registers the routes from the different modules for the LCD.
 // NOTE: details on the routes added for each module are in the module documentation
 // NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
 func registerRoutes(rs *lcd.RestServer) {
+
+	rs.Mux.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
+
 	registerSwaggerUI(rs)
 	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
