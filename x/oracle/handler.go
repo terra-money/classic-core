@@ -84,7 +84,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (prices map[string]sdk.Dec, rewardees
 			}
 
 			// Set the price for the asset
-			k.setPrice(ctx, denom, mod)
+			k.SetPrice(ctx, denom, mod)
 
 			// Emit price update tag
 			resTags = resTags.AppendTags(

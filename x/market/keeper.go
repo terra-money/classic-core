@@ -1,35 +1,30 @@
 package market
 
 import (
+	"terra/x/mint"
 	"terra/x/oracle"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 )
 
-// StoreKey is string representation of the store key for market
-const StoreKey = "market"
-
-//nolint
+// Keeper holds data structures for the market module
 type Keeper struct {
-	key sdk.StoreKey
-	cdc *codec.Codec
-
-	ok oracle.Keeper // Read terra & luna prices
-	bk bank.Keeper
-	dk distribution.Keeper
+	ok oracle.Keeper
+	mk mint.Keeper
 }
 
-func NewKeeper(ok oracle.Keeper, bk bank.Keeper, dk distribution.Keeper) Keeper {
+// NewKeeper creates a new Keeper for the market module
+func NewKeeper(ok oracle.Keeper, mk mint.Keeper) Keeper {
 	return Keeper{
 		ok: ok,
-		bk: bk,
-		dk: dk,
+		mk: mk,
 	}
 }
 
+// SwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
+// exchange rate registered with the oracle.
+// Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
+// to trade is too small.
 func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
 	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
 	if err != nil {
@@ -41,16 +36,17 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
-	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).RoundInt()
+	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).TruncateInt()
 	if retAmount.Equal(sdk.ZeroInt()) {
-		// drop in this scenario
 		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
 
-	retCoin := sdk.Coin{Denom: askDenom, Amount: retAmount}
-	return retCoin, nil
+	return sdk.Coin{Denom: askDenom, Amount: retAmount}, nil
 }
 
+// SwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
+// exchange rate registered with the oracle.
+// Similar to SwapCoins, but operates over sdk.DecCoins for convinience.
 func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
 	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
 	if err != nil {

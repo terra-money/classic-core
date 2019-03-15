@@ -7,6 +7,7 @@ import (
 	"sort"
 	"terra/x/budget"
 	"terra/x/market"
+	"terra/x/mint"
 	"terra/x/oracle"
 	"terra/x/pay"
 	"terra/x/treasury"
@@ -58,6 +59,7 @@ type TerraApp struct {
 	keyTreasury      *sdk.KVStoreKey
 	keyMarket        *sdk.KVStoreKey
 	keyBudget        *sdk.KVStoreKey
+	keyMint          *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountKeeper       auth.AccountKeeper
@@ -71,6 +73,7 @@ type TerraApp struct {
 	treasuryKeeper      treasury.Keeper
 	marketKeeper        market.Keeper
 	budgetKeeper        budget.Keeper
+	mintKeeper          mint.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
@@ -97,6 +100,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyTreasury:      sdk.NewKVStoreKey(treasury.StoreKey),
 		keyMarket:        sdk.NewKVStoreKey(market.StoreKey),
 		keyBudget:        sdk.NewKVStoreKey(budget.StoreKey),
+		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
 	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams)
@@ -141,30 +145,34 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
+	app.mintKeeper = mint.NewKeeper(
+		app.cdc,
+		app.keyMint,
+		app.bankKeeper,
+		app.accountKeeper,
+	)
 	app.marketKeeper = market.NewKeeper(
 		app.oracleKeeper,
-		app.bankKeeper,
-		app.distrKeeper,
+		app.mintKeeper,
 	)
 	app.treasuryKeeper = treasury.NewKeeper(
-		app.keyTreasury,
 		app.cdc,
+		app.keyTreasury,
 		app.accountKeeper,
-		app.bankKeeper,
+		app.mintKeeper,
 		app.marketKeeper,
-		app.distrKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.oracleKeeper = oracle.NewKeeper(
+		app.cdc,
 		app.keyOracle,
-		cdc,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 	app.budgetKeeper = budget.NewKeeper(
+		app.cdc,
 		app.keyBudget,
-		app.cdc, app.bankKeeper,
-		staking.DefaultCodespace,
+		app.bankKeeper,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
@@ -199,7 +207,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr,
 		app.keySlashing, app.keyFeeCollection, app.keyParams,
 		app.tkeyParams, app.tkeyStaking, app.tkeyDistr, app.keyMarket,
-		app.keyOracle, app.keyTreasury, app.keyBudget,
+		app.keyOracle, app.keyTreasury, app.keyBudget, app.keyMint,
 	)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)

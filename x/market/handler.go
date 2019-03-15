@@ -2,19 +2,19 @@ package market
 
 import (
 	"reflect"
+	"terra/types/assets"
 
 	"terra/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // NewHandler creates a new handler for all market type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case SwapMsg:
-			return handleSwapMsg(ctx, k, msg)
+		case MsgSwap:
+			return handleMsgSwap(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized market Msg type: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -22,42 +22,42 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func recordSeigniorage(ctx sdk.Context, k Keeper, seigniorage sdk.Coin) {
-	feePool := k.dk.GetFeePool(ctx)
-	feePool.CommunityPool = feePool.CommunityPool.Plus(sdk.DecCoins{sdk.NewDecCoinFromCoin(seigniorage)})
-	k.dk.SetFeePool(ctx, feePool)
-}
+// handleMsgSwap handles the logic of a MsgSwap
+func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
-// handleSwapMsg handles the logic of a SwapMsg
-func handleSwapMsg(ctx sdk.Context, k Keeper, msg SwapMsg) sdk.Result {
+	// Can't swap to the same coin
+	if msg.OfferCoin.Denom == msg.AskDenom {
+		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom).Result()
+	}
+
+	// Compute exchange rates between the ask and offer
 	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
 	if swapErr != nil {
 		return swapErr.Result()
 	}
 
-	input := bank.Input{Address: msg.Trader, Coins: sdk.Coins{swapCoin}}
-	output := bank.Output{Address: msg.Trader, Coins: sdk.Coins{msg.OfferCoin}}
-
-	// Record seigniorage
-	recordSeigniorage(ctx, k, swapCoin)
-
-	reqTags, reqErr := k.bk.InputOutputCoins(ctx, []bank.Input{input}, []bank.Output{output})
-	if reqErr != nil {
-		return reqErr.Result()
+	// Burn offered coins and subtract from the trader's account
+	burnErr := k.mk.Burn(ctx, msg.Trader, msg.OfferCoin)
+	if burnErr != nil {
+		return burnErr.Result()
 	}
 
-	reqTags = reqTags.AppendTags(
-		sdk.NewTags(
-			sdk.TagAction, tags.ActionSwap,
-			tags.OfferDenom, []byte(msg.OfferCoin.Denom),
-			tags.OfferAmount, msg.OfferCoin.Amount,
-			tags.AskDenom, []byte(swapCoin.Denom),
-			tags.AskAmount, swapCoin.Amount,
-			tags.Trader, msg.Trader.Bytes(),
-		),
-	)
+	// Record seigniorage if the offered coin is Luna
+	if msg.OfferCoin.Denom == assets.LunaDenom {
+		k.mk.AddSeigniorage(ctx, msg.OfferCoin.Amount)
+	}
+
+	// Mint asked coins and credit Trader's account
+	mintErr := k.mk.Mint(ctx, msg.Trader, swapCoin)
+	if mintErr != nil {
+		return mintErr.Result()
+	}
 
 	return sdk.Result{
-		Tags: reqTags,
+		Tags: sdk.NewTags(
+			tags.Offer, msg.OfferCoin.String(),
+			tags.Ask, swapCoin.String(),
+			tags.Trader, msg.Trader.Bytes(),
+		),
 	}
 }

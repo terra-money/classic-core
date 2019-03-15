@@ -135,7 +135,7 @@ func mrl(ctx sdk.Context, k Keeper, epochs sdk.Int) (res sdk.Dec) {
 			break
 		}
 
-		numLuna := k.GetIssuance(ctx, assets.LunaDenom, epoch)
+		numLuna := k.mtk.GetIssuance(ctx, assets.LunaDenom, epoch)
 		taxProceeds := translateFees(ctx, k)
 		marginalProceeds := sdk.NewDecFromInt(taxProceeds.Amount).QuoInt(numLuna)
 		sum = sum.Add(marginalProceeds)
@@ -157,7 +157,7 @@ func (k Keeper) ProcessClaims(ctx sdk.Context, class ClaimClass, rewardees map[s
 	}
 }
 
-func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []Claim) (remainder sdk.DecCoins, classTags sdk.Tags) {
+func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []Claim) (classTags sdk.Tags) {
 	store := ctx.KVStore(k.key)
 	for _, claim := range cClaims {
 		claimWeightInDec := sdk.NewDecFromInt(claim.weight)
@@ -173,11 +173,10 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		if err != nil {
 			continue
 		}
-		rewardInSDRInt, dust := rewardInSDR.TruncateDecimal()
+		rewardInSDRInt, _ := rewardInSDR.TruncateDecimal()
 
 		// credit the recipient's account with the reward
-		_, _, _ = k.bk.AddCoins(ctx, claim.recipient, sdk.Coins{rewardInSDRInt})
-		remainder = remainder.Plus(sdk.DecCoins{dust})
+		k.mtk.Mint(ctx, claim.recipient, rewardInSDRInt)
 
 		// We are now done with the claim; remove it from the store
 		store.Delete(KeyClaim(claim.ID()))
@@ -196,34 +195,33 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 
 // settleClaims distributes the current treasury to the registered claims, and deletes all claims from the store.
 func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
-	totalPool := k.dk.GetFeePool(ctx)
+	seignioragePool := k.mtk.ClaimSeigniorage(ctx)
+	decPool := sdk.DecCoins{sdk.NewDecCoin(assets.LunaDenom, seignioragePool)}
 
 	// Pay mining rewards; just burn Luna
 	minerRewardWeight := k.GetRewardWeight(ctx)
-	minerRewards := totalPool.CommunityPool.MulDec(minerRewardWeight)
+	minerRewards := decPool.MulDec(minerRewardWeight)
 
 	// Compute the size of oracle + budget claim reward pools
 	params := k.GetParams(ctx)
 
 	oracleRewardWeight := sdk.OneDec().Sub(minerRewardWeight).Mul(params.OracleClaimShare)
-	oracleReward := totalPool.CommunityPool.MulDec(oracleRewardWeight)
+	oracleReward := decPool.MulDec(oracleRewardWeight)
 	budgetRewardWeight := sdk.OneDec().Sub(minerRewardWeight).Mul(params.BudgetClaimShare)
-	budgetReward := totalPool.CommunityPool.MulDec(budgetRewardWeight)
+	budgetReward := decPool.MulDec(budgetRewardWeight)
 
 	// Sum the total amount of voting power accumulated in claims by class
 	oracleClaimWeightSum, oracleClaims := k.sumClaims(ctx, OracleClaimClass)
 	budgetClaimWeightSum, budgetClaims := k.sumClaims(ctx, BudgetClaimClass)
 
 	// Reward claims
-	oracleRemainder, oracleTags := k.settleClaimsForClass(ctx, oracleReward, oracleClaimWeightSum, oracleClaims)
-	budgetRemainder, budgetTags := k.settleClaimsForClass(ctx, budgetReward, budgetClaimWeightSum, budgetClaims)
-
+	oracleTags := k.settleClaimsForClass(ctx, oracleReward, oracleClaimWeightSum, oracleClaims)
 	settleTags = settleTags.AppendTags(oracleTags)
+	budgetTags := k.settleClaimsForClass(ctx, budgetReward, budgetClaimWeightSum, budgetClaims)
 	settleTags = settleTags.AppendTags(budgetTags)
 
-	// Add the remainder back to the community pool
-	totalPool.CommunityPool = oracleRemainder.Plus(budgetRemainder)
-	k.dk.SetFeePool(ctx, totalPool)
+	// Burn luna
+	k.mtk.ChangeIssuance(ctx, assets.LunaDenom, seignioragePool.Neg())
 
 	return sdk.NewTags(
 		tags.Action, tags.ActionSettle,

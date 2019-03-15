@@ -1,12 +1,10 @@
 package treasury
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"terra/types/util"
 	"terra/x/market"
+	"terra/x/mint"
 
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,27 +16,25 @@ const StoreKey = "treasury"
 
 // Keeper of the treasury store
 type Keeper struct {
-	key sdk.StoreKey
 	cdc *codec.Codec
+	key sdk.StoreKey
 
-	ak auth.AccountKeeper
-	bk bank.Keeper
-	mk market.Keeper
-	dk distribution.Keeper
+	ak  auth.AccountKeeper
+	mtk mint.Keeper
+	mk  market.Keeper
 
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, ak auth.AccountKeeper,
-	bk bank.Keeper, mk market.Keeper, dk distribution.Keeper, paramspace params.Subspace) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ak auth.AccountKeeper,
+	mtk mint.Keeper, mk market.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
-		key:        key,
 		cdc:        cdc,
+		key:        key,
 		ak:         ak,
-		bk:         bk,
+		mtk:        mtk,
 		mk:         mk,
-		dk:         dk,
 		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
 	}
 }
@@ -131,63 +127,6 @@ func (k Keeper) GetParams(ctx sdk.Context) Params {
 // SetParams set treasury params from the global param store
 func (k Keeper) SetParams(ctx sdk.Context, params Params) {
 	k.paramSpace.Set(ctx, ParamStoreKeyParams, &params)
-}
-
-//______________________________________________________________________
-// Issuance logic
-
-// GetIssuance fetches the total issuance count of the coin matching {denom}. If the {epoch} applies
-// to a previous period, fetches the last stored snapshot issuance of the coin. For virgin calls,
-// iterates through the accountkeeper and computes the genesis issuance.
-func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
-	store := ctx.KVStore(k.key)
-	bz := store.Get(keyIssuance(denom, util.GetEpoch(ctx)))
-	if bz == nil {
-
-		// Genesis epoch; nothing exists in store so we must read it
-		// from accountkeeper
-		if epoch.Equal(sdk.ZeroInt()) {
-			issuance = sdk.ZeroInt()
-			countIssuance := func(acc auth.Account) (stop bool) {
-				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
-				return false
-			}
-			k.ak.IterateAccounts(ctx, countIssuance)
-			k.setIssuance(ctx, denom, issuance)
-		} else {
-			// Fetch the issuance snapshot of the previous epoch
-			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
-		}
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
-	}
-
-	return
-}
-
-// sets the issuance in the store
-func (k Keeper) setIssuance(ctx sdk.Context, denom string, issuance sdk.Int) {
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-	store.Set(keyIssuance(denom, util.GetEpoch(ctx)), bz)
-}
-
-// convinience function. substracts the issuance counter in the store.
-func (k Keeper) subtractIssuance(ctx sdk.Context, coins sdk.Coins) {
-	for _, coin := range coins {
-		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
-		issuance = issuance.Sub(coin.Amount)
-		k.setIssuance(ctx, coin.Denom, issuance)
-	}
-}
-
-// convinience function. adds to the issuance counter in the store.
-func (k Keeper) addIssuance(ctx sdk.Context, coins sdk.Coins) {
-	for _, coin := range coins {
-		issuance := k.GetIssuance(ctx, coin.Denom, util.GetEpoch(ctx))
-		issuance = issuance.Add(coin.Amount)
-		k.setIssuance(ctx, coin.Denom, issuance)
-	}
 }
 
 //______________________________________________________________________

@@ -1,7 +1,6 @@
 package treasury
 
 import (
-	"terra/types/assets"
 	"terra/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -73,7 +72,7 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 // nolint: unparam
 func queryIssunace(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
-	issuance := keeper.GetIssuance(ctx, denom, util.GetEpoch(ctx))
+	issuance := keeper.mtk.GetIssuance(ctx, denom, util.GetEpoch(ctx))
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -93,9 +92,9 @@ func queryMiningRewardWeight(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 // nolint: unparam
 func queryTreasuryBalance(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	pool := keeper.dk.GetFeePool(ctx).CommunityPool
+	pool := keeper.mtk.PeekSeigniorage(ctx)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool.AmountOf(assets.LunaDenom))
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

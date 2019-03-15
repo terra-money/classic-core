@@ -3,7 +3,6 @@ package cli
 import (
 	"strings"
 	"terra/x/market"
-	"terra/x/market/client/util"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
@@ -16,13 +15,11 @@ import (
 )
 
 const (
-	flagOfferCoin     = "offerCoin"
-	flagOfferDenom    = "offerDenom"
-	flagAskDenom      = "askDenom"
-	flagTraderAddress = "traderAddress"
+	flagOfferCoin = "offerCoin"
+	flagAskDenom  = "askDenom"
 )
 
-// GetSwapCmd will create and send a SwapMsg
+// GetSwapCmd will create and send a MsgSwap
 func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "swap [offerCoin] [askDenom]",
@@ -47,7 +44,7 @@ $ terracli market swap --offerCoin="1000krw" --askDenom="usd"
 			fromAddress := cliCtx.GetFromAddress()
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := market.NewSwapMsg(fromAddress, offerCoin, askDenom)
+			msg := market.NewMsgSwap(fromAddress, offerCoin, askDenom)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -60,52 +57,5 @@ $ terracli market swap --offerCoin="1000krw" --askDenom="usd"
 	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000krw")
 	cmd.Flags().String(flagAskDenom, "", "Denom of the asset to swap to")
 
-	return cmd
-}
-
-// GetCmdQueryActive implements the query active command.
-func GetCmdQueryHistory(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "history [traderAddress] [offerDenom] [askDenom]",
-		Short: "Query history of atomic swaps filtered by three optional variables.",
-		Long: strings.TrimSpace(`
-Query history of atomic swaps filtered by three optional variables.
-
-$ terracli query market history --offerDenom="usd" --askDenom="krw"
-
-Return item count paginated by units of 30 values. 
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var traderAddress sdk.AccAddress
-			offerDenom := viper.GetString(flagOfferDenom)
-			askDenom := viper.GetString(flagAskDenom)
-
-			params := util.QueryHistoryParams{
-				TraderAddress: traderAddress,
-				AskDenom:      askDenom,
-				OfferDenom:    offerDenom,
-			}
-
-			traderAddrStr := viper.GetString(flagTraderAddress)
-			account, err := cliCtx.GetAccount([]byte(traderAddrStr))
-			if err == nil {
-				params.TraderAddress = account.GetAddress()
-			}
-
-			res, err := util.QueryHistoryByTxQuery(cdc, cliCtx, params)
-			if err != nil {
-				return err
-			}
-
-			var swaps market.SwapHistory
-			err = cdc.UnmarshalJSON(res, &swaps)
-			if err != nil {
-				return err
-			}
-			return cliCtx.PrintOutput(swaps)
-		},
-	}
 	return cmd
 }

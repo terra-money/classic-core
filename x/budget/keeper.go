@@ -16,28 +16,25 @@ const StoreKey = "budget"
 
 // nolint
 type Keeper struct {
-	key       sdk.StoreKey      // Key to our module's store
-	codespace sdk.CodespaceType // Reserves space for error codes
-	cdc       *codec.Codec      // Codec to encore/decode structs
-	valset    sdk.ValidatorSet  // Needed to compute voting power.
+	cdc    *codec.Codec     // Codec to encore/decode structs
+	key    sdk.StoreKey     // Key to our module's store
+	valset sdk.ValidatorSet // Needed to compute voting power.
 
 	bk         bank.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
 	paramSpace params.Subspace
 }
 
 // NewKeeper crates a new keeper with write and read access
-func NewKeeper(key sdk.StoreKey,
-	cdc *codec.Codec,
+func NewKeeper(cdc *codec.Codec,
+	key sdk.StoreKey,
 	bk bank.Keeper,
-	codespace sdk.CodespaceType,
 	valset sdk.ValidatorSet,
 	paramspace params.Subspace) Keeper {
 	return Keeper{
-		key:        key,
 		cdc:        cdc,
+		key:        key,
 		bk:         bk,
 		valset:     valset,
-		codespace:  codespace,
 		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
 	}
 }

@@ -13,15 +13,15 @@ const StoreKey = "oracle"
 
 // Keeper of the oracle store
 type Keeper struct {
-	key sdk.StoreKey
 	cdc *codec.Codec
+	key sdk.StoreKey
 
 	valset     sdk.ValidatorSet
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(key sdk.StoreKey, cdc *codec.Codec, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
@@ -106,7 +106,7 @@ func (k Keeper) getDropCounter(ctx sdk.Context, denom string) (counter sdk.Int) 
 //-----------------------------------
 // Price logic
 
-func (k Keeper) setPrice(ctx sdk.Context, denom string, price sdk.Dec) {
+func (k Keeper) SetPrice(ctx sdk.Context, denom string, price sdk.Dec) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(price)
 	store.Set(KeyPrice(denom), bz)

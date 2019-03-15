@@ -7,22 +7,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// RouterKey is they name of the market module
-const RouterKey = "market"
-
 //--------------------------------------------------------
 //--------------------------------------------------------
 
-// SwapMsg contains a swap request
-type SwapMsg struct {
+// MsgSwap contains a swap request
+type MsgSwap struct {
 	Trader    sdk.AccAddress // Address of the trader
 	OfferCoin sdk.Coin       // Coin being offered
 	AskDenom  string         // Denom of the coin to swap to
 }
 
-// NewSwapMsg creates a SwapMsg instance
-func NewSwapMsg(traderAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) SwapMsg {
-	return SwapMsg{
+// NewMsgSwap creates a MsgSwap instance
+func NewMsgSwap(traderAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) MsgSwap {
+	return MsgSwap{
 		Trader:    traderAddress,
 		OfferCoin: offerCoin,
 		AskDenom:  askCoin,
@@ -30,13 +27,13 @@ func NewSwapMsg(traderAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string
 }
 
 // Route Implements Msg
-func (msg SwapMsg) Route() string { return "market" }
+func (msg MsgSwap) Route() string { return "market" }
 
 // Type implements sdk.Msg
-func (msg SwapMsg) Type() string { return "swap" }
+func (msg MsgSwap) Type() string { return "swap" }
 
 // GetSignBytes Implements Msg
-func (msg SwapMsg) GetSignBytes() []byte {
+func (msg MsgSwap) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -45,12 +42,12 @@ func (msg SwapMsg) GetSignBytes() []byte {
 }
 
 // GetSigners Implements Msg
-func (msg SwapMsg) GetSigners() []sdk.AccAddress {
+func (msg MsgSwap) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Trader}
 }
 
 // ValidateBasic Implements Msg
-func (msg SwapMsg) ValidateBasic() sdk.Error {
+func (msg MsgSwap) ValidateBasic() sdk.Error {
 	if len(msg.Trader) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Trader.String())
 	}
@@ -67,16 +64,10 @@ func (msg SwapMsg) ValidateBasic() sdk.Error {
 }
 
 // String Implements Msg
-func (msg SwapMsg) String() string {
-	return fmt.Sprintf("SwapMsg{trader %v, offer %v, ask %s}", msg.Trader, msg.OfferCoin, msg.AskDenom)
-}
-
-type SwapHistory []SwapMsg
-
-// String implements fmt.Stringer interface
-func (swaps SwapHistory) String() (out string) {
-	for _, swap := range swaps {
-		out += fmt.Sprintf("\n  %s", swap.String())
-	}
-	return
+func (msg MsgSwap) String() string {
+	return fmt.Sprintf(`MsgSwap
+	trader:    %s, 
+	offer:     %s, 
+	ask:       %s`,
+		msg.Trader, msg.OfferCoin, msg.AskDenom)
 }

@@ -4,23 +4,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// market errors
+// market error codes
 const (
 	DefaultCodespace sdk.CodespaceType = "market"
 
 	CodeInsufficientSwap sdk.CodeType = 1
-	CodeUnknownDenom     sdk.CodeType = 2
-	CodeNoEffectivePrice sdk.CodeType = 3
-	CodeRecursiveSwap    sdk.CodeType = 4
+	CodeNoEffectivePrice sdk.CodeType = 2
+	CodeRecursiveSwap    sdk.CodeType = 3
 )
 
 // ----------------------------------------
 // Error constructors
-
-// ErrUnknownDenomination called when the denom is not whitelisted by the oracle
-func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error {
-	return sdk.NewError(codespace, CodeUnknownDenom, "Unknown denom in SwapMsg: "+denom)
-}
 
 // ErrNoEffectivePrice called when a price for the asset is not registered with the oracle
 func ErrNoEffectivePrice(codespace sdk.CodespaceType, denom string) sdk.Error {
