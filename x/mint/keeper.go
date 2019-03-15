@@ -60,10 +60,13 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 
 	// Update issuance
 	newIssuance := curIssuance.Add(delta)
-
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
-	store.Set(keyIssuance(denom, curEpoch), bz)
+	if newIssuance.IsNegative() {
+		err = sdk.ErrInternal("Issuance should never fall below 0")
+	} else {
+		store := ctx.KVStore(k.key)
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
+		store.Set(keyIssuance(denom, curEpoch), bz)
+	}
 	return
 }
 
