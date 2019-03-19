@@ -23,7 +23,7 @@ func TestIncome(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Added exchange rate for offer denom. Test should still fail.
-	pfm := oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm := oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res := oh(ctx, pfm)
 	require.True(t, res.IsOK())
 	ctx = ctx.WithBlockHeight(1000000)
@@ -37,11 +37,11 @@ func TestIncome(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Both denoms set. should succeed.
-	pfm = oracle.NewPriceFeedMsg(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 
-	pfm = oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 
@@ -67,7 +67,7 @@ func TestIssuance(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Added exchange rate for offer denom. Test should still fail.
-	pfm := oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm := oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res := oh(ctx, pfm)
 	require.True(t, res.IsOK())
 	ctx = ctx.WithBlockHeight(1000000)
@@ -81,11 +81,11 @@ func TestIssuance(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Both denoms set. should succeed.
-	pfm = oracle.NewPriceFeedMsg(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 
-	pfm = oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 
@@ -111,7 +111,7 @@ func TestClaim(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Added exchange rate for offer denom. Test should still fail.
-	pfm := oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm := oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res := oh(ctx, pfm)
 	require.True(t, res.IsOK())
 	ctx = ctx.WithBlockHeight(1000000)
@@ -125,11 +125,11 @@ func TestClaim(t *testing.T) {
 	require.NotNil(t, err)
 
 	// Both denoms set. should succeed.
-	pfm = oracle.NewPriceFeedMsg(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.USDDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 
-	pfm = oracle.NewPriceFeedMsg(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
+	pfm = oracle.NewMsgPriceFeed(assets.KRWDenom, sdk.OneDec(), sdk.OneDec(), addrs[0])
 	res = oh(ctx, pfm)
 	require.True(t, res.IsOK())
 

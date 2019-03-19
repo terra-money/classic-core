@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"sort"
+
 	"terra/version"
 	"terra/x/budget"
 	"terra/x/market"
@@ -104,8 +105,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
-	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams)
-
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -200,7 +199,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
 		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.treasuryKeeper)).
-		AddRoute(oracle.RouterKey, oracle.NewQuerier(app.oracleKeeper)).
+		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper)).
 		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
@@ -256,7 +255,7 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-// application updates every end block
+// BeginBlocker application updates every end block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
 	// distribute rewards for the previous block
@@ -274,8 +273,7 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 	}
 }
 
-// application updates every end block
-// nolint: unparam
+// EndBlocker application updates every end block
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 

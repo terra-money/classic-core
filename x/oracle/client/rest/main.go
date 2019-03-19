@@ -67,7 +67,7 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		price := sdk.NewDecWithPrec(int64(math.Round(req.Price*100)), 2)
 
 		// create the message
-		msg := oracle.NewPriceFeedMsg(req.Denom, price, fromAddress)
+		msg := oracle.NewMsgPriceFeed(req.Denom, price, fromAddress)
 		err := msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

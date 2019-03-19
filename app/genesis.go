@@ -213,17 +213,14 @@ func NewDefaultGenesisState() GenesisState {
 	distrGenState := distr.DefaultGenesisState()
 	distrGenState.CommunityTax = sdk.ZeroDec()
 
+	stakingGenState := staking.DefaultGenesisState()
+	stakingGenState.Params.BondDenom = assets.LunaDenom
+	stakingGenState.Params.MaxValidators = 100
+
 	return GenesisState{
-		Accounts: nil,
-		AuthData: auth.DefaultGenesisState(),
-		StakingData: staking.GenesisState{
-			Pool: staking.InitialPool(),
-			Params: staking.Params{
-				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
-				MaxValidators: 100,
-				BondDenom:     assets.LunaDenom,
-			},
-		},
+		Accounts:     nil,
+		AuthData:     auth.DefaultGenesisState(),
+		StakingData:  stakingGenState,
 		DistrData:    distrGenState,
 		BankData:     bank.DefaultGenesisState(),
 		BudgetData:   budget.DefaultGenesisState(),

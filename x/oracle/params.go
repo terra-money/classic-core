@@ -8,7 +8,7 @@ import (
 
 // Params oracle parameters
 type Params struct {
-	VotePeriod    sdk.Int `json:"vote_period"`    // voting period; tallys and reward claim period
+	VotePeriod    sdk.Int `json:"vote_period"`    // voting period in block height; tallys and reward claim period
 	VoteThreshold sdk.Dec `json:"vote_threshold"` // minimum stake power threshold to clear vote
 	DropThreshold sdk.Int `json:"drop_threshold"` // tolerated drops before blacklist
 }
@@ -47,8 +47,8 @@ func validateParams(params Params) error {
 
 func (params Params) String() string {
 	return fmt.Sprintf(`Oracle Params:
-  VotePeriod: %s
-  VoteThreshold: %s
+  VotePeriod:     %s
+  VoteThreshold:  %s
   DropThresdhold: %s
   `, params.VotePeriod, params.VoteThreshold, params.DropThreshold)
 }

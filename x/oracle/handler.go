@@ -10,8 +10,8 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case PriceFeedMsg:
-			return handlePriceFeedMsg(ctx, k, msg)
+		case MsgPriceFeed:
+			return handleMsgPriceFeed(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized oracle Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -20,80 +20,77 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (prices map[string]sdk.Dec, rewardees map[string]sdk.Int, resTags sdk.Tags) {
-
+func EndBlocker(ctx sdk.Context, k Keeper) (rewardablePower sdk.Int, rewardees map[string]sdk.Int, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
-	votes := k.getVotes(ctx)
+	votes := k.collectVotes(ctx)
+
+	rewardablePower = sdk.ZeroInt()
+	rewardees = map[string]sdk.Int{}
 
 	// Tally vote for oracle prices
 	if sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt()) {
-		for denom, filVotes := range votes {
-			votePower := filVotes.totalPower()
+		for denom, filteredVotes := range votes {
 
-			// Not enough validators have voted, skip
+			var actionTagForDenom string
+			votePower := filteredVotes.TotalPower()
+			rewardablePower = rewardablePower.Add(votePower)
+
 			thresholdVotes := params.VoteThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
-			if votePower.LT(thresholdVotes) {
 
+			// Cleared the vote
+			if votePower.GTE(thresholdVotes) {
+				// Get weighted median prices, and faithful respondants
+				mod, rewardableVotes := filteredVotes.tally()
+
+				for _, rewardableVote := range rewardableVotes {
+					voterStr := rewardableVote.Voter.String()
+					if val, ok := rewardees[voterStr]; ok {
+						rewardees[voterStr] = val.Add(rewardableVote.Power)
+					} else {
+						rewardees[voterStr] = rewardableVote.Power
+					}
+				}
+
+				// Emit whitelist tag if the price is coming in for the first time
+				_, err := k.GetPrice(ctx, denom)
+				if err != nil {
+					actionTagForDenom = tags.ActionWhitelist
+				} else {
+					actionTagForDenom = tags.ActionPriceUpdate
+				}
+
+				// Set the price for the asset
+				k.SetPrice(ctx, denom, mod)
+
+				// Emit price update tag
 				resTags = resTags.AppendTags(
 					sdk.NewTags(
-						tags.Action, tags.ActionTallyDropped,
+						tags.Action, actionTagForDenom,
 						tags.Denom, []byte(denom),
+						tags.Price, mod.Bytes(),
 					),
 				)
-
-				dropCounter := k.getDropCounter(ctx, denom)
+			} else {
+				// Not enough votes received
+				dropCounter := k.incrementDropCounter(ctx, denom)
 				if dropCounter.GT(params.DropThreshold) {
 
 					// Too many drops, blacklist currency
 					k.deletePrice(ctx, denom)
-					k.deleteDropCounter(ctx, denom)
+					k.resetDropCounter(ctx, denom)
 
-					resTags = resTags.AppendTags(
-						sdk.NewTags(
-							tags.Action, tags.ActionBlacklist,
-							tags.Denom, []byte(denom),
-						),
-					)
-
+					actionTagForDenom = tags.ActionBlacklist
 				} else {
-					dropCounter = dropCounter.Add(sdk.OneInt())
-					k.setDropCounter(ctx, denom, dropCounter)
+					actionTagForDenom = tags.ActionTallyDropped
 				}
 
-				continue
-			}
-
-			// Get weighted median prices, and faithful respondants
-			mod, loyalVotes := filVotes.tally()
-
-			prices[denom] = mod
-			for _, lv := range loyalVotes {
-				voterAddrStr := lv.Voter.String()
-				rewardees[voterAddrStr] = rewardees[voterAddrStr].Add(lv.Power)
-			}
-
-			// Emit whitelist tag if the price is coming in for the first time
-			_, err := k.GetPrice(ctx, denom)
-			if err != nil {
 				resTags = resTags.AppendTags(
 					sdk.NewTags(
-						tags.Action, tags.ActionWhitelist,
+						tags.Action, actionTagForDenom,
 						tags.Denom, []byte(denom),
 					),
 				)
 			}
-
-			// Set the price for the asset
-			k.SetPrice(ctx, denom, mod)
-
-			// Emit price update tag
-			resTags = resTags.AppendTags(
-				sdk.NewTags(
-					tags.Action, tags.ActionPriceUpdate,
-					tags.Denom, []byte(denom),
-					tags.Price, mod.Bytes(),
-				),
-			)
 		}
 
 		// Clear all votes
@@ -103,12 +100,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) (prices map[string]sdk.Dec, rewardees
 	return
 }
 
-// handlePriceFeedMsg is used by other modules to handle Msg
-func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Result {
+// handleMsgPriceFeed handles a MsgPriceFeed
+func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Result {
 	valset := keeper.valset
 	signer := pfm.Feeder
 
-	// Check the feeder is a validater
+	// Check the feeder is a validator
 	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
 	if val == nil {
 		return ErrNotValidator(DefaultCodespace, pfm.Feeder).Result()
@@ -120,10 +117,9 @@ func handlePriceFeedMsg(ctx sdk.Context, keeper Keeper, pfm PriceFeedMsg) sdk.Re
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Action, tags.ActionVoteSubmitted,
-			tags.Denom, []byte(pfm.Denom),
+			tags.Denom, pfm.Denom,
 			tags.Voter, pfm.Feeder.Bytes(),
-			tags.Power, val.GetBondedTokens(),
+			tags.Power, val.GetBondedTokens().String(),
 			tags.Price, pfm.Price.Bytes(),
 		),
 	}

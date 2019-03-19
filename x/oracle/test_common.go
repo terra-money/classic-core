@@ -1,104 +1,166 @@
 package oracle
 
-// import (
-// 	"terra/types/assets"
-// 	"terra/x/pay"
-// 	"terra/x/treasury"
+import (
+	"terra/types/assets"
 
-// 	//"terra/x/treasury"
-// 	"testing"
-// 	"time"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/cosmos/cosmos-sdk/x/auth"
-// 	"github.com/cosmos/cosmos-sdk/x/mock"
-// 	"github.com/cosmos/cosmos-sdk/x/params"
-// 	"github.com/cosmos/cosmos-sdk/x/staking"
-// 	"github.com/stretchr/testify/require"
-// 	"github.com/tendermint/tendermint/crypto"
+	"testing"
+	"time"
 
-// 	abci "github.com/tendermint/tendermint/abci/types"
-// )
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 
-// // initialize the mock application for this module
-// func getMockApp(t *testing.T, numGenAccs int) (*mock.App, Keeper, staking.Keeper, []sdk.AccAddress, []crypto.PubKey, []crypto.PrivKey) {
-// 	mapp := mock.NewApp()
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/params"
+)
 
-// 	staking.RegisterCodec(mapp.Cdc)
+var (
+	pubKeys = []crypto.PubKey{
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+	}
 
-// 	keyGlobalParams := sdk.NewKVStoreKey("params")
-// 	tkeyGlobalParams := sdk.NewTransientStoreKey("transient_params")
-// 	keystaking := sdk.NewKVStoreKey("staking")
-// 	tkeystaking := sdk.NewTransientStoreKey("transient_staking")
-// 	keyTreasury := sdk.NewKVStoreKey("treasury")
-// 	keyOracle := sdk.NewKVStoreKey("oracle")
-// 	keyBank := sdk.NewKVStoreKey("bank")
-// 	keyFeeCollection := sdk.NewKVStoreKey("fee")
+	addrs = []sdk.AccAddress{
+		sdk.AccAddress(pubKeys[0].Address()),
+		sdk.AccAddress(pubKeys[1].Address()),
+		sdk.AccAddress(pubKeys[2].Address()),
+	}
 
-// 	pk := params.NewKeeper(mapp.Cdc, keyGlobalParams, tkeyGlobalParams)
-// 	fck := auth.NewFeeCollectionKeeper(mapp.Cdc, keyFeeCollection)
-// 	ck := pay.NewKeeper(keyBank, mapp.Cdc, mapp.AccountKeeper, fck)
-// 	sk := staking.NewKeeper(mapp.Cdc, keystaking, tkeystaking, ck, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
-// 	tk := treasury.NewKeeper(keyTreasury, mapp.Cdc, ck, pk.Subspace(treasury.DefaultParamspace))
-// 	keeper := NewKeeper(keyOracle, mapp.Cdc, tk, sk.GetValidatorSet(), pk.Subspace(DefaultParamspace))
+	initAmt = sdk.NewInt(1005)
+	lunaAmt = sdk.NewInt(10)
+)
 
-// 	mapp.Router().AddRoute("oracle", NewHandler(keeper))
+type testInput struct {
+	ctx          sdk.Context
+	accKeeper    auth.AccountKeeper
+	bankKeeper   bank.Keeper
+	oracleKeeper Keeper
+	valset       MockValset
+}
 
-// 	mapp.SetEndBlocker(getEndBlocker(keeper))
-// 	mapp.SetInitChainer(getInitChainer(mapp, keeper, sk))
+func newTestCodec() *codec.Codec {
+	cdc := codec.New()
 
-// 	require.NoError(t, mapp.CompleteSetup(keystaking, tkeystaking,
-// 		keyTreasury,
-// 		keyOracle, keyBank, keyFeeCollection,
-// 		keyGlobalParams, tkeyGlobalParams))
+	bank.RegisterCodec(cdc)
+	RegisterCodec(cdc)
+	auth.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
+	sdk.RegisterCodec(cdc)
+	codec.RegisterCrypto(cdc)
 
-// 	genAccs, addrs, pubKeys, privKeys := mock.CreateGenAccounts(numGenAccs, sdk.Coins{sdk.NewInt64Coin(assets.LunaDenom, 42)})
+	return cdc
+}
 
-// 	mock.SetGenesis(mapp, genAccs)
+func createTestInput(t *testing.T) testInput {
+	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
+	keyParams := sdk.NewKVStoreKey(params.StoreKey)
+	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyOracle := sdk.NewKVStoreKey(StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tkeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
-// 	return mapp, keeper, sk, addrs, pubKeys, privKeys
-// }
+	cdc := newTestCodec()
+	db := dbm.NewMemDB()
+	ms := store.NewCommitMultiStore(db)
+	ctx := sdk.NewContext(ms, abci.Header{Time: time.Now().UTC()}, false, log.NewNopLogger())
 
-// // oracle and staking endblocker
-// func getEndBlocker(keeper Keeper) sdk.EndBlocker {
-// 	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-// 		_, _, tags := EndBlocker(ctx, keeper)
-// 		return abci.ResponseEndBlock{
-// 			Tags: tags,
-// 		}
-// 	}
-// }
+	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
-// // oracle and staking initchainer
-// func getInitChainer(mapp *mock.App, keeper Keeper, stakingKeeper staking.Keeper) sdk.InitChainer {
-// 	return func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-// 		mapp.InitChainer(ctx, req)
+	require.NoError(t, ms.LoadLatestVersion())
 
-// 		stakingGenesis := staking.GenesisState{
-// 			Pool: staking.InitialPool(),
-// 			Params: staking.Params{
-// 				UnbondingTime: 60 * 60 * 24 * 3 * time.Second,
-// 				MaxValidators: 100,
-// 				BondDenom:     assets.LunaDenom,
-// 			},
-// 		}
-// 		stakingGenesis.Pool.NotBondedTokens = sdk.NewInt(100000)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
+	accKeeper := auth.NewAccountKeeper(
+		cdc,
+		keyAcc,
+		paramsKeeper.Subspace(auth.DefaultParamspace),
+		auth.ProtoBaseAccount,
+	)
 
-// 		validators, err := staking.InitGenesis(ctx, stakingKeeper, stakingGenesis)
-// 		if err != nil {
-// 			panic(err)
-// 		}
+	bankKeeper := bank.NewBaseKeeper(
+		accKeeper,
+		paramsKeeper.Subspace(bank.DefaultParamspace),
+		bank.DefaultCodespace,
+	)
 
-// 		InitGenesis(ctx, keeper, GenesisState{
-// 			Params: NewParams(
-// 				sdk.NewInt(1),             // one block
-// 				sdk.NewDecWithPrec(66, 2), // 66%
-// 				sdk.NewInt(10),
-// 			),
-// 		})
+	valset := NewMockValSet()
+	for _, addr := range addrs {
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
+			sdk.NewCoin(assets.SDRDenom, initAmt),
+			sdk.NewCoin(assets.LunaDenom, lunaAmt),
+		})
+		require.NoError(t, err)
 
-// 		return abci.ResponseInitChain{
-// 			Validators: validators,
-// 		}
-// 	}
-// }
+		// Add validators
+		validator := NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		valset.validators = append(valset.validators, validator)
+	}
+
+	oracleKeeper := NewKeeper(
+		cdc, keyOracle, valset,
+		paramsKeeper.Subspace(DefaultParamspace),
+	)
+
+	return testInput{ctx, accKeeper, bankKeeper, oracleKeeper, valset}
+}
+
+type MockValset struct {
+	sdk.ValidatorSet
+
+	validators []MockValidator
+}
+
+type MockValidator struct {
+	sdk.Validator
+
+	address sdk.ValAddress
+	power   sdk.Int
+}
+
+func NewMockValSet() MockValset {
+	return MockValset{
+		validators: []MockValidator{},
+	}
+}
+
+func NewMockValidator(address sdk.ValAddress, power sdk.Int) MockValidator {
+	return MockValidator{
+		address: address,
+		power:   power,
+	}
+}
+
+func (mv MockValidator) GetBondedTokens() sdk.Int {
+	return mv.power
+}
+
+func (mv MockValset) Validator(ctx sdk.Context, valAddress sdk.ValAddress) sdk.Validator {
+	for _, val := range mv.validators {
+		if val.address.Equals(valAddress) {
+			return val
+		}
+	}
+	return nil
+}
+
+func (mv MockValset) TotalBondedTokens(ctx sdk.Context) sdk.Int {
+	rval := sdk.ZeroInt()
+	for _, val := range mv.validators {
+		rval = rval.Add(val.power)
+	}
+	return rval
+}

@@ -6,11 +6,10 @@ import (
 
 // Oracle tags
 var (
-	ActionPriceUpdate   = "price-update"
-	ActionVoteSubmitted = "vote-submitted"
-	ActionTallyDropped  = "tally-dropped"
-	ActionWhitelist     = "blacklist"
-	ActionBlacklist     = "blacklist"
+	ActionPriceUpdate  = "price-update"  // normal cases
+	ActionTallyDropped = "tally-dropped" // emitted when price update is illiquid
+	ActionWhitelist    = "blacklist"     // emitted on virgin listing
+	ActionBlacklist    = "blacklist"     // emitted on delisting
 
 	Action = sdk.TagAction
 	Denom  = "denom"

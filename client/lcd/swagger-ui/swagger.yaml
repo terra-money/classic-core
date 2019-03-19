@@ -2482,11 +2482,11 @@ definitions:
     type: object
     properties:
       FeedMsg:
-        $ref: '#/definitions/PriceFeedMsg'
+        $ref: '#/definitions/MsgPriceFeed'
       Power:
         type: number
         example: '100'
-  PriceFeedMsg:
+  MsgPriceFeed:
     type: object
     properties:
       Denom:

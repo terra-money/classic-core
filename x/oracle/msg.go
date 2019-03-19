@@ -7,28 +7,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const (
-	// Precision of Oracle vote
-	OracleDecPrec = 2
-
-	// RouterKey is they name of the oracle module
-	RouterKey = "oracle"
-)
-
 //-------------------------------------------------
 //-------------------------------------------------
 
-// PriceFeedMsg - struct for voting on payloads. Note that the Price
-// is denominated in Luna. All validators must vote on Terra prices.
-type PriceFeedMsg struct {
+// MsgPriceFeed - struct for voting on the price of Luna denominated in various Terra assets.
+// For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
+// what the price field would be, and if 1213.34 for KRW, same.
+type MsgPriceFeed struct {
 	Denom  string
 	Price  sdk.Dec // in Luna
 	Feeder sdk.AccAddress
 }
 
-// NewPriceFeedMsg creates a PriceFeedMsg instance
-func NewPriceFeedMsg(denom string, price sdk.Dec, feederAddress sdk.AccAddress) PriceFeedMsg {
-	return PriceFeedMsg{
+// NewMsgPriceFeed creates a MsgPriceFeed instance
+func NewMsgPriceFeed(denom string, price sdk.Dec, feederAddress sdk.AccAddress) MsgPriceFeed {
+	return MsgPriceFeed{
 		Denom:  denom,
 		Price:  price,
 		Feeder: feederAddress,
@@ -36,13 +29,13 @@ func NewPriceFeedMsg(denom string, price sdk.Dec, feederAddress sdk.AccAddress) 
 }
 
 // Route Implements Msg
-func (msg PriceFeedMsg) Route() string { return "oracle" }
+func (msg MsgPriceFeed) Route() string { return "oracle" }
 
 // Type implements sdk.Msg
-func (msg PriceFeedMsg) Type() string { return "pricefeed" }
+func (msg MsgPriceFeed) Type() string { return "pricefeed" }
 
 // GetSignBytes implements sdk.Msg
-func (msg PriceFeedMsg) GetSignBytes() []byte {
+func (msg MsgPriceFeed) GetSignBytes() []byte {
 	bz, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -51,12 +44,12 @@ func (msg PriceFeedMsg) GetSignBytes() []byte {
 }
 
 // GetSigners implements sdk.Msg
-func (msg PriceFeedMsg) GetSigners() []sdk.AccAddress {
+func (msg MsgPriceFeed) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg PriceFeedMsg) ValidateBasic() sdk.Error {
+func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
 	if len(msg.Denom) == 0 {
 		return ErrUnknownDenomination(DefaultCodespace, "")
 	}
@@ -72,8 +65,11 @@ func (msg PriceFeedMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// String Implements sdk.Msg
-func (msg PriceFeedMsg) String() string {
-	return fmt.Sprintf("PriceFeedMsg{feeder: %v, denom: %v, price: %v}",
+// String Implements Msg
+func (msg MsgPriceFeed) String() string {
+	return fmt.Sprintf(`MsgPriceFeed
+	feeder:    %s, 
+	denom:     %s, 
+	price:     %s`,
 		msg.Feeder, msg.Denom, msg.Price)
 }

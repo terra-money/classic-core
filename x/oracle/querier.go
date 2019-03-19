@@ -7,7 +7,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// query endpoints supported by the governance Querier
+// query endpoints supported by the oracle Querier
 const (
 	QueryPrice  = "price"
 	QueryVotes  = "votes"
@@ -33,7 +33,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-// nolint: unparam
 func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
 
@@ -46,18 +45,17 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 	return price.Bytes(), nil
 }
 
-// nolint: unparam
 func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denoms := []string{}
 
 	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixPrice)
-	defer iter.Close()
+	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
 	for ; iter.Valid(); iter.Next() {
 		var denom string
 		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &denom)
 		denoms = append(denoms, denom)
 	}
+	iter.Close()
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
@@ -67,13 +65,13 @@ func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 	return bz, nil
 }
 
-// Params for query 'custom/oracle/votes'
+// QueryVoteParams for query 'custom/oracle/votes'
 type QueryVoteParams struct {
 	Voter sdk.AccAddress
 	Denom string
 }
 
-// creates a new instance of QueryVoteParams
+// NewQueryVoteParams creates a new instance of QueryVoteParams
 func NewQueryVoteParams(voter sdk.AccAddress, denom string) QueryVoteParams {
 	return QueryVoteParams{
 		Voter: voter,
@@ -81,7 +79,6 @@ func NewQueryVoteParams(voter sdk.AccAddress, denom string) QueryVoteParams {
 	}
 }
 
-// nolint: unparam
 func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params QueryVoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
@@ -90,7 +87,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	}
 
 	filteredVotes := PriceBallot{}
-	votes := keeper.getVotes(ctx)
+	votes := keeper.collectVotes(ctx)
 
 	for _, ballot := range votes {
 		for _, vote := range ballot {
@@ -108,8 +105,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 					filteredVotes = append(filteredVotes, vote)
 				}
 			} else {
-				myVote := keeper.getVote(ctx, params.Denom, params.Voter)
-				filteredVotes = append(filteredVotes, myVote)
+				filteredVotes = append(filteredVotes, vote)
 			}
 		}
 

@@ -2,77 +2,105 @@ package oracle
 
 import (
 	"terra/types/assets"
+
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestPrice(t *testing.T) {
-	mapp, keeper, _, _, _, _ := getMockApp(t, 5)
-	mapp.BeginBlock(abci.RequestBeginBlock{})
-	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+func TestKeeperPrice(t *testing.T) {
+	input := createTestInput(t)
 
-	// New context. There should be no price.
-	tp, err := keeper.GetPrice(ctx, assets.TerraDenom)
-	require.True(t, tp.Equal(sdk.ZeroDec()) && err != nil)
+	cnyPrice := sdk.NewDecWithPrec(839, precision)
+	gbpPrice := sdk.NewDecWithPrec(4995, precision)
+	krwPrice := sdk.NewDecWithPrec(2838, precision)
+	lunaPrice := sdk.NewDecWithPrec(3282384, precision)
 
-	terraPrice := sdk.NewDecWithPrec(166, 2)
-	keeper.setPrice(ctx, assets.TerraDenom, terraPrice)
+	// Set prices
+	input.oracleKeeper.SetPrice(input.ctx, assets.CNYDenom, cnyPrice)
+	price, err := input.oracleKeeper.GetPrice(input.ctx, assets.CNYDenom)
+	require.Nil(t, err)
+	require.Equal(t, cnyPrice, price)
 
-	tp, err = keeper.GetPrice(ctx, assets.TerraDenom)
-	require.True(t, tp.Equal(terraPrice) && err == nil)
+	input.oracleKeeper.SetPrice(input.ctx, assets.GBPDenom, gbpPrice)
+	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.GBPDenom)
+	require.Nil(t, err)
+	require.Equal(t, gbpPrice, price)
+
+	input.oracleKeeper.SetPrice(input.ctx, assets.KRWDenom, krwPrice)
+	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.KRWDenom)
+	require.Nil(t, err)
+	require.Equal(t, krwPrice, price)
+
+	input.oracleKeeper.SetPrice(input.ctx, assets.LunaDenom, lunaPrice)
+	price, _ = input.oracleKeeper.GetPrice(input.ctx, assets.LunaDenom)
+	require.Equal(t, sdk.OneDec(), price)
 }
 
-func TestVotes(t *testing.T) {
-	mapp, keeper, _, addrs, _, _ := getMockApp(t, 3)
-	mapp.BeginBlock(abci.RequestBeginBlock{})
-	ctx := mapp.BaseApp.NewContext(false, abci.Header{})
+func TestKeeperVote(t *testing.T) {
+	input := createTestInput(t)
 
-	votes := []PriceVote{}
-	for i := 0; i < 3; i++ {
-		vote := NewPriceVote(
-			sdk.NewDecWithPrec(int64(i)+1, 0),
-			assets.TerraDenom,
-			sdk.OneInt(),
-			addrs[i],
-		)
-		votes = append(votes, vote)
+	// Test addvote
+	vote := NewPriceVote(sdk.OneDec(), assets.SDRDenom, sdk.NewInt(3458), addrs[0])
+	input.oracleKeeper.addVote(input.ctx, vote)
+
+	// Test getVote
+	voteQuery, err := input.oracleKeeper.getVote(input.ctx, assets.SDRDenom, addrs[0])
+	require.Nil(t, err)
+	require.Equal(t, vote, voteQuery)
+
+	// Test iteratevotes
+	input.oracleKeeper.iterateVotes(input.ctx, func(vote PriceVote) bool {
+		require.Equal(t, vote, voteQuery)
+		return true
+	})
+
+	// Test collectvotes
+	votes := input.oracleKeeper.collectVotes(input.ctx)
+	require.True(t, len(votes) == 1)
+	require.True(t, len(votes[assets.SDRDenom]) == 1)
+	require.Equal(t, vote, votes[assets.SDRDenom][0])
+
+	// Test deletevote
+	input.oracleKeeper.deleteVote(input.ctx, vote)
+	_, err = input.oracleKeeper.getVote(input.ctx, assets.SDRDenom, addrs[0])
+	require.NotNil(t, err)
+}
+
+func TestKeeperDropCounter(t *testing.T) {
+	input := createTestInput(t)
+
+	for i := 1; i < 40; i++ {
+		counter := input.oracleKeeper.incrementDropCounter(input.ctx, assets.SDRDenom)
+		require.Equal(t, sdk.NewInt(int64(i)), counter)
 	}
 
-	keeper.addVote(ctx, votes[0])
+	input.oracleKeeper.resetDropCounter(input.ctx, assets.SDRDenom)
+	store := input.ctx.KVStore(input.oracleKeeper.key)
+	b := store.Get(keyDropCounter(assets.SDRDenom))
+	require.Nil(t, b)
+}
 
-	// Should be one vote in total
-	terraVotes := keeper.getVotes(ctx)[assets.TerraDenom]
-	require.Equal(t, 1, len(votes))
+func TestKeeperParams(t *testing.T) {
+	input := createTestInput(t)
 
-	// Add the same vote; Should still be one vote in total
-	keeper.addVote(ctx, votes[0])
-	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
-	require.Equal(t, 1, len(votes))
+	// Test default params setting
+	input.oracleKeeper.SetParams(input.ctx, DefaultParams())
+	params := input.oracleKeeper.GetParams(input.ctx)
+	require.NotNil(t, params)
 
-	// Zero votes for an unrelated denom
-	krwVotes := keeper.getVotes(ctx)[assets.KRWDenom]
-	require.Equal(t, 0, len(krwVotes))
+	// Test custom params setting
+	votePeriod := sdk.NewInt(10)
+	voteThreshold := sdk.NewDecWithPrec(1, 10)
+	dropThreshold := sdk.NewInt(10)
 
-	// Should now be three votes in total
-	keeper.addVote(ctx, votes[1])
-	keeper.addVote(ctx, votes[2])
-	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
-	require.Equal(t, 3, len(terraVotes))
+	// Should really test validateParams, but skipping because obvious
+	newParams := NewParams(votePeriod, voteThreshold, dropThreshold)
+	input.oracleKeeper.SetParams(input.ctx, newParams)
 
-	// Should now be two votes
-	keeper.deleteVote(ctx, votes[0])
-	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
-	require.Equal(t, 2, len(votes))
-
-	// Should now be zero votes
-	deleter := func(vote PriceVote) (stop bool) {
-		keeper.deleteVote(ctx, vote)
-		return false
-	}
-	keeper.iterateVotes(ctx, deleter)
-	terraVotes = keeper.getVotes(ctx)[assets.TerraDenom]
-	require.Equal(t, 0, len(votes))
+	storedParams := input.oracleKeeper.GetParams(input.ctx)
+	require.NotNil(t, storedParams)
+	require.Equal(t, newParams, storedParams)
 }

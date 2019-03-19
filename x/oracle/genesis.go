@@ -9,20 +9,21 @@ type GenesisState struct {
 	Params Params `json:"params"` // oracle params
 }
 
+// NewGenesisState creates new oracle GenesisState
 func NewGenesisState(params Params) GenesisState {
 	return GenesisState{
 		Params: params,
 	}
 }
 
-// get raw genesis raw message for testing
+// DefaultGenesisState get raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
 		Params: DefaultParams(),
 	}
 }
 
-// new oracle genesis
+// InitGenesis creates new oracle genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 }

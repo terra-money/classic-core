@@ -28,7 +28,7 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Use:   "vote [denom] [price]",
 		Short: "Submit an oracle vote for the price of Luna",
 		Long: strings.TrimSpace(`
-Submit an oracle vote for the price of Luna. Reference currency denom and price should be given as input. 
+Submit an oracle vote for the price of Luna denominated in the input denom.
 
 $ terracli oracle vote --denom="krw" --price="8890.12"
 
@@ -48,7 +48,7 @@ where "krw" is the denominating currency, and "8890.12" is the price of Luna in 
 			price := viper.GetFloat64(flagPrice)
 			cleanPrice := sdk.NewDecWithPrec(int64(math.Round(price*100)), 2)
 
-			msg := oracle.NewPriceFeedMsg(denom, cleanPrice, voterAddress)
+			msg := oracle.NewMsgPriceFeed(denom, cleanPrice, voterAddress)
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -127,7 +127,7 @@ $ terracli query oracle active
 	return cmd
 }
 
-// GetCmdQueryVote implements the query vote command.
+// GetCmdQueryVotes implements the query vote command.
 func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "votes [denom] [voterAddress]",
@@ -172,7 +172,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom [usd]
 				return err
 			}
 
-			if len(matchingVotes) == 0 {
+			if matchingVotes.Len() == 0 {
 				return fmt.Errorf("No matching votes found")
 			}
 

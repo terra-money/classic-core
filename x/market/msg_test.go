@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPriceFeedMsg(t *testing.T) {
+func TestMsgPriceFeed(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 	tests := []struct {
 		offerCoin  sdk.Coin

@@ -8,9 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-// StoreKey is string representation of the store key for oracle
-const StoreKey = "oracle"
-
 // Keeper of the oracle store
 type Keeper struct {
 	cdc *codec.Codec
@@ -20,23 +17,27 @@ type Keeper struct {
 	paramSpace params.Subspace
 }
 
-// NewKeeper constructs a new keeper
+// NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
 
 		valset:     valset,
-		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
+		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }
 
 //-----------------------------------
 // Votes logic
 
-func (k Keeper) getVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
+// collectVotes collects all oracle votes for the period, categorized by the votes' denom parameter
+func (k Keeper) collectVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
+	votes = map[string]PriceBallot{}
 	handler := func(vote PriceVote) (stop bool) {
-		votes[vote.Denom] = append(votes[vote.Denom], vote)
+		ballot := votes[vote.Denom]
+		ballot = append(ballot, vote)
+		votes[vote.Denom] = ballot
 		return false
 	}
 	k.iterateVotes(ctx, handler)
@@ -44,10 +45,10 @@ func (k Keeper) getVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
 	return
 }
 
-// Iterate over votes
+// Iterate over votes in the store
 func (k Keeper) iterateVotes(ctx sdk.Context, handler func(vote PriceVote) (stop bool)) {
 	store := ctx.KVStore(k.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixVote)
+	iter := sdk.KVStorePrefixIterator(store, prefixVote)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var vote PriceVote
@@ -58,72 +59,68 @@ func (k Keeper) iterateVotes(ctx sdk.Context, handler func(vote PriceVote) (stop
 	}
 }
 
-func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.AccAddress) (vote PriceVote) {
+// Retrieves a vote from the store
+func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.AccAddress) (vote PriceVote, err sdk.Error) {
 	store := ctx.KVStore(k.key)
-	b := store.Get(KeyVote(denom, voter))
+	b := store.Get(keyVote(denom, voter))
 	if b == nil {
+		err = ErrNoVote(DefaultCodespace, voter, denom)
 		return
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &vote)
 	return
 }
 
+// Add a vote to the store
 func (k Keeper) addVote(ctx sdk.Context, vote PriceVote) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(vote)
-	store.Set(KeyVote(vote.Denom, vote.Voter), bz)
+	store.Set(keyVote(vote.Denom, vote.Voter), bz)
 }
 
+// Delete a vote from the store
 func (k Keeper) deleteVote(ctx sdk.Context, vote PriceVote) {
 	store := ctx.KVStore(k.key)
-	store.Delete(KeyVote(vote.Denom, vote.Voter))
+	store.Delete(keyVote(vote.Denom, vote.Voter))
 }
 
 //-----------------------------------
 // Drop counter logic
 
-func (k Keeper) setDropCounter(ctx sdk.Context, denom string, counter sdk.Int) {
+// Increment drop counter. Called when an oracle vote is illiquid.
+func (k Keeper) incrementDropCounter(ctx sdk.Context, denom string) (counter sdk.Int) {
 	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(counter)
-	store.Set(KeyDropCounter(denom), bz)
-}
-
-func (k Keeper) deleteDropCounter(ctx sdk.Context, denom string) {
-	store := ctx.KVStore(k.key)
-	store.Delete(KeyDropCounter(denom))
-}
-
-func (k Keeper) getDropCounter(ctx sdk.Context, denom string) (counter sdk.Int) {
-	store := ctx.KVStore(k.key)
-	b := store.Get(KeyDropCounter(denom))
+	b := store.Get(keyDropCounter(denom))
 	if b == nil {
-		return sdk.ZeroInt()
+		counter = sdk.ZeroInt()
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &counter)
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &counter)
+
+	// Increment counter
+	counter = counter.Add(sdk.OneInt())
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(counter)
+	store.Set(keyDropCounter(denom), bz)
 	return
+}
+
+// resets the drop counter.
+func (k Keeper) resetDropCounter(ctx sdk.Context, denom string) {
+	store := ctx.KVStore(k.key)
+	store.Delete(keyDropCounter(denom))
 }
 
 //-----------------------------------
 // Price logic
 
-func (k Keeper) SetPrice(ctx sdk.Context, denom string, price sdk.Dec) {
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(price)
-	store.Set(KeyPrice(denom), bz)
-}
-
-func (k Keeper) deletePrice(ctx sdk.Context, denom string) {
-	store := ctx.KVStore(k.key)
-	store.Delete(KeyPrice(denom))
-}
-
+// GetPrice gets the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) GetPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error) {
 	if denom == assets.LunaDenom {
 		return sdk.OneDec(), nil
 	}
 
 	store := ctx.KVStore(k.key)
-	b := store.Get(KeyPrice(denom))
+	b := store.Get(keyPrice(denom))
 	if b == nil {
 		return sdk.ZeroDec(), ErrUnknownDenomination(DefaultCodespace, denom)
 	}
@@ -131,17 +128,30 @@ func (k Keeper) GetPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.
 	return
 }
 
-//______________________________________________________________________
+// SetPrice sets the consensus exchange rate of Luna denominated in the denom asset to the store.
+func (k Keeper) SetPrice(ctx sdk.Context, denom string, price sdk.Dec) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(price)
+	store.Set(keyPrice(denom), bz)
+}
+
+// deletePrice gets the consensus exchange rate of Luna denominated in the denom asset from the store.
+func (k Keeper) deletePrice(ctx sdk.Context, denom string) {
+	store := ctx.KVStore(k.key)
+	store.Delete(keyPrice(denom))
+}
+
+//-----------------------------------
 // Params logic
 
-// GetParams get oralce params from the global param store
+// GetParams get oracle params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
 	var params Params
-	k.paramSpace.Get(ctx, ParamStoreKeyParams, &params)
+	k.paramSpace.Get(ctx, paramStoreKeyParams, &params)
 	return params
 }
 
 // SetParams set oracle params from the global param store
 func (k Keeper) SetParams(ctx sdk.Context, params Params) {
-	k.paramSpace.Set(ctx, ParamStoreKeyParams, &params)
+	k.paramSpace.Set(ctx, paramStoreKeyParams, &params)
 }
