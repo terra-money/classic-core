@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"terra/types"
 	"terra/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,83 +20,107 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
+// Get all active oracle asset denoms from the store
+func getActiveDenoms(ctx sdk.Context, k Keeper) (denoms []string) {
+	denoms = []string{}
+
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
+	for ; iter.Valid(); iter.Next() {
+		n := len(prefixPrice) + 1
+		denom := string(iter.Key()[n:])
+		denoms = append(denoms, denom)
+	}
+	iter.Close()
+
+	return
+}
+
+// Drop the ballot. If the ballot drops params.DropThreshold times sequentially, then blacklist
+func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags {
+	actionTag := tags.ActionTallyDropped
+
+	// Not enough votes received
+	dropCounter := k.incrementDropCounter(ctx, denom)
+	if dropCounter.GTE(params.DropThreshold) {
+
+		// Too many drops, blacklist currency
+		k.deletePrice(ctx, denom)
+		k.resetDropCounter(ctx, denom)
+
+		actionTag = tags.ActionBlacklist
+	}
+
+	return sdk.NewTags(
+		tags.Action, actionTag,
+		tags.Denom, []byte(denom),
+	)
+}
+
+// ballot for the asset is passing the threshold amount of voting power
+func ballotIsPassing(totalPower sdk.Int, ballot PriceBallot, params Params) bool {
+	thresholdVotes := params.VoteThreshold.MulInt(totalPower).RoundInt()
+	return ballot.TotalPower().GTE(thresholdVotes)
+}
+
+// at the block height for a tally
+func isTimeForTally(ctx sdk.Context, params Params) bool {
+	return sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt())
+}
+
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (rewardablePower sdk.Int, rewardees map[string]sdk.Int, resTags sdk.Tags) {
+func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
+
+	if !isTimeForTally(ctx, params) {
+		return
+	}
+
+	rewardees = types.ClaimPool{}
+	actives := getActiveDenoms(ctx, k)
 	votes := k.collectVotes(ctx)
 
-	rewardablePower = sdk.ZeroInt()
-	rewardees = map[string]sdk.Int{}
+	// Iterate through active oracle assets and drop assets that have no votes received.
+	for _, activeDenom := range actives {
+		if _, found := votes[activeDenom]; !found {
+			dropBallot(ctx, k, activeDenom, params)
+		}
+	}
 
-	// Tally vote for oracle prices
-	if sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt()) {
-		for denom, filteredVotes := range votes {
+	// Iterate through votes and update prices; drop if not enough votes have been achieved.
+	for denom, filteredVotes := range votes {
+		if ballotIsPassing(k.valset.TotalBondedTokens(ctx), filteredVotes, params) {
+			// Get weighted median prices, and faithful respondants
+			mod, ballotWinners := filteredVotes.tally()
 
-			var actionTagForDenom string
-			votePower := filteredVotes.TotalPower()
-			rewardablePower = rewardablePower.Add(votePower)
+			// Append ballot winners for the denom
+			rewardees = append(rewardees, ballotWinners...)
 
-			thresholdVotes := params.VoteThreshold.MulInt(k.valset.TotalBondedTokens(ctx)).TruncateInt()
-
-			// Cleared the vote
-			if votePower.GTE(thresholdVotes) {
-				// Get weighted median prices, and faithful respondants
-				mod, rewardableVotes := filteredVotes.tally()
-
-				for _, rewardableVote := range rewardableVotes {
-					voterStr := rewardableVote.Voter.String()
-					if val, ok := rewardees[voterStr]; ok {
-						rewardees[voterStr] = val.Add(rewardableVote.Power)
-					} else {
-						rewardees[voterStr] = rewardableVote.Power
-					}
-				}
-
-				// Emit whitelist tag if the price is coming in for the first time
-				_, err := k.GetPrice(ctx, denom)
-				if err != nil {
-					actionTagForDenom = tags.ActionWhitelist
-				} else {
-					actionTagForDenom = tags.ActionPriceUpdate
-				}
-
-				// Set the price for the asset
-				k.SetPrice(ctx, denom, mod)
-
-				// Emit price update tag
-				resTags = resTags.AppendTags(
-					sdk.NewTags(
-						tags.Action, actionTagForDenom,
-						tags.Denom, []byte(denom),
-						tags.Price, mod.Bytes(),
-					),
-				)
-			} else {
-				// Not enough votes received
-				dropCounter := k.incrementDropCounter(ctx, denom)
-				if dropCounter.GT(params.DropThreshold) {
-
-					// Too many drops, blacklist currency
-					k.deletePrice(ctx, denom)
-					k.resetDropCounter(ctx, denom)
-
-					actionTagForDenom = tags.ActionBlacklist
-				} else {
-					actionTagForDenom = tags.ActionTallyDropped
-				}
-
-				resTags = resTags.AppendTags(
-					sdk.NewTags(
-						tags.Action, actionTagForDenom,
-						tags.Denom, []byte(denom),
-					),
-				)
+			actionTag := tags.ActionPriceUpdate
+			if _, err := k.GetPrice(ctx, denom); err != nil {
+				actionTag = tags.ActionWhitelist
 			}
+
+			// Set price to the store
+			k.SetPrice(ctx, denom, mod)
+
+			resTags = resTags.AppendTags(
+				sdk.NewTags(
+					tags.Action, actionTag,
+					tags.Denom, []byte(denom),
+					tags.Price, mod.Bytes(),
+				),
+			)
+		} else {
+			dropBallot(ctx, k, denom, params)
 		}
 
 		// Clear all votes
 		k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })
 	}
+
+	// Sort rewardees before we return
+	rewardees.Sort()
 
 	return
 }

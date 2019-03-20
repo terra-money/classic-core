@@ -64,13 +64,13 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context) (res sdk.Dec) {
 //------------------------------------
 //------------------------------------
 
-func (k Keeper) addClaim(ctx sdk.Context, claim Claim) {
+func (k Keeper) addClaim(ctx sdk.Context, claim types.Claim) {
 	store := ctx.KVStore(k.key)
 	claimKey := KeyClaim(claim.ID())
 
 	// If the recipient has an existing claim in the same class, add to the previous claim
 	if bz := store.Get(claimKey); bz != nil {
-		var prevClaim Claim
+		var prevClaim types.Claim
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, prevClaim)
 		claim.weight = claim.weight.Add(prevClaim.weight)
 	}
@@ -79,11 +79,11 @@ func (k Keeper) addClaim(ctx sdk.Context, claim Claim) {
 	store.Set(claimKey, bz)
 }
 
-func (k Keeper) iterateClaims(ctx sdk.Context, handler func(Claim) (stop bool)) {
+func (k Keeper) iterateClaims(ctx sdk.Context, handler func(types.Claim) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	claimIter := sdk.KVStorePrefixIterator(store, PrefixClaim)
 	for ; claimIter.Valid(); claimIter.Next() {
-		var claim Claim
+		var claim types.Claim
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(claimIter.Value(), &claim)
 
 		if handler(claim) {
@@ -93,8 +93,8 @@ func (k Keeper) iterateClaims(ctx sdk.Context, handler func(Claim) (stop bool)) 
 	claimIter.Close()
 }
 
-func (k Keeper) sumClaims(ctx sdk.Context, class ClaimClass) (weightSumForClass sdk.Int, claimsForClass []Claim) {
-	k.iterateClaims(ctx, func(claim Claim) (stop bool) {
+func (k Keeper) sumClaims(ctx sdk.Context, class ClaimClass) (weightSumForClass sdk.Int, claimsForClass []types.Claim) {
+	k.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		if claim.class == class {
 			weightSumForClass = weightSumForClass.Add(claim.weight)
 			claimsForClass = append(claimsForClass, claim)
@@ -106,7 +106,7 @@ func (k Keeper) sumClaims(ctx sdk.Context, class ClaimClass) (weightSumForClass 
 
 func (k Keeper) clearClaims(ctx sdk.Context) {
 	store := ctx.KVStore(k.key)
-	k.iterateClaims(ctx, func(claim Claim) (stop bool) {
+	k.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		claimKey := KeyClaim(claim.ID())
 		store.Delete(claimKey)
 		return false

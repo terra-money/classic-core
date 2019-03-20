@@ -277,7 +277,7 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 
-	_, rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
 	app.treasuryKeeper.ProcessClaims(ctx, treasury.OracleClaimClass, rewardees)
 

@@ -37,29 +37,20 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 	denom := path[0]
 
 	price, err := keeper.GetPrice(ctx, denom)
-
 	if err != nil {
 		return []byte{}, ErrUnknownDenomination(DefaultCodespace, denom)
 	}
 
-	return price.Bytes(), nil
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(price)
+	return bz, nil
 }
 
 func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	denoms := []string{}
-
-	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
-	for ; iter.Valid(); iter.Next() {
-		var denom string
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &denom)
-		denoms = append(denoms, denom)
-	}
-	iter.Close()
+	denoms := getActiveDenoms(ctx, keeper)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
-		panic("could not marshal result to JSON")
+		return []byte{}, sdk.ErrInternal("could not marshal result to JSON")
 	}
 
 	return bz, nil
@@ -86,7 +77,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := PriceBallot{}
+	filteredVotes := []PriceVote{}
 	votes := keeper.collectVotes(ctx)
 
 	for _, ballot := range votes {

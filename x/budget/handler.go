@@ -3,6 +3,7 @@ package budget
 import (
 	"encoding/binary"
 	"reflect"
+	"terra/types"
 	"terra/types/assets"
 	"time"
 
@@ -40,7 +41,7 @@ func calculateThreshold(ctx sdk.Context, k Keeper, threshold sdk.Dec) sdk.Int {
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (claims map[string]sdk.Int, resTags sdk.Tags) {
+func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
 
 	// Clean out expired programs
@@ -62,24 +63,24 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims map[string]sdk.Int, resTags s
 	})
 
 	// Add claims to re-weight claims in accordance with voting results
-	if ctx.BlockHeight()%int64(k.GetParams(ctx).VotePeriod) == 0 {
+	// if ctx.BlockHeight()%int64(k.GetParams(ctx).VotePeriod) == 0 {
 
-		k.IterateActivePrograms(ctx, func(programID uint64, program Program) (stop bool) {
-			claimantAddr := program.Executor.String()
-			claims[claimantAddr] = claims[claimantAddr].Add(program.Tally)
+	// 	k.IterateActivePrograms(ctx, func(programID uint64, program Program) (stop bool) {
+	// 		claimantAddr := program.Executor.String()
+	// 		claims[claimantAddr] = claims[claimantAddr].Add(program.Tally)
 
-			resTags = resTags.AppendTags(
-				sdk.NewTags(
-					tags.Action, tags.ActionProgramGranted,
-					tags.ProgramID, string(programID),
-					tags.Submitter, program.Submitter.String(),
-					tags.Executor, program.Executor.String(),
-					tags.Weight, program.Tally.String(),
-				),
-			)
-			return false
-		})
-	}
+	// 		resTags = resTags.AppendTags(
+	// 			sdk.NewTags(
+	// 				tags.Action, tags.ActionProgramGranted,
+	// 				tags.ProgramID, string(programID),
+	// 				tags.Submitter, program.Submitter.String(),
+	// 				tags.Executor, program.Executor.String(),
+	// 				tags.Weight, program.Tally.String(),
+	// 			),
+	// 		)
+	// 		return false
+	// 	})
+	// }
 
 	return
 }

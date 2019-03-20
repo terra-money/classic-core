@@ -102,8 +102,8 @@ func queryTreasuryBalance(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 }
 
 func queryActiveClaims(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	claims := []Claim{}
-	keeper.iterateClaims(ctx, func(claim Claim) (stop bool) {
+	claims := []types.Claim{}
+	keeper.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		claims = append(claims, claim)
 		return false
 	})

@@ -104,3 +104,52 @@ func TestPBWeightedMedian(t *testing.T) {
 		require.Equal(t, tc.median, pb.weightedMedian())
 	}
 }
+
+func TestPBTally(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(4, sdk.Coins{})
+	tests := []struct {
+		inputs    []float64
+		weights   []int64
+		rewardees []sdk.AccAddress
+	}{
+		{
+			// Supermajority one number
+			[]float64{1.0, 2.0, 10.0, 100000.0},
+			[]int64{1, 1, 100, 1},
+			[]sdk.AccAddress{addrs[2]},
+		},
+		{
+			// Tie votes
+			[]float64{1.0, 2.0, 3.0, 4.0},
+			[]int64{1, 100, 100, 1},
+			[]sdk.AccAddress{addrs[1]},
+		},
+		{
+			// No votes
+			[]float64{},
+			[]int64{},
+			[]sdk.AccAddress{},
+		},
+
+		{
+			// Lots of random votes
+			[]float64{1.0, 78.48, 78.11, 79.0},
+			[]int64{1, 51, 79, 33},
+			[]sdk.AccAddress{addrs[1], addrs[2], addrs[3]},
+		},
+	}
+
+	for _, tc := range tests {
+		pb := PriceBallot{}
+		for i, input := range tc.inputs {
+			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*100), 2), "",
+				sdk.NewInt(tc.weights[i]), addrs[i])
+			pb = append(pb, vote)
+		}
+
+		_, rewardees := pb.tally()
+		require.Equal(t, len(tc.rewardees), len(rewardees))
+	}
+
+	panic(nil)
+}

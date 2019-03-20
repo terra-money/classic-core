@@ -8,7 +8,7 @@ var msgCdc = codec.New()
 
 // Register concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(&Claim{}, "treasury/Claim", nil)
+	cdc.RegisterConcrete(&types.Claim{}, "treasury/types.Claim", nil)
 }
 
 func init() {

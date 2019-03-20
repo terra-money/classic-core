@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"terra/types"
 
 	"gonum.org/v1/gonum/stat"
 
@@ -79,20 +80,28 @@ func (pb PriceBallot) stdDev() sdk.Dec {
 
 // Calculates the median and returns the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median.
-func (pb PriceBallot) tally() (weightedMedian sdk.Dec, rewardableVotes PriceBallot) {
+func (pb PriceBallot) tally() (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}
 
-	rewardableVotes = PriceBallot{}
+	ballotWinners = types.ClaimPool{}
 	weightedMedian = pb.weightedMedian()
 
-	// Limit oracle competition to 0.001
-	stdDev := sdk.MaxDec(pb.stdDev(), sdk.NewDecWithPrec(1, 3))
+	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
+	stdDev := pb.stdDev()
+
+	if stdDev.LT(maxSpread) {
+		maxSpread = stdDev
+	}
 
 	for _, vote := range pb {
-		if vote.Price.GTE(weightedMedian.Sub(stdDev)) && vote.Price.LTE(weightedMedian.Add(stdDev)) {
-			rewardableVotes = append(rewardableVotes, vote)
+		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
+			ballotWinners = append(ballotWinners, types.Claim{
+				Recipient: vote.Voter,
+				Weight:    vote.Power,
+				Class:     types.OracleClaimClass,
+			})
 		}
 	}
 

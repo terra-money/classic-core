@@ -1,6 +1,7 @@
 package treasury
 
 import (
+	"terra/types"
 	"terra/types/assets"
 	"terra/types/util"
 	"terra/x/treasury/tags"
@@ -145,19 +146,13 @@ func mrl(ctx sdk.Context, k Keeper, epochs sdk.Int) (res sdk.Dec) {
 }
 
 // AddClaim adds a funding claim to the treasury. Settled around once a month.
-func (k Keeper) ProcessClaims(ctx sdk.Context, class ClaimClass, rewardees map[string]sdk.Int) {
-	for rAddrStr, rewardWeight := range rewardees {
-		addr, err := sdk.AccAddressFromBech32(rAddrStr)
-		if err != nil {
-			continue
-		}
-
-		newClaim := NewClaim(class, rewardWeight, addr)
-		k.addClaim(ctx, newClaim)
+func (k Keeper) ProcessClaims(ctx sdk.Context, claims []types.Claim) {
+	for _, claim := range claims {
+		k.addClaim(ctx, claim)
 	}
 }
 
-func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []Claim) (classTags sdk.Tags) {
+func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []types.Claim) (classTags sdk.Tags) {
 	store := ctx.KVStore(k.key)
 	for _, claim := range cClaims {
 		claimWeightInDec := sdk.NewDecFromInt(claim.weight)
