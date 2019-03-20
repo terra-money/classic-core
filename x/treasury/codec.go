@@ -2,6 +2,7 @@ package treasury
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"terra/types"
 )
 
 var msgCdc = codec.New()
