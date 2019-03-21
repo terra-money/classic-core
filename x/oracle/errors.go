@@ -19,7 +19,7 @@ const (
 // ----------------------------------------
 // Error constructors
 
-// ErrUnknownDenomination called when the signer of a Msg is not a validator
+// ErrUnknownDenomination called when the denom is not known
 func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeUnknownDenom, fmt.Sprintf("The denom is not known: %s", denom))
 }

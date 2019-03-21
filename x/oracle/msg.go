@@ -54,7 +54,7 @@ func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
 		return ErrUnknownDenomination(DefaultCodespace, "")
 	}
 
-	if len(msg.Feeder) == 0 {
+	if msg.Feeder.Empty() {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 

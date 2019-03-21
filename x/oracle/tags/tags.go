@@ -8,7 +8,7 @@ import (
 var (
 	ActionPriceUpdate  = "price-update"  // normal cases
 	ActionTallyDropped = "tally-dropped" // emitted when price update is illiquid
-	ActionWhitelist    = "blacklist"     // emitted on virgin listing
+	ActionWhitelist    = "whitelist"     // emitted on virgin listing
 	ActionBlacklist    = "blacklist"     // emitted on delisting
 
 	Action = sdk.TagAction

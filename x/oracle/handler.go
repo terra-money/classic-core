@@ -103,6 +103,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 
 			// Set price to the store
 			k.SetPrice(ctx, denom, mod)
+			// Reset drop counter for the passed ballot
+			k.resetDropCounter(ctx, denom)
 
 			resTags = resTags.AppendTags(
 				sdk.NewTags(

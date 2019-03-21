@@ -35,9 +35,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, para
 func (k Keeper) collectVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
 	votes = map[string]PriceBallot{}
 	handler := func(vote PriceVote) (stop bool) {
-		ballot := votes[vote.Denom]
-		ballot = append(ballot, vote)
-		votes[vote.Denom] = ballot
+		votes[vote.Denom] = append(votes[vote.Denom], vote)
 		return false
 	}
 	k.iterateVotes(ctx, handler)
