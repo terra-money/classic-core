@@ -4,7 +4,6 @@
 // Taxes are of the fomula: min(principal * taxRate, taxCap).
 // TaxCap and taxRate are stored by the treasury module.
 // Should transactions fail midway, taxes are still paid and non-refundable.
-
 package pay
 
 import (
