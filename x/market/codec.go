@@ -6,7 +6,7 @@ import (
 
 var msgCdc = codec.New()
 
-// Register concrete types on codec codec
+// RegisterCodec concretes types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSwap{}, "market/MsgSwap", nil)
 }
