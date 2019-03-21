@@ -8,10 +8,14 @@ import (
 
 // nolint
 var (
-	prefixIssuance     = []byte("issuance")
-	keySeignioragePool = []byte("seigniorage_pool")
+	prefixIssuance        = []byte("issuance")
+	prefixSeignioragePool = []byte("seigniorage_pool")
 )
 
 func keyIssuance(denom string, epoch sdk.Int) []byte {
 	return []byte(fmt.Sprintf("%s:%s:%s", prefixIssuance, denom, epoch))
+}
+
+func keySeignioragePool(epoch sdk.Int) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixSeignioragePool, epoch))
 }

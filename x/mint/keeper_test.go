@@ -162,15 +162,14 @@ func TestKeeperMintBurn(t *testing.T) {
 func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
-	for i := 0; i < 100; i++ {
-		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(10))
+	for e := 0; e < 3; e++ {
+		input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * int64(e))
+		for i := 0; i < 100; i++ {
+			input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(int64(10*(e+1))))
+		}
 	}
 
-	peekedSeigniorage := input.mintKeeper.PeekSeigniorage(input.ctx)
-	claimedSeigniorage := input.mintKeeper.ClaimSeigniorage(input.ctx)
-	postClaimSeigniorage := input.mintKeeper.PeekSeigniorage(input.ctx)
-
-	require.Equal(t, peekedSeigniorage, sdk.NewInt(1000))
-	require.Equal(t, peekedSeigniorage, claimedSeigniorage)
-	require.Equal(t, postClaimSeigniorage, sdk.ZeroInt())
+	require.Equal(t, sdk.NewInt(1000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(0)))
+	require.Equal(t, sdk.NewInt(2000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(1)))
+	require.Equal(t, sdk.NewInt(3000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(2)))
 }

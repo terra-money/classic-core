@@ -11,3 +11,7 @@ func GetEpoch(ctx sdk.Context) sdk.Int {
 	curEpoch := ctx.BlockHeight() / blocksPerEpoch
 	return sdk.NewInt(curEpoch)
 }
+
+func GetBlocksPerEpoch() int64 {
+	return blocksPerEpoch
+}

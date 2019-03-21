@@ -6,10 +6,8 @@ import (
 
 // Treasury tags
 var (
-	ActionSettle            = "settle"
-	ActionReward            = "reward"
-	ActionTaxUpdate         = "tax-update"
-	ActionMinerRewardUpdate = "miner-reward-update"
+	ActionSettle       = "settle"
+	ActionPolicyUpdate = "policy-update"
 
 	Action      = sdk.TagAction
 	Denom       = "denom"

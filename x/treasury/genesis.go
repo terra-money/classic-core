@@ -1,41 +1,70 @@
 package treasury
 
 import (
+	"fmt"
+	"terra/types/assets"
+	"terra/types/util"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GenesisState - all treasury state that must be provided at genesis
 type GenesisState struct {
 	Params Params `json:"params"` // treasury params
+
+	GenesisTaxRate      sdk.Dec `json:"tax_rate"`
+	GenesisRewardWeight sdk.Dec `json:"reward_weight"`
 }
 
-func NewGenesisState(params Params /*, genesisIssuance map[string]sdk.Int*/) GenesisState {
+func NewGenesisState(params Params, taxRate, rewardWeight sdk.Dec) GenesisState {
 	return GenesisState{
-		Params: params,
+		Params:              params,
+		GenesisTaxRate:      taxRate,
+		GenesisRewardWeight: rewardWeight,
 	}
 }
 
-// get raw genesis raw message for testing
+// get raw genesis message for testing
 func DefaultGenesisState() GenesisState {
+	params := DefaultParams()
 	return GenesisState{
-		Params: DefaultParams(),
+		Params:              params,
+		GenesisTaxRate:      sdk.NewDecWithPrec(1, 3), // 0.1%
+		GenesisRewardWeight: sdk.NewDecWithPrec(5, 2), // 5%
 	}
 }
 
 // new oracle genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
+	keeper.SetTaxRate(ctx, data.GenesisTaxRate)
+	keeper.SetTaxCap(ctx, assets.SDRDenom, data.Params.TaxPolicy.Cap.Amount)
+	keeper.SetRewardWeight(ctx, data.GenesisRewardWeight)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper. The
 // GenesisState will contain the pool, and validator/delegator distribution info's
 func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 	params := k.GetParams(ctx)
-	return NewGenesisState(params)
+	taxRate := k.GetTaxRate(ctx)
+	rewardWeight := k.GetRewardWeight(ctx, util.GetEpoch(ctx))
+	return NewGenesisState(params, taxRate, rewardWeight)
 }
 
 // ValidateGenesis validates the provided oracle genesis state to ensure the
 // expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
 func ValidateGenesis(data GenesisState) error {
+	if data.GenesisTaxRate.GT(data.Params.TaxPolicy.RateMax) ||
+		data.GenesisTaxRate.LT(data.Params.TaxPolicy.RateMin) {
+		return fmt.Errorf("Genesis tax rate must be between %s and %s, is %s",
+			data.Params.TaxPolicy.RateMin, data.Params.TaxPolicy.RateMax, data.GenesisTaxRate)
+	}
+
+	if data.GenesisRewardWeight.GT(data.Params.RewardPolicy.RateMax) ||
+		data.GenesisRewardWeight.LT(data.Params.RewardPolicy.RateMin) {
+		return fmt.Errorf("Genesis reward rate must be between %s and %s, is %s",
+			data.Params.RewardPolicy.RateMin, data.Params.RewardPolicy.RateMax, data.GenesisRewardWeight)
+	}
+
 	return validateParams(data.Params)
 }

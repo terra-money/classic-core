@@ -12,4 +12,7 @@ const (
 
 	// QuerierRoute is the query router key for the oracle module
 	QuerierRoute = ModuleName
+
+	// Paramspace notation
+	DefaultParamspace = ModuleName
 )

@@ -110,6 +110,6 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 		fk.AddCollectedFees(ctx, taxCoin)
 	}
 
-	tk.AddTaxProceeds(ctx, util.GetEpoch(ctx), taxes)
+	tk.RecordTaxProceeds(ctx, util.GetEpoch(ctx), taxes)
 	return
 }

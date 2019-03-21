@@ -135,7 +135,7 @@ func (k Keeper) SetPrice(ctx sdk.Context, denom string, price sdk.Dec) {
 	store.Set(keyPrice(denom), bz)
 }
 
-// deletePrice gets the consensus exchange rate of Luna denominated in the denom asset from the store.
+// deletePrice deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) deletePrice(ctx sdk.Context, denom string) {
 	store := ctx.KVStore(k.key)
 	store.Delete(keyPrice(denom))

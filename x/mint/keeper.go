@@ -104,34 +104,25 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 	return
 }
 
-// ChangeIssuance updates the issuance to reflect
+// AddSeigniorage adds seigniorage to the current epochal seignioragepool
 func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
-	seignioragePool := k.PeekSeigniorage(ctx)
+	curEpoch := util.GetEpoch(ctx)
+	seignioragePool := k.PeekSeignioragePool(ctx, curEpoch)
 	seignioragePool = seignioragePool.Add(seigniorage)
 
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(seignioragePool)
-	store.Set(keySeignioragePool, bz)
-	return
+	store.Set(keySeignioragePool(curEpoch), bz)
 }
 
-// ChangeIssuance updates the issuance to reflect
-func (k Keeper) PeekSeigniorage(ctx sdk.Context) (seignioragePool sdk.Int) {
+// PeekSeignioragePool retrieves the size of the seigniorage pool at epoch
+func (k Keeper) PeekSeignioragePool(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int) {
 	store := ctx.KVStore(k.key)
-	b := store.Get(keySeignioragePool)
+	b := store.Get(keySeignioragePool(epoch))
 	if b == nil {
 		seignioragePool = sdk.ZeroInt()
 	} else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &seignioragePool)
 	}
-	return
-}
-
-// ChangeIssuance updates the issuance to reflect
-func (k Keeper) ClaimSeigniorage(ctx sdk.Context) (seignioragePool sdk.Int) {
-	seignioragePool = k.PeekSeigniorage(ctx)
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(sdk.ZeroInt())
-	store.Set(keySeignioragePool, bz)
 	return
 }

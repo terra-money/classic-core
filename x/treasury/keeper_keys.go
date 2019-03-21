@@ -7,16 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-const (
-	//nolint default paramspace for treasury keeper
-	DefaultParamspace = "treasury"
-)
-
 // nolint
 var (
-	KeyRewardWeight     = []byte("reward_weight")
+	prefixRewardWeight  = []byte("reward_weight")
 	PrefixClaim         = []byte("claim")
-	ParamStoreKeyParams = []byte("params")
+	paramStoreKeyParams = []byte("params")
 
 	keyTaxRate        = []byte("tax_rate")
 	prefixTaxProceeds = []byte("tax_proceeds")
@@ -24,8 +19,11 @@ var (
 	prefixIssuance    = []byte("issuance")
 )
 
-// KeyClaim is in format of prefixclaim:claimType:claimID
-func KeyClaim(claimID string) []byte {
+func keyRewardWeight(epoch sdk.Int) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixRewardWeight, epoch))
+}
+
+func keyClaim(claimID string) []byte {
 	return []byte(fmt.Sprintf("%s:%s", PrefixClaim, claimID))
 }
 
@@ -41,9 +39,8 @@ func keyIssuance(denom string, epoch sdk.Int) []byte {
 	return []byte(fmt.Sprintf("%s:%s:%s", prefixIssuance, denom, epoch))
 }
 
-// ParamKeyTable for treasury module
-func ParamKeyTable() params.KeyTable {
+func paramKeyTable() params.KeyTable {
 	return params.NewKeyTable(
-		ParamStoreKeyParams, Params{},
+		paramStoreKeyParams, Params{},
 	)
 }

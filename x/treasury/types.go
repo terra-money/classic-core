@@ -12,4 +12,7 @@ const (
 
 	// QuerierRoute is the query router key for the treasury module
 	QuerierRoute = ModuleName
+
+	// DefaultParamspace is the paramspace representation
+	DefaultParamspace = ModuleName
 )

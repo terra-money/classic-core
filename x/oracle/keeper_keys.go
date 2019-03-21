@@ -8,11 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-//nolint
-const (
-	DefaultParamspace = "oracle"
-)
-
 var (
 	prefixVote          = []byte("vote")
 	prefixPrice         = []byte("price")

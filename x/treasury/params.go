@@ -9,69 +9,86 @@ import (
 
 // Params treasury parameters
 type Params struct {
-	TaxRateMin sdk.Dec `json:"tax_rate_min"` // percentage cap on taxes. Defaults to 2%.
-	TaxRateMax sdk.Dec `json:"tax_rate_max"` // percentage floor on taxes. Defaults to 0.
+	TaxPolicy    PolicyConstraints `json:"tax_policy"`
+	RewardPolicy PolicyConstraints `json:"reward_policy"`
 
-	TaxCap sdk.Coin `json:"tax_cap"` // Tax Cap in TerraSDR
+	SeigniorageBurdenTarget sdk.Dec     `json:"seigniorage_burden_target"`
+	MiningIncrement         sdk.DecCoin `json:"mining_increment"`
 
-	RewardMin sdk.Dec `json:"reward_min"` // percentage floor on miner rewards for seigniorage. Defaults to 0.1.
-	RewardMax sdk.Dec `json:"reward_max"` // percentage cap on miner rewards for seigniorage. Defaults to 0.9
-
-	EpochLong  sdk.Int `json:"epoch_long"`
 	EpochShort sdk.Int `json:"epoch_short"`
+	EpochLong  sdk.Int `json:"epoch_long"`
 
 	OracleClaimShare sdk.Dec `json:"oracle_share"`
 	BudgetClaimShare sdk.Dec `json:"budget_share"`
 }
 
 // NewParams creates a new param instance
-func NewParams(taxRateMin, taxRateMax, rewardMin, rewardMax, oracleClaimShare, budgetClaimShare sdk.Dec,
-	epochLong, epochShort sdk.Int, taxCap sdk.Coin) Params {
+func NewParams(
+	taxPolicy, rewardPolicy PolicyConstraints,
+	seigniorageBurden sdk.Dec,
+	miningIncrement sdk.DecCoin,
+	epochShort, epochLong sdk.Int,
+	oracleShare, budgetShare sdk.Dec,
+) Params {
 	return Params{
-		TaxRateMin:       taxRateMin,
-		TaxRateMax:       taxRateMax,
-		TaxCap:           taxCap,
-		RewardMin:        rewardMin,
-		RewardMax:        rewardMax,
-		OracleClaimShare: oracleClaimShare,
-		BudgetClaimShare: budgetClaimShare,
-		EpochLong:        epochLong,
-		EpochShort:       epochShort,
+		TaxPolicy:               taxPolicy,
+		RewardPolicy:            rewardPolicy,
+		SeigniorageBurdenTarget: seigniorageBurden,
+		MiningIncrement:         miningIncrement,
+		EpochShort:              epochShort,
+		EpochLong:               epochLong,
+		OracleClaimShare:        oracleShare,
+		BudgetClaimShare:        budgetShare,
 	}
 }
 
 // DefaultParams creates default treasury module parameters
 func DefaultParams() Params {
 	return NewParams(
-		sdk.NewDecWithPrec(1, 3),                   // 0.1%
-		sdk.NewDecWithPrec(2, 2),                   // 2%
-		sdk.NewDecWithPrec(5, 2),                   // 5%
-		sdk.NewDecWithPrec(9, 1),                   // 90%
-		sdk.NewDecWithPrec(1, 1),                   // 10%
-		sdk.NewDecWithPrec(9, 1),                   // 90%
-		sdk.NewInt(52),                             // Approx. 1 year
-		sdk.NewInt(4),                              // Approx. 1 month
-		sdk.NewCoin(assets.SDRDenom, sdk.OneInt()), // 1 TerraSDR as cap
+
+		// Tax update policy
+		PolicyConstraints{
+			RateMin:       sdk.NewDecWithPrec(5, 4),                   // 0.05%
+			RateMax:       sdk.NewDecWithPrec(1, 2),                   // 1%
+			Cap:           sdk.NewCoin(assets.SDRDenom, sdk.OneInt()), // 1 SDR Tax cap
+			ChangeRateMax: sdk.NewDecWithPrec(25, 5),                  // 0.025%
+		},
+
+		// Reward update policy
+		PolicyConstraints{
+			RateMin:       sdk.NewDecWithPrec(5, 2),  // 5%
+			RateMax:       sdk.NewDecWithPrec(20, 2), // 20%
+			ChangeRateMax: sdk.NewDecWithPrec(25, 3), // 2.5%
+		},
+
+		sdk.NewDecWithPrec(67, 2),                     // 67%
+		sdk.NewDecCoin(assets.SDRDenom, sdk.OneInt()), // 1 SDR mining increment
+
+		sdk.NewInt(4),
+		sdk.NewInt(52),
+
+		sdk.NewDecWithPrec(1, 1), // 10%
+		sdk.NewDecWithPrec(9, 1), // 90%
 	)
 }
 
 func validateParams(params Params) error {
-	if params.TaxRateMax.LT(params.TaxRateMin) {
-		return fmt.Errorf("treasury parameter TaxRateMax (%s) must be greater than TaxRateMin (%s)",
-			params.TaxRateMax.String(), params.TaxRateMin.String())
+	if params.TaxPolicy.RateMax.LT(params.TaxPolicy.RateMin) {
+		return fmt.Errorf("treasury TaxPolicy.RateMax %s must be greater than TaxPolicy.RateMin %s",
+			params.TaxPolicy.RateMax.String(), params.TaxPolicy.RateMin.String())
 	}
 
-	if params.TaxRateMin.IsNegative() {
-		return fmt.Errorf("treasury parameter TaxRateMin must be >= 0, is %s", params.TaxRateMin.String())
+	if params.TaxPolicy.RateMin.IsNegative() {
+		return fmt.Errorf("treasury parameter TaxPolicy.RateMin must be >= 0, is %s", params.TaxPolicy.RateMin.String())
 	}
 
-	if params.RewardMax.LT(params.RewardMin) {
-		return fmt.Errorf("treasury parameter RewardMax (%s) must be greater than RewardMin (%s)",
-			params.RewardMax.String(), params.RewardMin.String())
+	if params.RewardPolicy.RateMax.LT(params.RewardPolicy.RateMin) {
+		return fmt.Errorf("treasury RewardPolicy.RateMax %s must be greater than RewardPolicy.RateMin %s",
+			params.RewardPolicy.RateMax.String(), params.RewardPolicy.RateMin.String())
 	}
 
-	if params.RewardMin.IsNegative() {
-		return fmt.Errorf("treasury parameter RewardMin must be >= 0, is %s", params.RewardMin.String())
+	if params.RewardPolicy.RateMin.IsNegative() {
+		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be >= 0, is %s", params.RewardPolicy.RateMin.String())
 	}
 
 	shareSum := params.OracleClaimShare.Add(params.BudgetClaimShare)
@@ -82,22 +99,21 @@ func validateParams(params Params) error {
 	return nil
 }
 
+// implements fmt.Stringer
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
-  Tax Rate Min: %s
-  Tax Rate Max: %s
- 
-  Tax Cap: %s
+  Tax Policy        : { %v } 
+  Reward Policy     : { %v }
 
-  Mining Reward Weight Min: %v
-  Mining Reward Weight Max: %v
+  SeigniorageBurdenTarget : %v
+  MiningIncrement   : %v
 
-  Oracle Reward Weight: %v
-  Budget Reward Weight: %v 
+  EpochShort        : %v
+  EpochLong         : %v
 
-  Epoch Long: %v 
-  Epoch Short %v
-  `, params.TaxRateMin, params.TaxRateMax, params.TaxCap,
-		params.RewardMin, params.RewardMax, params.EpochLong,
-		params.EpochShort)
+  OracleClaimShare  : %v
+  BudgetClaimShare  : %v
+  `, params.TaxPolicy, params.RewardPolicy, params.SeigniorageBurdenTarget,
+		params.MiningIncrement, params.EpochShort, params.EpochLong,
+		params.OracleClaimShare, params.BudgetClaimShare)
 }

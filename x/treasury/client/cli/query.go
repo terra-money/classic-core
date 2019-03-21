@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"terra/types"
 	"terra/x/treasury"
 
 	"github.com/spf13/cobra"
@@ -15,13 +16,14 @@ import (
 
 const (
 	flagDenom = "denom"
+	flagEpoch = "epoch"
 )
 
 // GetCmdQueryTaxRate implements the query taxrate command.
 func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "taxrate",
-		Short: "Query the current stability tax rate",
+		Short: "Query the stability tax rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -39,6 +41,35 @@ func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
+// GetCmdQueryMRL implements the query mrl command.
+func GetCmdQueryMRL(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mrl",
+		Short: "Query the unit mining rewards per luna for the epoch",
+		Long: strings.TrimSpace(`
+Query the unit mining reward for luna at the given epoch. 
+mining rewards are a sum of transaction tax and seigniorage rewards. 
+
+$ terracli query treasury mrl --epoch=5
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			epoch := viper.GetInt(flagEpoch)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryMRL, epoch), nil)
+			if err != nil {
+				return err
+			}
+
+			var mrl sdk.Dec
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &mrl)
+			return cliCtx.PrintOutput(mrl)
+		},
+	}
+
+	return cmd
+}
+
 // GetCmdQueryTaxCap implements the query taxcap command.
 func GetCmdQueryTaxCap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -48,7 +79,7 @@ func GetCmdQueryTaxCap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 Query the current stability tax cap of the [denom] asset. 
 The stability tax levied on a tx is at most tax cap, regardless of the size of the transaction. 
 
-$ terracli query treasury taxcap krw
+$ terracli query treasury taxcap --denom="krw"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -76,7 +107,7 @@ func GetCmdQueryIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current issuance of the [denom] asset. 
 
-$ terracli query treasury issuance krw
+$ terracli query treasury issuance --denom="krw"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -109,7 +140,7 @@ func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command
 				return err
 			}
 
-			var claims treasury.Claims
+			var claims types.Claims
 			cdc.MustUnmarshalBinaryLengthPrefixed(res, &claims)
 			return cliCtx.PrintOutput(claims)
 		},
@@ -126,7 +157,8 @@ func GetCmdQueryMiningWeight(queryRoute string, cdc *codec.Codec) *cobra.Command
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryMiningRewardWeight), nil)
+			epoch := viper.GetInt(flagEpoch)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryMiningRewardWeight, epoch), nil)
 			if err != nil {
 				return err
 			}
@@ -154,7 +186,8 @@ $ terracli query treasury balance
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryBalance), nil)
+			epoch := viper.GetInt(flagEpoch)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryBalance, epoch), nil)
 			if err != nil {
 				return err
 			}

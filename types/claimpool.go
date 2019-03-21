@@ -1,6 +1,6 @@
 package types
 
-// ClaimPool list of Claims
+// ClaimPool is a list of Claims
 type ClaimPool []Claim
 
 // Sort sorts the ClaimPool
