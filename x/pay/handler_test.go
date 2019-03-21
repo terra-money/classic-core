@@ -4,11 +4,10 @@ import (
 	"terra/types/assets"
 	"terra/types/util"
 	"terra/x/market"
+	"terra/x/mint"
 	"terra/x/treasury"
 	"testing"
 	"time"
-
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -59,6 +58,7 @@ func createTestInput(t *testing.T) testInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
+	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -70,6 +70,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -87,15 +88,16 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
+	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
+
 	marketKeeper := market.Keeper{}
-	distrKeeper := distribution.Keeper{}
 
 	treasuryKeeper := treasury.NewKeeper(
-		keyTreasury,
 		cdc,
-		bankKeeper,
+		keyTreasury,
+		accKeeper,
+		mintKeeper,
 		marketKeeper,
-		distrKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 

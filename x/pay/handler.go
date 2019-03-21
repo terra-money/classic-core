@@ -98,18 +98,16 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 			taxDue = taxCap
 		}
 
-		taxCoin := sdk.Coins{sdk.NewCoin(coin.Denom, taxDue)}
-
-		_, payTags, err := bk.SubtractCoins(ctx, taxPayer, taxCoin)
-		if err != nil {
-			return nil, err
-		}
-
-		taxTags = taxTags.AppendTags(payTags)
 		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
-		fk.AddCollectedFees(ctx, taxCoin)
 	}
 
+	_, payTags, err := bk.SubtractCoins(ctx, taxPayer, taxes)
+	if err != nil {
+		return nil, err
+	}
+
+	taxTags = taxTags.AppendTags(payTags)
+	fk.AddCollectedFees(ctx, taxes)
 	tk.AddTaxProceeds(ctx, util.GetEpoch(ctx), taxes)
 	return
 }
