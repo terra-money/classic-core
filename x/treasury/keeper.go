@@ -1,6 +1,7 @@
 package treasury
 
 import (
+	"terra/types"
 	"terra/x/market"
 	"terra/x/mint"
 
@@ -10,9 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
-
-// StoreKey is string representation of the store key for treasury
-const StoreKey = "treasury"
 
 // Keeper of the treasury store
 type Keeper struct {
@@ -72,7 +70,7 @@ func (k Keeper) addClaim(ctx sdk.Context, claim types.Claim) {
 	if bz := store.Get(claimKey); bz != nil {
 		var prevClaim types.Claim
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, prevClaim)
-		claim.weight = claim.weight.Add(prevClaim.weight)
+		claim.Weight = claim.Weight.Add(prevClaim.Weight)
 	}
 
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
@@ -93,10 +91,10 @@ func (k Keeper) iterateClaims(ctx sdk.Context, handler func(types.Claim) (stop b
 	claimIter.Close()
 }
 
-func (k Keeper) sumClaims(ctx sdk.Context, class ClaimClass) (weightSumForClass sdk.Int, claimsForClass []types.Claim) {
+func (k Keeper) sumClaims(ctx sdk.Context, class types.ClaimClass) (weightSumForClass sdk.Int, claimsForClass []types.Claim) {
 	k.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
-		if claim.class == class {
-			weightSumForClass = weightSumForClass.Add(claim.weight)
+		if claim.Class == class {
+			weightSumForClass = weightSumForClass.Add(claim.Weight)
 			claimsForClass = append(claimsForClass, claim)
 		}
 		return false

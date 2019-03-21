@@ -1,6 +1,7 @@
 package treasury
 
 import (
+	"terra/types"
 	"terra/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"

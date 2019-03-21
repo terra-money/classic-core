@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sort"
-
 	"terra/version"
 	"terra/x/budget"
 	"terra/x/market"
@@ -105,6 +104,11 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
+	app.paramsKeeper = params.NewKeeper(
+		app.cdc,
+		app.keyParams, app.tkeyParams,
+	)
+	
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -121,10 +125,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.accountKeeper,
 		app.paramsKeeper.Subspace(bank.DefaultParamspace),
 		bank.DefaultCodespace,
-	)
-	app.paramsKeeper = params.NewKeeper(
-		app.cdc,
-		app.keyParams, app.tkeyParams,
 	)
 	stakingKeeper := staking.NewKeeper(
 		app.cdc,
@@ -279,11 +279,11 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 	rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
-	app.treasuryKeeper.ProcessClaims(ctx, treasury.OracleClaimClass, rewardees)
+	app.treasuryKeeper.ProcessClaims(ctx, rewardees)
 
 	claimants, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
-	app.treasuryKeeper.ProcessClaims(ctx, treasury.BudgetClaimClass, claimants)
+	app.treasuryKeeper.ProcessClaims(ctx, claimants)
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)

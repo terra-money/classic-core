@@ -155,7 +155,7 @@ func (k Keeper) ProcessClaims(ctx sdk.Context, claims []types.Claim) {
 func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWeightSum sdk.Int, cClaims []types.Claim) (classTags sdk.Tags) {
 	store := ctx.KVStore(k.key)
 	for _, claim := range cClaims {
-		claimWeightInDec := sdk.NewDecFromInt(claim.weight)
+		claimWeightInDec := sdk.NewDecFromInt(claim.Weight)
 		sumWeightInDec := sdk.NewDecFromInt(cWeightSum)
 		claimReward := cReward.MulDec(claimWeightInDec).QuoDec(sumWeightInDec)
 
@@ -171,7 +171,7 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		rewardInSDRInt, _ := rewardInSDR.TruncateDecimal()
 
 		// credit the recipient's account with the reward
-		k.mtk.Mint(ctx, claim.recipient, rewardInSDRInt)
+		k.mtk.Mint(ctx, claim.Recipient, rewardInSDRInt)
 
 		// We are now done with the claim; remove it from the store
 		store.Delete(KeyClaim(claim.ID()))
@@ -179,9 +179,9 @@ func (k Keeper) settleClaimsForClass(ctx sdk.Context, cReward sdk.DecCoins, cWei
 		classTags = classTags.AppendTags(
 			sdk.NewTags(
 				tags.Action, tags.ActionReward,
-				tags.Rewardee, claim.recipient,
+				tags.Rewardee, claim.Recipient,
 				tags.Amount, rewardInSDR,
-				tags.Class, claim.class,
+				tags.Class, claim.Class,
 			),
 		)
 	}
@@ -206,8 +206,8 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 	budgetReward := decPool.MulDec(budgetRewardWeight)
 
 	// Sum the total amount of voting power accumulated in claims by class
-	oracleClaimWeightSum, oracleClaims := k.sumClaims(ctx, OracleClaimClass)
-	budgetClaimWeightSum, budgetClaims := k.sumClaims(ctx, BudgetClaimClass)
+	oracleClaimWeightSum, oracleClaims := k.sumClaims(ctx, types.OracleClaimClass)
+	budgetClaimWeightSum, budgetClaims := k.sumClaims(ctx, types.BudgetClaimClass)
 
 	// Reward claims
 	oracleTags := k.settleClaimsForClass(ctx, oracleReward, oracleClaimWeightSum, oracleClaims)
