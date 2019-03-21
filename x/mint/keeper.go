@@ -75,8 +75,7 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 // iterates through the accountkeeper and computes the genesis issuance.
 func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
 	store := ctx.KVStore(k.key)
-	curEpoch := util.GetEpoch(ctx)
-	bz := store.Get(keyIssuance(denom, curEpoch))
+	bz := store.Get(keyIssuance(denom, epoch))
 	if bz == nil {
 
 		// Genesis epoch; nothing exists in store so we must read it
@@ -92,7 +91,7 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 			// Set issuance to the store
 			store := ctx.KVStore(k.key)
 			bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-			store.Set(keyIssuance(denom, curEpoch), bz)
+			store.Set(keyIssuance(denom, epoch), bz)
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
@@ -104,7 +103,7 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 	return
 }
 
-// ChangeIssuance updates the issuance to reflect
+// AddSeigniorage adds seigniorage to the pool
 func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
 	seignioragePool := k.PeekSeigniorage(ctx)
 	seignioragePool = seignioragePool.Add(seigniorage)
@@ -115,7 +114,7 @@ func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
 	return
 }
 
-// ChangeIssuance updates the issuance to reflect
+// PeekSeigniorage peeks the amount of collected seigniorage
 func (k Keeper) PeekSeigniorage(ctx sdk.Context) (seignioragePool sdk.Int) {
 	store := ctx.KVStore(k.key)
 	b := store.Get(keySeignioragePool)
@@ -127,7 +126,7 @@ func (k Keeper) PeekSeigniorage(ctx sdk.Context) (seignioragePool sdk.Int) {
 	return
 }
 
-// ChangeIssuance updates the issuance to reflect
+// ClaimSeigniorage returns the amount of seigniorage and updates to zero
 func (k Keeper) ClaimSeigniorage(ctx sdk.Context) (seignioragePool sdk.Int) {
 	seignioragePool = k.PeekSeigniorage(ctx)
 	store := ctx.KVStore(k.key)
