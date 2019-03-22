@@ -57,6 +57,20 @@ func (k Keeper) iterateVotes(ctx sdk.Context, handler func(vote PriceVote) (stop
 	}
 }
 
+// Iterate over votes in the store
+func (k Keeper) iterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote PriceVote) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote PriceVote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
+}
+
 // Retrieves a vote from the store
 func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.AccAddress) (vote PriceVote, err sdk.Error) {
 	store := ctx.KVStore(k.key)
