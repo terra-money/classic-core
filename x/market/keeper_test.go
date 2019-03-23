@@ -130,13 +130,13 @@ func TestHandlerMsgSwapValidPrice(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Set offer asset price
-	input.oracleKeeper.SetPrice(input.ctx, offerCoin.Denom, offerLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, offerLunaPrice)
 
 	res = handler(input.ctx, msg)
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Set offer asset price
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
@@ -182,8 +182,8 @@ func TestHandlerMsgSwapTooSmall(t *testing.T) {
 	askLunaPrice := sdk.NewDecWithPrec(1001, 1)
 
 	// Set oracle price
-	input.oracleKeeper.SetPrice(input.ctx, offerCoin.Denom, offerLunaPrice)
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, offerLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 
 	msg := NewMsgSwap(addrs[0], offerCoin, askDenom)
 
@@ -191,9 +191,9 @@ func TestHandlerMsgSwapTooSmall(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Reset oracle price
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 	askLunaPrice = sdk.NewDecWithPrec(1000, 1)
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)

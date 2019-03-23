@@ -57,7 +57,7 @@ func TestOracleThreshold(t *testing.T) {
 	input.ctx = input.ctx.WithBlockHeight(1)
 	EndBlocker(input.ctx, input.oracleKeeper)
 
-	_, err := input.oracleKeeper.GetPrice(input.ctx, assets.SDRDenom)
+	_, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.SDRDenom)
 	require.NotNil(t, err)
 
 	// More than the threshold signs, msg succeeds
@@ -69,7 +69,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	EndBlocker(input.ctx, input.oracleKeeper)
 
-	price, err := input.oracleKeeper.GetPrice(input.ctx, assets.SDRDenom)
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.SDRDenom)
 	require.Nil(t, err)
 	require.Equal(t, randomPrice, price)
 
@@ -86,7 +86,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	EndBlocker(input.ctx, input.oracleKeeper)
 
-	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.SDRDenom)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.SDRDenom)
 	require.Nil(t, err)
 	require.Equal(t, randomPrice, price)
 }
@@ -114,7 +114,7 @@ func TestOracleMultiVote(t *testing.T) {
 	input.ctx = input.ctx.WithBlockHeight(1)
 	EndBlocker(input.ctx, input.oracleKeeper)
 
-	price, err := input.oracleKeeper.GetPrice(input.ctx, assets.SDRDenom)
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.SDRDenom)
 	require.Nil(t, err)
 	require.Equal(t, price, anotherRandomPrice)
 }
@@ -135,7 +135,7 @@ func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
 	dropThreshold := input.oracleKeeper.GetParams(input.ctx).DropThreshold
-	input.oracleKeeper.SetPrice(input.ctx, assets.KRWDenom, randomPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, randomPrice)
 
 	msg := NewMsgPriceFeed(assets.KRWDenom, randomPrice, addrs[0])
 	h(input.ctx, msg)
@@ -148,7 +148,7 @@ func TestOracleDrop(t *testing.T) {
 		EndBlocker(input.ctx, input.oracleKeeper)
 	}
 
-	price, err := input.oracleKeeper.GetPrice(input.ctx, assets.KRWDenom)
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
 	require.Nil(t, err)
 	require.Equal(t, price, randomPrice)
 
@@ -157,6 +157,6 @@ func TestOracleDrop(t *testing.T) {
 		EndBlocker(input.ctx, input.oracleKeeper)
 	}
 
-	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.KRWDenom)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
 	require.NotNil(t, err)
 }

@@ -104,19 +104,19 @@ func TestKeeperIssuance(t *testing.T) {
 	require.Equal(t, initAmt.MulRaw(3), issuance)
 
 	// Lowering issuance works
-	err := input.mintKeeper.ChangeIssuance(input.ctx, assets.SDRDenom, sdk.OneInt().Neg())
+	err := input.mintKeeper.changeIssuance(input.ctx, assets.SDRDenom, sdk.OneInt().Neg())
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.SDRDenom, curEpoch)
 	require.Equal(t, initAmt.MulRaw(3).Sub(sdk.OneInt()), issuance)
 
 	// ... but not too much
-	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.SDRDenom, sdk.NewInt(5000).Neg())
+	err = input.mintKeeper.changeIssuance(input.ctx, assets.SDRDenom, sdk.NewInt(5000).Neg())
 	require.NotNil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.SDRDenom, curEpoch)
 	require.Equal(t, initAmt.MulRaw(3).Sub(sdk.OneInt()), issuance)
 
 	// Raising issuance works, too
-	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.SDRDenom, sdk.NewInt(986))
+	err = input.mintKeeper.changeIssuance(input.ctx, assets.SDRDenom, sdk.NewInt(986))
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.SDRDenom, curEpoch)
 	require.Equal(t, sdk.NewInt(4000), issuance)

@@ -19,23 +19,23 @@ func TestKeeperPrice(t *testing.T) {
 	lunaPrice := sdk.NewDecWithPrec(3282384, precision)
 
 	// Set prices
-	input.oracleKeeper.SetPrice(input.ctx, assets.CNYDenom, cnyPrice)
-	price, err := input.oracleKeeper.GetPrice(input.ctx, assets.CNYDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.CNYDenom, cnyPrice)
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.CNYDenom)
 	require.Nil(t, err)
 	require.Equal(t, cnyPrice, price)
 
-	input.oracleKeeper.SetPrice(input.ctx, assets.GBPDenom, gbpPrice)
-	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.GBPDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, gbpPrice)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.GBPDenom)
 	require.Nil(t, err)
 	require.Equal(t, gbpPrice, price)
 
-	input.oracleKeeper.SetPrice(input.ctx, assets.KRWDenom, krwPrice)
-	price, err = input.oracleKeeper.GetPrice(input.ctx, assets.KRWDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, krwPrice)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
 	require.Nil(t, err)
 	require.Equal(t, krwPrice, price)
 
-	input.oracleKeeper.SetPrice(input.ctx, assets.LunaDenom, lunaPrice)
-	price, _ = input.oracleKeeper.GetPrice(input.ctx, assets.LunaDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.LunaDenom, lunaPrice)
+	price, _ = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.LunaDenom)
 	require.Equal(t, sdk.OneDec(), price)
 }
 

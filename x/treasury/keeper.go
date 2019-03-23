@@ -38,7 +38,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey,
 // Reward weight logic
 
 // SetRewardWeight sets the ratio of the treasury that goes to mining rewards, i.e.
-// supply of Luna that is burned.
+// supply of Luna that is burned. You can only set the reward weight of the current epoch.
 func (k Keeper) SetRewardWeight(ctx sdk.Context, weight sdk.Dec) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(weight)
@@ -48,11 +48,10 @@ func (k Keeper) SetRewardWeight(ctx sdk.Context, weight sdk.Dec) {
 // GetRewardWeight returns the mining reward weight
 func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(keyRewardWeight(epoch))
-	if bz == nil {
-		rewardWeight = k.GetParams(ctx).RewardPolicy.RateMin
-	} else {
+	if bz := store.Get(keyRewardWeight(epoch)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rewardWeight)
+	} else {
+		rewardWeight = k.GetParams(ctx).TaxPolicy.RateMin
 	}
 	return
 }
@@ -60,22 +59,24 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sd
 //-----------------------------------
 // Claims logic
 
-func (k Keeper) addClaim(ctx sdk.Context, claim types.Claim) {
+// AddClaim adds a claim to the store, to be settled and cleared at the end of the epoch
+func (k Keeper) AddClaim(ctx sdk.Context, claim types.Claim) {
 	store := ctx.KVStore(k.key)
 	claimKey := keyClaim(claim.ID())
 
 	// If the recipient has an existing claim in the same class, add to the previous claim
 	if bz := store.Get(claimKey); bz != nil {
 		var prevClaim types.Claim
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, prevClaim)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &prevClaim)
 		claim.Weight = claim.Weight.Add(prevClaim.Weight)
-	}
 
+	}
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
 	store.Set(claimKey, bz)
 }
 
-func (k Keeper) iterateClaims(ctx sdk.Context, handler func(types.Claim) (stop bool)) {
+// IterateClaims iterates over all the claims in the store.
+func (k Keeper) IterateClaims(ctx sdk.Context, handler func(types.Claim) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	claimIter := sdk.KVStorePrefixIterator(store, PrefixClaim)
 
@@ -118,17 +119,16 @@ func (k Keeper) SetTaxRate(ctx sdk.Context, rate sdk.Dec) {
 // GetTaxRate gets the tax rate
 func (k Keeper) GetTaxRate(ctx sdk.Context) (rate sdk.Dec) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(keyTaxRate)
-	if bz == nil {
-		rate = k.GetParams(ctx).TaxPolicy.RateMin
-	} else {
+	if bz := store.Get(keyTaxRate); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rate)
+	} else {
+		rate = k.GetParams(ctx).TaxPolicy.RateMin
 	}
 	return
 }
 
-// SetTaxCap sets the Tax Cap. Denominated in integer units of the reference {denom}
-func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
+// setTaxCap sets the Tax Cap. Denominated in integer units of the reference {denom}
+func (k Keeper) setTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cap)
 	store.Set(keyTaxCap(denom), bz)
@@ -137,28 +137,30 @@ func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 // GetTaxCap gets the Tax Cap. Denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(keyTaxCap(denom))
-	if bz == nil {
 
+	if bz := store.Get(keyTaxCap(denom)); bz != nil {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &taxCap)
+	} else {
 		// Tax cap does not exist for the asset; compute it by
 		// comparing it with the tax cap for TerraSDR
-		sdrTaxCap := k.GetParams(ctx).TaxPolicy.Cap
-		taxCap, err := k.mk.SwapCoins(ctx, sdrTaxCap, denom)
+		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
+		reqCap, err := k.mk.SwapCoins(ctx, referenceCap, denom)
 
-		// The coin is more valuable than TerraSDR. just set 1 as the cap.
+		// The coin is more valuable than TaxPolicy asset. just follow the Policy Cap.
 		if err != nil {
-			taxCap.Amount = sdk.OneInt()
+			reqCap = sdk.NewCoin(denom, referenceCap.Amount)
 		}
 
-		k.SetTaxCap(ctx, denom, taxCap.Amount)
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &taxCap)
+		taxCap = reqCap.Amount
+		k.setTaxCap(ctx, denom, taxCap)
 	}
+
 	return
 }
 
 // RecordTaxProceeds add tax proceeds that have been added this epoch
-func (k Keeper) RecordTaxProceeds(ctx sdk.Context, epoch sdk.Int, delta sdk.Coins) {
+func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
+	epoch := util.GetEpoch(ctx)
 	proceeds := k.PeekTaxProceeds(ctx, epoch)
 	proceeds = proceeds.Plus(delta)
 

@@ -26,17 +26,17 @@ func NewKeeper(ok oracle.Keeper, mk mint.Keeper) Keeper {
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
 func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
-	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
+	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
 
-	askRate, err := k.ok.GetPrice(ctx, askDenom)
+	askRate, err := k.ok.GetLunaSwapRate(ctx, askDenom)
 	if err != nil {
 		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
-	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(offerRate).Quo(askRate).TruncateInt()
+	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(askRate).Quo(offerRate).TruncateInt()
 	if retAmount.Equal(sdk.ZeroInt()) {
 		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
@@ -48,17 +48,17 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 // exchange rate registered with the oracle.
 // Similar to SwapCoins, but operates over sdk.DecCoins for convinience.
 func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
-	offerRate, err := k.ok.GetPrice(ctx, offerCoin.Denom)
+	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
 
-	askRate, err := k.ok.GetPrice(ctx, askDenom)
+	askRate, err := k.ok.GetLunaSwapRate(ctx, askDenom)
 	if err != nil {
 		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
-	retAmount := offerCoin.Amount.Mul(offerRate).Quo(askRate)
+	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	retCoin := sdk.NewDecCoinFromDec(askDenom, retAmount)
 	return retCoin, nil
 }

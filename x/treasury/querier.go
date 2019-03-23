@@ -103,7 +103,7 @@ func queryMRL(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keep
 		return nil, sdk.ErrInternal("epoch parameter is not correctly formatted")
 	}
 
-	mrl := mrl(ctx, keeper, epoch)
+	mrl := MRL(ctx, keeper, epoch)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, mrl)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -128,7 +128,7 @@ func queryTreasuryBalance(ctx sdk.Context, path []string, req abci.RequestQuery,
 
 func queryActiveClaims(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	claims := types.ClaimPool{}
-	keeper.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
+	keeper.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		claims = append(claims, claim)
 		return false
 	})

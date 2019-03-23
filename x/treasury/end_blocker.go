@@ -13,10 +13,11 @@ import (
 func isAtEpochEnd(ctx sdk.Context, k Keeper) bool {
 	settlementPeriod := k.GetParams(ctx).EpochShort
 
-	// Look 1 block into the future ... at the last block of the epoch
+	// Look 1 block into the future ... at the last block of the epoch, trigger
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	currentEpoch := util.GetEpoch(ctx)
-	return currentEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
+	return currentEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
+		currentEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
 }
 
 // EndBlocker called to adjust macro weights (tax, mining reward) and settle outstanding claims.
@@ -44,8 +45,24 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 // ProcessClaims adds a funding claim to the treasury. Settled around once a month.
 func (k Keeper) ProcessClaims(ctx sdk.Context, claims []types.Claim) {
 	for _, claim := range claims {
-		k.addClaim(ctx, claim)
+		k.AddClaim(ctx, claim)
 	}
+}
+
+func getScaleAndPool(ctx sdk.Context, k Keeper, rewardPool sdk.Coin, classWeightSum sdk.Int) (scale sdk.Dec, pool sdk.Int) {
+	params := k.GetParams(ctx)
+	curEpoch := util.GetEpoch(ctx)
+
+	if classWeightSum.Equal(sdk.ZeroInt()) {
+
+	}
+	minerScale := k.GetRewardWeight(ctx, curEpoch)
+	oracleScale := sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare).QuoInt(oracleSumWeight)
+	budgetScale := sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare).QuoInt(budgetSumWeight)
+
+	rewardPool.Amount.Mul(minerScale)
+	rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare)).String()
+	rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare)).String()
 }
 
 // settleClaims distributes the current treasury to the registered claims, and deletes all claims from the store.
@@ -62,14 +79,11 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		panic(nil)
 	}
 
-	// Decrement Luna issuance
-	k.mtk.ChangeIssuance(ctx, assets.LunaDenom, seigPool.Neg())
-
 	oracleSumWeight := sdk.ZeroInt()
 	budgetSumWeight := sdk.ZeroInt()
 
-	// Sum all weights by class
-	k.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
+	// Sum weights by class
+	k.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		switch claim.Class {
 		case types.OracleClaimClass:
 			oracleSumWeight = oracleSumWeight.Add(claim.Weight)
@@ -88,7 +102,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 	budgetScale := sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare).QuoInt(budgetSumWeight)
 
 	// Settle and delete all claims from the store
-	k.iterateClaims(ctx, func(claim types.Claim) (stop bool) {
+	k.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		var rewardAmt sdk.Int
 		if claim.Class == types.OracleClaimClass {
 			rewardAmt = rewardPool.Amount.Mul(oracleScale).TruncateInt()

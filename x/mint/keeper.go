@@ -40,7 +40,7 @@ func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (
 		return err
 	}
 
-	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount)
+	return k.changeIssuance(ctx, coin.Denom, coin.Amount)
 }
 
 // Burn deducts {coin} from the {recipient} account, and reflects the decrease in issuance
@@ -50,23 +50,29 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 		return err
 	}
 
-	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount.Neg())
+	return k.changeIssuance(ctx, coin.Denom, coin.Amount.Neg())
 }
 
 // ChangeIssuance updates the issuance to reflect
-func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
+func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
+	store := ctx.KVStore(k.key)
 	curEpoch := util.GetEpoch(ctx)
+
+	issuanceOnDisk := store.Has(keyIssuance(denom, curEpoch))
 	curIssuance := k.GetIssuance(ctx, denom, curEpoch)
 
-	// Update issuance
-	newIssuance := curIssuance.Add(delta)
-	if newIssuance.IsNegative() {
-		err = sdk.ErrInternal("Issuance should never fall below 0")
-	} else {
-		store := ctx.KVStore(k.key)
-		bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
-		store.Set(keyIssuance(denom, curEpoch), bz)
+	// If the issuance is not on disk, GetIssuance will do a fresh read of account balances
+	// and the change in issuance should be reported automatically.
+	if issuanceOnDisk {
+		newIssuance := curIssuance.Add(delta)
+		if newIssuance.IsNegative() {
+			err = sdk.ErrInternal("Issuance should never fall below 0")
+		} else {
+			bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
+			store.Set(keyIssuance(denom, curEpoch), bz)
+		}
 	}
+
 	return
 }
 
@@ -76,12 +82,13 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
 	store := ctx.KVStore(k.key)
 	curEpoch := util.GetEpoch(ctx)
-	bz := store.Get(keyIssuance(denom, curEpoch))
-	if bz == nil {
 
+	if bz := store.Get(keyIssuance(denom, curEpoch)); bz != nil {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
+	} else {
 		// Genesis epoch; nothing exists in store so we must read it
 		// from accountkeeper
-		if epoch.Equal(sdk.ZeroInt()) {
+		if epoch.LTE(sdk.ZeroInt()) {
 			issuance = sdk.ZeroInt()
 			countIssuance := func(acc auth.Account) (stop bool) {
 				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
@@ -97,8 +104,6 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
 		}
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
 	}
 
 	return

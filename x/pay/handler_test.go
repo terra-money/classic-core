@@ -4,11 +4,10 @@ import (
 	"terra/types/assets"
 	"terra/types/util"
 	"terra/x/market"
+	"terra/x/mint"
 	"terra/x/treasury"
 	"testing"
 	"time"
-
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -59,6 +58,7 @@ func createTestInput(t *testing.T) testInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
+	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -70,6 +70,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -87,15 +88,14 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
+	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
 	marketKeeper := market.Keeper{}
-	distrKeeper := distribution.Keeper{}
 
 	treasuryKeeper := treasury.NewKeeper(
-		keyTreasury,
 		cdc,
-		bankKeeper,
+		keyTreasury,
+		mintKeeper,
 		marketKeeper,
-		distrKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 
@@ -133,6 +133,9 @@ func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
 	input := createTestInput(t)
 	input.bankKeeper.SetSendEnabled(input.ctx, true)
 
+	params := treasury.DefaultParams()
+	input.treasuryKeeper.SetParams(input.ctx, params)
+
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
 	amt := sdk.NewInt(5)
 	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
@@ -152,9 +155,10 @@ func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
 func TestHandlerMsgSendTax(t *testing.T) {
 	input := createTestInput(t)
 	input.bankKeeper.SetSendEnabled(input.ctx, true)
+	params := treasury.DefaultParams()
 
-	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 3))      // 0.1%
-	input.treasuryKeeper.SetTaxCap(input.ctx, assets.SDRDenom, sdk.NewInt(1)) // 1 SDR cap
+	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 3)) // 0.1%
+	input.treasuryKeeper.SetParams(input.ctx, params)
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
 	amt := sdk.NewInt(1000)
@@ -183,7 +187,8 @@ func TestHandlerMsgSendTax(t *testing.T) {
 	input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(5000))})
 
 	// Reset tax cap
-	input.treasuryKeeper.SetTaxCap(input.ctx, assets.SDRDenom, sdk.NewInt(2)) // 2 SDR cap
+	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.SDRDenom, 2) // 2 SDR cap
+	input.treasuryKeeper.SetParams(input.ctx, params)
 	amt = sdk.NewInt(2000)
 	msg = bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
 	res = handler(input.ctx, msg)
@@ -205,8 +210,11 @@ func TestHandlerMsgMultiSendTax(t *testing.T) {
 	input := createTestInput(t)
 	input.bankKeeper.SetSendEnabled(input.ctx, true)
 
-	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 2))      // 1%
-	input.treasuryKeeper.SetTaxCap(input.ctx, assets.SDRDenom, sdk.NewInt(2)) // 1 SDR cap
+	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 2)) // 1%
+
+	params := treasury.DefaultParams()
+	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.SDRDenom, 2) // 2 SDR cap
+	input.treasuryKeeper.SetParams(input.ctx, params)
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
 

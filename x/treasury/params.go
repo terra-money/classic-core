@@ -56,9 +56,10 @@ func DefaultParams() Params {
 
 		// Reward update policy
 		PolicyConstraints{
-			RateMin:       sdk.NewDecWithPrec(5, 2),  // 5%
-			RateMax:       sdk.NewDecWithPrec(20, 2), // 20%
-			ChangeRateMax: sdk.NewDecWithPrec(25, 3), // 2.5%
+			RateMin:       sdk.NewDecWithPrec(5, 2),             // 5%
+			RateMax:       sdk.NewDecWithPrec(20, 2),            // 20%
+			ChangeRateMax: sdk.NewDecWithPrec(25, 3),            // 2.5%
+			Cap:           sdk.NewCoin("unused", sdk.ZeroInt()), // UNUSED
 		},
 
 		sdk.NewDecWithPrec(67, 2),                     // 67%

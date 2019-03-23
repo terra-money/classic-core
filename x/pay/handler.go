@@ -8,7 +8,6 @@
 package pay
 
 import (
-	"terra/types/util"
 	"terra/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -110,6 +109,6 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 		fk.AddCollectedFees(ctx, taxCoin)
 	}
 
-	tk.RecordTaxProceeds(ctx, util.GetEpoch(ctx), taxes)
+	tk.RecordTaxProceeds(ctx, taxes)
 	return
 }

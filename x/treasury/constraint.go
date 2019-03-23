@@ -24,8 +24,8 @@ func (pc PolicyConstraints) String() string {
 	`, pc.RateMin, pc.RateMax, pc.Cap, pc.ChangeRateMax)
 }
 
-// Clamps a policy variable within the policy constraints
-func (pc PolicyConstraints) clamp(prevRate sdk.Dec, newRate sdk.Dec) (clampedRate sdk.Dec) {
+// Clamp constrains a policy variable update within the policy constraints
+func (pc PolicyConstraints) Clamp(prevRate sdk.Dec, newRate sdk.Dec) (clampedRate sdk.Dec) {
 	if newRate.LT(pc.RateMin) {
 		newRate = pc.RateMin
 	} else if newRate.GT(pc.RateMax) {

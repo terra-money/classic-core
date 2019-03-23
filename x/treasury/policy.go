@@ -12,11 +12,11 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) sdk.Dec {
 
 	oldTaxRate := k.GetTaxRate(ctx)
 	inc := params.MiningIncrement
-	tlYear := rollingAverageIndicator(ctx, k, params.EpochLong, trl)
-	tlMonth := rollingAverageIndicator(ctx, k, params.EpochShort, trl)
+	tlYear := RollingAverageIndicator(ctx, k, params.EpochLong, TRL)
+	tlMonth := RollingAverageIndicator(ctx, k, params.EpochShort, TRL)
 
 	newTaxRate := oldTaxRate.Mul(tlYear.Add(inc.Amount)).Quo(tlMonth)
-	clampedTaxRate := params.TaxPolicy.clamp(oldTaxRate, newTaxRate)
+	clampedTaxRate := params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
 
 	// Set the new tax rate to the store
 	k.SetTaxRate(ctx, clampedTaxRate)
@@ -31,10 +31,10 @@ func updateRewardPolicy(ctx sdk.Context, k Keeper) sdk.Dec {
 	curEpoch := util.GetEpoch(ctx)
 	prevWeight := k.GetRewardWeight(ctx, curEpoch.Sub(sdk.OneInt()))
 	smrTarget := params.SeigniorageBurdenTarget
-	smrAvgMonth := rollingAverageIndicator(ctx, k, params.EpochShort, smr)
+	smrAvgMonth := RollingAverageIndicator(ctx, k, params.EpochShort, SMR)
 
 	newWeight := prevWeight.Mul(smrTarget.Quo(smrAvgMonth))
-	clampedWeight := params.RewardPolicy.clamp(prevWeight, newWeight)
+	clampedWeight := params.RewardPolicy.Clamp(prevWeight, newWeight)
 
 	// Set the new reward weight
 	k.SetRewardWeight(ctx, clampedWeight)

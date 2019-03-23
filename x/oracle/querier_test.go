@@ -98,7 +98,7 @@ func TestQueryPrice(t *testing.T) {
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
-	input.oracleKeeper.SetPrice(input.ctx, assets.KRWDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, testPrice)
 
 	price := getQueriedPrice(t, input.ctx, cdc, querier, assets.KRWDenom)
 
@@ -111,10 +111,10 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
-	input.oracleKeeper.SetPrice(input.ctx, assets.KRWDenom, testPrice)
-	input.oracleKeeper.SetPrice(input.ctx, assets.USDDenom, testPrice)
-	input.oracleKeeper.SetPrice(input.ctx, assets.SDRDenom, testPrice)
-	input.oracleKeeper.SetPrice(input.ctx, assets.GBPDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.USDDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, testPrice)
 
 	actives := getQueriedActive(t, input.ctx, cdc, querier)
 

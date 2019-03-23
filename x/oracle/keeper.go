@@ -113,8 +113,8 @@ func (k Keeper) resetDropCounter(ctx sdk.Context, denom string) {
 //-----------------------------------
 // Price logic
 
-// GetPrice gets the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) GetPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error) {
+// GetLunaSwapRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
+func (k Keeper) GetLunaSwapRate(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error) {
 	if denom == assets.LunaDenom {
 		return sdk.OneDec(), nil
 	}
@@ -128,8 +128,8 @@ func (k Keeper) GetPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.
 	return
 }
 
-// SetPrice sets the consensus exchange rate of Luna denominated in the denom asset to the store.
-func (k Keeper) SetPrice(ctx sdk.Context, denom string, price sdk.Dec) {
+// SetLunaSwapRate sets the consensus exchange rate of Luna denominated in the denom asset to the store.
+func (k Keeper) SetLunaSwapRate(ctx sdk.Context, denom string, price sdk.Dec) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(price)
 	store.Set(keyPrice(denom), bz)

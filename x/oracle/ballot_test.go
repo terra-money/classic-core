@@ -150,6 +150,4 @@ func TestPBTally(t *testing.T) {
 		_, rewardees := pb.tally()
 		require.Equal(t, len(tc.rewardees), len(rewardees))
 	}
-
-	panic(nil)
 }

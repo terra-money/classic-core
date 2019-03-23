@@ -97,12 +97,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 			rewardees = append(rewardees, ballotWinners...)
 
 			actionTag := tags.ActionPriceUpdate
-			if _, err := k.GetPrice(ctx, denom); err != nil {
+			if _, err := k.GetLunaSwapRate(ctx, denom); err != nil {
 				actionTag = tags.ActionWhitelist
 			}
 
 			// Set price to the store
-			k.SetPrice(ctx, denom, mod)
+			k.SetLunaSwapRate(ctx, denom, mod)
 
 			resTags = resTags.AppendTags(
 				sdk.NewTags(

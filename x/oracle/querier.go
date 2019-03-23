@@ -36,7 +36,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
 
-	price, err := keeper.GetPrice(ctx, denom)
+	price, err := keeper.GetLunaSwapRate(ctx, denom)
 	if err != nil {
 		return []byte{}, ErrUnknownDenomination(DefaultCodespace, denom)
 	}
