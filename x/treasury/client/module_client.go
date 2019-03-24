@@ -30,17 +30,19 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	treasuryQueryCmd.AddCommand(client.GetCommands(
 		treasuryCli.GetCmdQueryTaxRate(mc.storeKey, mc.cdc),
 		treasuryCli.GetCmdQueryTaxCap(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryMiningRewardWeight(mc.storeKey, mc.cdc),
 		treasuryCli.GetCmdQueryIssuance(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryTaxProceeds(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQuerySeigniorageProceeds(mc.storeKey, mc.cdc),
 		treasuryCli.GetCmdQueryActiveClaims(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryMiningWeight(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryBalance(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryCurrentEpoch(mc.storeKey, mc.cdc),
 		treasuryCli.GetCmdQueryParams(mc.storeKey, mc.cdc),
 	)...)
 
 	return treasuryQueryCmd
 }
 
-// The treasury module returns no TX commands.
+// GetTxCmd The treasury module returns no TX commands.
 func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	return &cobra.Command{Hidden: true}
 }

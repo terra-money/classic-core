@@ -41,7 +41,7 @@ var (
 	DefaultNodeHome = os.ExpandEnv("$HOME/.terrad")
 )
 
-// Extended ABCI application
+// TerraApp contains ABCI application
 type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
@@ -158,7 +158,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.cdc,
 		app.keyTreasury,
-		app.accountKeeper,
 		app.mintKeeper,
 		app.marketKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
@@ -194,11 +193,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
-		//AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
 		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
-		AddRoute(treasury.RouterKey, treasury.NewQuerier(app.treasuryKeeper)).
+		AddRoute(treasury.QuerierRoute, treasury.NewQuerier(app.treasuryKeeper)).
 		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper)).
 		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
 
@@ -238,7 +236,7 @@ func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	return app.BaseApp.Query(req)
 }
 
-// custom tx codec
+// MakeCodec builds a custom tx codec
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	bank.RegisterCodec(cdc)
@@ -277,13 +275,17 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 
-	rewardees, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	oracleClaims, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
-	app.treasuryKeeper.ProcessClaims(ctx, treasury.OracleClaimClass, rewardees)
+	for _, oracleClaim := range oracleClaims {
+		app.treasuryKeeper.AddClaim(ctx, oracleClaim)
+	}
 
-	claimants, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	budgetClaims, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
-	app.treasuryKeeper.ProcessClaims(ctx, treasury.BudgetClaimClass, claimants)
+	for _, budgetClaim := range budgetClaims {
+		app.treasuryKeeper.AddClaim(ctx, budgetClaim)
+	}
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)

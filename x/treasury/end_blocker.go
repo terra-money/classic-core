@@ -51,13 +51,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	)
 }
 
-// ProcessClaims adds a funding claim to the treasury. Settled around once a month.
-func (k Keeper) ProcessClaims(ctx sdk.Context, claims []types.Claim) {
-	for _, claim := range claims {
-		k.AddClaim(ctx, claim)
-	}
-}
-
 // compute scales by which the total reward pool must be
 func getScales(ctx sdk.Context, k Keeper, oracleSum, budgetSum sdk.Int) (minerScale, oracleScale, budgetScale sdk.Dec) {
 	params := k.GetParams(ctx)

@@ -1,11 +1,10 @@
-package test
+package treasury
 
 import (
 	"math/rand"
 	"terra/types"
 	"terra/types/assets"
 	"terra/types/util"
-	"terra/x/treasury"
 	"terra/x/treasury/tags"
 	"testing"
 	"time"
@@ -19,7 +18,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	input = reset(input)
 
 	// First endblocker should fail
-	tTags := treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+	tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 	require.True(t, len(tTags.ToKVPairs()) == 0)
 
 	// Subsequent endblocker should settle, but NOT update policy
@@ -27,7 +26,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := int64(1); i < params.EpochProbation.Int64(); i++ {
 		if i%params.EpochShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
-			tTags := treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
 			require.Equal(t, 4, len(tTags))
 		}
@@ -37,7 +36,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
 		if i%params.EpochShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
-			tTags := treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
 			require.Equal(t, tTags.ToKVPairs()[4].GetValue(), []byte(tags.ActionPolicyUpdate))
 		}
@@ -63,7 +62,7 @@ func reset(input testInput) testInput {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(1))
 
 	// Reset genesis
-	treasury.InitGenesis(input.ctx, input.treasuryKeeper, treasury.DefaultGenesisState())
+	InitGenesis(input.ctx, input.treasuryKeeper, DefaultGenesisState())
 
 	// Give everyone some luna
 	for _, addr := range addrs {
@@ -94,10 +93,10 @@ func updatePolicy(input testInput, startIndex int,
 		input.mintKeeper.AddSeigniorage(input.ctx, seigniorageRevenue)
 
 		// Call endblocker
-		treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+		EndBlocker(input.ctx, input.treasuryKeeper)
 	}
 
-	taxRate = input.treasuryKeeper.GetTaxRate(input.ctx)
+	taxRate = input.treasuryKeeper.GetTaxRate(input.ctx, util.GetEpoch(input.ctx))
 	rewardWeight = input.treasuryKeeper.GetRewardWeight(input.ctx, util.GetEpoch(input.ctx))
 	ctx = input.ctx
 
@@ -128,7 +127,7 @@ func TestEndBlockerUpdatePolicy(t *testing.T) {
 	require.Nil(t, err)
 
 	input.ctx = ctx
-	taxRate := input.treasuryKeeper.GetTaxRate(input.ctx)
+	taxRate := input.treasuryKeeper.GetTaxRate(input.ctx, util.GetEpoch(input.ctx))
 	rewardWeight := input.treasuryKeeper.GetRewardWeight(input.ctx, util.GetEpoch(input.ctx))
 
 	require.Equal(t, taxRate, newTaxRate)
@@ -187,8 +186,10 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 		input.mintKeeper.AddSeigniorage(input.ctx, tc.seigniorage)
 
 		// Call endblocker
-		input.treasuryKeeper.ProcessClaims(input.ctx, tc.claims)
-		treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+		for _, claim := range tc.claims {
+			input.treasuryKeeper.AddClaim(input.ctx, claim)
+		}
+		EndBlocker(input.ctx, input.treasuryKeeper)
 
 		for j, addr := range addrs {
 			balance := input.bankKeeper.GetCoins(input.ctx, addr).AmountOf(assets.SDRDenom)

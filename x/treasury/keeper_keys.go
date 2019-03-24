@@ -13,11 +13,15 @@ var (
 	PrefixClaim         = []byte("claim")
 	paramStoreKeyParams = []byte("params")
 
-	keyTaxRate        = []byte("tax_rate")
+	prefixTaxRate     = []byte("tax_rate")
 	prefixTaxProceeds = []byte("tax_proceeds")
 	prefixTaxCap      = []byte("tax_cap")
 	prefixIssuance    = []byte("issuance")
 )
+
+func keyTaxRate(epoch sdk.Int) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixTaxRate, epoch))
+}
 
 func keyRewardWeight(epoch sdk.Int) []byte {
 	return []byte(fmt.Sprintf("%s:%s", prefixRewardWeight, epoch))

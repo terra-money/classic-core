@@ -1,7 +1,8 @@
-package test
+package treasury
 
 import (
 	"terra/types/assets"
+	"terra/types/util"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,7 @@ func TestConstraintClamp(t *testing.T) {
 	input := createTestInput(t)
 
 	taxPolicy := input.treasuryKeeper.GetParams(input.ctx).TaxPolicy
-	prevRate := input.treasuryKeeper.GetTaxRate(input.ctx)
+	prevRate := input.treasuryKeeper.GetTaxRate(input.ctx, util.GetEpoch(input.ctx))
 
 	// Case 1: try to update delta > maxUpdateRate
 	newRate := prevRate.Add(taxPolicy.ChangeRateMax.MulInt64(2))

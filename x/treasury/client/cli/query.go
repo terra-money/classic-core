@@ -22,12 +22,18 @@ const (
 // GetCmdQueryTaxRate implements the query taxrate command.
 func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "taxrate",
+		Use:   treasury.QueryTaxRate + " [epoch]",
 		Short: "Query the stability tax rate",
+		Long: strings.TrimSpace(`
+Query the stability tax rate at the specified epoch.
+
+$ terracli query treasury taxrate --epoch=14
+`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryTaxRate), nil)
+			epoch := viper.GetInt(flagEpoch)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryTaxRate, epoch), nil)
 			if err != nil {
 				return err
 			}
@@ -41,39 +47,10 @@ func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryMRL implements the query mrl command.
-func GetCmdQueryMRL(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "mrl",
-		Short: "Query the unit mining rewards per luna for the epoch",
-		Long: strings.TrimSpace(`
-Query the unit mining reward for luna at the given epoch. 
-mining rewards are a sum of transaction tax and seigniorage rewards. 
-
-$ terracli query treasury mrl --epoch=5
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			epoch := viper.GetInt(flagEpoch)
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryMRL, epoch), nil)
-			if err != nil {
-				return err
-			}
-
-			var mrl sdk.Dec
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &mrl)
-			return cliCtx.PrintOutput(mrl)
-		},
-	}
-
-	return cmd
-}
-
 // GetCmdQueryTaxCap implements the query taxcap command.
 func GetCmdQueryTaxCap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "taxcap [denom]",
+		Use:   treasury.QueryTaxCap + " [denom]",
 		Short: "Query the current stability tax cap of the [denom] asset",
 		Long: strings.TrimSpace(`
 Query the current stability tax cap of the [denom] asset. 
@@ -102,7 +79,7 @@ $ terracli query treasury taxcap --denom="krw"
 // GetCmdQueryIssuance implements the query issuance command.
 func GetCmdQueryIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "issuance [denom]",
+		Use:   treasury.QueryIssuance + " [denom]",
 		Short: "Query the current issuance of the [denom] asset",
 		Long: strings.TrimSpace(`
 Query the current issuance of the [denom] asset. 
@@ -127,10 +104,10 @@ $ terracli query treasury issuance --denom="krw"
 	return cmd
 }
 
-// GetCmdQueryActiveClaims implements the query activeclaims command.
+// GetCmdQueryActiveClaims implements the query active-claims command.
 func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activeclaims",
+		Use:   treasury.QueryActiveClaims,
 		Short: "Query claims that have yet to be redeemed by the treasury",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -140,7 +117,7 @@ func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command
 				return err
 			}
 
-			var claims types.Claims
+			var claims types.ClaimPool
 			cdc.MustUnmarshalBinaryLengthPrefixed(res, &claims)
 			return cliCtx.PrintOutput(claims)
 		},
@@ -149,11 +126,16 @@ func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command
 	return cmd
 }
 
-// GetCmdQueryMiningWeight implements the query miningweight command.
-func GetCmdQueryMiningWeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryMiningRewardWeight implements the query reward-weight command.
+func GetCmdQueryMiningRewardWeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "miningweight",
-		Short: "Query the current mining weight",
+		Use:   treasury.QueryMiningRewardWeight,
+		Short: "Query the mining reward weight",
+		Long: strings.TrimSpace(`
+Query the mining reward rate at the specified epoch.
+
+$ terracli query treasury reward-weight --epoch=14
+`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -163,38 +145,87 @@ func GetCmdQueryMiningWeight(queryRoute string, cdc *codec.Codec) *cobra.Command
 				return err
 			}
 
-			var miningWeight sdk.Dec
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &miningWeight)
-			return cliCtx.PrintOutput(miningWeight)
+			var rewardWeight sdk.Dec
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &rewardWeight)
+			return cliCtx.PrintOutput(rewardWeight)
 		},
 	}
 
 	return cmd
 }
 
-// GetCmdQueryBalance implements the query balance command.
-func GetCmdQueryBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTaxProceeds implements the query tax-proceeds command.
+func GetCmdQueryTaxProceeds(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "balance",
-		Short: "Query the current Treasury balance",
+		Use:   treasury.QueryTaxProceeds,
+		Short: "Query the tax proceeds for the epoch",
 		Long: strings.TrimSpace(`
-Query the current Treasury balance, denominated in TerraSDR. 
-Balance clears periodically to satisfy claims registered with the Treasury. 
+Query the tax proceeds corresponding to the given epoch. The return value will be sdk.Coins{} of all the taxes collected. 
 
-$ terracli query treasury balance
+$ terracli query treasury tax-proceeds --epoch=14
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			epoch := viper.GetInt(flagEpoch)
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryBalance, epoch), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QueryTaxProceeds, epoch), nil)
 			if err != nil {
 				return err
 			}
 
-			var balance sdk.Int
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &balance)
-			return cliCtx.PrintOutput(balance)
+			var taxProceeds sdk.Coins
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &taxProceeds)
+			return cliCtx.PrintOutput(taxProceeds)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQuerySeigniorageProceeds implements the query seigniorage-proceeds command.
+func GetCmdQuerySeigniorageProceeds(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   treasury.QuerySeigniorageProceeds,
+		Short: "Query the seigniorage proceeds for the epoch",
+		Long: strings.TrimSpace(`
+Query the seigniorage proceeds corresponding to the given epoch. The return value will be in units of Luna coins. 
+
+$ terracli query treasury seigniorage-proceeds --epoch=14
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			epoch := viper.GetInt(flagEpoch)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, treasury.QuerySeigniorageProceeds, epoch), nil)
+			if err != nil {
+				return err
+			}
+
+			var seigniorageProceeds sdk.Coins
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &seigniorageProceeds)
+			return cliCtx.PrintOutput(seigniorageProceeds)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryCurrentEpoch implements the query seigniorage-proceeds command.
+func GetCmdQueryCurrentEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   treasury.QueryCurrentEpoch,
+		Short: "Query the current epoch number",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+			if err != nil {
+				return err
+			}
+
+			var curEpoch sdk.Int
+			cdc.MustUnmarshalBinaryLengthPrefixed(res, &curEpoch)
+			return cliCtx.PrintOutput(curEpoch)
 		},
 	}
 

@@ -46,7 +46,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // GenesisState will contain the pool, and validator/delegator distribution info's
 func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 	params := k.GetParams(ctx)
-	taxRate := k.GetTaxRate(ctx)
+	taxRate := k.GetTaxRate(ctx, sdk.ZeroInt())
 	rewardWeight := k.GetRewardWeight(ctx, util.GetEpoch(ctx))
 	return NewGenesisState(params, taxRate, rewardWeight)
 }

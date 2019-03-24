@@ -8,6 +8,7 @@
 package pay
 
 import (
+	"terra/types/util"
 	"terra/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -88,7 +89,7 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 
 	taxes := sdk.Coins{}
 	for _, coin := range principal {
-		taxRate := tk.GetTaxRate(ctx)
+		taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
 		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
 
 		// If tax due is greater than the tax cap, cap!

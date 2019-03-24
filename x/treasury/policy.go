@@ -10,7 +10,7 @@ import (
 func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 	params := k.GetParams(ctx)
 
-	oldTaxRate := k.GetTaxRate(ctx)
+	oldTaxRate := k.GetTaxRate(ctx, util.GetEpoch(ctx))
 	inc := params.MiningIncrement
 	tlYear := RollingAverageIndicator(ctx, k, params.EpochLong, TRL)
 	tlMonth := RollingAverageIndicator(ctx, k, params.EpochShort, TRL)

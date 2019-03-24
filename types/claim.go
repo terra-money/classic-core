@@ -42,13 +42,3 @@ func (c Claim) String() string {
 	return fmt.Sprintf("Claim{class: %v, weight: %v, recipient: %v}",
 		c.Class, c.Weight, c.Recipient)
 }
-
-// Claims is a collection of Claim
-type Claims []Claim
-
-func (c Claims) String() (out string) {
-	for _, claim := range c {
-		out += fmt.Sprintf("\n  %s", claim.String())
-	}
-	return out
-}

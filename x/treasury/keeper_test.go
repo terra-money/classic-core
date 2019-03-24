@@ -1,10 +1,9 @@
-package test
+package treasury
 
 import (
 	"terra/types"
 	"terra/types/assets"
 	"terra/types/util"
-	"terra/x/treasury"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,11 +35,11 @@ func TestTax(t *testing.T) {
 	// Set & get tax rate
 	testRate := sdk.NewDecWithPrec(2, 3)
 	input.treasuryKeeper.SetTaxRate(input.ctx, testRate)
-	curRate := input.treasuryKeeper.GetTaxRate(input.ctx)
+	curRate := input.treasuryKeeper.GetTaxRate(input.ctx, util.GetEpoch(input.ctx))
 	require.Equal(t, curRate, testRate)
 
 	// Vicariously set tax caps & test
-	params := treasury.DefaultParams()
+	params := DefaultParams()
 	input.treasuryKeeper.SetParams(input.ctx, params)
 	sdrCap := params.TaxPolicy.Cap
 
@@ -87,7 +86,7 @@ func TestClaim(t *testing.T) {
 func TestParams(t *testing.T) {
 	input := createTestInput(t)
 
-	defaultParams := treasury.DefaultParams()
+	defaultParams := DefaultParams()
 	input.treasuryKeeper.SetParams(input.ctx, defaultParams)
 
 	retrievedParams := input.treasuryKeeper.GetParams(input.ctx)

@@ -1,9 +1,8 @@
-package test
+package treasury
 
 import (
 	"terra/types/assets"
 	"terra/types/util"
-	"terra/x/treasury"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 	})
 
 	// Get taxes
-	taxProceedsInSDR := treasury.TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	taxProceedsInSDR := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	require.Equal(t, sdk.NewDec(1111), taxProceedsInSDR)
 }
 
@@ -48,7 +47,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.mintKeeper.AddSeigniorage(input.ctx, sAmt)
 
 	// Get seigniorage rewards
-	seigniorageProceeds := treasury.SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	seigniorageProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	miningRewardWeight := input.treasuryKeeper.GetRewardWeight(input.ctx, util.GetEpoch(input.ctx))
 	require.Equal(t, lnasdrRate.MulInt(sAmt).Mul(miningRewardWeight), seigniorageProceeds)
 }
@@ -75,9 +74,9 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	// Add seigniorage
 	input.mintKeeper.AddSeigniorage(input.ctx, amt)
 
-	tProceeds := treasury.TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	sProceeds := treasury.SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	mProceeds := treasury.MiningRewardForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	mProceeds := MiningRewardForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 
 	require.Equal(t, tProceeds.Add(sProceeds), mProceeds)
 }
@@ -98,10 +97,10 @@ func TestSMR(t *testing.T) {
 	// Add seigniorage
 	input.mintKeeper.AddSeigniorage(input.ctx, amt)
 
-	tProceeds := treasury.TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	sProceeds := treasury.SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 
-	actualSMR := treasury.SMR(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+	actualSMR := SMR(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	expectedSMR := sProceeds.Quo(tProceeds.Add(sProceeds))
 
 	require.Equal(t, expectedSMR, actualSMR)
@@ -116,15 +115,15 @@ func TestUnitIndicator(t *testing.T) {
 
 	// Just get an indicator to multiply the unit value by the expected rval.
 	// the unit indicator function obviously should return the expected rval.
-	actual := treasury.UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx),
-		func(_ sdk.Context, _ treasury.Keeper, _ sdk.Int) sdk.Dec {
+	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx),
+		func(_ sdk.Context, _ Keeper, _ sdk.Int) sdk.Dec {
 			return sdk.NewDecFromInt(lunaIssuance.MulRaw(20))
 		})
 
 	require.Equal(t, sdk.NewDec(20), actual)
 }
 
-func linearFn(_ sdk.Context, _ treasury.Keeper, epoch sdk.Int) sdk.Dec {
+func linearFn(_ sdk.Context, _ Keeper, epoch sdk.Int) sdk.Dec {
 	return sdk.NewDecFromInt(epoch)
 }
 
@@ -132,33 +131,33 @@ func TestRollingAverageIndicator(t *testing.T) {
 	input := createTestInput(t)
 
 	// Case 1: at epoch 0 and averaging over 0 epochs
-	rval := treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
+	rval := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 2: at epoch 0 and averaging over negative epochs
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.OneInt().Neg(), linearFn)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.OneInt().Neg(), linearFn)
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 3: at epoch 3 and averaging over 3, 4, 5 epochs; all should have the same rval
 	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 3)
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(4), linearFn)
-	rval2 := treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(5), linearFn)
-	rval3 := treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(6), linearFn)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(4), linearFn)
+	rval2 := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(5), linearFn)
+	rval3 := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(6), linearFn)
 	require.Equal(t, sdk.NewDecWithPrec(15, 1), rval)
 	require.Equal(t, rval, rval2)
 	require.Equal(t, rval2, rval3)
 
 	// Case 4: at epoch 3 and averaging over 0 epochs
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 5: at epoch 3 and averaging over 1 epoch
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.OneInt(), linearFn)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.OneInt(), linearFn)
 	require.Equal(t, sdk.NewDec(3), rval)
 
 	// Case 6: at epoch 500 and averaging over 300 epochs
 	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 500)
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), linearFn)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), linearFn)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
 	// Test all of our reporting functions
@@ -173,21 +172,21 @@ func TestRollingAverageIndicator(t *testing.T) {
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.TaxRewardsForEpoch)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TaxRewardsForEpoch)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.SeigniorageRewardsForEpoch)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), SeigniorageRewardsForEpoch)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.MiningRewardForEpoch)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), MiningRewardForEpoch)
 	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1), rval)
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.TRL)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TRL)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 5), rval)
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.SRL)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), SRL)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 5), rval)
 
-	rval = treasury.RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), treasury.MRL)
+	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), MRL)
 	require.Equal(t, sdk.NewDecWithPrec(3505*2, 5), rval)
 }

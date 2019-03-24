@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // ClaimPool is a list of Claims
 type ClaimPool []Claim
 
@@ -24,4 +26,11 @@ func (cp ClaimPool) Sort() ClaimPool {
 	}
 
 	return cp
+}
+
+func (cp ClaimPool) String() (out string) {
+	for _, claim := range cp {
+		out += fmt.Sprintf("\n  %s", claim.String())
+	}
+	return out
 }

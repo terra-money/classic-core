@@ -1,10 +1,9 @@
-package test
+package treasury
 
 import (
 	"terra/x/market"
 	"terra/x/mint"
 	"terra/x/oracle"
-	"terra/x/treasury"
 
 	"testing"
 	"time"
@@ -46,14 +45,14 @@ type testInput struct {
 	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
 	mintKeeper     mint.Keeper
-	treasuryKeeper treasury.Keeper
+	treasuryKeeper Keeper
 }
 
 func newTestCodec() *codec.Codec {
 	cdc := codec.New()
 
 	bank.RegisterCodec(cdc)
-	treasury.RegisterCodec(cdc)
+	RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
@@ -67,7 +66,7 @@ func createTestInput(t *testing.T) testInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
-	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
+	keyTreasury := sdk.NewKVStoreKey(StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -108,15 +107,15 @@ func createTestInput(t *testing.T) testInput {
 
 	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
 
-	treasuryKeeper := treasury.NewKeeper(
+	treasuryKeeper := NewKeeper(
 		cdc,
 		keyTreasury,
 		mintKeeper,
 		marketKeeper,
-		paramsKeeper.Subspace(treasury.DefaultParamspace),
+		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
-	treasury.InitGenesis(ctx, treasuryKeeper, treasury.DefaultGenesisState())
+	InitGenesis(ctx, treasuryKeeper, DefaultGenesisState())
 
 	return testInput{ctx, bankKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
 }

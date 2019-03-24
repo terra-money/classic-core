@@ -48,6 +48,7 @@ func (k Keeper) SetRewardWeight(ctx sdk.Context, weight sdk.Dec) {
 // GetRewardWeight returns the mining reward weight
 func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.key)
+
 	if bz := store.Get(keyRewardWeight(epoch)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rewardWeight)
 	} else {
@@ -81,7 +82,6 @@ func (k Keeper) AddClaim(ctx sdk.Context, claim types.Claim) {
 		var prevClaim types.Claim
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &prevClaim)
 		claim.Weight = claim.Weight.Add(prevClaim.Weight)
-
 	}
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
 	store.Set(claimKey, bz)
@@ -125,16 +125,26 @@ func (k Keeper) SetParams(ctx sdk.Context, params Params) {
 func (k Keeper) SetTaxRate(ctx sdk.Context, rate sdk.Dec) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(rate)
-	store.Set(keyTaxRate, bz)
+	store.Set(keyTaxRate(util.GetEpoch(ctx)), bz)
 }
 
 // GetTaxRate gets the tax rate
-func (k Keeper) GetTaxRate(ctx sdk.Context) (rate sdk.Dec) {
+func (k Keeper) GetTaxRate(ctx sdk.Context, epoch sdk.Int) (rate sdk.Dec) {
 	store := ctx.KVStore(k.key)
-	if bz := store.Get(keyTaxRate); bz != nil {
+	if bz := store.Get(keyTaxRate(epoch)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rate)
 	} else {
-		rate = k.GetParams(ctx).TaxPolicy.RateMin
+		if epoch.LTE(sdk.ZeroInt()) {
+			rate = k.GetParams(ctx).TaxPolicy.RateMin
+		} else {
+			// Fetch the tax rate of the previous epoch
+			rate = k.GetTaxRate(ctx, epoch.Sub(sdk.OneInt()))
+		}
+
+		// Set issuance to the store
+		store := ctx.KVStore(k.key)
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(rate)
+		store.Set(keyTaxRate(epoch), bz)
 	}
 	return
 }
