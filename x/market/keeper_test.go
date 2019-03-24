@@ -12,70 +12,33 @@ func TestKeeperSwapCoins(t *testing.T) {
 
 	input := createTestInput(t)
 
-	offerAmt := sdk.NewInt(2)
-	offerCoin := sdk.NewCoin(assets.SDRDenom, offerAmt)
-	askDenom := assets.CNYDenom
-	offerLunaPrice := sdk.NewDec(4)
-	askLunaPrice := sdk.NewDec(8)
-	expectedAskCoin := sdk.NewCoin(askDenom, sdk.NewInt(1))
+	lnasdrRate := sdk.NewDec(4)
+	lnacnyRate := sdk.NewDec(8)
+	offerCoin := sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2))
+	askCoin := sdk.NewCoin(assets.CNYDenom, sdk.NewInt(4))
 
-<<<<<<< HEAD
-	msg := NewMsgSwap(addrs[0], offerCoin, askDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	res := handler(input.ctx, msg)
-	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
-
-	// Set offer asset price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, offerLunaPrice)
-
-	res = handler(input.ctx, msg)
-	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
-
-	// Set offer asset price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
-=======
-	input.oracleKeeper.SetPrice(input.ctx, offerCoin.Denom, offerLunaPrice)
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
-	retCoin, err := input.marketKeeper.SwapCoins(input.ctx, offerCoin, askDenom)
+	retCoin, err := input.marketKeeper.SwapCoins(input.ctx, offerCoin, askCoin.Denom)
 	require.Nil(t, err)
->>>>>>> 95f3dd212d1beea3dd2355026d70588ef939b46a
 
-	require.Equal(t, retCoin, expectedAskCoin)
+	require.Equal(t, retCoin, askCoin)
 }
 
 func TestKeeperSwapDecCoins(t *testing.T) {
 	input := createTestInput(t)
 
-	offerAmt := sdk.NewInt(2)
-	offerCoin := sdk.NewDecCoin(assets.SDRDenom, offerAmt)
-	askDenom := assets.CNYDenom
-	offerLunaPrice := sdk.NewDec(4)
-	askLunaPrice := sdk.NewDec(8)
-	expectedAskCoin := sdk.NewDecCoin(askDenom, sdk.NewInt(1))
+	lnasdrRate := sdk.NewDec(4)
+	lnacnyRate := sdk.NewDec(8)
+	offerCoin := sdk.NewDecCoin(assets.SDRDenom, sdk.NewInt(2))
+	askCoin := sdk.NewDecCoin(assets.CNYDenom, sdk.NewInt(4))
 
-<<<<<<< HEAD
-	// Set oracle price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, offerLunaPrice)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	msg := NewMsgSwap(addrs[0], offerCoin, askDenom)
-
-	res := handler(input.ctx, msg)
-	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
-
-	// Reset oracle price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
-	askLunaPrice = sdk.NewDecWithPrec(1000, 1)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
-
-	res = handler(input.ctx, msg)
-	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
-=======
-	input.oracleKeeper.SetPrice(input.ctx, offerCoin.Denom, offerLunaPrice)
-	input.oracleKeeper.SetPrice(input.ctx, askDenom, askLunaPrice)
-	retCoin, err := input.marketKeeper.SwapDecCoins(input.ctx, offerCoin, askDenom)
+	retCoin, err := input.marketKeeper.SwapDecCoins(input.ctx, offerCoin, askCoin.Denom)
 	require.Nil(t, err)
 
-	require.Equal(t, retCoin, expectedAskCoin)
->>>>>>> 95f3dd212d1beea3dd2355026d70588ef939b46a
+	require.Equal(t, retCoin, askCoin)
 }

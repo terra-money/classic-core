@@ -89,7 +89,7 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 	taxes := sdk.Coins{}
 	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
 	for _, coin := range principal {
-		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).RoundInt()
+		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
 
 		// If tax due is greater than the tax cap, cap!
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)

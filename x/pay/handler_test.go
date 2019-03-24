@@ -5,6 +5,7 @@ import (
 	"terra/types/util"
 	"terra/x/market"
 	"terra/x/mint"
+	"terra/x/oracle"
 	"terra/x/treasury"
 	"testing"
 	"time"
@@ -59,6 +60,7 @@ func createTestInput(t *testing.T) testInput {
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -71,6 +73,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -89,7 +92,15 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
-	marketKeeper := market.Keeper{}
+	var valset sdk.ValidatorSet
+	oracleKeeper := oracle.NewKeeper(
+		cdc,
+		keyOracle,
+		valset,
+		paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
+
+	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
 
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
@@ -195,11 +206,11 @@ func TestHandlerMsgSendTax(t *testing.T) {
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
 
 	remainingBalance = input.bankKeeper.GetCoins(input.ctx, addrs[0])
-	expectedRemainingBalance := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2998))}
+	expectedRemainingBalance := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2999))}
 	receivedBalance := input.bankKeeper.GetCoins(input.ctx, addrs[1])
 	expectedReceivedBalance := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2000))}
 	taxCollected = input.feeKeeper.GetCollectedFees(input.ctx)
-	expectedTaxCollected := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(3))}
+	expectedTaxCollected := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2))}
 
 	require.Equal(t, expectedRemainingBalance, remainingBalance)
 	require.Equal(t, expectedReceivedBalance, receivedBalance)

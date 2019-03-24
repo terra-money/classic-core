@@ -80,9 +80,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 	seigPool := k.mtk.PeekSeignioragePool(ctx, curEpoch)
 	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.LunaDenom, seigPool), assets.SDRDenom)
 	if err != nil {
-		// Bad practice, but if Luna assets can't be converted to SDR, there is something
-		// seriously wrong...
-		panic(nil)
+		return // No or too little seigniorage
 	}
 
 	oracleSumWeight := sdk.ZeroInt()

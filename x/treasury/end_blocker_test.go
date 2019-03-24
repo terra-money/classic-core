@@ -26,6 +26,8 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := int64(1); i < params.EpochProbation.Int64(); i++ {
 		if i%params.EpochShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
 			require.Equal(t, 4, len(tTags))
@@ -36,6 +38,8 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
 		if i%params.EpochShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
 			require.Equal(t, tTags.ToKVPairs()[4].GetValue(), []byte(tags.ActionPolicyUpdate))
