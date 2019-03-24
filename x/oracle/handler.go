@@ -80,6 +80,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 	actives := getActiveDenoms(ctx, k)
 	votes := k.collectVotes(ctx)
 
+	totalBondedTokens := k.valset.TotalBondedTokens(ctx)
+
 	// Iterate through active oracle assets and drop assets that have no votes received.
 	for _, activeDenom := range actives {
 		if _, found := votes[activeDenom]; !found {
@@ -89,7 +91,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
 	for denom, filteredVotes := range votes {
-		if ballotIsPassing(k.valset.TotalBondedTokens(ctx), filteredVotes, params) {
+		if ballotIsPassing(totalBondedTokens, filteredVotes, params) {
 			// Get weighted median prices, and faithful respondants
 			mod, ballotWinners := filteredVotes.tally()
 
@@ -103,6 +105,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 
 			// Set price to the store
 			k.SetLunaSwapRate(ctx, denom, mod)
+
+			// Reset drop counter for the passed ballot
+			k.resetDropCounter(ctx, denom)
 
 			resTags = resTags.AppendTags(
 				sdk.NewTags(

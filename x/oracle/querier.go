@@ -78,29 +78,36 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	}
 
 	filteredVotes := []PriceVote{}
-	votes := keeper.collectVotes(ctx)
+	var prefix []byte
+	var handler func(vote PriceVote) (stop bool)
 
-	for _, ballot := range votes {
-		for _, vote := range ballot {
-			if len(params.Denom) != 0 && len(params.Voter) != 0 {
-				if vote.Denom == params.Denom && vote.Voter.Equals(params.Voter) {
-					filteredVotes = append(filteredVotes, vote)
-				}
-
-			} else if len(params.Denom) != 0 {
-				if vote.Denom == params.Denom {
-					filteredVotes = append(filteredVotes, vote)
-				}
-			} else if len(params.Voter) != 0 {
+	if len(params.Denom) != 0 && !params.Voter.Empty() {
+		prefix = keyVote(params.Denom, params.Voter)
+		handler = func(vote PriceVote) (stop bool) {
+			filteredVotes = append(filteredVotes, vote)
+			return false
+		}
+	} else if len(params.Denom) != 0 {
+		prefix = keyVote(params.Denom, sdk.AccAddress{})
+		handler = func(vote PriceVote) (stop bool) {
+			filteredVotes = append(filteredVotes, vote)
+			return false
+		}
+	} else {
+		prefix = prefixVote
+		handler = func(vote PriceVote) (stop bool) {
+			if !params.Voter.Empty() {
 				if vote.Voter.Equals(params.Voter) {
 					filteredVotes = append(filteredVotes, vote)
 				}
 			} else {
 				filteredVotes = append(filteredVotes, vote)
 			}
+			return false
 		}
-
 	}
+
+	keeper.iterateVotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {

@@ -35,9 +35,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, para
 func (k Keeper) collectVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
 	votes = map[string]PriceBallot{}
 	handler := func(vote PriceVote) (stop bool) {
-		ballot := votes[vote.Denom]
-		ballot = append(ballot, vote)
-		votes[vote.Denom] = ballot
+		votes[vote.Denom] = append(votes[vote.Denom], vote)
 		return false
 	}
 	k.iterateVotes(ctx, handler)
@@ -49,6 +47,20 @@ func (k Keeper) collectVotes(ctx sdk.Context) (votes map[string]PriceBallot) {
 func (k Keeper) iterateVotes(ctx sdk.Context, handler func(vote PriceVote) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	iter := sdk.KVStorePrefixIterator(store, prefixVote)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote PriceVote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
+}
+
+// Iterate over votes in the store
+func (k Keeper) iterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote PriceVote) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var vote PriceVote

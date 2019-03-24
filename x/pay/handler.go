@@ -4,7 +4,6 @@
 // Taxes are of the fomula: min(principal * taxRate, taxCap).
 // TaxCap and taxRate are stored by the treasury module.
 // Should transactions fail midway, taxes are still paid and non-refundable.
-
 package pay
 
 import (
@@ -88,9 +87,9 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 	taxPayer sdk.AccAddress, principal sdk.Coins) (taxTags sdk.Tags, err sdk.Error) {
 
 	taxes := sdk.Coins{}
+	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
 	for _, coin := range principal {
-		taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
-		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
+		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).RoundInt()
 
 		// If tax due is greater than the tax cap, cap!
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)
@@ -98,18 +97,15 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 			taxDue = taxCap
 		}
 
-		taxCoin := sdk.Coins{sdk.NewCoin(coin.Denom, taxDue)}
-
-		_, payTags, err := bk.SubtractCoins(ctx, taxPayer, taxCoin)
-		if err != nil {
-			return nil, err
-		}
-
-		taxTags = taxTags.AppendTags(payTags)
 		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
-		fk.AddCollectedFees(ctx, taxCoin)
 	}
 
+	_, taxTags, err = bk.SubtractCoins(ctx, taxPayer, taxes)
+	if err != nil {
+		return nil, err
+	}
+
+	fk.AddCollectedFees(ctx, taxes)
 	tk.RecordTaxProceeds(ctx, taxes)
 	return
 }

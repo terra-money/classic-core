@@ -41,12 +41,12 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
 
-	return sdk.Coin{Denom: askDenom, Amount: retAmount}, nil
+	return sdk.NewCoin(askDenom, retAmount), nil
 }
 
 // SwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
-// Similar to SwapCoins, but operates over sdk.DecCoins for convinience.
+// Similar to SwapCoins, but operates over sdk.DecCoins for convinience and accuracy.
 func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
@@ -59,6 +59,9 @@ func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom st
 	}
 
 	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
-	retCoin := sdk.NewDecCoinFromDec(askDenom, retAmount)
-	return retCoin, nil
+	if retAmount.LTE(sdk.ZeroDec()) {
+		return sdk.DecCoin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount.TruncateInt())
+	}
+
+	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil
 }

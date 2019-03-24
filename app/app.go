@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sort"
-
 	"terra/version"
 	"terra/x/budget"
 	"terra/x/market"
@@ -105,6 +104,11 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
+	app.paramsKeeper = params.NewKeeper(
+		app.cdc,
+		app.keyParams, app.tkeyParams,
+	)
+
 	// define the accountKeeper
 	app.accountKeeper = auth.NewAccountKeeper(
 		app.cdc,
@@ -121,10 +125,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.accountKeeper,
 		app.paramsKeeper.Subspace(bank.DefaultParamspace),
 		bank.DefaultCodespace,
-	)
-	app.paramsKeeper = params.NewKeeper(
-		app.cdc,
-		app.keyParams, app.tkeyParams,
 	)
 	stakingKeeper := staking.NewKeeper(
 		app.cdc,
