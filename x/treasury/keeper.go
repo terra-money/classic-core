@@ -51,7 +51,19 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sd
 	if bz := store.Get(keyRewardWeight(epoch)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rewardWeight)
 	} else {
-		rewardWeight = k.GetParams(ctx).TaxPolicy.RateMin
+		// Genesis epoch; nothing exists in store so we must read it
+		// from accountkeeper
+		if epoch.LTE(sdk.ZeroInt()) {
+			rewardWeight = k.GetParams(ctx).TaxPolicy.RateMin
+		} else {
+			// Fetch the issuance snapshot of the previous epoch
+			rewardWeight = k.GetRewardWeight(ctx, epoch.Sub(sdk.OneInt()))
+		}
+
+		// Set issuance to the store
+		store := ctx.KVStore(k.key)
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(rewardWeight)
+		store.Set(keyRewardWeight(epoch), bz)
 	}
 	return
 }

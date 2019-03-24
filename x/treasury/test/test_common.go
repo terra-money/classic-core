@@ -37,12 +37,12 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
-	lunaAmt = sdk.NewInt(10)
+	lunaAmt = sdk.NewInt(1000)
 )
 
 type testInput struct {
 	ctx            sdk.Context
+	bankKeeper     bank.Keeper
 	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
 	mintKeeper     mint.Keeper
@@ -118,5 +118,5 @@ func createTestInput(t *testing.T) testInput {
 
 	treasury.InitGenesis(ctx, treasuryKeeper, treasury.DefaultGenesisState())
 
-	return testInput{ctx, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
+	return testInput{ctx, bankKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
 }

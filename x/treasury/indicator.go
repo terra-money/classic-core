@@ -77,10 +77,14 @@ func MRL(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 
 // SMR returns the share of seigniorage rewards out of overall mining rewards for the epoch
 func SMR(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
-	taxRewardAmount := TaxRewardsForEpoch(ctx, k, epoch)
+	miningRewardAmount := MiningRewardForEpoch(ctx, k, epoch)
 	seigniorageRewardAmount := SeigniorageRewardsForEpoch(ctx, k, epoch)
 
-	return seigniorageRewardAmount.Quo(taxRewardAmount.Add(seigniorageRewardAmount))
+	if miningRewardAmount.Equal(sdk.ZeroDec()) {
+		return sdk.ZeroDec()
+	}
+
+	return seigniorageRewardAmount.Quo(miningRewardAmount)
 }
 
 // UnitLunaIndicator evaluates the indicator function and divides it by the luna supply for the epoch

@@ -9,25 +9,34 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// not enough data collected to update variables
+func isProbationPeriod(ctx sdk.Context, k Keeper) bool {
+	return util.GetEpoch(ctx).LT(k.GetParams(ctx).EpochProbation)
+}
+
 // at the block height for a tally
-func isAtEpochEnd(ctx sdk.Context, k Keeper) bool {
+func isEpochLastBlock(ctx sdk.Context, k Keeper) bool {
 	settlementPeriod := k.GetParams(ctx).EpochShort
 
 	// Look 1 block into the future ... at the last block of the epoch, trigger
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	currentEpoch := util.GetEpoch(ctx)
-	return currentEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
-		currentEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
+	futureCtx := ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	futureEpoch := util.GetEpoch(futureCtx)
+	return futureEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
+		futureEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
 }
 
 // EndBlocker called to adjust macro weights (tax, mining reward) and settle outstanding claims.
 func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
-	if !isAtEpochEnd(ctx, k) {
+	if !isEpochLastBlock(ctx, k) {
 		return resTags
 	}
 
 	// Settle and clear claims from the store
 	resTags = k.settleClaims(ctx)
+
+	if isProbationPeriod(ctx, k) {
+		return resTags
+	}
 
 	// Update policy weights
 	taxRate := updateTaxPolicy(ctx, k)
@@ -49,20 +58,24 @@ func (k Keeper) ProcessClaims(ctx sdk.Context, claims []types.Claim) {
 	}
 }
 
-func getScaleAndPool(ctx sdk.Context, k Keeper, rewardPool sdk.Coin, classWeightSum sdk.Int) (scale sdk.Dec, pool sdk.Int) {
+// compute scales by which the total reward pool must be
+func getScales(ctx sdk.Context, k Keeper, oracleSum, budgetSum sdk.Int) (minerScale, oracleScale, budgetScale sdk.Dec) {
 	params := k.GetParams(ctx)
 	curEpoch := util.GetEpoch(ctx)
 
-	if classWeightSum.Equal(sdk.ZeroInt()) {
-
+	oracleScale = sdk.ZeroDec()
+	budgetScale = sdk.ZeroDec()
+	rewardWeight := k.GetRewardWeight(ctx, curEpoch)
+	if oracleSum.GT(sdk.ZeroInt()) {
+		oracleScale = sdk.OneDec().Sub(rewardWeight).Mul(params.OracleClaimShare).QuoInt(oracleSum)
 	}
-	minerScale := k.GetRewardWeight(ctx, curEpoch)
-	oracleScale := sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare).QuoInt(oracleSumWeight)
-	budgetScale := sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare).QuoInt(budgetSumWeight)
 
-	rewardPool.Amount.Mul(minerScale)
-	rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare)).String()
-	rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare)).String()
+	if budgetSum.GT(sdk.ZeroInt()) {
+		budgetScale = sdk.OneDec().Sub(rewardWeight).Mul(params.BudgetClaimShare).QuoInt(budgetSum)
+	}
+
+	minerScale = sdk.OneDec().Sub(oracleScale).Sub(budgetScale)
+	return
 }
 
 // settleClaims distributes the current treasury to the registered claims, and deletes all claims from the store.
@@ -95,19 +108,16 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		return false
 	})
 
-	params := k.GetParams(ctx)
-
-	minerScale := k.GetRewardWeight(ctx, curEpoch)
-	oracleScale := sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare).QuoInt(oracleSumWeight)
-	budgetScale := sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare).QuoInt(budgetSumWeight)
+	// Need to scale weights in claims by dividing class shares and total amount of weights
+	minerScale, oracleScale, budgetScale := getScales(ctx, k, oracleSumWeight, budgetSumWeight)
 
 	// Settle and delete all claims from the store
 	k.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
 		var rewardAmt sdk.Int
 		if claim.Class == types.OracleClaimClass {
-			rewardAmt = rewardPool.Amount.Mul(oracleScale).TruncateInt()
+			rewardAmt = rewardPool.Amount.Mul(oracleScale).MulInt(claim.Weight).TruncateInt()
 		} else {
-			rewardAmt = rewardPool.Amount.Mul(budgetScale).TruncateInt()
+			rewardAmt = rewardPool.Amount.Mul(budgetScale).MulInt(claim.Weight).TruncateInt()
 		}
 
 		// Credit the recipient's account with the reward
@@ -118,10 +128,15 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		return false
 	})
 
+	// Just a rough approximation ... we are leaving some dust by rounding down each claim
+	oracleRewards := rewardPool.Amount.Mul(oracleScale).MulInt(oracleSumWeight)
+	budgetRewards := rewardPool.Amount.Mul(budgetScale).MulInt(budgetSumWeight)
+	minerRewards := rewardPool.Amount.Mul(minerScale)
+
 	return sdk.NewTags(
 		tags.Action, tags.ActionSettle,
-		tags.MinerReward, rewardPool.Amount.Mul(minerScale),
-		tags.Oracle, rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.OracleClaimShare)).String(),
-		tags.Budget, rewardPool.Amount.Mul(sdk.OneDec().Sub(minerScale).Mul(params.BudgetClaimShare)).String(),
+		tags.MinerReward, minerRewards.TruncateInt().String(),
+		tags.Oracle, oracleRewards.TruncateInt().String(),
+		tags.Budget, budgetRewards.TruncateInt().String(),
 	)
 }

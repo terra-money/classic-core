@@ -15,8 +15,9 @@ type Params struct {
 	SeigniorageBurdenTarget sdk.Dec     `json:"seigniorage_burden_target"`
 	MiningIncrement         sdk.DecCoin `json:"mining_increment"`
 
-	EpochShort sdk.Int `json:"epoch_short"`
-	EpochLong  sdk.Int `json:"epoch_long"`
+	EpochShort     sdk.Int `json:"epoch_short"`
+	EpochLong      sdk.Int `json:"epoch_long"`
+	EpochProbation sdk.Int `json:"epoch_probation"`
 
 	OracleClaimShare sdk.Dec `json:"oracle_share"`
 	BudgetClaimShare sdk.Dec `json:"budget_share"`
@@ -27,7 +28,7 @@ func NewParams(
 	taxPolicy, rewardPolicy PolicyConstraints,
 	seigniorageBurden sdk.Dec,
 	miningIncrement sdk.DecCoin,
-	epochShort, epochLong sdk.Int,
+	epochShort, epochLong, epochProbation sdk.Int,
 	oracleShare, budgetShare sdk.Dec,
 ) Params {
 	return Params{
@@ -37,6 +38,7 @@ func NewParams(
 		MiningIncrement:         miningIncrement,
 		EpochShort:              epochShort,
 		EpochLong:               epochLong,
+		EpochProbation:          epochProbation,
 		OracleClaimShare:        oracleShare,
 		BudgetClaimShare:        budgetShare,
 	}
@@ -67,6 +69,7 @@ func DefaultParams() Params {
 
 		sdk.NewInt(4),
 		sdk.NewInt(52),
+		sdk.NewInt(12),
 
 		sdk.NewDecWithPrec(1, 1), // 10%
 		sdk.NewDecWithPrec(9, 1), // 90%

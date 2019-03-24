@@ -95,15 +95,15 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 				return false
 			}
 			k.ak.IterateAccounts(ctx, countIssuance)
-
-			// Set issuance to the store
-			store := ctx.KVStore(k.key)
-			bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-			store.Set(keyIssuance(denom, curEpoch), bz)
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
 		}
+
+		// Set issuance to the store
+		store := ctx.KVStore(k.key)
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+		store.Set(keyIssuance(denom, curEpoch), bz)
 	}
 
 	return

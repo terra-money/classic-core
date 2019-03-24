@@ -7,7 +7,7 @@ import (
 )
 
 // t(t+1) = t(t) * (TL_year(t) + INC) / TL_month(t)
-func updateTaxPolicy(ctx sdk.Context, k Keeper) sdk.Dec {
+func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 	params := k.GetParams(ctx)
 
 	oldTaxRate := k.GetTaxRate(ctx)
@@ -15,29 +15,39 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) sdk.Dec {
 	tlYear := RollingAverageIndicator(ctx, k, params.EpochLong, TRL)
 	tlMonth := RollingAverageIndicator(ctx, k, params.EpochShort, TRL)
 
-	newTaxRate := oldTaxRate.Mul(tlYear.Add(inc.Amount)).Quo(tlMonth)
-	clampedTaxRate := params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
+	// No revenues, hike as much as possible.
+	if tlMonth.Equal(sdk.ZeroDec()) {
+		newTaxRate = params.TaxPolicy.RateMax
+	} else {
+		newTaxRate = oldTaxRate.Mul(tlYear.Add(inc.Amount)).Quo(tlMonth)
+	}
+
+	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx, clampedTaxRate)
-
-	return newTaxRate
+	k.SetTaxRate(ctx, newTaxRate)
+	return
 }
 
 // w(t+1) = w(t)*SMR_target/SMR_rolling(t)
-func updateRewardPolicy(ctx sdk.Context, k Keeper) sdk.Dec {
+func updateRewardPolicy(ctx sdk.Context, k Keeper) (newRewardWeight sdk.Dec) {
 	params := k.GetParams(ctx)
 
 	curEpoch := util.GetEpoch(ctx)
-	prevWeight := k.GetRewardWeight(ctx, curEpoch.Sub(sdk.OneInt()))
+	oldWeight := k.GetRewardWeight(ctx, curEpoch)
 	smrTarget := params.SeigniorageBurdenTarget
 	smrAvgMonth := RollingAverageIndicator(ctx, k, params.EpochShort, SMR)
 
-	newWeight := prevWeight.Mul(smrTarget.Quo(smrAvgMonth))
-	clampedWeight := params.RewardPolicy.Clamp(prevWeight, newWeight)
+	// No revenues; hike as much as possible
+	if smrAvgMonth.Equal(sdk.ZeroDec()) {
+		newRewardWeight = params.RewardPolicy.RateMax
+	} else {
+		newRewardWeight = oldWeight.Mul(smrTarget.Quo(smrAvgMonth))
+	}
+
+	newRewardWeight = params.RewardPolicy.Clamp(oldWeight, newRewardWeight)
 
 	// Set the new reward weight
-	k.SetRewardWeight(ctx, clampedWeight)
-
-	return clampedWeight
+	k.SetRewardWeight(ctx, newRewardWeight)
+	return
 }

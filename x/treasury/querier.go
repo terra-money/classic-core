@@ -20,7 +20,7 @@ const (
 	QueryRewards            = "rewards"
 	QueryParams             = "params"
 	QueryIssuance           = "issuance"
-	QueryMRL                = "mrl"
+	QueryIndicator          = "indicator"
 )
 
 // NewQuerier is the module level router for state queries
@@ -39,12 +39,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryActiveClaims(ctx, req, keeper)
 		case QueryIssuance:
 			return queryIssunace(ctx, path[1:], req, keeper)
-		case QueryMRL:
-			return queryMRL(ctx, path[1:], req, keeper)
+		case QueryIndicator:
+			return queryIndicator(ctx, path[1:], req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown treasury query endpoint")
 		}
 	}
 }
@@ -96,8 +96,17 @@ func queryMiningRewardWeight(ctx sdk.Context, path []string, req abci.RequestQue
 	return bz, nil
 }
 
+// // QueryIndicatorParams for query 'custom/treasury/indicator'
+// type QueryIndicatorParams struct {
+// }
+
+// // NewQueryIndicatorParams creates a new instance of QueryIndicatorParams
+// func NewQueryIndicatorParams(voter sdk.AccAddress, denom string) QueryIndicatorParams {
+// 	return QueryIndicatorParams{}
+// }
+
 // nolint: unparam
-func queryMRL(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryIndicator(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	epoch, ok := sdk.NewIntFromString(path[0])
 	if !ok {
 		return nil, sdk.ErrInternal("epoch parameter is not correctly formatted")
