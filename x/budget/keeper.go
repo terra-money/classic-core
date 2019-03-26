@@ -190,8 +190,8 @@ func (k Keeper) IteratePrograms(ctx sdk.Context, handler func(uint64, Program) (
 //-----------------------------------
 // Candidate Queue logic
 
-// CandQueuePopMature iterate all the Programs in the candidate queue that have outspent their voteperiod
-func (k Keeper) CandQueuePopMature(ctx sdk.Context, endBlock int64, handler func(uint64) (stop bool)) {
+// CandQueueIterateMature iterate all the Programs in the candidate queue that have outspent their voteperiod
+func (k Keeper) CandQueueIterateMature(ctx sdk.Context, endBlock int64, handler func(uint64) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	iter := store.Iterator(prefixCandQueue, sdk.PrefixEndBytes(prefixCandQueueEndBlock(endBlock)))
 	defer iter.Close()
@@ -202,8 +202,6 @@ func (k Keeper) CandQueuePopMature(ctx sdk.Context, endBlock int64, handler func
 		if handler(programID) {
 			break
 		}
-
-		store.Delete(iter.Key())
 	}
 }
 

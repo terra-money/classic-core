@@ -39,7 +39,7 @@ func clearsThreshold(votePower, totalPower sdk.Int, threshold sdk.Dec) bool {
 func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
 
-	k.CandQueuePopMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+	k.CandQueueIterateMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
 		program, err := k.GetProgram(ctx, programID)
 		if err != nil {
 			return false
@@ -50,6 +50,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
 			k.DeleteProgram(ctx, programID)
 		}
+
+		k.CandQueueRemove(ctx, program, programID)
 		return false
 	})
 

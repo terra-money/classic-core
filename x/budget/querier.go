@@ -130,15 +130,22 @@ func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 
 // nolint: unparam
 func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-
 	programs := []Program{}
 	store := ctx.KVStore(keeper.key)
+
+	keeper.CandQueueIterateMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+		program, err := keeper.GetProgram(ctx, programID)
+		if err != nil {
+			return false
+		}
+
+		programs = append(programs, program)
+		return false
+	})
 	iter := sdk.KVStorePrefixIterator(store, prefixCandQueue)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var program Program
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
-		programs = append(programs, program)
+
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
