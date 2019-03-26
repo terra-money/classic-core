@@ -26,13 +26,18 @@ RUN apk add --no-cache $PACKAGES && \
 FROM alpine:edge
 
 # Install ca-certificates
-RUN apk add --update ca-certificates rsync jq
-WORKDIR /etc/terrad
+RUN apk add --update ca-certificates rsync jq curl
 
 # Copy over binaries from the build-env
 COPY --from=build-env /go/bin/terrad /usr/bin/terrad
 COPY --from=build-env /go/bin/terracli /usr/bin/terracli
 
+# Create a terra group and a terra user
+RUN addgroup -S terra -g 54524 && adduser -S terra -u 54524 -h /home/terra -G terra
+
+# Tell docker that all future commands should run as the terra user
+USER terra
+WORKDIR /home/terra
+
 # Run terrad by default, omit entrypoint to ease using container with terracli
-EXPOSE 26656 26657
 CMD ["terrad"]
