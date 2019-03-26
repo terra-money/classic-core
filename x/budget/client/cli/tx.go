@@ -111,7 +111,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			msg := budget.NewSubmitProgramMsg(program.Title, program.Description, amount, submitter.GetAddress(), executor.GetAddress())
+			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, submitter.GetAddress(), executor.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -197,7 +197,7 @@ $ terracli tx budget vote 1 yes --from mykey
 			}
 
 			// Build vote message and run basic validation
-			msg := budget.NewVoteMsg(programID, option, from)
+			msg := budget.NewMsgVoteProgram(programID, option, from)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -237,7 +237,7 @@ $ terracli tx budget withdraw 1
 			}
 
 			// Build vote message and run basic validation
-			msg := budget.NewWithdrawProgramMsg(programID, from)
+			msg := budget.NewMsgWithdrawProgram(programID, from)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
