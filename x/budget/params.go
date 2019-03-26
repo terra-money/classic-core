@@ -45,6 +45,7 @@ func validateParams(params Params) error {
 	if params.VotePeriod < 0 {
 		return fmt.Errorf("budget parameter VotePeriod must be > 0, is %d", params.VotePeriod)
 	}
+
 	if params.Deposit.Amount.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("budget parameter Deposit must be > 0, is %v", params.Deposit.String())
 	}

@@ -172,7 +172,7 @@ func (msg MsgVoteProgram) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Voter.String())
 	}
 	if msg.ProgramID <= 0 {
-		return ErrInvalidProgramID("ProgramID cannot be negative")
+		return ErrInvalidProgramID(msg.ProgramID)
 	}
 
 	return nil

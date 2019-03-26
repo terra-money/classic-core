@@ -2,6 +2,7 @@ package budget
 
 import (
 	"terra/types"
+	"terra/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -49,13 +50,23 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		votePower, totalPower := tally(ctx, k, program)
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
 			k.DeleteProgram(ctx, programID)
+			resTags.AppendTag(tags.Action, tags.ActionProgramRejected)
+		} else {
+			resTags.AppendTag(tags.Action, tags.ActionProgramPassed)
 		}
+
+		resTags.AppendTags(
+			sdk.NewTags(
+				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.Weight, votePower,
+			),
+		)
 
 		k.CandQueueRemove(ctx, program, programID)
 		return false
 	})
 
-	// Not time to reweight programs yet
+	// Not time to review programs yet
 	if ctx.BlockHeight()%k.GetParams(ctx).VotePeriod != 0 {
 		return
 	}
@@ -69,9 +80,19 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		// Need to legacy program
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
 			k.DeleteProgram(ctx, programID)
+			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
+
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
+			resTags.AppendTag(tags.Action, tags.ActionProgramGranted)
 		}
+
+		resTags.AppendTags(
+			sdk.NewTags(
+				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.Weight, votePower,
+			),
+		)
 
 		return false
 	})
