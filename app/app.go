@@ -171,7 +171,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.budgetKeeper = budget.NewKeeper(
 		app.cdc,
 		app.keyBudget,
-		app.bankKeeper,
+		app.mintKeeper,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
@@ -198,7 +198,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(treasury.QuerierRoute, treasury.NewQuerier(app.treasuryKeeper)).
 		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper)).
-		AddRoute(budget.RouterKey, budget.NewQuerier(app.budgetKeeper))
+		AddRoute(budget.QuerierRoute, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
 	app.MountStores(

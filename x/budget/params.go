@@ -3,37 +3,34 @@ package budget
 import (
 	"fmt"
 	"terra/types/assets"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Params oracle parameters
+// Params budget parameters
 type Params struct {
-	ActiveThreshold sdk.Dec       `json:"active_threshold"` // threshold of vote that will transition a program open -> active budget queue
-	LegacyThreshold sdk.Dec       `json:"legacy_threshold"` // threshold of vote that will transition a program active -> legacy budget queue
-	VotePeriod      time.Duration `json:"vote_period"`      // vote period
-	MinDeposit      sdk.Coin      `json:"min_deposit"`      // Minimum deposit in TerraSDR
+	ActiveThreshold sdk.Dec  `json:"active_threshold"` // threshold of vote that will transition a program open -> active budget queue
+	LegacyThreshold sdk.Dec  `json:"legacy_threshold"` // threshold of vote that will transition a program active -> legacy budget queue
+	VotePeriod      int64    `json:"vote_period"`      // vote period
+	Deposit         sdk.Coin `json:"deposit"`          // Minimum deposit in TerraSDR
 }
 
 // NewParams creates a new param instance
-func NewParams(activeThreshold sdk.Dec, legacyThreshold sdk.Dec, votePeriod time.Duration, minDeposit sdk.Coin) Params {
+func NewParams(activeThreshold sdk.Dec, legacyThreshold sdk.Dec, votePeriod int64, deposit sdk.Coin) Params {
 	return Params{
 		ActiveThreshold: activeThreshold,
 		LegacyThreshold: legacyThreshold,
 		VotePeriod:      votePeriod,
-		MinDeposit:      minDeposit,
+		Deposit:         deposit,
 	}
 }
 
-// DefaultParams creates default oracle module parameters
+// DefaultParams creates default budget module parameters
 func DefaultParams() Params {
-
-	defaultVotePeriod, _ := time.ParseDuration("730h") // 1 month
 	return NewParams(
 		sdk.NewDecWithPrec(1, 1), // 10%
 		sdk.NewDecWithPrec(0, 2), // 0%
-		defaultVotePeriod,
+		1000000,                  // TODO: change for a real value later
 		sdk.NewInt64Coin(assets.SDRDenom, 100),
 	)
 }
@@ -46,10 +43,11 @@ func validateParams(params Params) error {
 		return fmt.Errorf("budget legacy threshold should be greater than or equal to 0, is %s", params.LegacyThreshold.String())
 	}
 	if params.VotePeriod < 0 {
-		return fmt.Errorf("budget parameter VotePeriod must be > 0, is %s", params.VotePeriod.String())
+		return fmt.Errorf("budget parameter VotePeriod must be > 0, is %d", params.VotePeriod)
 	}
-	if params.MinDeposit.Amount.LTE(sdk.ZeroInt()) {
-		return fmt.Errorf("budget parameter MinDeposit must be > 0, is %v", params.MinDeposit.String())
+
+	if params.Deposit.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("budget parameter Deposit must be > 0, is %v", params.Deposit.String())
 	}
 	return nil
 }
@@ -58,7 +56,7 @@ func (params Params) String() string {
 	return fmt.Sprintf(`Budget Params:
 	ActiveThreshold: %s
 	LegacyThreshold: %s
-	VotePeriod: %s
-	MinDeposit: %s
-  `, params.ActiveThreshold, params.LegacyThreshold, params.VotePeriod, params.MinDeposit)
+	VotePeriod: %d
+	Deposit: %s
+  `, params.ActiveThreshold, params.LegacyThreshold, params.VotePeriod, params.Deposit)
 }

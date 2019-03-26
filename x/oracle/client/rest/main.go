@@ -2,7 +2,6 @@ package rest
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"terra/x/oracle"
 
@@ -17,10 +16,10 @@ import (
 
 //nolint
 const (
-	RestVoteDenom  = "denom"
-	RestVoter      = "voter"
-	RestPrice      = "price"
-	RestParamsType = "params"
+	RestVoteDenom = "denom"
+	RestVoter     = "voter"
+	RestPrice     = "price"
+	// RestParamsType = "params"
 
 	queryRoute = "oracle"
 )
@@ -34,14 +33,13 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 	r.HandleFunc(fmt.Sprintf("/oracle/votes/{%s}/{%s}", RestVoteDenom, RestVoter), queryVotesHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/price/{%s}", RestPrice), queryPriceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/active", queryActiveHandlerFunction(cdc, cliCtx)).Methods("GET")
-
 	r.HandleFunc("/oracle/params", queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
 //VoteReq ...
 type VoteReq struct {
 	BaseReq      rest.BaseReq `json:"base_req"`
-	Price        float64      `json:"price"`
+	Price        sdk.Dec      `json:"price"`
 	Denom        string       `json:"denom"`
 	VoterAddress string       `json:"voter_address"`
 }
@@ -53,22 +51,28 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
 			return
 		}
 
-		fromAddress := cliCtx.GetFromAddress()
+		// derive the from account address and name from the Keybase
+		fromAddress, fromName, err := context.GetFromFields(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithFromName(fromName).WithFromAddress(fromAddress)
+
 		if req.VoterAddress != fromAddress.String() {
 			rest.WriteErrorResponse(w, http.StatusUnauthorized, "Must use own address")
 			return
 		}
 
-		price := sdk.NewDecWithPrec(int64(math.Round(req.Price*100)), 2)
-
 		// create the message
-		msg := oracle.NewMsgPriceFeed(req.Denom, price, fromAddress)
-		err := msg.ValidateBasic()
+		msg := oracle.NewMsgPriceFeed(req.Denom, req.Price, fromAddress)
+		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

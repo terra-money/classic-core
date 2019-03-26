@@ -8,9 +8,9 @@ var msgCdc = codec.New()
 
 // Register concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(SubmitProgramMsg{}, "budget/SubmitProgramMsg", nil)
-	cdc.RegisterConcrete(WithdrawProgramMsg{}, "budget/WithdrawProgramMsg", nil)
-	cdc.RegisterConcrete(VoteMsg{}, "budget/VoteMsg", nil)
+	cdc.RegisterConcrete(MsgSubmitProgram{}, "budget/MsgSubmitProgram", nil)
+	cdc.RegisterConcrete(MsgWithdrawProgram{}, "budget/MsgWithdrawProgram", nil)
+	cdc.RegisterConcrete(MsgVoteProgram{}, "budget/MsgVoteProgram", nil)
 
 	cdc.RegisterConcrete(&Program{}, "budget/Program", nil)
 }
