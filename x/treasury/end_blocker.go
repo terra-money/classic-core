@@ -11,17 +11,24 @@ import (
 
 // not enough data collected to update variables
 func isProbationPeriod(ctx sdk.Context, k Keeper) bool {
-	return util.GetEpoch(ctx).LT(k.GetParams(ctx).EpochProbation)
+
+	// Look 1 block into the future ... at the last block of the epoch, trigger
+	futureCtx := ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	futureEpoch := util.GetEpoch(futureCtx)
+
+	return futureEpoch.LT(k.GetParams(ctx).EpochProbation)
 }
 
 // at the block height for a tally
 func isEpochLastBlock(ctx sdk.Context, k Keeper) bool {
 	settlementPeriod := k.GetParams(ctx).EpochShort
+	curEpoch := util.GetEpoch(ctx)
 
 	// Look 1 block into the future ... at the last block of the epoch, trigger
 	futureCtx := ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	futureEpoch := util.GetEpoch(futureCtx)
-	return futureEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
+	return !curEpoch.Equal(futureEpoch) && // Check last block of the epoch
+		futureEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
 		futureEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
 }
 
@@ -67,7 +74,7 @@ func getScales(ctx sdk.Context, k Keeper, oracleSum, budgetSum sdk.Int) (minerSc
 		budgetScale = sdk.OneDec().Sub(rewardWeight).Mul(params.BudgetClaimShare).QuoInt(budgetSum)
 	}
 
-	minerScale = sdk.OneDec().Sub(oracleScale).Sub(budgetScale)
+	minerScale = sdk.OneDec().Sub(oracleScale.MulInt(oracleSum)).Sub(budgetScale.MulInt(budgetSum))
 	return
 }
 

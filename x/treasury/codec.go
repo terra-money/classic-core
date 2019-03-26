@@ -8,7 +8,7 @@ import (
 
 var cdc = codec.New()
 
-// Register concrete types on codec codec
+// RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&types.Claim{}, "treasury/Claim", nil)
 }

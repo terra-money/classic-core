@@ -81,9 +81,8 @@ func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 // iterates through the accountkeeper and computes the genesis issuance.
 func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
 	store := ctx.KVStore(k.key)
-	curEpoch := util.GetEpoch(ctx)
 
-	if bz := store.Get(keyIssuance(denom, curEpoch)); bz != nil {
+	if bz := store.Get(keyIssuance(denom, epoch)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
 	} else {
 		// Genesis epoch; nothing exists in store so we must read it
@@ -103,13 +102,13 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 		// Set issuance to the store
 		store := ctx.KVStore(k.key)
 		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-		store.Set(keyIssuance(denom, curEpoch), bz)
+		store.Set(keyIssuance(denom, epoch), bz)
 	}
 
 	return
 }
 
-// AddSeigniorage adds seigniorage to the current epochal seignioragepool
+// AddSeigniorage adds seigniorage to the current epochal seigniorage pool
 func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
 	curEpoch := util.GetEpoch(ctx)
 	seignioragePool := k.PeekSeignioragePool(ctx, curEpoch)

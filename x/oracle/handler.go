@@ -42,7 +42,7 @@ func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags
 
 	// Not enough votes received
 	dropCounter := k.incrementDropCounter(ctx, denom)
-	if dropCounter.GT(params.DropThreshold) {
+	if dropCounter.GTE(params.DropThreshold) {
 
 		// Too many drops, blacklist currency
 		k.deletePrice(ctx, denom)

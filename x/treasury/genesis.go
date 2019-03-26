@@ -16,6 +16,7 @@ type GenesisState struct {
 	GenesisRewardWeight sdk.Dec `json:"reward_weight"`
 }
 
+// NewGenesisState constructs a new genesis state
 func NewGenesisState(params Params, taxRate, rewardWeight sdk.Dec) GenesisState {
 	return GenesisState{
 		Params:              params,
@@ -24,7 +25,7 @@ func NewGenesisState(params Params, taxRate, rewardWeight sdk.Dec) GenesisState 
 	}
 }
 
-// get raw genesis message for testing
+// DefaultGenesisState returns raw genesis message for testing
 func DefaultGenesisState() GenesisState {
 	params := DefaultParams()
 	return GenesisState{
@@ -34,7 +35,7 @@ func DefaultGenesisState() GenesisState {
 	}
 }
 
-// new oracle genesis
+// InitGenesis new treasury genesis
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 	keeper.SetTaxRate(ctx, data.GenesisTaxRate)
@@ -51,7 +52,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 	return NewGenesisState(params, taxRate, rewardWeight)
 }
 
-// ValidateGenesis validates the provided oracle genesis state to ensure the
+// ValidateGenesis validates the provided treasury genesis state to ensure the
 // expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
 func ValidateGenesis(data GenesisState) error {
 	if data.GenesisTaxRate.GT(data.Params.TaxPolicy.RateMax) ||

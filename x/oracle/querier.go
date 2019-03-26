@@ -78,31 +78,26 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	}
 
 	filteredVotes := []PriceVote{}
-	var prefix []byte
-	var handler func(vote PriceVote) (stop bool)
 
+	// collects all votes without filter
+	prefix := prefixVote
+	handler := func(vote PriceVote) (stop bool) {
+		filteredVotes = append(filteredVotes, vote)
+		return false
+	}
+
+	// applies filter
 	if len(params.Denom) != 0 && !params.Voter.Empty() {
 		prefix = keyVote(params.Denom, params.Voter)
-		handler = func(vote PriceVote) (stop bool) {
-			filteredVotes = append(filteredVotes, vote)
-			return false
-		}
 	} else if len(params.Denom) != 0 {
 		prefix = keyVote(params.Denom, sdk.AccAddress{})
+	} else if !params.Voter.Empty() {
 		handler = func(vote PriceVote) (stop bool) {
-			filteredVotes = append(filteredVotes, vote)
-			return false
-		}
-	} else {
-		prefix = prefixVote
-		handler = func(vote PriceVote) (stop bool) {
-			if !params.Voter.Empty() {
-				if vote.Voter.Equals(params.Voter) {
-					filteredVotes = append(filteredVotes, vote)
-				}
-			} else {
+
+			if vote.Voter.Equals(params.Voter) {
 				filteredVotes = append(filteredVotes, vote)
 			}
+
 			return false
 		}
 	}
