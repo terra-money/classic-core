@@ -2,8 +2,6 @@ package budget
 
 import (
 	"bytes"
-	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -11,50 +9,55 @@ import (
 
 // nolint
 var (
-	KeyDelimiter         = []byte(":")
-	PrefixProgram        = []byte("program")
-	PrefixVote           = []byte("vote")
-	KeyNextProgramID     = []byte("new-program-id")
-	PrefixCandidateQueue = []byte("candidate-queue")
-	ParamStoreKeyParams  = []byte("params")
-	DefaultParamspace    = "budget"
+	keyDelimiter     = []byte(":")
+	keyNextProgramID = []byte("new-program-id")
+
+	prefixProgram   = []byte("program")
+	prefixVote      = []byte("vote")
+	prefixCandQueue = []byte("candidate-queue")
+
+	paramStoreKeyParams = []byte("params")
 )
 
-// KeyProgram creates a key of the form "Programs"|{state}|{ProgramID}
-func KeyProgram(programID uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", PrefixProgram, programID))
-}
-
-// Key for getting a specific vote from the store
-func KeyVote(programID uint64, voterAddr sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("%s:%d:%s", PrefixVote, programID, voterAddr))
-}
-
-// Key for getting a specific vote from the store
-func PrefixVoteForProgram(programID uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", PrefixVote, programID))
-}
-
-// Returns the key for a programID in the activeprogramQueue
-func PrefixCandidateQueueTime(endTime time.Time) []byte {
+func keyProgram(programID uint64) []byte {
 	return bytes.Join([][]byte{
-		PrefixCandidateQueue,
-		sdk.FormatTimeBytes(endTime),
-	}, KeyDelimiter)
-}
-
-// Returns the key for a programID in the activeprogramQueue
-func KeyCandidate(endTime time.Time, programID uint64) []byte {
-	return bytes.Join([][]byte{
-		PrefixCandidateQueue,
-		sdk.FormatTimeBytes(endTime),
+		prefixProgram,
 		sdk.Uint64ToBigEndian(programID),
-	}, KeyDelimiter)
+	}, keyDelimiter)
 }
 
-// ParamTable for budget module
-func ParamKeyTable() params.KeyTable {
+func keyVote(programID uint64, voterAddr sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{
+		prefixVote,
+		sdk.Uint64ToBigEndian(programID),
+		voterAddr,
+	}, keyDelimiter)
+}
+
+func prefixVoteForProgram(programID uint64) []byte {
+	return bytes.Join([][]byte{
+		prefixVote,
+		sdk.Uint64ToBigEndian(programID),
+	}, keyDelimiter)
+}
+
+func prefixCandQueueEndBlock(endBlock int64) []byte {
+	return bytes.Join([][]byte{
+		prefixCandQueue,
+		sdk.Uint64ToBigEndian(uint64(endBlock)),
+	}, keyDelimiter)
+}
+
+func keyCandidate(endBlock int64, programID uint64) []byte {
+	return bytes.Join([][]byte{
+		prefixCandQueue,
+		sdk.Uint64ToBigEndian(uint64(endBlock)),
+		sdk.Uint64ToBigEndian(programID),
+	}, keyDelimiter)
+}
+
+func paramKeyTable() params.KeyTable {
 	return params.NewKeyTable(
-		ParamStoreKeyParams, Params{},
+		paramStoreKeyParams, Params{},
 	)
 }

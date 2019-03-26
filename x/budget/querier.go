@@ -2,7 +2,6 @@ package budget
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -83,47 +82,24 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := []VoteMsg{}
-
-	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixVote)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var option bool
-		var metaData string
-		var programID uint64
-		var voterAddress sdk.AccAddress
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &metaData)
-		keeper.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &option)
-
-		metaStrs := strings.Split(metaData, ":")
-		programIDInt, err := strconv.Atoi(metaStrs[1])
-		if err != nil {
-			panic(err)
-		}
-		programID = uint64(programIDInt)
-
-		voterAddress, err = sdk.AccAddressFromBech32(metaStrs[2])
-		if err != nil {
-			panic(err)
-		}
-
+	filteredVotes := []MsgVoteProgram{}
+	keeper.IterateVotes(ctx, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
 		include := true
 		if params.ProgramID != 0 && params.ProgramID != programID {
 			include = false
 		}
 
-		if len(params.Voter) != 0 && !(params.Voter.Equals(voterAddress)) {
+		if len(params.Voter) != 0 && !(params.Voter.Equals(voter)) {
 			include = false
 		}
 
-		if !include {
-			continue
+		if include {
+			vote := NewMsgVoteProgram(programID, option, voter)
+			filteredVotes = append(filteredVotes, vote)
 		}
 
-		vote := NewVoteMsg(programID, option, voterAddress)
-		filteredVotes = append(filteredVotes, vote)
-	}
+		return false
+	})
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
@@ -137,8 +113,10 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 
 	programs := []Program{}
-	keeper.IterateActivePrograms(ctx, func(programID uint64, program Program) (stop bool) {
-		programs = append(programs, program)
+	keeper.IteratePrograms(ctx, func(programID uint64, program Program) (stop bool) {
+		if !keeper.CandQueueHas(ctx, program, programID) {
+			programs = append(programs, program)
+		}
 		return false
 	})
 
@@ -155,7 +133,7 @@ func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 
 	programs := []Program{}
 	store := ctx.KVStore(keeper.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixCandidateQueue)
+	iter := sdk.KVStorePrefixIterator(store, prefixCandQueue)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var program Program

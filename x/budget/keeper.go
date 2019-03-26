@@ -3,16 +3,12 @@ package budget
 import (
 	"strconv"
 	"strings"
-	"time"
+	"terra/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
-
-// StoreKey is string representation of the store key for budget
-const StoreKey = "budget"
 
 // nolint
 type Keeper struct {
@@ -20,188 +16,219 @@ type Keeper struct {
 	key    sdk.StoreKey     // Key to our module's store
 	valset sdk.ValidatorSet // Needed to compute voting power.
 
-	bk         bank.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
+	mk         mint.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
 	paramSpace params.Subspace
 }
 
-// NewKeeper crates a new keeper with write and read access
+// NewKeeper crates a new keeper
 func NewKeeper(cdc *codec.Codec,
 	key sdk.StoreKey,
-	bk bank.Keeper,
+	mk mint.Keeper,
 	valset sdk.ValidatorSet,
 	paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
-		bk:         bk,
+		mk:         mk,
 		valset:     valset,
-		paramSpace: paramspace.WithKeyTable(ParamKeyTable()),
+		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }
 
-// Get the last used proposal ID
-func (k Keeper) NewProgramID(ctx sdk.Context) (programID uint64) {
-	store := ctx.KVStore(k.key)
-
-	bz := store.Get(KeyNextProgramID)
-	if bz == nil {
-		programID = 0
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &programID)
-		programID++
-	}
-
-	bz = k.cdc.MustMarshalBinaryLengthPrefixed(programID)
-	store.Set(KeyNextProgramID, bz)
-	return
-}
-
-// GetProgram gets the Program with the given id from the context.
-func (k Keeper) GetProgram(ctx sdk.Context, programID uint64) (res Program, err sdk.Error) {
-	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyProgram(programID))
-	if bz == nil {
-		err = ErrProgramNotFound(programID)
-		return
-	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
-	return
-}
-
-// SetProgram sets a Program to the context
-func (k Keeper) SetProgram(ctx sdk.Context, programID uint64, program Program) {
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(program)
-	store.Set(KeyProgram(programID), bz)
-}
-
-// DeleteProgram deletes a program from the context
-func (k Keeper) DeleteProgram(ctx sdk.Context, programID uint64) {
-	store := ctx.KVStore(k.key)
-	store.Delete(KeyProgram(programID))
-}
-
-// IteratePrograms iterates through programs in the store
-func (k Keeper) IterateActivePrograms(ctx sdk.Context, handler func(uint64, Program) (stop bool)) {
-	store := ctx.KVStore(k.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixCandidateQueue)
-	for ; iter.Valid(); iter.Next() {
-		var programStoreKey string
-		var program Program
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &programStoreKey)
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
-
-		if programID, err := strconv.Atoi(strings.Split(programStoreKey, ":")[1]); err == nil {
-			if k.CandidateQueueHas(ctx, program, uint64(programID)) {
-				continue
-			}
-
-			if handler(uint64(programID), program) {
-				break
-			}
-		}
-
-	}
-	iter.Close()
-}
+//-----------------------------------
+// Vote logic
 
 // GetVote returns the given option of a Program stored in the keeper
-// Used to check if an address already voted
 func (k Keeper) GetVote(ctx sdk.Context, programID uint64, voter sdk.AccAddress) (res bool, err sdk.Error) {
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyVote(programID, voter))
-	if bz == nil {
+	if bz := store.Get(keyVote(programID, voter)); bz != nil {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	} else {
 		err = ErrVoteNotFound()
-		return
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	return
 }
 
-// SetVote sets the vote option to the Program stored in the context store
+// SetVote sets the vote option to 0 the store
 func (k Keeper) SetVote(ctx sdk.Context, programID uint64, voter sdk.AccAddress, option bool) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(option)
-	store.Set(KeyVote(programID, voter), bz)
+	store.Set(keyVote(programID, voter), bz)
 }
 
-func (k Keeper) ClearVotesForProgram(ctx sdk.Context, programID uint64) {
+// DeleteVote deletes the vote from the store
+func (k Keeper) DeleteVote(ctx sdk.Context, programID uint64, voter sdk.AccAddress) {
 	store := ctx.KVStore(k.key)
-	iter := sdk.KVStorePrefixIterator(store, PrefixVoteForProgram(programID))
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
-	iter.Close()
+	store.Delete(keyVote(programID, voter))
 }
 
-// RefundDeposit refunds the deposit
-func (k Keeper) RefundDeposit(ctx sdk.Context, programID uint64) (err sdk.Error) {
-	program, err := k.GetProgram(ctx, programID)
-	if err != nil {
-		return err
+// IterateVotes iterates votes in the store
+func (k Keeper) IterateVotes(ctx sdk.Context, handler func(uint64, sdk.AccAddress, bool) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixVote)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var option bool
+		var voteKey string
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &voteKey)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &option)
+
+		elems := strings.Split(voteKey, ":")
+		programID, err := strconv.ParseUint(elems[1], 10, 0)
+		if err != nil {
+			continue
+		}
+
+		voterAddrStr := elems[2]
+		voterAddr, err := sdk.AccAddressFromBech32(voterAddrStr)
+		if err != nil {
+			continue
+		}
+
+		if handler(programID, voterAddr, option) {
+			break
+		}
+
 	}
-	_, _, err = k.bk.AddCoins(ctx, program.Submitter, sdk.Coins{program.Deposit})
+}
+
+//-----------------------------------
+// Deposit logic
+
+// PayDeposit pays the deposit by withdrawing from the submitter's balance.
+func (k Keeper) PayDeposit(ctx sdk.Context, submitter sdk.AccAddress) (err sdk.Error) {
+	deposit := k.GetParams(ctx).Deposit
+	err = k.mk.Burn(ctx, submitter, deposit)
 	return
 }
 
-//______________________________________________________________________
+// RefundDeposit refunds the deposit, by crediting the submitter's balance.
+func (k Keeper) RefundDeposit(ctx sdk.Context, submitter sdk.AccAddress) (err sdk.Error) {
+	deposit := k.GetParams(ctx).Deposit
+	err = k.mk.Mint(ctx, submitter, deposit)
+	return
+}
 
-// GetParams get oralce params from the global param store
+//-----------------------------------
+// Params logic
+
+// GetParams get budget params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
 	var resultParams Params
-	k.paramSpace.Get(ctx, ParamStoreKeyParams, &resultParams)
+	k.paramSpace.Get(ctx, paramStoreKeyParams, &resultParams)
 	return resultParams
 }
 
-// SetParams set oracle params from the global param store
+// SetParams set budget params from the global param store
 func (k Keeper) SetParams(ctx sdk.Context, params Params) {
-	k.paramSpace.Set(ctx, ParamStoreKeyParams, &params)
+	k.paramSpace.Set(ctx, paramStoreKeyParams, &params)
 }
 
-// =====================================================
-// ProgramQueues
+//-----------------------------------
+// Program logic
 
-// IterateMatureCandidates Returns an iterator for all the Programs in the Candidate Queue that expire by endTime
-func (k Keeper) IterateMatureCandidates(ctx sdk.Context, endTime time.Time, handler func(uint64, Program) (stop bool)) {
+// NewProgramID generates a new program id; advances sequentially from 0
+func (k Keeper) NewProgramID(ctx sdk.Context) (programID uint64) {
 	store := ctx.KVStore(k.key)
-	iter := store.Iterator(PrefixCandidateQueue, sdk.PrefixEndBytes(PrefixCandidateQueueTime(endTime)))
+	if bz := store.Get(keyNextProgramID); bz != nil {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &programID)
+		programID++
+	} else {
+		programID = 0
+	}
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(programID)
+	store.Set(keyNextProgramID, bz)
+	return
+}
+
+// GetProgram gets the Program with the given id from the store.
+func (k Keeper) GetProgram(ctx sdk.Context, programID uint64) (res Program, err sdk.Error) {
+	store := ctx.KVStore(k.key)
+
+	if bz := store.Get(keyProgram(programID)); bz != nil {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	} else {
+		err = ErrProgramNotFound(programID)
+	}
+	return
+}
+
+// SetProgram sets a Program to the store
+func (k Keeper) SetProgram(ctx sdk.Context, programID uint64, program Program) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(program)
+	store.Set(keyProgram(programID), bz)
+}
+
+// DeleteProgram deletes a program from the store
+func (k Keeper) DeleteProgram(ctx sdk.Context, programID uint64) {
+	store := ctx.KVStore(k.key)
+	store.Delete(keyProgram(programID))
+}
+
+// IteratePrograms iterates programs in the store
+func (k Keeper) IteratePrograms(ctx sdk.Context, handler func(uint64, Program) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixProgram)
+	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var programStoreKey string
 		var program Program
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Key(), &programStoreKey)
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
 
-		if programID, err := strconv.Atoi(strings.Split(programStoreKey, ":")[1]); err == nil {
+		elems := strings.Split(programStoreKey, ":")
+		if programID, err := strconv.ParseUint(elems[1], 10, 0); err == nil {
 			if handler(uint64(programID), program) {
 				break
 			}
 		}
 	}
-	iter.Close()
 }
 
-// CandidateQueueInsert Inserts a ProgramID into the Candidate Program queue at endTime
-func (k Keeper) CandidateQueueInsert(ctx sdk.Context, program Program, programID uint64) {
-	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
+//-----------------------------------
+// Candidate Queue logic
+
+// CandQueuePopMature iterate all the Programs in the candidate queue that have outspent their voteperiod
+func (k Keeper) CandQueuePopMature(ctx sdk.Context, endBlock int64, handler func(uint64) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := store.Iterator(prefixCandQueue, sdk.PrefixEndBytes(prefixCandQueueEndBlock(endBlock)))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var programID uint64
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &programID)
+
+		if handler(programID) {
+			break
+		}
+
+		store.Delete(iter.Key())
+	}
+}
+
+// CandQueueInsert Inserts a ProgramID into the Candidate Program queue at endTime
+func (k Keeper) CandQueueInsert(ctx sdk.Context, program Program, programID uint64) {
+	votingEndTime := program.getVotingEndBlock(k.GetParams(ctx).VotePeriod)
 
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(programID)
-	store.Set(KeyCandidate(votingEndTime, programID), bz)
+	store.Set(keyCandidate(votingEndTime, programID), bz)
 }
 
-// CandidateQueueHas Checks if a progrma exists in accordance with the given parameters
-func (k Keeper) CandidateQueueHas(ctx sdk.Context, program Program, programID uint64) (res bool) {
-	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
+// CandQueueHas Checks if a progrma exists in accordance with the given parameters
+func (k Keeper) CandQueueHas(ctx sdk.Context, program Program, programID uint64) (res bool) {
+	votingEndTime := program.getVotingEndBlock(k.GetParams(ctx).VotePeriod)
 
 	store := ctx.KVStore(k.key)
-	bz := store.Get(KeyCandidate(votingEndTime, programID))
+	bz := store.Get(keyCandidate(votingEndTime, programID))
 	return bz != nil
 }
 
-// CandidateQueueRemove removes a ProgramID from the Candidate Program Queue
-func (k Keeper) CandidateQueueRemove(ctx sdk.Context, program Program, programID uint64) {
-	votingEndTime := program.getVotingEndTime(k.GetParams(ctx).VotePeriod)
+// CandQueueRemove removes a ProgramID from the Candidate Program Queue
+func (k Keeper) CandQueueRemove(ctx sdk.Context, program Program, programID uint64) {
+	votingEndTime := program.getVotingEndBlock(k.GetParams(ctx).VotePeriod)
 
 	store := ctx.KVStore(k.key)
-	store.Delete(KeyCandidate(votingEndTime, programID))
+	store.Delete(keyCandidate(votingEndTime, programID))
 }

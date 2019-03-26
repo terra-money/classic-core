@@ -34,7 +34,6 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 	r.HandleFunc(fmt.Sprintf("/oracle/votes/{%s}/{%s}", RestVoteDenom, RestVoter), queryVotesHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/price/{%s}", RestPrice), queryPriceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/active", queryActiveHandlerFunction(cdc, cliCtx)).Methods("GET")
-
 	r.HandleFunc("/oracle/params", queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
