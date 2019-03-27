@@ -95,7 +95,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			msg := budget.NewSubmitProgramMsg(program.Title, program.Description, submitter.GetAddress(), executor.GetAddress())
+			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, submitter.GetAddress(), executor.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

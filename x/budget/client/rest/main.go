@@ -80,7 +80,7 @@ func submitProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Ha
 		}
 
 		// create the message
-		msg := budget.NewSubmitProgramMsg(req.Title, req.Description, req.Submitter, req.Executor)
+		msg := budget.NewMsgSubmitProgram(req.Title, req.Description, req.Submitter, req.Executor)
 		err := msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

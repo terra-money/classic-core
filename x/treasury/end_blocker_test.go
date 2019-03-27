@@ -25,19 +25,28 @@ func TestEndBlockerTiming(t *testing.T) {
 	params := input.treasuryKeeper.GetParams(input.ctx)
 	for i := int64(1); i < params.EpochProbation.Int64(); i++ {
 		if i%params.EpochShort.Int64() == 0 {
-			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			// Last block should settle
+			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
 			require.Equal(t, 4, len(tTags))
+
+			// Non-last block should not settle
+			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+
+			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
+
+			require.Equal(t, 0, len(tTags))
 		}
 	}
 
 	// After probationary period, we should also be updating policy variables
 	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
 		if i%params.EpochShort.Int64() == 0 {
-			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
@@ -178,7 +187,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 	for i, tc := range tests {
 
 		// Advance blockcount
-		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64() * blocksPerEpoch * int64(i))
+		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64()*blocksPerEpoch*int64(i) - 1)
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {

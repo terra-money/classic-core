@@ -6,11 +6,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// ClaimClass is used to categorize type of Claim
 type ClaimClass byte
 
 const (
+	// OracleClaimClass represents oracle claim type
 	OracleClaimClass ClaimClass = iota
-	BudgetClaimClass ClaimClass = iota
+	// BudgetClaimClass represents budget claim type
+	BudgetClaimClass
 )
 
 //------------------------------------

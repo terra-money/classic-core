@@ -12,7 +12,7 @@ func TestHandlerMsgSubmitProgram(t *testing.T) {
 	h := NewHandler(input.budgetKeeper)
 
 	// Regular submit msg passes
-	msg := NewSubmitProgramMsg("test", "testdescription", addrs[0], addrs[1])
+	msg := NewMsgSubmitProgram("test", "testdescription", addrs[0], addrs[1])
 	res := h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
@@ -25,7 +25,7 @@ func TestHandlerMsgWithdrawProgram(t *testing.T) {
 	h := NewHandler(input.budgetKeeper)
 
 	// Submit program
-	submitMsg := NewSubmitProgramMsg("test", "testdescription", addrs[0], addrs[1])
+	submitMsg := NewMsgSubmitProgram("test", "testdescription", addrs[0], addrs[1])
 	res := h(input.ctx, submitMsg)
 	require.True(t, res.IsOK())
 
@@ -56,7 +56,7 @@ func TestHandlerMsgVoteCandidate(t *testing.T) {
 	h := NewHandler(input.budgetKeeper)
 
 	// Submit program
-	submitMsg := NewSubmitProgramMsg("test", "testdescription", addrs[0], addrs[1])
+	submitMsg := NewMsgSubmitProgram("test", "testdescription", addrs[0], addrs[1])
 	res := h(input.ctx, submitMsg)
 	require.True(t, res.IsOK())
 
