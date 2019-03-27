@@ -25,8 +25,8 @@ func NewParams(votePeriod sdk.Int, voteThreshold sdk.Dec, dropThreshold sdk.Int)
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
 	return NewParams(
-		sdk.NewInt(1000000),
-		sdk.NewDecWithPrec(66, 2), // 66%
+		sdk.NewInt(900),           // 900 blocks; 15 minutes
+		sdk.NewDecWithPrec(67, 2), // 67%
 		sdk.NewInt(10),
 	)
 }
