@@ -59,7 +59,7 @@ $ terracli query budget program 1
 // GetCmdQueryActives implements a query actives command.
 func GetCmdQueryActives(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "actives",
+		Use:   budget.QueryActiveList,
 		Short: "Query active programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -91,7 +91,7 @@ func GetCmdQueryActives(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdQueryCandidates implements the query program candidates command.
 func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "candidates",
+		Use:   budget.QueryCandidateList,
 		Short: "Query candidate programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -123,7 +123,7 @@ func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdQueryVotes implements the command to query for program votes.
 func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "votes",
+		Use:   budget.QueryVotes,
 		Short: "Query votes, filtered by voterAddress ",
 		Long: strings.TrimSpace(`
 Query vote details for a single program by its identifier.
@@ -192,8 +192,8 @@ $ terracli query budget votes 1
 // GetCmdQueryParams implements the query params command.
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "Query the current Budget params",
+		Use:   budget.QueryParams,
+		Short: "Query the current budget params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

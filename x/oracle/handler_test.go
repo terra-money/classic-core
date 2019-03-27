@@ -2,11 +2,12 @@ package oracle
 
 import (
 	"terra/types/assets"
+	"terra/types/mock"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/mock"
+	cosmock "github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,7 +41,7 @@ func TestOracleFilters(t *testing.T) {
 	require.True(t, res.IsOK())
 
 	// Case 3: a non-validator sending an oracle message fails
-	_, randoAddrs := mock.GeneratePrivKeyAddressPairs(1)
+	_, randoAddrs := cosmock.GeneratePrivKeyAddressPairs(1)
 	msg = NewMsgPriceFeed(assets.SDRDenom, randomPrice, randoAddrs[0])
 	res = h(input.ctx, msg)
 	require.False(t, res.IsOK())
@@ -74,8 +75,8 @@ func TestOracleThreshold(t *testing.T) {
 	require.Equal(t, randomPrice, price)
 
 	// A new validator joins, we are now below threshold. Price update should now fail
-	newValidator := NewMockValidator(sdk.ValAddress(addrs[2].Bytes()), sdk.NewInt(30))
-	input.valset.validators = append(input.valset.validators, newValidator)
+	newValidator := mock.NewMockValidator(sdk.ValAddress(addrs[2].Bytes()), sdk.NewInt(30))
+	input.valset.Validators = append(input.valset.Validators, newValidator)
 	input.oracleKeeper.valset = input.valset
 
 	msg = NewMsgPriceFeed(assets.SDRDenom, anotherRandomPrice, addrs[0])

@@ -3,9 +3,6 @@ package cli
 import (
 	"fmt"
 	"strconv"
-	"terra/types/assets"
-
-	"github.com/pkg/errors"
 
 	"terra/x/budget"
 
@@ -26,8 +23,7 @@ import (
 const (
 	flagTitle       = "title"
 	flagDescription = "description"
-	flagDeposit     = "deposit"
-	flagExecutor    = "execitpr"
+	flagExecutor    = "executor"
 	flagVoter       = "voter"
 	flagOption      = "option"
 	flagNumLimit    = "limit"
@@ -47,7 +43,6 @@ type program struct {
 var programFlags = []string{
 	flagTitle,
 	flagDescription,
-	flagDeposit,
 	flagExecutor,
 }
 
@@ -95,17 +90,6 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			// Find deposit amount
-			amount, err := sdk.ParseCoin(program.Deposit)
-			if err != nil {
-				return err
-			}
-
-			// ensure account has enough coins
-			if !submitter.GetCoins().AmountOf(assets.SDRDenom).GTE(amount.Amount) {
-				return errors.Errorf("Address %s doesn't have enough coins to pay for this transaction.", from)
-			}
-
 			executor, err := cliCtx.GetAccount([]byte(program.Executor))
 			if err != nil {
 				return err
@@ -123,7 +107,6 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 
 	cmd.Flags().String(flagTitle, "", "title of program")
 	cmd.Flags().String(flagDescription, "", "(optional) description of program")
-	cmd.Flags().String(flagDeposit, "", "deposit of program")
 	cmd.Flags().String(flagExecutor, "", "executor of program")
 	cmd.Flags().String(flagProgram, "", "program file path (if this path is given, other program flags are ignored)")
 
@@ -137,7 +120,6 @@ func parseSubmitProgramFlags() (*program, error) {
 	if programFile == "" {
 		program.Title = viper.GetString(flagTitle)
 		program.Description = viper.GetString(flagDescription)
-		program.Deposit = viper.GetString(flagDeposit)
 		program.Executor = viper.GetString(flagExecutor)
 		return program, nil
 	}

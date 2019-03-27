@@ -210,7 +210,6 @@ func TestQueryTaxRate(t *testing.T) {
 
 func TestQueryTaxCap(t *testing.T) {
 	input := createTestInput(t)
-	InitGenesis(input.ctx, input.treasuryKeeper, DefaultGenesisState())
 	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 

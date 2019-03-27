@@ -1,8 +1,9 @@
-package oracle
+package budget
 
 import (
 	"terra/types/assets"
 	"terra/types/mock"
+	"terra/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -43,9 +44,9 @@ var (
 
 type testInput struct {
 	ctx          sdk.Context
-	accKeeper    auth.AccountKeeper
+	mintKeeper   mint.Keeper
 	bankKeeper   bank.Keeper
-	oracleKeeper Keeper
+	budgetKeeper Keeper
 	valset       mock.MockValset
 }
 
@@ -66,7 +67,8 @@ func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
-	keyOracle := sdk.NewKVStoreKey(StoreKey)
+	keyBudget := sdk.NewKVStoreKey(StoreKey)
+	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tkeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
@@ -78,7 +80,8 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
@@ -111,10 +114,19 @@ func createTestInput(t *testing.T) testInput {
 		valset.Validators = append(valset.Validators, validator)
 	}
 
-	oracleKeeper := NewKeeper(
-		cdc, keyOracle, valset,
+	mintKeeper := mint.NewKeeper(
+		cdc,
+		keyMint,
+		bankKeeper,
+		accKeeper,
+	)
+
+	budgetKeeper := NewKeeper(
+		cdc, keyBudget, mintKeeper, valset,
 		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
-	return testInput{ctx, accKeeper, bankKeeper, oracleKeeper, valset}
+	InitGenesis(ctx, budgetKeeper, DefaultGenesisState())
+
+	return testInput{ctx, mintKeeper, bankKeeper, budgetKeeper, valset}
 }
