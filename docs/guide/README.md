@@ -14,5 +14,5 @@ This section will guide the reader to install, deploy, and interact with the Ter
 -  **[Become a validator](./validators.md)**: How to join Columbus as a network validator. Read [validator FAQ](../concepts/validator/overview.md)
 -  **[Become a delegator](./terracli.md#Bond-tokens)**: You can also participate in securing the network by delegating your Luna to a validator. 
 -  **[Introduction to terracli](./terracli.md)**: Using the Terracli to interact with the Terra blockchain
--  **[Toolsets & clients](./light-clients.md)**: How to spin up a light client daemon, that stores partial state and responds to REST API queries.
+-  **[Toolsets & clients](./light-client.md)**: How to spin up a light client daemon, that stores partial state and responds to REST API queries.
 
