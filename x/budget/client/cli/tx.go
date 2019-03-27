@@ -3,9 +3,6 @@ package cli
 import (
 	"fmt"
 	"strconv"
-	"terra/types/assets"
-
-	"github.com/pkg/errors"
 
 	"terra/x/budget"
 
@@ -26,8 +23,7 @@ import (
 const (
 	flagTitle       = "title"
 	flagDescription = "description"
-	flagDeposit     = "deposit"
-	flagExecutor    = "execitpr"
+	flagExecutor    = "executor"
 	flagVoter       = "voter"
 	flagOption      = "option"
 	flagNumLimit    = "limit"
@@ -47,7 +43,6 @@ type program struct {
 var programFlags = []string{
 	flagTitle,
 	flagDescription,
-	flagDeposit,
 	flagExecutor,
 }
 
@@ -95,11 +90,6 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			// ensure account has enough coins
-			if !submitter.GetCoins().AmountOf(assets.SDRDenom).GTE(amount.Amount) {
-				return errors.Errorf("Address %s doesn't have enough coins to pay for this transaction.", from)
-			}
-
 			executor, err := cliCtx.GetAccount([]byte(program.Executor))
 			if err != nil {
 				return err
@@ -117,7 +107,6 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 
 	cmd.Flags().String(flagTitle, "", "title of program")
 	cmd.Flags().String(flagDescription, "", "(optional) description of program")
-	cmd.Flags().String(flagDeposit, "", "deposit of program")
 	cmd.Flags().String(flagExecutor, "", "executor of program")
 	cmd.Flags().String(flagProgram, "", "program file path (if this path is given, other program flags are ignored)")
 
@@ -131,7 +120,6 @@ func parseSubmitProgramFlags() (*program, error) {
 	if programFile == "" {
 		program.Title = viper.GetString(flagTitle)
 		program.Description = viper.GetString(flagDescription)
-		program.Deposit = viper.GetString(flagDeposit)
 		program.Executor = viper.GetString(flagExecutor)
 		return program, nil
 	}
@@ -191,7 +179,7 @@ $ terracli tx budget vote 1 yes --from mykey
 			}
 
 			// Build vote message and run basic validation
-			msg := budget.NewVoteMsg(programID, option, from)
+			msg := budget.NewMsgVoteProgram(programID, option, from)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -231,7 +219,7 @@ $ terracli tx budget withdraw 1
 			}
 
 			// Build vote message and run basic validation
-			msg := budget.NewWithdrawProgramMsg(programID, from)
+			msg := budget.NewMsgWithdrawProgram(programID, from)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
