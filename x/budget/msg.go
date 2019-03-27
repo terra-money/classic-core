@@ -17,7 +17,7 @@ type MsgSubmitProgram struct {
 }
 
 // NewMsgSubmitProgram submits a message with a new Program
-func NewSubmitProgramMsg(title string, description string,
+func NewMsgSubmitProgram(title string, description string,
 	submitter sdk.AccAddress, executor sdk.AccAddress) MsgSubmitProgram {
 	return MsgSubmitProgram{
 		Title:       title,

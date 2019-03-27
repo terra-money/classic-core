@@ -168,7 +168,7 @@ $ terracli query budget votes 1
 				return err
 			}
 
-			var matchingVotes []budget.VoteMsg
+			var matchingVotes []budget.MsgVoteProgram
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
 			if len(matchingVotes) == 0 {
