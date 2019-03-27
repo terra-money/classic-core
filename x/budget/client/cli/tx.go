@@ -95,12 +95,6 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			// Find deposit amount
-			amount, err := sdk.ParseCoin(program.Deposit)
-			if err != nil {
-				return err
-			}
-
 			// ensure account has enough coins
 			if !submitter.GetCoins().AmountOf(assets.SDRDenom).GTE(amount.Amount) {
 				return errors.Errorf("Address %s doesn't have enough coins to pay for this transaction.", from)
@@ -111,7 +105,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			msg := budget.NewSubmitProgramMsg(program.Title, program.Description, amount, submitter.GetAddress(), executor.GetAddress())
+			msg := budget.NewSubmitProgramMsg(program.Title, program.Description, submitter.GetAddress(), executor.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

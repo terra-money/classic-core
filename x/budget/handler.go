@@ -2,6 +2,7 @@ package budget
 
 import (
 	"reflect"
+	"strconv"
 
 	"terra/x/budget/tags"
 
@@ -27,7 +28,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// handleMsgVoteProgram handles the logic of a SubmitProgramMsg
+// handleMsgVoteProgram handles the logic of a MsgSubmitProgram
 func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk.Result {
 
 	// Subtract coins from the submitter balance and updates it
@@ -46,19 +47,17 @@ func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk
 	)
 	programID := k.NewProgramID(ctx)
 	k.SetProgram(ctx, programID, program)
-	k.CandQueueInsert(ctx, program, programID)
+	k.CandQueueInsert(ctx, program.getVotingEndBlock(ctx, k), programID)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Action, tags.ActionProgramSubmitted,
 			tags.ProgramID, sdk.Uint64ToBigEndian(programID),
-			tags.Submitter, msg.Submitter.Bytes(),
-			tags.Executor, msg.Executor.Bytes(),
 		),
 	}
 }
 
-// handleMsgWithdrawProgram handles the logic of a WithdrawProgramMsg
+// handleMsgWithdrawProgram handles the logic of a MsgWithdrawProgram
 func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram) sdk.Result {
 	program, err := k.GetProgram(ctx, msg.ProgramID)
 	if err != nil {
@@ -66,13 +65,14 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 	}
 
 	// Only submitters can withdraw the program submission
-	if program.Submitter.Equals(msg.Submitter) {
+	if !program.Submitter.Equals(msg.Submitter) {
 		return ErrInvalidSubmitter(msg.Submitter).Result()
 	}
 
 	// Remove from candidate queue if not yet active
-	if k.CandQueueHas(ctx, program, msg.ProgramID) {
-		k.CandQueueRemove(ctx, program, msg.ProgramID)
+	prgmEndBlock := program.getVotingEndBlock(ctx, k)
+	if k.CandQueueHas(ctx, prgmEndBlock, msg.ProgramID) {
+		k.CandQueueRemove(ctx, prgmEndBlock, msg.ProgramID)
 		k.RefundDeposit(ctx, program.Submitter)
 	}
 
@@ -82,13 +82,11 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 		Tags: sdk.NewTags(
 			tags.Action, tags.ActionProgramWithdrawn,
 			tags.ProgramID, sdk.Uint64ToBigEndian(msg.ProgramID),
-			tags.Submitter, msg.Submitter.Bytes(),
-			tags.Executor, program.Executor.Bytes(),
 		),
 	}
 }
 
-// handleMsgVoteProgram handles the logic of a VoteMsg
+// handleMsgVoteProgram handles the logic of a MsgVoteProgram
 func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Result {
 	resTags := sdk.NewTags()
 
@@ -103,7 +101,7 @@ func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Res
 		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
 	}
 
-	k.SetVote(ctx, msg.ProgramID, msg.Voter, msg.Option)
+	k.AddVote(ctx, msg.ProgramID, msg.Voter, msg.Option)
 
 	return sdk.Result{
 		Tags: resTags.AppendTags(
@@ -111,7 +109,7 @@ func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Res
 				tags.Action, tags.ActionProgramVote,
 				tags.ProgramID, sdk.Uint64ToBigEndian(msg.ProgramID),
 				tags.Voter, msg.Voter.Bytes(),
-				tags.Option, msg.Option,
+				tags.Option, strconv.FormatBool(msg.Option),
 			),
 		),
 	}

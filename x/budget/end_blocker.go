@@ -1,53 +1,71 @@
 package budget
 
 import (
+	"fmt"
 	"terra/types"
 	"terra/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func tally(ctx sdk.Context, k Keeper, program Program) (votePower sdk.Int, totalPower sdk.Int) {
+// Tally returns votePower = yesVotes minus NoVotes for program, as well as the total votes.
+// Power is denominated in validator bonded tokens (Luna stake size)
+func tally(ctx sdk.Context, k Keeper, targetProgramID uint64) (votePower sdk.Int, totalPower sdk.Int) {
 	currValidators := make(map[string]sdk.Int)
+	votePower = sdk.ZeroInt()
+	totalPower = sdk.ZeroInt()
 
 	// fetch all the bonded validators, insert them into currValidators
 	k.valset.IterateBondedValidatorsByPower(ctx, func(index int64, validator sdk.Validator) (stop bool) {
 		currValidators[validator.GetOperator().String()] = validator.GetBondedTokens()
+		totalPower = totalPower.Add(validator.GetBondedTokens())
 		return false
 	})
 
+	voteCount := 0
 	k.IterateVotes(ctx, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		valAddrStr := sdk.ValAddress(voter).String()
-		if bondSize, ok := currValidators[valAddrStr]; ok {
-			if option == true {
-				votePower.Add(bondSize)
-			} else {
-				votePower.Sub(bondSize)
+		fmt.Printf("programID: %v target: %v \n", programID, targetProgramID)
+		if programID == targetProgramID {
+			voteCount++
+			valAddrStr := sdk.ValAddress(voter).String()
+			if bondSize, ok := currValidators[valAddrStr]; ok {
+				if option {
+					votePower = votePower.Add(bondSize)
+				} else {
+					votePower = votePower.Sub(bondSize)
+				}
 			}
-			totalPower.Add(bondSize)
 		}
+
 		return false
 	})
+
+	fmt.Printf("real votecount : %v \n", voteCount)
 
 	return
 }
 
+// clearsThreshold returns true if totalPower * threshold < votePower
 func clearsThreshold(votePower, totalPower sdk.Int, threshold sdk.Dec) bool {
+	fmt.Printf("%v %v %v\n", votePower, totalPower, threshold)
 	return votePower.GTE(threshold.MulInt(totalPower).RoundInt())
 }
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
+	claims = types.ClaimPool{}
+	resTags = sdk.EmptyTags()
 
-	k.CandQueueIterateMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+	k.CandQueueIterateExpired(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
 		program, err := k.GetProgram(ctx, programID)
 		if err != nil {
 			return false
 		}
 
 		// Did not pass the tally, delete program
-		votePower, totalPower := tally(ctx, k, program)
+		votePower, totalPower := tally(ctx, k, programID)
+
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
 			k.DeleteProgram(ctx, programID)
 			resTags.AppendTag(tags.Action, tags.ActionProgramRejected)
@@ -58,30 +76,30 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		resTags.AppendTags(
 			sdk.NewTags(
 				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
-				tags.Weight, votePower,
+				tags.Weight, votePower.String(),
 			),
 		)
 
-		k.CandQueueRemove(ctx, program, programID)
+		k.CandQueueRemove(ctx, program.getVotingEndBlock(ctx, k), programID)
 		return false
 	})
 
 	// Not time to review programs yet
-	if ctx.BlockHeight()%k.GetParams(ctx).VotePeriod != 0 {
+	curBlockHeight := ctx.BlockHeight()
+	if curBlockHeight == 0 || curBlockHeight%k.GetParams(ctx).VotePeriod != 0 {
 		return
 	}
 
 	claims = types.ClaimPool{}
 
 	// iterate programs and weight them
-	k.IteratePrograms(ctx, func(programID uint64, program Program) (stop bool) {
-		votePower, totalPower := tally(ctx, k, program)
+	k.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
+		votePower, totalPower := tally(ctx, k, programID)
 
 		// Need to legacy program
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
 			k.DeleteProgram(ctx, programID)
 			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
-
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
 			resTags.AppendTag(tags.Action, tags.ActionProgramGranted)
@@ -90,7 +108,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		resTags.AppendTags(
 			sdk.NewTags(
 				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
-				tags.Weight, votePower,
+				tags.Weight, votePower.String(),
 			),
 		)
 

@@ -80,7 +80,7 @@ func submitProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Ha
 		}
 
 		// create the message
-		msg := budget.NewSubmitProgramMsg(req.Title, req.Description, req.Deposit, req.Submitter, req.Executor)
+		msg := budget.NewSubmitProgramMsg(req.Title, req.Description, req.Submitter, req.Executor)
 		err := msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -125,7 +125,7 @@ func withdrawProgramHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.
 		fromAddress := cliCtx.GetFromAddress()
 
 		// create the message
-		msg := budget.NewWithdrawProgramMsg(programID, fromAddress)
+		msg := budget.NewMsgWithdrawProgram(programID, fromAddress)
 		err := msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -163,7 +163,7 @@ func voteHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc
 		}
 
 		// create the message
-		msg := budget.NewVoteMsg(programID, req.Option, req.Voter)
+		msg := budget.NewMsgVoteProgram(programID, req.Option, req.Voter)
 		err := msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

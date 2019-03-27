@@ -113,10 +113,8 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 
 	programs := []Program{}
-	keeper.IteratePrograms(ctx, func(programID uint64, program Program) (stop bool) {
-		if !keeper.CandQueueHas(ctx, program, programID) {
-			programs = append(programs, program)
-		}
+	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
+		programs = append(programs, program)
 		return false
 	})
 
@@ -131,9 +129,8 @@ func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 // nolint: unparam
 func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	programs := []Program{}
-	store := ctx.KVStore(keeper.key)
 
-	keeper.CandQueueIterateMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+	keeper.CandQueueIterateExpired(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
 		program, err := keeper.GetProgram(ctx, programID)
 		if err != nil {
 			return false
@@ -142,11 +139,6 @@ func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		programs = append(programs, program)
 		return false
 	})
-	iter := sdk.KVStorePrefixIterator(store, prefixCandQueue)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-
-	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
 	if err != nil {

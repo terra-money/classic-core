@@ -108,9 +108,9 @@ func (k Keeper) IterateClaims(ctx sdk.Context, handler func(types.Claim) (stop b
 
 // GetParams get treasury params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
-	var resultParams Params
-	k.paramSpace.Get(ctx, paramStoreKeyParams, &resultParams)
-	return resultParams
+	var params Params
+	k.paramSpace.Get(ctx, paramStoreKeyParams, &params)
+	return params
 }
 
 // SetParams set treasury params from the global param store
