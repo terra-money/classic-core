@@ -10,10 +10,10 @@ import (
 
 // SubmitProgramMsg defines a message to create a Program
 type MsgSubmitProgram struct {
-	Title       string         // Title of the Program
-	Description string         // Description of the Program
-	Submitter   sdk.AccAddress // Address of the submitter
-	Executor    sdk.AccAddress // Address of the executor
+	Title       string         `json:"title"`       // Title of the Program
+	Description string         `json:"description"` // Description of the Program
+	Submitter   sdk.AccAddress `json:"submitter"`   // Address of the submitter
+	Executor    sdk.AccAddress `json:"executor"`    // Address of the executor
 }
 
 // NewMsgSubmitProgram submits a message with a new Program
@@ -79,8 +79,8 @@ func (msg MsgSubmitProgram) String() string {
 // WithdrawProgramMsg defines the msg of a staker containing the vote option to an
 // specific Program
 type MsgWithdrawProgram struct {
-	ProgramID uint64         // ID of the Program
-	Submitter sdk.AccAddress // Address of the voter
+	ProgramID uint64         `json:"program_id"` // ID of the Program
+	Submitter sdk.AccAddress `json:"submitter"`  // Address of the voter
 }
 
 // NewVoteMsg creates a VoteMsg instance
@@ -132,9 +132,9 @@ func (msg MsgWithdrawProgram) String() string {
 // MsgVoteProgram defines the msg of a staker containing the vote option to an
 // specific Program
 type MsgVoteProgram struct {
-	ProgramID uint64         // ID of the Program
-	Option    bool           // Option chosen by voter
-	Voter     sdk.AccAddress // Address of the voter
+	ProgramID uint64         `json:"program_id"` // ID of the Program
+	Option    bool           `json:"option"`     // Option chosen by voter
+	Voter     sdk.AccAddress `json:"voter"`      // Address of the voter
 }
 
 // NewMsgVoteProgram creates a MsgVoteProgram instance

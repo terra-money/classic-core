@@ -12,9 +12,9 @@ import (
 
 // MsgSwap contains a swap request
 type MsgSwap struct {
-	Trader    sdk.AccAddress // Address of the trader
-	OfferCoin sdk.Coin       // Coin being offered
-	AskDenom  string         // Denom of the coin to swap to
+	Trader    sdk.AccAddress `json:"trader"`     // Address of the trader
+	OfferCoin sdk.Coin       `json:"offer_coin"` // Coin being offered
+	AskDenom  string         `json:"ask_denom"`  // Denom of the coin to swap to
 }
 
 // NewMsgSwap creates a MsgSwap instance
@@ -27,7 +27,7 @@ func NewMsgSwap(traderAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string
 }
 
 // Route Implements Msg
-func (msg MsgSwap) Route() string { return "market" }
+func (msg MsgSwap) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
 func (msg MsgSwap) Type() string { return "swap" }

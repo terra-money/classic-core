@@ -14,9 +14,9 @@ import (
 // For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
 // what the price field would be, and if 1213.34 for KRW, same.
 type MsgPriceFeed struct {
-	Denom  string
-	Price  sdk.Dec // in Luna
-	Feeder sdk.AccAddress
+	Denom  string         `json:"denom"`
+	Price  sdk.Dec        `json:"price"` // the effective price of Luna in {Denom}
+	Feeder sdk.AccAddress `json:"feeder"`
 }
 
 // NewMsgPriceFeed creates a MsgPriceFeed instance
@@ -29,7 +29,7 @@ func NewMsgPriceFeed(denom string, price sdk.Dec, feederAddress sdk.AccAddress) 
 }
 
 // Route Implements Msg
-func (msg MsgPriceFeed) Route() string { return "oracle" }
+func (msg MsgPriceFeed) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
 func (msg MsgPriceFeed) Type() string { return "pricefeed" }
