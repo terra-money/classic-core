@@ -42,4 +42,4 @@ We are currently finalizing contribution standards and guidelines. In the meanwh
 
 ## Documentation
 
-See the [docs](./docs/guide/README) and the [White paper](https://terra.money/static/Terra_White_Paper.pdf).
+See the [docs](./docs/guide/README.md) and the [White paper](https://terra.money/static/Terra_White_Paper.pdf).
