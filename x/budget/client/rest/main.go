@@ -35,6 +35,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/withdraw", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/vote", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 
+	r.HandleFunc(fmt.Sprintf("/budget/program"), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/actives", RestProgramID), queryActivesHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/candidates", RestProgramID), queryCandidatesHandlerFn(cdc, cliCtx)).Methods("GET")
