@@ -6,10 +6,12 @@ BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/cosmos/cosmos-sdk/ve
 LEDGER_ENABLED ?= true
 GOTOOLS = \
 	github.com/golang/dep/cmd/dep \
-	github.com/alecthomas/gometalinter \
+	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: get_tools get_vendor_deps install test_lint test
+all: get_tools get_vendor_deps install test
+#all: get_tools get_vendor_deps install test_lint test
+
 
 get_tools:
 	go get github.com/golang/dep/cmd/dep
@@ -101,12 +103,12 @@ test_unit:
 test_race:
 	@VERSION=$(VERSION) go test -race $(PACKAGES_NOSIMULATION)
 
-test_lint:
-	gometalinter --config=tools/gometalinter.json ./...
-	!(gometalinter --exclude /usr/lib/go/src/ --exclude client/lcd/statik/statik.go --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	dep status >> /dev/null
-	!(grep -n branch Gopkg.toml)
+# test_lint:
+# 	gometalinter --config=tools/gometalinter.json ./...
+# 	!(gometalinter --exclude /usr/lib/go/src/ --exclude client/lcd/statik/statik.go --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
+# 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+# 	dep status >> /dev/null
+# 	!(grep -n branch Gopkg.toml)
 
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
@@ -165,6 +167,6 @@ localnet-stop:
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
 .PHONY: build build_cosmos-sdk-cli build_examples install install_debug dist \
 check_tools check_dev_tools get_dev_tools get_vendor_deps draw_deps test test_cli test_unit \
-test_cover test_lint benchmark devdoc_init devdoc devdoc_save devdoc_update \
+test_cover benchmark devdoc_init devdoc devdoc_save devdoc_update \
 build-linux build-docker-terradnode localnet-start localnet-stop \
 format check-ledger update_tools update_dev_tools

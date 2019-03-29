@@ -81,33 +81,30 @@ func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 
 func TestQueryParams(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.oracleKeeper)
 
 	defaultParams := DefaultParams()
 	input.oracleKeeper.SetParams(input.ctx, defaultParams)
 
-	params := getQueriedParams(t, input.ctx, cdc, querier)
+	params := getQueriedParams(t, input.ctx, input.cdc, querier)
 
 	require.Equal(t, defaultParams, params)
 }
 
 func TestQueryPrice(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, testPrice)
 
-	price := getQueriedPrice(t, input.ctx, cdc, querier, assets.KRWDenom)
+	price := getQueriedPrice(t, input.ctx, input.cdc, querier, assets.KRWDenom)
 
 	require.Equal(t, testPrice, price)
 }
 
 func TestQueryActives(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
@@ -116,14 +113,13 @@ func TestQueryActives(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, testPrice)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, testPrice)
 
-	actives := getQueriedActive(t, input.ctx, cdc, querier)
+	actives := getQueriedActive(t, input.ctx, input.cdc, querier)
 
 	require.Equal(t, 4, len(actives))
 }
 
 func TestQueryVotes(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
@@ -149,15 +145,15 @@ func TestQueryVotes(t *testing.T) {
 		input.oracleKeeper.addVote(input.ctx, vote)
 	}
 
-	voterOneSDR := getQueriedVotes(t, input.ctx, cdc, querier, addrs[0], assets.SDRDenom)
+	voterOneSDR := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], assets.SDRDenom)
 	require.Equal(t, 1, len(voterOneSDR))
 
-	voterOne := getQueriedVotes(t, input.ctx, cdc, querier, addrs[0], "")
+	voterOne := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], "")
 	require.Equal(t, 3, len(voterOne))
 
-	assetKRW := getQueriedVotes(t, input.ctx, cdc, querier, sdk.AccAddress{}, assets.KRWDenom)
+	assetKRW := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, assets.KRWDenom)
 	require.Equal(t, 2, len(assetKRW))
 
-	noFilters := getQueriedVotes(t, input.ctx, cdc, querier, sdk.AccAddress{}, "")
+	noFilters := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, "")
 	require.Equal(t, 9, len(noFilters))
 }

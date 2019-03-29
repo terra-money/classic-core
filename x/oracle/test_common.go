@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"terra/types/assets"
+	"terra/types/mock"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -42,10 +43,11 @@ var (
 
 type testInput struct {
 	ctx          sdk.Context
+	cdc          *codec.Codec
 	accKeeper    auth.AccountKeeper
 	bankKeeper   bank.Keeper
 	oracleKeeper Keeper
-	valset       MockValset
+	valset       mock.MockValset
 }
 
 func newTestCodec() *codec.Codec {
@@ -97,7 +99,7 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
-	valset := NewMockValSet()
+	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
 			sdk.NewCoin(assets.SDRDenom, initAmt),
@@ -106,8 +108,8 @@ func createTestInput(t *testing.T) testInput {
 		require.NoError(t, err)
 
 		// Add validators
-		validator := NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
-		valset.validators = append(valset.validators, validator)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		valset.Validators = append(valset.Validators, validator)
 	}
 
 	oracleKeeper := NewKeeper(
@@ -115,52 +117,5 @@ func createTestInput(t *testing.T) testInput {
 		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
-	return testInput{ctx, accKeeper, bankKeeper, oracleKeeper, valset}
-}
-
-type MockValset struct {
-	sdk.ValidatorSet
-
-	validators []MockValidator
-}
-
-type MockValidator struct {
-	sdk.Validator
-
-	address sdk.ValAddress
-	power   sdk.Int
-}
-
-func NewMockValSet() MockValset {
-	return MockValset{
-		validators: []MockValidator{},
-	}
-}
-
-func NewMockValidator(address sdk.ValAddress, power sdk.Int) MockValidator {
-	return MockValidator{
-		address: address,
-		power:   power,
-	}
-}
-
-func (mv MockValidator) GetBondedTokens() sdk.Int {
-	return mv.power
-}
-
-func (mv MockValset) Validator(ctx sdk.Context, valAddress sdk.ValAddress) sdk.Validator {
-	for _, val := range mv.validators {
-		if val.address.Equals(valAddress) {
-			return val
-		}
-	}
-	return nil
-}
-
-func (mv MockValset) TotalBondedTokens(ctx sdk.Context) sdk.Int {
-	rval := sdk.ZeroInt()
-	for _, val := range mv.validators {
-		rval = rval.Add(val.power)
-	}
-	return rval
+	return testInput{ctx, cdc, accKeeper, bankKeeper, oracleKeeper, valset}
 }

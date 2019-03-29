@@ -41,7 +41,19 @@ func (c Claim) ID() string {
 	return fmt.Sprintf("%d:%s", c.Class, c.Recipient.String())
 }
 
+func (c Claim) getClassString() string {
+	switch c.Class {
+	case OracleClaimClass:
+		return "oracle"
+	case BudgetClaimClass:
+		return "budget"
+	}
+	return "unknown"
+}
+
 func (c Claim) String() string {
-	return fmt.Sprintf("Claim{class: %v, weight: %v, recipient: %v}",
-		c.Class, c.Weight, c.Recipient)
+	return fmt.Sprintf(`Claim
+	Class: %v
+	Weight: %v
+	Recipient: %v`, c.getClassString(), c.Weight, c.Recipient)
 }

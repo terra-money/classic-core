@@ -16,6 +16,8 @@ type Keeper struct {
 	cdc *codec.Codec
 	key sdk.StoreKey
 
+	valset sdk.ValidatorSet
+
 	mtk mint.Keeper
 	mk  market.Keeper
 
@@ -23,11 +25,12 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey,
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet,
 	mtk mint.Keeper, mk market.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
+		valset:     valset,
 		mtk:        mtk,
 		mk:         mk,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
@@ -108,9 +111,9 @@ func (k Keeper) IterateClaims(ctx sdk.Context, handler func(types.Claim) (stop b
 
 // GetParams get treasury params from the global param store
 func (k Keeper) GetParams(ctx sdk.Context) Params {
-	var resultParams Params
-	k.paramSpace.Get(ctx, paramStoreKeyParams, &resultParams)
-	return resultParams
+	var params Params
+	k.paramSpace.Get(ctx, paramStoreKeyParams, &params)
+	return params
 }
 
 // SetParams set treasury params from the global param store

@@ -43,7 +43,7 @@ func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (
 	return k.changeIssuance(ctx, coin.Denom, coin.Amount)
 }
 
-// Burn deducts {coin} from the {recipient} account, and reflects the decrease in issuance
+// Burn deducts {coin} from the {payer} account, and reflects the decrease in issuance
 func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err sdk.Error) {
 	_, _, err = k.bk.SubtractCoins(ctx, payer, sdk.Coins{coin})
 	if err != nil {

@@ -8,16 +8,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// SubmitProgramMsg defines a message to create a Program
+// MsgSubmitProgram defines a message to create a Program
 type MsgSubmitProgram struct {
-	Title       string         // Title of the Program
-	Description string         // Description of the Program
-	Submitter   sdk.AccAddress // Address of the submitter
-	Executor    sdk.AccAddress // Address of the executor
+	Title       string         `json:"title"`       // Title of the Program
+	Description string         `json:"description"` // Description of the Program
+	Submitter   sdk.AccAddress `json:"submitter"`   // Address of the submitter
+	Executor    sdk.AccAddress `json:"executor"`    // Address of the executor
 }
 
 // NewMsgSubmitProgram submits a message with a new Program
-func NewSubmitProgramMsg(title string, description string,
+func NewMsgSubmitProgram(title string, description string,
 	submitter sdk.AccAddress, executor sdk.AccAddress) MsgSubmitProgram {
 	return MsgSubmitProgram{
 		Title:       title,
@@ -27,13 +27,13 @@ func NewSubmitProgramMsg(title string, description string,
 	}
 }
 
-// Route Implements Msg
+// Route returns msg route
 func (msg MsgSubmitProgram) Route() string { return "budget" }
 
-// Type implements sdk.Msg
+// Type returns msg type
 func (msg MsgSubmitProgram) Type() string { return "submitprogram" }
 
-// Implements Msg
+// GetSignBytes returns sign byptes
 func (msg MsgSubmitProgram) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -42,12 +42,12 @@ func (msg MsgSubmitProgram) GetSignBytes() []byte {
 	return b
 }
 
-// Implements Msg
+// GetSigners returns signer
 func (msg MsgSubmitProgram) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Submitter}
 }
 
-// Implements Msg
+// ValidateBasic validate msg
 func (msg MsgSubmitProgram) ValidateBasic() sdk.Error {
 	if len(msg.Submitter) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Submitter.String())
@@ -65,7 +65,7 @@ func (msg MsgSubmitProgram) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// Implements Msg
+// String stringify the msg
 func (msg MsgSubmitProgram) String() string {
 	return fmt.Sprintf(`MsgSubmitProgram
 	Title: %v
@@ -79,11 +79,11 @@ func (msg MsgSubmitProgram) String() string {
 // WithdrawProgramMsg defines the msg of a staker containing the vote option to an
 // specific Program
 type MsgWithdrawProgram struct {
-	ProgramID uint64         // ID of the Program
-	Submitter sdk.AccAddress // Address of the voter
+	ProgramID uint64         `json:"program_id"` // ID of the Program
+	Submitter sdk.AccAddress `json:"submitter"`  // Address of the voter
 }
 
-// NewVoteMsg creates a VoteMsg instance
+// NewMsgWithdrawProgram creates a VoteMsg instance
 func NewMsgWithdrawProgram(programID uint64, submitter sdk.AccAddress) MsgWithdrawProgram {
 	return MsgWithdrawProgram{
 		ProgramID: programID,
@@ -91,13 +91,13 @@ func NewMsgWithdrawProgram(programID uint64, submitter sdk.AccAddress) MsgWithdr
 	}
 }
 
-// Route Implements Msg
+// Route returns msg route
 func (msg MsgWithdrawProgram) Route() string { return "budget" }
 
-// Type implements sdk.Msg
+// Type returns msg type
 func (msg MsgWithdrawProgram) Type() string { return "withdraw" }
 
-// Implements Msg
+// GetSignBytes returns sign byptes
 func (msg MsgWithdrawProgram) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -106,12 +106,12 @@ func (msg MsgWithdrawProgram) GetSignBytes() []byte {
 	return b
 }
 
-// Implements Msg
+// GetSigners returns signer
 func (msg MsgWithdrawProgram) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Submitter}
 }
 
-// Implements Msg
+// ValidateBasic validate msg
 func (msg MsgWithdrawProgram) ValidateBasic() sdk.Error {
 	if len(msg.Submitter) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Submitter.String())
@@ -119,7 +119,7 @@ func (msg MsgWithdrawProgram) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// Implements Msg
+// String stringify the msg
 func (msg MsgWithdrawProgram) String() string {
 	return fmt.Sprintf(`MsgWithdrawProgram
 	ProgramID: %v
@@ -132,9 +132,9 @@ func (msg MsgWithdrawProgram) String() string {
 // MsgVoteProgram defines the msg of a staker containing the vote option to an
 // specific Program
 type MsgVoteProgram struct {
-	ProgramID uint64         // ID of the Program
-	Option    bool           // Option chosen by voter
-	Voter     sdk.AccAddress // Address of the voter
+	ProgramID uint64         `json:"program_id"` // ID of the Program
+	Option    bool           `json:"option"`     // Option chosen by voter
+	Voter     sdk.AccAddress `json:"voter"`      // Address of the voter
 }
 
 // NewMsgVoteProgram creates a MsgVoteProgram instance
@@ -146,13 +146,13 @@ func NewMsgVoteProgram(programID uint64, option bool, voter sdk.AccAddress) MsgV
 	}
 }
 
-// Route Implements Msg
+// Route returns msg route
 func (msg MsgVoteProgram) Route() string { return "budget" }
 
-// Type implements sdk.Msg
+// Type returns msg type
 func (msg MsgVoteProgram) Type() string { return "vote" }
 
-// Implements Msg
+// GetSignBytes returns sign byptes
 func (msg MsgVoteProgram) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -161,12 +161,12 @@ func (msg MsgVoteProgram) GetSignBytes() []byte {
 	return b
 }
 
-// Implements Msg
+// GetSigners returns signer
 func (msg MsgVoteProgram) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Voter}
 }
 
-// Implements Msg
+// ValidateBasic validate msg
 func (msg MsgVoteProgram) ValidateBasic() sdk.Error {
 	if len(msg.Voter) == 0 {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Voter.String())
@@ -178,7 +178,7 @@ func (msg MsgVoteProgram) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// Implements Msg
+// String stringify the msg
 func (msg MsgVoteProgram) String() string {
 	return fmt.Sprintf(`MsgVoteProgram
 	ProgramID: %v

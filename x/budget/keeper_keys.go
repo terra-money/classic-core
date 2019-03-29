@@ -1,7 +1,7 @@
 package budget
 
 import (
-	"bytes"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -20,40 +20,23 @@ var (
 )
 
 func keyProgram(programID uint64) []byte {
-	return bytes.Join([][]byte{
-		prefixProgram,
-		sdk.Uint64ToBigEndian(programID),
-	}, keyDelimiter)
+	return []byte(fmt.Sprintf("%s:%d", prefixProgram, programID))
 }
 
 func keyVote(programID uint64, voterAddr sdk.AccAddress) []byte {
-	return bytes.Join([][]byte{
-		prefixVote,
-		sdk.Uint64ToBigEndian(programID),
-		voterAddr,
-	}, keyDelimiter)
+	return []byte(fmt.Sprintf("%s:%d:%s", prefixVote, programID, voterAddr))
 }
 
 func prefixVoteForProgram(programID uint64) []byte {
-	return bytes.Join([][]byte{
-		prefixVote,
-		sdk.Uint64ToBigEndian(programID),
-	}, keyDelimiter)
+	return []byte(fmt.Sprintf("%s:%d", prefixVote, programID))
 }
 
 func prefixCandQueueEndBlock(endBlock int64) []byte {
-	return bytes.Join([][]byte{
-		prefixCandQueue,
-		sdk.Uint64ToBigEndian(uint64(endBlock)),
-	}, keyDelimiter)
+	return []byte(fmt.Sprintf("%s:%d", prefixCandQueue, endBlock))
 }
 
 func keyCandidate(endBlock int64, programID uint64) []byte {
-	return bytes.Join([][]byte{
-		prefixCandQueue,
-		sdk.Uint64ToBigEndian(uint64(endBlock)),
-		sdk.Uint64ToBigEndian(programID),
-	}, keyDelimiter)
+	return []byte(fmt.Sprintf("%s:%d:%d", prefixCandQueue, endBlock, programID))
 }
 
 func paramKeyTable() params.KeyTable {

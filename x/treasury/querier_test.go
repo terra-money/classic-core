@@ -171,72 +171,65 @@ func getQueriedParams(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 
 func TestQueryParams(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	params := DefaultParams()
 	input.treasuryKeeper.SetParams(input.ctx, params)
 
-	queriedParams := getQueriedParams(t, input.ctx, cdc, querier)
+	queriedParams := getQueriedParams(t, input.ctx, input.cdc, querier)
 
 	require.Equal(t, queriedParams, params)
 }
 
 func TestQueryRewardWeight(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	rewardWeight := sdk.NewDecWithPrec(77, 2)
 	input.treasuryKeeper.SetRewardWeight(input.ctx, rewardWeight)
 
-	queriedRewardWeight := getQueriedRewardWeight(t, input.ctx, cdc, querier, util.GetEpoch(input.ctx))
+	queriedRewardWeight := getQueriedRewardWeight(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
 	require.Equal(t, queriedRewardWeight, rewardWeight)
 }
 
 func TestQueryTaxRate(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	taxRate := sdk.NewDecWithPrec(1, 3)
 	input.treasuryKeeper.SetTaxRate(input.ctx, taxRate)
 
-	queriedTaxRate := getQueriedTaxRate(t, input.ctx, cdc, querier, util.GetEpoch(input.ctx))
+	queriedTaxRate := getQueriedTaxRate(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
 	require.Equal(t, queriedTaxRate, taxRate)
 }
 
 func TestQueryTaxCap(t *testing.T) {
 	input := createTestInput(t)
-	InitGenesis(input.ctx, input.treasuryKeeper, DefaultGenesisState())
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
 
 	// Get a currency super random; should default to policy coin.
-	queriedTaxCap := getQueriedTaxCap(t, input.ctx, cdc, querier, "hello")
+	queriedTaxCap := getQueriedTaxCap(t, input.ctx, input.cdc, querier, "hello")
 
 	require.Equal(t, queriedTaxCap, params.TaxPolicy.Cap.Amount)
 }
 
 func TestQueryCurrentEpoch(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	curEpoch := util.GetEpoch(input.ctx)
 
-	queriedCurEpoch := getQueriedCurrentEpoch(t, input.ctx, cdc, querier)
+	queriedCurEpoch := getQueriedCurrentEpoch(t, input.ctx, input.cdc, querier)
 
 	require.Equal(t, queriedCurEpoch, curEpoch)
 }
 
 func TestQueryTaxProceeds(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	taxProceeds := sdk.Coins{
@@ -244,40 +237,37 @@ func TestQueryTaxProceeds(t *testing.T) {
 	}
 	input.treasuryKeeper.RecordTaxProceeds(input.ctx, taxProceeds)
 
-	queriedTaxProceeds := getQueriedTaxProceeds(t, input.ctx, cdc, querier, util.GetEpoch(input.ctx))
+	queriedTaxProceeds := getQueriedTaxProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
 	require.Equal(t, queriedTaxProceeds, taxProceeds)
 }
 
 func TestQuerySeigniorageProceeds(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	seigniorageProceeds := sdk.NewCoin(assets.LunaDenom, sdk.NewInt(10))
 	input.mintKeeper.AddSeigniorage(input.ctx, seigniorageProceeds.Amount)
 
-	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, cdc, querier, util.GetEpoch(input.ctx))
+	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
 	require.Equal(t, queriedSeigniorageProceeds, seigniorageProceeds)
 }
 
 func TestQueryIssuance(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	issuance := sdk.NewInt(1000)
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.SDRDenom, issuance))
 
-	queriedIssuance := getQueriedIssuance(t, input.ctx, cdc, querier, assets.SDRDenom)
+	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.SDRDenom)
 
 	require.Equal(t, queriedIssuance, issuance)
 }
 
 func TestQueryActiveClaims(t *testing.T) {
 	input := createTestInput(t)
-	cdc := codec.New()
 	querier := NewQuerier(input.treasuryKeeper)
 
 	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
@@ -296,7 +286,7 @@ func TestQueryActiveClaims(t *testing.T) {
 		types.OracleClaimClass, sdk.NewInt(10), addrs[2],
 	))
 
-	queriedActiveClaims := getQueriedActiveClaims(t, input.ctx, cdc, querier)
+	queriedActiveClaims := getQueriedActiveClaims(t, input.ctx, input.cdc, querier)
 
 	require.Equal(t, 5, len(queriedActiveClaims))
 }

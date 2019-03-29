@@ -1,11 +1,12 @@
-package treasury
+package budget
 
 import (
 	"terra/types/assets"
 	"terra/types/mock"
-	"terra/x/market"
+	"terra/types/util"
 	"terra/x/mint"
-	"terra/x/oracle"
+
+	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	"testing"
 	"time"
@@ -38,17 +39,17 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	lunaAmt = sdk.NewInt(1000)
+	initAmt = sdk.NewInt(1005)
+	lunaAmt = sdk.NewInt(10)
 )
 
 type testInput struct {
-	ctx            sdk.Context
-	cdc            *codec.Codec
-	bankKeeper     bank.Keeper
-	oracleKeeper   oracle.Keeper
-	marketKeeper   market.Keeper
-	mintKeeper     mint.Keeper
-	treasuryKeeper Keeper
+	ctx          sdk.Context
+	cdc          *codec.Codec
+	mintKeeper   mint.Keeper
+	bankKeeper   bank.Keeper
+	budgetKeeper Keeper
+	valset       mock.MockValset
 }
 
 func newTestCodec() *codec.Codec {
@@ -57,6 +58,7 @@ func newTestCodec() *codec.Codec {
 	bank.RegisterCodec(cdc)
 	RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
+	staking.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 
@@ -67,9 +69,10 @@ func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyBudget := sdk.NewKVStoreKey(StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
-	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
-	keyTreasury := sdk.NewKVStoreKey(StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tkeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -79,9 +82,10 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -99,37 +103,46 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
-	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
-
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
-		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
-		require.NoError(t, err2)
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
+			sdk.NewCoin(assets.SDRDenom, initAmt),
+			sdk.NewCoin(assets.LunaDenom, lunaAmt),
+		})
+		require.NoError(t, err)
 
 		// Add validators
 		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 
-	oracleKeeper := oracle.NewKeeper(
+	mintKeeper := mint.NewKeeper(
 		cdc,
-		keyOracle,
-		valset,
-		paramsKeeper.Subspace(oracle.DefaultParamspace),
+		keyMint,
+		bankKeeper,
+		accKeeper,
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
-
-	treasuryKeeper := NewKeeper(
-		cdc,
-		keyTreasury,
-		valset,
-		mintKeeper,
-		marketKeeper,
+	budgetKeeper := NewKeeper(
+		cdc, keyBudget, mintKeeper, valset,
 		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
-	InitGenesis(ctx, treasuryKeeper, DefaultGenesisState())
+	InitGenesis(ctx, budgetKeeper, DefaultGenesisState())
 
-	return testInput{ctx, cdc, bankKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
+	return testInput{ctx, cdc, mintKeeper, bankKeeper, budgetKeeper, valset}
+}
+
+func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
+	submitter := addrs[0]
+	if len(accounts) > 0 {
+		submitter = accounts[0]
+	}
+
+	executor := addrs[1]
+	if len(accounts) > 1 {
+		executor = accounts[1]
+	}
+
+	return NewProgram("testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
 }

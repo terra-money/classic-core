@@ -83,23 +83,30 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	}
 
 	filteredVotes := []MsgVoteProgram{}
-	keeper.IterateVotes(ctx, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		include := true
-		if params.ProgramID != 0 && params.ProgramID != programID {
-			include = false
-		}
-
-		if len(params.Voter) != 0 && !(params.Voter.Equals(voter)) {
-			include = false
-		}
-
-		if include {
-			vote := NewMsgVoteProgram(programID, option, voter)
-			filteredVotes = append(filteredVotes, vote)
-		}
+	prefix := prefixVote
+	handler := func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+		vote := NewMsgVoteProgram(programID, option, voter)
+		filteredVotes = append(filteredVotes, vote)
 
 		return false
-	})
+	}
+
+	if params.ProgramID != 0 && !params.Voter.Empty() {
+		prefix = keyVote(params.ProgramID, params.Voter)
+	} else if params.ProgramID != 0 {
+		prefix = keyVote(params.ProgramID, sdk.AccAddress{})
+	} else if !params.Voter.Empty() {
+		handler = func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+			if params.Voter.Equals(voter) {
+				vote := NewMsgVoteProgram(programID, option, voter)
+				filteredVotes = append(filteredVotes, vote)
+			}
+
+			return false
+		}
+	}
+
+	keeper.IterateVotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
@@ -113,10 +120,8 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 
 	programs := []Program{}
-	keeper.IteratePrograms(ctx, func(programID uint64, program Program) (stop bool) {
-		if !keeper.CandQueueHas(ctx, program, programID) {
-			programs = append(programs, program)
-		}
+	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
+		programs = append(programs, program)
 		return false
 	})
 
@@ -131,9 +136,8 @@ func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 // nolint: unparam
 func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	programs := []Program{}
-	store := ctx.KVStore(keeper.key)
 
-	keeper.CandQueueIterateMature(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+	keeper.CandQueueIterateExpired(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
 		program, err := keeper.GetProgram(ctx, programID)
 		if err != nil {
 			return false
@@ -142,11 +146,6 @@ func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		programs = append(programs, program)
 		return false
 	})
-	iter := sdk.KVStorePrefixIterator(store, prefixCandQueue)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-
-	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
 	if err != nil {

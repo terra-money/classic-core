@@ -109,15 +109,13 @@ func TestSMR(t *testing.T) {
 func TestUnitIndicator(t *testing.T) {
 	input := createTestInput(t)
 
-	lunaIssuance := sdk.NewInt(10000)
-	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.LunaDenom, lunaIssuance))
-	require.Nil(t, err)
+	lunaTotalBondedAmount := input.treasuryKeeper.valset.TotalBondedTokens(input.ctx)
 
 	// Just get an indicator to multiply the unit value by the expected rval.
 	// the unit indicator function obviously should return the expected rval.
 	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx),
 		func(_ sdk.Context, _ Keeper, _ sdk.Int) sdk.Dec {
-			return sdk.NewDecFromInt(lunaIssuance.MulRaw(20))
+			return sdk.NewDecFromInt(lunaTotalBondedAmount.MulRaw(20))
 		})
 
 	require.Equal(t, sdk.NewDec(20), actual)
@@ -161,8 +159,6 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
 	// Test all of our reporting functions
-	lunaAmt := int64(10000)
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewInt64Coin(assets.LunaDenom, lunaAmt))
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.OneDec())
 
 	for i := int64(201); i <= 500; i++ {
@@ -172,6 +168,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
 
+	totalBondedTokens := sdk.NewDecFromInt(input.treasuryKeeper.valset.TotalBondedTokens(input.ctx))
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TaxRewardsForEpoch)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
@@ -182,11 +179,11 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1), rval)
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 5), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.Mul(sdk.NewDec(1000000)).TruncateInt())
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), SRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 5), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), MRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505*2, 5), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
 }

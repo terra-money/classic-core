@@ -12,8 +12,8 @@ type Params struct {
 	TaxPolicy    PolicyConstraints `json:"tax_policy"`
 	RewardPolicy PolicyConstraints `json:"reward_policy"`
 
-	SeigniorageBurdenTarget sdk.Dec     `json:"seigniorage_burden_target"`
-	MiningIncrement         sdk.DecCoin `json:"mining_increment"`
+	SeigniorageBurdenTarget sdk.Dec `json:"seigniorage_burden_target"`
+	MiningIncrement         sdk.Dec `json:"mining_increment"`
 
 	EpochShort     sdk.Int `json:"epoch_short"`
 	EpochLong      sdk.Int `json:"epoch_long"`
@@ -27,7 +27,7 @@ type Params struct {
 func NewParams(
 	taxPolicy, rewardPolicy PolicyConstraints,
 	seigniorageBurden sdk.Dec,
-	miningIncrement sdk.DecCoin,
+	miningIncrement sdk.Dec,
 	epochShort, epochLong, epochProbation sdk.Int,
 	oracleShare, budgetShare sdk.Dec,
 ) Params {
@@ -64,8 +64,8 @@ func DefaultParams() Params {
 			Cap:           sdk.NewCoin("unused", sdk.ZeroInt()), // UNUSED
 		},
 
-		sdk.NewDecWithPrec(67, 2),                     // 67%
-		sdk.NewDecCoin(assets.SDRDenom, sdk.OneInt()), // 1 SDR mining increment
+		sdk.NewDecWithPrec(67, 2),  // 67%
+		sdk.NewDecWithPrec(107, 2), // 1.07 mining increment; exponential growth
 
 		sdk.NewInt(4),
 		sdk.NewInt(52),

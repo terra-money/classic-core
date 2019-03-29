@@ -29,6 +29,7 @@ func (cp ClaimPool) Sort() ClaimPool {
 }
 
 func (cp ClaimPool) String() (out string) {
+	out = "ClaimPool "
 	for _, claim := range cp {
 		out += fmt.Sprintf("\n  %s", claim.String())
 	}

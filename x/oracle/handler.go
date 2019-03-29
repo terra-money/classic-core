@@ -5,6 +5,7 @@ import (
 	"terra/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // NewHandler returns a handler for "oracle" type messages.
@@ -138,7 +139,7 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	// Check the feeder is a validator
 	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
 	if val == nil {
-		return ErrNotValidator(DefaultCodespace, pfm.Feeder).Result()
+		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
 	}
 
 	// Add the vote to the store

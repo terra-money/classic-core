@@ -31,8 +31,8 @@ func NewProgram(
 	}
 }
 
-func (p *Program) getVotingEndBlock(votingPeriod int64) int64 {
-	return p.SubmitBlock + votingPeriod
+func (p *Program) getVotingEndBlock(ctx sdk.Context, k Keeper) int64 {
+	return p.SubmitBlock + k.GetParams(ctx).VotePeriod
 }
 
 // String implements fmt.Stringer
