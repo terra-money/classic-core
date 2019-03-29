@@ -11,29 +11,21 @@ import (
 // Tally returns votePower = yesVotes minus NoVotes for program, as well as the total votes.
 // Power is denominated in validator bonded tokens (Luna stake size)
 func tally(ctx sdk.Context, k Keeper, targetProgramID uint64) (votePower sdk.Int, totalPower sdk.Int) {
-	currValidators := make(map[string]sdk.Int)
 	votePower = sdk.ZeroInt()
-	totalPower = sdk.ZeroInt()
-
-	// fetch all the bonded validators, insert them into currValidators
-	k.valset.IterateBondedValidatorsByPower(ctx, func(index int64, validator sdk.Validator) (stop bool) {
-		currValidators[validator.GetOperator().String()] = validator.GetBondedTokens()
-		totalPower = totalPower.Add(validator.GetBondedTokens())
-		return false
-	})
+	totalPower = k.valset.TotalBondedTokens(ctx)
 
 	voteCount := 0
-	k.IterateVotes(ctx, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		fmt.Printf("programID: %v target: %v \n", programID, targetProgramID)
-		if programID == targetProgramID {
-			voteCount++
-			valAddrStr := sdk.ValAddress(voter).String()
-			if bondSize, ok := currValidators[valAddrStr]; ok {
-				if option {
-					votePower = votePower.Add(bondSize)
-				} else {
-					votePower = votePower.Sub(bondSize)
-				}
+	targetProgramIDPrefix := keyVote(targetProgramID, sdk.AccAddress{})
+	k.IterateVotesWithPrefix(ctx, targetProgramIDPrefix, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+		voteCount++
+		valAddr := sdk.ValAddress(voter)
+
+		if validator := k.valset.Validator(ctx, valAddr); validator != nil {
+			bondSize := validator.GetBondedTokens()
+			if option {
+				votePower = votePower.Add(bondSize)
+			} else {
+				votePower = votePower.Sub(bondSize)
 			}
 		}
 
@@ -86,7 +78,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 	// Not time to review programs yet
 	curBlockHeight := ctx.BlockHeight()
-	if curBlockHeight == 0 || curBlockHeight%k.GetParams(ctx).VotePeriod != 0 {
+	if curBlockHeight == 0 || (curBlockHeight%k.GetParams(ctx).VotePeriod) != 0 {
 		return
 	}
 

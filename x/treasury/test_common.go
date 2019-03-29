@@ -1,6 +1,8 @@
 package treasury
 
 import (
+	"terra/types/assets"
+	"terra/types/mock"
 	"terra/x/market"
 	"terra/x/mint"
 	"terra/x/oracle"
@@ -97,20 +99,31 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
-	var valset sdk.ValidatorSet
+	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
+
+	valset := mock.NewMockValSet()
+	for _, addr := range addrs {
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+		require.NoError(t, err2)
+
+		// Add validators
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		valset.Validators = append(valset.Validators, validator)
+	}
+
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
 		valset,
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
-	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
 
 	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
 
 	treasuryKeeper := NewKeeper(
 		cdc,
 		keyTreasury,
+		valset,
 		mintKeeper,
 		marketKeeper,
 		paramsKeeper.Subspace(DefaultParamspace),

@@ -19,7 +19,7 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 	if tlMonth.Equal(sdk.ZeroDec()) {
 		newTaxRate = params.TaxPolicy.RateMax
 	} else {
-		newTaxRate = oldTaxRate.Mul(tlYear.Add(inc.Amount)).Quo(tlMonth)
+		newTaxRate = oldTaxRate.Mul(tlYear.Mul(inc)).Quo(tlMonth)
 	}
 
 	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)

@@ -91,9 +91,9 @@ func SMR(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 func UnitLunaIndicator(ctx sdk.Context, k Keeper, epoch sdk.Int,
 	indicatorFunction func(sdk.Context, Keeper, sdk.Int) sdk.Dec) sdk.Dec {
 	indicator := indicatorFunction(ctx, k, epoch)
-	lunaIssuance := k.mtk.GetIssuance(ctx, assets.LunaDenom, epoch)
+	lunaTotalBondedAmount := k.valset.TotalBondedTokens(ctx)
 
-	return indicator.QuoInt(lunaIssuance)
+	return indicator.QuoInt(lunaTotalBondedAmount)
 }
 
 // RollingAverageIndicator returns the rolling average of the indicator over several epochs.

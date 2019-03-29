@@ -158,6 +158,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.cdc,
 		app.keyTreasury,
+		stakingKeeper.GetValidatorSet(),
 		app.mintKeeper,
 		app.marketKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),

@@ -16,6 +16,8 @@ type Keeper struct {
 	cdc *codec.Codec
 	key sdk.StoreKey
 
+	valset sdk.ValidatorSet
+
 	mtk mint.Keeper
 	mk  market.Keeper
 
@@ -23,11 +25,12 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey,
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet,
 	mtk mint.Keeper, mk market.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
+		valset:     valset,
 		mtk:        mtk,
 		mk:         mk,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
