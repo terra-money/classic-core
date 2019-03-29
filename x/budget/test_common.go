@@ -8,10 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -39,7 +37,7 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
+	initAmt = sdk.NewInt(10000000)
 	lunaAmt = sdk.NewInt(10)
 )
 
@@ -65,7 +63,7 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput(t *testing.T) testInput {
+func createTestInput() testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
@@ -87,7 +85,9 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
-	require.NoError(t, ms.LoadLatestVersion())
+	if err := ms.LoadLatestVersion(); err != nil {
+		panic(err.Error())
+	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -103,25 +103,31 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
-	valset := mock.NewMockValSet()
-	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.SDRDenom, initAmt),
-			sdk.NewCoin(assets.LunaDenom, lunaAmt),
-		})
-		require.NoError(t, err)
-
-		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
-		valset.Validators = append(valset.Validators, validator)
-	}
-
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
 		bankKeeper,
 		accKeeper,
 	)
+
+	valset := mock.NewMockValSet()
+	for _, addr := range addrs {
+
+		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.SDRDenom, initAmt))
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		if err2 != nil {
+			panic(err2.Error())
+		}
+
+		// Add validators
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		valset.Validators = append(valset.Validators, validator)
+	}
 
 	budgetKeeper := NewKeeper(
 		cdc, keyBudget, mintKeeper, valset,

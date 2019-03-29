@@ -11,7 +11,7 @@ import (
 )
 
 func TestKeeperProgramID(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// Program ids start at 0 and increment by 1 on each request
 	numTests := 10
@@ -22,7 +22,7 @@ func TestKeeperProgramID(t *testing.T) {
 }
 
 func TestKeeperDeposit(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// Set the balance to equal the default deposit
 	deposit := sdk.Coins{input.budgetKeeper.GetParams(input.ctx).Deposit}
@@ -46,7 +46,7 @@ func TestKeeperDeposit(t *testing.T) {
 }
 
 func TestKeeperParams(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	defaultParams := DefaultParams()
 	input.budgetKeeper.SetParams(input.ctx, defaultParams)
@@ -56,7 +56,7 @@ func TestKeeperParams(t *testing.T) {
 }
 
 func TestKeeperProgram(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	maxTests := 30
 	idCeiling := 10
@@ -107,7 +107,7 @@ func TestKeeperProgram(t *testing.T) {
 }
 
 func TestKeeperVote(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	maxTests := 30
 	idCeiling := 10
@@ -173,7 +173,7 @@ func TestKeeperVote(t *testing.T) {
 }
 
 func TestKeeperCandidateQueue(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// Insert a program in the queue
 	input.budgetKeeper.CandQueueInsert(input.ctx, 0, 0)

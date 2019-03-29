@@ -13,7 +13,7 @@ import (
 )
 
 func TestEndBlockerTallyBasic(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// create test program
 	testProgram := generateTestProgram(input.ctx)
@@ -39,7 +39,7 @@ func TestEndBlockerTallyBasic(t *testing.T) {
 }
 
 func TestEndBlockerTallyRandom(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// create test program
 	testProgram := generateTestProgram(input.ctx)
@@ -80,7 +80,7 @@ func TestEndBlockerTallyRandom(t *testing.T) {
 }
 
 func TestEndBlockerTiming(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// create test program
 	testProgram := generateTestProgram(input.ctx)
@@ -106,7 +106,7 @@ func TestEndBlockerTiming(t *testing.T) {
 }
 
 func TestEndBlockerPassOrReject(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// add a hundred validators with 1 stakable token each
 	valset := mock.NewMockValSet()

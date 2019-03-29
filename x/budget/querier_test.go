@@ -100,7 +100,7 @@ func getQueriedParams(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 }
 
 func TestQueryParams(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.budgetKeeper)
 
 	params := DefaultParams()
@@ -112,7 +112,7 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryProgram(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx)
@@ -125,7 +125,7 @@ func TestQueryProgram(t *testing.T) {
 }
 
 func TestQueryVotes(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx)
@@ -158,7 +158,7 @@ func TestQueryVotes(t *testing.T) {
 }
 
 func TestQueryActiveList(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx)
@@ -171,7 +171,7 @@ func TestQueryActiveList(t *testing.T) {
 }
 
 func TestQueryCandidateList(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx)
