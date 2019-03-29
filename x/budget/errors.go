@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// DefaultCodespace nolint
 	DefaultCodespace sdk.CodespaceType = "budget"
 
 	// Budget errors

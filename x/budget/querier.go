@@ -83,23 +83,30 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	}
 
 	filteredVotes := []MsgVoteProgram{}
-	keeper.IterateVotes(ctx, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		include := true
-		if params.ProgramID != 0 && params.ProgramID != programID {
-			include = false
-		}
-
-		if len(params.Voter) != 0 && !(params.Voter.Equals(voter)) {
-			include = false
-		}
-
-		if include {
-			vote := NewMsgVoteProgram(programID, option, voter)
-			filteredVotes = append(filteredVotes, vote)
-		}
+	prefix := prefixVote
+	handler := func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+		vote := NewMsgVoteProgram(programID, option, voter)
+		filteredVotes = append(filteredVotes, vote)
 
 		return false
-	})
+	}
+
+	if params.ProgramID != 0 && !params.Voter.Empty() {
+		prefix = keyVote(params.ProgramID, params.Voter)
+	} else if params.ProgramID != 0 {
+		prefix = keyVote(params.ProgramID, sdk.AccAddress{})
+	} else if !params.Voter.Empty() {
+		handler = func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+			if params.Voter.Equals(voter) {
+				vote := NewMsgVoteProgram(programID, option, voter)
+				filteredVotes = append(filteredVotes, vote)
+			}
+
+			return false
+		}
+	}
+
+	keeper.IterateVotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
@@ -155,48 +162,3 @@ func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 	}
 	return bz, nil
 }
-
-/*
-
-func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryVotesParams
-	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
-	}
-
-	filteredVotes := []MsgVoteProgram{}
-	prefix := prefixVote
-	handler := func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		vote := NewMsgVoteProgram(programID, option, voter)
-		filteredVotes = append(filteredVotes, vote)
-
-		return false
-	}
-
-	if params.ProgramID != 0 && !params.Voter.Empty() {
-		prefix = keyVote(params.ProgramID, params.Voter)
-	} else if params.ProgramID != 0 {
-		prefix = keyVote(params.ProgramID, sdk.AccAddress{})
-	} else if !params.Voter.Empty() {
-		handler = func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-			if params.Voter.Equals(voter) {
-				vote := NewMsgVoteProgram(programID, option, voter)
-				filteredVotes = append(filteredVotes, vote)
-			}
-
-			return false
-		}
-	}
-
-	keeper.IterateVotesWithPrefix(ctx, prefix, handler)
-
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
-	if err != nil {
-		panic("could not marshal result to JSON")
-	}
-
-	return bz, nil
-}
-
-*/

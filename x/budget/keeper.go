@@ -64,8 +64,13 @@ func (k Keeper) DeleteVote(ctx sdk.Context, programID uint64, voter sdk.AccAddre
 
 // IterateVotes iterates votes in the store
 func (k Keeper) IterateVotes(ctx sdk.Context, handler func(uint64, sdk.AccAddress, bool) (stop bool)) {
+	k.IterateVotesWithPrefix(ctx, prefixVote, handler)
+}
+
+// IterateVotesWithPrefix iterates votes with given {prefix} in the store
+func (k Keeper) IterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(uint64, sdk.AccAddress, bool) (stop bool)) {
 	store := ctx.KVStore(k.key)
-	iter := sdk.KVStorePrefixIterator(store, prefixVote)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		voteKey := string(iter.Key())
@@ -126,14 +131,14 @@ func (k Keeper) SetParams(ctx sdk.Context, params Params) {
 //-----------------------------------
 // Program logic
 
-// NewProgramID generates a new program id; advances sequentially from 0
+// NewProgramID generates a new program id; advances sequentially from 1; 0 conflits with vote querier
 func (k Keeper) NewProgramID(ctx sdk.Context) (programID uint64) {
 	store := ctx.KVStore(k.key)
 	if bz := store.Get(keyNextProgramID); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &programID)
 		programID++
 	} else {
-		programID = 0
+		programID = 1
 	}
 
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(programID)

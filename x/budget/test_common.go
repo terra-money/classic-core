@@ -3,6 +3,7 @@ package budget
 import (
 	"terra/types/assets"
 	"terra/types/mock"
+	"terra/types/util"
 	"terra/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -44,6 +45,7 @@ var (
 
 type testInput struct {
 	ctx          sdk.Context
+	cdc          *codec.Codec
 	mintKeeper   mint.Keeper
 	bankKeeper   bank.Keeper
 	budgetKeeper Keeper
@@ -128,5 +130,19 @@ func createTestInput(t *testing.T) testInput {
 
 	InitGenesis(ctx, budgetKeeper, DefaultGenesisState())
 
-	return testInput{ctx, mintKeeper, bankKeeper, budgetKeeper, valset}
+	return testInput{ctx, cdc, mintKeeper, bankKeeper, budgetKeeper, valset}
+}
+
+func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
+	submitter := addrs[0]
+	if len(accounts) > 0 {
+		submitter = accounts[0]
+	}
+
+	executor := addrs[1]
+	if len(accounts) > 1 {
+		executor = accounts[1]
+	}
+
+	return NewProgram("testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
 }

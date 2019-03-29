@@ -3,7 +3,6 @@ package budget
 import (
 	"math/rand"
 	"terra/types/mock"
-	"terra/types/util"
 	"testing"
 	"time"
 
@@ -12,20 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
-
-func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
-	submitter := addrs[0]
-	if len(accounts) > 0 {
-		submitter = accounts[0]
-	}
-
-	executor := addrs[1]
-	if len(accounts) > 1 {
-		executor = accounts[1]
-	}
-
-	return NewProgram("testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
-}
 
 func TestEndBlockerTallyBasic(t *testing.T) {
 	input := createTestInput(t)

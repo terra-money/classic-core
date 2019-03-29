@@ -41,6 +41,7 @@ var (
 
 type testInput struct {
 	ctx            sdk.Context
+	cdc            *codec.Codec
 	bankKeeper     bank.Keeper
 	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
@@ -117,5 +118,5 @@ func createTestInput(t *testing.T) testInput {
 
 	InitGenesis(ctx, treasuryKeeper, DefaultGenesisState())
 
-	return testInput{ctx, bankKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
+	return testInput{ctx, cdc, bankKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
 }

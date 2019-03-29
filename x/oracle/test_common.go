@@ -43,6 +43,7 @@ var (
 
 type testInput struct {
 	ctx          sdk.Context
+	cdc          *codec.Codec
 	accKeeper    auth.AccountKeeper
 	bankKeeper   bank.Keeper
 	oracleKeeper Keeper
@@ -116,5 +117,5 @@ func createTestInput(t *testing.T) testInput {
 		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
-	return testInput{ctx, accKeeper, bankKeeper, oracleKeeper, valset}
+	return testInput{ctx, cdc, accKeeper, bankKeeper, oracleKeeper, valset}
 }

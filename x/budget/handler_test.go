@@ -30,17 +30,17 @@ func TestHandlerMsgWithdrawProgram(t *testing.T) {
 	require.True(t, res.IsOK())
 
 	// Withdrawing submitted program works
-	withdrawMsg := NewMsgWithdrawProgram(0, addrs[0])
+	withdrawMsg := NewMsgWithdrawProgram(1, addrs[0])
 	res = h(input.ctx, withdrawMsg)
 	require.True(t, res.IsOK())
 
 	// Withdrawing again doesn't work
-	withdrawMsg = NewMsgWithdrawProgram(0, addrs[0])
+	withdrawMsg = NewMsgWithdrawProgram(1, addrs[0])
 	res = h(input.ctx, withdrawMsg)
 	require.False(t, res.IsOK())
 
 	// Withdrawing from a different submitter address doesn't work
-	withdrawMsg = NewMsgWithdrawProgram(0, addrs[2])
+	withdrawMsg = NewMsgWithdrawProgram(1, addrs[2])
 	res = h(input.ctx, withdrawMsg)
 	require.False(t, res.IsOK())
 
@@ -61,7 +61,7 @@ func TestHandlerMsgVoteCandidate(t *testing.T) {
 	require.True(t, res.IsOK())
 
 	// Voting on a submitted program works
-	voteMsg := NewMsgVoteProgram(0, true, addrs[0])
+	voteMsg := NewMsgVoteProgram(1, true, addrs[0])
 	res = h(input.ctx, voteMsg)
 	require.True(t, res.IsOK())
 
