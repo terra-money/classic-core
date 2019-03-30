@@ -1,23 +1,23 @@
-swagger: "2.0"
+swagger: '2.0'
 info:
-  version: 0.1 alpha
-  title: Terra-Lite for Terra
-  description: >-
-    A REST interface for state queries, transaction generation, signing, and
-    broadcast.
+  version: '1.0.0'
+  title: 'Terra-Lite for Terra'
+  description: 'A REST interface for state queries, transaction generation, signing, and broadcast.'
 tags:
   - name: ICS0
-    description: 'Tendermint APIs, such as query blocks, transactions and validatorset'
+    description: Tendermint APIs, such as query blocks, transactions and validatorset
   - name: ICS1
     description: Key management APIs
   - name: ICS20
-    description: 'Create, sign and broadcast transactions'
+    description: Create, sign and broadcast transactions
   - name: ICS21
     description: Stake module APIs
+  - name: ICS22
+    description: Governance module APIs
   - name: ICS23
     description: Slashing module APIs
   - name: ICS24
-    description: WIP - Fee distribution module APIs
+    description: Fee distribution module APIs
   - name: TERRA
     description: Terra modules APIs
   - name: version
@@ -25,34 +25,27 @@ tags:
 schemes:
   - https
   - http
-host: 'soju.terra.money:1317'
-securityDefinitions:
-  kms:
-    type: basic
+host: soju.terra.money:1317
 paths:
   /version:
     get:
       summary: Version of Terra-lite
       tags:
         - version
-      description: >-
-        Get the version of terra-lite running locally to compare against
-        expected
+      description: Get the version of terra-lite running locally to compare against expected
       responses:
-        '200':
+        200:
           description: Plaintext version i.e. "v0.25.0"
   /node_version:
     get:
       summary: Version of the connected node
       tags:
         - version
-      description: >-
-        Get the version of the SDK running on the connected node to compare
-        against expected
+      description: Get the version of the SDK running on the connected node to compare against expected
       responses:
-        '200':
+        200:
           description: Plaintext version i.e. "v0.25.0"
-        '500':
+        500:
           description: failed to query node version
   /node_info:
     get:
@@ -63,7 +56,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: Node status
           schema:
             type: object
@@ -75,12 +68,12 @@ paths:
                 example: validator-name
               network:
                 type: string
-                example: "soju-0004"
+                example: soju-0005
               channels:
                 type: string
               listen_addr:
                 type: string
-                example: '192.168.56.1:26656'
+                example: 192.168.56.1:26656
               version:
                 description: Tendermint version
                 type: string
@@ -90,7 +83,7 @@ paths:
                 type: array
                 items:
                   type: string
-        '500':
+        500:
           description: Failed to query node status
   /syncing:
     get:
@@ -99,9 +92,9 @@ paths:
         - ICS0
       description: Get if the node is currently syning with other nodes
       responses:
-        '200':
+        200:
           description: '"true" or "false"'
-        '500':
+        500:
           description: Server internal error
   /blocks/latest:
     get:
@@ -111,13 +104,13 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: The latest block
           schema:
-            $ref: '#/definitions/BlockQuery'
-        '500':
+            $ref: "#/definitions/BlockQuery"
+        500:
           description: Server internal error
-  '/blocks/{height}':
+  /blocks/{height}:
     get:
       summary: Get a block at a certain height
       tags:
@@ -131,15 +124,15 @@ paths:
           required: true
           type: number
       responses:
-        '200':
+        200:
           description: The block at a specific height
           schema:
-            $ref: '#/definitions/BlockQuery'
-        '400':
-          description: Invalid height
-        '404':
+            $ref: "#/definitions/BlockQuery"
+        404:
           description: Request block height doesn't
-        '500':
+        400:
+          description: Invalid height
+        500:
           description: Server internal error
   /validatorsets/latest:
     get:
@@ -149,7 +142,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: The validator set at the latest block height
           schema:
             type: object
@@ -159,10 +152,10 @@ paths:
               validators:
                 type: array
                 items:
-                  $ref: '#/definitions/TendermintValidator'
-        '500':
+                  $ref: "#/definitions/TendermintValidator"
+        500:
           description: Server internal error
-  '/validatorsets/{height}':
+  /validatorsets/{height}:
     get:
       summary: Get a validator set a certain height
       tags:
@@ -176,7 +169,7 @@ paths:
           required: true
           type: number
       responses:
-        '200':
+        200:
           description: The validator set at a specific block height
           schema:
             type: object
@@ -186,14 +179,14 @@ paths:
               validators:
                 type: array
                 items:
-                  $ref: '#/definitions/TendermintValidator'
-        '400':
-          description: Invalid height
-        '404':
+                  $ref: "#/definitions/TendermintValidator"
+        404:
           description: Block at height not available
-        '500':
+        400:
+          description: Invalid height
+        500:
           description: Server internal error
-  '/txs/{hash}':
+  /txs/{hash}:
     get:
       summary: Get a Tx by hash
       tags:
@@ -207,11 +200,11 @@ paths:
           required: true
           type: string
       responses:
-        '200':
+        200:
           description: Tx with the provided hash
           schema:
-            $ref: '#/definitions/TxQuery'
-        '500':
+            $ref: "#/definitions/TxQuery"
+        500:
           description: Internal Server Error
   /txs:
     get:
@@ -225,11 +218,7 @@ paths:
         - in: query
           name: tag
           type: string
-          description: >-
-            transaction tags such as 'action=submit-proposal' and
-            'proposer=terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t' which
-            results in the following endpoint: 'GET
-            /txs?action=submit-proposal&proposer=terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t'
+          description: "transaction tags such as 'action=submit-proposal' and 'proposer=cosmos1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc' which results in the following endpoint: 'GET /txs?action=submit-proposal&proposer=cosmos1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc'"
           required: true
         - in: query
           name: page
@@ -240,15 +229,15 @@ paths:
           description: Pagination size
           type: integer
       responses:
-        '200':
+        200:
           description: All txs matching the provided tags
           schema:
             type: array
             items:
-              $ref: '#/definitions/TxQuery'
-        '400':
+              $ref: "#/definitions/TxQuery"
+        400:
           description: Invalid search tags
-        '500':
+        500:
           description: Internal Server Error
     post:
       tags:
@@ -262,12 +251,7 @@ paths:
       parameters:
         - in: body
           name: txBroadcast
-          description: >-
-            Build a StdTx transaction and serilize it to a byte array with
-            amino, then the `"tx"` field in the post body will be the base64
-            encoding of the byte array. The supported return types includes
-            `"block"`(return after tx commit), `"sync"`(return afer CheckTx) and
-            `"async"`(return right away).
+          description: Build a StdTx transaction and serilize it to a byte array with amino, then the `"tx"` field in the post body will be the base64 encoding of the byte array. The supported return types includes `"block"`(return after tx commit), `"sync"`(return afer CheckTx) and `"async"`(return right away).
           required: true
           schema:
             type: object
@@ -278,11 +262,11 @@ paths:
                 type: string
                 example: block
       responses:
-        '200':
+        200:
           description: Broadcast tx result
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '500':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        500:
           description: Internal Server Error
   /tx/sign:
     post:
@@ -303,22 +287,22 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               tx:
-                $ref: '#/definitions/StdTx'
+                $ref: "#/definitions/StdTx"
               append_sig:
                 type: boolean
                 example: true
       responses:
-        '200':
+        200:
           description: The signed Tx
           schema:
-            $ref: '#/definitions/StdTx'
-        '400':
+            $ref: "#/definitions/StdTx"
+        400:
           description: The Tx was malformated or key doesn't exist
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Server internal error
   /tx/broadcast:
     post:
@@ -339,17 +323,50 @@ paths:
             type: object
             properties:
               tx:
-                $ref: '#/definitions/StdTx'
+                $ref: "#/definitions/StdTx"
       responses:
-        '202':
+        202:
           description: Tx was send and will probably be added to the next block
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: The Tx was malformated
-        '500':
+        500:
           description: Server internal error
-  '/bank/balances/{address}':
+  /tx/encode:
+    post:
+      tags:
+        - ICS20
+      summary: Encode a transaction to wire format
+      description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: tx
+          description: The transaction to encode
+          required: true
+          schema:
+            type: object
+            properties:
+              tx:
+                $ref: "#/definitions/StdTx"
+      responses:
+        200:
+          description: Transaction was successfully decoded and re-encoded
+          schema:
+            type: object
+            properties:
+              tx:
+                type: string
+                example: The base64-encoded Amino-serialized bytes for the transaction
+        400:
+          description: The Tx was malformated
+        500:
+          description: Server internal error
+  /bank/balances/{address}:
     get:
       summary: Get the account balances
       tags:
@@ -363,17 +380,17 @@ paths:
           required: true
           type: string
       responses:
-        '200':
+        200:
           description: Account balances
           schema:
             type: array
             items:
-              $ref: '#/definitions/Coin'
-        '204':
+              $ref: "#/definitions/Coin"
+        204:
           description: There is no data for the requested account
-        '500':
+        500:
           description: Server internal error
-  '/bank/accounts/{address}/transfers':
+  /bank/accounts/{address}/transfers:
     post:
       summary: Send coins (build -> sign -> send)
       description: Send coins (build -> sign -> send)
@@ -397,21 +414,21 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               amount:
                 type: array
                 items:
-                  $ref: '#/definitions/Coin'
+                  $ref: "#/definitions/Coin"
       responses:
-        '202':
+        202:
           description: Tx was send and will probably be added to the next block
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid request
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Server internal error
   /keys:
     get:
@@ -421,13 +438,13 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: Array of accounts
           schema:
             type: array
             items:
-              $ref: '#/definitions/KeyOutput'
-        '500':
+              $ref: "#/definitions/KeyOutput"
+        500:
           description: Server internal error
     post:
       summary: Create a new account locally
@@ -455,15 +472,15 @@ paths:
               seed:
                 type: string
       responses:
-        '200':
+        200:
           description: Returns account information of the created key
           schema:
-            $ref: '#/definitions/KeyOutput'
-        '400':
+            $ref: "#/definitions/KeyOutput"
+        400:
           description: Invalid request
-        '409':
+        409:
           description: Key name confliction
-        '500':
+        500:
           description: Server internal error
   /keys/seed:
     get:
@@ -471,15 +488,12 @@ paths:
       tags:
         - ICS1
       responses:
-        '200':
+        200:
           description: 24 word Seed
           schema:
             type: string
-            example: >-
-              blossom pool issue kidney elevator blame furnace winter account
-              merry vessel security depend exact travel bargain problem jelly
-              rural net again mask roast chest
-  '/keys/{name}/recover':
+            example: blossom pool issue kidney elevator blame furnace winter account merry vessel security depend exact travel bargain problem jelly rural net again mask roast chest
+  /keys/{name}/recover:
     post:
       summary: Recover a account from a seed
       tags:
@@ -508,17 +522,17 @@ paths:
               seed:
                 type: string
       responses:
-        '200':
+        200:
           description: Returns account information of the recovered key
           schema:
-            $ref: '#/definitions/KeyOutput'
-        '400':
+            $ref: "#/definitions/KeyOutput"
+        400:
           description: Invalid request
-        '409':
+        409:
           description: Key name confliction
-        '500':
+        500:
           description: Server internal error
-  '/keys/{name}':
+  /keys/{name}:
     parameters:
       - in: path
         name: name
@@ -532,11 +546,11 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: Locally stored account
           schema:
-            $ref: '#/definitions/KeyOutput'
-        '404':
+            $ref: "#/definitions/KeyOutput"
+        404:
           description: Key doesn't exist
     put:
       summary: Update the password for this account in the KMS
@@ -559,11 +573,11 @@ paths:
               old_password:
                 type: string
       responses:
-        '200':
+        200:
           description: Updated password
-        '401':
+        401:
           description: Key password is wrong
-        '404':
+        404:
           description: Key doesn't exist
     delete:
       summary: Remove an account
@@ -583,13 +597,13 @@ paths:
               password:
                 type: string
       responses:
-        '200':
+        200:
           description: Removed account
-        '401':
+        401:
           description: Key password is wrong
-        '404':
+        404:
           description: Key doesn't exist
-  '/auth/accounts/{address}':
+  /auth/accounts/{address}:
     get:
       summary: Get the account information on blockchain
       tags:
@@ -603,7 +617,7 @@ paths:
           required: true
           type: string
       responses:
-        '200':
+        200:
           description: Account information on the blockchain
           schema:
             type: object
@@ -620,16 +634,16 @@ paths:
                   coins:
                     type: array
                     items:
-                      $ref: '#/definitions/Coin'
+                      $ref: "#/definitions/Coin"
                   public_key:
-                    $ref: '#definitions/PubKey'
+                    $ref: "#/definitions/PubKey"
                   sequence:
                     type: string
-        '204':
+        204:
           description: No content about this account address
-        '500':
+        500:
           description: Server internel error
-  '/stake/delegators/{delegatorAddr}/delegations':
+  /staking/delegators/{delegatorAddr}/delegations:
     parameters:
       - in: path
         name: delegatorAddr
@@ -643,15 +657,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Delegation'
-        '400':
+              $ref: "#/definitions/Delegation"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Submit delegation
@@ -663,13 +677,13 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               delegator_addr:
-                $ref: '#/definitions/Address'
+                $ref: "#/definitions/Address"
               validator_addr:
-                $ref: '#/definitions/ValidatorAddress'
+                $ref: "#/definitions/ValidatorAddress"
               delegation:
-                $ref: '#/definitions/Coin'
+                $ref: "#/definitions/Coin"
       tags:
         - ICS21
       consumes:
@@ -677,17 +691,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator address or delegation request body
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/delegations/{validatorAddr}':
+  /staking/delegators/{delegatorAddr}/delegations/{validatorAddr}:
     parameters:
       - in: path
         name: delegatorAddr
@@ -706,15 +720,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/Delegation'
-        '400':
+            $ref: "#/definitions/Delegation"
+        400:
           description: Invalid delegator address or validator address
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/unbonding_delegations':
+  /staking/delegators/{delegatorAddr}/unbonding_delegations:
     parameters:
       - in: path
         name: delegatorAddr
@@ -728,31 +742,19 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/UnbondingDelegation'
-        '400':
+              $ref: "#/definitions/UnbondingDelegation"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Submit an unbonding delegation
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: delegation
           description: The password of the account to remove from the KMS
@@ -760,14 +762,14 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               delegator_addr:
-                $ref: '#/definitions/Address'
+                $ref: "#/definitions/Address"
               validator_addr:
-                $ref: '#/definitions/ValidatorAddress'
+                $ref: "#/definitions/ValidatorAddress"
               shares:
                 type: string
-                example: '100'
+                example: "100"
       tags:
         - ICS21
       consumes:
@@ -775,17 +777,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator address or unbonding delegation request body
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/unbonding_delegations/{validatorAddr}':
+  /staking/delegators/{delegatorAddr}/unbonding_delegations/{validatorAddr}:
     parameters:
       - in: path
         name: delegatorAddr
@@ -804,17 +806,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/UnbondingDelegation'
-        '400':
+              $ref: "#/definitions/UnbondingDelegation"
+        400:
           description: Invalid delegator address or validator address
-        '500':
+        500:
           description: Internal Server Error
-  /stake/redelegations:
+  /staking/redelegations:
     parameters:
       - in: query
         name: delegator
@@ -838,15 +840,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Redelegation'
-        '500':
+              $ref: "#/definitions/Redelegation"
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/redelegations':
+  /staking/delegators/{delegatorAddr}/redelegations:
     parameters:
       - in: path
         name: delegatorAddr
@@ -856,18 +858,6 @@ paths:
     post:
       summary: Submit a redelegation
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: delegation
           description: The password of the account to remove from the KMS
@@ -875,16 +865,16 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               delegator_addr:
-                $ref: '#/definitions/Address'
+                $ref: "#/definitions/Address"
               validator_src_addr:
-                $ref: '#/definitions/ValidatorAddress'
+                $ref: "#/definitions/ValidatorAddress"
               validator_dst_addr:
-                $ref: '#/definitions/ValidatorAddress'
+                $ref: "#/definitions/ValidatorAddress"
               shares:
                 type: string
-                example: '100'
+                example: "100"
       tags:
         - ICS21
       consumes:
@@ -892,17 +882,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator address or redelegation request body
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/validators':
+  /staking/delegators/{delegatorAddr}/validators:
     parameters:
       - in: path
         name: delegatorAddr
@@ -916,17 +906,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Validator'
-        '400':
+              $ref: "#/definitions/Validator"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/validators/{validatorAddr}':
+  /staking/delegators/{delegatorAddr}/validators/{validatorAddr}:
     parameters:
       - in: path
         name: delegatorAddr
@@ -945,15 +935,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/Validator'
-        '400':
+            $ref: "#/definitions/Validator"
+        400:
           description: Invalid delegator address or validator address
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/delegators/{delegatorAddr}/txs':
+  /staking/delegators/{delegatorAddr}/txs:
     parameters:
       - in: path
         name: delegatorAddr
@@ -967,19 +957,19 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/TxQuery'
-        '204':
+              $ref: "#/definitions/TxQuery"
+        204:
           description: No staking transaction about this delegator address
-        '400':
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
-  /stake/validators:
+  /staking/validators:
     get:
       summary: Get all validator candidates
       tags:
@@ -987,15 +977,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Validator'
-        '500':
+              $ref: "#/definitions/Validator"
+        500:
           description: Internal Server Error
-  '/stake/validators/{validatorAddr}':
+  /staking/validators/{validatorAddr}:
     parameters:
       - in: path
         name: validatorAddr
@@ -1009,15 +999,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/Validator'
-        '400':
+            $ref: "#/definitions/Validator"
+        400:
           description: Invalid validator address
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/validators/{validatorAddr}/delegations':
+  /staking/validators/{validatorAddr}/delegations:
     parameters:
       - in: path
         name: validatorAddr
@@ -1031,17 +1021,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Delegation'
-        '400':
+              $ref: "#/definitions/Delegation"
+        400:
           description: Invalid validator address
-        '500':
+        500:
           description: Internal Server Error
-  '/stake/validators/{validatorAddr}/unbonding_delegations':
+  /staking/validators/{validatorAddr}/unbonding_delegations:
     parameters:
       - in: path
         name: validatorAddr
@@ -1055,17 +1045,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/UnbondingDelegation'
-        '400':
+              $ref: "#/definitions/UnbondingDelegation"
+        400:
           description: Invalid validator address
-        '500':
+        500:
           description: Internal Server Error
-  /stake/pool:
+  /staking/pool:
     get:
       summary: Get the current state of the staking pool
       tags:
@@ -1073,7 +1063,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: object
@@ -1090,9 +1080,9 @@ paths:
                 type: string
               prev_bonded_shares:
                 type: string
-        '500':
+        500:
           description: Internal Server Error
-  /stake/parameters:
+  /staking/parameters:
     get:
       summary: Get the current staking parameter values
       tags:
@@ -1100,7 +1090,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: object
@@ -1119,9 +1109,9 @@ paths:
                 type: integer
               bond_denom:
                 type: string
-        '500':
+        500:
           description: Internal Server Error
-  '/slashing/validators/{validatorPubKey}/signing_info':
+  /slashing/validators/{validatorPubKey}/signing_info:
     get:
       summary: Get sign info of given validator
       description: Get sign info of given validator
@@ -1136,7 +1126,7 @@ paths:
           required: true
           in: path
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: object
@@ -1149,13 +1139,13 @@ paths:
                 type: string
               missed_blocks_counter:
                 type: string
-        '204':
+        204:
           description: No sign info of this validator
-        '400':
+        400:
           description: Invalid validator public key
-        '500':
+        500:
           description: Internal Server Error
-  '/slashing/validators/{validatorAddr}/unjail':
+  /slashing/validators/{validatorAddr}/unjail:
     post:
       summary: Unjail a jailed validator
       description: Send transaction to unjail a jailed validator
@@ -1171,7 +1161,7 @@ paths:
           name: validatorAddr
           required: true
           in: path
-        - description: ''
+        - description: ""
           name: UnjailBody
           in: body
           required: true
@@ -1179,17 +1169,17 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid validator address or base_req
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
   /slashing/parameters:
     get:
@@ -1199,7 +1189,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: object
@@ -1218,9 +1208,421 @@ paths:
                 type: integer
               slash_fraction_downtime:
                 type: integer
-        '500':
+        500:
           description: Internal Server Error
-  '/distribution/delegators/{delegatorAddr}/rewards':
+  /gov/proposals:
+    post:
+      summary: Submit a proposal
+      description: Send transaction to submit a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - description: valid value of `"proposal_type"` can be `"text"`, `"parameter_change"`, `"software_upgrade"`
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+              description:
+                type: string
+              proposal_type:
+                type: string
+                example: "text"
+              proposer:
+                $ref: "#/definitions/Address"
+              initial_deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Invalid proposal body
+        401:
+          description: Key password is wrong
+        500:
+          description: Internal Server Error
+    get:
+      summary: Query proposals
+      description: Query proposals information with parameters
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - in: query
+          name: voter
+          description: voter address
+          required: false
+          type: string
+        - in: query
+          name: depositor
+          description: depositor address
+          required: false
+          type: string
+        - in: query
+          name: status
+          description: proposal status, valid values can be `"deposit_period"`, `"voting_period"`, `"passed"`, `"rejected"`
+          required: false
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/TextProposal"
+        400:
+          description: Invalid query parameters
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}:
+    get:
+      summary: Query a proposal
+      description: Query a proposal by id
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/TextProposal"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/proposer:
+    get:
+      summary: Query proposer
+      description: Query for the proposer for a proposal
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Proposer"
+        400:
+          description: Invalid proposal ID
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/deposits:
+    get:
+      summary: Query deposits
+      description: Query deposits by proposalId
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Deposit"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+    post:
+      summary: Deposit tokens to a proposal
+      description: Send transaction to deposit tokens to a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+        - description: ""
+          name: post_deposit_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              depositor:
+                $ref: "#/definitions/Address"
+              amount:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Invalid proposal id or deposit body
+        401:
+          description: Key password is wrong
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/deposits/{depositor}:
+    get:
+      summary: Query deposit
+      description: Query deposit by proposalId and depositor address
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+        - type: string
+          description: Bech32 depositor address
+          name: depositor
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Deposit"
+        400:
+          description: Invalid proposal id or depositor address
+        404:
+          description: Found no deposit
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/votes:
+    get:
+      summary: Query voters
+      description: Query voters information by proposalId
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Vote"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+    post:
+      summary: Vote a proposal
+      description: Send transaction to vote a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+        - description: valid value of `"option"` field can be `"yes"`, `"no"`, `"no_with_veto"` and `"abstain"`
+          name: post_vote_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              voter:
+                $ref: "#/definitions/Address"
+              option:
+                type: string
+                example: "yes"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Invalid proposal id or vote body
+        401:
+          description: Key password is wrong
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/votes/{voter}:
+    get:
+      summary: Query vote
+      description: Query vote information by proposal Id and voter address
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+        - type: string
+          description: Bech32 voter address
+          name: voter
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Vote"
+        400:
+          description: Invalid proposal id or voter address
+        404:
+          description: Found no vote
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/tally:
+    get:
+      summary: Get a proposal's tally result at the current time
+      description: Gets a proposal's tally result at the current time. If the proposal is pending deposits (i.e status 'DepositPeriod') it returns an empty tally result.
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/TallyResult"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+  /gov/parameters/deposit:
+    get:
+      summary: Query governance deposit parameters
+      description: Query governance deposit parameters. The max_deposit_period units are in nanoseconds.
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              min_deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              max_deposit_period:
+                type: string
+                example: "86400000000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no deposit parameters
+        500:
+          description: Internal Server Error
+  /gov/parameters/tallying:
+    get:
+      summary: Query governance tally parameters
+      description: Query governance tally parameters
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              threshold:
+                type: string
+                example: "0.5000000000"
+              veto:
+                type: string
+                example: "0.3340000000"
+              governance_penalty:
+                type: string
+                example: "0.0100000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no tally parameters
+        500:
+          description: Internal Server Error
+  /gov/parameters/voting:
+    get:
+      summary: Query governance voting parameters
+      description: Query governance voting parameters. The voting_period units are in nanoseconds.
+      produces:
+        - application/json
+      tags:
+        - ICS22
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              voting_period:
+                type: string
+                example: "86400000000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no voting parameters
+        500:
+          description: Internal Server Error
+  /distribution/delegators/{delegatorAddr}/rewards:
     parameters:
       - in: path
         name: delegatorAddr
@@ -1229,23 +1631,21 @@ paths:
         type: string
     get:
       summary: Get the total rewards balance from all delegations
-      description: >-
-        Get the sum of all the rewards earned by delegations by a single
-        delegator
+      description: Get the sum of all the rewards earned by delegations by a single delegator
       produces:
         - application/json
       tags:
         - ICS24
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Coin'
-        '400':
+              $ref: "#/definitions/Coin"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Withdraw all the delegator's delegation rewards
@@ -1257,36 +1657,24 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: Withdraw request body
           schema:
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator address
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/distribution/delegators/{delegatorAddr}/rewards/{validatorAddr}':
+  /distribution/delegators/{delegatorAddr}/rewards/{validatorAddr}:
     parameters:
       - in: path
         name: delegatorAddr
@@ -1306,15 +1694,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Coin'
-        '400':
+              $ref: "#/definitions/Coin"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Withdraw a delegation reward
@@ -1326,36 +1714,24 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: Withdraw request body
           schema:
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator address or delegation body
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/distribution/delegators/{delegatorAddr}/withdraw_address':
+  /distribution/delegators/{delegatorAddr}/withdraw_address:
     parameters:
       - in: path
         name: delegatorAddr
@@ -1364,21 +1740,19 @@ paths:
         type: string
     get:
       summary: Get the rewards withdrawal address
-      description: >-
-        Get the delegations' rewards withdrawal address. This is the address in
-        which the user will receive the reward funds
+      description: Get the delegations' rewards withdrawal address. This is the address in which the user will receive the reward funds
       tags:
         - ICS24
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/Address'
-        '400':
+            $ref: "#/definitions/Address"
+        400:
           description: Invalid delegator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Replace the rewards withdrawal address
@@ -1390,38 +1764,26 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: Withdraw request body
           schema:
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
               withdraw_address:
-                $ref: '#/definitions/Address'
+                $ref: "#/definitions/Address"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid delegator or withdraw address
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
-  '/distribution/validators/{validatorAddr}':
+  /distribution/validators/{validatorAddr}:
     parameters:
       - in: path
         name: validatorAddr
@@ -1436,15 +1798,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/ValidatorDistInfo'
-        '400':
+            $ref: "#/definitions/ValidatorDistInfo"
+        400:
           description: Invalid validator address
-        '500':
+        500:
           description: Internal Server Error
-  '/distribution/validators/{validatorAddr}/rewards':
+  /distribution/validators/{validatorAddr}/rewards:
     parameters:
       - in: path
         name: validatorAddr
@@ -1459,15 +1821,15 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Coin'
-        '400':
+              $ref: "#/definitions/Coin"
+        400:
           description: Invalid validator address
-        '500':
+        500:
           description: Internal Server Error
     post:
       summary: Withdraw the validator's rewards
@@ -1479,34 +1841,22 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: query
-          name: simulate
-          description: >-
-            if true, ignore the gas field and perform a simulation of a
-            transaction, but don't broadcast it
-          required: false
-          type: boolean
-        - in: query
-          name: generate_only
-          description: 'if true, build an unsigned transaction and write it back'
-          required: false
-          type: boolean
         - in: body
           name: Withdraw request body
           schema:
             properties:
               base_req:
-                $ref: '#/definitions/BaseReq'
+                $ref: "#/definitions/BaseReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
           description: Invalid validator address
-        '401':
+        401:
           description: Key password is wrong
-        '500':
+        500:
           description: Internal Server Error
   /distribution/parameters:
     get:
@@ -1516,7 +1866,7 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             properties:
@@ -1526,23 +1876,200 @@ paths:
                 type: string
               community_tax:
                 type: string
-        '500':
+        500:
           description: Internal Server Error
-  /distribution/pool:
+  /distribution/outstanding_rewards:
     get:
-      summary: Fee distribution pool
+      summary: Fee distribution outstanding rewards
       tags:
         - ICS24
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/FeePool'
-        '500':
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        500:
           description: Internal Server Error
-  '/market/swap':
+  /budget/program/submit:
+    post:
+      summary: Posting new budget program
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: Post Program request body
+          schema:
+            $ref: "#/definitions/submitProgramReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /budget/program/{programId}/withdraw:
+    post:
+      summary: Send withdraw request
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: programId
+          description: Program ID
+          required: true
+          type: number
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /budget/program/{programId}/vote:
+    post:
+      summary: Vote to the program by programId
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: programId
+          description: Program ID
+          required: true
+          type: number
+        - in: body
+          name: Budget Vote request body
+          schema:
+            $ref: "#/definitions/BudgetVoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /budget/program/{programId}:
+    get:
+      summary: Get a budget program by program-id
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: programId
+          description: Program ID
+          required: true
+          type: number
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Program"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /budget/program/actives:
+    get:
+      summary: Get active budget programs
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Program"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /budget/program/candidates:
+    get:
+      summary: Get candidate budget programs
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Program"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /budget/program/{programID}/votes/{voter}:
+    get:
+      summary: Get the budget program voting record of RestVoter
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: programID
+          description: Program ID
+          required: true
+          type: number
+        - in: path
+          name: voter
+          description: Voter Address, bech32
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/MsgVoteProgram"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /budget/params:
+    get:
+      summary: Get the budget program voting record of RestVoter
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BudgetParams"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/swap:
     post:
       summary: Swap coin with another coin
       tags:
@@ -1553,19 +2080,15 @@ paths:
         - in: body
           name: Swap coin request body
           schema:
-            $ref: '#/definitions/SwapReq'
+            $ref: "#/definitions/SwapReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        default:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        500:
           description: Internal Server Error
-          content:
-            text/plain:
-              schema:
-                type: string
-  '/oracle/vote':
+  /oracle/vote:
     post:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
@@ -1576,15 +2099,19 @@ paths:
         - in: body
           name: Vote request body
           schema:
-            $ref: '#/definitions/VoteReq'
+            $ref: "#/definitions/VoteReq"
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '500':
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Bad request
+        401:
+          description: Must use own address
+        500:
           description: Internal Server Error
-  '/oracle/vote/{denom}/{voterAddress}':
+  /oracle/vote/{denom}/{voter}:
     get:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
@@ -1598,19 +2125,21 @@ paths:
           required: true
           type: string
         - in: path
-          name: voterAddress
+          name: voter
           required: true
           type: string
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/PriceVote'
-        '400':
+            type: array
+            items:
+              $ref: "#/definitions/PriceVote"
+        400:
           description: Bad Request
-        '500':
+        500:
           description: Internal Server Error
-  '/oracle/current/{denom}':
+  /oracle/price/{denom}:
     get:
       summary: Get the current effective price in Luna for the asset
       tags:
@@ -1624,52 +2153,48 @@ paths:
           required: true
           type: string
       responses:
-        '200':
+        200:
           description: current price of denom i.e. "1000.0"
-        '400':
+        400:
           description: Bad Request
-        '500':
+        500:
           description: Internal Server Error
-  '/oracle/target/{denom}':
+  /oracle/active:
     get:
-      summary: Get the target peg in Luna for the asset
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-      responses:
-        '200':
-          description: current price of denom i.e. "1000.0"
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/whitelist':
-    get:
-      summary: Get all whitelisted Coins
+      summary: Get all activated Coins
       tags:
         - TERRA
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
               type: string
             example: ["terra", "luna"]
-        '400':
+        400:
           description: Bad Request
-        '500':
+        500:
           description: Internal Server Error
-  '/treasury/assets':
+  /oracle/params:
+    get:
+      summary: Get oracle params
+      tags:
+        - TERRA
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/OracleParams"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /treasury/assets:
     get:
       summary: Get all treasury assets
       tags:
@@ -1677,17 +2202,17 @@ paths:
       produces:
         - application/json
       responses:
-        '200':
+        200:
           description: OK
           schema:
             type: array
             items:
-              $ref: '#/definitions/Coin'
-        '400':
+              $ref: "#/definitions/Coin"
+        400:
           description: Bad Request
-        '500':
+        500:
           description: Internal Server Error
-  '/treasury/share/{share-id}':
+  /treasury/share/{share-id}:
     get:
       summary: TODO // Add Summary
       tags:
@@ -1697,198 +2222,18 @@ paths:
       parameters:
         - in: path
           name: share-id
-          description: Share ID is one of 'oracle', 'debt', and 'budget'
+          description: Share ID is one of "oracle', 'debt', and 'budget"
           required: true
           enum: ['oracle', 'debt', 'budget']
           type: string
       responses:
-        '200':
+        200:
           description: OK
           schema:
-            $ref: '#/definitions/Share'
-        '400':
+            $ref: "#/definitions/Share"
+        400:
           description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/budget/program':
-    get:
-      summary: Get all budget programs
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array,
-            items:
-              $ref: '#/definitions/Program'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-    post:
-      summary: Posting new budget program
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Post Program request body
-          schema:
-            $ref: '#/definitions/postProgramReq'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-
-  '/budget/program/active':
-    get:
-      summary: Get all active budget programs
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array,
-            items:
-              $ref: '#/definitions/Program'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-
-  '/budget/program/{RestProgramID}/votes':
-    post:
-      summary: Vote to the program by RestProgramId
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: RestProgramID
-          description: Program ID
-          required: true
-          type: string
-        - in: body
-          name: Budget Vote request body
-          schema:
-            $ref: '#/definitions/BudgetVoteReq'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/BroadcastTxCommitResult'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-    get:
-      summary: Get the budget program's voting history
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: RestProgramID
-          description: Program ID
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: string
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/budget/program/{RestProgramID}':
-    get:
-      summary: Get a budget program by RestProgramId
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: RestProgramID
-          description: Program ID
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/Program'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/budget/program/{RestProgramID}/tally':
-    get:
-      summary: Get the budget program's tally
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: RestProgramID
-          description: Program ID
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/BudgetTallyResult'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/budget/program/{RestProgramID}/votes/{RestVoter}':
-    get:
-      summary: Get the budget program voting record of RestVoter
-      tags:
-        - TERRA
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: RestProgramID
-          description: Program ID
-          required: true
-          type: string
-        - in: path
-          name: RestVoter
-          description: Voter Address, bech32
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: string
-        '400':
-          description: Bad Request
-        '500':
+        500:
           description: Internal Server Error
 definitions:
   CheckTxResult:
@@ -1909,7 +2254,7 @@ definitions:
       tags:
         type: array
         items:
-          $ref: '#/definitions/KVPair'
+          $ref: "#/definitions/KVPair"
     example:
       code: 0
       data: data
@@ -1918,8 +2263,8 @@ definitions:
       gas_wanted: 10000
       info: info
       tags:
-        - ''
-        - ''
+        - ""
+        - ""
   DeliverTxResult:
     type: object
     properties:
@@ -1938,7 +2283,7 @@ definitions:
       tags:
         type: array
         items:
-          $ref: '#/definitions/KVPair'
+          $ref: "#/definitions/KVPair"
     example:
       code: 5
       data: data
@@ -1947,17 +2292,17 @@ definitions:
       gas_wanted: 10000
       info: info
       tags:
-        - ''
-        - ''
+        - ""
+        - ""
   BroadcastTxCommitResult:
     type: object
     properties:
       check_tx:
-        $ref: '#/definitions/CheckTxResult'
+        $ref: "#/definitions/CheckTxResult"
       deliver_tx:
-        $ref: '#/definitions/DeliverTxResult'
+        $ref: "#/definitions/DeliverTxResult"
       hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       height:
         type: integer
   KVPair:
@@ -1989,7 +2334,7 @@ definitions:
         example: luna
       amount:
         type: string
-        example: '50'
+        example: "50"
   Hash:
     type: string
     example: EE5F3404034C524501629B56E0DDC38FAD651F04
@@ -2001,7 +2346,7 @@ definitions:
       height:
         type: number
       tx:
-        $ref: '#/definitions/StdTx'
+        $ref: "#/definitions/StdTx"
       result:
         type: object
         properties:
@@ -2009,21 +2354,21 @@ definitions:
             type: string
           gas_wanted:
             type: string
-            example: '0'
+            example: "0"
           gas_used:
             type: string
-            example: '0'
+            example: "0"
           tags:
             type: array
             items:
-              $ref: '#/definitions/KVPair'
+              $ref: "#/definitions/KVPair"
   StdTx:
     type: object
     properties:
       msg:
         type: array
         items:
-          $ref: '#/definitions/Msg'
+          $ref: "#/definitions/Msg"
       fee:
         type: object
         properties:
@@ -2032,7 +2377,7 @@ definitions:
           amount:
             type: array
             items:
-              $ref: '#/definitions/Coin'
+              $ref: "#/definitions/Coin"
       memo:
         type: string
       signature:
@@ -2040,23 +2385,22 @@ definitions:
         properties:
           signature:
             type: string
-            example: >-
-              MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+            example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
           pub_key:
             type: object
             properties:
               type:
                 type: string
-                example: tendermint/PubKeySecp256k1
+                example: "tendermint/PubKeySecp256k1"
               value:
                 type: string
-                example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
           account_number:
             type: string
-            example: '0'
+            example: "0"
           sequence:
             type: string
-            example: '0'
+            example: "0"
   KeyOutput:
     type: object
     properties:
@@ -2064,9 +2408,9 @@ definitions:
         type: string
         example: Main Account
       address:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       pub_key:
-        $ref: '#definitions/PubKey'
+        $ref: "#/definitions/PubKey"
       type:
         type: string
         example: local
@@ -2076,7 +2420,7 @@ definitions:
     type: object
     properties:
       hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       parts:
         type: object
         properties:
@@ -2084,7 +2428,7 @@ definitions:
             type: number
             example: 0
           hash:
-            $ref: '#/definitions/Hash'
+            $ref: "#/definitions/Hash"
   BlockHeader:
     type: object
     properties:
@@ -2096,38 +2440,38 @@ definitions:
         example: 1
       time:
         type: string
-        example: '2017-12-30T05:53:09.287+01:00'
+        example: "2017-12-30T05:53:09.287+01:00"
       num_txs:
         type: number
         example: 0
       last_block_id:
-        $ref: '#/definitions/BlockID'
+        $ref: "#/definitions/BlockID"
       total_txs:
         type: number
         example: 35
       last_commit_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       data_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       validators_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       next_validators_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       consensus_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       app_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       last_results_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       evidence_hash:
-        $ref: '#/definitions/Hash'
+        $ref: "#/definitions/Hash"
       proposer_address:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
   Block:
     type: object
     properties:
       header:
-        $ref: '#/definitions/BlockHeader'
+        $ref: "#/definitions/BlockHeader"
       txs:
         type: array
         items:
@@ -2140,7 +2484,7 @@ definitions:
         type: object
         properties:
           block_id:
-            $ref: '#/definitions/BlockID'
+            $ref: "#/definitions/BlockID"
           precommits:
             type: array
             items:
@@ -2150,25 +2494,24 @@ definitions:
                   type: string
                 validator_index:
                   type: string
-                  example: '0'
+                  example: "0"
                 height:
                   type: string
-                  example: '0'
+                  example: "0"
                 round:
                   type: string
-                  example: '0'
+                  example: "0"
                 timestamp:
                   type: string
-                  example: '2017-12-30T05:53:09.287+01:00'
+                  example: "2017-12-30T05:53:09.287+01:00"
                 type:
                   type: number
                   example: 2
                 block_id:
-                  $ref: '#/definitions/BlockID'
+                  $ref: "#/definitions/BlockID"
                 signature:
                   type: string
-                  example: >-
-                    7uTC74QlknqYWEwg7Vn6M8Om7FuZ0EO4bjvuj6rwH1mTUJrRuMMZvAAqT9VjNgP0RA/TDp6u/92AqrZfXJSpBQ==
+                  example: "7uTC74QlknqYWEwg7Vn6M8Om7FuZ0EO4bjvuj6rwH1mTUJrRuMMZvAAqT9VjNgP0RA/TDp6u/92AqrZfXJSpBQ=="
   BlockQuery:
     type: object
     properties:
@@ -2176,65 +2519,68 @@ definitions:
         type: object
         properties:
           header:
-            $ref: '#/definitions/BlockHeader'
+            $ref: "#/definitions/BlockHeader"
           block_id:
-            $ref: '#/definitions/BlockID'
+            $ref: "#/definitions/BlockID"
       block:
-        $ref: '#/definitions/Block'
+        $ref: "#/definitions/Block"
   BaseReq:
     type: object
     properties:
-      name:
+      from:
         type: string
-        example: my_name
+        example: "my_name"
+        description: Sender address or Keybase name to generate a transaction
       password:
         type: string
-        example: '12345678'
+        example: "12345678"
       memo:
         type: string
-        example: "Sent via Terra Voyager \U0001F680"
+        example: "Sent via Terra Voyager 🚀"
       chain_id:
         type: string
-        example: "soju-0004"
+        example: "soju-0005"
       account_number:
         type: string
-        example: '0'
+        example: "0"
       sequence:
         type: string
-        example: '1'
+        example: "1"
       gas:
         type: string
-        example: '200000'
+        example: "200000"
       gas_adjustment:
         type: string
-        example: '1.2'
+        example: "1.2"
       fees:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       gas_prices:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       generate_only:
         type: boolean
         example: false
+        description: Create a JSON transaction that can be signed client side instead of actually signing and broadcasting
       simulate:
         type: boolean
-        example: true
+        example: false
+        description: Estimate gas for a transaction (cannot be used in conjunction with generate_only)
   TendermintValidator:
     type: object
     properties:
       address:
-        $ref: '#/definitions/ValidatorAddress'
+        $ref: "#/definitions/ValidatorAddress"
       pub_key:
-        $ref: '#definitions/PubKey'
+        $ref: "#/definitions/PubKey"
       power:
         type: string
-        example: '1000'
+        example: "1000"
       accum:
         type: string
-        example: '1000'
+        example: "1000"
   TextProposal:
     type: object
     properties:
@@ -2249,13 +2595,13 @@ definitions:
       proposal_status:
         type: string
       final_tally_result:
-        $ref: '#/definitions/TallyResult'
+        $ref: "#/definitions/TallyResult"
       submit_time:
         type: string
       total_deposit:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       voting_start_time:
         type: string
   Proposer:
@@ -2271,26 +2617,26 @@ definitions:
       amount:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       proposal_id:
         type: integer
       depositor:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
   TallyResult:
     type: object
     properties:
-      'yes':
+      yes:
         type: string
-        example: '0.0000000000'
+        example: "0.0000000000"
       abstain:
         type: string
-        example: '0.0000000000'
-      'no':
+        example: "0.0000000000"
+      no:
         type: string
-        example: '0.0000000000'
+        example: "0.0000000000"
       no_with_veto:
         type: string
-        example: '0.0000000000'
+        example: "0.0000000000"
   Vote:
     type: object
     properties:
@@ -2304,9 +2650,9 @@ definitions:
     type: object
     properties:
       operator_address:
-        $ref: '#/definitions/ValidatorAddress'
+        $ref: "#/definitions/ValidatorAddress"
       consensus_pubkey:
-        $ref: '#definitions/PubKey'
+        $ref: "#/definitions/PubKey"
       jailed:
         type: boolean
       status:
@@ -2328,31 +2674,31 @@ definitions:
             type: string
       bond_height:
         type: string
-        example: '0'
+        example: "0"
       bond_intra_tx_counter:
         type: integer
         example: 0
       unbonding_height:
         type: string
-        example: '0'
+        example: "0"
       unbonding_time:
         type: string
-        example: '1970-01-01T00:00:00Z'
+        example: "1970-01-01T00:00:00Z"
       commission:
         type: object
         properties:
           rate:
             type: string
-            example: '0'
+            example: "0"
           max_rate:
             type: string
-            example: '0'
+            example: "0"
           max_change_rate:
             type: string
-            example: '0'
+            example: "0"
           update_time:
             type: string
-            example: '1970-01-01T00:00:00Z'
+            example: "1970-01-01T00:00:00Z"
   Delegation:
     type: object
     properties:
@@ -2400,136 +2746,98 @@ definitions:
         type: string
       shares_dst:
         type: string
-  FeePool:
-    type: object
-    properties:
-      community_pool:
-        type: array
-        items:
-          $ref: '#/definitions/Coin'
-      val_accum:
-        $ref: '#/definitions/TotalAccum'
-      val_pool:
-        type: array
-        items:
-          $ref: '#/definitions/Coin'
-  TotalAccum:
-    type: object
-    properties:
-      update_height:
-        type: integer
-      accum:
-        type: string
   ValidatorDistInfo:
     type: object
     properties:
       operator_addr:
-        $ref: '#/definitions/ValidatorAddress'
-      fee_pool_withdrawal_height:
-        type: integer
-      del_accum:
-        $ref: '#/definitions/TotalAccum'
-      del_pool:
+        $ref: "#/definitions/ValidatorAddress"
+      self_bond_rewards:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       val_commission:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
   SwapReq:
     type: object
     properties:
       base_req:
-        $ref: '#/definitions/BaseReq'
-      offer_denom:
-        type: string
-        example: terra
-      offer_amount:
-        type: string
-        example: '1000'
+        $ref: "#/definitions/BaseReq"
+      offer_coin:
+        $ref: "#/definitions/Coin"
       ask_denom:
         type: string
         example: luna
+      trader_address:
+        $ref: "#/definitions/Address"
   VoteReq:
     type: object
     properties:
       base_req:
-        $ref: '#/definitions/BaseReq'
+        $ref: "#/definitions/BaseReq"
       target_price:
         type: number
-        example: '1000.0'
+        example: "1000.0"
       current_price:
         type: number
-        example: '1000.0'
+        example: "1000.0"
       denom:
         type: string
         example: luna
       voter_address:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
   BudgetVoteReq:
     type: object
     properties:
       base_req:
-        $ref: '#/definitions/BaseReq'
+        $ref: "#/definitions/BaseReq"
       voter:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       option:
-        type: string
-        enum: ['yes', 'no']
-        example: 'yes'
+        type: boolean
   PriceVote:
     type: object
     properties:
-      FeedMsg:
-        $ref: '#/definitions/MsgPriceFeed'
-      Power:
+      price:
         type: number
-        example: '100'
-  MsgPriceFeed:
-    type: object
-    properties:
-      Denom:
+        example: "0.01241"
+      denom:
         type: string
-        example: 'terra'
-      TargetPrice:
+        example: "krt"
+      power:
         type: number
-        example: '1000.0'
-      ObservedPrice:
-        type: number
-        example: '1000.0'
-      Feeder:
-        $ref: '#/definitions/Address'
+        example: "100"
+      voter:
+        $ref: "#/definitions/Address"
   Share:
     type: object
     properties:
       id:
         type: string
-        example: 'oracle'
+        example: "oracle"
       weight:
         type: number
-  postProgramReq:
+  submitProgramReq:
     type: object
     properties:
       base_req:
-        $ref: '#/definitions/BaseReq'
+        $ref: "#/definitions/BaseReq"
       title:
         type: string
-        example: 'title'
+        example: "title"
       description:
         type: string
-        example: 'description'
+        example: "description"
       Program_type:
         type: string
-        example: 'PlainTextProgram, SoftwareUpgradeProgram'
+        example: "PlainTextProgram, SoftwareUpgradeProgram"
       submitter:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       executor:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       deposit:
-        type: array
-        items:
-          $ref: '#/definitions/Coin'
+        $ref: "#/definitions/Coin"
   Program:
     type: object
     properties:
@@ -2538,27 +2846,52 @@ definitions:
       description:
         type: string
       submitter:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       executor:
-        $ref: '#/definitions/Address'
+        $ref: "#/definitions/Address"
       submit_time:
         type: string
-        format: '2006-01-02T15:04:05.999999999Z07:00'
+        format: "2006-01-02T15:04:05.999999999Z07:00"
       deposit:
         type: array
         items:
-          $ref: '#/definitions/Coin'
+          $ref: "#/definitions/Coin"
       tally_result:
-        $ref: '#/definitions/TallyResult'
+        $ref: "#/definitions/TallyResult"
       state:
         type: string
-
-  BudgetTallyResult:
+  MsgVoteProgram:
     type: object
     properties:
-      yes:
+      program_id:
         type: number
-      abstain:
+      option:
+        type: boolean
+      voter:
+        $ref: "#/definitions/Address"
+  BudgetParams:
+    type: object
+    properties:
+      active_threshold:
         type: number
-      no:
+        example: "0.1"
+      legacy_threshold:
         type: number
+        example: "0.00"
+      vote_period:
+        type: number
+        example: "1000000"
+      deposit:
+        $ref: "#/definitions/Coin"
+  OracleParams:
+    type: object
+    properties:
+      vote_period:
+        type: number
+        example: "900"
+      vote_threshold:
+        type: number
+        example: "0.67"
+      drop_threshold:
+        type: number
+        example: "10"
