@@ -9,7 +9,7 @@ GOTOOLS = \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: get_tools get_vendor_deps install lint test
+all: clean get_tools get_vendor_deps install lint test
 
 
 get_tools:
@@ -40,6 +40,8 @@ install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
+clean:
+	rm -rf ./build
 
 dist:
 	@bash publish/dist.sh
