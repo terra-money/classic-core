@@ -54,7 +54,7 @@ func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags
 
 	return sdk.NewTags(
 		tags.Action, actionTag,
-		tags.Denom, []byte(denom),
+		tags.Denom, denom,
 	)
 }
 
@@ -113,8 +113,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 			resTags = resTags.AppendTags(
 				sdk.NewTags(
 					tags.Action, actionTag,
-					tags.Denom, []byte(denom),
-					tags.Price, mod.Bytes(),
+					tags.Denom, denom,
+					tags.Price, mod.String(),
 				),
 			)
 		} else {
@@ -149,9 +149,9 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Denom, pfm.Denom,
-			tags.Voter, pfm.Feeder.Bytes(),
+			tags.Voter, pfm.Feeder.String(),
 			tags.Power, val.GetBondedTokens().String(),
-			tags.Price, pfm.Price.Bytes(),
+			tags.Price, pfm.Price.String(),
 		),
 	}
 }

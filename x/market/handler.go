@@ -57,7 +57,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		Tags: sdk.NewTags(
 			tags.Offer, msg.OfferCoin.String(),
 			tags.Ask, swapCoin.String(),
-			tags.Trader, msg.Trader.Bytes(),
+			tags.Trader, msg.Trader.String(),
 		),
 	}
 }

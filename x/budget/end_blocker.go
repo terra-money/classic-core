@@ -2,6 +2,7 @@ package budget
 
 import (
 	"fmt"
+	"strconv"
 	"terra/types"
 	"terra/x/budget/tags"
 
@@ -67,7 +68,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		resTags.AppendTags(
 			sdk.NewTags(
-				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.ProgramID, strconv.FormatUint(programID, 10),
 				tags.Weight, votePower.String(),
 			),
 		)
@@ -99,7 +100,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		resTags.AppendTags(
 			sdk.NewTags(
-				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.ProgramID, strconv.FormatUint(programID, 10),
 				tags.Weight, votePower.String(),
 			),
 		)
