@@ -21,6 +21,8 @@ func BenchmarkOneSubmitterSubmitProgramPerBlock(b *testing.B) {
 		if !res.IsOK() {
 			panic("program submission broken")
 		}
+
+		EndBlocker(ctx, input.budgetKeeper)
 	}
 }
 
@@ -46,5 +48,7 @@ func BenchmarkOneSubmitterSubmitAndWithdrawProgram(b *testing.B) {
 		if !res.IsOK() {
 			panic(res.Log)
 		}
+
+		EndBlocker(ctx, input.budgetKeeper)
 	}
 }

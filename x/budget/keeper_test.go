@@ -17,7 +17,7 @@ func TestKeeperProgramID(t *testing.T) {
 	numTests := 10
 	for i := 0; i < numTests; i++ {
 		id := input.budgetKeeper.NewProgramID(input.ctx)
-		require.Equal(t, id, uint64(i))
+		require.Equal(t, id, uint64(i+1))
 	}
 }
 
@@ -206,7 +206,7 @@ func TestKeeperCandidateQueue(t *testing.T) {
 			func(programID uint64) (stop bool) {
 				counter++
 
-				input.budgetKeeper.CandQueueRemove(input.ctx, int64(i), uint64(i))
+				input.budgetKeeper.CandQueueRemove(input.ctx, input.ctx.BlockHeight(), programID)
 				return false
 			})
 	}
