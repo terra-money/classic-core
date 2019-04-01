@@ -86,7 +86,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	// Convert seigniorage to TerraSDR for rewards
 	seigPool := k.mtk.PeekSeignioragePool(ctx, curEpoch)
-	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.LunaDenom, seigPool), assets.SDRDenom)
+	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
 	if err != nil {
 		return // No or too little seigniorage
 	}
@@ -118,7 +118,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		}
 
 		// Credit the recipient's account with the reward
-		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.SDRDenom, rewardAmt))
+		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
 		if err != nil {
 			fmt.Printf("[settleClaims] failed to mint to %s\n", claim.Recipient.String())
 			return false

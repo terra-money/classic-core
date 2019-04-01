@@ -43,13 +43,13 @@ func TestTax(t *testing.T) {
 	input.treasuryKeeper.SetParams(input.ctx, params)
 	sdrCap := params.TaxPolicy.Cap
 
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(1))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.CNYDenom, sdk.NewDec(10))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, sdk.NewDec(100))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.NewDec(10))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, sdk.NewDec(100))
 
-	readSdrCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.SDRDenom)
-	cnyCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.CNYDenom)
-	krwCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.KRWDenom)
+	readSdrCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroSDRDenom)
+	cnyCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroCNYDenom)
+	krwCap := input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroKRWDenom)
 
 	require.Equal(t, sdrCap.Amount, readSdrCap)
 	require.Equal(t, sdrCap.Amount.MulRaw(10), cnyCap)

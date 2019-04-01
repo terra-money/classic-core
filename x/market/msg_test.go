@@ -16,9 +16,9 @@ func TestMsgPriceFeed(t *testing.T) {
 		askDenom   string
 		expectPass bool
 	}{
-		{sdk.NewInt64Coin(assets.KRWDenom, 10), assets.LunaDenom, true},
-		{sdk.NewInt64Coin(assets.LunaDenom, 10), assets.USDDenom, true},
-		{sdk.NewInt64Coin(assets.USDDenom, 10), assets.USDDenom, false},
+		{sdk.NewInt64Coin(assets.MicroKRWDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit).Int64()), assets.MicroLunaDenom, true},
+		{sdk.NewInt64Coin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit).Int64()), assets.MicroUSDDenom, true},
+		{sdk.NewInt64Coin(assets.MicroUSDDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit).Int64()), assets.MicroUSDDenom, false},
 	}
 
 	for i, tc := range tests {

@@ -13,25 +13,25 @@ import (
 func TestFeeRewardsForEpoch(t *testing.T) {
 	input := createTestInput(t)
 
-	taxAmount := sdk.NewInt(1000)
+	taxAmount := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
 
 	// Set random prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(1))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, sdk.NewDec(10))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, sdk.NewDec(100))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.CNYDenom, sdk.NewDec(1000))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, sdk.NewDec(10))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, sdk.NewDec(100))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.NewDec(1000))
 
 	// Record tax proceeds
 	input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, taxAmount),
-		sdk.NewCoin(assets.KRWDenom, taxAmount),
-		sdk.NewCoin(assets.GBPDenom, taxAmount),
-		sdk.NewCoin(assets.CNYDenom, taxAmount),
+		sdk.NewCoin(assets.MicroSDRDenom, taxAmount),
+		sdk.NewCoin(assets.MicroKRWDenom, taxAmount),
+		sdk.NewCoin(assets.MicroGBPDenom, taxAmount),
+		sdk.NewCoin(assets.MicroCNYDenom, taxAmount),
 	})
 
 	// Get taxes
 	taxProceedsInSDR := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	require.Equal(t, sdk.NewDec(1111), taxProceedsInSDR)
+	require.Equal(t, sdk.NewDec(1111).MulInt64(assets.MicroUnit), taxProceedsInSDR)
 }
 
 func TestSeigniorageRewardsForEpoch(t *testing.T) {
@@ -41,7 +41,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	lnasdrRate := sdk.NewDec(10)
 
 	// Set random prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, lnasdrRate)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
 	// Add seigniorage
 	input.mintKeeper.AddSeigniorage(input.ctx, sAmt)
@@ -55,20 +55,20 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 func TestMiningRewardsForEpoch(t *testing.T) {
 	input := createTestInput(t)
 
-	amt := sdk.NewInt(1000)
+	amt := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
 
 	// Set random prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, sdk.NewDec(1))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(10))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, sdk.NewDec(100))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.CNYDenom, sdk.NewDec(1000))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(10))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, sdk.NewDec(100))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.NewDec(1000))
 
 	// Record tax proceeds
 	input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, amt),
-		sdk.NewCoin(assets.KRWDenom, amt),
-		sdk.NewCoin(assets.GBPDenom, amt),
-		sdk.NewCoin(assets.CNYDenom, amt),
+		sdk.NewCoin(assets.MicroSDRDenom, amt),
+		sdk.NewCoin(assets.MicroKRWDenom, amt),
+		sdk.NewCoin(assets.MicroGBPDenom, amt),
+		sdk.NewCoin(assets.MicroCNYDenom, amt),
 	})
 
 	// Add seigniorage
@@ -83,15 +83,15 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 
 func TestSMR(t *testing.T) {
 	input := createTestInput(t)
-	amt := sdk.NewInt(1000)
+	amt := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
 	lnasdrRate := sdk.NewDec(10)
 
 	// Set random prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, lnasdrRate)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
 	// Record tax proceeds
 	input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, amt),
+		sdk.NewCoin(assets.MicroSDRDenom, amt),
 	})
 
 	// Add seigniorage
@@ -159,31 +159,31 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
 	// Test all of our reporting functions
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.OneDec())
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.OneDec())
 
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * i)
-		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(i))})
-		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(i))
+		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
+		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(i).MulRaw(assets.MicroUnit))
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
 
 	totalBondedTokens := sdk.NewDecFromInt(input.treasuryKeeper.valset.TotalBondedTokens(input.ctx))
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TaxRewardsForEpoch)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).MulInt64(assets.MicroUnit), rval)
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), SeigniorageRewardsForEpoch)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).MulInt64(assets.MicroUnit), rval)
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), MiningRewardForEpoch)
-	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1), rval)
+	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1).MulInt64(assets.MicroUnit), rval)
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), TRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.Mul(sdk.NewDec(1000000)).TruncateInt())
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).MulInt64(assets.MicroUnit).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.Mul(sdk.NewDec(1000000)).TruncateInt())
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), SRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
+	require.Equal(t, sdk.NewDecWithPrec(3505, 1).MulInt64(assets.MicroUnit).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
 
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), MRL)
-	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
+	require.Equal(t, sdk.NewDecWithPrec(3505*2, 1).MulInt64(assets.MicroUnit).Quo(totalBondedTokens).Mul(sdk.NewDec(1000000)).TruncateInt(), rval.MulTruncate(sdk.NewDec(1000000)).TruncateInt())
 }

@@ -13,29 +13,29 @@ import (
 func TestKeeperPrice(t *testing.T) {
 	input := createTestInput(t)
 
-	cnyPrice := sdk.NewDecWithPrec(839, precision)
-	gbpPrice := sdk.NewDecWithPrec(4995, precision)
-	krwPrice := sdk.NewDecWithPrec(2838, precision)
-	lunaPrice := sdk.NewDecWithPrec(3282384, precision)
+	cnyPrice := sdk.NewDecWithPrec(839, precision).MulInt64(assets.MicroUnit)
+	gbpPrice := sdk.NewDecWithPrec(4995, precision).MulInt64(assets.MicroUnit)
+	krwPrice := sdk.NewDecWithPrec(2838, precision).MulInt64(assets.MicroUnit)
+	lunaPrice := sdk.NewDecWithPrec(3282384, precision).MulInt64(assets.MicroUnit)
 
 	// Set prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.CNYDenom, cnyPrice)
-	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.CNYDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, cnyPrice)
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroCNYDenom)
 	require.Nil(t, err)
 	require.Equal(t, cnyPrice, price)
 
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, gbpPrice)
-	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.GBPDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, gbpPrice)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroGBPDenom)
 	require.Nil(t, err)
 	require.Equal(t, gbpPrice, price)
 
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, krwPrice)
-	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, krwPrice)
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroKRWDenom)
 	require.Nil(t, err)
 	require.Equal(t, krwPrice, price)
 
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.LunaDenom, lunaPrice)
-	price, _ = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.LunaDenom)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroLunaDenom, lunaPrice)
+	price, _ = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroLunaDenom)
 	require.Equal(t, sdk.OneDec(), price)
 }
 
@@ -43,11 +43,11 @@ func TestKeeperVote(t *testing.T) {
 	input := createTestInput(t)
 
 	// Test addvote
-	vote := NewPriceVote(sdk.OneDec(), assets.SDRDenom, sdk.NewInt(3458), addrs[0])
+	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, sdk.NewInt(3458).MulRaw(assets.MicroUnit), addrs[0])
 	input.oracleKeeper.addVote(input.ctx, vote)
 
 	// Test getVote
-	voteQuery, err := input.oracleKeeper.getVote(input.ctx, assets.SDRDenom, addrs[0])
+	voteQuery, err := input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, addrs[0])
 	require.Nil(t, err)
 	require.Equal(t, vote, voteQuery)
 
@@ -60,12 +60,12 @@ func TestKeeperVote(t *testing.T) {
 	// Test collectvotes
 	votes := input.oracleKeeper.collectVotes(input.ctx)
 	require.True(t, len(votes) == 1)
-	require.True(t, len(votes[assets.SDRDenom]) == 1)
-	require.Equal(t, vote, votes[assets.SDRDenom][0])
+	require.True(t, len(votes[assets.MicroSDRDenom]) == 1)
+	require.Equal(t, vote, votes[assets.MicroSDRDenom][0])
 
 	// Test deletevote
 	input.oracleKeeper.deleteVote(input.ctx, vote)
-	_, err = input.oracleKeeper.getVote(input.ctx, assets.SDRDenom, addrs[0])
+	_, err = input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, addrs[0])
 	require.NotNil(t, err)
 }
 
@@ -73,13 +73,13 @@ func TestKeeperDropCounter(t *testing.T) {
 	input := createTestInput(t)
 
 	for i := 1; i < 40; i++ {
-		counter := input.oracleKeeper.incrementDropCounter(input.ctx, assets.SDRDenom)
+		counter := input.oracleKeeper.incrementDropCounter(input.ctx, assets.MicroSDRDenom)
 		require.Equal(t, sdk.NewInt(int64(i)), counter)
 	}
 
-	input.oracleKeeper.resetDropCounter(input.ctx, assets.SDRDenom)
+	input.oracleKeeper.resetDropCounter(input.ctx, assets.MicroSDRDenom)
 	store := input.ctx.KVStore(input.oracleKeeper.key)
-	b := store.Get(keyDropCounter(assets.SDRDenom))
+	b := store.Get(keyDropCounter(assets.MicroSDRDenom))
 	require.Nil(t, b)
 }
 

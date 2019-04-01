@@ -22,34 +22,34 @@ import (
 func TaxRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 	taxRewards := sdk.NewDecCoins(k.PeekTaxProceeds(ctx, epoch))
 
-	taxRewardInSDR := sdk.ZeroDec()
+	taxRewardInMicroSDR := sdk.ZeroDec()
 	for _, coinReward := range taxRewards {
-		if coinReward.Denom != assets.SDRDenom {
-			swappedReward, err := k.mk.SwapDecCoins(ctx, coinReward, assets.SDRDenom)
+		if coinReward.Denom != assets.MicroSDRDenom {
+			swappedReward, err := k.mk.SwapDecCoins(ctx, coinReward, assets.MicroSDRDenom)
 			if err != nil {
 				continue
 			}
-			taxRewardInSDR = taxRewardInSDR.Add(swappedReward.Amount)
+			taxRewardInMicroSDR = taxRewardInMicroSDR.Add(swappedReward.Amount)
 		} else {
-			taxRewardInSDR = taxRewardInSDR.Add(coinReward.Amount)
+			taxRewardInMicroSDR = taxRewardInMicroSDR.Add(coinReward.Amount)
 		}
 	}
 
-	return taxRewardInSDR
+	return taxRewardInMicroSDR
 }
 
 // SeigniorageRewardsForEpoch returns seigniorage rewards for the epoch
 func SeigniorageRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 	seignioragePool := k.mtk.PeekSeignioragePool(ctx, epoch)
 	rewardAmt := k.GetRewardWeight(ctx, epoch).MulInt(seignioragePool)
-	seigniorageReward := sdk.NewDecCoinFromDec(assets.LunaDenom, rewardAmt)
+	seigniorageReward := sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardAmt)
 
-	sdrReward, err := k.mk.SwapDecCoins(ctx, seigniorageReward, assets.SDRDenom)
+	microSDRReward, err := k.mk.SwapDecCoins(ctx, seigniorageReward, assets.MicroSDRDenom)
 	if err != nil {
 		return sdk.ZeroDec()
 	}
 
-	return sdrReward.Amount
+	return microSDRReward.Amount
 }
 
 // MiningRewardForEpoch returns the sum of tax and seigniorage rewards for the epoch
