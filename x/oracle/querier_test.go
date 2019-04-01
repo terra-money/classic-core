@@ -65,7 +65,7 @@ func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 
 func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.AccAddress, denom string) PriceBallot {
 	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, QuerierRoute, QueryPrice}, "/"),
+		Path: strings.Join([]string{custom, QuerierRoute, QueryVotes}, "/"),
 		Data: cdc.MustMarshalJSON(NewQueryVoteParams(voter, denom)),
 	}
 
