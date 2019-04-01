@@ -39,10 +39,6 @@ func keyTaxCap(denom string) []byte {
 	return []byte(fmt.Sprintf("%s:%s", prefixTaxCap, denom))
 }
 
-func keyIssuance(denom string, epoch sdk.Int) []byte {
-	return []byte(fmt.Sprintf("%s:%s:%s", prefixIssuance, denom, epoch))
-}
-
 func paramKeyTable() params.KeyTable {
 	return params.NewKeyTable(
 		paramStoreKeyParams, Params{},

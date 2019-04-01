@@ -73,7 +73,11 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 	prgmEndBlock := program.getVotingEndBlock(ctx, k)
 	if k.CandQueueHas(ctx, prgmEndBlock, msg.ProgramID) {
 		k.CandQueueRemove(ctx, prgmEndBlock, msg.ProgramID)
-		k.RefundDeposit(ctx, program.Submitter)
+		err := k.RefundDeposit(ctx, program.Submitter)
+
+		if err != nil {
+			return ErrRefundFailed(msg.Submitter, msg.ProgramID).Result()
+		}
 	}
 
 	k.DeleteProgram(ctx, msg.ProgramID)

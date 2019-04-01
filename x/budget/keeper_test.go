@@ -26,10 +26,11 @@ func TestKeeperDeposit(t *testing.T) {
 
 	// Set the balance to equal the default deposit
 	deposit := sdk.Coins{input.budgetKeeper.GetParams(input.ctx).Deposit}
-	input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	err := input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	require.Nil(t, err)
 
 	// addr0 has enough coins to pay the deposit
-	err := input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
+	err = input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
 	require.Nil(t, err)
 
 	// Doesn't have enough coins to pay the deposit
