@@ -50,10 +50,10 @@ func DefaultParams() Params {
 
 		// Tax update policy
 		PolicyConstraints{
-			RateMin:       sdk.NewDecWithPrec(5, 4),                   // 0.05%
-			RateMax:       sdk.NewDecWithPrec(1, 2),                   // 1%
-			Cap:           sdk.NewCoin(assets.SDRDenom, sdk.OneInt()), // 1 SDR Tax cap
-			ChangeRateMax: sdk.NewDecWithPrec(25, 5),                  // 0.025%
+			RateMin:       sdk.NewDecWithPrec(5, 4),                                                 // 0.05%
+			RateMax:       sdk.NewDecWithPrec(1, 2),                                                 // 1%
+			Cap:           sdk.NewCoin(assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit)), // 1 SDR Tax cap
+			ChangeRateMax: sdk.NewDecWithPrec(25, 5),                                                // 0.025%
 		},
 
 		// Reward update policy
