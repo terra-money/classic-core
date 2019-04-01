@@ -153,6 +153,6 @@ func TestOracleDrop(t *testing.T) {
 	// Going over dropthreshold should blacklist the price
 	EndBlocker(input.ctx, input.oracleKeeper)
 
-	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
+	_, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.KRWDenom)
 	require.NotNil(t, err)
 }

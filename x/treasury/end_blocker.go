@@ -1,6 +1,7 @@
 package treasury
 
 import (
+	"fmt"
 	"terra/types"
 	"terra/types/assets"
 	"terra/types/util"
@@ -98,10 +99,8 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		switch claim.Class {
 		case types.OracleClaimClass:
 			oracleSumWeight = oracleSumWeight.Add(claim.Weight)
-			break
 		case types.BudgetClaimClass:
 			budgetSumWeight = budgetSumWeight.Add(claim.Weight)
-			break
 		}
 		return false
 	})
@@ -119,7 +118,11 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		}
 
 		// Credit the recipient's account with the reward
-		k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.SDRDenom, rewardAmt))
+		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.SDRDenom, rewardAmt))
+		if err != nil {
+			fmt.Printf("[settleClaims] failed to mint to %s\n", claim.Recipient.String())
+			return false
+		}
 
 		// We are now done with the claim; remove it from the store
 		store.Delete(keyClaim(claim.ID()))

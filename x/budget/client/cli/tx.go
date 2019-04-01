@@ -25,12 +25,8 @@ const (
 	flagDescription = "description"
 	flagExecutor    = "executor"
 	flagVoter       = "voter"
-	flagOption      = "option"
-	flagNumLimit    = "limit"
 	flagProgram     = "program"
 	flagProgramID   = "program-id"
-
-	queryRoute = "budget"
 )
 
 type program struct {

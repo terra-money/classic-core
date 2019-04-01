@@ -259,7 +259,8 @@ func TestQueryIssuance(t *testing.T) {
 	querier := NewQuerier(input.treasuryKeeper)
 
 	issuance := sdk.NewInt(1000)
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.SDRDenom, issuance))
+	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.SDRDenom, issuance))
+	require.Nil(t, err)
 
 	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.SDRDenom)
 

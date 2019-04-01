@@ -56,16 +56,6 @@ func TestEndBlockerTiming(t *testing.T) {
 	}
 }
 
-func randomMacroVariables() (tax, seigniorage, lunaIssuance sdk.Int) {
-	rand.Seed(int64(time.Now().Nanosecond()))
-
-	tax = sdk.NewInt(rand.Int63())
-	seigniorage = sdk.NewInt(rand.Int63())
-	lunaIssuance = sdk.NewInt(rand.Int63() % 1000)
-
-	return
-}
-
 func reset(input testInput) testInput {
 
 	// Set blocknum back to 0
@@ -79,7 +69,10 @@ func reset(input testInput) testInput {
 
 	// Give everyone some luna
 	for _, addr := range addrs {
-		input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+		err := input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return input
@@ -191,7 +184,8 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {
-			input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.LunaDenom, lunaAmt)})
+			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.LunaDenom, lunaAmt)})
+			require.Nil(t, err)
 		}
 
 		// Reset reward weight
