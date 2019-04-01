@@ -27,10 +27,11 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote [denom] [price]",
 		Short: "Submit an oracle vote for the price of Luna",
+		Args:  cobra.ExactArgs(2),
 		Long: strings.TrimSpace(`
 Submit an oracle vote for the price of Luna denominated in the input denom.
 
-$ terracli oracle vote --denom="krw" --price="8890.12"
+$ terracli oracle vote "krw" "8890.12"
 
 where "krw" is the denominating currency, and "8890.12" is the price of Luna in KRW from the voter's point of view. 
 `),
