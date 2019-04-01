@@ -77,7 +77,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := []PriceVote{}
+	filteredVotes := PriceBallot{}
 
 	// collects all votes without filter
 	prefix := prefixVote

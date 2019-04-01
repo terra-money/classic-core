@@ -1,7 +1,7 @@
-# Terra Money
-![banner](docs/terra-sdk-img.png)
+# Terra Core
+![banner](docs/terra-core.png)
 
-[![CircleCI](https://circleci.com/gh/terra-project/terra/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d)](https://circleci.com/gh/terra-project/terra/tree/develop)
+[![CircleCI](https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d)](https://circleci.com/gh/terra-project/core/tree/develop)
 
 **[The Terra Protocol](https://www.terra.money)** facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies.
 
@@ -12,9 +12,11 @@
 - Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna
 - Zero-spread atomic swap amongst Terra currencies.
 
-The Terra Protocol builds on [Tendermint](https://github.com/tendermint/tendermint) consensus and the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) toolkits. Please make sure to study these projects as well if you are not already familiar.
+**Terra Core** is a golang implementation of the Terra Protocol. 
 
-**WARNING**: Terra is pre-launch software, and should not be used for real transactions. Breaking changes will come regularly.
+Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) consensus and the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) toolkits. Please make sure to study these projects as well if you are not already familiar. 
+
+**WARNING**: Terra Core has mostly stabilized, but breaking changes may come regularly.
 
 **Note**: Requires [Go 1.10+](https://golang.org/dl/)
 
@@ -44,4 +46,4 @@ We are currently finalizing contribution standards and guidelines. In the meanwh
 
 ## Documentation
 
-See the [docs](./docs/guide/README.md) and the [White paper](https://terra.money/static/Terra_White_Paper.pdf).
+See the [docs](./docs/guide/README.md) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf).

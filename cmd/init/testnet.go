@@ -106,9 +106,10 @@ Example:
 	return cmd
 }
 
+// no-lint
 type Node struct {
 	Name string
-	Ip   string
+	IP   string
 }
 
 func makeNodes() ([]Node, error) {
@@ -116,7 +117,7 @@ func makeNodes() ([]Node, error) {
 
 	if len(predefined) > 0 {
 		// parse predefined nodes information
-		re, _ := regexp.Compile("[\\s,]*(\\w+)@([\\d.]+)[\\s,]*")
+		re, _ := regexp.Compile(`[\s,]*(\w+)@([\d.]+)[\s,]*`)
 		groups := re.FindAllStringSubmatch(viper.GetString(flagPredefinedNodes), -1)
 
 		nodes := make([]Node, len(groups))
@@ -194,7 +195,7 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		monikers = append(monikers, nodeDirName)
 		config.Moniker = nodeDirName
 
-		ip := nodes[i].Ip
+		ip := nodes[i].IP
 		nodeIDs[i], valPubKeys[i], err = InitializeNodeValidatorFiles(config)
 		if err != nil {
 			_ = os.RemoveAll(outDir)

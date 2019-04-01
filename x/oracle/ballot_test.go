@@ -62,8 +62,8 @@ func TestPBMean(t *testing.T) {
 	}
 
 	statAnswerRounded := float64(int64(stat.Mean(prices, weights)*10000)) / 10000
-	ballotAnswerRounded := float64(pb.mean().MulTruncate(sdk.NewDec(10000)).TruncateInt64()) / 10000
-	require.Equal(t, statAnswerRounded, ballotAnswerRounded)
+	ballotAnswerRounded := float64(pb.mean().Mul(sdk.NewDec(10000)).TruncateInt64()) / 10000
+	require.Equal(t, ballotAnswerRounded, statAnswerRounded)
 }
 
 func TestPBWeightedMedian(t *testing.T) {

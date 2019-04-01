@@ -52,7 +52,7 @@ func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Action, tags.ActionProgramSubmitted,
-			tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+			tags.ProgramID, strconv.FormatUint(programID, 10),
 		),
 	}
 }
@@ -73,7 +73,11 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 	prgmEndBlock := program.getVotingEndBlock(ctx, k)
 	if k.CandQueueHas(ctx, prgmEndBlock, msg.ProgramID) {
 		k.CandQueueRemove(ctx, prgmEndBlock, msg.ProgramID)
-		k.RefundDeposit(ctx, program.Submitter)
+		err := k.RefundDeposit(ctx, program.Submitter)
+
+		if err != nil {
+			return ErrRefundFailed(msg.Submitter, msg.ProgramID).Result()
+		}
 	}
 
 	k.DeleteProgram(ctx, msg.ProgramID)
@@ -81,7 +85,7 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Action, tags.ActionProgramWithdrawn,
-			tags.ProgramID, sdk.Uint64ToBigEndian(msg.ProgramID),
+			tags.ProgramID, strconv.FormatUint(msg.ProgramID, 10),
 		),
 	}
 }
@@ -107,8 +111,8 @@ func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Res
 		Tags: resTags.AppendTags(
 			sdk.NewTags(
 				tags.Action, tags.ActionProgramVote,
-				tags.ProgramID, sdk.Uint64ToBigEndian(msg.ProgramID),
-				tags.Voter, msg.Voter.Bytes(),
+				tags.ProgramID, strconv.FormatUint(msg.ProgramID, 10),
+				tags.Voter, msg.Voter.String(),
 				tags.Option, strconv.FormatBool(msg.Option),
 			),
 		),

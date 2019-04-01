@@ -291,8 +291,7 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
 
-	// TODO: request fixing it to comsmos guys
-	//app.assertRuntimeInvariants()
+	app.assertRuntimeInvariants()
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -383,7 +382,7 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	}
 
 	// assert runtime invariants
-	//app.assertRuntimeInvariants()
+	app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{
 		Validators: validators,

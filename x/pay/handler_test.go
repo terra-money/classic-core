@@ -105,6 +105,7 @@ func createTestInput(t *testing.T) testInput {
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
+		valset,
 		mintKeeper,
 		marketKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
@@ -191,11 +192,14 @@ func TestHandlerMsgSendTax(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Clear coin balances
-	input.bankKeeper.SetCoins(input.ctx, addrs[0], sdk.Coins{})
-	input.bankKeeper.SetCoins(input.ctx, addrs[1], sdk.Coins{})
+	err := input.bankKeeper.SetCoins(input.ctx, addrs[0], sdk.Coins{})
+	require.Nil(t, err)
+	err = input.bankKeeper.SetCoins(input.ctx, addrs[1], sdk.Coins{})
+	require.Nil(t, err)
 
 	// Give more coins
-	input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(5000))})
+	_, _, err = input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(5000))})
+	require.Nil(t, err)
 
 	// Reset tax cap
 	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.SDRDenom, 2) // 2 SDR cap

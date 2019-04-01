@@ -18,6 +18,7 @@ const (
 	CodeProgramNotFound    sdk.CodeType = 4
 	CodeVoteNotFound       sdk.CodeType = 5
 	CodeInvalidSubmitter   sdk.CodeType = 6
+	CodeRefundFailed       sdk.CodeType = 7
 )
 
 // nolint
@@ -50,4 +51,9 @@ func ErrVoteNotFound() sdk.Error {
 // nolint
 func ErrInvalidSubmitter(submitter sdk.AccAddress) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidSubmitter, fmt.Sprintf("Submitter does not match %s", submitter))
+}
+
+//
+func ErrRefundFailed(submitter sdk.AccAddress, programID uint64) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeRefundFailed, fmt.Sprintf("Refund failed to %s of program %d", submitter.String(), programID))
 }

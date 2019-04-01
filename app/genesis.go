@@ -26,11 +26,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-var (
-	// bonded tokens given to genesis validators/accounts
-	freeFermionsAcc = sdk.NewInt(150)
-)
-
 // State to Unmarshal
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
