@@ -20,7 +20,7 @@ The Terra Protocol builds on [Tendermint](https://github.com/tendermint/tendermi
 
 ### Network
 
-Public Testnet Soju-0002 is online. Currently the Columbus Public mainnet is being prepared for launch. 
+Public Testnet Soju-0005 is online. Currently the Columbus Public mainnet is being prepared for launch. 
 
 [Testnets](https://github.com/terra-project/testnets) contains latest updates to the testnet. 
 
