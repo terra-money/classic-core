@@ -98,7 +98,7 @@ func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Cod
 	err2 := cdc.UnmarshalJSON(bz, &seigniorageProceeds)
 	require.Nil(t, err2)
 
-	return sdk.NewCoin(assets.LunaDenom, seigniorageProceeds)
+	return sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds)
 }
 
 func getQueriedActiveClaims(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) types.ClaimPool {
@@ -233,7 +233,7 @@ func TestQueryTaxProceeds(t *testing.T) {
 	querier := NewQuerier(input.treasuryKeeper)
 
 	taxProceeds := sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, sdk.NewInt(1000)),
+		sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(1000).MulRaw(assets.MicroUnit)),
 	}
 	input.treasuryKeeper.RecordTaxProceeds(input.ctx, taxProceeds)
 
@@ -246,7 +246,7 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.treasuryKeeper)
 
-	seigniorageProceeds := sdk.NewCoin(assets.LunaDenom, sdk.NewInt(10))
+	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
 	input.mintKeeper.AddSeigniorage(input.ctx, seigniorageProceeds.Amount)
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
@@ -258,10 +258,11 @@ func TestQueryIssuance(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.treasuryKeeper)
 
-	issuance := sdk.NewInt(1000)
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.SDRDenom, issuance))
+	issuance := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
+	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroSDRDenom, issuance))
+	require.Nil(t, err)
 
-	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.SDRDenom)
+	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.MicroSDRDenom)
 
 	require.Equal(t, queriedIssuance, issuance)
 }

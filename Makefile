@@ -9,13 +9,13 @@ GOTOOLS = \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: get_tools get_vendor_deps install test
-#all: get_tools get_vendor_deps install test_lint test
+all: get_tools get_vendor_deps install lint test
 
 
 get_tools:
 	go get github.com/golang/dep/cmd/dep
 	go get github.com/rakyll/statik
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
@@ -57,15 +57,13 @@ update_tools:
 	@echo "--> Updating tools to correct version"
 	$(MAKE) --always-make get_tools
 
-update_dev_tools:
-	@echo "--> Downloading linters (this may take awhile)"
-	$(GOPATH)/src/github.com/alecthomas/gometalinter/scripts/install.sh -b $(GOBIN)
-	go get -u github.com/tendermint/lint/golint
 
-get_dev_tools: get_tools
-	@echo "--> Downloading linters (this may take awhile)"
-	$(GOPATH)/src/github.com/alecthomas/gometalinter/scripts/install.sh -b $(GOBIN)
-	go get github.com/tendermint/lint/golint
+lint: get_tools ci-lint
+ci-lint:
+	golangci-lint run
+	go vet -composites=false -tests=false ./...
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	go mod verify
 
 get_vendor_deps: get_tools
 	@echo "--> Generating vendor directory via dep ensure"
@@ -151,7 +149,7 @@ build-docker-terradnode:
 
 # Run a 4-node testnet locally
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2  --faucet terra1pw8nf7k4p26wtam3agpggfwte0vfeaekf9n5wz --faucet-coins 10000luna,10000terra,100usd,100krw; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2  --faucet terra1pw8nf7k4p26wtam3agpggfwte0vfeaekf9n5wz --faucet-coins 10000000000mluna,10000000000mterra,100000000musd,100000000mkrw; fi
 	# replace docker ip to local port, mapped
 	sed -i -e 's/192.168.10.2:26656/localhost:26656/g; s/192.168.10.3:26656/localhost:26659/g; s/192.168.10.4:26656/localhost:26661/g; s/192.168.10.5:26656/localhost:26663/g' $(CURDIR)/build/node4/terrad/config/config.toml
 	# change allow duplicated ip option to prevent the error : cant not route ~
@@ -166,7 +164,7 @@ localnet-stop:
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
 .PHONY: build build_cosmos-sdk-cli build_examples install install_debug dist \
-check_tools check_dev_tools get_dev_tools get_vendor_deps draw_deps test test_cli test_unit \
+check_tools check_dev_tools get_vendor_deps draw_deps test test_cli test_unit \
 test_cover benchmark devdoc_init devdoc devdoc_save devdoc_update \
 build-linux build-docker-terradnode localnet-start localnet-stop \
-format check-ledger update_tools update_dev_tools
+format check-ledger update_dev_tools lint

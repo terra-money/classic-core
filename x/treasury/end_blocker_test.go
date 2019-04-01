@@ -27,7 +27,7 @@ func TestEndBlockerTiming(t *testing.T) {
 		if i%params.EpochShort.Int64() == 0 {
 			// Last block should settle
 			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -35,7 +35,7 @@ func TestEndBlockerTiming(t *testing.T) {
 
 			// Non-last block should not settle
 			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
-			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -47,7 +47,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
 		if i%params.EpochShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, lunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -56,30 +56,23 @@ func TestEndBlockerTiming(t *testing.T) {
 	}
 }
 
-func randomMacroVariables() (tax, seigniorage, lunaIssuance sdk.Int) {
-	rand.Seed(int64(time.Now().Nanosecond()))
-
-	tax = sdk.NewInt(rand.Int63())
-	seigniorage = sdk.NewInt(rand.Int63())
-	lunaIssuance = sdk.NewInt(rand.Int63() % 1000)
-
-	return
-}
-
 func reset(input testInput) testInput {
 
 	// Set blocknum back to 0
 	input.ctx = input.ctx.WithBlockHeight(0)
 
 	// Reset oracle price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(1))
 
 	// Reset genesis
 	InitGenesis(input.ctx, input.treasuryKeeper, DefaultGenesisState())
 
 	// Give everyone some luna
 	for _, addr := range addrs {
-		input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+		err := input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return input
@@ -100,7 +93,7 @@ func updatePolicy(input testInput, startIndex int,
 		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
 
 		taxRevenue := taxRevenues[i]
-		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.SDRDenom, taxRevenue)})
+		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
 
 		seigniorageRevenue := seigniorageRevenues[i]
 		input.mintKeeper.AddSeigniorage(input.ctx, seigniorageRevenue)
@@ -191,7 +184,8 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {
-			input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.LunaDenom, lunaAmt)})
+			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt)})
+			require.Nil(t, err)
 		}
 
 		// Reset reward weight
@@ -205,7 +199,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 		EndBlocker(input.ctx, input.treasuryKeeper)
 
 		for j, addr := range addrs {
-			balance := input.bankKeeper.GetCoins(input.ctx, addr).AmountOf(assets.SDRDenom)
+			balance := input.bankKeeper.GetCoins(input.ctx, addr).AmountOf(assets.MicroSDRDenom)
 			require.Equal(t, balance, sdk.NewInt(tc.sdrRewards[j]), "test: %v", i)
 		}
 

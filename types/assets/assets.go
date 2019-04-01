@@ -2,18 +2,14 @@ package assets
 
 //nolint
 const (
-	LunaDenom = "luna"
-	USDDenom  = "usd"
-	KRWDenom  = "krw"
-	SDRDenom  = "sdr"
-	CNYDenom  = "cny"
-	JPYDenom  = "jpy"
-	EURDenom  = "eur"
-	GBPDenom  = "gbp"
-)
+	MicroLunaDenom = "mluna"
+	MicroUSDDenom  = "musd"
+	MicroKRWDenom  = "mkrw"
+	MicroSDRDenom  = "msdr"
+	MicroCNYDenom  = "mcny"
+	MicroJPYDenom  = "mjpy"
+	MicroEURDenom  = "meur"
+	MicroGBPDenom  = "mgbp"
 
-func GetAllDenoms() []string {
-	return []string{
-		USDDenom, KRWDenom, SDRDenom, CNYDenom, JPYDenom, EURDenom, GBPDenom,
-	}
-}
+	MicroUnit = int64(1e6)
+)

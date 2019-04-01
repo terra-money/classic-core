@@ -2,7 +2,6 @@ package treasury
 
 import (
 	"fmt"
-	"terra/types/assets"
 	"terra/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +38,7 @@ func DefaultGenesisState() GenesisState {
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 	keeper.SetTaxRate(ctx, data.GenesisTaxRate)
-	keeper.setTaxCap(ctx, assets.SDRDenom, data.Params.TaxPolicy.Cap.Amount)
+	keeper.setTaxCap(ctx, data.Params.TaxPolicy.Cap.Denom, data.Params.TaxPolicy.Cap.Amount)
 	keeper.SetRewardWeight(ctx, data.GenesisRewardWeight)
 }
 

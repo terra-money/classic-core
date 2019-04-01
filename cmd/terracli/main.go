@@ -20,7 +20,7 @@ import (
 	budgetClient "terra/x/budget/client"
 	marketClient "terra/x/market/client"
 	oracleClient "terra/x/oracle/client"
-	treasuryClient "terra/x/oracle/client"
+	treasuryClient "terra/x/treasury/client"
 
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"

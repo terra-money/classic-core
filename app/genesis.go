@@ -26,11 +26,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-var (
-	// bonded tokens given to genesis validators/accounts
-	freeFermionsAcc = sdk.NewInt(150)
-)
-
 // State to Unmarshal
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
@@ -214,7 +209,7 @@ func NewDefaultGenesisState() GenesisState {
 	distrGenState.CommunityTax = sdk.ZeroDec()
 
 	stakingGenState := staking.DefaultGenesisState()
-	stakingGenState.Params.BondDenom = assets.LunaDenom
+	stakingGenState.Params.BondDenom = assets.MicroLunaDenom
 	stakingGenState.Params.MaxValidators = 100
 
 	return GenesisState{
@@ -410,8 +405,8 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, sdk.NewInt(1000)),
-		sdk.NewCoin(assets.LunaDenom, sdk.NewInt(100)),
+		sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(1000).MulRaw(assets.MicroUnit)),
+		sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100).MulRaw(assets.MicroUnit)),
 	}
 
 	coins.Sort()

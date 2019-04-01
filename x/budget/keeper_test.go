@@ -17,7 +17,7 @@ func TestKeeperProgramID(t *testing.T) {
 	numTests := 10
 	for i := 0; i < numTests; i++ {
 		id := input.budgetKeeper.NewProgramID(input.ctx)
-		require.Equal(t, id, uint64(i))
+		require.Equal(t, id, uint64(i+1))
 	}
 }
 
@@ -26,10 +26,11 @@ func TestKeeperDeposit(t *testing.T) {
 
 	// Set the balance to equal the default deposit
 	deposit := sdk.Coins{input.budgetKeeper.GetParams(input.ctx).Deposit}
-	input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	err := input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	require.Nil(t, err)
 
 	// addr0 has enough coins to pay the deposit
-	err := input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
+	err = input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
 	require.Nil(t, err)
 
 	// Doesn't have enough coins to pay the deposit
@@ -206,7 +207,7 @@ func TestKeeperCandidateQueue(t *testing.T) {
 			func(programID uint64) (stop bool) {
 				counter++
 
-				input.budgetKeeper.CandQueueRemove(input.ctx, int64(i), uint64(i))
+				input.budgetKeeper.CandQueueRemove(input.ctx, input.ctx.BlockHeight(), programID)
 				return false
 			})
 	}

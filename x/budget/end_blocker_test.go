@@ -133,7 +133,9 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 	for i := 0; i < int(minNumTokensToPass.Int64())-1; i++ {
 		input.budgetKeeper.AddVote(input.ctx, testProgramID, valAddrs[i], true)
 	}
-	input.ctx = input.ctx.WithBlockHeight(1)
+
+	params := input.budgetKeeper.GetParams(input.ctx)
+	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod)
 	EndBlocker(input.ctx, input.budgetKeeper)
 	_, err := input.budgetKeeper.GetProgram(input.ctx, testProgramID)
 	require.NotNil(t, err)
@@ -146,11 +148,11 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 	input.budgetKeeper.SetProgram(input.ctx, testProgramID2, testProgram2)
 	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram2.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgramID2)
 
-	for i := 0; i < int(minNumTokensToPass.Int64())+10; i++ {
+	for i := 0; i < int(minNumTokensToPass.Int64())+1; i++ {
 		input.budgetKeeper.AddVote(input.ctx, testProgramID2, valAddrs[i], true)
 	}
 
-	input.ctx = input.ctx.WithBlockHeight(2)
+	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod)
 	EndBlocker(input.ctx, input.budgetKeeper)
 	_, err = input.budgetKeeper.GetProgram(input.ctx, testProgramID2)
 	require.Nil(t, err)

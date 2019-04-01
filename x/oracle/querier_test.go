@@ -65,7 +65,7 @@ func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 
 func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.AccAddress, denom string) PriceBallot {
 	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, QuerierRoute, QueryPrice}, "/"),
+		Path: strings.Join([]string{custom, QuerierRoute, QueryVotes}, "/"),
 		Data: cdc.MustMarshalJSON(NewQueryVoteParams(voter, denom)),
 	}
 
@@ -95,10 +95,10 @@ func TestQueryPrice(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.oracleKeeper)
 
-	testPrice := sdk.NewDecWithPrec(48842, 4)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, testPrice)
+	testPrice := sdk.NewDecWithPrec(48842, 4).MulInt64(assets.MicroUnit)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, testPrice)
 
-	price := getQueriedPrice(t, input.ctx, input.cdc, querier, assets.KRWDenom)
+	price := getQueriedPrice(t, input.ctx, input.cdc, querier, assets.MicroKRWDenom)
 
 	require.Equal(t, testPrice, price)
 }
@@ -107,11 +107,11 @@ func TestQueryActives(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.oracleKeeper)
 
-	testPrice := sdk.NewDecWithPrec(48842, 4)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, testPrice)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.USDDenom, testPrice)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, testPrice)
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, testPrice)
+	testPrice := sdk.NewDecWithPrec(48842, 4).MulInt64(assets.MicroUnit)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroUSDDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, testPrice)
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, testPrice)
 
 	actives := getQueriedActive(t, input.ctx, input.cdc, querier)
 
@@ -126,32 +126,32 @@ func TestQueryVotes(t *testing.T) {
 
 	votes := []PriceVote{
 		// first voter votes
-		NewPriceVote(testPrice, assets.SDRDenom, sdk.OneInt(), addrs[0]),
-		NewPriceVote(testPrice, assets.KRWDenom, sdk.OneInt(), addrs[0]),
-		NewPriceVote(testPrice, assets.USDDenom, sdk.OneInt(), addrs[0]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
+		NewPriceVote(testPrice, assets.MicroUSDDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
 
 		// Second voter votes
-		NewPriceVote(testPrice, assets.SDRDenom, sdk.OneInt(), addrs[1]),
-		NewPriceVote(testPrice, assets.KRWDenom, sdk.OneInt(), addrs[1]),
-		NewPriceVote(testPrice, assets.GBPDenom, sdk.OneInt(), addrs[1]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
 
 		// Third voter votes
-		NewPriceVote(testPrice, assets.SDRDenom, sdk.OneInt(), addrs[2]),
-		NewPriceVote(testPrice, assets.CNYDenom, sdk.OneInt(), addrs[2]),
-		NewPriceVote(testPrice, assets.GBPDenom, sdk.OneInt(), addrs[2]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
+		NewPriceVote(testPrice, assets.MicroCNYDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
 	}
 
 	for _, vote := range votes {
 		input.oracleKeeper.addVote(input.ctx, vote)
 	}
 
-	voterOneSDR := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], assets.SDRDenom)
+	voterOneSDR := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], assets.MicroSDRDenom)
 	require.Equal(t, 1, len(voterOneSDR))
 
 	voterOne := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], "")
 	require.Equal(t, 3, len(voterOne))
 
-	assetKRW := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, assets.KRWDenom)
+	assetKRW := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, assets.MicroKRWDenom)
 	require.Equal(t, 2, len(assetKRW))
 
 	noFilters := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, "")

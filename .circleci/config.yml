@@ -1,0 +1,155 @@
+version: 2.1
+
+defaults: &linux_defaults
+  working_directory: /go/src/terra
+  docker:
+    - image: circleci/golang:1.11.5
+  environment:
+    GOBIN: /tmp/workspace/bin
+
+deps: &dependencies
+  run:
+    name: dependencies
+    command: |
+      export PATH="$GOBIN:$PATH"
+      make get_vendor_deps
+
+refs:
+  filter_only_branches: &filter_only_branches
+    filters:
+      branches:
+        only: /^(develop|release|master).*/
+
+jobs:
+  setup_dependencies:
+    <<: *linux_defaults
+    steps:
+      - run: mkdir -p /tmp/workspace/bin
+      - run: mkdir -p /tmp/workspace/profiles
+      - checkout
+      - run:
+          name: tools
+          command: |
+            export PATH="$GOBIN:$PATH"
+            make get_tools
+      - *dependencies
+      - run:
+          name: binaries
+          command: |
+            export PATH="$GOBIN:$PATH"
+            make install
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - bin
+            - profiles
+
+  docker_image:
+    <<: *linux_defaults
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            TERRA_VERSION="stable"
+          elif [ "${CIRCLE_BRANCH}" == "develop" ]; then
+            TERRA_VERSION="develop"
+          else
+            TERRA_VERSION=`/tmp/workspace/bin/terrad version`
+          fi
+          docker build -t ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION} .
+          mkdir -p docker-image
+          docker save -o docker-image/image.tar ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
+      - persist_to_workspace:
+          root: .
+          paths: docker-image
+
+  push_to_ecr:
+    docker:
+      - image: wilson208/circleci-awscli
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            TERRA_VERSION="stable"
+          elif [ "${CIRCLE_BRANCH}" == "develop" ]; then
+            TERRA_VERSION="develop"
+          else
+            TERRA_VERSION=`/tmp/workspace/bin/terrad version`
+          fi
+          eval $(aws --region ${AWS_DEFAULT_REGION} ecr --no-include-email get-login)
+          docker load --input /tmp/workspace/docker-image/image.tar
+          docker tag ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION} ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
+          docker push ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
+
+  localnet:
+    working_directory: /home/circleci/.go_workspace/src/terra
+    machine:
+      image: circleci/classic:latest
+    environment:
+      GOBIN: /home/circleci/.go_workspace/bin
+      GOPATH: /home/circleci/.go_workspace/
+      GOOS: linux
+      GOARCH: amd64
+      GO_VERSION: "1.11.5"
+    parallelism: 1
+
+    steps:
+      - checkout
+      - run:
+          name: run localnet and exit on failure
+          command: |
+            pushd /tmp
+            wget https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz
+            sudo tar -xvf go$GO_VERSION.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go
+            sudo mv go /usr/local
+            popd
+
+            make get_vendor_deps
+            make build-linux
+            make build-docker-terradnode
+            make localnet-start
+
+            CNT=0
+            ITER=40
+            SLEEP=5
+            NUMBLOCKS=10
+            NODEADDR=localhost
+
+            while [ ${CNT} -lt $ITER ]; do
+              var=$((curl -s --fail $NODEADDR:26657/status || echo "{\"result\":{\"sync_info\":{\"latest_block_height\":0}}}") | jq -r '.result.sync_info.latest_block_height')
+              echo "Number of Blocks: ${var}"
+              if [ ! -z ${var} ] && [ ${var} -gt ${NUMBLOCKS} ]; then
+                echo "Number of blocks reached, exiting success..."
+                exit 0
+              fi
+              let CNT=CNT+1
+              sleep $SLEEP
+            done
+
+            echo "Timeout reached, exiting failure..."
+            exit 1
+
+workflows:
+  version: 2
+  build_and_push:
+    jobs:
+      - setup_dependencies: *filter_only_branches
+      - localnet:
+          <<: *filter_only_branches
+      - docker_image:
+          <<: *filter_only_branches
+          requires:
+            - setup_dependencies
+      - push_to_ecr:
+          <<: *filter_only_branches
+          requires:
+            - docker_image
+            - localnet

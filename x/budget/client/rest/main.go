@@ -20,11 +20,8 @@ import (
 // REST Variable names
 // nolint
 const (
-	RestParamsType    = "type"
-	RestProgramID     = "program-id"
-	RestVoter         = "voter"
-	RestProgramStatus = "status"
-	RestNumLimit      = "limit"
+	RestProgramID = "program-id"
+	RestVoter     = "voter"
 
 	queryRoute = "budget"
 )
@@ -32,13 +29,16 @@ const (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc("/budget/program/submit", submitProgramHandlerFn(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/withdraw", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
+
+	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/withdraw", RestProgramID), withdrawProgramHandlerFn(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/vote", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/actives", RestProgramID), queryActivesHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/candidates", RestProgramID), queryCandidatesHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/budget/program/actives", queryActivesHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc("/budget/program/candidates", queryCandidatesHandlerFn(cdc, cliCtx)).Methods("GET")
+
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/votes/{%s}", RestProgramID, RestVoter), queryVotesHandlerFn(cdc, cliCtx)).Methods("GET")
+
 	r.HandleFunc("/budget/params", queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 

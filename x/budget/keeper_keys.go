@@ -27,16 +27,12 @@ func keyVote(programID uint64, voterAddr sdk.AccAddress) []byte {
 	return []byte(fmt.Sprintf("%s:%d:%s", prefixVote, programID, voterAddr))
 }
 
-func prefixVoteForProgram(programID uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", prefixVote, programID))
-}
-
 func prefixCandQueueEndBlock(endBlock int64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", prefixCandQueue, endBlock))
+	return []byte(fmt.Sprintf("%s:%020d", prefixCandQueue, endBlock))
 }
 
 func keyCandidate(endBlock int64, programID uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d:%d", prefixCandQueue, endBlock, programID))
+	return []byte(fmt.Sprintf("%s:%020d:%d", prefixCandQueue, endBlock, programID))
 }
 
 func paramKeyTable() params.KeyTable {
