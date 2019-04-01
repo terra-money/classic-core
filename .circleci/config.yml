@@ -15,7 +15,7 @@ deps: &dependencies
       make get_vendor_deps
 
 refs:
-  filter_only_branches:
+  filter_only_branches: &filter_only_branches
     filters:
       branches:
         only: /^(develop|release|master).*/
@@ -139,7 +139,7 @@ jobs:
 
 workflows:
   version: 2
-  test-suite:
+  build_and_push:
     jobs:
       - setup_dependencies: *filter_only_branches
       - localnet:
