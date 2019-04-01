@@ -10,7 +10,7 @@ import (
 
 func TestKeeperSwapCoins(t *testing.T) {
 
-	input := createTestInput(t)
+	input := createTestInput()
 
 	lnasdrRate := sdk.NewDec(4)
 	lnacnyRate := sdk.NewDec(8)
@@ -27,7 +27,7 @@ func TestKeeperSwapCoins(t *testing.T) {
 }
 
 func TestKeeperSwapDecCoins(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	lnasdrRate := sdk.NewDec(4)
 	lnacnyRate := sdk.NewDec(8)

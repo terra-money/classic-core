@@ -4,10 +4,8 @@ import (
 	"terra/types/assets"
 	"terra/x/mint"
 	"terra/x/oracle"
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -53,7 +51,7 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput(t *testing.T) testInput {
+func createTestInput() testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
@@ -73,7 +71,9 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 
-	require.NoError(t, ms.LoadLatestVersion())
+	if err := ms.LoadLatestVersion(); err != nil {
+		panic(err)
+	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -108,7 +108,9 @@ func createTestInput(t *testing.T) testInput {
 
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.SDRDenom, initAmt)})
-		require.NoError(t, err)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return testInput{ctx, accKeeper, bankKeeper, marketKeeper, oracleKeeper, mintKeeper}

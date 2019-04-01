@@ -11,7 +11,7 @@ import (
 )
 
 func TestKeeperPrice(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	cnyPrice := sdk.NewDecWithPrec(839, precision)
 	gbpPrice := sdk.NewDecWithPrec(4995, precision)
@@ -40,7 +40,7 @@ func TestKeeperPrice(t *testing.T) {
 }
 
 func TestKeeperVote(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// Test addvote
 	vote := NewPriceVote(sdk.OneDec(), assets.SDRDenom, sdk.NewInt(3458), addrs[0])
@@ -70,7 +70,7 @@ func TestKeeperVote(t *testing.T) {
 }
 
 func TestKeeperDropCounter(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	for i := 1; i < 40; i++ {
 		counter := input.oracleKeeper.incrementDropCounter(input.ctx, assets.SDRDenom)
@@ -84,7 +84,7 @@ func TestKeeperDropCounter(t *testing.T) {
 }
 
 func TestKeeperParams(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 
 	// Test default params setting
 	input.oracleKeeper.SetParams(input.ctx, DefaultParams())

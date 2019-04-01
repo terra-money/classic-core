@@ -17,7 +17,7 @@ var (
 )
 
 func setup(t *testing.T) (testInput, sdk.Handler) {
-	input := createTestInput(t)
+	input := createTestInput()
 	h := NewHandler(input.oracleKeeper)
 
 	defaultOracleParams := DefaultParams()
@@ -139,9 +139,6 @@ func TestOracleDrop(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, randomPrice)
 
 	msg := NewMsgPriceFeed(assets.KRWDenom, randomPrice, addrs[0])
-	h(input.ctx, msg)
-
-	msg = NewMsgPriceFeed(assets.KRWDenom, randomPrice, addrs[1])
 	h(input.ctx, msg)
 
 	input.ctx = input.ctx.WithBlockHeight(1)

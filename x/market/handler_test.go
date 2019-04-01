@@ -10,7 +10,7 @@ import (
 )
 
 func TestHandlerMsgSwapValidPrice(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	handler := NewHandler(input.marketKeeper)
 
 	lnasdrRate := sdk.NewDec(4)
@@ -42,7 +42,7 @@ func TestHandlerMsgSwapValidPrice(t *testing.T) {
 }
 
 func TestHandlerMsgSwapNoBalance(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	handler := NewHandler(input.marketKeeper)
 
 	// Try to swap a coin I don't have at all
@@ -57,7 +57,7 @@ func TestHandlerMsgSwapNoBalance(t *testing.T) {
 }
 
 func TestHandlerMsgSwapRecursion(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	handler := NewHandler(input.marketKeeper)
 
 	msg := NewMsgSwap(addrs[0], sdk.NewCoin(assets.SDRDenom, sdk.OneInt()), assets.SDRDenom)
@@ -66,7 +66,7 @@ func TestHandlerMsgSwapRecursion(t *testing.T) {
 }
 
 func TestHandlerMsgSwapTooSmall(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	handler := NewHandler(input.marketKeeper)
 
 	offerCoin := sdk.NewCoin(assets.SDRDenom, sdk.NewInt(100))

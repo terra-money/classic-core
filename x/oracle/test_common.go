@@ -6,10 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -63,7 +61,7 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput(t *testing.T) testInput {
+func createTestInput() testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
@@ -83,7 +81,9 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
-	require.NoError(t, ms.LoadLatestVersion())
+	if err := ms.LoadLatestVersion(); err != nil {
+		panic(err)
+	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -105,7 +105,10 @@ func createTestInput(t *testing.T) testInput {
 			sdk.NewCoin(assets.SDRDenom, initAmt),
 			sdk.NewCoin(assets.LunaDenom, lunaAmt),
 		})
-		require.NoError(t, err)
+
+		if err != nil {
+			panic(err)
+		}
 
 		// Add validators
 		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)

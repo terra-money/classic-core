@@ -80,7 +80,7 @@ func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 }
 
 func TestQueryParams(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.oracleKeeper)
 
 	defaultParams := DefaultParams()
@@ -92,7 +92,7 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryPrice(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
@@ -104,7 +104,7 @@ func TestQueryPrice(t *testing.T) {
 }
 
 func TestQueryActives(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
@@ -119,7 +119,7 @@ func TestQueryActives(t *testing.T) {
 }
 
 func TestQueryVotes(t *testing.T) {
-	input := createTestInput(t)
+	input := createTestInput()
 	querier := NewQuerier(input.oracleKeeper)
 
 	testPrice := sdk.NewDecWithPrec(48842, 4)
