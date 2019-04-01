@@ -14,6 +14,12 @@ deps: &dependencies
       export PATH="$GOBIN:$PATH"
       make get_vendor_deps
 
+refs:
+  filter_only_branches:
+    filters:
+      branches:
+        only: /^(develop|release|master).*/
+
 jobs:
   setup_dependencies:
     <<: *linux_defaults
@@ -93,6 +99,7 @@ jobs:
       GOARCH: amd64
       GO_VERSION: "1.11.5"
     parallelism: 1
+
     steps:
       - checkout
       - run:
@@ -134,17 +141,15 @@ workflows:
   version: 2
   test-suite:
     jobs:
-      - setup_dependencies
-      - localnet
+      - setup_dependencies: *filter_only_branches
+      - localnet:
+          <<: *filter_only_branches
       - docker_image:
-          filters:
-            branches:
-              only:
-                - master
-                - develop
+          <<: *filter_only_branches
           requires:
             - setup_dependencies
       - push_to_ecr:
+          <<: *filter_only_branches
           requires:
             - docker_image
             - localnet
