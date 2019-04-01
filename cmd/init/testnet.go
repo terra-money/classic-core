@@ -92,7 +92,7 @@ Example:
 		client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created",
 	)
 	cmd.Flags().String(
-		server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", assets.LunaDenom),
+		server.FlagMinGasPrices, fmt.Sprintf("0%s", assets.MicroLunaDenom),
 		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)",
 	)
 	cmd.Flags().String(flagPredefinedNodes, "",
@@ -244,21 +244,21 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 			return err
 		}
 
-		accTokens := sdk.TokensFromTendermintPower(1000)
-		accStakingTokens := sdk.TokensFromTendermintPower(500)
+		accTokens := sdk.TokensFromTendermintPower(sdk.NewInt(1000).MulRaw(assets.MicroUnit).Int64())
+		accStakingTokens := sdk.TokensFromTendermintPower(sdk.NewInt(500).MulRaw(assets.MicroUnit).Int64())
 		accs = append(accs, app.GenesisAccount{
 			Address: addr,
 			Coins: sdk.Coins{
 				sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), accTokens),
-				sdk.NewCoin(assets.LunaDenom, accStakingTokens),
+				sdk.NewCoin(assets.MicroLunaDenom, accStakingTokens),
 			},
 		})
 
-		valTokens := sdk.TokensFromTendermintPower(100)
+		valTokens := sdk.TokensFromTendermintPower(sdk.NewInt(100).MulRaw(assets.MicroUnit).Int64())
 		msg := staking.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
-			sdk.NewCoin(assets.LunaDenom, valTokens),
+			sdk.NewCoin(assets.MicroLunaDenom, valTokens),
 			staking.NewDescription(nodeDirName, "", "", ""),
 			staking.NewCommissionMsg(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			sdk.OneInt(),

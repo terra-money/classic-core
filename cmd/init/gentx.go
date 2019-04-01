@@ -35,7 +35,7 @@ import (
 
 var (
 	defaultTokens                  = sdk.TokensFromTendermintPower(100)
-	defaultAmount                  = defaultTokens.String() + assets.LunaDenom
+	defaultAmount                  = defaultTokens.String() + assets.MicroLunaDenom
 	defaultCommissionRate          = "0.1"
 	defaultCommissionMaxRate       = "0.2"
 	defaultCommissionMaxChangeRate = "0.01"

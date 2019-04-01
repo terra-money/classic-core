@@ -37,8 +37,8 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
-	lunaAmt = sdk.NewInt(10)
+	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
+	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
 )
 
 type testInput struct {
@@ -102,13 +102,13 @@ func createTestInput(t *testing.T) testInput {
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.SDRDenom, initAmt),
-			sdk.NewCoin(assets.LunaDenom, lunaAmt),
+			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
+			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
 		})
 		require.NoError(t, err)
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 

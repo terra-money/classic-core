@@ -43,7 +43,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	}
 
 	// Record seigniorage if the offered coin is Luna
-	if msg.OfferCoin.Denom == assets.LunaDenom {
+	if msg.OfferCoin.Denom == assets.MicroLunaDenom {
 		k.mk.AddSeigniorage(ctx, msg.OfferCoin.Amount)
 	}
 

@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"fmt"
 	"terra/types"
 	"terra/x/oracle/tags"
 
@@ -60,6 +61,7 @@ func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags
 
 // ballot for the asset is passing the threshold amount of voting power
 func ballotIsPassing(totalPower sdk.Int, ballot PriceBallot, params Params) bool {
+	fmt.Println(params.VoteThreshold.String(), totalPower.String(), ballot.TotalPower())
 	thresholdVotes := params.VoteThreshold.MulInt(totalPower).RoundInt()
 	return ballot.TotalPower().GTE(thresholdVotes)
 }

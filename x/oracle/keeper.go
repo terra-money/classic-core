@@ -127,7 +127,7 @@ func (k Keeper) resetDropCounter(ctx sdk.Context, denom string) {
 
 // GetLunaSwapRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) GetLunaSwapRate(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error) {
-	if denom == assets.LunaDenom {
+	if denom == assets.MicroLunaDenom {
 		return sdk.OneDec(), nil
 	}
 

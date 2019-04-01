@@ -14,8 +14,8 @@ func TestKeeperSwapCoins(t *testing.T) {
 
 	lnasdrRate := sdk.NewDec(4)
 	lnacnyRate := sdk.NewDec(8)
-	offerCoin := sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2))
-	askCoin := sdk.NewCoin(assets.CNYDenom, sdk.NewInt(4))
+	offerCoin := sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(2).MulRaw(assets.MicroUnit))
+	askCoin := sdk.NewCoin(assets.MicroCNYDenom, sdk.NewInt(4).MulRaw(assets.MicroUnit))
 
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
@@ -31,8 +31,8 @@ func TestKeeperSwapDecCoins(t *testing.T) {
 
 	lnasdrRate := sdk.NewDec(4)
 	lnacnyRate := sdk.NewDec(8)
-	offerCoin := sdk.NewDecCoin(assets.SDRDenom, sdk.NewInt(2))
-	askCoin := sdk.NewDecCoin(assets.CNYDenom, sdk.NewInt(4))
+	offerCoin := sdk.NewDecCoin(assets.MicroSDRDenom, sdk.NewInt(2).MulRaw(assets.MicroUnit))
+	askCoin := sdk.NewDecCoin(assets.MicroCNYDenom, sdk.NewInt(4).MulRaw(assets.MicroUnit))
 
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
