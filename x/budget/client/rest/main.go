@@ -21,8 +21,8 @@ import (
 // nolint
 const (
 	// RestParamsType    = "type"
-	RestProgramID     = "program-id"
-	RestVoter         = "voter"
+	RestProgramID = "program-id"
+	RestVoter     = "voter"
 	// RestProgramStatus = "status"
 	// RestNumLimit      = "limit"
 
@@ -36,7 +36,6 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/withdraw", RestProgramID), withdrawProgramHandlerFn(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}/vote", RestProgramID), voteHandlerFn(cdc, cliCtx)).Methods("POST")
 
-	r.HandleFunc("/budget/program", queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/budget/program/{%s}", RestProgramID), queryProgramHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/budget/program/actives", queryActivesHandlerFn(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/budget/program/candidates", queryCandidatesHandlerFn(cdc, cliCtx)).Methods("GET")

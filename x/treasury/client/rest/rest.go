@@ -127,7 +127,7 @@ func queryActiveClaimsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContex
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryActiveClaims), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -140,7 +140,7 @@ func queryCurrentEpochHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContex
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -153,7 +153,7 @@ func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryParams), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 

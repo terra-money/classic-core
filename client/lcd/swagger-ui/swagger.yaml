@@ -4,22 +4,26 @@ info:
   title: 'Terra-Lite for Terra'
   description: 'A REST interface for state queries, transaction generation, signing, and broadcast.'
 tags:
-  - name: ICS0
+  - name: Tendermint
     description: Tendermint APIs, such as query blocks, transactions and validatorset
-  - name: ICS1
+  - name: Keys
     description: Key management APIs
-  - name: ICS20
+  - name: Transaction
     description: Create, sign and broadcast transactions
-  - name: ICS21
+  - name: Staking
     description: Stake module APIs
-  - name: ICS22
-    description: Governance module APIs
-  - name: ICS23
+  - name: Slashing
     description: Slashing module APIs
-  - name: ICS24
+  - name: Distribution
     description: Fee distribution module APIs
-  - name: TERRA
-    description: Terra modules APIs
+  - name: Budget
+    description: Budget program modules APIs
+  - name: Market
+    description: Market modules APIs
+  - name: Oracle
+    description: Get price and voting modules APIs
+  - name: Treasury
+    description: Treasury modules APIs
   - name: version
     description: Query app version
 schemes:
@@ -52,7 +56,7 @@ paths:
       description: Information about the connected node
       summary: The properties of the connected node
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       responses:
@@ -89,7 +93,7 @@ paths:
     get:
       summary: Syncing state of node
       tags:
-        - ICS0
+        - Tendermint
       description: Get if the node is currently syning with other nodes
       responses:
         200:
@@ -100,7 +104,7 @@ paths:
     get:
       summary: Get the latest block
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       responses:
@@ -114,7 +118,7 @@ paths:
     get:
       summary: Get a block at a certain height
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       parameters:
@@ -138,7 +142,7 @@ paths:
     get:
       summary: Get the latest validator set
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       responses:
@@ -159,7 +163,7 @@ paths:
     get:
       summary: Get a validator set a certain height
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       parameters:
@@ -190,7 +194,7 @@ paths:
     get:
       summary: Get a Tx by hash
       tags:
-        - ICS0
+        - Tendermint
       produces:
         - application/json
       parameters:
@@ -209,7 +213,7 @@ paths:
   /txs:
     get:
       tags:
-        - ICS0
+        - Tendermint
       summary: Search transactions
       description: Search transactions by tag(s).
       produces:
@@ -241,7 +245,7 @@ paths:
           description: Internal Server Error
     post:
       tags:
-        - ICS0
+        - Tendermint
       summary: broadcast Tx
       description: broadcast tx with tendermint rpc
       consumes:
@@ -271,7 +275,7 @@ paths:
   /tx/sign:
     post:
       tags:
-        - ICS20
+        - Transaction
       summary: Sign a Tx
       description: Sign a Tx providing locally stored account and according password
       consumes:
@@ -307,7 +311,7 @@ paths:
   /tx/broadcast:
     post:
       tags:
-        - ICS20
+        - Transaction
       summary: Send a signed Tx
       description: Send a signed Tx to a Terrad full node
       consumes:
@@ -336,7 +340,7 @@ paths:
   /tx/encode:
     post:
       tags:
-        - ICS20
+        - Transaction
       summary: Encode a transaction to wire format
       description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
       consumes:
@@ -370,7 +374,7 @@ paths:
     get:
       summary: Get the account balances
       tags:
-        - ICS20
+        - Transaction
       produces:
         - application/json
       parameters:
@@ -395,7 +399,7 @@ paths:
       summary: Send coins (build -> sign -> send)
       description: Send coins (build -> sign -> send)
       tags:
-        - ICS20
+        - Transaction
       consumes:
         - application/json
       produces:
@@ -434,7 +438,7 @@ paths:
     get:
       summary: List of accounts stored locally
       tags:
-        - ICS1
+        - Keys
       produces:
         - application/json
       responses:
@@ -449,7 +453,7 @@ paths:
     post:
       summary: Create a new account locally
       tags:
-        - ICS1
+        - Keys
       consumes:
         - application/json
       produces:
@@ -486,7 +490,7 @@ paths:
     get:
       summary: Create a new seed to create a new account with
       tags:
-        - ICS1
+        - Keys
       responses:
         200:
           description: 24 word Seed
@@ -497,7 +501,7 @@ paths:
     post:
       summary: Recover a account from a seed
       tags:
-        - ICS1
+        - Keys
       consumes:
         - application/json
       produces:
@@ -542,7 +546,7 @@ paths:
     get:
       summary: Get a certain locally stored account
       tags:
-        - ICS1
+        - Keys
       produces:
         - application/json
       responses:
@@ -555,7 +559,7 @@ paths:
     put:
       summary: Update the password for this account in the KMS
       tags:
-        - ICS1
+        - Keys
       consumes:
         - application/json
       parameters:
@@ -582,7 +586,7 @@ paths:
     delete:
       summary: Remove an account
       tags:
-        - ICS1
+        - Keys
       consumes:
         - application/json
       parameters:
@@ -607,7 +611,7 @@ paths:
     get:
       summary: Get the account information on blockchain
       tags:
-        - ICS1
+        - Keys
       produces:
         - application/json
       parameters:
@@ -653,7 +657,7 @@ paths:
     get:
       summary: Get all delegations from a delegator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -685,7 +689,7 @@ paths:
               delegation:
                 $ref: "#/definitions/Coin"
       tags:
-        - ICS21
+        - Staking
       consumes:
         - application/json
       produces:
@@ -716,7 +720,7 @@ paths:
     get:
       summary: Query the current delegation between a delegator and a validator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -738,7 +742,7 @@ paths:
     get:
       summary: Get all unbonding delegations from a delegator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -771,7 +775,7 @@ paths:
                 type: string
                 example: "100"
       tags:
-        - ICS21
+        - Staking
       consumes:
         - application/json
       produces:
@@ -802,7 +806,7 @@ paths:
     get:
       summary: Query all unbonding delegations between a delegator and a validator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -836,7 +840,7 @@ paths:
     get:
       summary: Get all redelegations (filter by query params)
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -876,7 +880,7 @@ paths:
                 type: string
                 example: "100"
       tags:
-        - ICS21
+        - Staking
       consumes:
         - application/json
       produces:
@@ -902,7 +906,7 @@ paths:
     get:
       summary: Query all validators that a delegator is bonded to
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -931,7 +935,7 @@ paths:
     get:
       summary: Query a validator that a delegator is bonded to
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -953,7 +957,7 @@ paths:
     get:
       summary: Get all staking txs (i.e msgs) from a delegator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -973,7 +977,7 @@ paths:
     get:
       summary: Get all validator candidates
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -995,7 +999,7 @@ paths:
     get:
       summary: Query the information from a single validator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -1017,7 +1021,7 @@ paths:
     get:
       summary: Get all delegations from a validator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -1041,7 +1045,7 @@ paths:
     get:
       summary: Get all unbonding delegations from a validator
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -1059,7 +1063,7 @@ paths:
     get:
       summary: Get the current state of the staking pool
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -1086,7 +1090,7 @@ paths:
     get:
       summary: Get the current staking parameter values
       tags:
-        - ICS21
+        - Staking
       produces:
         - application/json
       responses:
@@ -1118,7 +1122,7 @@ paths:
       produces:
         - application/json
       tags:
-        - ICS23
+        - Slashing
       parameters:
         - type: string
           description: Bech32 validator public key
@@ -1154,7 +1158,7 @@ paths:
       produces:
         - application/json
       tags:
-        - ICS23
+        - Slashing
       parameters:
         - type: string
           description: Bech32 validator address
@@ -1185,7 +1189,7 @@ paths:
     get:
       summary: Get the current slashing parameters
       tags:
-        - ICS23
+        - Slashing
       produces:
         - application/json
       responses:
@@ -1210,418 +1214,6 @@ paths:
                 type: integer
         500:
           description: Internal Server Error
-  /gov/proposals:
-    post:
-      summary: Submit a proposal
-      description: Send transaction to submit a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - description: valid value of `"proposal_type"` can be `"text"`, `"parameter_change"`, `"software_upgrade"`
-          name: post_proposal_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              title:
-                type: string
-              description:
-                type: string
-              proposal_type:
-                type: string
-                example: "text"
-              proposer:
-                $ref: "#/definitions/Address"
-              initial_deposit:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
-        400:
-          description: Invalid proposal body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-    get:
-      summary: Query proposals
-      description: Query proposals information with parameters
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - in: query
-          name: voter
-          description: voter address
-          required: false
-          type: string
-        - in: query
-          name: depositor
-          description: depositor address
-          required: false
-          type: string
-        - in: query
-          name: status
-          description: proposal status, valid values can be `"deposit_period"`, `"voting_period"`, `"passed"`, `"rejected"`
-          required: false
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/TextProposal"
-        400:
-          description: Invalid query parameters
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}:
-    get:
-      summary: Query a proposal
-      description: Query a proposal by id
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/TextProposal"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/proposer:
-    get:
-      summary: Query proposer
-      description: Query for the proposer for a proposal
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Proposer"
-        400:
-          description: Invalid proposal ID
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/deposits:
-    get:
-      summary: Query deposits
-      description: Query deposits by proposalId
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Deposit"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-    post:
-      summary: Deposit tokens to a proposal
-      description: Send transaction to deposit tokens to a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-        - description: ""
-          name: post_deposit_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              depositor:
-                $ref: "#/definitions/Address"
-              amount:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
-        400:
-          description: Invalid proposal id or deposit body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/deposits/{depositor}:
-    get:
-      summary: Query deposit
-      description: Query deposit by proposalId and depositor address
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-        - type: string
-          description: Bech32 depositor address
-          name: depositor
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Deposit"
-        400:
-          description: Invalid proposal id or depositor address
-        404:
-          description: Found no deposit
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/votes:
-    get:
-      summary: Query voters
-      description: Query voters information by proposalId
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Vote"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-    post:
-      summary: Vote a proposal
-      description: Send transaction to vote a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-        - description: valid value of `"option"` field can be `"yes"`, `"no"`, `"no_with_veto"` and `"abstain"`
-          name: post_vote_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              voter:
-                $ref: "#/definitions/Address"
-              option:
-                type: string
-                example: "yes"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
-        400:
-          description: Invalid proposal id or vote body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/votes/{voter}:
-    get:
-      summary: Query vote
-      description: Query vote information by proposal Id and voter address
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-        - type: string
-          description: Bech32 voter address
-          name: voter
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Vote"
-        400:
-          description: Invalid proposal id or voter address
-        404:
-          description: Found no vote
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/tally:
-    get:
-      summary: Get a proposal's tally result at the current time
-      description: Gets a proposal's tally result at the current time. If the proposal is pending deposits (i.e status 'DepositPeriod') it returns an empty tally result.
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/TallyResult"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-  /gov/parameters/deposit:
-    get:
-      summary: Query governance deposit parameters
-      description: Query governance deposit parameters. The max_deposit_period units are in nanoseconds.
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              min_deposit:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-              max_deposit_period:
-                type: string
-                example: "86400000000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no deposit parameters
-        500:
-          description: Internal Server Error
-  /gov/parameters/tallying:
-    get:
-      summary: Query governance tally parameters
-      description: Query governance tally parameters
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              threshold:
-                type: string
-                example: "0.5000000000"
-              veto:
-                type: string
-                example: "0.3340000000"
-              governance_penalty:
-                type: string
-                example: "0.0100000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no tally parameters
-        500:
-          description: Internal Server Error
-  /gov/parameters/voting:
-    get:
-      summary: Query governance voting parameters
-      description: Query governance voting parameters. The voting_period units are in nanoseconds.
-      produces:
-        - application/json
-      tags:
-        - ICS22
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              voting_period:
-                type: string
-                example: "86400000000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no voting parameters
-        500:
-          description: Internal Server Error
   /distribution/delegators/{delegatorAddr}/rewards:
     parameters:
       - in: path
@@ -1635,7 +1227,7 @@ paths:
       produces:
         - application/json
       tags:
-        - ICS24
+        - Distribution
       responses:
         200:
           description: OK
@@ -1651,7 +1243,7 @@ paths:
       summary: Withdraw all the delegator's delegation rewards
       description: Withdraw all the delegator's delegation rewards
       tags:
-        - ICS24
+        - Distribution
       consumes:
         - application/json
       produces:
@@ -1690,7 +1282,7 @@ paths:
       summary: Query a delegation reward
       description: Query a single delegation reward by a delegator
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1708,7 +1300,7 @@ paths:
       summary: Withdraw a delegation reward
       description: Withdraw a delegator's delegation reward from a single validator
       tags:
-        - ICS24
+        - Distribution
       consumes:
         - application/json
       produces:
@@ -1742,7 +1334,7 @@ paths:
       summary: Get the rewards withdrawal address
       description: Get the delegations' rewards withdrawal address. This is the address in which the user will receive the reward funds
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1758,7 +1350,7 @@ paths:
       summary: Replace the rewards withdrawal address
       description: Replace the delegations' rewards withdrawal address for a new one.
       tags:
-        - ICS24
+        - Distribution
       consumes:
         - application/json
       produces:
@@ -1794,7 +1386,7 @@ paths:
       summary: Validator distribution information
       description: Query the distribution information of a single validator
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1817,7 +1409,7 @@ paths:
       summary: Commission and self-delegation rewards of a single a validator
       description: Query the commission and self-delegation rewards of a validator.
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1835,7 +1427,7 @@ paths:
       summary: Withdraw the validator's rewards
       description: Withdraw the validator's self-delegation and commissions rewards
       tags:
-        - ICS24
+        - Distribution
       consumes:
         - application/json
       produces:
@@ -1862,7 +1454,7 @@ paths:
     get:
       summary: Fee distribution parameters
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1882,7 +1474,7 @@ paths:
     get:
       summary: Fee distribution outstanding rewards
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1898,7 +1490,7 @@ paths:
     post:
       summary: Posting new budget program
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       parameters:
@@ -1919,7 +1511,7 @@ paths:
     post:
       summary: Send withdraw request
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       parameters:
@@ -1927,7 +1519,7 @@ paths:
           name: programId
           description: Program ID
           required: true
-          type: number
+          type: integer
       responses:
         200:
           description: OK
@@ -1941,7 +1533,7 @@ paths:
     post:
       summary: Vote to the program by programId
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       parameters:
@@ -1949,7 +1541,7 @@ paths:
           name: programId
           description: Program ID
           required: true
-          type: number
+          type: integer
         - in: body
           name: Budget Vote request body
           schema:
@@ -1968,7 +1560,7 @@ paths:
     get:
       summary: Get a budget program by program-id
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       parameters:
@@ -1976,7 +1568,7 @@ paths:
           name: programId
           description: Program ID
           required: true
-          type: number
+          type: integer
       responses:
         200:
           description: OK
@@ -1991,7 +1583,7 @@ paths:
     get:
       summary: Get active budget programs
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       responses:
@@ -2005,12 +1597,11 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-
   /budget/program/candidates:
     get:
       summary: Get candidate budget programs
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       responses:
@@ -2028,7 +1619,7 @@ paths:
     get:
       summary: Get the budget program voting record of RestVoter
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       parameters:
@@ -2036,7 +1627,7 @@ paths:
           name: programID
           description: Program ID
           required: true
-          type: number
+          type: integer
         - in: path
           name: voter
           description: Voter Address, bech32
@@ -2053,11 +1644,11 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/params:
+  /budget/program/params:
     get:
-      summary: Get the budget program voting record of RestVoter
+      summary: Get budget program params
       tags:
-        - TERRA
+        - Budget
       produces:
         - application/json
       responses:
@@ -2065,15 +1656,13 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/BudgetParams"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+        404:
+          description: Not Found
   /market/swap:
     post:
       summary: Swap coin with another coin
       tags:
-        - TERRA
+        - Market
       produces:
         - application/json
       parameters:
@@ -2092,7 +1681,7 @@ paths:
     post:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
-        - TERRA
+        - Oracle
       produces:
         - application/json
       parameters:
@@ -2115,7 +1704,7 @@ paths:
     get:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
-        - TERRA
+        - Oracle
       produces:
         - application/json
       parameters:
@@ -2143,7 +1732,7 @@ paths:
     get:
       summary: Get the current effective price in Luna for the asset
       tags:
-        - TERRA
+        - Oracle
       produces:
         - application/json
       parameters:
@@ -2163,7 +1752,7 @@ paths:
     get:
       summary: Get all activated Coins
       tags:
-        - TERRA
+        - Oracle
       produces:
         - application/json
       responses:
@@ -2182,7 +1771,7 @@ paths:
     get:
       summary: Get oracle params
       tags:
-        - TERRA
+        - Oracle
       produces:
         - application/json
       responses:
@@ -2194,11 +1783,140 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /treasury/assets:
+  /treasury/tax-rate/{epoch}:
     get:
-      summary: Get all treasury assets
+      summary: Get tax rate at epoch
       tags:
-        - TERRA
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: epoch
+          description: Epoch number
+          required: true
+          type: number
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "0.05"
+        500:
+          description: Internal Server Error
+  /treasury/tax-cap/{denom}:
+    get:
+      summary: Get tax cap of the denom
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: Denom
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: integer
+            example: "1"
+        404:
+          description: Not Found
+  /treasury/reward-weight/{epoch}:
+    get:
+      summary: Get reward weight at epoch
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: epoch
+          description: Epoch number
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            example: "5"
+            description: 5%
+        500:
+          description: Internal Server Error
+  /treasury/issuance/{denom}:
+    get:
+      summary: Get total issuance count of denom
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: Denom to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: integer
+            example: "500"
+        500:
+          description: Internal Server Error
+  /treasury/tax-proceeds/{epoch}:
+    get:
+      summary: Get tax proceeds at epoch
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: epoch
+          description: Epoch number
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        500:
+          description: Internal Server Error
+  /treasury/seigniorage-proceeds/{epoch}:
+    get:
+      summary: retrieves the size of the seigniorage pool at epoch
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: epoch
+          description: Epoch number
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            type: integer
+            example: "0"
+        500:
+          description: Internal Server Error
+  /treasury/active-claims:
+    get:
+      summary: Get all active Claims
+      tags:
+        - Treasury
       produces:
         - application/json
       responses:
@@ -2207,34 +1925,39 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/Coin"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /treasury/share/{share-id}:
+              $ref: "#/definitions/Claim"
+        404:
+          description: Not Found
+  /treasury/current-epoch:
     get:
-      summary: TODO // Add Summary
+      summary: Get current epoch
       tags:
-        - TERRA
+        - Treasury
       produces:
         - application/json
-      parameters:
-        - in: path
-          name: share-id
-          description: Share ID is one of "oracle', 'debt', and 'budget"
-          required: true
-          enum: ['oracle', 'debt', 'budget']
-          type: string
       responses:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/Share"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+            type: array
+            items:
+              $ref: "#/definitions/Claim"
+        404:
+          description: Not Found
+  /treasury/params:
+    get:
+      summary: Get treasury module params
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/TreasuryParams"
+        404:
+          description: Not Found
 definitions:
   CheckTxResult:
     type: object
@@ -2581,47 +2304,6 @@ definitions:
       accum:
         type: string
         example: "1000"
-  TextProposal:
-    type: object
-    properties:
-      proposal_id:
-        type: integer
-      title:
-        type: string
-      description:
-        type: string
-      proposal_type:
-        type: string
-      proposal_status:
-        type: string
-      final_tally_result:
-        $ref: "#/definitions/TallyResult"
-      submit_time:
-        type: string
-      total_deposit:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      voting_start_time:
-        type: string
-  Proposer:
-    type: object
-    properties:
-      proposal_id:
-        type: integer
-      proposer:
-        type: string
-  Deposit:
-    type: object
-    properties:
-      amount:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      proposal_id:
-        type: integer
-      depositor:
-        $ref: "#/definitions/Address"
   TallyResult:
     type: object
     properties:
@@ -2637,15 +2319,6 @@ definitions:
       no_with_veto:
         type: string
         example: "0.0000000000"
-  Vote:
-    type: object
-    properties:
-      voter:
-        type: string
-      proposal_id:
-        type: integer
-      option:
-        type: string
   Validator:
     type: object
     properties:
@@ -2677,7 +2350,7 @@ definitions:
         example: "0"
       bond_intra_tx_counter:
         type: integer
-        example: 0
+        example: "0"
       unbonding_height:
         type: string
         example: "0"
@@ -2810,14 +2483,6 @@ definitions:
         example: "100"
       voter:
         $ref: "#/definitions/Address"
-  Share:
-    type: object
-    properties:
-      id:
-        type: string
-        example: "oracle"
-      weight:
-        type: number
   submitProgramReq:
     type: object
     properties:
@@ -2895,3 +2560,67 @@ definitions:
       drop_threshold:
         type: number
         example: "10"
+  Claim:
+    type: object
+    properties:
+      class:
+        type: string
+        example: ["oracle", "budget"]
+      weight:
+        type: integer
+        example: "100"
+      recipient:
+        $ref: "#/definitions/Address"
+  PolicyConstraints:
+    type: object
+    properties:
+      rate_min:
+        type: number
+        format: float
+        example: "0.0005"
+        description: "0.05%"
+      rate_max:
+        type: number
+        format: float
+        example: "0.01"
+        description: "1%"
+      cap:
+        $ref: "#/definitions/Coin"
+      change_max:
+        type: number
+        format: float
+        example: "0.00025"
+        description: "0.025%"
+  TreasuryParams:
+    type: object
+    properties:
+      tax_policy:
+        $ref: "#/definitions/PolicyConstraints"
+      reward_policy:
+        $ref: "#/definitions/PolicyConstraints"
+      seigniorage_burden_target:
+        type: number
+        format: float
+        example: "0.67"
+        description: "67%"
+      mining_increment:
+        type: number
+        format: float
+        example: "1.07"
+      epoch_short:
+        type: integer
+        example: "4"
+      epoch_long:
+        type: integer
+        example: "52"
+      epoch_probation:
+        type: integer
+        example: "12"
+      oracle_share:
+        type: number
+        format: float
+        example: "0.1"
+      budget_share:
+        type: number
+        format: float
+        example: "0.9"
