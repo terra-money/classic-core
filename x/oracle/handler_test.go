@@ -141,9 +141,6 @@ func TestOracleDrop(t *testing.T) {
 	msg := NewMsgPriceFeed(assets.KRWDenom, randomPrice, addrs[0])
 	h(input.ctx, msg)
 
-	msg = NewMsgPriceFeed(assets.KRWDenom, randomPrice, addrs[1])
-	h(input.ctx, msg)
-
 	input.ctx = input.ctx.WithBlockHeight(1)
 	for i := 0; i < int(dropThreshold.Int64())-1; i++ {
 		EndBlocker(input.ctx, input.oracleKeeper)

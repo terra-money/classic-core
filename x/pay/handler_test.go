@@ -105,6 +105,7 @@ func createTestInput(t *testing.T) testInput {
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
+		valset,
 		mintKeeper,
 		marketKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
