@@ -20,11 +20,8 @@ import (
 // REST Variable names
 // nolint
 const (
-	// RestParamsType    = "type"
 	RestProgramID = "program-id"
 	RestVoter     = "voter"
-	// RestProgramStatus = "status"
-	// RestNumLimit      = "limit"
 
 	queryRoute = "budget"
 )
