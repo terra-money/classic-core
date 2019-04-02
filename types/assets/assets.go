@@ -14,8 +14,8 @@ const (
 	MicroUnit = int64(1e6)
 )
 
-// IsValidAsset returns the asset is valid or not
-func IsValidAsset(denom string) bool {
+// IsValidDenom returns the given denom is valid or not
+func IsValidDenom(denom string) bool {
 	return denom == MicroLunaDenom ||
 		denom == MicroUSDDenom ||
 		denom == MicroKRWDenom ||

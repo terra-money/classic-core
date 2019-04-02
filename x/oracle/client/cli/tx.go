@@ -54,7 +54,7 @@ where "mkrw" is the denominating currency, and "8890" is the price of micro Luna
 				return fmt.Errorf("--denom flag is required")
 			}
 
-			if denom == assets.MicroLunaDenom || !assets.IsValidAsset(denom) {
+			if denom == assets.MicroLunaDenom || !assets.IsValidDenom(denom) {
 				return fmt.Errorf("given denom {%s} is not a valid one", denom)
 			}
 

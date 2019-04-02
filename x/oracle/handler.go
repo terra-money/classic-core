@@ -144,7 +144,7 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	}
 
 	// Check the given denom is valid or not
-	if pfm.Denom == assets.MicroLunaDenom || !assets.IsValidAsset(pfm.Denom) {
+	if pfm.Denom == assets.MicroLunaDenom || !assets.IsValidDenom(pfm.Denom) {
 		return ErrUnknownDenomination(DefaultCodespace, pfm.Denom).Result()
 	}
 
