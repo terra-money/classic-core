@@ -81,31 +81,6 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	require.Equal(t, tProceeds.Add(sProceeds), mProceeds)
 }
 
-func TestSMR(t *testing.T) {
-	input := createTestInput(t)
-	amt := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
-	lnasdrRate := sdk.NewDec(10)
-
-	// Set random prices
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
-
-	// Record tax proceeds
-	input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
-		sdk.NewCoin(assets.MicroSDRDenom, amt),
-	})
-
-	// Add seigniorage
-	input.mintKeeper.AddSeigniorage(input.ctx, amt)
-
-	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-
-	actualSMR := SMR(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-	expectedSMR := sProceeds.Quo(tProceeds.Add(sProceeds))
-
-	require.Equal(t, expectedSMR, actualSMR)
-}
-
 func TestUnitIndicator(t *testing.T) {
 	input := createTestInput(t)
 
@@ -123,6 +98,36 @@ func TestUnitIndicator(t *testing.T) {
 
 func linearFn(_ sdk.Context, _ Keeper, epoch sdk.Int) sdk.Dec {
 	return sdk.NewDecFromInt(epoch)
+}
+
+func TestSumIndicator(t *testing.T) {
+	input := createTestInput(t)
+
+	// Case 1: at epoch 0 and summing over 0 epochs
+	rval := SumIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
+	require.Equal(t, sdk.ZeroDec(), rval)
+
+	// Case 2: at epoch 0 and summing over negative epochs
+	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.OneInt().Neg(), linearFn)
+	require.Equal(t, sdk.ZeroDec(), rval)
+
+	// Case 3: at epoch 3 and summing over 3, 4, 5 epochs; all should have the same rval
+	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 3)
+	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(4), linearFn)
+	rval2 := SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(5), linearFn)
+	rval3 := SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(6), linearFn)
+	require.Equal(t, sdk.NewDec(6), rval)
+	require.Equal(t, rval, rval2)
+	require.Equal(t, rval2, rval3)
+
+	// Case 4: at epoch 3 and summing over 0 epochs
+	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
+	require.Equal(t, sdk.ZeroDec(), rval)
+
+	// Case 5. Sum up to 10
+	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 10)
+	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(10), linearFn)
+	require.Equal(t, sdk.NewDec(55), rval)
 }
 
 func TestRollingAverageIndicator(t *testing.T) {
