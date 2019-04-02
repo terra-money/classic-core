@@ -107,6 +107,9 @@ func TestQueryActives(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.oracleKeeper)
 
+	empty := getQueriedActive(t, input.ctx, input.cdc, querier)
+	require.Equal(t, 0, len(empty))
+
 	testPrice := sdk.NewDecWithPrec(48842, 4).MulInt64(assets.MicroUnit)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, testPrice)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroUSDDenom, testPrice)

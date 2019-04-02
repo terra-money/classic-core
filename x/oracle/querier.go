@@ -38,10 +38,14 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 
 	price, err := keeper.GetLunaSwapRate(ctx, denom)
 	if err != nil {
-		return []byte{}, ErrUnknownDenomination(DefaultCodespace, denom)
+		return nil, ErrUnknownDenomination(DefaultCodespace, denom)
 	}
 
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(price)
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, price)
+	if err2 != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+	}
+
 	return bz, nil
 }
 
@@ -50,7 +54,7 @@ func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
-		return []byte{}, sdk.ErrInternal("could not marshal result to JSON")
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return bz, nil

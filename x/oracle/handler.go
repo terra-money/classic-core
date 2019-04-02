@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"terra/types"
+	"terra/types/assets"
 	"terra/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -140,6 +141,11 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
 	if val == nil {
 		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
+	}
+
+	// Check the given denom is valid or not
+	if pfm.Denom == assets.MicroLunaDenom || !assets.IsValidAsset(pfm.Denom) {
+		return ErrUnknownDenomination(DefaultCodespace, pfm.Denom).Result()
 	}
 
 	// Add the vote to the store
