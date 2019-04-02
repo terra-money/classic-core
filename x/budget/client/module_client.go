@@ -43,7 +43,7 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	}
 
 	budgetTxCmd.AddCommand(client.PostCommands(
-		cli.GetCmdSubmitProgram(mc.cdc),
+		cli.GetCmdSubmitProgram(mc.storeKey, mc.cdc),
 		cli.GetCmdWithdrawProgram(mc.cdc),
 		cli.GetCmdVote(mc.cdc),
 	)...)
