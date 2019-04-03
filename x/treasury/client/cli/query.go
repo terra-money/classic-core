@@ -21,7 +21,7 @@ const (
 )
 
 // GetCmdQueryTaxRate implements the query taxrate command.
-func GetCmdQueryTaxRate(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxRate,
 		Short: "Query the stability tax rate",
@@ -36,7 +36,7 @@ $ terracli query treasury taxrate --epoch=14
 			var epoch sdk.Int
 			epochStr := viper.GetString(flagEpoch)
 			if len(epochStr) == 0 {
-				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 				if err != nil {
 					return err
 				}
@@ -50,7 +50,7 @@ $ terracli query treasury taxrate --epoch=14
 				}
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryTaxRate, epoch.String()), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxRate, epoch.String()), nil)
 			if err != nil {
 				return err
 			}
@@ -66,7 +66,7 @@ $ terracli query treasury taxrate --epoch=14
 }
 
 // GetCmdQueryTaxCap implements the query taxcap command.
-func GetCmdQueryTaxCap(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxCap(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxCap,
 		Short: "Query the current stability tax cap of a denom asset",
@@ -88,7 +88,7 @@ $ terracli query treasury taxcap --denom="mkrw"
 				return fmt.Errorf("given denom {%s} is not a valid one", denom)
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryTaxCap, denom), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap, denom), nil)
 			if err != nil {
 				return err
 			}
@@ -105,7 +105,7 @@ $ terracli query treasury taxcap --denom="mkrw"
 }
 
 // GetCmdQueryIssuance implements the query issuance command.
-func GetCmdQueryIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryIssuance(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryIssuance,
 		Short: "Query the current issuance of a denom asset",
@@ -126,7 +126,7 @@ $ terracli query treasury issuance --denom="mkrw"
 				return fmt.Errorf("given denom {%s} is not a valid one", denom)
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryIssuance, denom), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
 			if err != nil {
 				return err
 			}
@@ -143,7 +143,7 @@ $ terracli query treasury issuance --denom="mkrw"
 }
 
 // GetCmdQueryActiveClaims implements the query active-claims command.
-func GetCmdQueryActiveClaims(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryActiveClaims(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryActiveClaims,
 		Short: "Query claims that have yet to be redeemed by the treasury",
@@ -155,7 +155,7 @@ $ terracli query treasury active-claims
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryActiveClaims), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryActiveClaims), nil)
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ $ terracli query treasury active-claims
 }
 
 // GetCmdQueryMiningRewardWeight implements the query reward-weight command.
-func GetCmdQueryMiningRewardWeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryMiningRewardWeight(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryMiningRewardWeight,
 		Short: "Query the mining reward weight",
@@ -185,7 +185,7 @@ $ terracli query treasury reward-weight --epoch=14
 			var epoch sdk.Int
 			epochStr := viper.GetString(flagEpoch)
 			if len(epochStr) == 0 {
-				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 				if err != nil {
 					return err
 				}
@@ -199,7 +199,7 @@ $ terracli query treasury reward-weight --epoch=14
 				}
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryMiningRewardWeight, epoch.String()), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryMiningRewardWeight, epoch.String()), nil)
 			if err != nil {
 				return err
 			}
@@ -216,7 +216,7 @@ $ terracli query treasury reward-weight --epoch=14
 }
 
 // GetCmdQueryTaxProceeds implements the query tax-proceeds command.
-func GetCmdQueryTaxProceeds(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxProceeds,
 		Short: "Query the tax proceeds for the epoch",
@@ -231,7 +231,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 			var epoch sdk.Int
 			epochStr := viper.GetString(flagEpoch)
 			if len(epochStr) == 0 {
-				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 				if err != nil {
 					return err
 				}
@@ -245,7 +245,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 				}
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QueryTaxProceeds, epoch.String()), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxProceeds, epoch.String()), nil)
 			if err != nil {
 				return err
 			}
@@ -262,7 +262,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 }
 
 // GetCmdQuerySeigniorageProceeds implements the query seigniorage-proceeds command.
-func GetCmdQuerySeigniorageProceeds(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQuerySeigniorageProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QuerySeigniorageProceeds,
 		Short: "Query the seigniorage proceeds for the epoch",
@@ -277,7 +277,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 			var epoch sdk.Int
 			epochStr := viper.GetString(flagEpoch)
 			if len(epochStr) == 0 {
-				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 				if err != nil {
 					return err
 				}
@@ -291,7 +291,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 				}
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, treasury.QuerySeigniorageProceeds, epoch.String()), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QuerySeigniorageProceeds, epoch.String()), nil)
 			if err != nil {
 				return err
 			}
@@ -308,7 +308,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 }
 
 // GetCmdQueryCurrentEpoch implements the query seigniorage-proceeds command.
-func GetCmdQueryCurrentEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryCurrentEpoch(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryCurrentEpoch,
 		Short: "Query the current epoch number",
@@ -320,7 +320,7 @@ $ terracli query treasury current-epoch
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryCurrentEpoch), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
 			if err != nil {
 				return err
 			}
@@ -335,14 +335,14 @@ $ terracli query treasury current-epoch
 }
 
 // GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryParams,
 		Short: "Query the current Treasury params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, treasury.QueryParams), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryParams), nil)
 			if err != nil {
 				return err
 			}
