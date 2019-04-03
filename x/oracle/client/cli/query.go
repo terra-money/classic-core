@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"terra/types/assets"
 	"terra/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -96,6 +97,13 @@ returns oracle votes submitted by terrad8duyufdshs... for denom musd
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
+			if len(denom) == 0 {
+				return fmt.Errorf("--denom flag is required")
+			}
+
+			if !assets.IsValidDenom(denom) {
+				return fmt.Errorf("The denom is not known: %s", denom)
+			}
 
 			// Check voter address exists, then valids
 			var voterAddress sdk.AccAddress
@@ -128,7 +136,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom musd
 		},
 	}
 
-	cmd.Flags().String(flagDenom, "", "(optional) filter by votes matching the denom")
+	cmd.Flags().String(flagDenom, "", "filter by votes matching the denom")
 	cmd.Flags().String(flagVoter, "", "(optional) filter by votes by voter")
 
 	return cmd
