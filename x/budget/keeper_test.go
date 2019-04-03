@@ -68,12 +68,12 @@ func TestKeeperProgram(t *testing.T) {
 	programBitmap := make([]bool, idCeiling)
 
 	// just a random test program...
-	testProgram := NewProgram("", "", addrs[0], addrs[1], 0)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numTests := rand.Int() % maxTests
 	for i := 0; i < numTests; i++ {
 		programID := uint64(rand.Int63() % int64(idCeiling))
+		testProgram := NewProgram(programID, "", "", addrs[0], addrs[1], 0)
 		action := rand.Int() % 2
 		if action == 0 {
 			programBitmap[programID] = true

@@ -38,20 +38,21 @@ func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk
 	}
 
 	// Create and add program
+	programID := k.NewProgramID(ctx)
 	program := NewProgram(
+		programID,
 		msg.Title,
 		msg.Description,
 		msg.Submitter,
 		msg.Executor,
 		ctx.BlockHeight(),
 	)
-	programID := k.NewProgramID(ctx)
+
 	k.SetProgram(ctx, programID, program)
 	k.CandQueueInsert(ctx, program.getVotingEndBlock(ctx, k), programID)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Action, tags.ActionProgramSubmitted,
 			tags.ProgramID, strconv.FormatUint(programID, 10),
 		),
 	}
@@ -84,7 +85,6 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Action, tags.ActionProgramWithdrawn,
 			tags.ProgramID, strconv.FormatUint(msg.ProgramID, 10),
 		),
 	}
@@ -110,7 +110,6 @@ func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Res
 	return sdk.Result{
 		Tags: resTags.AppendTags(
 			sdk.NewTags(
-				tags.Action, tags.ActionProgramVote,
 				tags.ProgramID, strconv.FormatUint(msg.ProgramID, 10),
 				tags.Voter, msg.Voter.String(),
 				tags.Option, strconv.FormatBool(msg.Option),

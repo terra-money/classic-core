@@ -13,13 +13,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetCmdQueryProgram implements the query program command.
 func GetCmdQueryProgram(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "program [program-id]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "program",
 		Short: "Query details of a single program",
 		Long: strings.TrimSpace(`
 Query details for a program. 
@@ -27,15 +27,20 @@ Query details for a program.
 You can find the program-id of active programs by running terracli query budget actives
 You can find the program-id of inactive (candidate) programs by running terracli query budget candidates
 
-$ terracli query budget program 1
+$ terracli query budget program --program-id 1
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// validate that the program id is a uint
-			programID, err := strconv.ParseUint(args[0], 10, 64)
+			programIDStr := viper.GetString(flagProgramID)
+			if len(programIDStr) == 0 {
+				return fmt.Errorf("--program-id flag is required")
+			}
+
+			programID, err := strconv.ParseUint(programIDStr, 10, 64)
 			if err != nil {
-				return fmt.Errorf("program-id %s not a valid uint, please input a valid program-id", args[0])
+				return fmt.Errorf("given program-id %s not a valid format\n, program-id should be formatted as integer", programIDStr)
 			}
 
 			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, budget.QueryProgram, programID), nil)
@@ -53,6 +58,7 @@ $ terracli query budget program 1
 		},
 	}
 
+	cmd.Flags().String(flagProgramID, "", "the program ID to query")
 	return cmd
 }
 
@@ -69,19 +75,10 @@ func GetCmdQueryActives(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			var actives []budget.Program
+			var actives budget.Programs
 			cdc.MustUnmarshalJSON(res, &actives)
 
-			if len(actives) == 0 {
-				fmt.Println("No active Programs found")
-				return nil
-			}
-
-			for _, program := range actives {
-				fmt.Println(program.String())
-			}
-
-			return nil
+			return cliCtx.PrintOutput(actives)
 		},
 	}
 
@@ -96,24 +93,15 @@ func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryActiveList), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryCandidateList), nil)
 			if err != nil {
 				return err
 			}
 
-			var candidates []budget.Program
+			var candidates budget.Programs
 			cdc.MustUnmarshalJSON(res, &candidates)
 
-			if len(candidates) == 0 {
-				fmt.Println("No candidates Programs found")
-				return nil
-			}
-
-			for _, program := range candidates {
-				fmt.Println(program.String())
-			}
-
-			return nil
+			return cliCtx.PrintOutput(candidates)
 		},
 	}
 
@@ -124,12 +112,12 @@ func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
 func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryVotes,
-		Short: "Query votes, filtered by voterAddress ",
+		Short: "Query votes, filtered by voter and program id ",
 		Long: strings.TrimSpace(`
-Query vote details for a single program by its identifier.
+Query vote details filtered by voter address and program id.
 
 Example:
-$ terracli query budget votes 1
+$ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -139,20 +127,20 @@ $ terracli query budget votes 1
 			// Get voting address
 			voterAddrStr := viper.GetString(flagVoter)
 			if len(voterAddrStr) > 0 {
-				acc, err := cliCtx.GetAccount([]byte(voterAddrStr))
+				voterAddress, err := sdk.AccAddressFromBech32(voterAddrStr)
 				if err != nil {
 					return err
 				}
 
-				params.Voter = acc.GetAddress()
+				params.Voter = voterAddress
 			}
 
 			programIDStr := viper.GetString(flagProgramID)
 			if len(programIDStr) > 0 {
 				// validate that the program id is a uint
-				programID, err := strconv.ParseUint(args[0], 10, 64)
+				programID, err := strconv.ParseUint(programIDStr, 10, 64)
 				if err != nil {
-					return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", args[0])
+					return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", programIDStr)
 				}
 
 				params.ProgramID = programID
@@ -168,23 +156,15 @@ $ terracli query budget votes 1
 				return err
 			}
 
-			var matchingVotes []budget.MsgVoteProgram
+			var matchingVotes budget.Votes
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
-			if len(matchingVotes) == 0 {
-				fmt.Println("No matching votes found")
-				return nil
-			}
-
-			for _, vote := range matchingVotes {
-				fmt.Println(vote.String())
-			}
-
-			return nil
+			return cliCtx.PrintOutput(matchingVotes)
 		},
 	}
 
-	cmd.Flags().String(flagVoter, "", "voter for the program")
+	cmd.Flags().String(flagVoter, "", "(optional) voter for the program")
+	cmd.Flags().String(flagProgramID, "", "(optional) the program ID to query")
 
 	return cmd
 }

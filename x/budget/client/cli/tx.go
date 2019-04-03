@@ -143,12 +143,12 @@ func parseSubmitProgramFlags() (*program, error) {
 
 		// Check title existence
 		if len(program.Title) == 0 {
-			return nil, fmt.Errorf("--title flag is required")
+			return nil, fmt.Errorf("--%s flag is required", flagTitle)
 		}
 
 		// Check executor existence
 		if len(program.Executor) == 0 {
-			return nil, fmt.Errorf("--executor flag is required")
+			return nil, fmt.Errorf("--%s flag is required", flagExecutor)
 		}
 
 		return program, nil
@@ -219,7 +219,7 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 			} else if optionStr == "no" || optionStr == "false" {
 				option = false
 			} else {
-				return fmt.Errorf(`given option {%s} is not valid format;\n option should be formatted as "yes" or "no"\n`, optionStr)
+				return fmt.Errorf(`given option {%s} is not valid format;\n option should be formatted as "yes" or "no"`, optionStr)
 			}
 
 			// Build vote message and run basic validation
@@ -242,13 +242,12 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 // GetCmdVote implements creating a new vote command.
 func GetCmdWithdrawProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw [program-id]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "withdraw",
 		Short: "withdraw a program from consideration",
 		Long: strings.TrimSpace(`
 Withdraw a program from consideration. The deposit is only refunded if the program is already in the active set. 
 
-$ terracli tx budget withdraw 1 
+$ terracli tx budget withdraw --program-id 1 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -271,7 +270,7 @@ $ terracli tx budget withdraw 1
 
 			programID, err := strconv.ParseUint(programStrID, 10, 64)
 			if err != nil {
-				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", programStrID)
+				return fmt.Errorf("given program-id %s not a valid int, please input a valid program-id", programStrID)
 			}
 
 			// Build vote message and run basic validation

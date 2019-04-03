@@ -199,6 +199,21 @@ func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler fu
 //-----------------------------------
 // Candidate Queue logic
 
+// CandQueueIterate iterate all the Programs in the candidate queue
+func (k Keeper) CandQueueIterate(ctx sdk.Context, handler func(uint64) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixCandQueue)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var programID uint64
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &programID)
+
+		if handler(programID) {
+			break
+		}
+	}
+}
+
 // CandQueueIterateExpired iterate all the Programs in the candidate queue that have outspent their voteperiod
 func (k Keeper) CandQueueIterateExpired(ctx sdk.Context, endBlock int64, handler func(uint64) (stop bool)) {
 	store := ctx.KVStore(k.key)

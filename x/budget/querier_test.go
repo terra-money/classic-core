@@ -31,7 +31,7 @@ func getQueriedProgram(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier 
 	return program
 }
 
-func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.AccAddress, programID uint64) []MsgVoteProgram {
+func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.AccAddress, programID uint64) Votes {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryVotes}, "/"),
 		Data: cdc.MustMarshalJSON(NewQueryVotesParams(voter, programID)),
@@ -41,14 +41,14 @@ func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var votes []MsgVoteProgram
+	var votes Votes
 	err2 := cdc.UnmarshalJSON(bz, &votes)
 	require.Nil(t, err2)
 
 	return votes
 }
 
-func getQueriedActiveList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) []Program {
+func getQueriedActiveList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Programs {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryActiveList}, "/"),
 		Data: []byte{},
@@ -58,14 +58,14 @@ func getQueriedActiveList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, queri
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var activeList []Program
+	var activeList Programs
 	err2 := cdc.UnmarshalJSON(bz, &activeList)
 	require.Nil(t, err2)
 
 	return activeList
 }
 
-func getQueriedCandidateList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) []Program {
+func getQueriedCandidateList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Programs {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryCandidateList}, "/"),
 		Data: []byte{},
@@ -75,7 +75,7 @@ func getQueriedCandidateList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, qu
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var candidateList []Program
+	var candidateList Programs
 	err2 := cdc.UnmarshalJSON(bz, &candidateList)
 	require.Nil(t, err2)
 
@@ -115,11 +115,10 @@ func TestQueryProgram(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.budgetKeeper)
 
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
-	queriedProgram := getQueriedProgram(t, input.ctx, input.cdc, querier, testProgramID)
+	queriedProgram := getQueriedProgram(t, input.ctx, input.cdc, querier, testProgram.ProgramID)
 
 	require.Equal(t, queriedProgram, testProgram)
 }
@@ -128,13 +127,12 @@ func TestQueryVotes(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.budgetKeeper)
 
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
-	var votes []MsgVoteProgram
+	var votes Votes
 	for _, addr := range addrs {
-		vote := NewMsgVoteProgram(testProgramID, true, addr)
+		vote := NewVote(testProgram.ProgramID, true, addr)
 		votes = append(votes, vote)
 
 		input.budgetKeeper.AddVote(input.ctx, vote.ProgramID, vote.Voter, vote.Option)
@@ -145,7 +143,7 @@ func TestQueryVotes(t *testing.T) {
 	require.Equal(t, len(queriedVotes), len(votes))
 
 	// queriedVotes with programID filter
-	queriedVotesWithProgramID := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, testProgramID)
+	queriedVotesWithProgramID := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, testProgram.ProgramID)
 	require.Equal(t, len(queriedVotesWithProgramID), len(votes))
 
 	// queriedVotes with voter filter
@@ -153,7 +151,7 @@ func TestQueryVotes(t *testing.T) {
 	require.Equal(t, queriedVotesWithVoter, votes[:1])
 
 	// queriedVotes with programID and voter filter
-	queriedVotesWithBoth := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[1], testProgramID)
+	queriedVotesWithBoth := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[1], testProgram.ProgramID)
 	require.Equal(t, queriedVotesWithBoth, votes[1:2])
 }
 
@@ -161,25 +159,23 @@ func TestQueryActiveList(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.budgetKeeper)
 
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
 	queriedActiveList := getQueriedActiveList(t, input.ctx, input.cdc, querier)
 
-	require.Equal(t, queriedActiveList, []Program{testProgram})
+	require.Equal(t, queriedActiveList, Programs{testProgram})
 }
 
 func TestQueryCandidateList(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.budgetKeeper)
 
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
-	input.budgetKeeper.CandQueueInsert(input.ctx, 0, testProgramID)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.CandQueueInsert(input.ctx, 0, testProgram.ProgramID)
 
 	queriedCandidateList := getQueriedCandidateList(t, input.ctx, input.cdc, querier)
 
-	require.Equal(t, queriedCandidateList, []Program{testProgram})
+	require.Equal(t, queriedCandidateList, Programs{testProgram})
 }
