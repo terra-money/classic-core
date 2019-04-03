@@ -43,7 +43,7 @@ var programFlags = []string{
 }
 
 // GetCmdSubmitProgram implements submitting a program transaction command.
-func GetCmdSubmitProgram(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdSubmitProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "submit-program",
 		Short: "Submit a program along with an initial deposit",
@@ -91,7 +91,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 			submitterCoins := submitter.GetCoins()
 
 			// Query params to get deposit amount
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryParams), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
 			if err != nil {
 				return err
 			}

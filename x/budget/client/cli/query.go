@@ -17,7 +17,7 @@ import (
 )
 
 // GetCmdQueryProgram implements the query program command.
-func GetCmdQueryProgram(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "program",
 		Short: "Query details of a single program",
@@ -43,7 +43,7 @@ $ terracli query budget program --program-id 1
 				return fmt.Errorf("given program-id %s not a valid format\n, program-id should be formatted as integer", programIDStr)
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", queryRoute, budget.QueryProgram, programID), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%d", budget.QuerierRoute, budget.QueryProgram, programID), nil)
 			if err != nil {
 				return err
 			}
@@ -63,14 +63,14 @@ $ terracli query budget program --program-id 1
 }
 
 // GetCmdQueryActives implements a query actives command.
-func GetCmdQueryActives(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryActiveList,
 		Short: "Query active programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryActiveList), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryActiveList), nil)
 			if err != nil {
 				return err
 			}
@@ -86,14 +86,14 @@ func GetCmdQueryActives(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryCandidates implements the query program candidates command.
-func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryCandidates(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryCandidateList,
 		Short: "Query candidate programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryCandidateList), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryCandidateList), nil)
 			if err != nil {
 				return err
 			}
@@ -109,7 +109,7 @@ func GetCmdQueryCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryVotes implements the command to query for program votes.
-func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryVotes(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryVotes,
 		Short: "Query votes, filtered by voter and program id ",
@@ -136,22 +136,24 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 			}
 
 			programIDStr := viper.GetString(flagProgramID)
-			if len(programIDStr) > 0 {
-				// validate that the program id is a uint
-				programID, err := strconv.ParseUint(programIDStr, 10, 64)
-				if err != nil {
-					return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", programIDStr)
-				}
-
-				params.ProgramID = programID
+			if len(programIDStr) == 0 {
+				return fmt.Errorf("--program-id flag is required")
 			}
+
+			// validate that the program id is a uint
+			programID, err := strconv.ParseUint(programIDStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", programIDStr)
+			}
+
+			params.ProgramID = programID
 
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryVotes), bz)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryVotes), bz)
 			if err != nil {
 				return err
 			}
@@ -163,21 +165,21 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 		},
 	}
 
+	cmd.Flags().String(flagProgramID, "", "the program ID to query; defalut 0 for all programs")
 	cmd.Flags().String(flagVoter, "", "(optional) voter for the program")
-	cmd.Flags().String(flagProgramID, "", "(optional) the program ID to query")
 
 	return cmd
 }
 
 // GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryParams,
 		Short: "Query the current budget params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, budget.QueryParams), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
 			if err != nil {
 				return err
 			}
