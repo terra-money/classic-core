@@ -13,7 +13,7 @@
     
 ## Guide
 
-* [Guide](guide/README.md)
+* [Getting started](guide/README.md)
 * [Installation](guide/installation.md)
 * [Join a network](guide/join-network.md)
 * [Deploy a testnet](guide/deploy-testnet.md)
