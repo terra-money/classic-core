@@ -1,12 +1,14 @@
 package mint
 
 import (
+	"terra/types/assets"
 	"terra/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // StoreKey is string representation of the store key for mint
@@ -18,16 +20,17 @@ const StoreKey = "mint"
 type Keeper struct {
 	cdc *codec.Codec
 	key sdk.StoreKey
-
-	bk bank.Keeper
-	ak auth.AccountKeeper
+	sk  staking.Keeper
+	bk  bank.Keeper
+	ak  auth.AccountKeeper
 }
 
 // NewKeeper creates a new instance of the mint module.
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk bank.Keeper, ak auth.AccountKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Keeper, ak auth.AccountKeeper) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
+		sk:  sk,
 		bk:  bk,
 		ak:  ak,
 	}
@@ -40,6 +43,12 @@ func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (
 		return err
 	}
 
+	if coin.Denom == assets.MicroLunaDenom {
+		pool := k.sk.GetPool(ctx)
+		pool.NotBondedTokens = pool.NotBondedTokens.Add(coin.Amount)
+		k.sk.SetPool(ctx, pool)
+	}
+
 	return k.changeIssuance(ctx, coin.Denom, coin.Amount)
 }
 
@@ -48,6 +57,12 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 	_, _, err = k.bk.SubtractCoins(ctx, payer, sdk.Coins{coin})
 	if err != nil {
 		return err
+	}
+
+	if coin.Denom == assets.MicroLunaDenom {
+		pool := k.sk.GetPool(ctx)
+		pool.NotBondedTokens = pool.NotBondedTokens.Sub(coin.Amount)
+		k.sk.SetPool(ctx, pool)
 	}
 
 	return k.changeIssuance(ctx, coin.Denom, coin.Amount.Neg())

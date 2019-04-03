@@ -154,6 +154,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mintKeeper = mint.NewKeeper(
 		app.cdc,
 		app.keyMint,
+		stakingKeeper,
 		app.bankKeeper,
 		app.accountKeeper,
 	)

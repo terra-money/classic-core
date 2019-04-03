@@ -42,7 +42,7 @@ func getQueriedPrice(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 	require.NotNil(t, bz)
 
 	var price sdk.Dec
-	err2 := cdc.UnmarshalBinaryLengthPrefixed(bz, &price)
+	err2 := cdc.UnmarshalJSON(bz, &price)
 	require.Nil(t, err2)
 	return price
 }
@@ -95,7 +95,7 @@ func TestQueryPrice(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.oracleKeeper)
 
-	testPrice := sdk.NewDecWithPrec(48842, 4).MulInt64(assets.MicroUnit)
+	testPrice := sdk.NewDecWithPrec(48842, 4)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, testPrice)
 
 	price := getQueriedPrice(t, input.ctx, input.cdc, querier, assets.MicroKRWDenom)
@@ -107,7 +107,10 @@ func TestQueryActives(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.oracleKeeper)
 
-	testPrice := sdk.NewDecWithPrec(48842, 4).MulInt64(assets.MicroUnit)
+	empty := getQueriedActive(t, input.ctx, input.cdc, querier)
+	require.Equal(t, 0, len(empty))
+
+	testPrice := sdk.NewDecWithPrec(48842, 4)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, testPrice)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroUSDDenom, testPrice)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, testPrice)

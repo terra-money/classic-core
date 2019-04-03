@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 var (
@@ -60,6 +61,8 @@ func createTestInput(t *testing.T) testInput {
 	keyMarket := sdk.NewKVStoreKey(StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -72,6 +75,8 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -89,6 +94,16 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
 	var valset sdk.ValidatorSet
 	oracleKeeper := oracle.NewKeeper(
 		cdc, keyOracle, valset,
@@ -98,6 +113,7 @@ func createTestInput(t *testing.T) testInput {
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
+		stakingKeeper,
 		bankKeeper,
 		accKeeper,
 	)
