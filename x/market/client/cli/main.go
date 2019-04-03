@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"strings"
 	"terra/x/market"
 
@@ -15,19 +16,19 @@ import (
 )
 
 const (
-	flagOfferCoin = "offerCoin"
-	flagAskDenom  = "askDenom"
+	flagOfferCoin = "offer-coin"
+	flagAskDenom  = "ask-denom"
 )
 
 // GetSwapCmd will create and send a MsgSwap
 func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "swap [offerCoin] [askDenom]",
+		Use:   "swap",
 		Short: "Atomically swap currencies at their target exchange rate",
 		Long: strings.TrimSpace(`
-Swap the offerCoin to the askDenom currency at the oracle's effective exchange rate. 
+Swap the offer-coin to the ask-denom currency at the oracle's effective exchange rate. 
 
-$ terracli market swap --offerCoin="1000krw" --askDenom="usd"
+$ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().
@@ -36,7 +37,16 @@ $ terracli market swap --offerCoin="1000krw" --askDenom="usd"
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			askDenom := viper.GetString(flagAskDenom)
-			offerCoin, err := sdk.ParseCoin(viper.GetString(flagOfferCoin))
+			if len(askDenom) == 0 {
+				return fmt.Errorf("--ask-denom flag is required")
+			}
+
+			offerCoinStr := viper.GetString(flagOfferCoin)
+			if len(offerCoinStr) == 0 {
+				return fmt.Errorf("--offset-coin flag is required")
+			}
+
+			offerCoin, err := sdk.ParseCoin(offerCoinStr)
 			if err != nil {
 				return err
 			}
@@ -54,7 +64,7 @@ $ terracli market swap --offerCoin="1000krw" --askDenom="usd"
 		},
 	}
 
-	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000krw")
+	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000mkrw")
 	cmd.Flags().String(flagAskDenom, "", "Denom of the asset to swap to")
 
 	return cmd
