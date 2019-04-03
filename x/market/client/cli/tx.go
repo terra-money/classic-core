@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"terra/types/assets"
 	"terra/x/market"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -41,6 +42,10 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 				return fmt.Errorf("--ask-denom flag is required")
 			}
 
+			if !assets.IsValidDenom(askDenom) {
+				return fmt.Errorf("The denom is not known: %s", askDenom)
+			}
+
 			offerCoinStr := viper.GetString(flagOfferCoin)
 			if len(offerCoinStr) == 0 {
 				return fmt.Errorf("--offset-coin flag is required")
@@ -52,6 +57,18 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 			}
 
 			fromAddress := cliCtx.GetFromAddress()
+			fromAccount, err := cliCtx.GetAccount(fromAddress)
+			if err != nil {
+				return err
+			}
+
+			if fromAccount.GetCoins().AmountOf(offerCoin.Denom).LT(offerCoin.Amount) {
+				return fmt.Errorf(strings.TrimSpace(`
+					account %s has insufficient amount of coins to pay the offered coins.\n
+					Required: %s\n
+					Given:    %s\n`),
+					fromAddress, offerCoin, fromAccount.GetCoins())
+			}
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := market.NewMsgSwap(fromAddress, offerCoin, askDenom)
