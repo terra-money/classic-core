@@ -25,11 +25,11 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 		Short: "Querying commands for the budget module",
 	}
 	budgetQueryCmd.AddCommand(client.GetCommands(
-		cli.GetCmdQueryProgram(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryActives(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryCandidates(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryVotes(mc.storeKey, mc.cdc),
-		cli.GetCmdQueryParams(mc.storeKey, mc.cdc),
+		cli.GetCmdQueryProgram(mc.cdc),
+		cli.GetCmdQueryActives(mc.cdc),
+		cli.GetCmdQueryCandidates(mc.cdc),
+		cli.GetCmdQueryVotes(mc.cdc),
+		cli.GetCmdQueryParams(mc.cdc),
 	)...)
 
 	return budgetQueryCmd

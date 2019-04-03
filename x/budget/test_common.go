@@ -72,7 +72,7 @@ func createTestInput(t *testing.T) testInput {
 	keyBudget := sdk.NewKVStoreKey(StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tkeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -85,7 +85,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -103,6 +103,16 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
@@ -119,6 +129,7 @@ func createTestInput(t *testing.T) testInput {
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
+		stakingKeeper,
 		bankKeeper,
 		accKeeper,
 	)
@@ -133,7 +144,7 @@ func createTestInput(t *testing.T) testInput {
 	return testInput{ctx, cdc, mintKeeper, bankKeeper, budgetKeeper, valset}
 }
 
-func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
+func generateTestProgram(ctx sdk.Context, budgetKeeper Keeper, accounts ...sdk.AccAddress) Program {
 	submitter := addrs[0]
 	if len(accounts) > 0 {
 		submitter = accounts[0]
@@ -144,5 +155,7 @@ func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
 		executor = accounts[1]
 	}
 
-	return NewProgram("testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
+	testProgramID := budgetKeeper.NewProgramID(ctx)
+
+	return NewProgram(testProgramID, "testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
 }

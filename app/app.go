@@ -145,9 +145,16 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.cdc,
+		app.keyOracle,
+		stakingKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
 	app.mintKeeper = mint.NewKeeper(
 		app.cdc,
 		app.keyMint,
+		stakingKeeper,
 		app.bankKeeper,
 		app.accountKeeper,
 	)
@@ -162,12 +169,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.mintKeeper,
 		app.marketKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
-	)
-	app.oracleKeeper = oracle.NewKeeper(
-		app.cdc,
-		app.keyOracle,
-		stakingKeeper.GetValidatorSet(),
-		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 	app.budgetKeeper = budget.NewKeeper(
 		app.cdc,

@@ -16,9 +16,9 @@ func TestEndBlockerTallyBasic(t *testing.T) {
 	input := createTestInput(t)
 
 	// create test program
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
 	// Add validators and their votes; to keep things simple, let's assume each validator holds 1 token
 	valset := mock.NewMockValSet()
@@ -27,11 +27,11 @@ func TestEndBlockerTallyBasic(t *testing.T) {
 		validator := mock.NewMockValidator(valAddr, sdk.OneInt())
 		valset.Validators = append(valset.Validators, validator)
 
-		input.budgetKeeper.AddVote(input.ctx, testProgramID, addr, true)
+		input.budgetKeeper.AddVote(input.ctx, testProgram.ProgramID, addr, true)
 	}
 	input.budgetKeeper.valset = valset
 
-	actualVotePower, actualTotalPower := tally(input.ctx, input.budgetKeeper, testProgramID)
+	actualVotePower, actualTotalPower := tally(input.ctx, input.budgetKeeper, testProgram.ProgramID)
 
 	// totalPower and votepower should match the number of validators (uniform, single weighted)
 	require.Equal(t, actualTotalPower, sdk.NewInt(int64(len(addrs))))
@@ -42,9 +42,10 @@ func TestEndBlockerTallyRandom(t *testing.T) {
 	input := createTestInput(t)
 
 	// create test program
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numValidators := rand.Int() % 100 // cap validator count by a 100
@@ -69,11 +70,11 @@ func TestEndBlockerTallyRandom(t *testing.T) {
 			votePower -= valPower
 		}
 
-		input.budgetKeeper.AddVote(input.ctx, testProgramID, valAccAddr, choice)
+		input.budgetKeeper.AddVote(input.ctx, testProgram.ProgramID, valAccAddr, choice)
 	}
 	input.budgetKeeper.valset = valset
 
-	actualVotePower, actualTotalPower := tally(input.ctx, input.budgetKeeper, testProgramID)
+	actualVotePower, actualTotalPower := tally(input.ctx, input.budgetKeeper, testProgram.ProgramID)
 
 	require.Equal(t, actualTotalPower, sdk.NewInt(int64(totalPower)))
 	require.Equal(t, actualVotePower, sdk.NewInt(int64(votePower)))
@@ -83,13 +84,13 @@ func TestEndBlockerTiming(t *testing.T) {
 	input := createTestInput(t)
 
 	// create test program
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
 
 	// Add a vote each from validators
 	for _, addr := range addrs {
-		input.budgetKeeper.AddVote(input.ctx, testProgramID, addr, true)
+		input.budgetKeeper.AddVote(input.ctx, testProgram.ProgramID, addr, true)
 	}
 
 	// No claims should have been settled yet
@@ -124,36 +125,34 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 	minNumTokensToPass := activeThreshold.MulInt(sdk.NewInt(100)).TruncateInt()
 
 	// create test program
-	testProgram := generateTestProgram(input.ctx)
-	testProgramID := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID, testProgram)
-	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgramID)
+	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgram.ProgramID)
 
 	// vote slightly such that the sum falls short of the threshold; tally should fail and program not activated.
 	for i := 0; i < int(minNumTokensToPass.Int64())-1; i++ {
-		input.budgetKeeper.AddVote(input.ctx, testProgramID, valAddrs[i], true)
+		input.budgetKeeper.AddVote(input.ctx, testProgram.ProgramID, valAddrs[i], true)
 	}
 
 	params := input.budgetKeeper.GetParams(input.ctx)
 	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod)
 	EndBlocker(input.ctx, input.budgetKeeper)
-	_, err := input.budgetKeeper.GetProgram(input.ctx, testProgramID)
+	_, err := input.budgetKeeper.GetProgram(input.ctx, testProgram.ProgramID)
 	require.NotNil(t, err)
 
-	input.budgetKeeper.DeleteProgram(input.ctx, testProgramID)
+	input.budgetKeeper.DeleteProgram(input.ctx, testProgram.ProgramID)
 
 	// vote above the threshold; the tally should now pass
-	testProgram2 := generateTestProgram(input.ctx)
-	testProgramID2 := input.budgetKeeper.NewProgramID(input.ctx)
-	input.budgetKeeper.SetProgram(input.ctx, testProgramID2, testProgram2)
-	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram2.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgramID2)
+	testProgram2 := generateTestProgram(input.ctx, input.budgetKeeper)
+	input.budgetKeeper.SetProgram(input.ctx, testProgram2.ProgramID, testProgram2)
+	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram2.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgram2.ProgramID)
 
 	for i := 0; i < int(minNumTokensToPass.Int64())+1; i++ {
-		input.budgetKeeper.AddVote(input.ctx, testProgramID2, valAddrs[i], true)
+		input.budgetKeeper.AddVote(input.ctx, testProgram2.ProgramID, valAddrs[i], true)
 	}
 
 	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod)
 	EndBlocker(input.ctx, input.budgetKeeper)
-	_, err = input.budgetKeeper.GetProgram(input.ctx, testProgramID2)
+	_, err = input.budgetKeeper.GetProgram(input.ctx, testProgram2.ProgramID)
 	require.Nil(t, err)
 }

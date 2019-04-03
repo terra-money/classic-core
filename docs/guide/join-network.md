@@ -1,9 +1,9 @@
 # Join the Public Testnet
 
 ::: tip Current Testnet
-See the [testnet repo](https://github.com/terra-project/testnets) for
+See the [testnet repo](https://github.com/terra-project/networks) for
 information on the latest testnet, including the correct version
-of the Terra to use and details about the genesis file.
+of the Terra Core to use and details about the genesis file.
 :::
 
 ::: warning
@@ -46,7 +46,7 @@ minimum_fees = ""
 ```
 
 
-Your full node has been initialized! Please skip to [Genesis & Seeds](#genesis-seeds).
+Your full node has been initialized! Please skip to [Genesis & Seeds](#Genesis-&-Seeds).
 
 ## Upgrading From Previous Testnet
 
@@ -71,10 +71,9 @@ Make sure that every node has a unique `priv_validator.json`. Do not copy the `p
 
 ### Software Upgrade
 
-Now it is time to upgrade the software:
+Now it is time to upgrade the software. Go to the project directory, and run: 
 
 ```bash
-cd $GOPATH/src/github.com/terra-project/terra
 git fetch --all && git checkout master
 make update_tools install
 ```
@@ -84,7 +83,7 @@ make update_tools install
 :::
 
 Note we use `master` here since it contains the latest stable release.
-See the [testnet repo](https://github.com/terra-project/testnets)
+See the [testnet repo](https://github.com/terra-project/networks)
 for details on which version is needed for which testnet,
 and the [SDK release page](https://github.com/terra-project/terra/releases)
 for details on each release.
@@ -99,10 +98,10 @@ Fetch the testnet's `genesis.json` file into `terrad`'s config directory.
 
 ```bash
 mkdir -p $HOME/.terrad/config
-curl https://raw.githubusercontent.com/terra-project/testnets/master/latest/genesis.json > $HOME/.terrad/config/genesis.json
+curl https://raw.githubusercontent.com/terra-project/networks/master/latest/genesis.json > $HOME/.terrad/config/genesis.json
 ```
 
-Note we use the `latest` directory in the [testnets repo](https://github.com/terra-project/testnets)
+Note we use the `latest` directory in the [networks repo](https://github.com/terra-project/networks)
 which contains details for the latest testnet. If you are connecting to a different testnet, ensure you get the right files.
 
 To verify the correctness of the configuration run:
@@ -113,9 +112,9 @@ terrad start
 
 ### Add Seed Nodes
 
-Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.terrad/config/config.toml`. The `testnets` repo contains links to the seed nodes for each testnet. If you are looking to join the running testnet please [check the repository for details](https://github.com/terra-project/testnets) on which nodes to use.
+Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.terrad/config/config.toml`. The `testnets` repo contains links to the seed nodes for each testnet. If you are looking to join the running testnet please [check the repository for details](https://github.com/terra-project/networks) on which nodes to use.
 
-If those seeds aren't working, you can find more seeds and persistent peers on the [Terra Explorer](https://explorer.terra.money/nodes). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
+If those seeds aren't working, you can find more seeds and persistent peers on the [Terra Finder](https://finder.terra.money/nodes). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
 
 For more information on seeds and peers, you can [read this](https://github.com/tendermint/tendermint/blob/develop/docs/tendermint-core/using-tendermint.md#peers).
 
@@ -133,7 +132,7 @@ Check that everything is running smoothly:
 terracli status
 ```
 
-View the status of the network with the [Terra Explorer](https://explorer.terra.money). Once your full node syncs up to the current block height, you should see it appear on the [list of full nodes](https://explorer.terra.money/validators). If it doesn't show up, that's ok--the Explorer does not connect to every node.
+View the status of the network with the [Terra Finder](https://finder.terra.money). Once your full node syncs up to the current block height, you should see it appear on the [list of full nodes](https://explorer.terra.money/validators). If it doesn't show up, that's ok--the Explorer does not connect to every node.
 
 ## Export State
 

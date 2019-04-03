@@ -8,4 +8,4 @@ This section contains introductory material regarding important concepts in the 
 
 - **[Exchange](./terra-exchange.md)**: The Terra Protocol offers zero-spread atomic swaps amongst its stablecoins, flattening forex costs and the attendant barriers for global value exchange and commerce
 
-- **[Validator](./validator)**: Contains detailed information on proper network setups, application procedures and useful tips on running a validator for the Terra network.
+- **[Validator](./validator/overview.md)**: Contains detailed information on proper network setups, application procedures and useful tips on running a validator for the Terra network.

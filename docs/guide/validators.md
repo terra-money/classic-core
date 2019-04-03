@@ -1,12 +1,12 @@
 # Run a Validator on the public testnet
 
 ::: tip
-Information on how to join the current testnet (`genesis.json` file and seeds) is held [in our `testnet` repo](https://github.com/terra-project/testnets/tree/master/latest). Please check there if you are looking to join our latest testnet. 
+Information on how to join the current testnet (`genesis.json` file and seeds) is held [in our `testnet` repo](https://github.com/terra-project/networks/tree/master/latest). Please check there if you are looking to join our latest testnet. 
 :::
 
-__Note__: This documentation is only intended for validators of the **public testnet**
+__Note__: This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**
 
-Before setting up your validator node, make sure you've already gone through the [Full Node Setup](./2.join-network.md) guide.
+Before setting up your validator node, make sure you've already gone through the [Full Node Setup](./join-network.md) guide.
 
 ## What is a Validator? 
 
@@ -52,7 +52,7 @@ __Note__: If unspecified, `consensus_pubkey` will default to the output of `terr
 
 __Note__: This section only concerns validators that want to be in the genesis file. If the chain you want to validate is already live, skip this section.
 
-__Note__: The currently running Columbus testnet will not use this process. They will be bootsrapped using Tendermint seed validators. You will just need to use the [create-validator](#create-your-validator) command in order to join as a validator for these networks.
+__Note__: The currently running Soju testnet will not use this process. They will be bootsrapped using Tendermint seed validators. You will just need to use the [create-validator](#create-your-validator) command in order to join as a validator for these networks.
 
 If you want to participate in genesis as a validator, you need to justify that you (or a delegator) have some stake at genesis, create one (or multiple) transaction to bond this stake to your validator address, and include this transaction in the genesis file. 
 
@@ -122,10 +122,10 @@ Fetch the `genesis.json` file into `terrad`'s config directory.
 
 ```bash
 mkdir -p $HOME/.terrad/config
-curl https://raw.githubusercontent.com/terra/testnets/master/latest/genesis.json > $HOME/.terrad/config/genesis.json
+curl https://raw.githubusercontent.com/terra-project/networks/master/latest/genesis.json > $HOME/.terrad/config/genesis.json
 ```
 
-__Note:__ We use the `latest` directory in the [testnets repo](https://github.com/cosmos/testnets)
+__Note:__ We use the `latest` directory in the [testnets repo](https://github.com/terra-project/networks)
 which contains details for the latest testnet. If you are connecting to a different testnet, ensure you get the right files.
 
 
@@ -204,7 +204,7 @@ Your validator is active if the following command returns anything:
 terracli query tendermint-validator-set | grep "$(terrad tendermint show-validator)"
 ```
 
-You should also be able to see your validator on the [Explorer](https://explorer.terra.money/validators). You are looking for the `bech32` encoded `address` in the `~/.terrad/config/priv_validator.json` file.
+You should also be able to see your validator on the Terra Station. You are looking for the `bech32` encoded `address` in the `~/.terrad/config/priv_validator.json` file.
 
 ::: warning Note
 To be in the validator set, you need to have more total voting power than the 100th validator.
@@ -214,7 +214,7 @@ To be in the validator set, you need to have more total voting power than the 10
 
 ### Problem #1: My validator has `voting_power: 0`
 
-Your validator has become auto-unbonded. In Columbus, we unbond validators if they do not vote on `50` of the last `100` blocks. Since blocks are proposed every ~2 seconds, a validator unresponsive for ~100 seconds will become unbonded. This usually happens when your `terrad` process crashes.
+Your validator has become auto-unbonded. In Soju and Columbus networks, we unbond validators if they do not vote on `50` of the last `100` blocks. Since blocks are proposed every ~2 seconds, a validator unresponsive for ~100 seconds will become unbonded. This usually happens when your `terrad` process crashes.
 
 Here's how you can return the voting power back to your validator. First, if `terrad` is not running, start it up again:
 

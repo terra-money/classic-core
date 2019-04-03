@@ -6,13 +6,10 @@ import (
 
 // Governance tags
 var (
-	ActionProgramWithdrawn = "program-withdrawn"
-	ActionProgramLegacied  = "program-legacied"
-	ActionProgramPassed    = "program-passed"
-	ActionProgramRejected  = "program-rejected"
-	ActionProgramSubmitted = "program-submitted"
-	ActionProgramVote      = "program-vote"
-	ActionProgramGranted   = "program-grant"
+	ActionProgramLegacied = "program-legacied"
+	ActionProgramPassed   = "program-passed"
+	ActionProgramRejected = "program-rejected"
+	ActionProgramGranted  = "program-grant"
 
 	Action            = sdk.TagAction
 	Submitter         = "submitter"

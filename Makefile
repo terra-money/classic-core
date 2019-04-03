@@ -2,14 +2,14 @@ PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(subst v,,$(shell git describe --tags --long))
 BUILD_TAGS = netgo
-BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
+BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/terra/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
 LEDGER_ENABLED ?= true
 GOTOOLS = \
 	github.com/golang/dep/cmd/dep \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: get_tools get_vendor_deps install lint test
+all: clean get_tools get_vendor_deps install lint test
 
 
 get_tools:
@@ -40,6 +40,8 @@ install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
+clean:
+	rm -rf ./build
 
 dist:
 	@bash publish/dist.sh
@@ -59,6 +61,7 @@ update_tools:
 
 
 lint: get_tools ci-lint
+
 ci-lint:
 	golangci-lint run
 	go vet -composites=false -tests=false ./...
@@ -78,7 +81,7 @@ update_vendor_deps: get_tools
 draw_deps: get_tools
 	@# requires brew install graphviz or apt-get install graphviz
 	go get github.com/RobotsAndPencils/goviz
-	@goviz -i github.com/cosmos/cosmos-sdk/cmd/terra/cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
+	@goviz -i github.com/terra-project/core/cmd/terra/cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
 
 
 
@@ -86,7 +89,7 @@ draw_deps: get_tools
 ### Documentation
 
 godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/cosmos/cosmos-sdk/types"
+	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/terra-project/core/types"
 	godoc -http=:6060
 
 
@@ -101,17 +104,10 @@ test_unit:
 test_race:
 	@VERSION=$(VERSION) go test -race $(PACKAGES_NOSIMULATION)
 
-# test_lint:
-# 	gometalinter --config=tools/gometalinter.json ./...
-# 	!(gometalinter --exclude /usr/lib/go/src/ --exclude client/lcd/statik/statik.go --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
-# 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-# 	dep status >> /dev/null
-# 	!(grep -n branch Gopkg.toml)
-
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/terra-project/core
 
 benchmark:
 	@go test -bench=. $(PACKAGES_NOSIMULATION)
@@ -123,12 +119,12 @@ benchmark:
 DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
 
 devdoc_init:
-	docker run -it -v "$(CURDIR):/go/src/github.com/cosmos/cosmos-sdk" -w "/go/src/github.com/cosmos/cosmos-sdk" tendermint/devdoc echo
+	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" tendermint/devdoc echo
 	# TODO make this safer
 	$(call DEVDOC_SAVE)
 
 devdoc:
-	docker run -it -v "$(CURDIR):/go/src/github.com/cosmos/cosmos-sdk" -w "/go/src/github.com/cosmos/cosmos-sdk" devdoc:local bash
+	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" devdoc:local bash
 
 devdoc_save:
 	# TODO make this safer
@@ -163,8 +159,8 @@ localnet-stop:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build build_cosmos-sdk-cli build_examples install install_debug dist \
-check_tools check_dev_tools get_vendor_deps draw_deps test test_cli test_unit \
-test_cover benchmark devdoc_init devdoc devdoc_save devdoc_update \
+.PHONY: build install dist check_tools get_vendor_deps \
+draw_deps test test_cli test_unit benchmark \
+devdoc_init devdoc devdoc_save devdoc_update \
 build-linux build-docker-terradnode localnet-start localnet-stop \
 format check-ledger update_dev_tools lint

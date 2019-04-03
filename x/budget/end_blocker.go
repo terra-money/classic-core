@@ -1,7 +1,6 @@
 package budget
 
 import (
-	"fmt"
 	"strconv"
 	"terra/types"
 	"terra/x/budget/tags"
@@ -28,19 +27,18 @@ func tally(ctx sdk.Context, k Keeper, targetProgramID uint64) (votePower sdk.Int
 			} else {
 				votePower = votePower.Sub(bondSize)
 			}
+		} else {
+			k.DeleteVote(ctx, targetProgramID, voter)
 		}
 
 		return false
 	})
-
-	fmt.Printf("real votecount : %v \n", voteCount)
 
 	return
 }
 
 // clearsThreshold returns true if totalPower * threshold < votePower
 func clearsThreshold(votePower, totalPower sdk.Int, threshold sdk.Dec) bool {
-	fmt.Printf("%v %v %v\n", votePower, totalPower, threshold)
 	return votePower.GTE(threshold.MulInt(totalPower).RoundInt())
 }
 
@@ -61,6 +59,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
 			k.DeleteProgram(ctx, programID)
+			k.DeleteVote(ctx, programID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramRejected)
 		} else {
 			resTags.AppendTag(tags.Action, tags.ActionProgramPassed)
@@ -92,6 +91,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		// Need to legacy program
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
 			k.DeleteProgram(ctx, programID)
+			k.DeleteVote(ctx, programID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
