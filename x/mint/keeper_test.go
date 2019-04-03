@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -53,6 +55,8 @@ func createTestInput(t *testing.T) testInput {
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyMint := sdk.NewKVStoreKey(StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -80,9 +84,17 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
 	mintKeeper := NewKeeper(
 		cdc,
 		keyMint,
+		stakingKeeper,
 		bankKeeper,
 		accKeeper,
 	)
