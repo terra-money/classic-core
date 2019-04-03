@@ -296,7 +296,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 				return err
 			}
 
-			var seigniorageProceeds sdk.Coins
+			var seigniorageProceeds sdk.Int
 			cdc.MustUnmarshalJSON(res, &seigniorageProceeds)
 			return cliCtx.PrintOutput(seigniorageProceeds)
 		},
