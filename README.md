@@ -18,15 +18,15 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 **WARNING**: Terra Core has mostly stabilized, but breaking changes may come regularly.
 
-**Note**: Requires [Go 1.10+](https://golang.org/dl/)
+**Note**: Requires [Go 1.12+](https://golang.org/dl/)
 
 ## Status
 
 ### Network
 
-Public Testnet Soju-0005 is online. Currently the Columbus Public mainnet is being prepared for launch.
+Public testnet Soju-0005 is online. Currently the Columbus public mainnet is being prepared for launch.
 
-[Testnets](https://github.com/terra-project/testnets) contains latest updates to the testnet.
+[Testnets](https://github.com/terra-project/networks) contains latest updates to the testnet.
 
 
 ### Terra Alliance
