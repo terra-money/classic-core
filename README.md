@@ -3,6 +3,11 @@
 
 [![CircleCI](https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d)](https://circleci.com/gh/terra-project/core/tree/develop)
 
+
+
+ATTEMPT
+
+
 **[The Terra Protocol](https://terra.money)** facilitates the creation of digital assets _Terra_ that track the value of major fiat currencies.
 
 **Key features:**
