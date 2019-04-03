@@ -77,7 +77,7 @@ terrad tendermint show-validator
 Note that this is the Tendermint signing key, _not_ the operator key you will use in delegation transactions.
 
 ::: danger Warning
-We strongly recommend _NOT_ using the same passphrase for multiple keys. The Tendermint team and the Interchain Foundation will not be responsible for the loss of funds.
+We strongly recommend _NOT_ using the same passphrase for multiple keys. The Terra team will not be responsible for the loss of funds.
 :::
 
 #### Generate multisig public keys
@@ -129,13 +129,13 @@ higher tx priority.
 e.g.
 
 ```bash
-terracli tx send ... --fees=100photino
+terracli tx send ... --fees=100msdr
 ```
 
 or
 
 ```bash
-terracli tx send ... --gas-prices=0.000001stake
+terracli tx send ... --gas-prices=0.000001msdr
 ```
 
 ### Account
@@ -258,13 +258,7 @@ terracli query txs --tags='<tag>:<value>' --page=1 --limit=20
 
 The action tag always equals the message type returned by the `Type()` function of the relevant message.
 
-You can find a list of available `tags` on each of the SDK modules:
-
-- [Common tags](https://github.com/cosmos/cosmos-sdk/blob/d1e76221d8e28824bb4791cb4ad8662d2ae9051e/types/tags.go#L57-L63)
-- [Staking tags](https://github.com/cosmos/cosmos-sdk/blob/d1e76221d8e28824bb4791cb4ad8662d2ae9051e/x/staking/tags/tags.go#L8-L24)
-- [Slashing tags](https://github.com/cosmos/cosmos-sdk/blob/d1e76221d8e28824bb4791cb4ad8662d2ae9051e/x/slashing/handler.go#L52)
-- [Distribution tags](https://github.com/cosmos/cosmos-sdk/blob/develop/x/distribution/tags/tags.go#L8-L17)
-- [Bank tags](https://github.com/cosmos/cosmos-sdk/blob/d1e76221d8e28824bb4791cb4ad8662d2ae9051e/x/bank/keeper.go#L193-L206)
+You can find a list of available `tags` on each module by looking at the /tags directory of each module.
 :::
 
 #### Matching a transaction's hash
@@ -322,7 +316,7 @@ terracli query staking validators
 If you want to get the information of a single validator you can check it with:
 
 ```bash
-terracli query staking validator <account_cosmosval>
+terracli query staking validator <account_terraval>
 ```
 
 #### Bond Tokens
@@ -348,7 +342,7 @@ where `[name]` is the name of the key you specified when you initialized `terrad
 While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
 
 ::: tip Note
-Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucetcosmos.network/)!
+Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
 :::
 
 ##### Query Delegations
@@ -373,7 +367,7 @@ If for any reason the validator misbehaves, or you just want to unbond a certain
 
 ```bash
 terracli tx staking unbond \
-  --validator=<account_cosmosval> \
+  --validator=<account_terraval> \
   --shares-fraction=0.5 \
   --from=<key_name> \
   --chain-id=<chain_id>
@@ -392,13 +386,13 @@ terracli query staking unbonding-delegation <delegator_addr> <validator_addr>
 Or if you want to check all your current unbonding-delegations with disctinct validators:
 
 ```bash
-terracli query staking unbonding-delegations <account_cosmos>
+terracli query staking unbonding-delegations <account_terra>
 ```
 
 Additionally, as you can get all the unbonding-delegations from a particular validator:
 
 ```bash
-terracli query staking unbonding-delegations-from <account_cosmosval>
+terracli query staking unbonding-delegations-from <account_terraval>
 ```
 
 To get previous unbonding-delegation(s) status on past blocks, try adding the `--height` flag.
@@ -409,8 +403,8 @@ A redelegation is a type delegation that allows you to bond illiquid tokens from
 
 ```bash
 terracli tx staking redelegate \
-  --addr-validator-source=<account_cosmosval> \
-  --addr-validator-dest=<account_cosmosval> \
+  --addr-validator-source=<account_terraval> \
+  --addr-validator-dest=<account_terraval> \
   --shares-fraction=50 \
   --from=<key_name> \
   --chain-id=<chain_id>
@@ -431,13 +425,13 @@ terracli query staking redelegation <delegator_addr> <src_val_addr> <dst_val_add
 Or if you want to check all your current unbonding-delegations with disctinct validators:
 
 ```bash
-terracli query staking redelegations <account_cosmos>
+terracli query staking redelegations <account_terra>
 ```
 
 Additionally, as you can get all the outgoing redelegations from a particular validator:
 
 ```bash
-  terracli query staking redelegations-from <account_cosmosval>
+  terracli query staking redelegations-from <account_terraval>
 ```
 
 To get previous redelegation(s) status on past blocks, try adding the `--height` flag.
@@ -478,7 +472,7 @@ With the `pool` command you will get the values for:
 You can also query all of the delegations to a particular validator:
 
 ```bash
-  terracli query delegations-to <account_cosmosval>
+  terracli query delegations-to <account_terraval>
 ```
 
 
@@ -548,11 +542,11 @@ generate the multisig account public key:
 ```
 terracli keys add \
   p2 \
-  --pubkey=cosmospub1addwnpepqtd28uwa0yxtwal5223qqr5aqf5y57tc7kk7z8qd4zplrdlk5ez5kdnlrj4
+  --pubkey=terrapub1addwnpepqtd28uwa0yxtwal5223qqr5aqf5y57tc7kk7z8qd4zplrdlk5ez5kdnlrj4
 
 terracli keys add \
   p3 \
-  --pubkey=cosmospub1addwnpepqgj04jpm9wrdml5qnss9kjxkmxzywuklnkj0g3a3f8l5wx9z4ennz84ym5t
+  --pubkey=terrapub1addwnpepqgj04jpm9wrdml5qnss9kjxkmxzywuklnkj0g3a3f8l5wx9z4ennz84ym5t
 
 terracli keys add \
   p1p2p3 \
@@ -580,7 +574,7 @@ The first step to create a multisig transaction is to initiate it on behalf
 of the multisig address created above:
 
 ```bash
-terracli tx send cosmos1570v2fq3twt0f0x02vhxpuzc9jc4yl30q2qned 10stake \
+terracli tx send terra1570v2fq3twt0f0x02vhxpuzc9jc4yl30q2qned 10stake \
   --from=<multisig_address> \
   --generate-only > unsignedTx.json
 ```

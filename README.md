@@ -24,9 +24,9 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Network
 
-Public Testnet Soju-0005 is online. Currently the Columbus Public mainnet is being prepared for launch.
+Public testnet Soju-0005 is online. Currently the Columbus public mainnet is being prepared for launch.
 
-[Testnets](https://github.com/terra-project/testnets) contains latest updates to the testnet.
+[Testnets](https://github.com/terra-project/networks) contains latest updates to the testnet.
 
 
 ### Terra Alliance

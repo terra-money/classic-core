@@ -3,7 +3,7 @@
 
 ## Terra Accounts
 
-At the core of every Cosmos account, there is a seed, which takes the form of a 12 or 24-words mnemonic. From this mnemonic, it is possible to create any number of Cosmos accounts, i.e. pairs of private key/public key. This is called an HD wallet (see [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) for more information on the HD wallet specification).
+At the core of every Terra account, there is a seed, which takes the form of a 12 or 24-words mnemonic. From this mnemonic, it is possible to create any number of Terra accounts, i.e. pairs of private key/public key. This is called an HD wallet (see [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) for more information on the HD wallet specification).
 
 ```
      Account 0                         Account 1                         Account 2
@@ -41,19 +41,19 @@ At the core of every Cosmos account, there is a seed, which takes the form of a 
 The funds stored in an account are controlled by the private key. This private key is generated using a one-way function from the mnemonic. If you lose the private key, you can retrieve it using the mnemonic. However, if you lose the mnemonic, you will lose access to all the derived private keys. Likewise, if someone gains access to your mnemonic, they gain access to all the associated accounts. 
 
 ::: danger
-**Do not lose or share your 12 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.**
+**Do not lose or share your 24 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.**
 :::
 
-The address is a public string with a human-readable prefix (e.g. `cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg`) that identifies your account. When someone wants to send you funds, they send it to your address. It is computationally infeasible to find the private key associated with a given address. 
+The address is a public string with a human-readable prefix (e.g. `terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg`) that identifies your account. When someone wants to send you funds, they send it to your address. It is computationally infeasible to find the private key associated with a given address. 
 
 
 ### Redeem Luna from the sale
 
-If you participated in the fundraiser, you should be in possession of a 12-words mnemonic. Newly generated mnemonics use 24 words, but 12-word mnemonics are also compatible with all the Cosmos tools. 
+If you participated in the fundraiser, you should be in possession of a 24-word mnemonic created through the Registrar tool. If you have not yet generated your wallet, please contact the Terra team right away.
 
 #### On a ledger device
 
-At the core of a ledger device, there is a mnemonic used to generate accounts on multiple blockchains (including the Terra Protocol). Usually, you will create a new mnemonic when you initialize your ledger device. However, it is possible to tell the ledger device to use a mnemonic provided by the user instead. Let us go ahead and see how you can input the mnemonic you obtained during the fundraiser as the seed of your ledger device. 
+At the core of a ledger device, there is a mnemonic used to generate accounts on multiple blockchains (including Terra Core). Usually, you will create a new mnemonic when you initialize your ledger device. However, it is possible to tell the ledger device to use a mnemonic provided by the user instead. Let us go ahead and see how you can input the mnemonic you obtained during the fundraiser as the seed of your ledger device. 
 
 ::: warning
 *NOTE: To do this, **it is preferable to use a brand new ledger device.**. Indeed, there can be only one mnemonic per ledger device. If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in `Settings`>`Device`>`Reset All`. **Please note that this will wipe out the seed currently stored on the device. If you have not properly secured the associated mnemonic, you could lose your funds!!!***
@@ -65,7 +65,7 @@ The following steps need to be performed on an un-initialized ledger device:
 2. Press both buttons
 3. Do **NOT** choose the "Config as a new device" option. Instead, choose "Restore Configuration"
 4. Choose a PIN
-5. Choose the 12 words option
+5. Choose the 24 words option
 6. Input each of the words you got during the fundraiser, in the correct order. 
 
 Your ledger is now correctly set up with your fundraiser mnemonic! Do not lose this mnemonic! If your ledger is compromised, you can always restore a new device again using the same mnemonic.
@@ -99,12 +99,12 @@ To create an account, you just need to have `terracli` installed. Before creatin
 **Only use Ledger devices that you bought factory new or trust fully**
 :::
 
-When you initialize your ledger, a 24-word mnemonic is generated and stored in the device. This mnemonic is compatible with Cosmos and Cosmos accounts can be derived from it. Therefore, all you have to do is make your ledger compatible with `terracli`. To do so, you need to go through the following steps:
+When you initialize your ledger, a 24-word mnemonic is generated and stored in the device. This mnemonic is compatible with Terra and Terra accounts can be derived from it. Therefore, all you have to do is make your ledger compatible with `terracli`. To do so, you need to go through the following steps:
 
 1. Download the Ledger Live app [here](https://www.ledger.com/pages/ledger-live). 
 2. Connect your ledger via USB and update to the latest firmware
-3. Go to the ledger live app store, and download the "Cosmos" application (this can take a while). **Note: You may have to enable `Dev Mode` in the `Settings` of Ledger Live to be able to download the "Cosmos" application**. 
-4. Navigate to the Cosmos app on your ledger device
+3. Go to the ledger live app store, and download the "Terra" application (this can take a while). **Note: You may have to enable `Dev Mode` in the `Settings` of Ledger Live to be able to download the "Terra" application**. 
+4. Navigate to the Terra app on your ledger device
 
 Then, to create an account, use the following command:
 
@@ -134,7 +134,7 @@ terracli keys add <yourKeyName>
 The command will generate a 24-words mnemonic and save the private and public keys for account `0` at the same time. You will be prompted to input a passphrase that is used to encrypt the private key of account `0` on disk. Each time you want to send a transaction, this password will be required. If you lose the password, you can always recover the private key with the mnemonic. 
 
 ::: danger
-**Do not lose or share your 12 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.**
+**Do not lose or share your 24 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.**
 ::: 
 
 ::: warning
@@ -164,14 +164,14 @@ This command will prompt you to input a passphrase as well as your mnemonic. Cha
 In order to query the state and send transactions, you need a way to access the network. To do so, you can either run your own full-node, or connect to someone else's.
 
 ::: danger
-**NOTE: Do not share your mnemonic (12 or 24 words) with anyone. The only person who should ever need to know it is you. This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support. No one from Cosmos, the Tendermint team or the Interchain Foundation will ever send an email that asks for you to share any kind of account credentials or your mnemonic."**.
+**NOTE: Do not share your mnemonic (12 or 24 words) with anyone. The only person who should ever need to know it is you. This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support. No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic."**.
 ::: 
 
 ### Running your own full-node
 
 This is the most secure option, but comes with relatively high resource requirements. In order to run your own full-node, you need good bandwidth and at least 1TB of disk space. 
 
-You will find the tutorial on how to install `terrad` [here](https://cosmos.network/docs/gaia/installation.html), and the guide to run a full-node [here](https://cosmos.network/docs/gaia/join-testnet.html).
+You will find the tutorial on how to install `terrad` [here](./installation.md), and the guide to run a full-node [here](./join-network.md).
 
 ### Connecting to a remote full-node
 
@@ -182,7 +182,7 @@ In order to connect to the full-node, you will need an address of the following 
 ## Setting up `terracli`
 
 ::: tip
-**Before setting up `terracli`, make sure you have set up a way to [access the Terra Protocol network](#accessing-the-cosmos-hub-network)**
+**Before setting up `terracli`, make sure you have set up a way to [access the Terra Protocol network](#Accessing-the-Terra-network)**
 :::
 
 ::: warning
@@ -238,16 +238,16 @@ terracli query account
 // query the list of validators
 terracli query staking validators
 
-// query the information of a validator given their address (e.g. cosmosvaloper1n5pepvmgsfd3p2tqqgvt505jvymmstf6s9gw27)
+// query the information of a validator given their address (e.g. terravaloper1n5pepvmgsfd3p2tqqgvt505jvymmstf6s9gw27)
 terracli query staking validator <validatorAddress>
 
-// query all delegations made from a delegator given their address (e.g. cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
+// query all delegations made from a delegator given their address (e.g. terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
 terracli query staking delegations <delegatorAddress>
 
-// query a specific delegation made from a delegator (e.g. cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg) to a validator (e.g. cosmosvaloper1n5pepvmgsfd3p2tqqgvt505jvymmstf6s9gw27) given their addresses
+// query a specific delegation made from a delegator (e.g. terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg) to a validator (e.g. terravaloper1n5pepvmgsfd3p2tqqgvt505jvymmstf6s9gw27) given their addresses
 terracli query staking delegation <delegatorAddress> <validatorAddress>
 
-// query the rewards of a delegator given a delegator address (e.g. cosmos10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
+// query the rewards of a delegator given a delegator address (e.g. terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
 terracli query distr rewards <delegatorAddress> 
 ```
 

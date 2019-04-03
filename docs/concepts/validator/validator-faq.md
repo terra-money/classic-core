@@ -8,7 +8,7 @@ This is work in progress. Mechanisms and values are susceptible to change.
 
 ### What is a validator?
 
-The Terra Protocol is based on Tendermint, which relies on a set of [validators](./overview.md) to secure the network. The role of validators is to run a full-node and participate in consensus by broadcasting votes which contain cryptographic signatures signed by their private key. Validators commit new blocks in the blockchain and receive revenue in exchange for their work. They must also participate in governance by voting on proposals. Validators are weighted according to their total stake.
+The Terra Protocol is based on Tendermint, which relies on a set of [validators](./overview.md) to secure the network. The role of validators is to run a full-node and participate in consensus by broadcasting votes which contain cryptographic signatures signed by their private key. Validators commit new blocks in the blockchain and receive revenue in exchange for their work. They must also participate in on-procotol treasury governance by voting on budget programs. Validators are weighted according to their total stake.
 
 ### What is 'staking'?
 
@@ -26,7 +26,7 @@ Of course, it is possible and encouraged for any user to run full-nodes even if 
 
 ### What is a delegator?
 
-Delegators are Luna holders who cannot, or do not want to run validator operations themselves. Through [Terra Voyager](/getting-started/voyager.md), a user can delegate Luna to a validator and obtain a part of its revenue in exchange (for more detail on how revenue is distributed, see **What is the incentive to stake?** and **What is a validator's commission?** sections below).
+Delegators are Luna holders who cannot, or do not want to run validator operations themselves. Through Terra Station (check the Terra website to download), a user can delegate Luna to a validator and obtain a part of its revenue in exchange (for more detail on how revenue is distributed, see **What is the incentive to stake?** and **What is a validator's commission?** sections below).
 
 Because they share revenue with their validators, delegators also share responsibility. Should a validator misbehave, each of its delegators will be partially slashed in proportion to their stake. This is why delegators should perform due diligence on validators before delegating, as well as spreading their stake over multiple validators.
 
@@ -59,7 +59,7 @@ Out of all validators that signaled themselves, the 100 with the most stake are 
 
 The Testnet is a great environment to test your validator setup before launch.
 
-We view testnet participation as a great way to signal to the community that you are ready and able to operate a validator. You can find all relevant information about the testnet [here](https://github.com/terra-project/testnets).
+We view testnet participation as a great way to signal to the community that you are ready and able to operate a validator. You can find all relevant information about the testnet [here](https://github.com/terra-project/networks).
 
 ### What are the different types of keys?
 
@@ -106,7 +106,7 @@ Delegators are free to choose validators according to their own subjective crite
 * **Commission rate:** Commission applied on revenue by validators before it is distributed to their delegators
 * **Track record:** Delegators will likely look at the track record of the validators they plan to delegate to. This includes seniority, past votes on proposals, historical average uptime and how often the node was compromised.
 
-Apart from these criteria that will be displayed in Terra Voyager, there will be a possibility for validators to signal a website address to complete their resume. Validators will need to build reputation one way or another to attract delegators. For example, it would be a good practice for validators to have their setup audited by third parties. Note though, that the Tendermint team will not approve or conduct any audit itself. 
+Apart from these criteria that will be displayed in Terra Station, there will be a possibility for validators to signal a website address to complete their resume. Validators will need to build reputation one way or another to attract delegators. For example, it would be a good practice for validators to have their setup audited by third parties. Note though, that the Tendermint team will not approve or conduct any audit itself. 
 
 ## Responsibilites
 
@@ -152,9 +152,10 @@ The validator that is selected to propose the next block is called proposer. Eac
 
 Each member of a validator's staking pool earns different types of revenue:
 
-* **Block provisions:** Native tokens of applications run by validators (e.g. Luna on the Terra Network) are inflated to produce block provisions. These provisions exist to incentivize Luna holders to bond their stake, as non-bonded Luna will be diluted over time.
-* **Block rewards:** For the Ethermint zone, block rewards are paid in Photons. Initial distribution of Photons will be hard spooned from Ethereum. This means Photons will be emitted 1:1 to Ether.
-* **Transaction fees:** The Terra Network maintains a whitelist of token that are accepted as fee payment.
+- **Compute fees**: To prevent spamming, validators may set minimum gas fees for transactions to be included in their mempool. At the end of every block, the compute fees are disbursed to the participating validators pro-rata to stake. 
+- **Stability fees**: To stabilize the value of Luna, the protocol charges a small percentage transaction fee ranging from 0.1% to 1% on every Terra transaction, capped at 1 TerraSDR. This is paid in any Terra currency, and is disbursed pro-rata to stake at the end of every block in TerraSDR. 
+- **Seigniorage rewards**: To stabilize the value of Luna, the protocol commits to using some variable portion of Terra seigniorage (see the market and treasury modules for how this functions) to buy back and burn Luna tokens. This creates scarcity for Luna tokens and indirectly rewards validators. 
+
 
 This total revenue is divided among validators' staking pools according to each validator's weight. Then, within each validator's staking pool the revenue is divided among delegators in proportion to each delegator's stake. Note that a commission on delegators' revenue is applied by the validator before it is distributed.
 
@@ -162,7 +163,7 @@ This total revenue is divided among validators' staking pools according to each 
 
 Validators earn proportionally more revenue than their delegators because of commissions.
 
-Validators also play a major role in governance. If a delegator does not vote, it inherits the vote from its validator. This gives validators a major responsibility in the ecosystem.
+Validators also play a major role in on-chain treasury governance.
 
 ### What is a validator's commission?
 
@@ -186,13 +187,7 @@ Fees are similarly distributed with the exception that the block proposer can ge
 
 When a validator is selected to propose the next block, it must include at least 2/3 precommits for the previous block in the form of validator signatures. However, there is an incentive to include more than 2/3 precommits in the form of a bonus. The bonus is linear: it ranges from 1% if the proposer includes 2/3rd precommits (minimum for the block to be valid) to 5% if the proposer includes 100% precommits. Of course the proposer should not wait too long or other validators may timeout and move on to the next proposer. As such, validators have to find a balance between wait-time to get the most signatures and risk of losing out on proposing the next block. This mechanism aims to incentivize non-empty block proposals, better networking between validators as well as to mitigate censorship.
 
-Let's take a concrete example to illustrate the aforementioned concept. In this example, there are 10 validators with equal stake. Each of them applies a 1% commission and has 20% of self-bonded Luna. Now comes a successful block that collects a total of 1025.51020408 Luna in fees.
-
-First, a 2% tax is applied. The corresponding Luna go to the reserve pool. Reserve pool's funds can be allocated through governance to fund bounties and upgrades.
-
-* `2% \* 1025.51020408 = 20.51020408` Luna go to the reserve pool.
-
-1005 Luna now remain. Let's assume that the proposer included 100% of the signatures in its block. It thus obtains the full bonus of 5%.
+Let's take a concrete example to illustrate the aforementioned concept. In this example, there are 10 validators with equal stake. Each of them applies a 1% commission and has 20% of self-bonded Luna. Now comes a successful block that collects a total of 1005 Luna in fees. Let's assume that the proposer included 100% of the signatures in its block. It thus obtains the full bonus of 5%.
 
 We have to solve this simple equation to find the reward R for each validator:
 
@@ -208,6 +203,12 @@ We have to solve this simple equation to find the reward R for each validator:
   * Commission: `100 * 80% * 1%` = 0.8 Luna
   * Validator's reward: `100 * 20% + Commission` = 20.8 Luna
   * Delegators' rewards: `100 * 80% - Commission` = 79.2 Luna (each delegator will be able to claim its portion of these rewards in proportion to their stake)
+
+
+### How does Luna supply behave over time? 
+
+Luna is the mining token for the Terra chain, but it is also the stability collateral pair for the stablecoin Terra. Luna is minted to contract Terra supply (see [this](../stability.md)). In order to constrain inflation and return Luna supply to the target, the protocol burns a certain percentage of Terra seigniorage gains every month. The genesis Luna burn ratio is set to be 20%, and this changes over time depending on macroeconomic conditions.
+
 
 ### What are the slashing conditions?
 
@@ -233,7 +234,7 @@ For now the community is expected to behave in a smart and self-preserving way. 
 
 * **Penalty-free re-delegation:** This is to allow delegators to easily switch from one validator to another, in order to reduce validator stickiness.
 * **Hack bounty:** This is an incentive for the community to hack validators. There will be bounties proportionate to the size of the validator, so that a validator becomes a bigger target as its stake grows.
-* **UI warning:** Users will be warned by Terra Voyager if they want to delegate to a validator that already has a significant amount of staking power.
+* **UI warning:** Users will be warned by Terra Station if they want to delegate to a validator that already has a significant amount of staking power.
 
 ## Technical Requirements
 
@@ -268,7 +269,7 @@ Validators should expect to run an HSM that supports ed25519 keys. Here are pote
 * Ledger BOLOS SGX enclave
 * Thales nShield support
 
-The Tendermint team does not recommend one solution above the other. The community is encouraged to bolster the effort to improve HSMs and the security of key management.
+The Terra team does not recommend one solution above the other. The community is encouraged to bolster the effort to improve HSMs and the security of key management.
 
 ### What can validators expect in terms of operations?
 
