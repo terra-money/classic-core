@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"terra/x/budget"
+	"github.com/terra-project/core/x/budget"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"

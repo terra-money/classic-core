@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

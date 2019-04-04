@@ -3,9 +3,9 @@ package app
 import (
 	"encoding/json"
 	"log"
-	"terra/x/budget"
-	"terra/x/oracle"
-	"terra/x/treasury"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

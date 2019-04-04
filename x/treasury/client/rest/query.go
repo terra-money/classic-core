@@ -3,8 +3,8 @@ package rest
 import (
 	"fmt"
 	"net/http"
-	"terra/types/assets"
-	"terra/x/treasury"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"

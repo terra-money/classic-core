@@ -2,9 +2,9 @@ package market
 
 import (
 	"reflect"
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 
-	"terra/x/market/tags"
+	"github.com/terra-project/core/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

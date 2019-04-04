@@ -14,10 +14,10 @@ Install `go` by following the [official docs](https://golang.org/doc/install).
 
 Next, let's install the latest version of Terra Core. Here we'll use the `master` branch, which contains the latest stable release.
 If necessary, make sure you `git checkout` the correct
-[released version](https://github.com/terra-project/terra/releases).
+[released version](https://github.com/terra-project/core//releases).
 
 ```bash
-git clone https://github.com/terra-project/terra
+git clone https://github.com/terra-project/core/
 git checkout master
 make
 ```

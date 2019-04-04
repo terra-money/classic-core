@@ -1,10 +1,10 @@
 package budget
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
-	"terra/types/util"
-	"terra/x/mint"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 

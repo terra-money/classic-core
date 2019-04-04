@@ -2,7 +2,7 @@ package oracle
 
 import (
 	"strings"
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 	"testing"
 
 	"github.com/stretchr/testify/require"

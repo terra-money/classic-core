@@ -2,7 +2,7 @@ PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(subst v,,$(shell git describe --tags --long))
 BUILD_TAGS = netgo
-BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/terra/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
+BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/core/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
 LEDGER_ENABLED ?= true
 GOTOOLS = \
 	github.com/golang/dep/cmd/dep \
@@ -119,12 +119,12 @@ benchmark:
 DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
 
 devdoc_init:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" tendermint/devdoc echo
+	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/core/" -w "/go/src/github.com/terra-project/core/" tendermint/devdoc echo
 	# TODO make this safer
 	$(call DEVDOC_SAVE)
 
 devdoc:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" devdoc:local bash
+	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/core/" -w "/go/src/github.com/terra-project/core/" devdoc:local bash
 
 devdoc_save:
 	# TODO make this safer
