@@ -8,6 +8,24 @@ GOTOOLS = \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
+GOSUM := $(shell which gosum)
+
+export GO111MODULE = on
+
+
+# # process build tags
+build_tags = netgo
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += gcc
+endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
+
+
+########################################
+### All
+
 all: clean go-mod-cache install lint test
 
 ########################################
@@ -35,15 +53,11 @@ build-linux:
 update_terra_lite_docs:
 	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
-
 install: update_terra_lite_docs 
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
-dist:
-	@bash publish/dist.sh
-	@bash publish/publish.sh
 
 ########################################
 ### Tools & dependencies
@@ -52,20 +66,15 @@ get_tools:
 	go get github.com/rakyll/statik
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
-check_tools:
-	@# https://stackoverflow.com/a/25668869
-	@echo "Found tools: $(foreach tool,$(notdir $(GOTOOLS)),\
-        $(if $(shell which $(tool)),$(tool),$(error "No $(tool) in PATH")))"
-
 update_tools:
 	@echo "--> Updating tools to correct version"
 	$(MAKE) --always-make get_tools
 
-go-mod-cache: go.sum
+go-mod-cache: go-sum
 	@echo "--> Download go modules to local cache"
 	@go mod download
 
-go.sum: get_tools go.mod
+go-sum: get_tools
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 
@@ -96,6 +105,7 @@ benchmark:
 
 lint: get_tools ci-lint
 ci-lint:
+	@echo "--> Running lint..."
 	golangci-lint run
 	go vet -composites=false -tests=false ./...
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
@@ -124,9 +134,9 @@ localnet-stop:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build install dist clean distclean update_terra_lite_docs \
-get_tools check_tools update_tools \
+.PHONY: build install clean distclean update_terra_lite_docs \
+get_tools update_tools \
 test test_cli test_unit benchmark \
 build-linux build-docker-terradnode localnet-start localnet-stop \
 format update_dev_tools lint ci ci-lint\
-go-mod-cache 
+go-mod-cache go-sum

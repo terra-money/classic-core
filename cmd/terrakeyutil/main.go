@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+
 	"github.com/terra-project/core/types/util"
 
 	"github.com/tendermint/tendermint/libs/bech32"
