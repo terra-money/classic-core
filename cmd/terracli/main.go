@@ -13,14 +13,14 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"terra/app"
-	"terra/types/util"
+	"github.com/terra-project/core/app"
+	"github.com/terra-project/core/types/util"
 
-	"terra/version"
-	budgetClient "terra/x/budget/client"
-	marketClient "terra/x/market/client"
-	oracleClient "terra/x/oracle/client"
-	treasuryClient "terra/x/treasury/client"
+	"github.com/terra-project/core/version"
+	budgetClient "github.com/terra-project/core/x/budget/client"
+	marketClient "github.com/terra-project/core/x/market/client"
+	oracleClient "github.com/terra-project/core/x/oracle/client"
+	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
@@ -33,15 +33,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
-	budget "terra/x/budget/client/rest"
-	market "terra/x/market/client/rest"
-	oracle "terra/x/oracle/client/rest"
-	treasury "terra/x/treasury/client/rest"
+	budget "github.com/terra-project/core/x/budget/client/rest"
+	market "github.com/terra-project/core/x/market/client/rest"
+	oracle "github.com/terra-project/core/x/oracle/client/rest"
+	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
-	bud "terra/x/budget"
-	mkt "terra/x/market"
-	ora "terra/x/oracle"
-	tre "terra/x/treasury"
+	bud "github.com/terra-project/core/x/budget"
+	mkt "github.com/terra-project/core/x/market"
+	ora "github.com/terra-project/core/x/oracle"
+	tre "github.com/terra-project/core/x/treasury"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
@@ -57,7 +57,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "terra/client/lcd/statik"
+	_ "github.com/terra-project/core/client/lcd/statik"
 )
 
 func main() {

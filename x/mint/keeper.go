@@ -1,8 +1,8 @@
 package mint
 
 import (
-	"terra/types/assets"
-	"terra/types/util"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

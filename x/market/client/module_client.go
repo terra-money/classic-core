@@ -1,7 +1,7 @@
 package client
 
 import (
-	"terra/x/market/client/cli"
+	"github.com/terra-project/core/x/market/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"

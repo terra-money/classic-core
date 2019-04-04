@@ -2,12 +2,12 @@ package pay
 
 import (
 	"fmt"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
-	"terra/x/treasury"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 	"testing"
 	"time"
 

@@ -2,10 +2,10 @@ package rest
 
 import (
 	"fmt"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 	"net/http"
 	"strings"
-	"terra/types/assets"
-	"terra/x/market"
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	"github.com/cosmos/cosmos-sdk/types/rest"

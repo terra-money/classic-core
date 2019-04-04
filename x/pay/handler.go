@@ -7,8 +7,8 @@
 package pay
 
 import (
-	"terra/types/util"
-	"terra/x/treasury"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
 

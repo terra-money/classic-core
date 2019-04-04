@@ -1,9 +1,9 @@
 package treasury
 
 import (
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 	"testing"
 
 	"github.com/stretchr/testify/require"
