@@ -53,11 +53,13 @@ func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
 		fromAddress, err := sdk.AccAddressFromBech32(swapReq.BaseReq.From)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		fromAccount, err := cliCtx.GetAccount(fromAddress)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		if fromAccount.GetCoins().AmountOf(swapReq.OfferCoin.Denom).LT(swapReq.OfferCoin.Amount) {
@@ -67,6 +69,7 @@ func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
                               Given:    %s\n`), fromAddress, swapReq.OfferCoin, fromAccount.GetCoins())
 
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// create the message
