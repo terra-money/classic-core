@@ -1,7 +1,7 @@
 version: 2.1
 
 defaults: &linux_defaults
-  working_directory: /go/src/terra
+  working_directory: /go/src/core
   docker:
     - image: circleci/golang:1.11.5
   environment:
@@ -89,7 +89,7 @@ jobs:
           docker push ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
 
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/terra
+    working_directory: /home/circleci/.go_workspace/src/core
     machine:
       image: circleci/classic:latest
     environment:
