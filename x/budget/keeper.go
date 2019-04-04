@@ -1,9 +1,9 @@
 package budget
 
 import (
+	"github.com/terra-project/core/x/mint"
 	"strconv"
 	"strings"
-	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

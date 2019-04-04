@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+
 	"github.com/terra-project/core/types"
 
 	"gonum.org/v1/gonum/stat"

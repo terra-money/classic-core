@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/oracle"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"

@@ -2,6 +2,7 @@ package market
 
 import (
 	"reflect"
+
 	"github.com/terra-project/core/types/assets"
 
 	"github.com/terra-project/core/x/market/tags"

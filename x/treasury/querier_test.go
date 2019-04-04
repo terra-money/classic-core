@@ -1,10 +1,10 @@
 package treasury
 
 import (
-	"strings"
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"

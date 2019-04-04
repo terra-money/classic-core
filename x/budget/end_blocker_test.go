@@ -1,8 +1,8 @@
 package budget
 
 import (
-	"math/rand"
 	"github.com/terra-project/core/types/mock"
+	"math/rand"
 	"testing"
 	"time"
 
