@@ -1,6 +1,6 @@
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := $(subst v,,$(shell git describe --tags --long))
+VERSION := $(subst v,,$(shell git describe --tags --always))
 BUILD_TAGS = netgo
 BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/core/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
 LEDGER_ENABLED ?= true
@@ -53,7 +53,7 @@ build-linux:
 update_terra_lite_docs:
 	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
-install: update_terra_lite_docs 
+install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
