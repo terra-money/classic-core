@@ -12,7 +12,7 @@ deps: &dependencies
     name: dependencies
     command: |
       export PATH="$GOBIN:$PATH"
-      make get_vendor_deps
+      make go-mod-cache
 
 refs:
   filter_only_branches: &filter_only_branches
@@ -112,7 +112,7 @@ jobs:
             sudo mv go /usr/local
             popd
 
-            make get_vendor_deps
+            make go-mod-cache
             make build-linux
             make build-docker-terradnode
             make localnet-start
