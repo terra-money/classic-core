@@ -145,7 +145,7 @@ build-docker-terradnode:
 
 # Run a 4-node testnet locally
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2  --faucet terra1pw8nf7k4p26wtam3agpggfwte0vfeaekf9n5wz --faucet-coins 10000000000mluna,10000000000mterra,100000000musd,100000000mkrw; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2; fi
 	# replace docker ip to local port, mapped
 	sed -i -e 's/192.168.10.2:26656/localhost:26656/g; s/192.168.10.3:26656/localhost:26659/g; s/192.168.10.4:26656/localhost:26661/g; s/192.168.10.5:26656/localhost:26663/g' $(CURDIR)/build/node4/terrad/config/config.toml
 	# change allow duplicated ip option to prevent the error : cant not route ~
