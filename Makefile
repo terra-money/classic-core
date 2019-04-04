@@ -5,17 +5,18 @@ BUILD_TAGS = netgo
 BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/core/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
 LEDGER_ENABLED ?= true
 GOTOOLS = \
-	github.com/golang/dep/cmd/dep \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: clean get_tools get_vendor_deps install lint test
+all: clean go-mod-cache install lint test
 
+########################################
+### CI
 
-get_tools:
-	go get github.com/golang/dep/cmd/dep
-	go get github.com/rakyll/statik
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+ci: get_tools install lint test
+
+########################################
+### Build/Install
 
 build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
@@ -35,13 +36,10 @@ update_terra_lite_docs:
 	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
 
-install: update_terra_lite_docs
+install: update_terra_lite_docs 
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
-
-clean:
-	rm -rf ./build
 
 dist:
 	@bash publish/dist.sh
@@ -49,6 +47,10 @@ dist:
 
 ########################################
 ### Tools & dependencies
+
+get_tools:
+	go get github.com/rakyll/statik
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 check_tools:
 	@# https://stackoverflow.com/a/25668869
@@ -59,39 +61,19 @@ update_tools:
 	@echo "--> Updating tools to correct version"
 	$(MAKE) --always-make get_tools
 
+go-mod-cache: go.sum
+	@echo "--> Download go modules to local cache"
+	@go mod download
 
-lint: get_tools ci-lint
+go.sum: get_tools go.mod
+	@echo "--> Ensure dependencies have not been modified"
+	@go mod verify
 
-ci-lint:
-	golangci-lint run
-	go vet -composites=false -tests=false ./...
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
+clean:
+	rm -rf ./build
 
-get_vendor_deps: get_tools
-	@echo "--> Generating vendor directory via dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v -vendor-only
-
-update_vendor_deps: get_tools
-	@echo "--> Running dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v
-
-draw_deps: get_tools
-	@# requires brew install graphviz or apt-get install graphviz
-	go get github.com/RobotsAndPencils/goviz
-	@goviz -i github.com/terra-project/core/cmd/terra/cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
-
-
-
-########################################
-### Documentation
-
-godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/terra-project/core/types"
-	godoc -http=:6060
-
+distclean: clean
+	rm -rf vendor/
 
 ########################################
 ### Testing
@@ -112,29 +94,12 @@ format:
 benchmark:
 	@go test -bench=. $(PACKAGES_NOSIMULATION)
 
-
-########################################
-### Devdoc
-
-DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
-
-devdoc_init:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/core/" -w "/go/src/github.com/terra-project/core/" tendermint/devdoc echo
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/core/" -w "/go/src/github.com/terra-project/core/" devdoc:local bash
-
-devdoc_save:
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc_clean:
-	docker rmi -f $$(docker images -f "dangling=true" -q)
-
-devdoc_update:
-	docker pull tendermint/devdoc
+lint: get_tools ci-lint
+ci-lint:
+	golangci-lint run
+	go vet -composites=false -tests=false ./...
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	go mod verify
 
 
 ########################################
@@ -159,8 +124,9 @@ localnet-stop:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build install dist check_tools get_vendor_deps \
-draw_deps test test_cli test_unit benchmark \
-devdoc_init devdoc devdoc_save devdoc_update \
+.PHONY: build install dist clean distclean update_terra_lite_docs \
+get_tools check_tools update_tools \
+test test_cli test_unit benchmark \
 build-linux build-docker-terradnode localnet-start localnet-stop \
-format check-ledger update_dev_tools lint
+format update_dev_tools lint ci ci-lint\
+go-mod-cache 
