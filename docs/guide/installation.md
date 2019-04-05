@@ -2,9 +2,10 @@
 
 This guide will explain how to install the `terrad` and `terracli` entrypoints onto your system. With these installed on a server, you can participate in the latest testnet as either a [Full Node](./join-network.md#run-a-full-node) or a [Validator](./setup-validator.md).
 
-### Install Go
+### Requirements
 
-Install `go` by following the [official docs](https://golang.org/doc/install). 
+* Install `go` by following the [official docs](https://golang.org/doc/install). 
+* Set `$GOPATH` by following the [docs](https://github.com/golang/go/wiki/SettingGOPATH).
 
 ::: tip
 **Go 1.12+ +** is required for Terra Core.
@@ -17,7 +18,10 @@ If necessary, make sure you `git checkout` the correct
 [released version](https://github.com/terra-project/core//releases).
 
 ```bash
+mkdir -p $GOPATH/src/github.com/terra-project
+cd $GOPATH/src/github.com/terra-project
 git clone https://github.com/terra-project/core/
+cd core
 git checkout master
 make
 ```
