@@ -23,7 +23,7 @@ cd $GOPATH/src/github.com/terra-project
 git clone https://github.com/terra-project/core/
 cd core
 git checkout master
-make build install
+make install lint test
 ```
 
 > *NOTE*: If you have issues at this step, please check that you have the latest stable version of GO installed.
