@@ -1,11 +1,11 @@
 package treasury
 
 import (
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury/tags"
 	"math/rand"
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/treasury/tags"
 	"testing"
 	"time"
 

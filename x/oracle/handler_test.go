@@ -1,8 +1,8 @@
 package oracle
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,9 +1,9 @@
 package budget
 
 import (
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/budget/tags"
 	"strconv"
-	"terra/types"
-	"terra/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

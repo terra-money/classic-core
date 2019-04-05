@@ -1,9 +1,9 @@
 package oracle
 
 import (
-	"terra/types"
-	"terra/types/assets"
-	"terra/x/oracle/tags"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"

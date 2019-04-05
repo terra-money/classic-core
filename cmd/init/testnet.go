@@ -12,8 +12,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 
-	"terra/app"
-	"terra/types/assets"
+	"github.com/terra-project/core/app"
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

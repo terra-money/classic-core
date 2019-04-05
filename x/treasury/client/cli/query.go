@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/treasury"
 	"strings"
-	"terra/types"
-	"terra/types/assets"
-	"terra/x/treasury"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
