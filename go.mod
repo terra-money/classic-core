@@ -40,7 +40,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.0.3
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.3.0
 	github.com/syndtr/goleveldb v0.0.0-20180708030551-c4c61651e9e3 // indirect
 	github.com/tendermint/btcd v0.1.0 // indirect
 	github.com/tendermint/go-amino v0.14.1
