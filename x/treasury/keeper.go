@@ -187,7 +187,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 	epoch := util.GetEpoch(ctx)
 	proceeds := k.PeekTaxProceeds(ctx, epoch)
-	proceeds = proceeds.Plus(delta)
+	proceeds = proceeds.Add(delta)
 
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(proceeds)
