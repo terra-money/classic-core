@@ -1,9 +1,10 @@
 package budget
 
 import (
-	"github.com/terra-project/core/x/mint"
 	"strconv"
 	"strings"
+
+	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -189,7 +190,7 @@ func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler fu
 				continue
 			}
 
-			if handler(uint64(programID), program) {
+			if handler(programID, program) {
 				break
 			}
 		}
