@@ -12,7 +12,6 @@ deps: &dependencies
     name: dependencies
     command: |
       export PATH="$GOBIN:$PATH"
-      make go-mod-cache
 
 refs:
   filter_only_branches: &filter_only_branches
