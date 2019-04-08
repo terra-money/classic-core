@@ -97,6 +97,36 @@ jobs:
       - store_artifacts:
           path: /tmp/logs
 
+  upload_coverage:
+    <<: *linux_defaults
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - *dependencies
+      - run:
+          name: gather
+          command: |
+            set -ex
+            echo "--> Concatenating profiles:"
+            ls /tmp/workspace/profiles/
+            echo "mode: atomic" > coverage.txt
+            for prof in $(ls /tmp/workspace/profiles/); do
+              tail -n +2 /tmp/workspace/profiles/"$prof" >> coverage.txt
+            done
+      - run:
+          name: filter out DONTCOVER
+          command: |
+            excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER' | xargs realpath --relative-to=$GOPATH/src)"
+            for filename in ${excludelist}; do
+              echo "Excluding ${filename} ..."
+              sed -i "\%${filename}:%d" coverage.txt
+            done
+      - run:
+          name: upload
+          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
+
   docker_image:
     <<: *linux_defaults
     steps:
@@ -215,3 +245,7 @@ workflows:
             - lint
             - docker_image
             - localnet
+      - upload_coverage:
+          <<: *filter_only_branches
+          requires:
+            - test_cover
