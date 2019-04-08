@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"terra/app"
+	"github.com/terra-project/core/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"

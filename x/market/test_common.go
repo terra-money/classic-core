@@ -1,9 +1,9 @@
 package market
 
 import (
-	"terra/types/assets"
-	"terra/x/mint"
-	"terra/x/oracle"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 	"testing"
 	"time"
 

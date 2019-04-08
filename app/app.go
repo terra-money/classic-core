@@ -2,16 +2,16 @@ package app
 
 import (
 	"fmt"
+	"github.com/terra-project/core/version"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/pay"
+	"github.com/terra-project/core/x/treasury"
 	"io"
 	"os"
 	"sort"
-	"terra/version"
-	"terra/x/budget"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
-	"terra/x/pay"
-	"terra/x/treasury"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

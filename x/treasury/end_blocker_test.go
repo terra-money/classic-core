@@ -1,11 +1,11 @@
 package treasury
 
 import (
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury/tags"
 	"math/rand"
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/treasury/tags"
 	"testing"
 	"time"
 
@@ -23,8 +23,8 @@ func TestEndBlockerTiming(t *testing.T) {
 
 	// Subsequent endblocker should settle, but NOT update policy
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	for i := int64(1); i < params.EpochProbation.Int64(); i++ {
-		if i%params.EpochShort.Int64() == 0 {
+	for i := int64(1); i < params.WindowProbation.Int64(); i++ {
+		if i%params.WindowShort.Int64() == 0 {
 			// Last block should settle
 			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
@@ -44,8 +44,8 @@ func TestEndBlockerTiming(t *testing.T) {
 	}
 
 	// After probationary period, we should also be updating policy variables
-	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
-		if i%params.EpochShort.Int64() == 0 {
+	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
+		if i%params.WindowShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
@@ -90,7 +90,7 @@ func updatePolicy(input testInput, startIndex int,
 	blocksPerEpoch := util.GetBlocksPerEpoch()
 
 	for i := 0; i < len(taxRevenues); i++ {
-		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
+		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
 
 		taxRevenue := taxRevenues[i]
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
@@ -180,7 +180,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 	for i, tc := range tests {
 
 		// Advance blockcount
-		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64()*blocksPerEpoch*int64(i) - 1)
+		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64()*blocksPerEpoch*int64(i) - 1)
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {

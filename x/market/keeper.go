@@ -1,8 +1,8 @@
 package market
 
 import (
-	"terra/x/mint"
-	"terra/x/oracle"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -2,10 +2,10 @@ package rest
 
 import (
 	"fmt"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 	"net/http"
 	"strings"
-	"terra/types/assets"
-	"terra/x/market"
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -53,11 +53,13 @@ func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
 		fromAddress, err := sdk.AccAddressFromBech32(swapReq.BaseReq.From)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		fromAccount, err := cliCtx.GetAccount(fromAddress)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		if fromAccount.GetCoins().AmountOf(swapReq.OfferCoin.Denom).LT(swapReq.OfferCoin.Amount) {
@@ -67,6 +69,7 @@ func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
                               Given:    %s\n`), fromAddress, swapReq.OfferCoin, fromAccount.GetCoins())
 
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// create the message
