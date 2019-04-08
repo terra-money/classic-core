@@ -86,6 +86,11 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 
 	taxes := sdk.Coins{}
 	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
+
+	if taxRate.Equal(sdk.ZeroDec()) {
+		return nil
+	}
+
 	for _, coin := range principal {
 		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
 
@@ -93,6 +98,10 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)
 		if taxDue.GT(taxCap) {
 			taxDue = taxCap
+		}
+
+		if taxDue.Equal(sdk.ZeroInt()) {
+			continue
 		}
 
 		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))

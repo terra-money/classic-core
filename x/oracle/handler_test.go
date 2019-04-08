@@ -21,7 +21,7 @@ func setup(t *testing.T) (testInput, sdk.Handler) {
 	h := NewHandler(input.oracleKeeper)
 
 	defaultOracleParams := DefaultParams()
-	defaultOracleParams.VotePeriod = sdk.OneInt()
+	defaultOracleParams.VotePeriod = int64(1) // Set to one block for convinience
 	input.oracleKeeper.SetParams(input.ctx, defaultOracleParams)
 
 	return input, h
