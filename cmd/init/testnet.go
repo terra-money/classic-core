@@ -93,7 +93,7 @@ Example:
 	)
 	cmd.Flags().String(
 		server.FlagMinGasPrices, fmt.Sprintf("0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s", assets.MicroLunaDenom, assets.MicroSDRDenom, assets.MicroUSDDenom, assets.MicroKRWDenom, assets.MicroCNYDenom, assets.MicroJPYDenom, assets.MicroEURDenom, assets.MicroGBPDenom),
-		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)",
+		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01mluna,0.01msdr)",
 	)
 	cmd.Flags().String(flagPredefinedNodes, "",
 		"Predefined node list, using this will override --starting-ip-address, --node-dir-prefix and --v (ex. \"node101@192.168.0.1,node102@192.168.0.22,node103@192.168.0.56\")")
