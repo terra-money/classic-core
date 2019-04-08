@@ -34,19 +34,23 @@ func generateRandomTestCase() (prices []float64, weights []float64) {
 func TestPBStdDev(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
-	prices, weights := generateRandomTestCase()
-	pb := PriceBallot{}
-	for i, price := range prices {
-		weight := sdk.NewDec(int64(weights[i])).TruncateInt()
-		vote := NewPriceVote(sdk.NewDecWithPrec(int64(price*10000), 4), "", weight, addrs[0])
-		pb = append(pb, vote)
+	for i := 0; i < 100; i ++ {
+		prices, weights := generateRandomTestCase()
+		pb := PriceBallot{}
+		for i, price := range prices {
+			weight := sdk.NewDec(int64(weights[i])).TruncateInt()
+			vote := NewPriceVote(sdk.NewDecWithPrec(int64(price*10000), 4), "", weight, addrs[0])
+			pb = append(pb, vote)
+		}
+	
+		precBase := math.Pow10(2)
+		statAnswerRaw := stat.StdDev(prices, weights)
+		statAnswerRounded := float64(int64(statAnswerRaw*precBase)) / precBase
+		ballotAnswerRaw := pb.stdDev()
+		ballotAnswerRounded := float64(ballotAnswerRaw.MulInt64(int64(precBase)).TruncateInt64()) / precBase
+	
+		require.Equal(t, statAnswerRounded, ballotAnswerRounded)
 	}
-
-	statAnswerRaw := stat.StdDev(prices, weights)
-	statAnswerRounded := float64(int64(statAnswerRaw*math.Pow10(precision))) / math.Pow10(precision)
-	ballotAnswerRounded := float64(pb.stdDev().MulInt64(int64(math.Pow10(precision))).TruncateInt64()) / math.Pow10(precision)
-
-	require.Equal(t, statAnswerRounded, ballotAnswerRounded)
 }
 
 func TestPBMean(t *testing.T) {
