@@ -92,7 +92,7 @@ func TestKeeperParams(t *testing.T) {
 	require.NotNil(t, params)
 
 	// Test custom params setting
-	votePeriod := sdk.NewInt(10)
+	votePeriod := int64(10)
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
 	dropThreshold := sdk.NewInt(10)
 

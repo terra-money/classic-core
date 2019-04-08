@@ -3,6 +3,7 @@ package oracle
 import (
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -65,16 +66,12 @@ func ballotIsPassing(totalPower sdk.Int, ballot PriceBallot, params Params) bool
 	return ballot.TotalPower().GTE(thresholdVotes)
 }
 
-// at the block height for a tally
-func isTimeForTally(ctx sdk.Context, params Params) bool {
-	return sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt())
-}
-
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
 
-	if !isTimeForTally(ctx, params) {
+	// Not yet time for a tally
+	if !util.IsPeriodLastBlock(ctx, params.VotePeriod) {
 		return
 	}
 
