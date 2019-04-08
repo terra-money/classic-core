@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"terra/x/budget/tags"
+	"github.com/terra-project/core/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"

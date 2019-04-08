@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"terra/app"
+	"github.com/terra-project/core/app"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"

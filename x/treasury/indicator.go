@@ -1,8 +1,8 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/types/util"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

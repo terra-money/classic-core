@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/oracle"
 	"net/http"
-	"terra/x/budget"
-	"terra/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"

@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/version"
 	"io"
-	"terra/types/util"
-	"terra/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -19,8 +19,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"terra/app"
-	terraInit "terra/cmd/init"
+	"github.com/terra-project/core/app"
+	terraInit "github.com/terra-project/core/cmd/init"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"

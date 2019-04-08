@@ -2,8 +2,9 @@ package oracle
 
 import (
 	"strings"
-	"terra/types/assets"
 	"testing"
+
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"

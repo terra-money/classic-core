@@ -1,11 +1,11 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 
 	"testing"
 	"time"

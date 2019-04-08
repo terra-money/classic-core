@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/oracle"
 	"net/http"
-	"terra/types/assets"
-	"terra/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
@@ -50,6 +50,7 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// create the message

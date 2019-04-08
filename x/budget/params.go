@@ -2,7 +2,9 @@ package budget
 
 import (
 	"fmt"
-	"terra/types/assets"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -42,10 +44,9 @@ func validateParams(params Params) error {
 	if params.LegacyThreshold.LT(sdk.ZeroDec()) {
 		return fmt.Errorf("budget legacy threshold should be greater than or equal to 0, is %s", params.LegacyThreshold.String())
 	}
-	if params.VotePeriod < 0 {
+	if params.VotePeriod <= 0 {
 		return fmt.Errorf("budget parameter VotePeriod must be > 0, is %d", params.VotePeriod)
 	}
-
 	if params.Deposit.Amount.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("budget parameter Deposit must be > 0, is %v", params.Deposit.String())
 	}

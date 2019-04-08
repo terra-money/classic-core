@@ -1,10 +1,10 @@
 package treasury
 
 import (
-	"terra/types"
-	"terra/types/util"
-	"terra/x/market"
-	"terra/x/mint"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

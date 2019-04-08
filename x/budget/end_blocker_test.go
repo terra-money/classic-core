@@ -1,8 +1,8 @@
 package budget
 
 import (
+	"github.com/terra-project/core/types/mock"
 	"math/rand"
-	"terra/types/mock"
 	"testing"
 	"time"
 
@@ -97,9 +97,9 @@ func TestEndBlockerTiming(t *testing.T) {
 	claims, _ := EndBlocker(input.ctx, input.budgetKeeper)
 	require.Equal(t, 0, len(claims))
 
-	// Advance block height by voteperiod, and the program should be settled.
+	// Advance block height by voteperiod - 1, and the program should be settled.
 	params := input.budgetKeeper.GetParams(input.ctx)
-	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod)
+	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod - 1)
 	claims, _ = EndBlocker(input.ctx, input.budgetKeeper)
 
 	require.Equal(t, 1, len(claims))

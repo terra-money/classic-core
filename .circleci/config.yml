@@ -1,7 +1,7 @@
 version: 2.1
 
 defaults: &linux_defaults
-  working_directory: /go/src/terra
+  working_directory: /go/src/core
   docker:
     - image: circleci/golang:1.11.5
   environment:
@@ -12,7 +12,7 @@ deps: &dependencies
     name: dependencies
     command: |
       export PATH="$GOBIN:$PATH"
-      make get_vendor_deps
+      make go-mod-cache
 
 refs:
   filter_only_branches: &filter_only_branches
@@ -89,7 +89,7 @@ jobs:
           docker push ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
 
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/terra
+    working_directory: /home/circleci/.go_workspace/src/core
     machine:
       image: circleci/classic:latest
     environment:
@@ -112,7 +112,7 @@ jobs:
             sudo mv go /usr/local
             popd
 
-            make get_vendor_deps
+            make go-mod-cache
             make build-linux
             make build-docker-terradnode
             make localnet-start
