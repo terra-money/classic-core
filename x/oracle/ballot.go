@@ -81,7 +81,7 @@ func (pb PriceBallot) stdDev() sdk.Dec {
 
 // Calculates the median and returns the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median.
-func (pb PriceBallot) tally() (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
+func (pb PriceBallot) tally(ctx sdk.Context, k Keeper) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}
@@ -98,11 +98,16 @@ func (pb PriceBallot) tally() (weightedMedian sdk.Dec, ballotWinners types.Claim
 
 	for _, vote := range pb {
 		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
-			ballotWinners = append(ballotWinners, types.Claim{
-				Recipient: vote.Voter,
-				Weight:    vote.Power,
-				Class:     types.OracleClaimClass,
-			})
+			valAddr := sdk.ValAddress(vote.Voter)
+			if validator := k.valset.Validator(ctx, valAddr); validator != nil {
+				bondSize := validator.GetBondedTokens()
+
+				ballotWinners = append(ballotWinners, types.Claim{
+					Recipient: vote.Voter,
+					Weight:    bondSize,
+					Class:     types.OracleClaimClass,
+				})
+			}
 		}
 	}
 
