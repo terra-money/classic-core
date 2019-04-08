@@ -30,7 +30,7 @@ func DefaultParams() Params {
 	return NewParams(
 		sdk.NewDecWithPrec(1, 1), // 10%
 		sdk.NewDecWithPrec(0, 2), // 0%
-		1000000,                  // TODO: change for a real value later
+		util.BlocksPerMonth,
 		sdk.NewInt64Coin(assets.MicroSDRDenom, sdk.NewInt(100).MulRaw(assets.MicroUnit).Int64()),
 	)
 }
