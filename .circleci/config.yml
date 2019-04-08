@@ -12,7 +12,6 @@ deps: &dependencies
     name: dependencies
     command: |
       export PATH="$GOBIN:$PATH"
-      make go-mod-cache
 
 refs:
   filter_only_branches: &filter_only_branches
@@ -27,6 +26,9 @@ jobs:
       - run: mkdir -p /tmp/workspace/bin
       - run: mkdir -p /tmp/workspace/profiles
       - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
       - run:
           name: tools
           command: |
@@ -37,12 +39,93 @@ jobs:
           name: binaries
           command: |
             export PATH="$GOBIN:$PATH"
+            make go-mod-cache
             make install
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
             - bin
             - profiles
+
+  lint:
+    <<: *linux_defaults
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - *dependencies
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Lint source
+          command: |
+            export PATH="$GOBIN:$PATH"
+            make ci-lint
+
+  test_cover:
+    <<: *linux_defaults
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - *dependencies
+      - run: mkdir -p /tmp/logs
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Run tests
+          command: |
+            export PATH="$GOBIN:$PATH"
+            export VERSION="$(git describe --tags --long | sed 's/v\(.*\)/\1/')"
+            export GO111MODULE=on
+            for pkg in $(go list ./... | grep -v github.com/terra-project/core/cmd/terra/cli_test | grep -v '/simulation'); do
+              id=$(echo "$pkg" | sed 's|[/.]|_|g')
+              go test -mod=readonly -timeout 8m -race -coverprofile=/tmp/workspace/profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" | tee "/tmp/logs/$id-$RANDOM.log"
+            done
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - "profiles/*"
+      - store_artifacts:
+          path: /tmp/logs
+
+  upload_coverage:
+    <<: *linux_defaults
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - *dependencies
+      - run:
+          name: gather
+          command: |
+            set -ex
+            echo "--> Concatenating profiles:"
+            ls /tmp/workspace/profiles/
+            echo "mode: atomic" > coverage.txt
+            for prof in $(ls /tmp/workspace/profiles/); do
+              tail -n +2 /tmp/workspace/profiles/"$prof" >> coverage.txt
+            done
+      - run:
+          name: filter out DONTCOVER
+          command: |
+            excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER' | xargs realpath --relative-to=$GOPATH/src)"
+            for filename in ${excludelist}; do
+              echo "Excluding ${filename} ..."
+              sed -i "\%${filename}:%d" coverage.txt
+            done
+      - run:
+          name: upload
+          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
   docker_image:
     <<: *linux_defaults
@@ -142,6 +225,14 @@ workflows:
   build_and_push:
     jobs:
       - setup_dependencies: *filter_only_branches
+      - lint:
+          <<: *filter_only_branches
+          requires:
+            - setup_dependencies
+      - test_cover:
+          <<: *filter_only_branches
+          requires:
+            - setup_dependencies
       - localnet:
           <<: *filter_only_branches
       - docker_image:
@@ -151,5 +242,10 @@ workflows:
       - push_to_ecr:
           <<: *filter_only_branches
           requires:
+            - lint
             - docker_image
             - localnet
+      - upload_coverage:
+          <<: *filter_only_branches
+          requires:
+            - test_cover

@@ -2,6 +2,10 @@ package app
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"sort"
+
 	"github.com/terra-project/core/version"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
@@ -9,9 +13,6 @@ import (
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
-	"io"
-	"os"
-	"sort"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -195,6 +196,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
 
 	app.QueryRouter().
+		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
 		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
@@ -224,7 +226,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	return app
 }
 
-// Overide query function in baseapp to change result of "/app/version" query.
+// Query overides query function in baseapp to change result of "/app/version" query.
 func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 
 	if req.Path == "/app/version" {
@@ -406,47 +408,66 @@ type StakingHooks struct {
 	sh slashing.Hooks
 }
 
+// NewStakingHooks nolint
 func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks) StakingHooks {
 	return StakingHooks{dh, sh}
 }
 
-// nolint
+// AfterValidatorCreated nolint
 func (h StakingHooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
 	h.dh.AfterValidatorCreated(ctx, valAddr)
 	h.sh.AfterValidatorCreated(ctx, valAddr)
 }
+
+// BeforeValidatorModified nolint
 func (h StakingHooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
 	h.dh.BeforeValidatorModified(ctx, valAddr)
 	h.sh.BeforeValidatorModified(ctx, valAddr)
 }
+
+// AfterValidatorRemoved nolint
 func (h StakingHooks) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterValidatorRemoved(ctx, consAddr, valAddr)
 	h.sh.AfterValidatorRemoved(ctx, consAddr, valAddr)
 }
+
+// AfterValidatorBonded nolint
 func (h StakingHooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterValidatorBonded(ctx, consAddr, valAddr)
 	h.sh.AfterValidatorBonded(ctx, consAddr, valAddr)
 }
+
+// AfterValidatorBeginUnbonding nolint
 func (h StakingHooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
 	h.sh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
 }
+
+// BeforeDelegationCreated nolint
 func (h StakingHooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationCreated(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationCreated(ctx, delAddr, valAddr)
 }
+
+// BeforeDelegationSharesModified nolint
 func (h StakingHooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 }
+
+// BeforeDelegationRemoved nolint
 func (h StakingHooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 }
+
+// AfterDelegationModified nolint
 func (h StakingHooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterDelegationModified(ctx, delAddr, valAddr)
 	h.sh.AfterDelegationModified(ctx, delAddr, valAddr)
 }
+
+// BeforeValidatorSlashed nolint
 func (h StakingHooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
 	h.dh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 	h.sh.BeforeValidatorSlashed(ctx, valAddr, fraction)

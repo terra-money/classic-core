@@ -43,14 +43,15 @@ func checkFloatEquality(a sdk.Dec, b float64, precision int) bool {
 func TestPBStdDev(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
-	prices, weights := generateRandomTestCase()
-	pb := PriceBallot{}
-	for i, price := range prices {
-		weight := sdk.NewDec(int64(weights[i])).TruncateInt()
-		vote := NewPriceVote(sdk.NewDecWithPrec(int64(price*10000), 4), "", weight, addrs[0])
-		pb = append(pb, vote)
-	}
-
+	for i := 0; i < 100; i ++ {
+		prices, weights := generateRandomTestCase()
+		pb := PriceBallot{}
+		for i, price := range prices {
+			weight := sdk.NewDec(int64(weights[i])).TruncateInt()
+			vote := NewPriceVote(sdk.NewDecWithPrec(int64(price*10000), 4), "", weight, addrs[0])
+			pb = append(pb, vote)
+		}
+    
 	match := checkFloatEquality(pb.stdDev(), stat.StdDev(prices, weights), 2)
 	require.True(t, match)
 }
