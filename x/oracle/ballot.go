@@ -5,8 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"github.com/terra-project/core/types"
-
 	"gonum.org/v1/gonum/stat"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,18 +13,17 @@ import (
 // PriceBallot is a convinience wrapper arounda a PriceVote slice
 type PriceBallot []PriceVote
 
-// TotalPower gets the total amount of voting power in the ballot
-func (pb PriceBallot) TotalPower() sdk.Int {
-	totalPower := sdk.ZeroInt()
-	for _, vote := range pb {
-		totalPower = totalPower.Add(vote.Power)
-	}
-	return totalPower
-}
+// // TotalPower gets the total amount of voting power in the ballot
+// func (pb PriceBallot) TotalPower() sdk.Int {
+// 	totalPower := sdk.ZeroInt()
+// 	for _, vote := range pb {
+// 		totalPower = totalPower.Add(vote.Power)
+// 	}
+// 	return totalPower
+// }
 
 // Returns the median weighted by the Power of the PriceVote.
-func (pb PriceBallot) weightedMedian() sdk.Dec {
-	totalPower := pb.TotalPower()
+func (pb PriceBallot) weightedMedian(totalPower sdk.Int) sdk.Dec {
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
 			sort.Sort(pb)
@@ -79,41 +76,6 @@ func (pb PriceBallot) stdDev() sdk.Dec {
 	return sdk.ZeroDec()
 }
 
-// Calculates the median and returns the set of voters to be rewarded, i.e. voted within
-// a reasonable spread from the weighted median.
-func (pb PriceBallot) tally(ctx sdk.Context, k Keeper) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
-	if !sort.IsSorted(pb) {
-		sort.Sort(pb)
-	}
-
-	ballotWinners = types.ClaimPool{}
-	weightedMedian = pb.weightedMedian()
-
-	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
-	stdDev := pb.stdDev()
-
-	if stdDev.LT(maxSpread) {
-		maxSpread = stdDev
-	}
-
-	for _, vote := range pb {
-		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
-			valAddr := sdk.ValAddress(vote.Voter)
-			if validator := k.valset.Validator(ctx, valAddr); validator != nil {
-				bondSize := validator.GetBondedTokens()
-
-				ballotWinners = append(ballotWinners, types.Claim{
-					Recipient: vote.Voter,
-					Weight:    bondSize,
-					Class:     types.OracleClaimClass,
-				})
-			}
-		}
-	}
-
-	return
-}
-
 // Len implements sort.Interface
 func (pb PriceBallot) Len() int {
 	return len(pb)
@@ -132,7 +94,7 @@ func (pb PriceBallot) Swap(i, j int) {
 
 // String implements fmt.Stringer interface
 func (pb PriceBallot) String() (out string) {
-	out = fmt.Sprintf("PriceBallot of %d votes with %s total power\n", pb.Len(), pb.TotalPower())
+	out = fmt.Sprintf("PriceBallot of %d votes\n", pb.Len())
 	for _, pv := range pb {
 		out += fmt.Sprintf("\n  %s", pv.String())
 	}

@@ -3,11 +3,49 @@ package oracle
 import (
 	"github.com/terra-project/core/types/util"
 
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/tags"
 )
 
+
+
+// Calculates the median and returns the set of voters to be rewarded, i.e. voted within
+// a reasonable spread from the weighted median.
+func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
+	if !sort.IsSorted(pb) {
+		sort.Sort(pb)
+	}
+
+	ballotWinners = types.ClaimPool{}
+	weightedMedian = pb.weightedMedian()
+
+	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
+	stdDev := pb.stdDev()
+
+	if stdDev.LT(maxSpread) {
+		maxSpread = stdDev
+	}
+
+	for _, vote := range pb {
+		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
+			valAddr := sdk.ValAddress(vote.Voter)
+			if validator := k.valset.Validator(ctx, valAddr); validator != nil {
+				bondSize := validator.GetBondedTokens()
+
+				ballotWinners = append(ballotWinners, types.Claim{
+					Recipient: vote.Voter,
+					Weight:    bondSize,
+					Class:     types.OracleClaimClass,
+				})
+			}
+		}
+	}
+
+	return
+}
 
 // Get all active oracle asset denoms from the store
 func getActiveDenoms(ctx sdk.Context, k Keeper) (denoms []string) {
