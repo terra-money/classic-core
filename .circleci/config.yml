@@ -17,7 +17,7 @@ refs:
   filter_only_branches: &filter_only_branches
     filters:
       branches:
-        only: /^(develop|release|master|feature).*/
+        only: /^(develop|release|master).*/
 
 jobs:
   setup_dependencies:
