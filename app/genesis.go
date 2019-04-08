@@ -27,7 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-// State to Unmarshal
+// GenesisState is a state to Unmarshal
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
 	AuthData     auth.GenesisState     `json:"auth"`
@@ -41,6 +41,7 @@ type GenesisState struct {
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
+// NewGenesisState returns new genesis state
 func NewGenesisState(accounts []GenesisAccount,
 	authData auth.GenesisState,
 	bankData bank.GenesisState,
@@ -90,6 +91,7 @@ type GenesisAccount struct {
 	EndTime          int64     `json:"end_time"`          // vesting end time (UNIX Epoch time)
 }
 
+// NewGenesisAccount returns new genesis account
 func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	return GenesisAccount{
 		Address:       acc.Address,
@@ -99,6 +101,7 @@ func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	}
 }
 
+// NewGenesisAccountI no-lint
 func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	gacc := GenesisAccount{
 		Address:       acc.GetAddress(),
@@ -119,7 +122,7 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	return gacc
 }
 
-// convert GenesisAccount to auth.BaseAccount
+// ToAccount converts GenesisAccount to auth.BaseAccount
 func (ga *GenesisAccount) ToAccount() auth.Account {
 	bacc := &auth.BaseAccount{
 		Address:       ga.Address,
@@ -154,7 +157,7 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 	return bacc
 }
 
-// Create the core parameters for genesis initialization for Terra
+// TerraAppGenState creates the core parameters for genesis initialization for Terra
 // note that the pubkey input is this machines pubkey
 func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	genesisState GenesisState, err error) {
@@ -292,7 +295,7 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 	return nil
 }
 
-// TerraAppGenState but with JSON
+// TerraAppGenStateJSON returns genesis state with JSON
 func TerraAppGenStateJSON(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	appState json.RawMessage, err error) {
 	// create the final app state
@@ -403,6 +406,7 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 	return appGenTxs, persistentPeers, nil
 }
 
+// NewDefaultGenesisAccount returns default genesis account
 func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{

@@ -19,7 +19,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// export the state of Terra for a genesis file
+// ExportAppStateAndValidators exports the state of Terra for a genesis file
 func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string) (
 	appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
