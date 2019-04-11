@@ -4,7 +4,7 @@ This guide will explain how to install the `terrad` and `terracli` entrypoints o
 
 ### Install Go
 
-Install `go` by following the [official docs](https://golang.org/doc/install). 
+Install `go` by following the [official docs](https://golang.org/doc/install).
 
 ::: tip
 **Go 1.12+ +** is required for Terra Core.
@@ -17,8 +17,8 @@ If necessary, make sure you `git checkout` the correct
 [released version](https://github.com/terra-project/core//releases).
 
 ```bash
-git clone https://github.com/terra-project/core/
-git checkout master
+git clone https://github.com/terra-project/core/ $GOPATH/src/github.com/terra-project/core
+git checkout master # as of 2019.04.11 only `develop` branch builds correctly
 make
 ```
 
