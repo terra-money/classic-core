@@ -1,0 +1,81 @@
+project_name: terra
+
+before:
+  hooks:
+    - go mod download
+    - go generate ./...
+
+builds:
+  -
+    main: cmd/terracli/main.go
+    binary: terracli
+    ldflags: -s -w -X main.version={{.Version}}
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: 386
+
+  -
+    main: cmd/terrad/main.go
+    binary: terrad
+    ldflags: -s -w -X main.version={{.Version}}
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: 386
+
+  -
+    main: cmd/terrakeyutil/main.go
+    binary: terrakeytutil
+    ldflags: -s -w -X main.version={{.Version}}
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: 386
+
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
