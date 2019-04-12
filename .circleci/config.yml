@@ -17,7 +17,9 @@ refs:
   filter_only_branches: &filter_only_branches
     filters:
       branches:
-        only: /^(develop|release|master).*/
+        only: /^(develop|master).*/
+      tags:
+        only: /v[0-9]+(\.[0-9]+)*(-.*)*/
 
 jobs:
   setup_dependencies:
@@ -96,6 +98,13 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
+
+  release:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - checkout
+      - run: curl -sL https://git.io/goreleaser | bash
 
   upload_coverage:
     <<: *linux_defaults
@@ -249,3 +258,13 @@ workflows:
           <<: *filter_only_branches
           requires:
             - test_cover
+      - release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+          requires:
+            - lint
+            - test_cover
+            - localnet
