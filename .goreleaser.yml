@@ -2,14 +2,23 @@ project_name: terra
 
 before:
   hooks:
-    - go mod download
-    - go generate ./...
+    - make get_tools
+    - make go-mod-cache
 
 builds:
   -
     main: cmd/terracli/main.go
     binary: terracli
-    ldflags: -s -w -X main.version={{.Version}}
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    ldflags: |
+      -s -w
+      -X github.com/terra-project/core/version.Version={{.Version}}
+      -X github.com/terra-project/core/version.Commit={{.Commit}}
+      -X "github.com/terra-project/core/version.BuildTags={{.Env.BUILD_TAGS}}"
+      -X github.com/terra-project/core/version.GoSumHash={{.Env.GOSUM}}
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
@@ -28,7 +37,16 @@ builds:
   -
     main: cmd/terrad/main.go
     binary: terrad
-    ldflags: -s -w -X main.version={{.Version}}
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    ldflags: |
+      -s -w
+      -X github.com/terra-project/core/version.Version={{.Version}}
+      -X github.com/terra-project/core/version.Commit={{.Commit}}
+      -X "github.com/terra-project/core/version.BuildTags={{.Env.BUILD_TAGS}}"
+      -X github.com/terra-project/core/version.GoSumHash={{.Env.GOSUM}}
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
@@ -47,7 +65,16 @@ builds:
   -
     main: cmd/terrakeyutil/main.go
     binary: terrakeytutil
-    ldflags: -s -w -X main.version={{.Version}}
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    ldflags: |
+      -s -w
+      -X github.com/terra-project/core/version.Version={{.Version}}
+      -X github.com/terra-project/core/version.Commit={{.Commit}}
+      -X "github.com/terra-project/core/version.BuildTags={{.Env.BUILD_TAGS}}"
+      -X github.com/terra-project/core/version.GoSumHash={{.Env.GOSUM}}
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
