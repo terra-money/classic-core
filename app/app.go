@@ -47,6 +47,8 @@ type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
+	assertInvariantsBlockly bool
+
 	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
@@ -81,30 +83,31 @@ type TerraApp struct {
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
-func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
+func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest, assertInvariantsBlockly bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 	cdc := MakeCodec()
 
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 
 	var app = &TerraApp{
-		BaseApp:          bApp,
-		cdc:              cdc,
-		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
-		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
-		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
-		keyDistr:         sdk.NewKVStoreKey(distr.StoreKey),
-		tkeyDistr:        sdk.NewTransientStoreKey(distr.TStoreKey),
-		keySlashing:      sdk.NewKVStoreKey(slashing.StoreKey),
-		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
-		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
-		tkeyParams:       sdk.NewTransientStoreKey(params.TStoreKey),
-		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
-		keyTreasury:      sdk.NewKVStoreKey(treasury.StoreKey),
-		keyMarket:        sdk.NewKVStoreKey(market.StoreKey),
-		keyBudget:        sdk.NewKVStoreKey(budget.StoreKey),
-		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
+		BaseApp:                 bApp,
+		cdc:                     cdc,
+		assertInvariantsBlockly: assertInvariantsBlockly,
+		keyMain:                 sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:              sdk.NewKVStoreKey(auth.StoreKey),
+		keyStaking:              sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:             sdk.NewTransientStoreKey(staking.TStoreKey),
+		keyDistr:                sdk.NewKVStoreKey(distr.StoreKey),
+		tkeyDistr:               sdk.NewTransientStoreKey(distr.TStoreKey),
+		keySlashing:             sdk.NewKVStoreKey(slashing.StoreKey),
+		keyFeeCollection:        sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyParams:               sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:              sdk.NewTransientStoreKey(params.TStoreKey),
+		keyOracle:               sdk.NewKVStoreKey(oracle.StoreKey),
+		keyTreasury:             sdk.NewKVStoreKey(treasury.StoreKey),
+		keyMarket:               sdk.NewKVStoreKey(market.StoreKey),
+		keyBudget:               sdk.NewKVStoreKey(budget.StoreKey),
+		keyMint:                 sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
 	app.paramsKeeper = params.NewKeeper(
@@ -309,7 +312,9 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
 
-	app.assertRuntimeInvariants()
+	if app.assertInvariantsBlockly {
+		app.assertRuntimeInvariants()
+	}
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
