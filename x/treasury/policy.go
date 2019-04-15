@@ -1,7 +1,7 @@
 package treasury
 
 import (
-	"terra/types/util"
+	"github.com/terra-project/core/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -12,8 +12,8 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 
 	oldTaxRate := k.GetTaxRate(ctx, util.GetEpoch(ctx))
 	inc := params.MiningIncrement
-	tlYear := RollingAverageIndicator(ctx, k, params.EpochLong, TRL)
-	tlMonth := RollingAverageIndicator(ctx, k, params.EpochShort, TRL)
+	tlYear := RollingAverageIndicator(ctx, k, params.WindowLong, TRL)
+	tlMonth := RollingAverageIndicator(ctx, k, params.WindowShort, TRL)
 
 	// No revenues, hike as much as possible.
 	if tlMonth.Equal(sdk.ZeroDec()) {
@@ -29,20 +29,24 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 	return
 }
 
-// w(t+1) = w(t)*SMR_target/SMR_rolling(t)
+// w(t+1) = w(t)*SB_target/SB_rolling(t)
 func updateRewardPolicy(ctx sdk.Context, k Keeper) (newRewardWeight sdk.Dec) {
 	params := k.GetParams(ctx)
 
 	curEpoch := util.GetEpoch(ctx)
 	oldWeight := k.GetRewardWeight(ctx, curEpoch)
-	smrTarget := params.SeigniorageBurdenTarget
-	smrAvgMonth := RollingAverageIndicator(ctx, k, params.EpochShort, SMR)
+	sbTarget := params.SeigniorageBurdenTarget
+
+	seigniorageSum := SumIndicator(ctx, k, params.WindowShort, SeigniorageRewardsForEpoch)
+	totalSum := SumIndicator(ctx, k, params.WindowShort, MiningRewardForEpoch)
 
 	// No revenues; hike as much as possible
-	if smrAvgMonth.Equal(sdk.ZeroDec()) {
+	if totalSum.Equal(sdk.ZeroDec()) || seigniorageSum.Equal(sdk.ZeroDec()) {
 		newRewardWeight = params.RewardPolicy.RateMax
 	} else {
-		newRewardWeight = oldWeight.Mul(smrTarget.Quo(smrAvgMonth))
+		// Seigniorage burden out of total rewards
+		sb := seigniorageSum.Quo(totalSum)
+		newRewardWeight = oldWeight.Mul(sbTarget.Quo(sb))
 	}
 
 	newRewardWeight = params.RewardPolicy.Clamp(oldWeight, newRewardWeight)

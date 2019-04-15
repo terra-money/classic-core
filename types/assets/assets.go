@@ -2,18 +2,26 @@ package assets
 
 //nolint
 const (
-	LunaDenom = "luna"
-	USDDenom  = "usd"
-	KRWDenom  = "krw"
-	SDRDenom  = "sdr"
-	CNYDenom  = "cny"
-	JPYDenom  = "jpy"
-	EURDenom  = "eur"
-	GBPDenom  = "gbp"
+	MicroLunaDenom = "mluna"
+	MicroUSDDenom  = "musd"
+	MicroKRWDenom  = "mkrw"
+	MicroSDRDenom  = "msdr"
+	MicroCNYDenom  = "mcny"
+	MicroJPYDenom  = "mjpy"
+	MicroEURDenom  = "meur"
+	MicroGBPDenom  = "mgbp"
+
+	MicroUnit = int64(1e6)
 )
 
-func GetAllDenoms() []string {
-	return []string{
-		USDDenom, KRWDenom, SDRDenom, CNYDenom, JPYDenom, EURDenom, GBPDenom,
-	}
+// IsValidDenom returns the given denom is valid or not
+func IsValidDenom(denom string) bool {
+	return denom == MicroLunaDenom ||
+		denom == MicroUSDDenom ||
+		denom == MicroKRWDenom ||
+		denom == MicroSDRDenom ||
+		denom == MicroCNYDenom ||
+		denom == MicroJPYDenom ||
+		denom == MicroEURDenom ||
+		denom == MicroGBPDenom
 }

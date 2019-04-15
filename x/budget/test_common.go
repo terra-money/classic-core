@@ -1,10 +1,13 @@
 package budget
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
-	"terra/types/util"
-	"terra/x/mint"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -37,8 +40,8 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	initAmt = sdk.NewInt(10000000)
-	lunaAmt = sdk.NewInt(10)
+	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
+	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
 )
 
 type testInput struct {
@@ -63,14 +66,14 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput() testInput {
+func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyBudget := sdk.NewKVStoreKey(StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tkeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -83,10 +86,10 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 
 	if err := ms.LoadLatestVersion(); err != nil {
-		panic(err.Error())
+		require.Nil(t, err)
 	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
@@ -103,29 +106,39 @@ func createTestInput() testInput {
 		bank.DefaultCodespace,
 	)
 
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
+		stakingKeeper,
 		bankKeeper,
 		accKeeper,
 	)
 
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
-
-		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.SDRDenom, initAmt))
-		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.LunaDenom, lunaAmt))
+		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt))
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
 
 		if err != nil {
-			panic(err.Error())
+			require.Nil(t, err)
 		}
 
 		if err2 != nil {
-			panic(err2.Error())
+			require.Nil(t, err2)
 		}
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 
@@ -139,7 +152,7 @@ func createTestInput() testInput {
 	return testInput{ctx, cdc, mintKeeper, bankKeeper, budgetKeeper, valset}
 }
 
-func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
+func generateTestProgram(ctx sdk.Context, budgetKeeper Keeper, accounts ...sdk.AccAddress) Program {
 	submitter := addrs[0]
 	if len(accounts) > 0 {
 		submitter = accounts[0]
@@ -150,5 +163,7 @@ func generateTestProgram(ctx sdk.Context, accounts ...sdk.AccAddress) Program {
 		executor = accounts[1]
 	}
 
-	return NewProgram("testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
+	testProgramID := budgetKeeper.NewProgramID(ctx)
+
+	return NewProgram(testProgramID, "testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
 }

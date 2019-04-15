@@ -9,11 +9,12 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"terra/types/assets"
-	"terra/x/budget"
-	"terra/x/oracle"
-	"terra/x/treasury"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -26,12 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-var (
-	// bonded tokens given to genesis validators/accounts
-	freeFermionsAcc = sdk.NewInt(150)
-)
-
-// State to Unmarshal
+// GenesisState is a state to Unmarshal
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
 	AuthData     auth.GenesisState     `json:"auth"`
@@ -45,6 +41,7 @@ type GenesisState struct {
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
+// NewGenesisState returns new genesis state
 func NewGenesisState(accounts []GenesisAccount,
 	authData auth.GenesisState,
 	bankData bank.GenesisState,
@@ -94,6 +91,7 @@ type GenesisAccount struct {
 	EndTime          int64     `json:"end_time"`          // vesting end time (UNIX Epoch time)
 }
 
+// NewGenesisAccount returns new genesis account
 func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	return GenesisAccount{
 		Address:       acc.Address,
@@ -103,6 +101,7 @@ func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	}
 }
 
+// NewGenesisAccountI no-lint
 func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	gacc := GenesisAccount{
 		Address:       acc.GetAddress(),
@@ -123,7 +122,7 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	return gacc
 }
 
-// convert GenesisAccount to auth.BaseAccount
+// ToAccount converts GenesisAccount to auth.BaseAccount
 func (ga *GenesisAccount) ToAccount() auth.Account {
 	bacc := &auth.BaseAccount{
 		Address:       ga.Address,
@@ -158,7 +157,7 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 	return bacc
 }
 
-// Create the core parameters for genesis initialization for Terra
+// TerraAppGenState creates the core parameters for genesis initialization for Terra
 // note that the pubkey input is this machines pubkey
 func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	genesisState GenesisState, err error) {
@@ -214,7 +213,7 @@ func NewDefaultGenesisState() GenesisState {
 	distrGenState.CommunityTax = sdk.ZeroDec()
 
 	stakingGenState := staking.DefaultGenesisState()
-	stakingGenState.Params.BondDenom = assets.LunaDenom
+	stakingGenState.Params.BondDenom = assets.MicroLunaDenom
 	stakingGenState.Params.MaxValidators = 100
 
 	return GenesisState{
@@ -296,7 +295,7 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 	return nil
 }
 
-// TerraAppGenState but with JSON
+// TerraAppGenStateJSON returns genesis state with JSON
 func TerraAppGenStateJSON(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	appState json.RawMessage, err error) {
 	// create the final app state
@@ -370,8 +369,8 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 
 		msg := msgs[0].(staking.MsgCreateValidator)
 		// validate delegator and validator addresses and funds against the accounts in the state
-		delAddr := msg.DelegatorAddr.String()
-		valAddr := sdk.AccAddress(msg.ValidatorAddr).String()
+		delAddr := msg.DelegatorAddress.String()
+		valAddr := sdk.AccAddress(msg.ValidatorAddress).String()
 
 		delAcc, delOk := addrMap[delAddr]
 		_, valOk := addrMap[valAddr]
@@ -407,11 +406,12 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 	return appGenTxs, persistentPeers, nil
 }
 
+// NewDefaultGenesisAccount returns default genesis account
 func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{
-		sdk.NewCoin(assets.SDRDenom, sdk.NewInt(1000)),
-		sdk.NewCoin(assets.LunaDenom, sdk.NewInt(100)),
+		sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(1000).MulRaw(assets.MicroUnit)),
+		sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100).MulRaw(assets.MicroUnit)),
 	}
 
 	coins.Sort()

@@ -1,8 +1,10 @@
 package oracle
 
 import (
-	"terra/types"
-	"terra/x/oracle/tags"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -54,7 +56,7 @@ func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags
 
 	return sdk.NewTags(
 		tags.Action, actionTag,
-		tags.Denom, []byte(denom),
+		tags.Denom, denom,
 	)
 }
 
@@ -64,16 +66,12 @@ func ballotIsPassing(totalPower sdk.Int, ballot PriceBallot, params Params) bool
 	return ballot.TotalPower().GTE(thresholdVotes)
 }
 
-// at the block height for a tally
-func isTimeForTally(ctx sdk.Context, params Params) bool {
-	return sdk.NewInt(ctx.BlockHeight()).Mod(params.VotePeriod).Equal(sdk.ZeroInt())
-}
-
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
 
-	if !isTimeForTally(ctx, params) {
+	// Not yet time for a tally
+	if !util.IsPeriodLastBlock(ctx, params.VotePeriod) {
 		return
 	}
 
@@ -113,8 +111,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 			resTags = resTags.AppendTags(
 				sdk.NewTags(
 					tags.Action, actionTag,
-					tags.Denom, []byte(denom),
-					tags.Price, mod.Bytes(),
+					tags.Denom, denom,
+					tags.Price, mod.String(),
 				),
 			)
 		} else {
@@ -142,6 +140,11 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
 	}
 
+	// Check the given denom is valid or not
+	if pfm.Denom == assets.MicroLunaDenom || !assets.IsValidDenom(pfm.Denom) {
+		return ErrUnknownDenomination(DefaultCodespace, pfm.Denom).Result()
+	}
+
 	// Add the vote to the store
 	vote := NewPriceVote(pfm.Price, pfm.Denom, val.GetBondedTokens(), signer)
 	keeper.addVote(ctx, vote)
@@ -149,9 +152,9 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Denom, pfm.Denom,
-			tags.Voter, pfm.Feeder.Bytes(),
+			tags.Voter, pfm.Feeder.String(),
 			tags.Power, val.GetBondedTokens().String(),
-			tags.Price, pfm.Price.Bytes(),
+			tags.Price, pfm.Price.String(),
 		),
 	}
 }

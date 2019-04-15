@@ -4,31 +4,22 @@ This guide will explain how to install the `terrad` and `terracli` entrypoints o
 
 ### Install Go
 
-Install `go` by following the [official docs](https://golang.org/doc/install). Remember to set your `$GOPATH`, `$GOBIN`, and `$PATH` environment variables, for example:
-
-```bash
-mkdir -p $HOME/go/bin
-echo "export GOPATH=$HOME/go" >> ~/.bash_profile
-echo "export GOBIN=$GOPATH/bin" >> ~/.bash_profile
-echo "export PATH=$PATH:$GOBIN" >> ~/.bash_profile
-```
+Install `go` by following the [official docs](https://golang.org/doc/install). 
 
 ::: tip
-**Go 1.11.5+** is required for Terra.
+**Go 1.12+ +** is required for Terra Core.
 :::
 
 ### Install the binaries
 
-Next, let's install the latest version of Terra. Here we'll use the `master` branch, which contains the latest stable release.
+Next, let's install the latest version of Terra Core. Here we'll use the `master` branch, which contains the latest stable release.
 If necessary, make sure you `git checkout` the correct
-[released version](https://github.com/terra-project/terra/releases).
+[released version](https://github.com/terra-project/core//releases).
 
 ```bash
-mkdir -p $GOPATH/src/github.com/terra-project/terra
-cd $GOPATH/src/github.com/terra-project/terra
-git clone https://github.com/terra-project/terra
+git clone https://github.com/terra-project/core/
 git checkout master
-make tools install
+make
 ```
 
 > *NOTE*: If you have issues at this step, please check that you have the latest stable version of GO installed.
@@ -47,7 +38,7 @@ terra-money: 0.1
 git commit: 1fba7308fa226e971964cd6baad9527d4b51d9fc
 vendor hash: 1aec7edfad9888a967b3e9063e42f66b28f447e6
 build tags: netgo ledger
-go version go1.11.5 linux/amd64
+go version go1.12.1 linux/amd64
 ```
 
 ##### Build Tags

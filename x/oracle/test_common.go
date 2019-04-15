@@ -1,8 +1,11 @@
 package oracle
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -35,8 +38,8 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
-	lunaAmt = sdk.NewInt(10)
+	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
+	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
 )
 
 type testInput struct {
@@ -61,7 +64,7 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput() testInput {
+func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
@@ -81,9 +84,7 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeIAVL, db)
 
-	if err := ms.LoadLatestVersion(); err != nil {
-		panic(err)
-	}
+	require.NoError(t, ms.LoadLatestVersion())
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -102,16 +103,14 @@ func createTestInput() testInput {
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.SDRDenom, initAmt),
-			sdk.NewCoin(assets.LunaDenom, lunaAmt),
+			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
+			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
 		})
 
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), lunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 

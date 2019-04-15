@@ -1,10 +1,11 @@
 package treasury
 
 import (
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/treasury/tags"
+	"fmt"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -16,25 +17,12 @@ func isProbationPeriod(ctx sdk.Context, k Keeper) bool {
 	futureCtx := ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	futureEpoch := util.GetEpoch(futureCtx)
 
-	return futureEpoch.LT(k.GetParams(ctx).EpochProbation)
-}
-
-// at the block height for a tally
-func isEpochLastBlock(ctx sdk.Context, k Keeper) bool {
-	settlementPeriod := k.GetParams(ctx).EpochShort
-	curEpoch := util.GetEpoch(ctx)
-
-	// Look 1 block into the future ... at the last block of the epoch, trigger
-	futureCtx := ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	futureEpoch := util.GetEpoch(futureCtx)
-	return !curEpoch.Equal(futureEpoch) && // Check last block of the epoch
-		futureEpoch.GT(sdk.ZeroInt()) && // Skip the first epoch; need to build up history
-		futureEpoch.Mod(settlementPeriod).Equal(sdk.ZeroInt())
+	return futureEpoch.LT(k.GetParams(ctx).WindowProbation)
 }
 
 // EndBlocker called to adjust macro weights (tax, mining reward) and settle outstanding claims.
 func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
-	if !isEpochLastBlock(ctx, k) {
+	if !util.IsPeriodLastBlock(ctx, util.BlocksPerEpoch) {
 		return resTags
 	}
 
@@ -85,7 +73,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	// Convert seigniorage to TerraSDR for rewards
 	seigPool := k.mtk.PeekSeignioragePool(ctx, curEpoch)
-	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.LunaDenom, seigPool), assets.SDRDenom)
+	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
 	if err != nil {
 		return // No or too little seigniorage
 	}
@@ -98,10 +86,8 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		switch claim.Class {
 		case types.OracleClaimClass:
 			oracleSumWeight = oracleSumWeight.Add(claim.Weight)
-			break
 		case types.BudgetClaimClass:
 			budgetSumWeight = budgetSumWeight.Add(claim.Weight)
-			break
 		}
 		return false
 	})
@@ -119,7 +105,11 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		}
 
 		// Credit the recipient's account with the reward
-		k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.SDRDenom, rewardAmt))
+		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
+		if err != nil {
+			fmt.Printf("[settleClaims] failed to mint to %s\n", claim.Recipient.String())
+			return false
+		}
 
 		// We are now done with the claim; remove it from the store
 		store.Delete(keyClaim(claim.ID()))

@@ -11,7 +11,7 @@ import (
 )
 
 func TestKeeperProgramID(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	// Program ids start at 0 and increment by 1 on each request
 	numTests := 10
@@ -22,14 +22,15 @@ func TestKeeperProgramID(t *testing.T) {
 }
 
 func TestKeeperDeposit(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	// Set the balance to equal the default deposit
 	deposit := sdk.Coins{input.budgetKeeper.GetParams(input.ctx).Deposit}
-	input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	err := input.bankKeeper.SetCoins(input.ctx, addrs[0], deposit)
+	require.Nil(t, err)
 
 	// addr0 has enough coins to pay the deposit
-	err := input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
+	err = input.budgetKeeper.PayDeposit(input.ctx, addrs[0])
 	require.Nil(t, err)
 
 	// Doesn't have enough coins to pay the deposit
@@ -46,7 +47,7 @@ func TestKeeperDeposit(t *testing.T) {
 }
 
 func TestKeeperParams(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	defaultParams := DefaultParams()
 	input.budgetKeeper.SetParams(input.ctx, defaultParams)
@@ -56,7 +57,7 @@ func TestKeeperParams(t *testing.T) {
 }
 
 func TestKeeperProgram(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	maxTests := 30
 	idCeiling := 10
@@ -67,12 +68,12 @@ func TestKeeperProgram(t *testing.T) {
 	programBitmap := make([]bool, idCeiling)
 
 	// just a random test program...
-	testProgram := NewProgram("", "", addrs[0], addrs[1], 0)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numTests := rand.Int() % maxTests
 	for i := 0; i < numTests; i++ {
 		programID := uint64(rand.Int63() % int64(idCeiling))
+		testProgram := NewProgram(programID, "", "", addrs[0], addrs[1], 0)
 		action := rand.Int() % 2
 		if action == 0 {
 			programBitmap[programID] = true
@@ -107,7 +108,7 @@ func TestKeeperProgram(t *testing.T) {
 }
 
 func TestKeeperVote(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	maxTests := 30
 	idCeiling := 10
@@ -173,7 +174,7 @@ func TestKeeperVote(t *testing.T) {
 }
 
 func TestKeeperCandidateQueue(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	// Insert a program in the queue
 	input.budgetKeeper.CandQueueInsert(input.ctx, 0, 0)

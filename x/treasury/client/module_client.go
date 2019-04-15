@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/go-amino"
 
-	treasuryCli "terra/x/treasury/client/cli"
+	treasuryCli "github.com/terra-project/core/x/treasury/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )
@@ -28,15 +28,15 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	}
 
 	treasuryQueryCmd.AddCommand(client.GetCommands(
-		treasuryCli.GetCmdQueryTaxRate(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryTaxCap(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryMiningRewardWeight(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryIssuance(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryTaxProceeds(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQuerySeigniorageProceeds(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryActiveClaims(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryCurrentEpoch(mc.storeKey, mc.cdc),
-		treasuryCli.GetCmdQueryParams(mc.storeKey, mc.cdc),
+		treasuryCli.GetCmdQueryTaxRate(mc.cdc),
+		treasuryCli.GetCmdQueryTaxCap(mc.cdc),
+		treasuryCli.GetCmdQueryMiningRewardWeight(mc.cdc),
+		treasuryCli.GetCmdQueryIssuance(mc.cdc),
+		treasuryCli.GetCmdQueryTaxProceeds(mc.cdc),
+		treasuryCli.GetCmdQuerySeigniorageProceeds(mc.cdc),
+		treasuryCli.GetCmdQueryActiveClaims(mc.cdc),
+		treasuryCli.GetCmdQueryCurrentEpoch(mc.cdc),
+		treasuryCli.GetCmdQueryParams(mc.cdc),
 	)...)
 
 	return treasuryQueryCmd

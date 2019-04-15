@@ -1,8 +1,8 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/types/util"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,12 +43,12 @@ func TestConstraintCap(t *testing.T) {
 	taxPolicy := input.treasuryKeeper.GetParams(input.ctx).TaxPolicy
 
 	// Set prices for test assets first
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.SDRDenom, sdk.NewDec(10))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.KRWDenom, sdk.NewDec(1000))
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.GBPDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(10))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, sdk.NewDec(1000))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, sdk.NewDec(1))
 
 	// Check that SDR tax cap has been set
-	require.Equal(t, taxPolicy.Cap.Amount, input.treasuryKeeper.GetTaxCap(input.ctx, assets.SDRDenom))
-	require.Equal(t, sdk.NewInt(100), input.treasuryKeeper.GetTaxCap(input.ctx, assets.KRWDenom))
-	require.Equal(t, sdk.NewInt(1), input.treasuryKeeper.GetTaxCap(input.ctx, assets.GBPDenom))
+	require.Equal(t, taxPolicy.Cap.Amount, input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroSDRDenom))
+	require.Equal(t, sdk.NewInt(100).MulRaw(assets.MicroUnit), input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroKRWDenom))
+	require.Equal(t, sdk.NewDecFromIntWithPrec(sdk.OneInt(), 1).MulInt64(assets.MicroUnit).TruncateInt(), input.treasuryKeeper.GetTaxCap(input.ctx, assets.MicroGBPDenom))
 }

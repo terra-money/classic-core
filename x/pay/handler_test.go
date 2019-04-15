@@ -1,12 +1,13 @@
 package pay
 
 import (
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
-	"terra/x/treasury"
+	"fmt"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 var (
@@ -31,7 +33,7 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
+	mSDRAmout = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -61,6 +63,8 @@ func createTestInput(t *testing.T) testInput {
 	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -74,6 +78,8 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -91,12 +97,28 @@ func createTestInput(t *testing.T) testInput {
 		bank.DefaultCodespace,
 	)
 
-	mintKeeper := mint.NewKeeper(cdc, keyMint, bankKeeper, accKeeper)
-	var valset sdk.ValidatorSet
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
+	mintKeeper := mint.NewKeeper(
+		cdc,
+		keyMint,
+		stakingKeeper,
+		bankKeeper,
+		accKeeper,
+	)
+
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
-		valset,
+		&stakingKeeper,
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
@@ -105,6 +127,7 @@ func createTestInput(t *testing.T) testInput {
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
+		&stakingKeeper,
 		mintKeeper,
 		marketKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
@@ -115,7 +138,7 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.SDRDenom, initAmt)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
 		require.NoError(t, err)
 	}
 
@@ -128,16 +151,16 @@ func TestHandlerMsgSendTransfersDisabled(t *testing.T) {
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
 	amt := sdk.NewInt(5)
-	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
+	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, amt)})
 
 	res := handler(input.ctx, msg)
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, initAmt)})
+	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, initAmt)})
+	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
 }
 
 func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
@@ -146,21 +169,22 @@ func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
 
 	params := treasury.DefaultParams()
 	input.treasuryKeeper.SetParams(input.ctx, params)
+	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.ZeroDec()) // 0.0%
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
-	amt := sdk.NewInt(5)
-	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
+	amt := sdk.NewInt(5).MulRaw(assets.MicroUnit)
+	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, amt)})
 
 	res := handler(input.ctx, msg)
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := initAmt.Sub(amt)
-	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, balance)})
+	balance := mSDRAmout.Sub(amt)
+	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = initAmt.Add(amt)
-	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, balance)})
+	balance = mSDRAmout.Add(amt)
+	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }
 
 func TestHandlerMsgSendTax(t *testing.T) {
@@ -172,46 +196,50 @@ func TestHandlerMsgSendTax(t *testing.T) {
 	input.treasuryKeeper.SetParams(input.ctx, params)
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
-	amt := sdk.NewInt(1000)
-	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
+	amt := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
+	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, amt)})
 
 	handler(input.ctx, msg)
 
 	taxCollected := input.feeKeeper.GetCollectedFees(input.ctx)
 	taxRecorded := input.treasuryKeeper.PeekTaxProceeds(input.ctx, util.GetEpoch(input.ctx))
-	require.Equal(t, sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(1))}, taxCollected)
+	require.Equal(t, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(1).MulRaw(assets.MicroUnit))}, taxCollected)
 	require.Equal(t, taxCollected, taxRecorded)
 
 	remainingBalance := input.bankKeeper.GetCoins(input.ctx, addrs[0])
-	require.Equal(t, remainingBalance, sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(4))}, "expected 4 SDR to be remaining")
+	require.Equal(t, remainingBalance, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(4).MulRaw(assets.MicroUnit))}, "expected 4 SDR to be remaining")
 
-	amt = sdk.NewInt(5)
-	msg = bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
+	amt = sdk.NewInt(5).MulRaw(assets.MicroUnit)
+	msg = bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, amt)})
 	res := handler(input.ctx, msg)
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Clear coin balances
-	input.bankKeeper.SetCoins(input.ctx, addrs[0], sdk.Coins{})
-	input.bankKeeper.SetCoins(input.ctx, addrs[1], sdk.Coins{})
+	err := input.bankKeeper.SetCoins(input.ctx, addrs[0], sdk.Coins{})
+	require.Nil(t, err)
+	err = input.bankKeeper.SetCoins(input.ctx, addrs[1], sdk.Coins{})
+	require.Nil(t, err)
 
 	// Give more coins
-	input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(5000))})
+	_, _, err = input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit))})
+	require.Nil(t, err)
 
 	// Reset tax cap
-	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.SDRDenom, 2) // 2 SDR cap
+	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.MicroSDRDenom, sdk.NewInt(2).MulRaw(assets.MicroUnit).Int64()) // 2 SDR cap
 	input.treasuryKeeper.SetParams(input.ctx, params)
-	amt = sdk.NewInt(2000)
-	msg = bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, amt)})
+	amt = sdk.NewInt(2000).MulRaw(assets.MicroUnit)
+	msg = bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, amt)})
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
 
 	remainingBalance = input.bankKeeper.GetCoins(input.ctx, addrs[0])
-	expectedRemainingBalance := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2999))}
+	expectedRemainingBalance := sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(2999).MulRaw(assets.MicroUnit))}
 	receivedBalance := input.bankKeeper.GetCoins(input.ctx, addrs[1])
-	expectedReceivedBalance := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2000))}
+	expectedReceivedBalance := sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(2000).MulRaw(assets.MicroUnit))}
 	taxCollected = input.feeKeeper.GetCollectedFees(input.ctx)
-	expectedTaxCollected := sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(2))}
+	expectedTaxCollected := sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewDecFromIntWithPrec(sdk.NewInt(2005000), 6).MulInt64(assets.MicroUnit).TruncateInt())}
 
+	fmt.Println(taxCollected)
 	require.Equal(t, expectedRemainingBalance, remainingBalance)
 	require.Equal(t, expectedReceivedBalance, receivedBalance)
 	require.Equal(t, expectedTaxCollected, taxCollected)
@@ -224,19 +252,19 @@ func TestHandlerMsgMultiSendTax(t *testing.T) {
 	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 2)) // 1%
 
 	params := treasury.DefaultParams()
-	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.SDRDenom, 2) // 2 SDR cap
+	params.TaxPolicy.Cap = sdk.NewInt64Coin(assets.MicroSDRDenom, sdk.NewInt(2).MulRaw(assets.MicroUnit).Int64()) // 2 SDR cap
 	input.treasuryKeeper.SetParams(input.ctx, params)
 
 	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
 
 	msg := bank.NewMsgMultiSend(
 		[]bank.Input{
-			bank.NewInput(addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(398))}),
-			bank.NewInput(addrs[1], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(14))}),
-			bank.NewInput(addrs[2], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(189))}),
+			bank.NewInput(addrs[0], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(398).MulRaw(assets.MicroUnit))}),
+			bank.NewInput(addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(14).MulRaw(assets.MicroUnit))}),
+			bank.NewInput(addrs[2], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(189).MulRaw(assets.MicroUnit))}),
 		},
 		[]bank.Output{
-			bank.NewOutput(addrs[0], sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(601))}),
+			bank.NewOutput(addrs[0], sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(601).MulRaw(assets.MicroUnit))}),
 		},
 	)
 
@@ -245,18 +273,19 @@ func TestHandlerMsgMultiSendTax(t *testing.T) {
 
 	taxCollected := input.feeKeeper.GetCollectedFees(input.ctx)
 	taxRecorded := input.treasuryKeeper.PeekTaxProceeds(input.ctx, util.GetEpoch(input.ctx))
-	require.Equal(t, sdk.Coins{sdk.NewCoin(assets.SDRDenom, sdk.NewInt(3))}, taxCollected)
+
+	require.Equal(t, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewDecFromIntWithPrec(sdk.NewInt(403), 2).MulInt64(assets.MicroUnit).TruncateInt())}, taxCollected)
 	require.Equal(t, taxCollected, taxRecorded)
 
 	acc1 := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := initAmt.Add(sdk.NewInt(201))
-	require.Equal(t, acc1.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, balance)})
+	balance := mSDRAmout.Add(sdk.NewInt(201).MulRaw(assets.MicroUnit))
+	require.Equal(t, acc1.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc2 := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = initAmt.Sub(sdk.NewInt(14))
-	require.Equal(t, acc2.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, balance)})
+	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(1414), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	require.Equal(t, acc2.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc3 := input.accKeeper.GetAccount(input.ctx, addrs[2])
-	balance = initAmt.Sub(sdk.NewInt(190))
-	require.Equal(t, acc3.GetCoins(), sdk.Coins{sdk.NewCoin(assets.SDRDenom, balance)})
+	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(19089), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	require.Equal(t, acc3.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }

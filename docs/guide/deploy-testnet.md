@@ -6,7 +6,7 @@ This document describes 3 ways to setup a network of `terrad` nodes, each servin
 2. Multi-node, local, automated testnet
 3. Multi-node, remote, automated testnet
 
-Supporting code can be found in the [networks directory](https://github.com/terra-project/terra/tree/networks) and additionally the `local` or `remote` sub-directories.
+Supporting code can be found in the [networks directory](https://github.com/terra-project/core//tree/networks) and additionally the `local` or `remote` sub-directories.
 
 > NOTE: The `remote` network bootstrapping may be out of sync with the latest releases and is not to be relied upon.
 
@@ -34,10 +34,10 @@ terracli keys add validator
 # Add that key into the genesis.app_state.accounts array in the genesis file
 # NOTE: this command lets you set the number of coins. Make sure this account has some coins
 # with the genesis.app_state.staking.params.bond_denom denom, the default is staking
-terrad add-genesis-account $(terracli keys show validator -a) 1000luna,1000sdr
+terrad add-genesis-account $(terracli keys show validator -a) 1000mluna,1000msdr
 
 # Generate the transaction that creates your validator
-terrad gentx --name validator
+terrad gentx --name validator --amount 100mluna
 
 # Add the generated bonding transaction to the genesis file
 terrad collect-gentxs
@@ -50,7 +50,7 @@ This setup puts all the data for `terrad` in `~/.terrad`. You can examine the ge
 
 ## Multi-node, local, automated testnet
 
-From the [networks/local directory](https://github.com/terra-project/terra/networks/local):
+From the [networks/local directory](https://github.com/terra-project/core//networks/local):
 
 ### Requirements
 
@@ -60,12 +60,9 @@ From the [networks/local directory](https://github.com/terra-project/terra/netwo
 
 ### Build
 
-Build the `terrad` binary (linux) and the `tendermint/terradnode` docker image required for running the `localnet` commands. This binary will be mounted into the container and can be updated rebuilding the image, so you only need to build the image once.
+Build the `terrad` binary (linux) and the `tendermint/terradnode` docker image required for running the `localnet` commands. This binary will be mounted into the container and can be updated rebuilding the image, so you only need to build the image once. Go to the main project directory for Terra Core, and run:
 
 ```bash
-# Work from the SDK repo
-cd $GOPATH/src/github.com/terra-project/terra
-
 # Build the linux binary in ./build
 make build-linux
 
@@ -94,7 +91,7 @@ The ports for each node are found in this table:
 To update the binary, just rebuild it and restart the nodes:
 
 ```
-make build-linux localnet-start
+make build-linux build-docker-terradnode localnet-start
 ```
 
 ### Configuration
@@ -182,7 +179,7 @@ BINARY=terrafoo make localnet-start
 
 ## Multi-node, remote, automated testnet
 
-The following should be run from the [networks directory](https://github.com/terra-project/terra/networks).
+The following should be run from the [networks directory](https://github.com/terra-project/core//networks).
 
 ### Terraform & Ansible
 

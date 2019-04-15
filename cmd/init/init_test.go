@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"terra/app"
+	"github.com/terra-project/core/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -73,7 +73,8 @@ func TestEmptyState(t *testing.T) {
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		_, err := io.Copy(&buf, r)
+		require.Nil(t, err)
 		outC <- buf.String()
 	}()
 
@@ -111,13 +112,15 @@ func TestStartStandAlone(t *testing.T) {
 	svr, err := abciServer.NewServer(svrAddr, "socket", app)
 	require.Nil(t, err, "error creating listener")
 	svr.SetLogger(logger.With("module", "abci-server"))
-	svr.Start()
+	err = svr.Start()
+	require.Nil(t, err)
 
 	timer := time.NewTimer(time.Duration(2) * time.Second)
-	select {
-	case <-timer.C:
-		svr.Stop()
-	}
+
+	<-timer.C
+	err = svr.Stop()
+	require.Nil(t, err)
+
 }
 
 func TestInitNodeValidatorFiles(t *testing.T) {

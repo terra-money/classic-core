@@ -18,8 +18,8 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 
-	"terra/app"
-	"terra/types/assets"
+	"github.com/terra-project/core/app"
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -35,7 +35,7 @@ import (
 
 var (
 	defaultTokens                  = sdk.TokensFromTendermintPower(100)
-	defaultAmount                  = defaultTokens.String() + assets.LunaDenom
+	defaultAmount                  = defaultTokens.String() + assets.MicroLunaDenom
 	defaultCommissionRate          = "0.1"
 	defaultCommissionMaxRate       = "0.2"
 	defaultCommissionMaxChangeRate = "0.01"

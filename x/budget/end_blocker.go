@@ -1,9 +1,11 @@
 package budget
 
 import (
-	"fmt"
-	"terra/types"
-	"terra/x/budget/tags"
+	"strconv"
+
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,19 +29,18 @@ func tally(ctx sdk.Context, k Keeper, targetProgramID uint64) (votePower sdk.Int
 			} else {
 				votePower = votePower.Sub(bondSize)
 			}
+		} else {
+			k.DeleteVote(ctx, targetProgramID, voter)
 		}
 
 		return false
 	})
-
-	fmt.Printf("real votecount : %v \n", voteCount)
 
 	return
 }
 
 // clearsThreshold returns true if totalPower * threshold < votePower
 func clearsThreshold(votePower, totalPower sdk.Int, threshold sdk.Dec) bool {
-	fmt.Printf("%v %v %v\n", votePower, totalPower, threshold)
 	return votePower.GTE(threshold.MulInt(totalPower).RoundInt())
 }
 
@@ -60,6 +61,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
 			k.DeleteProgram(ctx, programID)
+			k.DeleteVote(ctx, programID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramRejected)
 		} else {
 			resTags.AppendTag(tags.Action, tags.ActionProgramPassed)
@@ -67,7 +69,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		resTags.AppendTags(
 			sdk.NewTags(
-				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.ProgramID, strconv.FormatUint(programID, 10),
 				tags.Weight, votePower.String(),
 			),
 		)
@@ -76,9 +78,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		return false
 	})
 
-	// Not time to review programs yet
-	curBlockHeight := ctx.BlockHeight()
-	if curBlockHeight == 0 || (curBlockHeight%k.GetParams(ctx).VotePeriod) != 0 {
+	// Time to re-weight programs
+	if !util.IsPeriodLastBlock(ctx, params.VotePeriod) {
 		return
 	}
 
@@ -91,6 +92,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		// Need to legacy program
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
 			k.DeleteProgram(ctx, programID)
+			k.DeleteVote(ctx, programID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
@@ -99,13 +101,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		resTags.AppendTags(
 			sdk.NewTags(
-				tags.ProgramID, sdk.Uint64ToBigEndian(programID),
+				tags.ProgramID, strconv.FormatUint(programID, 10),
 				tags.Weight, votePower.String(),
 			),
 		)
 
 		return false
 	})
-
 	return
 }

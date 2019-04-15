@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"terra/types"
+
+	"github.com/terra-project/core/types"
 
 	"gonum.org/v1/gonum/stat"
 
@@ -35,7 +36,7 @@ func (pb PriceBallot) weightedMedian() sdk.Dec {
 		for _, v := range pb {
 			pivot = pivot.Add(v.Power)
 
-			if pivot.GTE(totalPower.DivRaw(2)) {
+			if pivot.GTE(totalPower.QuoRaw(2)) {
 				return v.Price
 			}
 		}

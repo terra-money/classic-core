@@ -1,10 +1,10 @@
 package treasury
 
 import (
-	"terra/types"
-	"terra/types/util"
-	"terra/x/market"
-	"terra/x/mint"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -187,7 +187,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 	epoch := util.GetEpoch(ctx)
 	proceeds := k.PeekTaxProceeds(ctx, epoch)
-	proceeds = proceeds.Plus(delta)
+	proceeds = proceeds.Add(delta)
 
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(proceeds)

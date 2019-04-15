@@ -2,9 +2,10 @@ package market
 
 import (
 	"reflect"
-	"terra/types/assets"
 
-	"terra/x/market/tags"
+	"github.com/terra-project/core/types/assets"
+
+	"github.com/terra-project/core/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -43,7 +44,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	}
 
 	// Record seigniorage if the offered coin is Luna
-	if msg.OfferCoin.Denom == assets.LunaDenom {
+	if msg.OfferCoin.Denom == assets.MicroLunaDenom {
 		k.mk.AddSeigniorage(ctx, msg.OfferCoin.Amount)
 	}
 
@@ -57,7 +58,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		Tags: sdk.NewTags(
 			tags.Offer, msg.OfferCoin.String(),
 			tags.Ask, swapCoin.String(),
-			tags.Trader, msg.Trader.Bytes(),
+			tags.Trader, msg.Trader.String(),
 		),
 	}
 }

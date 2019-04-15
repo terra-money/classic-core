@@ -82,10 +82,10 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := []MsgVoteProgram{}
+	filteredVotes := Votes{}
 	prefix := prefixVote
 	handler := func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		vote := NewMsgVoteProgram(programID, option, voter)
+		vote := NewVote(programID, option, voter)
 		filteredVotes = append(filteredVotes, vote)
 
 		return false
@@ -98,7 +98,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	} else if !params.Voter.Empty() {
 		handler = func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
 			if params.Voter.Equals(voter) {
-				vote := NewMsgVoteProgram(programID, option, voter)
+				vote := NewVote(programID, option, voter)
 				filteredVotes = append(filteredVotes, vote)
 			}
 
@@ -119,7 +119,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 // nolint: unparam
 func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 
-	programs := []Program{}
+	programs := Programs{}
 	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
 		programs = append(programs, program)
 		return false
@@ -135,9 +135,9 @@ func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 
 // nolint: unparam
 func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	programs := []Program{}
+	programs := Programs{}
 
-	keeper.CandQueueIterateExpired(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
+	keeper.CandQueueIterate(ctx, func(programID uint64) (stop bool) {
 		program, err := keeper.GetProgram(ctx, programID)
 		if err != nil {
 			return false

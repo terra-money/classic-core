@@ -7,8 +7,8 @@
 package pay
 
 import (
-	"terra/types/util"
-	"terra/x/treasury"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
 
@@ -39,17 +39,16 @@ func handleMsgSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk auth.F
 		return bank.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	tags, err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
+	err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
-	sendTags, err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
+	tags, err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
-	tags = tags.AppendTags(sendTags)
 	return sdk.Result{
 		Tags: tags,
 	}
@@ -64,11 +63,10 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 
 	tags := sdk.NewTags()
 	for _, input := range msg.Inputs {
-		taxTags, taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
+		taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
 		if taxErr != nil {
 			return taxErr.Result()
 		}
-		tags = tags.AppendTags(taxTags)
 	}
 
 	sendTags, sendErr := k.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
@@ -84,10 +82,15 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 
 // payTax charges the stability tax on MsgSend and MsgMultiSend.
 func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper,
-	taxPayer sdk.AccAddress, principal sdk.Coins) (taxTags sdk.Tags, err sdk.Error) {
+	taxPayer sdk.AccAddress, principal sdk.Coins) (err sdk.Error) {
 
 	taxes := sdk.Coins{}
 	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
+
+	if taxRate.Equal(sdk.ZeroDec()) {
+		return nil
+	}
+
 	for _, coin := range principal {
 		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
 
@@ -97,12 +100,16 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 			taxDue = taxCap
 		}
 
+		if taxDue.Equal(sdk.ZeroInt()) {
+			continue
+		}
+
 		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
 	}
 
-	_, taxTags, err = bk.SubtractCoins(ctx, taxPayer, taxes)
+	_, _, err = bk.SubtractCoins(ctx, taxPayer, taxes)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	fk.AddCollectedFees(ctx, taxes)

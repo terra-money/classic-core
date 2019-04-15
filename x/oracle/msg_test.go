@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,9 +18,9 @@ func TestMsgPriceFeed(t *testing.T) {
 		expectPass bool
 	}{
 		{"", sdk.OneDec(), addrs[0], false},
-		{assets.CNYDenom, sdk.OneDec(), addrs[0], true},
-		{assets.CNYDenom, sdk.ZeroDec(), addrs[0], false},
-		{assets.CNYDenom, sdk.OneDec(), sdk.AccAddress{}, false},
+		{assets.MicroCNYDenom, sdk.OneDec().MulInt64(assets.MicroUnit), addrs[0], true},
+		{assets.MicroCNYDenom, sdk.ZeroDec().MulInt64(assets.MicroUnit), addrs[0], false},
+		{assets.MicroCNYDenom, sdk.OneDec().MulInt64(assets.MicroUnit), sdk.AccAddress{}, false},
 	}
 
 	for i, tc := range tests {

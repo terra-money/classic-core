@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"terra/x/budget"
+	"github.com/terra-project/core/x/budget"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
@@ -25,18 +25,14 @@ const (
 	flagDescription = "description"
 	flagExecutor    = "executor"
 	flagVoter       = "voter"
-	flagOption      = "option"
-	flagNumLimit    = "limit"
 	flagProgram     = "program"
 	flagProgramID   = "program-id"
-
-	queryRoute = "budget"
+	flagOption      = "option"
 )
 
 type program struct {
 	Title       string
 	Description string
-	Deposit     string
 	Executor    string
 }
 
@@ -61,9 +57,7 @@ where program.json contains:
 {
   "title": "Test program",
   "description": "My awesome program (include a website link for impact)",
-  "submitter": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
   "executor": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
-  "deposit": "10terra"
 }
 
 is equivalent to
@@ -81,6 +75,10 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
+			if err := cliCtx.EnsureAccountExists(); err != nil {
+				return err
+			}
+
 			// Get from address
 			from := cliCtx.GetFromAddress()
 
@@ -90,12 +88,33 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			executor, err := cliCtx.GetAccount([]byte(program.Executor))
+			submitterCoins := submitter.GetCoins()
+
+			// Query params to get deposit amount
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
 			if err != nil {
 				return err
 			}
 
-			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, submitter.GetAddress(), executor.GetAddress())
+			var params budget.Params
+			cdc.MustUnmarshalJSON(res, &params)
+
+			// Check submitter has enough coins to pay a deposit
+			if submitterCoins.AmountOf(params.Deposit.Denom).LT(params.Deposit.Amount) {
+				return fmt.Errorf(strings.TrimSpace(`
+					account %s has insufficient amount of coins to pay a deposit.\n
+					Required: %s\n
+					Given:    %s\n`),
+					from, params.Deposit.String(), submitterCoins.String())
+			}
+
+			// Get executor address
+			executorAddr, err := sdk.AccAddressFromBech32(program.Executor)
+			if err != nil {
+				return err
+			}
+
+			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, from, executorAddr)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -117,15 +136,26 @@ func parseSubmitProgramFlags() (*program, error) {
 	program := &program{}
 	programFile := viper.GetString(flagProgram)
 
-	if programFile == "" {
+	if len(programFile) == 0 {
 		program.Title = viper.GetString(flagTitle)
 		program.Description = viper.GetString(flagDescription)
 		program.Executor = viper.GetString(flagExecutor)
+
+		// Check title existence
+		if len(program.Title) == 0 {
+			return nil, fmt.Errorf("--%s flag is required", flagTitle)
+		}
+
+		// Check executor existence
+		if len(program.Executor) == 0 {
+			return nil, fmt.Errorf("--%s flag is required", flagExecutor)
+		}
+
 		return program, nil
 	}
 
 	for _, flag := range programFlags {
-		if viper.GetString(flag) != "" {
+		if len(viper.GetString(flag)) > 0 {
 			return nil, fmt.Errorf("--%s flag provided alongside --program, which is a noop", flag)
 		}
 	}
@@ -146,16 +176,15 @@ func parseSubmitProgramFlags() (*program, error) {
 // GetCmdVote implements creating a new vote command.
 func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote [program-id] [option]",
-		Args:  cobra.ExactArgs(2),
-		Short: "Vote for an active program, options: yes or no",
+		Use:   "vote",
+		Short: "Vote for an candidate/active program, options: yes or no",
 		Long: strings.TrimSpace(`
-Submit a vote for an active program. 
+Submit a vote for an candidate/active program.
 
 You can find the program-id of active programs by running terracli query budget actives
-You can find the program-id of inactive (candidate) programs by running terracli query budget candidates
+You can find the program-id of candidate programs by running terracli query budget candidates
 
-$ terracli tx budget vote 1 yes --from mykey
+$ terracli tx budget vote --program-id 1  --option yes --from mykey
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -163,19 +192,34 @@ $ terracli tx budget vote 1 yes --from mykey
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
+			if err := cliCtx.EnsureAccountExists(); err != nil {
+				return err
+			}
+
 			// Get voting address
 			from := cliCtx.GetFromAddress()
 
-			// validate that the program id is a uint
-			programID, err := strconv.ParseUint(args[0], 10, 64)
+			// Check flag program-id is given
+			programStrID := viper.GetString(flagProgramID)
+			if len(programStrID) == 0 {
+				return fmt.Errorf("--program-id flag is required")
+			}
+
+			// Validate that the program id is a uint
+			programID, err := strconv.ParseUint(programStrID, 10, 64)
 			if err != nil {
-				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", args[0])
+				return fmt.Errorf("given program-id {%s} is not a valid format; program-id should be formatted as integer", programStrID)
 			}
 
 			// Find out which vote option user chose
 			var option bool
-			if args[1] == "yes" {
+			optionStr := viper.GetString(flagOption)
+			if optionStr == "yes" || optionStr == "true" {
 				option = true
+			} else if optionStr == "no" || optionStr == "false" {
+				option = false
+			} else {
+				return fmt.Errorf(`given option {%s} is not valid format;\n option should be formatted as "yes" or "no"`, optionStr)
 			}
 
 			// Build vote message and run basic validation
@@ -189,19 +233,21 @@ $ terracli tx budget vote 1 yes --from mykey
 		},
 	}
 
+	cmd.Flags().String(flagProgramID, "", "the program ID to vote")
+	cmd.Flags().String(flagOption, "", "yes or no")
+
 	return cmd
 }
 
 // GetCmdVote implements creating a new vote command.
 func GetCmdWithdrawProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw [program-id]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "withdraw",
 		Short: "withdraw a program from consideration",
 		Long: strings.TrimSpace(`
 Withdraw a program from consideration. The deposit is only refunded if the program is already in the active set. 
 
-$ terracli tx budget withdraw 1 
+$ terracli tx budget withdraw --program-id 1 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -209,13 +255,22 @@ $ terracli tx budget withdraw 1
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
+			if err := cliCtx.EnsureAccountExists(); err != nil {
+				return err
+			}
+
 			// Get voting address
 			from := cliCtx.GetFromAddress()
 
 			// validate that the program id is a uint
-			programID, err := strconv.ParseUint(args[0], 10, 64)
+			programStrID := viper.GetString(flagProgramID)
+			if programStrID == "" {
+				return fmt.Errorf("--program-id flag is required")
+			}
+
+			programID, err := strconv.ParseUint(programStrID, 10, 64)
 			if err != nil {
-				return fmt.Errorf("program-id %s not a valid int, please input a valid program-id", args[0])
+				return fmt.Errorf("given program-id %s not a valid int, please input a valid program-id", programStrID)
 			}
 
 			// Build vote message and run basic validation
@@ -228,5 +283,8 @@ $ terracli tx budget withdraw 1
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
 		},
 	}
+
+	cmd.Flags().String(flagProgramID, "", "the program ID to withdraw")
+
 	return cmd
 }

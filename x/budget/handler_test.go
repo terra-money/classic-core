@@ -7,7 +7,7 @@ import (
 )
 
 func TestHandlerMsgSubmitProgram(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	h := NewHandler(input.budgetKeeper)
 
@@ -20,7 +20,7 @@ func TestHandlerMsgSubmitProgram(t *testing.T) {
 }
 
 func TestHandlerMsgWithdrawProgram(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	h := NewHandler(input.budgetKeeper)
 
@@ -51,7 +51,7 @@ func TestHandlerMsgWithdrawProgram(t *testing.T) {
 }
 
 func TestHandlerMsgVoteCandidate(t *testing.T) {
-	input := createTestInput()
+	input := createTestInput(t)
 
 	h := NewHandler(input.budgetKeeper)
 

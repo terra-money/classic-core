@@ -31,6 +31,15 @@ func generateRandomTestCase() (prices []float64, weights []float64) {
 	return
 }
 
+func checkFloatEquality(a sdk.Dec, b float64, precision int) bool {
+	base := math.Pow10(precision)
+
+	a2 := a.MulInt64(int64(base)).TruncateInt64()
+	b2 := int64(b * base)
+
+	return a2 == b2
+}
+
 func TestPBStdDev(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
@@ -42,11 +51,8 @@ func TestPBStdDev(t *testing.T) {
 		pb = append(pb, vote)
 	}
 
-	statAnswerRaw := stat.StdDev(prices, weights)
-	statAnswerRounded := float64(int64(statAnswerRaw*math.Pow10(precision))) / math.Pow10(precision)
-	ballotAnswerRounded := float64(pb.stdDev().MulInt64(int64(math.Pow10(precision))).TruncateInt64()) / math.Pow10(precision)
-
-	require.Equal(t, statAnswerRounded, ballotAnswerRounded)
+	match := checkFloatEquality(pb.stdDev(), stat.StdDev(prices, weights), 2)
+	require.True(t, match)
 }
 
 func TestPBMean(t *testing.T) {
@@ -61,9 +67,8 @@ func TestPBMean(t *testing.T) {
 		pb = append(pb, vote)
 	}
 
-	statAnswerRounded := float64(int64(stat.Mean(prices, weights)*10000)) / 10000
-	ballotAnswerRounded := float64(pb.mean().MulTruncate(sdk.NewDec(10000)).TruncateInt64()) / 10000
-	require.Equal(t, statAnswerRounded, ballotAnswerRounded)
+	match := checkFloatEquality(pb.mean(), stat.Mean(prices, weights), 2)
+	require.True(t, match)
 }
 
 func TestPBWeightedMedian(t *testing.T) {

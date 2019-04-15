@@ -1,10 +1,13 @@
 package market
 
 import (
-	"terra/types/assets"
-	"terra/x/mint"
-	"terra/x/oracle"
+	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -17,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 var (
@@ -26,7 +30,7 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	initAmt = sdk.NewInt(1005)
+	mSDRAmt = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -51,13 +55,15 @@ func newTestCodec() *codec.Codec {
 	return cdc
 }
 
-func createTestInput() testInput {
+func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyMarket := sdk.NewKVStoreKey(StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -70,10 +76,10 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
-	if err := ms.LoadLatestVersion(); err != nil {
-		panic(err)
-	}
+	require.NoError(t, ms.LoadLatestVersion())
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -89,6 +95,16 @@ func createTestInput() testInput {
 		bank.DefaultCodespace,
 	)
 
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking, tKeyStaking,
+		bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
 	var valset sdk.ValidatorSet
 	oracleKeeper := oracle.NewKeeper(
 		cdc, keyOracle, valset,
@@ -98,6 +114,7 @@ func createTestInput() testInput {
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
+		stakingKeeper,
 		bankKeeper,
 		accKeeper,
 	)
@@ -107,10 +124,8 @@ func createTestInput() testInput {
 	}
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.SDRDenom, initAmt)})
-		if err != nil {
-			panic(err)
-		}
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt)})
+		require.NoError(t, err)
 	}
 
 	return testInput{ctx, accKeeper, bankKeeper, marketKeeper, oracleKeeper, mintKeeper}
