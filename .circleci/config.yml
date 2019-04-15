@@ -101,10 +101,10 @@ jobs:
 
   release:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.5
     steps:
       - checkout
-      - run: curl -sL https://git.io/goreleaser | bash
+      - run: BUILD_TAGS="netgo ledger" GOSUM=$(sha256sum go.sum | cut -d ' ' -f1) curl -sL https://git.io/goreleaser | bash
 
   upload_coverage:
     <<: *linux_defaults

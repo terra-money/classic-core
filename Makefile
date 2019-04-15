@@ -1,20 +1,49 @@
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := $(subst v,,$(shell git describe --tags --long))
-BUILD_TAGS = netgo
-BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/core/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 GOTOOLS = \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-GOSUM := $(shell which gosum)
+SHASUM := $(shell which sha256sum)
 
 export GO111MODULE = on
 
-
-# # process build tags
+# process build tags
 build_tags = netgo
+ifeq ($(LEDGER_ENABLED),true)
+  ifeq ($(OS),Windows_NT)
+    GCCEXE = $(shell where gcc.exe 2> NUL)
+    ifeq ($(GCCEXE),)
+      $(error gcc.exe not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  else
+    GCC = $(shell command -v gcc 2> /dev/null)
+    ifeq ($(GCC),)
+      $(error gcc not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  endif
+endif
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += gcc
+endif
+
+# process linker flags
+
+ldflags = -X github.com/terra-project/core/version.Version=$(VERSION) \
+					-X github.com/terra-project/core/version.Commit=$(COMMIT) \
+					-X "github.com/terra-project/core/version.BuildTags=$(build_tags)" \
+
+ifneq ($(SHASUM),)
+	ldflags += -X github.com/terra-project/core/version.GoSumHash=$(shell sha256sum go.sum | cut -d ' ' -f1)
+endif
 
 ifeq ($(WITH_CLEVELDB),yes)
   build_tags += gcc
@@ -22,6 +51,10 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 ########################################
 ### All
@@ -53,7 +86,7 @@ build-linux:
 update_terra_lite_docs:
 	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
-install: update_terra_lite_docs 
+install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
@@ -78,7 +111,12 @@ go-sum: get_tools
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 
+go-release:
+	@echo "--> Dry run for go-release"
+	BUILD_TAGS=$(shell echo \"$(build_tags)\") GOSUM=$(shell sha256sum go.sum | cut -d ' ' -f1) goreleaser release --skip-publish --rm-dist --debug
+
 clean:
+	rm -rf ./dist
 	rm -rf ./build
 
 distclean: clean
