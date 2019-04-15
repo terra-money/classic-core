@@ -16,6 +16,7 @@ import (
 	"github.com/terra-project/core/app"
 	"github.com/terra-project/core/types/util"
 
+	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	"github.com/terra-project/core/version"
 	budgetClient "github.com/terra-project/core/x/budget/client"
 	marketClient "github.com/terra-project/core/x/market/client"
@@ -88,6 +89,7 @@ func main() {
 		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
 		budgetClient.NewModuleClient(bud.StoreKey, cdc),
 		marketClient.NewModuleClient(mkt.StoreKey, cdc),
+		crisisclient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
