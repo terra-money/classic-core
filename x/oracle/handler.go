@@ -38,7 +38,7 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	}
 
 	// Add the vote to the store
-	vote := NewPriceVote(pfm.Price, pfm.Denom, val.GetBondedTokens(), signer)
+	vote := NewPriceVote(pfm.Price, pfm.Denom, signer)
 	keeper.addVote(ctx, vote)
 
 	return sdk.Result{

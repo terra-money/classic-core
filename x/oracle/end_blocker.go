@@ -10,8 +10,6 @@ import (
 	"github.com/terra-project/core/x/oracle/tags"
 )
 
-
-
 // Calculates the median and returns the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median.
 func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
@@ -20,7 +18,7 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 	}
 
 	ballotWinners = types.ClaimPool{}
-	weightedMedian = pb.weightedMedian()
+	weightedMedian = pb.weightedMedian(ctx, k.valset)
 
 	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
 	stdDev := pb.stdDev()

@@ -10,9 +10,10 @@ import (
 const (
 	DefaultCodespace sdk.CodespaceType = "oracle"
 
-	CodeUnknownDenom sdk.CodeType = 1
-	CodeInvalidPrice sdk.CodeType = 2
-	CodeInvalidVote  sdk.CodeType = 3
+	CodeUnknownDenom      sdk.CodeType = 1
+	CodeInvalidPrice      sdk.CodeType = 2
+	CodeVoterNotValidator sdk.CodeType = 3
+	CodeInvalidVote       sdk.CodeType = 4
 )
 
 // ----------------------------------------
@@ -26,6 +27,11 @@ func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error
 // ErrInvalidPrice called when the price submitted is not valid
 func ErrInvalidPrice(codespace sdk.CodespaceType, price sdk.Dec) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidPrice, fmt.Sprintf("Price is invalid: %s", price.String()))
+}
+
+// ErrVoterNotValidator called when the voter is not a validator
+func ErrVoterNotValidator(codespace sdk.CodespaceType, voter sdk.AccAddress) sdk.Error {
+	return sdk.NewError(codespace, CodeVoterNotValidator, fmt.Sprintf("Voter is not a validator: %s", voter.String()))
 }
 
 // ErrNoVote called when no vote exists
