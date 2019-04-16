@@ -18,6 +18,7 @@ If necessary, make sure you `git checkout` the correct
 
 ```bash
 git clone https://github.com/terra-project/terra
+cd terra
 git checkout master
 make
 ```
