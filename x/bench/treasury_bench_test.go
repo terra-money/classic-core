@@ -2,40 +2,41 @@ package bench
 
 import (
 	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury"
 )
 
-func BenchmarkTreasuryUpdatePerBlock(b *testing.B) {
-	// input := createTestInput()
+func BenchmarkTreasuryUpdatePerEpoch(b *testing.B) {
+	input := createTestInput()
 
-	// defaultTreasuryParams := treasury.DefaultParams()
+	taxAmount := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
 
-	// h := oracle.NewHandler(input.oracleKeeper)
+	// Set random prices
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.NewDec(1))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, sdk.NewDec(10))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroGBPDenom, sdk.NewDec(100))
+	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.NewDec(1000))
 
-	// denoms := []string{
-	// 	assets.MicroSDRDenom,
-	// 	assets.MicroKRWDenom,
-	// 	assets.MicroUSDDenom,
-	// 	assets.MicroCNYDenom,
-	// 	assets.MicroJPYDenom,
-	// 	assets.MicroGBPDenom,
-	// 	assets.MicroEURDenom,
-	// }
+	params := input.treasuryKeeper.GetParams(input.ctx)
+	probationEpoch := params.WindowProbation.Int64()
 
-	// b.ResetTimer()
-	// for i := 0; i < b.N; i++ {
-	// 	ctx := input.ctx.WithBlockHeight(int64(i))
+	b.ResetTimer()
+	for i := int64(0); i < int64(b.N)+probationEpoch; i++ {
 
-	// 	for j := 0; j < numOfValidators; j++ {
-	// 		for d := 0; d < len(denoms); d++ {
-	// 			voteMsg := oracle.NewMsgPriceFeed(denoms[d], sdk.NewDec(1), addrs[j])
+		input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
+		input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
-	// 			res := h(ctx, voteMsg)
-	// 			if !res.IsOK() {
-	// 				panic(res.Log)
-	// 			}
-	// 		}
-	// 	}
+		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
+			sdk.NewCoin(assets.MicroSDRDenom, taxAmount),
+			sdk.NewCoin(assets.MicroKRWDenom, taxAmount),
+			sdk.NewCoin(assets.MicroGBPDenom, taxAmount),
+			sdk.NewCoin(assets.MicroCNYDenom, taxAmount),
+		})
 
-	// 	oracle.EndBlocker(ctx, input.oracleKeeper)
-	// }
+		treasury.EndBlocker(input.ctx, input.treasuryKeeper)
+	}
 }

@@ -281,11 +281,6 @@ github.com/tendermint/go-amino v0.14.1/go.mod h1:i/UKE5Uocn+argJJBb12qTZsCDBcAYM
 github.com/tendermint/iavl v0.12.1 h1:JDfyhM/Hhrumu1CL1Nxrypm8sNTPYqmeHo1IZLiJoXM=
 github.com/tendermint/iavl v0.12.1/go.mod h1:EoKMMv++tDOL5qKKVnoIqtVPshRrEPeJ0WsgDOLAauM=
 github.com/tendermint/tendermint v0.29.1/go.mod h1:ymcPyWblXCplCPQjbOYbrF1fWnpslATMVqiGgWbZrlc=
-<<<<<<< HEAD
-github.com/tendermint/tendermint v0.31.0-dev0-fix0 h1:FdgB238YmsVQJQA4ggyrQMG5zV/G1Rtt7KYacs6MAFw=
-github.com/tendermint/tendermint v0.31.0-dev0-fix0/go.mod h1:ymcPyWblXCplCPQjbOYbrF1fWnpslATMVqiGgWbZrlc=
-=======
->>>>>>> develop
 github.com/tendermint/tendermint v0.31.4 h1:F/vZ/fMHZJriAkDLjf9ZrReJQsuELiTmJLqigmbE5NU=
 github.com/tendermint/tendermint v0.31.4/go.mod h1:ymcPyWblXCplCPQjbOYbrF1fWnpslATMVqiGgWbZrlc=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
