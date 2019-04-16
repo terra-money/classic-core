@@ -1,7 +1,6 @@
 package budget
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -35,11 +34,7 @@ func (msg MsgSubmitProgram) Type() string { return "submitprogram" }
 
 // GetSignBytes returns sign byptes
 func (msg MsgSubmitProgram) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners returns signer
@@ -99,11 +94,7 @@ func (msg MsgWithdrawProgram) Type() string { return "withdraw" }
 
 // GetSignBytes returns sign byptes
 func (msg MsgWithdrawProgram) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners returns signer
@@ -154,11 +145,7 @@ func (msg MsgVoteProgram) Type() string { return "vote" }
 
 // GetSignBytes returns sign byptes
 func (msg MsgVoteProgram) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners returns signer
