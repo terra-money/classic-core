@@ -21,7 +21,7 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 	weightedMedian = pb.weightedMedian(ctx, k.valset)
 
 	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
-	stdDev := pb.stdDev()
+	stdDev := pb.stdDev(ctx, k.valset)
 
 	if stdDev.LT(maxSpread) {
 		maxSpread = stdDev
@@ -83,9 +83,9 @@ func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags
 }
 
 // ballot for the asset is passing the threshold amount of voting power
-func ballotIsPassing(totalPower sdk.Int, ballot PriceBallot, params Params) bool {
-	thresholdVotes := params.VoteThreshold.MulInt(totalPower).RoundInt()
-	return ballot.TotalPower().GTE(thresholdVotes)
+func ballotIsPassing(totalBondedTokens sdk.Int, voteThreshold sdk.Dec, ballotPower sdk.Int) bool {
+	thresholdVotes := voteThreshold.MulInt(totalBondedTokens).RoundInt()
+	return ballotPower.GTE(thresholdVotes)
 }
 
 // EndBlocker is called at the end of every block
@@ -97,11 +97,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 		return
 	}
 
-	rewardees = types.ClaimPool{}
 	actives := getActiveDenoms(ctx, k)
 	votes := k.collectVotes(ctx)
-
-	totalBondedTokens := k.valset.TotalBondedTokens(ctx)
 
 	// Iterate through active oracle assets and drop assets that have no votes received.
 	for _, activeDenom := range actives {
@@ -110,11 +107,14 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 		}
 	}
 
+	rewardees = types.ClaimPool{}
+	totalBondedTokens := k.valset.TotalBondedTokens(ctx)
+
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
 	for denom, filteredVotes := range votes {
-		if ballotIsPassing(totalBondedTokens, filteredVotes, params) {
+		if ballotIsPassing(totalBondedTokens, params.VoteThreshold, filteredVotes.power(ctx, k.valset)) {
 			// Get weighted median prices, and faithful respondants
-			mod, ballotWinners := filteredVotes.tally(ctx, k)
+			mod, ballotWinners := tally(ctx, k, filteredVotes)
 
 			// Append ballot winners for the denom
 			rewardees = append(rewardees, ballotWinners...)

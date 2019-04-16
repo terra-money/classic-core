@@ -49,23 +49,6 @@ func TestPBStdDev(t *testing.T) {
 	require.Equal(t, statAnswerRounded, ballotAnswerRounded)
 }
 
-func TestPBMean(t *testing.T) {
-	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
-
-	prices, _ := generateRandomTestCase()
-	weights := []float64{}
-	pb := PriceBallot{}
-	for _, price := range prices {
-		vote := NewPriceVote(sdk.NewDecWithPrec(int64(price*10000), 4), "", sdk.OneInt(), addrs[0])
-		weights = append(weights, 1.0)
-		pb = append(pb, vote)
-	}
-
-	statAnswerRounded := float64(int64(stat.Mean(prices, weights)*10000)) / 10000
-	ballotAnswerRounded := float64(pb.mean().Mul(sdk.NewDec(10000)).TruncateInt64()) / 10000
-	require.Equal(t, ballotAnswerRounded, statAnswerRounded)
-}
-
 func TestPBWeightedMedian(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 	tests := []struct {
