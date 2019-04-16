@@ -22,6 +22,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -37,6 +38,7 @@ type GenesisState struct {
 	TreasuryData treasury.GenesisState `json:"treasury"`
 	BudgetData   budget.GenesisState   `json:"budget"`
 	OracleData   oracle.GenesisState   `json:"oracle"`
+	CrisisData   crisis.GenesisState   `json:"crisis"`
 	SlashingData slashing.GenesisState `json:"slashing"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
@@ -49,6 +51,7 @@ func NewGenesisState(accounts []GenesisAccount,
 	distrData distr.GenesisState,
 	oracleData oracle.GenesisState,
 	budgetData budget.GenesisState,
+	crisisData crisis.GenesisState,
 	treasuryData treasury.GenesisState,
 	slashingData slashing.GenesisState) GenesisState {
 
@@ -59,6 +62,7 @@ func NewGenesisState(accounts []GenesisAccount,
 		StakingData:  stakingData,
 		DistrData:    distrData,
 		OracleData:   oracleData,
+		CrisisData:   crisisData,
 		TreasuryData: treasuryData,
 		BudgetData:   budgetData,
 		SlashingData: slashingData,
@@ -225,6 +229,7 @@ func NewDefaultGenesisState() GenesisState {
 		BudgetData:   budget.DefaultGenesisState(),
 		OracleData:   oracle.DefaultGenesisState(),
 		TreasuryData: treasury.DefaultGenesisState(),
+		CrisisData:   crisis.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
@@ -254,6 +259,9 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 		return err
 	}
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
+		return err
+	}
+	if err := crisis.ValidateGenesis(genesisState.CrisisData); err != nil {
 		return err
 	}
 
