@@ -19,6 +19,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
@@ -46,6 +47,8 @@ type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
+	assertInvariantsBlockly bool
+
 	// keys to access the substores
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
@@ -70,6 +73,7 @@ type TerraApp struct {
 	stakingKeeper       staking.Keeper
 	slashingKeeper      slashing.Keeper
 	distrKeeper         distr.Keeper
+	crisisKeeper        crisis.Keeper
 	paramsKeeper        params.Keeper
 	oracleKeeper        oracle.Keeper
 	treasuryKeeper      treasury.Keeper
@@ -79,30 +83,31 @@ type TerraApp struct {
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
-func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
+func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest, assertInvariantsBlockly bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 	cdc := MakeCodec()
 
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 
 	var app = &TerraApp{
-		BaseApp:          bApp,
-		cdc:              cdc,
-		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
-		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
-		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
-		keyDistr:         sdk.NewKVStoreKey(distr.StoreKey),
-		tkeyDistr:        sdk.NewTransientStoreKey(distr.TStoreKey),
-		keySlashing:      sdk.NewKVStoreKey(slashing.StoreKey),
-		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
-		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
-		tkeyParams:       sdk.NewTransientStoreKey(params.TStoreKey),
-		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
-		keyTreasury:      sdk.NewKVStoreKey(treasury.StoreKey),
-		keyMarket:        sdk.NewKVStoreKey(market.StoreKey),
-		keyBudget:        sdk.NewKVStoreKey(budget.StoreKey),
-		keyMint:          sdk.NewKVStoreKey(mint.StoreKey),
+		BaseApp:                 bApp,
+		cdc:                     cdc,
+		assertInvariantsBlockly: assertInvariantsBlockly,
+		keyMain:                 sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:              sdk.NewKVStoreKey(auth.StoreKey),
+		keyStaking:              sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:             sdk.NewTransientStoreKey(staking.TStoreKey),
+		keyDistr:                sdk.NewKVStoreKey(distr.StoreKey),
+		tkeyDistr:               sdk.NewTransientStoreKey(distr.TStoreKey),
+		keySlashing:             sdk.NewKVStoreKey(slashing.StoreKey),
+		keyFeeCollection:        sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyParams:               sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:              sdk.NewTransientStoreKey(params.TStoreKey),
+		keyOracle:               sdk.NewKVStoreKey(oracle.StoreKey),
+		keyTreasury:             sdk.NewKVStoreKey(treasury.StoreKey),
+		keyMarket:               sdk.NewKVStoreKey(market.StoreKey),
+		keyBudget:               sdk.NewKVStoreKey(budget.StoreKey),
+		keyMint:                 sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
 	app.paramsKeeper = params.NewKeeper(
@@ -146,6 +151,12 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
+	app.crisisKeeper = crisis.NewKeeper(
+		app.paramsKeeper.Subspace(crisis.DefaultParamspace),
+		app.distrKeeper,
+		app.bankKeeper,
+		app.feeCollectionKeeper,
+	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.cdc,
 		app.keyOracle,
@@ -185,6 +196,11 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.stakingKeeper = *stakingKeeper.SetHooks(
 		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
+	// register the crisis routes
+	bank.RegisterInvariants(&app.crisisKeeper, app.accountKeeper)
+	distr.RegisterInvariants(&app.crisisKeeper, app.distrKeeper, app.stakingKeeper)
+	staking.RegisterInvariants(&app.crisisKeeper, app.stakingKeeper, app.feeCollectionKeeper, app.distrKeeper, app.accountKeeper)
+
 	// register message routes
 	app.Router().
 		AddRoute(bank.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
@@ -193,7 +209,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
 		AddRoute(oracle.RouterKey, oracle.NewHandler(app.oracleKeeper)).
 		AddRoute(budget.RouterKey, budget.NewHandler(app.budgetKeeper)).
-		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper))
+		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper)).
+		AddRoute(crisis.RouterKey, crisis.NewHandler(app.crisisKeeper))
 
 	app.QueryRouter().
 		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
@@ -252,6 +269,7 @@ func MakeCodec() *codec.Codec {
 	budget.RegisterCodec(cdc)
 	market.RegisterCodec(cdc)
 	treasury.RegisterCodec(cdc)
+	crisis.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
@@ -294,7 +312,9 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
 
-	app.assertRuntimeInvariants()
+	if app.assertInvariantsBlockly {
+		app.assertRuntimeInvariants()
+	}
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -326,6 +346,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
+	crisis.InitGenesis(ctx, app.crisisKeeper, genesisState.CrisisData)
 	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
 	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
 	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)

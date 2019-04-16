@@ -16,6 +16,7 @@ import (
 	"github.com/terra-project/core/app"
 	"github.com/terra-project/core/types/util"
 
+	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	"github.com/terra-project/core/version"
 	budgetClient "github.com/terra-project/core/x/budget/client"
 	marketClient "github.com/terra-project/core/x/market/client"
@@ -88,6 +89,7 @@ func main() {
 		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
 		budgetClient.NewModuleClient(bud.StoreKey, cdc),
 		marketClient.NewModuleClient(mkt.StoreKey, cdc),
+		crisisclient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -143,7 +145,10 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	)
 
 	for _, m := range mc {
-		queryCmd.AddCommand(m.GetQueryCmd())
+		mQueryCmd := m.GetQueryCmd()
+		if mQueryCmd != nil {
+			queryCmd.AddCommand(mQueryCmd)
+		}
 	}
 
 	return queryCmd
@@ -172,7 +177,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return txCmd
 }
 
-// cli version REST handler endpoint
+// CLIVersionRequestHandler cli version REST handler endpoint
 func CLIVersionRequestHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(fmt.Sprintf("{\"version\": \"%s\"}", version.Version)))
