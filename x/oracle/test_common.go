@@ -102,8 +102,8 @@ func createTestInput(t *testing.T) testInput {
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
 			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
+			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
 		})
 		require.NoError(t, err)
 

@@ -28,7 +28,7 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	// Check the feeder is a validator
 	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
 	if val == nil {
-		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
+		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
 	}
 
 	// Add the vote to the store

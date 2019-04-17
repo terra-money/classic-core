@@ -19,16 +19,10 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 
 	ballotWinners = types.ClaimPool{}
 	weightedMedian = pb.weightedMedian(ctx, k.valset)
-
-	maxSpread := weightedMedian.Mul(sdk.NewDecWithPrec(1, 2)) // 1%
-	stdDev := pb.stdDev(ctx, k.valset)
-
-	if stdDev.LT(maxSpread) {
-		maxSpread = stdDev
-	}
+	rewardSpread := k.GetParams(ctx).OracleRewardBand.QuoInt64(2)
 
 	for _, vote := range pb {
-		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
+		if vote.Price.GTE(weightedMedian.Sub(rewardSpread)) && vote.Price.LTE(weightedMedian.Add(rewardSpread)) {
 			valAddr := sdk.ValAddress(vote.Voter)
 			if validator := k.valset.Validator(ctx, valAddr); validator != nil {
 				bondSize := validator.GetBondedTokens()
@@ -103,7 +97,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 	// Iterate through active oracle assets and drop assets that have no votes received.
 	for _, activeDenom := range actives {
 		if _, found := votes[activeDenom]; !found {
-			dropBallot(ctx, k, activeDenom, params)
+			dropTags := dropBallot(ctx, k, activeDenom, params)
+			resTags = resTags.AppendTags(dropTags)
 		}
 	}
 
@@ -113,6 +108,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
 	for denom, filteredVotes := range votes {
 		if ballotIsPassing(totalBondedTokens, params.VoteThreshold, filteredVotes.power(ctx, k.valset)) {
+
 			// Get weighted median prices, and faithful respondants
 			mod, ballotWinners := tally(ctx, k, filteredVotes)
 
@@ -138,7 +134,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 				),
 			)
 		} else {
-			dropBallot(ctx, k, denom, params)
+			dropTags := dropBallot(ctx, k, denom, params)
+			resTags = resTags.AppendTags(dropTags)
 		}
 
 		// Clear all votes
