@@ -17,7 +17,7 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 
 	// No revenues, hike as much as possible.
 	if tlMonth.Equal(sdk.ZeroDec()) {
-		newTaxRate = params.TaxPolicy.RateMax
+		newTaxRate = DefaultGenesisState().GenesisTaxRate
 	} else {
 		newTaxRate = oldTaxRate.Mul(tlYear.Mul(inc)).Quo(tlMonth)
 	}
@@ -42,7 +42,7 @@ func updateRewardPolicy(ctx sdk.Context, k Keeper) (newRewardWeight sdk.Dec) {
 
 	// No revenues; hike as much as possible
 	if totalSum.Equal(sdk.ZeroDec()) || seigniorageSum.Equal(sdk.ZeroDec()) {
-		newRewardWeight = params.RewardPolicy.RateMax
+		newRewardWeight = DefaultGenesisState().GenesisRewardWeight
 	} else {
 		// Seigniorage burden out of total rewards
 		sb := seigniorageSum.Quo(totalSum)

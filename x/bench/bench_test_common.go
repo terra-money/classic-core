@@ -69,7 +69,7 @@ func createTestInput() testInput {
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -84,7 +84,7 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	if err := ms.LoadLatestVersion(); err != nil {
 		panic(err)
