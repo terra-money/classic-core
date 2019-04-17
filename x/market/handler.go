@@ -30,19 +30,17 @@ func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
 	curDay := ctx.BlockHeight() / util.BlocksPerDay
 
 	// Disable trades on the first day
-	if curDay == 0 {
-		return true
-	}
+	if curDay != 0 {
+		curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
+		prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
 
-	curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
-	prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
+		if curIssuance.GT(prevIssuance) {
+			dailyDelta := curIssuance.Sub(prevIssuance).Add(swapCoin.Amount)
 
-	if curIssuance.GT(prevIssuance) {
-		dailyDelta := curIssuance.Sub(prevIssuance).Add(swapCoin.Amount)
-
-		// If daily inflation is greater than 1%
-		if dailyDelta.MulRaw(100).GT(curIssuance) {
-			return true
+			// If daily inflation is greater than 1%
+			if dailyDelta.MulRaw(100).GT(curIssuance) {
+				return true
+			}
 		}
 	}
 

@@ -1,8 +1,9 @@
 package market
 
 import (
-	"github.com/terra-project/core/types/assets"
 	"testing"
+
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/stretchr/testify/require"
 
@@ -84,7 +85,6 @@ func TestHandlerMsgSwapTooSmall(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Reset oracle price
-	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 	askLunaPrice = sdk.NewDecWithPrec(1000, 1)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askDenom, askLunaPrice)
 
