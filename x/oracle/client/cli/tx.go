@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/terra-project/core/x/oracle"
@@ -60,13 +59,13 @@ where "mkrw" is the denominating currency, and "8890" is the price of micro Luna
 				return fmt.Errorf("--price flag is required")
 			}
 
-			// Parse the price to int64
-			price, err := strconv.ParseInt(priceStr, 10, 64)
+			// Parse the price to Dec
+			price, err := sdk.NewDecFromStr(priceStr)
 			if err != nil {
 				return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", priceStr)
 			}
 
-			msg := oracle.NewMsgPriceFeed(denom, sdk.NewDec(price), voter)
+			msg := oracle.NewMsgPriceFeed(denom, price, voter)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
