@@ -22,11 +22,6 @@ func GetEpoch(ctx sdk.Context) sdk.Int {
 	return sdk.NewInt(curEpoch)
 }
 
-// GetBlocksPerEpoch gets the number of blocks processed in one epoch
-func GetBlocksPerEpoch() int64 {
-	return BlocksPerEpoch
-}
-
 // IsPeriodLastBlock returns true if we are at the last block of the period
 func IsPeriodLastBlock(ctx sdk.Context, blocksPerPeriod int64) bool {
 	return (ctx.BlockHeight()+1)%blocksPerPeriod == 0

@@ -91,18 +91,18 @@ func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 	return
 }
 
-// GetIssuance fetches the total issuance count of the coin matching {denom}. If the {epoch} applies
+// GetIssuance fetches the total issuance count of the coin matching {denom}. If the {day} applies
 // to a previous period, fetches the last stored snapshot issuance of the coin. For virgin calls,
 // iterates through the accountkeeper and computes the genesis issuance.
-func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issuance sdk.Int) {
+func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuance sdk.Int) {
 	store := ctx.KVStore(k.key)
 
-	if bz := store.Get(keyIssuance(denom, epoch)); bz != nil {
+	if bz := store.Get(keyIssuance(denom, day)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
 	} else {
 		// Genesis epoch; nothing exists in store so we must read it
 		// from accountkeeper
-		if epoch.LTE(sdk.ZeroInt()) {
+		if day.LTE(sdk.ZeroInt()) {
 			issuance = sdk.ZeroInt()
 			countIssuance := func(acc auth.Account) (stop bool) {
 				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
@@ -111,13 +111,13 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, epoch sdk.Int) (issua
 			k.ak.IterateAccounts(ctx, countIssuance)
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
-			issuance = k.GetIssuance(ctx, denom, epoch.Sub(sdk.OneInt()))
+			issuance = k.GetIssuance(ctx, denom, day.Sub(sdk.OneInt()))
 		}
 
 		// Set issuance to the store
 		store := ctx.KVStore(k.key)
 		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-		store.Set(keyIssuance(denom, epoch), bz)
+		store.Set(keyIssuance(denom, day), bz)
 	}
 
 	return

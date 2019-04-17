@@ -4,16 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/budget"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/treasury"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -37,6 +39,7 @@ type GenesisState struct {
 	BudgetData   budget.GenesisState   `json:"budget"`
 	OracleData   oracle.GenesisState   `json:"oracle"`
 	SlashingData slashing.GenesisState `json:"slashing"`
+	MarketData   market.GenesisState   `json:"market"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
@@ -48,7 +51,8 @@ func NewGenesisState(accounts []GenesisAccount,
 	oracleData oracle.GenesisState,
 	budgetData budget.GenesisState,
 	treasuryData treasury.GenesisState,
-	slashingData slashing.GenesisState) GenesisState {
+	slashingData slashing.GenesisState,
+	marketData market.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
@@ -60,6 +64,7 @@ func NewGenesisState(accounts []GenesisAccount,
 		TreasuryData: treasuryData,
 		BudgetData:   budgetData,
 		SlashingData: slashingData,
+		MarketData:   marketData,
 	}
 }
 
@@ -222,6 +227,7 @@ func NewDefaultGenesisState() GenesisState {
 		OracleData:   oracle.DefaultGenesisState(),
 		TreasuryData: treasury.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
+		MarketData:   market.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
 }
@@ -252,8 +258,11 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
 		return err
 	}
+	if err := slashing.ValidateGenesis(genesisState.SlashingData); err != nil {
+		return err
+	}
 
-	return slashing.ValidateGenesis(genesisState.SlashingData)
+	return market.ValidateGenesis(genesisState.MarketData)
 }
 
 // validateGenesisStateAccounts performs validation of genesis accounts. It

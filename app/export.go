@@ -2,10 +2,12 @@ package app
 
 import (
 	"encoding/json"
+	"log"
+
 	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/treasury"
-	"log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,6 +50,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 		budget.ExportGenesis(ctx, app.budgetKeeper),
 		treasury.ExportGenesis(ctx, app.treasuryKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
+		market.ExportGenesis(ctx, app.marketKeeper),
 	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {

@@ -2,6 +2,10 @@ package app
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"sort"
+
 	"github.com/terra-project/core/version"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
@@ -9,9 +13,6 @@ import (
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
-	"io"
-	"os"
-	"sort"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -161,6 +162,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.marketKeeper = market.NewKeeper(
 		app.oracleKeeper,
 		app.mintKeeper,
+		app.paramsKeeper.Subspace(market.DefaultParamspace),
 	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.cdc,

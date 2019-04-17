@@ -112,7 +112,7 @@ func TestSumIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 3: at epoch 3 and summing over 3, 4, 5 epochs; all should have the same rval
-	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 3)
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * 3)
 	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(4), linearFn)
 	rval2 := SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(5), linearFn)
 	rval3 := SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(6), linearFn)
@@ -125,7 +125,7 @@ func TestSumIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 5. Sum up to 10
-	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 10)
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * 10)
 	rval = SumIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(10), linearFn)
 	require.Equal(t, sdk.NewDec(55), rval)
 }
@@ -142,7 +142,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 3: at epoch 3 and averaging over 3, 4, 5 epochs; all should have the same rval
-	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 3)
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * 3)
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(4), linearFn)
 	rval2 := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(5), linearFn)
 	rval3 := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(6), linearFn)
@@ -159,7 +159,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.NewDec(3), rval)
 
 	// Case 6: at epoch 500 and averaging over 300 epochs
-	input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * 500)
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * 500)
 	rval = RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.NewInt(300), linearFn)
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
@@ -167,7 +167,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.OneDec())
 
 	for i := int64(201); i <= 500; i++ {
-		input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * i)
+		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
 		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(i).MulRaw(assets.MicroUnit))
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())

@@ -1,10 +1,11 @@
 package mint
 
 import (
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/util"
 	"testing"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -114,65 +115,65 @@ func createTestInput(t *testing.T) testInput {
 
 func TestKeeperIssuance(t *testing.T) {
 	input := createTestInput(t)
-	curEpoch := util.GetEpoch(input.ctx)
+	curDay := sdk.ZeroInt()
 
 	// Should be able to claim genesis issunace
-	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, mSDRAmout.MulRaw(3), issuance)
 
 	// Lowering issuance works
 	err := input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
 	require.Nil(t, err)
-	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, mSDRAmout.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// ... but not too much
 	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
 	require.NotNil(t, err)
-	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, mSDRAmout.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// Raising issuance works, too
 	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
 	require.Nil(t, err)
-	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, sdk.NewInt(4000).MulRaw(assets.MicroUnit), issuance)
 
-	// Moving up one epoch inherits the issuance of previous epoch
-	curEpoch = curEpoch.Add(sdk.OneInt())
-	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	// Moving up one epoch inherits the issuance of previous day
+	curDay = curDay.Add(sdk.OneInt())
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, sdk.NewInt(4000).MulRaw(assets.MicroUnit), issuance)
 
-	// ... Even when you move many epochs
-	curEpoch = curEpoch.Add(sdk.NewInt(10))
-	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	// ... Even when you move many days
+	curDay = curDay.Add(sdk.NewInt(10))
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, sdk.NewInt(4000).MulRaw(assets.MicroUnit), issuance)
 }
 
 func TestKeeperMintBurn(t *testing.T) {
 	input := createTestInput(t)
-	curEpoch := util.GetEpoch(input.ctx)
-	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	curDay := sdk.ZeroInt()
+	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 
 	// Minting new coins results in an issuance increase
 	increment := sdk.NewInt(10).MulRaw(assets.MicroUnit)
 	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroSDRDenom, increment))
 	require.Nil(t, err)
-	newIssuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	newIssuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, issuance.Add(increment), newIssuance)
 
 	// Burning new coins results in an issuance decrease
 	decrement := sdk.NewInt(10).MulRaw(assets.MicroUnit)
 	err = input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroSDRDenom, decrement))
 	require.Nil(t, err)
-	newIssuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	newIssuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, issuance, newIssuance)
 
 	// Burning new coins errors if requested to burn too much
 	decrement = sdk.NewInt(100000).MulRaw(assets.MicroUnit)
 	err = input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroSDRDenom, decrement))
 	require.NotNil(t, err)
-	newIssuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curEpoch)
+	newIssuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, issuance, newIssuance)
 }
 
@@ -180,7 +181,7 @@ func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
 	for e := 0; e < 3; e++ {
-		input.ctx = input.ctx.WithBlockHeight(util.GetBlocksPerEpoch() * int64(e))
+		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * int64(e))
 		for i := 0; i < 100; i++ {
 			input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(int64(10*(e+1))))
 		}

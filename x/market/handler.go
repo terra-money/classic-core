@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/terra-project/core/x/market/tags"
 
@@ -23,6 +24,31 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
+// Returns true if the amount of total coins swapped INTO the denom asset during a 24 hr window
+// (block approximation) exceeds 1% of coinissuance.
+func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
+	curDay := ctx.BlockHeight() / util.BlocksPerDay
+
+	// Disable trades on the first day
+	if curDay == 0 {
+		return true
+	}
+
+	curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
+	prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
+
+	if curIssuance.GT(prevIssuance) {
+		dailyDelta := curIssuance.Sub(prevIssuance).Add(swapCoin.Amount)
+
+		// If daily inflation is greater than 1%
+		if dailyDelta.MulRaw(100).GT(curIssuance) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // handleMsgSwap handles the logic of a MsgSwap
 func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
@@ -35,6 +61,11 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
 	if swapErr != nil {
 		return swapErr.Result()
+	}
+
+	// We've passed the daily swap limit. Fail.
+	if exceedsDailySwapLimit(ctx, k, swapCoin) {
+		return ErrExceedsDailySwapLimit(DefaultCodespace, swapCoin.Denom).Result()
 	}
 
 	// Burn offered coins and subtract from the trader's account

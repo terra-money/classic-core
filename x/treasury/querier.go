@@ -81,7 +81,9 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 // nolint: unparam
 func queryIssuance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
-	issuance := keeper.mtk.GetIssuance(ctx, denom, util.GetEpoch(ctx))
+
+	curDay := ctx.BlockHeight() / util.BlocksPerDay
+	issuance := keeper.mtk.GetIssuance(ctx, denom, sdk.NewInt(curDay))
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

@@ -15,7 +15,7 @@ func TestRewardWeight(t *testing.T) {
 	input := createTestInput(t)
 
 	// See that we can get and set reward weights
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 	for i := int64(0); i < 10; i++ {
 		input.ctx = input.ctx.WithBlockHeight(i * blocksPerEpoch)
 
