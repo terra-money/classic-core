@@ -2,14 +2,15 @@ package pay
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/treasury"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -64,7 +65,7 @@ func createTestInput(t *testing.T) testInput {
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -79,7 +80,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 

@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"io"
+
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/version"
-	"io"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,6 +27,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const flagAssertInvariantsBlockly = "assert-invariants-blockly"
+
+var assertInvariantsBlockly bool
+
 func main() {
 	cdc := app.MakeCodec()
 
@@ -40,7 +45,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:               "terrad",
 		Short:             "Terra Daemon (server)",
-		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+		PersistentPreRunE: persistentPreRunEFn(ctx),
 	}
 	rootCmd.AddCommand(terraInit.InitCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.CollectGenTxsCmd(ctx, cdc))
@@ -57,6 +62,8 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "TE", app.DefaultNodeHome)
+	rootCmd.PersistentFlags().BoolVar(&assertInvariantsBlockly, flagAssertInvariantsBlockly,
+		false, "Assert registered invariants on a blockly basis")
 	err := executor.Execute()
 	if err != nil {
 		// handle with #870
@@ -66,7 +73,7 @@ func main() {
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	return app.NewTerraApp(
-		logger, db, traceStore, true,
+		logger, db, traceStore, true, assertInvariantsBlockly,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 	)
@@ -76,13 +83,13 @@ func exportAppStateAndTMValidators(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 	if height != -1 {
-		tApp := app.NewTerraApp(logger, db, traceStore, false)
+		tApp := app.NewTerraApp(logger, db, traceStore, false, false)
 		err := tApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	tApp := app.NewTerraApp(logger, db, traceStore, true)
+	tApp := app.NewTerraApp(logger, db, traceStore, true, false)
 	return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

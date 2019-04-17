@@ -1,0 +1,19 @@
+coverage:
+  precision: 2
+  round: down
+  range: 70...100
+
+  status:
+    project: 
+      default:
+        threshold: 1% # allow this much decrease on project
+    changes: false
+
+comment:
+  layout: "header, diff"
+  behavior: default  # update if exists else create new
+
+ignore:
+  - "docs"
+  - "*.md"
+  - "*.rst"

@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/oracle"
 	"net/http"
+
+	"github.com/terra-project/core/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
@@ -29,12 +29,6 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
-
-		if !assets.IsValidDenom(denom) {
-			err := fmt.Errorf("The denom is not known: %s", denom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		var req VoteReq
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
@@ -61,11 +55,6 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
-		if req.BaseReq.GenerateOnly {
-			clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
-			return
-		}
-
-		clientrest.CompleteAndBroadcastTxREST(w, cliCtx, req.BaseReq, []sdk.Msg{msg}, cdc)
+		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

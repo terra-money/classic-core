@@ -130,19 +130,19 @@ func TestQueryVotes(t *testing.T) {
 
 	votes := []PriceVote{
 		// first voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
-		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
-		NewPriceVote(testPrice, assets.MicroUSDDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[0]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[0]),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, addrs[0]),
+		NewPriceVote(testPrice, assets.MicroUSDDenom, addrs[0]),
 
 		// Second voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
-		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
-		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[1]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[1]),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, addrs[1]),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, addrs[1]),
 
 		// Third voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
-		NewPriceVote(testPrice, assets.MicroCNYDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
-		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.OneInt().MulRaw(assets.MicroUnit), addrs[2]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[2]),
+		NewPriceVote(testPrice, assets.MicroCNYDenom, addrs[2]),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, addrs[2]),
 	}
 
 	for _, vote := range votes {

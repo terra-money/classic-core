@@ -58,7 +58,7 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sd
 		// Genesis epoch; nothing exists in store so we must read it
 		// from accountkeeper
 		if epoch.LTE(sdk.ZeroInt()) {
-			rewardWeight = k.GetParams(ctx).TaxPolicy.RateMin
+			rewardWeight = DefaultGenesisState().GenesisRewardWeight
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
 			rewardWeight = k.GetRewardWeight(ctx, epoch.Sub(sdk.OneInt()))
@@ -138,7 +138,7 @@ func (k Keeper) GetTaxRate(ctx sdk.Context, epoch sdk.Int) (rate sdk.Dec) {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &rate)
 	} else {
 		if epoch.LTE(sdk.ZeroInt()) {
-			rate = k.GetParams(ctx).TaxPolicy.RateMin
+			rate = DefaultGenesisState().GenesisTaxRate
 		} else {
 			// Fetch the tax rate of the previous epoch
 			rate = k.GetTaxRate(ctx, epoch.Sub(sdk.OneInt()))
@@ -187,7 +187,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 	epoch := util.GetEpoch(ctx)
 	proceeds := k.PeekTaxProceeds(ctx, epoch)
-	proceeds = proceeds.Plus(delta)
+	proceeds = proceeds.Add(delta)
 
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(proceeds)
