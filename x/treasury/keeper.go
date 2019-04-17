@@ -1,8 +1,6 @@
 package treasury
 
 import (
-	"fmt"
-
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/market"
@@ -187,7 +185,6 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 
 // RecordTaxProceeds add tax proceeds that have been added this epoch
 func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
-	fmt.Println(delta)
 	epoch := util.GetEpoch(ctx)
 	proceeds := k.PeekTaxProceeds(ctx, epoch)
 	proceeds = proceeds.Add(delta)
