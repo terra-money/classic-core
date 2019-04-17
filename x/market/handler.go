@@ -61,8 +61,9 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		return swapErr.Result()
 	}
 
-	// We've passed the daily swap limit. Fail.
-	if exceedsDailySwapLimit(ctx, k, swapCoin) {
+	// We've passed the daily swap limit for Luna. Fail.
+	// TODO: add safety checks for Terra as well.
+	if msg.OfferCoin.Denom == assets.MicroLunaDenom && exceedsDailySwapLimit(ctx, k, swapCoin) {
 		return ErrExceedsDailySwapLimit(DefaultCodespace, swapCoin.Denom).Result()
 	}
 
