@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -20,7 +21,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// export the state of Terra for a genesis file
+// ExportAppStateAndValidators exports the state of Terra for a genesis file
 func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string) (
 	appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
@@ -48,6 +49,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		oracle.ExportGenesis(ctx, app.oracleKeeper),
 		budget.ExportGenesis(ctx, app.budgetKeeper),
+		crisis.ExportGenesis(ctx, app.crisisKeeper),
 		treasury.ExportGenesis(ctx, app.treasuryKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
 		market.ExportGenesis(ctx, app.marketKeeper),
@@ -93,7 +95,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	// withdraw all delegator rewards
 	dels := app.stakingKeeper.GetAllDelegations(ctx)
 	for _, delegation := range dels {
-		_ = app.distrKeeper.WithdrawDelegationRewards(ctx, delegation.DelegatorAddr, delegation.ValidatorAddr)
+		_ = app.distrKeeper.WithdrawDelegationRewards(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
 	}
 
 	// clear validator slash events
@@ -114,7 +116,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	// reinitialize all delegations
 	for _, del := range dels {
-		app.distrKeeper.Hooks().BeforeDelegationCreated(ctx, del.DelegatorAddr, del.ValidatorAddr)
+		app.distrKeeper.Hooks().BeforeDelegationCreated(ctx, del.DelegatorAddress, del.ValidatorAddress)
 	}
 
 	// reset context height
