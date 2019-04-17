@@ -1,6 +1,9 @@
 package budget
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/mock"
 	"github.com/terra-project/core/types/util"
@@ -8,10 +11,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -72,7 +73,7 @@ func createTestInput(t *testing.T) testInput {
 	keyBudget := sdk.NewKVStoreKey(StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -85,9 +86,11 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
-	require.NoError(t, ms.LoadLatestVersion())
+	if err := ms.LoadLatestVersion(); err != nil {
+		require.Nil(t, err)
+	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accKeeper := auth.NewAccountKeeper(
@@ -113,19 +116,6 @@ func createTestInput(t *testing.T) testInput {
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	valset := mock.NewMockValSet()
-	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
-			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
-		})
-		require.NoError(t, err)
-
-		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
-		valset.Validators = append(valset.Validators, validator)
-	}
-
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
@@ -133,6 +123,24 @@ func createTestInput(t *testing.T) testInput {
 		bankKeeper,
 		accKeeper,
 	)
+
+	valset := mock.NewMockValSet()
+	for _, addr := range addrs {
+		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt))
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+
+		if err != nil {
+			require.Nil(t, err)
+		}
+
+		if err2 != nil {
+			require.Nil(t, err2)
+		}
+
+		// Add validators
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
+		valset.Validators = append(valset.Validators, validator)
+	}
 
 	budgetKeeper := NewKeeper(
 		cdc, keyBudget, mintKeeper, valset,

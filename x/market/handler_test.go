@@ -1,8 +1,9 @@
 package market
 
 import (
-	"github.com/terra-project/core/types/assets"
 	"testing"
+
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/stretchr/testify/require"
 

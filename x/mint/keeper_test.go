@@ -1,10 +1,11 @@
 package mint
 
 import (
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/util"
 	"testing"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
