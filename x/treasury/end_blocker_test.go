@@ -26,7 +26,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := int64(1); i < params.WindowProbation.Int64(); i++ {
 		if i%params.WindowShort.Int64() == 0 {
 			// Last block should settle
-			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
+			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
@@ -34,7 +34,7 @@ func TestEndBlockerTiming(t *testing.T) {
 			require.Equal(t, 4, len(tTags))
 
 			// Non-last block should not settle
-			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
@@ -46,7 +46,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	// After probationary period, we should also be updating policy variables
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {
-			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
+			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
@@ -87,7 +87,7 @@ func updatePolicy(input testInput, startIndex int,
 	}
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 
 	for i := 0; i < len(taxRevenues); i++ {
 		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
@@ -175,7 +175,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 	}
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 
 	for i, tc := range tests {
 

@@ -9,4 +9,7 @@ const (
 
 	// RouterKey is the msg router key for the market module
 	RouterKey = ModuleName
+
+	// DefaultParamspace is for the paramspace notation
+	DefaultParamspace = ModuleName
 )

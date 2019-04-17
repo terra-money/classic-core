@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/treasury"
 
@@ -51,6 +52,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 		crisis.ExportGenesis(ctx, app.crisisKeeper),
 		treasury.ExportGenesis(ctx, app.treasuryKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
+		market.ExportGenesis(ctx, app.marketKeeper),
 	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {

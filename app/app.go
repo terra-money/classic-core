@@ -173,6 +173,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 	app.marketKeeper = market.NewKeeper(
 		app.oracleKeeper,
 		app.mintKeeper,
+		app.paramsKeeper.Subspace(market.DefaultParamspace),
 	)
 	app.treasuryKeeper = treasury.NewKeeper(
 		app.cdc,

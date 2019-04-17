@@ -120,7 +120,7 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	marketKeeper := Keeper{
-		oracleKeeper, mintKeeper,
+		oracleKeeper, mintKeeper, paramsKeeper.Subspace(DefaultParamspace),
 	}
 
 	for _, addr := range addrs {

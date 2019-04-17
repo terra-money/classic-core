@@ -1,7 +1,6 @@
 package treasury
 
 import (
-	"fmt"
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
@@ -107,7 +106,6 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 		// Credit the recipient's account with the reward
 		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
 		if err != nil {
-			fmt.Printf("[settleClaims] failed to mint to %s\n", claim.Recipient.String())
 			return false
 		}
 

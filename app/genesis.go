@@ -13,6 +13,7 @@ import (
 
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/treasury"
 
@@ -40,6 +41,7 @@ type GenesisState struct {
 	OracleData   oracle.GenesisState   `json:"oracle"`
 	CrisisData   crisis.GenesisState   `json:"crisis"`
 	SlashingData slashing.GenesisState `json:"slashing"`
+	MarketData   market.GenesisState   `json:"market"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
@@ -53,7 +55,8 @@ func NewGenesisState(accounts []GenesisAccount,
 	budgetData budget.GenesisState,
 	crisisData crisis.GenesisState,
 	treasuryData treasury.GenesisState,
-	slashingData slashing.GenesisState) GenesisState {
+	slashingData slashing.GenesisState,
+	marketData market.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
@@ -66,6 +69,7 @@ func NewGenesisState(accounts []GenesisAccount,
 		TreasuryData: treasuryData,
 		BudgetData:   budgetData,
 		SlashingData: slashingData,
+		MarketData:   marketData,
 	}
 }
 
@@ -231,6 +235,7 @@ func NewDefaultGenesisState() GenesisState {
 		TreasuryData: treasury.DefaultGenesisState(),
 		CrisisData:   crisis.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
+		MarketData:   market.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
 }
@@ -259,13 +264,16 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 		return err
 	}
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
-		return err
+	  return err
 	}
+	if err := slashing.ValidateGenesis(genesisState.SlashingData); err != nil {
+    return err
+  }
 	if err := crisis.ValidateGenesis(genesisState.CrisisData); err != nil {
-		return err
+	  return err
 	}
 
-	return slashing.ValidateGenesis(genesisState.SlashingData)
+	return market.ValidateGenesis(genesisState.MarketData)
 }
 
 // validateGenesisStateAccounts performs validation of genesis accounts. It

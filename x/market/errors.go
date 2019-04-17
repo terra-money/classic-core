@@ -11,6 +11,7 @@ const (
 	CodeInsufficientSwap sdk.CodeType = 1
 	CodeNoEffectivePrice sdk.CodeType = 2
 	CodeRecursiveSwap    sdk.CodeType = 3
+	CodeExceedsSwapLimit sdk.CodeType = 4
 )
 
 // ----------------------------------------
@@ -29,4 +30,9 @@ func ErrInsufficientSwapCoins(codespace sdk.CodespaceType, rval sdk.Int) sdk.Err
 // ErrRecursiveSwap called when Ask and Offer coin denominatioins are equal
 func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
+}
+
+// ErrExceedsDailySwapLimit called when the coin swap exceeds the daily swap limit
+func ErrExceedsDailySwapLimit(codespace sdk.CodespaceType, denom string) sdk.Error {
+	return sdk.NewError(codespace, CodeExceedsSwapLimit, "Exceeded the daily swap limit for the ask denomination: "+denom)
 }
