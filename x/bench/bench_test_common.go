@@ -1,15 +1,13 @@
-package budget
+package bench
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/mock"
-	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
-
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	"time"
 
@@ -25,53 +23,51 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
+const numOfValidators = 100
+
 var (
-	pubKeys = []crypto.PubKey{
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-	}
+	pubKeys [numOfValidators]crypto.PubKey
+	addrs   [numOfValidators]sdk.AccAddress
 
-	addrs = []sdk.AccAddress{
-		sdk.AccAddress(pubKeys[0].Address()),
-		sdk.AccAddress(pubKeys[1].Address()),
-		sdk.AccAddress(pubKeys[2].Address()),
-	}
-
-	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
-	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
+	mLunaAmt = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
+	mSDRAmt  = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
-	ctx          sdk.Context
-	cdc          *codec.Codec
-	mintKeeper   mint.Keeper
-	bankKeeper   bank.Keeper
-	budgetKeeper Keeper
-	valset       mock.MockValset
+	ctx            sdk.Context
+	cdc            *codec.Codec
+	bankKeeper     bank.Keeper
+	budgetKeeper   budget.Keeper
+	oracleKeeper   oracle.Keeper
+	marketKeeper   market.Keeper
+	mintKeeper     mint.Keeper
+	treasuryKeeper treasury.Keeper
 }
 
 func newTestCodec() *codec.Codec {
 	cdc := codec.New()
 
 	bank.RegisterCodec(cdc)
-	RegisterCodec(cdc)
+	treasury.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 
 	return cdc
 }
 
-func createTestInput(t *testing.T) testInput {
+// createTestInput common test code for bench test
+func createTestInput() testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
-	keyBudget := sdk.NewKVStoreKey(StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyBudget := sdk.NewKVStoreKey(budget.StoreKey)
+	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
+	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
@@ -83,13 +79,15 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	if err := ms.LoadLatestVersion(); err != nil {
-		require.Nil(t, err)
+		panic(err)
 	}
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
@@ -125,45 +123,51 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	valset := mock.NewMockValSet()
-	for _, addr := range addrs {
-		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt))
-		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+	for i := 0; i < 100; i++ {
+		pubKeys[i] = secp256k1.GenPrivKey().PubKey()
+		addrs[i] = sdk.AccAddress(pubKeys[i].Address())
 
+		err := mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
 		if err != nil {
-			require.Nil(t, err)
+			panic(err)
 		}
 
-		if err2 != nil {
-			require.Nil(t, err2)
+		err = mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt))
+		if err != nil {
+			panic(err)
 		}
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addrs[i].Bytes()), mLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 
-	budgetKeeper := NewKeeper(
+	budgetKeeper := budget.NewKeeper(
 		cdc, keyBudget, mintKeeper, valset,
-		paramsKeeper.Subspace(DefaultParamspace),
+		paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
 
-	InitGenesis(ctx, budgetKeeper, DefaultGenesisState())
+	oracleKeeper := oracle.NewKeeper(
+		cdc,
+		keyOracle,
+		valset,
+		paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
 
-	return testInput{ctx, cdc, mintKeeper, bankKeeper, budgetKeeper, valset}
-}
+	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
 
-func generateTestProgram(ctx sdk.Context, budgetKeeper Keeper, accounts ...sdk.AccAddress) Program {
-	submitter := addrs[0]
-	if len(accounts) > 0 {
-		submitter = accounts[0]
-	}
+	treasuryKeeper := treasury.NewKeeper(
+		cdc,
+		keyTreasury,
+		valset,
+		mintKeeper,
+		marketKeeper,
+		paramsKeeper.Subspace(treasury.DefaultParamspace),
+	)
 
-	executor := addrs[1]
-	if len(accounts) > 1 {
-		executor = accounts[1]
-	}
+	budget.InitGenesis(ctx, budgetKeeper, budget.DefaultGenesisState())
+	oracle.InitGenesis(ctx, oracleKeeper, oracle.DefaultGenesisState())
+	treasury.InitGenesis(ctx, treasuryKeeper, treasury.DefaultGenesisState())
 
-	testProgramID := budgetKeeper.NewProgramID(ctx)
-
-	return NewProgram(testProgramID, "testTitle", "testDescription", submitter, executor, util.GetEpoch(ctx).Int64())
+	return testInput{ctx, cdc, bankKeeper, budgetKeeper, oracleKeeper, marketKeeper, mintKeeper, treasuryKeeper}
 }

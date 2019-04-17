@@ -45,7 +45,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:               "terrad",
 		Short:             "Terra Daemon (server)",
-		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+		PersistentPreRunE: persistentPreRunEFn(ctx),
 	}
 	rootCmd.AddCommand(terraInit.InitCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.CollectGenTxsCmd(ctx, cdc))

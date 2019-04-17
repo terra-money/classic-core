@@ -1,15 +1,16 @@
 package oracle
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/mock"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -107,6 +108,7 @@ func createTestInput(t *testing.T) testInput {
 			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
 			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
 		})
+
 		require.NoError(t, err)
 
 		// Add validators

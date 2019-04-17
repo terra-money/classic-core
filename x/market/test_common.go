@@ -1,13 +1,14 @@
 package market
 
 import (
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/mint"
-	"github.com/terra-project/core/x/oracle"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"

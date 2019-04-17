@@ -1,10 +1,11 @@
 package budget
 
 import (
-	"github.com/terra-project/core/types/mock"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/terra-project/core/types/mock"
 
 	"github.com/stretchr/testify/require"
 
@@ -104,6 +105,43 @@ func TestEndBlockerTiming(t *testing.T) {
 
 	require.Equal(t, 1, len(claims))
 	require.Equal(t, input.budgetKeeper.valset.TotalBondedTokens(input.ctx), claims[0].Weight)
+}
+
+func TestEndBlockerLegacy(t *testing.T) {
+	input := createTestInput(t)
+
+	defaultBudgetParams := DefaultParams()
+	defaultBudgetParams.VotePeriod = 1
+	input.budgetKeeper.SetParams(input.ctx, defaultBudgetParams)
+
+	ctx := input.ctx.WithBlockHeight(1)
+
+	// Create test program
+	testProgram := generateTestProgram(ctx, input.budgetKeeper)
+
+	input.budgetKeeper.SetProgram(ctx, testProgram.ProgramID, testProgram)
+
+	// Add a vote each from validators
+	for _, addr := range addrs {
+		input.budgetKeeper.AddVote(ctx, testProgram.ProgramID, addr, true)
+	}
+
+	// Claims should have been settled
+	claims, _ := EndBlocker(ctx, input.budgetKeeper)
+	require.Equal(t, 1, len(claims))
+
+	ctx = input.ctx.WithBlockHeight(2)
+
+	for _, addr := range addrs {
+		input.budgetKeeper.AddVote(ctx, testProgram.ProgramID, addr, false)
+	}
+
+	// Program should be legacy
+	claims, _ = EndBlocker(ctx, input.budgetKeeper)
+	require.Equal(t, 0, len(claims))
+
+	_, err := input.budgetKeeper.GetProgram(ctx, 1)
+	require.Error(t, err)
 }
 
 func TestEndBlockerPassOrReject(t *testing.T) {
