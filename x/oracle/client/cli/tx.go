@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/oracle"
 	"strings"
+
+	"github.com/terra-project/core/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
@@ -51,10 +51,6 @@ where "mkrw" is the denominating currency, and "8890" is the price of micro Luna
 			denom := viper.GetString(flagDenom)
 			if len(denom) == 0 {
 				return fmt.Errorf("--denom flag is required")
-			}
-
-			if denom == assets.MicroLunaDenom || !assets.IsValidDenom(denom) {
-				return fmt.Errorf("given denom {%s} is not a valid one", denom)
 			}
 
 			// Check the price flag exists

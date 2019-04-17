@@ -39,6 +39,8 @@ var (
 
 	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
 	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
+
+	oracleDecPrecision = 8
 )
 
 type testInput struct {
