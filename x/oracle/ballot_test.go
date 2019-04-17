@@ -18,7 +18,7 @@ import (
 func generateRandomTestCase() (prices []float64, valAccAddrs []sdk.AccAddress, mockValset mcVal.MockValset) {
 	mockValset = mcVal.NewMockValSet()
 	valAccAddrs = []sdk.AccAddress{}
-	base := math.Pow10(OracleDecPrecision)
+	base := math.Pow10(oracleDecPrecision)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numInputs := 10 + (rand.Int() % 100)
@@ -112,7 +112,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}
 
 	mockValset := mcVal.NewMockValSet()
-	base := math.Pow10(OracleDecPrecision)
+	base := math.Pow10(oracleDecPrecision)
 	for _, tc := range tests {
 		pb := PriceBallot{}
 		for i, input := range tc.inputs {
@@ -125,7 +125,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			if tc.isValidator[i] {
 				mockValset.Validators = append(mockValset.Validators, mockVal)
 			}
-			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), OracleDecPrecision), assets.MicroSDRDenom, valAccAddr)
+			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), assets.MicroSDRDenom, valAccAddr)
 			pb = append(pb, vote)
 		}
 

@@ -174,7 +174,7 @@ func TestOracleTally(t *testing.T) {
 	h := NewHandler(input.oracleKeeper)
 	for i, price := range prices {
 
-		decPrice := sdk.NewDecWithPrec(int64(price*math.Pow10(OracleDecPrecision)), OracleDecPrecision)
+		decPrice := sdk.NewDecWithPrec(int64(price*math.Pow10(oracleDecPrecision)), int64(oracleDecPrecision))
 		pfm := NewMsgPriceFeed(
 			assets.MicroSDRDenom,
 			decPrice,

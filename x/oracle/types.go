@@ -15,7 +15,4 @@ const (
 
 	// DefaultParamspace is the paramspace notation
 	DefaultParamspace = ModuleName
-
-	// OracleDecPrecision is the precision count of the oracle
-	OracleDecPrecision = 8
 )

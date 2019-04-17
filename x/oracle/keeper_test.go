@@ -13,10 +13,10 @@ import (
 func TestKeeperPrice(t *testing.T) {
 	input := createTestInput(t)
 
-	cnyPrice := sdk.NewDecWithPrec(839, OracleDecPrecision).MulInt64(assets.MicroUnit)
-	gbpPrice := sdk.NewDecWithPrec(4995, OracleDecPrecision).MulInt64(assets.MicroUnit)
-	krwPrice := sdk.NewDecWithPrec(2838, OracleDecPrecision).MulInt64(assets.MicroUnit)
-	lunaPrice := sdk.NewDecWithPrec(3282384, OracleDecPrecision).MulInt64(assets.MicroUnit)
+	cnyPrice := sdk.NewDecWithPrec(839, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	gbpPrice := sdk.NewDecWithPrec(4995, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	krwPrice := sdk.NewDecWithPrec(2838, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	lunaPrice := sdk.NewDecWithPrec(3282384, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
 
 	// Set & get prices
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, cnyPrice)

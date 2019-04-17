@@ -39,22 +39,6 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 	return
 }
 
-// Get all active oracle asset denoms from the store
-func getActiveDenoms(ctx sdk.Context, k Keeper) (denoms []string) {
-	denoms = []string{}
-
-	store := ctx.KVStore(k.key)
-	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
-	for ; iter.Valid(); iter.Next() {
-		n := len(prefixPrice) + 1
-		denom := string(iter.Key()[n:])
-		denoms = append(denoms, denom)
-	}
-	iter.Close()
-
-	return
-}
-
 // Drop the ballot. If the ballot drops params.DropThreshold times sequentially, then blacklist
 func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags {
 	actionTag := tags.ActionTallyDropped
@@ -91,7 +75,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 		return
 	}
 
-	actives := getActiveDenoms(ctx, k)
+	actives := k.getActiveDenoms(ctx)
 	votes := k.collectVotes(ctx)
 
 	// Iterate through active oracle assets and drop assets that have no votes received.
