@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ import (
 // PersistentPreRunEFn returns a PersistentPreRunE function for cobra
 // that initailizes the passed in context with a properly configured
 // logger and config object.
-func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string) error {
+func PersistentPreRunEFn(context *server.Context) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if cmd.Name() == version.VersionCmd.Name() {
 			return nil
