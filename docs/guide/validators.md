@@ -31,15 +31,14 @@ Don't use more Luna than you have! You can always get more by using the [Faucet]
 
 ```bash
 terracli tx staking create-validator \
-  --amount=5000000mluna \
+  --amount=5luna \
   --pubkey=$(terrad tendermint show-validator) \
   --moniker="choose a moniker" \
   --chain-id=<chain_id> \
   --from=<key_name> \
   --commission-rate="0.10" \
   --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01"
-  --min-self-delegation="1"
+  --commission-max-change-rate="0.01" 
 ```
 
 __Note__: When specifying commission parameters, the `commission-max-change-rate`
