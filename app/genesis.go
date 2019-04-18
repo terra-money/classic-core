@@ -264,13 +264,13 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 		return err
 	}
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
-	  return err
+		return err
 	}
 	if err := slashing.ValidateGenesis(genesisState.SlashingData); err != nil {
-    return err
-  }
+		return err
+	}
 	if err := crisis.ValidateGenesis(genesisState.CrisisData); err != nil {
-	  return err
+		return err
 	}
 
 	return market.ValidateGenesis(genesisState.MarketData)

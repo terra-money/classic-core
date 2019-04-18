@@ -154,7 +154,7 @@ func createTestInput() testInput {
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
+	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
 
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
