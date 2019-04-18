@@ -181,10 +181,6 @@ In order to connect to the full-node, you will need an address of the following 
 
 ## Setting up `terracli`
 
-::: tip
-**Before setting up `terracli`, make sure you have set up a way to [access the Terra Protocol network](#Accessing-the-Terra-network)**
-:::
-
 ::: warning
 **Please check that you are always using the latest stable release of `terracli`**
 :::
