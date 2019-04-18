@@ -24,12 +24,12 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// Returns true if the amount of total coins swapped INTO the denom asset during a 24 hr window
+// Returns true if the amount of total coins swapped INTO Luna during a 24 hr window
 // (block approximation) exceeds 1% of coinissuance.
 func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
 	curDay := ctx.BlockHeight() / util.BlocksPerDay
 
-	// Start limits on day 2. 
+	// Start limits on day 2
 	if curDay != 0 {
 		curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
 		prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
