@@ -1,23 +1,26 @@
 package market
 
 import (
-	"terra/x/mint"
-	"terra/x/oracle"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper holds data structures for the market module
 type Keeper struct {
-	ok oracle.Keeper
-	mk mint.Keeper
+	ok         oracle.Keeper
+	mk         mint.Keeper
+	paramSpace params.Subspace
 }
 
 // NewKeeper creates a new Keeper for the market module
-func NewKeeper(ok oracle.Keeper, mk mint.Keeper) Keeper {
+func NewKeeper(ok oracle.Keeper, mk mint.Keeper, paramspace params.Subspace) Keeper {
 	return Keeper{
-		ok: ok,
-		mk: mk,
+		ok:         ok,
+		mk:         mk,
+		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }
 
@@ -64,4 +67,19 @@ func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom st
 	}
 
 	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil
+}
+
+//-----------------------------------
+// Params logic
+
+// GetParams get budget params from the global param store
+func (k Keeper) GetParams(ctx sdk.Context) Params {
+	var resultParams Params
+	k.paramSpace.Get(ctx, paramStoreKeyParams, &resultParams)
+	return resultParams
+}
+
+// SetParams set budget params from the global param store
+func (k Keeper) SetParams(ctx sdk.Context, params Params) {
+	k.paramSpace.Set(ctx, paramStoreKeyParams, &params)
 }

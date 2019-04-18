@@ -9,11 +9,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"terra/types/assets"
-	"terra/x/budget"
-	"terra/x/oracle"
-	"terra/x/treasury"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -21,12 +23,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-// State to Unmarshal
+// GenesisState is a state to Unmarshal
 type GenesisState struct {
 	Accounts     []GenesisAccount      `json:"accounts"`
 	AuthData     auth.GenesisState     `json:"auth"`
@@ -36,10 +39,13 @@ type GenesisState struct {
 	TreasuryData treasury.GenesisState `json:"treasury"`
 	BudgetData   budget.GenesisState   `json:"budget"`
 	OracleData   oracle.GenesisState   `json:"oracle"`
+	CrisisData   crisis.GenesisState   `json:"crisis"`
 	SlashingData slashing.GenesisState `json:"slashing"`
+	MarketData   market.GenesisState   `json:"market"`
 	GenTxs       []json.RawMessage     `json:"gentxs"`
 }
 
+// NewGenesisState returns new genesis state
 func NewGenesisState(accounts []GenesisAccount,
 	authData auth.GenesisState,
 	bankData bank.GenesisState,
@@ -47,8 +53,10 @@ func NewGenesisState(accounts []GenesisAccount,
 	distrData distr.GenesisState,
 	oracleData oracle.GenesisState,
 	budgetData budget.GenesisState,
+	crisisData crisis.GenesisState,
 	treasuryData treasury.GenesisState,
-	slashingData slashing.GenesisState) GenesisState {
+	slashingData slashing.GenesisState,
+	marketData market.GenesisState) GenesisState {
 
 	return GenesisState{
 		Accounts:     accounts,
@@ -57,9 +65,11 @@ func NewGenesisState(accounts []GenesisAccount,
 		StakingData:  stakingData,
 		DistrData:    distrData,
 		OracleData:   oracleData,
+		CrisisData:   crisisData,
 		TreasuryData: treasuryData,
 		BudgetData:   budgetData,
 		SlashingData: slashingData,
+		MarketData:   marketData,
 	}
 }
 
@@ -89,6 +99,7 @@ type GenesisAccount struct {
 	EndTime          int64     `json:"end_time"`          // vesting end time (UNIX Epoch time)
 }
 
+// NewGenesisAccount returns new genesis account
 func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	return GenesisAccount{
 		Address:       acc.Address,
@@ -98,6 +109,7 @@ func NewGenesisAccount(acc *auth.BaseAccount) GenesisAccount {
 	}
 }
 
+// NewGenesisAccountI no-lint
 func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	gacc := GenesisAccount{
 		Address:       acc.GetAddress(),
@@ -118,7 +130,7 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 	return gacc
 }
 
-// convert GenesisAccount to auth.BaseAccount
+// ToAccount converts GenesisAccount to auth.BaseAccount
 func (ga *GenesisAccount) ToAccount() auth.Account {
 	bacc := &auth.BaseAccount{
 		Address:       ga.Address,
@@ -153,7 +165,7 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 	return bacc
 }
 
-// Create the core parameters for genesis initialization for Terra
+// TerraAppGenState creates the core parameters for genesis initialization for Terra
 // note that the pubkey input is this machines pubkey
 func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	genesisState GenesisState, err error) {
@@ -221,7 +233,9 @@ func NewDefaultGenesisState() GenesisState {
 		BudgetData:   budget.DefaultGenesisState(),
 		OracleData:   oracle.DefaultGenesisState(),
 		TreasuryData: treasury.DefaultGenesisState(),
+		CrisisData:   crisis.DefaultGenesisState(),
 		SlashingData: slashing.DefaultGenesisState(),
+		MarketData:   market.DefaultGenesisState(),
 		GenTxs:       nil,
 	}
 }
@@ -252,8 +266,14 @@ func TerraValidateGenesisState(genesisState GenesisState) error {
 	if err := distr.ValidateGenesis(genesisState.DistrData); err != nil {
 		return err
 	}
+	if err := slashing.ValidateGenesis(genesisState.SlashingData); err != nil {
+		return err
+	}
+	if err := crisis.ValidateGenesis(genesisState.CrisisData); err != nil {
+		return err
+	}
 
-	return slashing.ValidateGenesis(genesisState.SlashingData)
+	return market.ValidateGenesis(genesisState.MarketData)
 }
 
 // validateGenesisStateAccounts performs validation of genesis accounts. It
@@ -291,7 +311,7 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 	return nil
 }
 
-// TerraAppGenState but with JSON
+// TerraAppGenStateJSON returns genesis state with JSON
 func TerraAppGenStateJSON(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []json.RawMessage) (
 	appState json.RawMessage, err error) {
 	// create the final app state
@@ -365,8 +385,8 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 
 		msg := msgs[0].(staking.MsgCreateValidator)
 		// validate delegator and validator addresses and funds against the accounts in the state
-		delAddr := msg.DelegatorAddr.String()
-		valAddr := sdk.AccAddress(msg.ValidatorAddr).String()
+		delAddr := msg.DelegatorAddress.String()
+		valAddr := sdk.AccAddress(msg.ValidatorAddress).String()
 
 		delAcc, delOk := addrMap[delAddr]
 		_, valOk := addrMap[valAddr]
@@ -402,6 +422,7 @@ func CollectStdTxs(cdc *codec.Codec, moniker string, genTxsDir string, genDoc tm
 	return appGenTxs, persistentPeers, nil
 }
 
+// NewDefaultGenesisAccount returns default genesis account
 func NewDefaultGenesisAccount(addr sdk.AccAddress) GenesisAccount {
 	accAuth := auth.NewBaseAccountWithAddress(addr)
 	coins := sdk.Coins{

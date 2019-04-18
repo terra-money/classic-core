@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"terra/types/assets"
-	"terra/x/market"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
+
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
@@ -30,52 +32,56 @@ type SwapReq struct {
 // submitSwapHandlerFn handles a POST vote request
 func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var swapReq SwapReq
-		if !rest.ReadRESTReq(w, r, cdc, &swapReq) {
+		var req SwapReq
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			err := sdk.ErrUnknownRequest("malformed request")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		if !assets.IsValidDenom(swapReq.AskDenom) {
-			err := fmt.Errorf("The denom is not known: %s", swapReq.AskDenom)
+		if !assets.IsValidDenom(req.AskDenom) {
+			err := fmt.Errorf("The denom is not known: %s", req.AskDenom)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		swapReq.BaseReq = swapReq.BaseReq.Sanitize()
-		if !swapReq.BaseReq.ValidateBasic(w) {
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
 			err := sdk.ErrUnknownRequest("malformed request")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		fromAddress, err := sdk.AccAddressFromBech32(swapReq.BaseReq.From)
+		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		fromAccount, err := cliCtx.GetAccount(fromAddress)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
-		if fromAccount.GetCoins().AmountOf(swapReq.OfferCoin.Denom).LT(swapReq.OfferCoin.Amount) {
+		if fromAccount.GetCoins().AmountOf(req.OfferCoin.Denom).LT(req.OfferCoin.Amount) {
 			err := fmt.Errorf(strings.TrimSpace(`
                               account %s has insufficient amount of coins to pay the offered coins.\n
                               Required: %s\n
-                              Given:    %s\n`), fromAddress, swapReq.OfferCoin, fromAccount.GetCoins())
+                              Given:    %s\n`), fromAddress, req.OfferCoin, fromAccount.GetCoins())
 
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// create the message
-		msg := market.NewMsgSwap(fromAddress, swapReq.OfferCoin, swapReq.AskDenom)
+		msg := market.NewMsgSwap(fromAddress, req.OfferCoin, req.AskDenom)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		clientrest.CompleteAndBroadcastTxREST(w, cliCtx, swapReq.BaseReq, []sdk.Msg{msg}, cdc)
+
+		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

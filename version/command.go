@@ -24,7 +24,7 @@ var (
 			verInfo := newVersionInfo()
 
 			if !viper.GetBool(flagLong) {
-				fmt.Println(verInfo.CosmosSDK)
+				fmt.Println(verInfo.Core)
 				return nil
 			}
 

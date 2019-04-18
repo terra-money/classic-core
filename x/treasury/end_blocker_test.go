@@ -1,11 +1,11 @@
 package treasury
 
 import (
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/treasury/tags"
 	"math/rand"
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/treasury/tags"
 	"testing"
 	"time"
 
@@ -23,10 +23,10 @@ func TestEndBlockerTiming(t *testing.T) {
 
 	// Subsequent endblocker should settle, but NOT update policy
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	for i := int64(1); i < params.EpochProbation.Int64(); i++ {
-		if i%params.EpochShort.Int64() == 0 {
+	for i := int64(1); i < params.WindowProbation.Int64(); i++ {
+		if i%params.WindowShort.Int64() == 0 {
 			// Last block should settle
-			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
+			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
@@ -34,7 +34,7 @@ func TestEndBlockerTiming(t *testing.T) {
 			require.Equal(t, 4, len(tTags))
 
 			// Non-last block should not settle
-			input.ctx = input.ctx.WithBlockHeight(i * util.GetBlocksPerEpoch())
+			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
@@ -44,9 +44,9 @@ func TestEndBlockerTiming(t *testing.T) {
 	}
 
 	// After probationary period, we should also be updating policy variables
-	for i := params.EpochProbation.Int64(); i < params.EpochProbation.Int64()+12; i++ {
-		if i%params.EpochShort.Int64() == 0 {
-			input.ctx = input.ctx.WithBlockHeight(i*util.GetBlocksPerEpoch() - 1)
+	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
+		if i%params.WindowShort.Int64() == 0 {
+			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
 			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
@@ -87,10 +87,10 @@ func updatePolicy(input testInput, startIndex int,
 	}
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 
 	for i := 0; i < len(taxRevenues); i++ {
-		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
+		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64() * int64(i+startIndex) * blocksPerEpoch)
 
 		taxRevenue := taxRevenues[i]
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
@@ -175,12 +175,12 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 	}
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 
 	for i, tc := range tests {
 
 		// Advance blockcount
-		input.ctx = input.ctx.WithBlockHeight(params.EpochShort.Int64()*blocksPerEpoch*int64(i) - 1)
+		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64()*blocksPerEpoch*int64(i) - 1)
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {

@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/go-amino"
 
-	treasuryCli "terra/x/treasury/client/cli"
+	treasuryCli "github.com/terra-project/core/x/treasury/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )

@@ -1,9 +1,9 @@
 package treasury
 
 import (
-	"terra/types"
-	"terra/types/assets"
-	"terra/types/util"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ func TestRewardWeight(t *testing.T) {
 	input := createTestInput(t)
 
 	// See that we can get and set reward weights
-	blocksPerEpoch := util.GetBlocksPerEpoch()
+	blocksPerEpoch := util.BlocksPerEpoch
 	for i := int64(0); i < 10; i++ {
 		input.ctx = input.ctx.WithBlockHeight(i * blocksPerEpoch)
 

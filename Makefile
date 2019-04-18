@@ -1,21 +1,73 @@
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := $(subst v,,$(shell git describe --tags --long))
-BUILD_TAGS = netgo
-BUILD_FLAGS = -tags "${BUILD_TAGS}" -ldflags "-X github.com/terra-project/terra/version.Version=${VERSION} -X terra/version.Version=${VERSION}"
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 GOTOOLS = \
-	github.com/golang/dep/cmd/dep \
 	github.com/golangci/golangci-lint/cmd/golangci-lint \
 	github.com/rakyll/statik
 GOBIN ?= $(GOPATH)/bin
-all: clean get_tools get_vendor_deps install lint test
+SHASUM := $(shell which sha256sum)
 
+export GO111MODULE = on
 
-get_tools:
-	go get github.com/golang/dep/cmd/dep
-	go get github.com/rakyll/statik
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+# process build tags
+build_tags = netgo
+ifeq ($(LEDGER_ENABLED),true)
+  ifeq ($(OS),Windows_NT)
+    GCCEXE = $(shell where gcc.exe 2> NUL)
+    ifeq ($(GCCEXE),)
+      $(error gcc.exe not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  else
+    GCC = $(shell command -v gcc 2> /dev/null)
+    ifeq ($(GCC),)
+      $(error gcc not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  endif
+endif
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += gcc
+endif
+
+# process linker flags
+
+ldflags = -X github.com/terra-project/core/version.Version=$(VERSION) \
+					-X github.com/terra-project/core/version.Commit=$(COMMIT) \
+					-X "github.com/terra-project/core/version.BuildTags=$(build_tags)" \
+
+ifneq ($(SHASUM),)
+	ldflags += -X github.com/terra-project/core/version.GoSumHash=$(shell sha256sum go.sum | cut -d ' ' -f1)
+endif
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += gcc
+endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
+
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+
+########################################
+### All
+
+all: clean go-mod-cache install lint test
+
+########################################
+### CI
+
+ci: get_tools install lint test
+
+########################################
+### Build/Install
 
 build: update_terra_lite_docs
 ifeq ($(OS),Windows_NT)
@@ -34,64 +86,41 @@ build-linux:
 update_terra_lite_docs:
 	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
 
-
 install: update_terra_lite_docs
 	go install $(BUILD_FLAGS) ./cmd/terrad
 	go install $(BUILD_FLAGS) ./cmd/terracli
 	go install $(BUILD_FLAGS) ./cmd/terrakeyutil
 
-clean:
-	rm -rf ./build
-
-dist:
-	@bash publish/dist.sh
-	@bash publish/publish.sh
 
 ########################################
 ### Tools & dependencies
 
-check_tools:
-	@# https://stackoverflow.com/a/25668869
-	@echo "Found tools: $(foreach tool,$(notdir $(GOTOOLS)),\
-        $(if $(shell which $(tool)),$(tool),$(error "No $(tool) in PATH")))"
+get_tools:
+	go get github.com/rakyll/statik
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 update_tools:
 	@echo "--> Updating tools to correct version"
 	$(MAKE) --always-make get_tools
 
+go-mod-cache: go-sum
+	@echo "--> Download go modules to local cache"
+	@go mod download
 
-lint: get_tools ci-lint
+go-sum: get_tools
+	@echo "--> Ensure dependencies have not been modified"
+	@go mod verify
 
-ci-lint:
-	golangci-lint run
-	go vet -composites=false -tests=false ./...
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
+go-release:
+	@echo "--> Dry run for go-release"
+	BUILD_TAGS=$(shell echo \"$(build_tags)\") GOSUM=$(shell sha256sum go.sum | cut -d ' ' -f1) goreleaser release --skip-publish --rm-dist --debug
 
-get_vendor_deps: get_tools
-	@echo "--> Generating vendor directory via dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v -vendor-only
+clean:
+	rm -rf ./dist
+	rm -rf ./build
 
-update_vendor_deps: get_tools
-	@echo "--> Running dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v
-
-draw_deps: get_tools
-	@# requires brew install graphviz or apt-get install graphviz
-	go get github.com/RobotsAndPencils/goviz
-	@goviz -i github.com/terra-project/core/cmd/terra/cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
-
-
-
-########################################
-### Documentation
-
-godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/terra-project/core/types"
-	godoc -http=:6060
-
+distclean: clean
+	rm -rf vendor/
 
 ########################################
 ### Testing
@@ -112,29 +141,13 @@ format:
 benchmark:
 	@go test -bench=. $(PACKAGES_NOSIMULATION)
 
-
-########################################
-### Devdoc
-
-DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
-
-devdoc_init:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" tendermint/devdoc echo
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc:
-	docker run -it -v "$(CURDIR):/go/src/github.com/terra-project/terra" -w "/go/src/github.com/terra-project/terra" devdoc:local bash
-
-devdoc_save:
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc_clean:
-	docker rmi -f $$(docker images -f "dangling=true" -q)
-
-devdoc_update:
-	docker pull tendermint/devdoc
+lint: get_tools ci-lint
+ci-lint:
+	@echo "--> Running lint..."
+	golangci-lint run
+	go vet -composites=false -tests=false ./...
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	go mod verify
 
 
 ########################################
@@ -145,7 +158,7 @@ build-docker-terradnode:
 
 # Run a 4-node testnet locally
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2  --faucet terra1pw8nf7k4p26wtam3agpggfwte0vfeaekf9n5wz --faucet-coins 10000000000mluna,10000000000mterra,100000000musd,100000000mkrw; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 5 -o . --starting-ip-address 192.168.10.2; fi
 	# replace docker ip to local port, mapped
 	sed -i -e 's/192.168.10.2:26656/localhost:26656/g; s/192.168.10.3:26656/localhost:26659/g; s/192.168.10.4:26656/localhost:26661/g; s/192.168.10.5:26656/localhost:26663/g' $(CURDIR)/build/node4/terrad/config/config.toml
 	# change allow duplicated ip option to prevent the error : cant not route ~
@@ -159,8 +172,9 @@ localnet-stop:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build install dist check_tools get_vendor_deps \
-draw_deps test test_cli test_unit benchmark \
-devdoc_init devdoc devdoc_save devdoc_update \
+.PHONY: build install clean distclean update_terra_lite_docs \
+get_tools update_tools \
+test test_cli test_unit benchmark \
 build-linux build-docker-terradnode localnet-start localnet-stop \
-format check-ledger update_dev_tools lint
+format update_dev_tools lint ci ci-lint\
+go-mod-cache go-sum

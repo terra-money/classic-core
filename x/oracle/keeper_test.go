@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 
 	"testing"
 
@@ -13,12 +13,12 @@ import (
 func TestKeeperPrice(t *testing.T) {
 	input := createTestInput(t)
 
-	cnyPrice := sdk.NewDecWithPrec(839, precision).MulInt64(assets.MicroUnit)
-	gbpPrice := sdk.NewDecWithPrec(4995, precision).MulInt64(assets.MicroUnit)
-	krwPrice := sdk.NewDecWithPrec(2838, precision).MulInt64(assets.MicroUnit)
-	lunaPrice := sdk.NewDecWithPrec(3282384, precision).MulInt64(assets.MicroUnit)
+	cnyPrice := sdk.NewDecWithPrec(839, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	gbpPrice := sdk.NewDecWithPrec(4995, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	krwPrice := sdk.NewDecWithPrec(2838, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
+	lunaPrice := sdk.NewDecWithPrec(3282384, int64(oracleDecPrecision)).MulInt64(assets.MicroUnit)
 
-	// Set prices
+	// Set & get prices
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, cnyPrice)
 	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroCNYDenom)
 	require.Nil(t, err)
@@ -43,7 +43,7 @@ func TestKeeperVote(t *testing.T) {
 	input := createTestInput(t)
 
 	// Test addvote
-	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, sdk.NewInt(3458).MulRaw(assets.MicroUnit), addrs[0])
+	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, addrs[0])
 	input.oracleKeeper.addVote(input.ctx, vote)
 
 	// Test getVote
@@ -92,12 +92,13 @@ func TestKeeperParams(t *testing.T) {
 	require.NotNil(t, params)
 
 	// Test custom params setting
-	votePeriod := sdk.NewInt(10)
+	votePeriod := int64(10)
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
+	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
 	dropThreshold := sdk.NewInt(10)
 
 	// Should really test validateParams, but skipping because obvious
-	newParams := NewParams(votePeriod, voteThreshold, dropThreshold)
+	newParams := NewParams(votePeriod, voteThreshold, oracleRewardBand, dropThreshold)
 	input.oracleKeeper.SetParams(input.ctx, newParams)
 
 	storedParams := input.oracleKeeper.GetParams(input.ctx)

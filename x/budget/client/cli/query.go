@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"terra/x/budget"
+	"github.com/terra-project/core/x/budget"
 
 	"github.com/spf13/cobra"
 

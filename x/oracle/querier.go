@@ -50,7 +50,7 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 }
 
 func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	denoms := getActiveDenoms(ctx, keeper)
+	denoms := keeper.getActiveDenoms(ctx)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {

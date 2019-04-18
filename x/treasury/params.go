@@ -2,7 +2,8 @@ package treasury
 
 import (
 	"fmt"
-	"terra/types/assets"
+
+	"github.com/terra-project/core/types/assets"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -15,9 +16,9 @@ type Params struct {
 	SeigniorageBurdenTarget sdk.Dec `json:"seigniorage_burden_target"`
 	MiningIncrement         sdk.Dec `json:"mining_increment"`
 
-	EpochShort     sdk.Int `json:"epoch_short"`
-	EpochLong      sdk.Int `json:"epoch_long"`
-	EpochProbation sdk.Int `json:"epoch_probation"`
+	WindowShort     sdk.Int `json:"window_short"`
+	WindowLong      sdk.Int `json:"window_long"`
+	WindowProbation sdk.Int `json:"window_probation"`
 
 	OracleClaimShare sdk.Dec `json:"oracle_share"`
 	BudgetClaimShare sdk.Dec `json:"budget_share"`
@@ -28,7 +29,7 @@ func NewParams(
 	taxPolicy, rewardPolicy PolicyConstraints,
 	seigniorageBurden sdk.Dec,
 	miningIncrement sdk.Dec,
-	epochShort, epochLong, epochProbation sdk.Int,
+	windowShort, windowLong, windowProbation sdk.Int,
 	oracleShare, budgetShare sdk.Dec,
 ) Params {
 	return Params{
@@ -36,9 +37,9 @@ func NewParams(
 		RewardPolicy:            rewardPolicy,
 		SeigniorageBurdenTarget: seigniorageBurden,
 		MiningIncrement:         miningIncrement,
-		EpochShort:              epochShort,
-		EpochLong:               epochLong,
-		EpochProbation:          epochProbation,
+		WindowShort:             windowShort,
+		WindowLong:              windowLong,
+		WindowProbation:         windowProbation,
 		OracleClaimShare:        oracleShare,
 		BudgetClaimShare:        budgetShare,
 	}
@@ -112,12 +113,12 @@ func (params Params) String() string {
   SeigniorageBurdenTarget : %v
   MiningIncrement   : %v
 
-  EpochShort        : %v
-  EpochLong         : %v
+  WindowShort        : %v
+  WindowLong         : %v
 
   OracleClaimShare  : %v
   BudgetClaimShare  : %v
   `, params.TaxPolicy, params.RewardPolicy, params.SeigniorageBurdenTarget,
-		params.MiningIncrement, params.EpochShort, params.EpochLong,
+		params.MiningIncrement, params.WindowShort, params.WindowLong,
 		params.OracleClaimShare, params.BudgetClaimShare)
 }

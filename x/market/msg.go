@@ -1,7 +1,6 @@
 package market
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,11 +33,7 @@ func (msg MsgSwap) Type() string { return "swap" }
 
 // GetSignBytes Implements Msg
 func (msg MsgSwap) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return b
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners Implements Msg

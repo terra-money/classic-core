@@ -1,8 +1,9 @@
 package market
 
 import (
-	"terra/types/assets"
 	"testing"
+
+	"github.com/terra-project/core/types/assets"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

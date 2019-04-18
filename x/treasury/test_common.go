@@ -1,11 +1,11 @@
 package treasury
 
 import (
-	"terra/types/assets"
-	"terra/types/mock"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/mock"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
 
 	"testing"
 	"time"
@@ -72,7 +72,7 @@ func createTestInput(t *testing.T) testInput {
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyTreasury := sdk.NewKVStoreKey(StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -86,7 +86,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -139,7 +139,7 @@ func createTestInput(t *testing.T) testInput {
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
+	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
 
 	treasuryKeeper := NewKeeper(
 		cdc,

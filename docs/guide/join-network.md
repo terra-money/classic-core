@@ -85,7 +85,7 @@ make update_tools install
 Note we use `master` here since it contains the latest stable release.
 See the [testnet repo](https://github.com/terra-project/networks)
 for details on which version is needed for which testnet,
-and the [SDK release page](https://github.com/terra-project/terra/releases)
+and the [SDK release page](https://github.com/terra-project/core//releases)
 for details on each release.
 
 Your full node has been cleanly upgraded!

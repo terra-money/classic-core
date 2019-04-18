@@ -2,14 +2,15 @@ package pay
 
 import (
 	"fmt"
-	"terra/types/assets"
-	"terra/types/util"
-	"terra/x/market"
-	"terra/x/mint"
-	"terra/x/oracle"
-	"terra/x/treasury"
 	"testing"
 	"time"
+
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -64,7 +65,7 @@ func createTestInput(t *testing.T) testInput {
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -79,7 +80,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -122,7 +123,8 @@ func createTestInput(t *testing.T) testInput {
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper)
+	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper,
+		paramsKeeper.Subspace(market.DefaultParamspace))
 
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,

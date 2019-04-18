@@ -1,13 +1,14 @@
 package market
 
 import (
-	"terra/types/assets"
-	"terra/x/mint"
-	"terra/x/oracle"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -119,7 +120,7 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	marketKeeper := Keeper{
-		oracleKeeper, mintKeeper,
+		oracleKeeper, mintKeeper, paramsKeeper.Subspace(DefaultParamspace),
 	}
 
 	for _, addr := range addrs {

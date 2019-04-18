@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"terra/x/budget"
+	"github.com/terra-project/core/x/budget"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"

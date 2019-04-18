@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	"terra/types/assets"
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -151,6 +151,22 @@ func (k Keeper) SetLunaSwapRate(ctx sdk.Context, denom string, price sdk.Dec) {
 func (k Keeper) deletePrice(ctx sdk.Context, denom string) {
 	store := ctx.KVStore(k.key)
 	store.Delete(keyPrice(denom))
+}
+
+// Get all active oracle asset denoms from the store
+func (k Keeper) getActiveDenoms(ctx sdk.Context) (denoms []string) {
+	denoms = []string{}
+
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
+	for ; iter.Valid(); iter.Next() {
+		n := len(prefixPrice) + 1
+		denom := string(iter.Key()[n:])
+		denoms = append(denoms, denom)
+	}
+	iter.Close()
+
+	return
 }
 
 //-----------------------------------

@@ -2,8 +2,10 @@ package budget
 
 import (
 	"strconv"
-	"terra/types"
-	"terra/x/budget/tags"
+
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/x/budget/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -76,9 +78,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		return false
 	})
 
-	// Not time to review programs yet
-	curBlockHeight := ctx.BlockHeight()
-	if curBlockHeight == 0 || (curBlockHeight%k.GetParams(ctx).VotePeriod) != 0 {
+	// Time to re-weight programs
+	if !util.IsPeriodLastBlock(ctx, params.VotePeriod) {
 		return
 	}
 
@@ -107,6 +108,5 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		return false
 	})
-
 	return
 }

@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,11 +35,7 @@ func (msg MsgPriceFeed) Type() string { return "pricefeed" }
 
 // GetSignBytes implements sdk.Msg
 func (msg MsgPriceFeed) GetSignBytes() []byte {
-	bz, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(bz)
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg

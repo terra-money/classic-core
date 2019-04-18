@@ -13,14 +13,15 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"terra/app"
-	"terra/types/util"
+	"github.com/terra-project/core/app"
+	"github.com/terra-project/core/types/util"
 
-	"terra/version"
-	budgetClient "terra/x/budget/client"
-	marketClient "terra/x/market/client"
-	oracleClient "terra/x/oracle/client"
-	treasuryClient "terra/x/treasury/client"
+	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
+	"github.com/terra-project/core/version"
+	budgetClient "github.com/terra-project/core/x/budget/client"
+	marketClient "github.com/terra-project/core/x/market/client"
+	oracleClient "github.com/terra-project/core/x/oracle/client"
+	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
@@ -33,15 +34,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
-	budget "terra/x/budget/client/rest"
-	market "terra/x/market/client/rest"
-	oracle "terra/x/oracle/client/rest"
-	treasury "terra/x/treasury/client/rest"
+	budget "github.com/terra-project/core/x/budget/client/rest"
+	market "github.com/terra-project/core/x/market/client/rest"
+	oracle "github.com/terra-project/core/x/oracle/client/rest"
+	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
-	bud "terra/x/budget"
-	mkt "terra/x/market"
-	ora "terra/x/oracle"
-	tre "terra/x/treasury"
+	bud "github.com/terra-project/core/x/budget"
+	mkt "github.com/terra-project/core/x/market"
+	ora "github.com/terra-project/core/x/oracle"
+	tre "github.com/terra-project/core/x/treasury"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
@@ -57,7 +58,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "terra/client/lcd/statik"
+	_ "github.com/terra-project/core/client/lcd/statik"
 )
 
 func main() {
@@ -88,6 +89,7 @@ func main() {
 		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
 		budgetClient.NewModuleClient(bud.StoreKey, cdc),
 		marketClient.NewModuleClient(mkt.StoreKey, cdc),
+		crisisclient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -143,7 +145,10 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	)
 
 	for _, m := range mc {
-		queryCmd.AddCommand(m.GetQueryCmd())
+		mQueryCmd := m.GetQueryCmd()
+		if mQueryCmd != nil {
+			queryCmd.AddCommand(mQueryCmd)
+		}
 	}
 
 	return queryCmd
@@ -160,8 +165,8 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),
-		authcmd.GetBroadcastCommand(cdc),
-		authcmd.GetEncodeCommand(cdc),
+		tx.GetBroadcastCommand(cdc),
+		tx.GetEncodeCommand(cdc),
 		client.LineBreak,
 	)
 
@@ -172,7 +177,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return txCmd
 }
 
-// cli version REST handler endpoint
+// CLIVersionRequestHandler cli version REST handler endpoint
 func CLIVersionRequestHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(fmt.Sprintf("{\"version\": \"%s\"}", version.Version)))
@@ -186,7 +191,6 @@ func registerRoutes(rs *lcd.RestServer) {
 	rs.Mux.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
 
 	registerSwaggerUI(rs)
-	keys.RegisterRoutes(rs.Mux, rs.CliCtx.Indent)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
