@@ -299,11 +299,11 @@ terracli query slashing params
 
 #### Set up a Validator
 
-Please refer to the [Validator Setup](../validators/validator-setup.md) section for a more complete guide on how to set up a validator-candidate.
+Please refer to the [Validator Setup](./validators.md) section for a more complete guide on how to set up a validator-candidate.
 
 #### Delegate to a Validator
 
-On the upcoming mainnet, you can delegate `luna` to a validator. These [delegators](/resources/delegators-faq) can receive part of the validator's fee revenue.
+On the upcoming mainnet, you can delegate `luna` to a validator. These [delegators](../concepts/validator/validator-faq.md) can receive part of the validator's fee revenue.
 
 ##### Query Validators
 
