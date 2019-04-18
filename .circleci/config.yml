@@ -104,7 +104,12 @@ jobs:
       - image: circleci/golang:1.11.5
     steps:
       - checkout
-      - run: BUILD_TAGS="netgo ledger" GOSUM=$(sha256sum go.sum | cut -d ' ' -f1) curl -sL https://git.io/goreleaser | bash
+      - run:
+          name: release
+          command: |
+            export BUILD_TAGS="netgo ledger"
+            export GOSUM=$(sha256sum go.sum | cut -d ' ' -f1)
+            curl -sL https://git.io/goreleaser | bash
 
   upload_coverage:
     <<: *linux_defaults
