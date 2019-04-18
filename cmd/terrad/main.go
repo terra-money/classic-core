@@ -25,6 +25,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	terraserver "github.com/terra-project/core/server"
 )
 
 const flagAssertInvariantsBlockly = "assert-invariants-blockly"
@@ -45,7 +46,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:               "terrad",
 		Short:             "Terra Daemon (server)",
-		PersistentPreRunE: persistentPreRunEFn(ctx),
+		PersistentPreRunE: terraserver.PersistentPreRunEFn(ctx),
 	}
 	rootCmd.AddCommand(terraInit.InitCmd(ctx, cdc))
 	rootCmd.AddCommand(terraInit.CollectGenTxsCmd(ctx, cdc))
