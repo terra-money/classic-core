@@ -29,7 +29,7 @@ func NewHandler(k Keeper) sdk.Handler {
 func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
 	curDay := ctx.BlockHeight() / util.BlocksPerDay
 
-	// Start limits on day 2. 
+	// Start limits on day 2.
 	if curDay != 0 {
 		curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
 		prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
