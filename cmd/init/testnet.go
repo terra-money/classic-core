@@ -87,7 +87,7 @@ Example:
 	)
 	cmd.Flags().String(
 		server.FlagMinGasPrices, fmt.Sprintf("0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s,0.015%s", assets.MicroLunaDenom, assets.MicroSDRDenom, assets.MicroUSDDenom, assets.MicroKRWDenom, assets.MicroCNYDenom, assets.MicroJPYDenom, assets.MicroEURDenom, assets.MicroGBPDenom),
-		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01mluna,0.01msdr)",
+		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01uluna,0.01usdr)",
 	)
 
 	return cmd

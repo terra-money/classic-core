@@ -129,13 +129,13 @@ higher tx priority.
 e.g.
 
 ```bash
-terracli tx send ... --fees=100msdr
+terracli tx send ... --fees=100usdr
 ```
 
 or
 
 ```bash
-terracli tx send ... --gas-prices=0.000001msdr
+terracli tx send ... --gas-prices=0.000001usdr
 ```
 
 ### Account

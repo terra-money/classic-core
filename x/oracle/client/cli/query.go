@@ -29,7 +29,7 @@ func GetCmdQueryPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current price of a denom asset. You can find the current list of active denoms by running: terracli query oracle active
 
-$ terracli query oracle price --denom mkrw
+$ terracli query oracle price --denom ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -89,9 +89,9 @@ func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle votes, filtered by denom and voter address.
 
-$ terracli query oracle votes --denom="musd" --voter="terrad8duyufdshs..."
+$ terracli query oracle votes --denom="uusd" --voter="terrad8duyufdshs..."
 
-returns oracle votes submitted by terrad8duyufdshs... for denom musd 
+returns oracle votes submitted by terrad8duyufdshs... for denom uusd 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

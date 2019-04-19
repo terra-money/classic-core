@@ -81,7 +81,7 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 		},
 	}
 
-	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000mkrw")
+	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000ukrw")
 	cmd.Flags().String(flagAskDenom, "", "Denom of the asset to swap to")
 
 	return cmd
