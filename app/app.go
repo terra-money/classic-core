@@ -349,6 +349,7 @@ func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisS
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
 	crisis.InitGenesis(ctx, app.crisisKeeper, genesisState.CrisisData)
 	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
+	market.InitGenesis(ctx, app.marketKeeper, genesisState.MarketData)
 	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
 	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
 
