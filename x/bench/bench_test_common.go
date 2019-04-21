@@ -32,8 +32,8 @@ var (
 	pubKeys [numOfValidators]crypto.PubKey
 	addrs   [numOfValidators]sdk.AccAddress
 
-	mLunaAmt = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
-	mSDRAmt  = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
+	uLunaAmt = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
+	uSDRAmt  = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -127,18 +127,18 @@ func createTestInput() testInput {
 		pubKeys[i] = secp256k1.GenPrivKey().PubKey()
 		addrs[i] = sdk.AccAddress(pubKeys[i].Address())
 
-		err := mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+		err := mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 		if err != nil {
 			panic(err)
 		}
 
-		err = mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt))
+		err = mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt))
 		if err != nil {
 			panic(err)
 		}
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addrs[i].Bytes()), mLunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addrs[i].Bytes()), uLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 

@@ -30,7 +30,7 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	mSDRAmt = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	uSDRAmt = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -124,7 +124,7 @@ func createTestInput(t *testing.T) testInput {
 	}
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt)})
 		require.NoError(t, err)
 	}
 
