@@ -6,7 +6,7 @@ This document describes 3 ways to setup a network of `terrad` nodes, each servin
 2. Multi-node, local, automated testnet
 3. Multi-node, remote, automated testnet
 
-Supporting code can be found in the [networks directory](https://github.com/terra-project/core/tree/master/networks) and additionally the `local` or `remote` sub-directories.
+Supporting code can be found in the [networks directory](https://github.com/terra-project/core/networks) and additionally the `local` or `remote` sub-directories.
 
 > NOTE: The `remote` network bootstrapping may be out of sync with the latest releases and is not to be relied upon.
 
@@ -50,7 +50,7 @@ This setup puts all the data for `terrad` in `~/.terrad`. You can examine the ge
 
 ## Multi-node, local, automated testnet
 
-From the [networks/local directory](https://github.com/terra-project/core/tree/master/networks/local):
+From the [networks/local directory](https://github.com/terra-project/core/networks/local):
 
 ### Requirements
 
@@ -179,7 +179,7 @@ BINARY=terrafoo make localnet-start
 
 ## Multi-node, remote, automated testnet
 
-The following should be run from the [networks directory](https://github.com/terra-project/core/tree/master/networks).
+The following should be run from the [networks directory](https://github.com/terra-project/core/networks).
 
 ### Terraform & Ansible
 
