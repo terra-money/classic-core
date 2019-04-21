@@ -60,9 +60,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	msgs := []MsgSubmitProgram{}
 	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) bool {
 		msgs = append(msgs, NewMsgSubmitProgram(
-			program.Title, 
-			program.Description, 
-			program.Submitter, 
+			program.Title,
+			program.Description,
+			program.Submitter,
 			program.Executor,
 		))
 		return false
