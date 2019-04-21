@@ -89,7 +89,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 	k.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
 		votePower, totalPower := tally(ctx, k, programID)
 
-		// Need to legacy program
+		//  Need to check if the program should be legacied
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
 			k.DeleteProgram(ctx, programID)
 			k.DeleteVote(ctx, programID, sdk.AccAddress{})
