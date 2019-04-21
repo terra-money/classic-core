@@ -132,7 +132,7 @@ Check that everything is running smoothly:
 terracli status
 ```
 
-View the status of the network with the [Terra Finder](https://finder.terra.money). Once your full node syncs up to the current block height, you should see it appear on the [list of full nodes](https://explorer.terra.money/validators). If it doesn't show up, that's ok--the Explorer does not connect to every node.
+View the status of the network with the [Terra Finder](https://finder.terra.money). Once your full node syncs up to the current block height, you should see it appear on the [list of full nodes](https://terra.stake.id/). 
 
 ## Export State
 
