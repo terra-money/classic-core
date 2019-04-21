@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/market"
 	"strings"
 
@@ -40,10 +39,6 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 			askDenom := viper.GetString(flagAskDenom)
 			if len(askDenom) == 0 {
 				return fmt.Errorf("--ask-denom flag is required")
-			}
-
-			if !assets.IsValidDenom(askDenom) {
-				return fmt.Errorf("The denom is not known: %s", askDenom)
 			}
 
 			offerCoinStr := viper.GetString(flagOfferCoin)

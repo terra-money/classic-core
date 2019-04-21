@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/market"
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
@@ -35,12 +34,6 @@ func submitSwapHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
 		var req SwapReq
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			err := sdk.ErrUnknownRequest("malformed request")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if !assets.IsValidDenom(req.AskDenom) {
-			err := fmt.Errorf("The denom is not known: %s", req.AskDenom)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
