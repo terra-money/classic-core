@@ -50,7 +50,7 @@ This setup puts all the data for `terrad` in `~/.terrad`. You can examine the ge
 
 ## Multi-node, local, automated testnet
 
-From the [networks/local directory](https://github.com/terra-project/core/tree/master/networks):
+From the [networks/local directory](https://github.com/terra-project/core/tree/master/networks/local):
 
 ### Requirements
 
