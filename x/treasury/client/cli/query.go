@@ -74,7 +74,7 @@ func GetCmdQueryTaxCap(cdc *codec.Codec) *cobra.Command {
 Query the current stability tax cap of the denom asset. 
 The stability tax levied on a tx is at most tax cap, regardless of the size of the transaction. 
 
-$ terracli query treasury taxcap --denom="mkrw"
+$ terracli query treasury taxcap --denom="ukrw"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -112,7 +112,7 @@ func GetCmdQueryIssuance(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current issuance of a denom asset. 
 
-$ terracli query treasury issuance --denom="mkrw"
+$ terracli query treasury issuance --denom="ukrw"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
