@@ -267,9 +267,7 @@ func MakeCodec() *codec.Codec {
 	distr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
-
 	types.RegisterCodec(cdc)
-
 	oracle.RegisterCodec(cdc)
 	budget.RegisterCodec(cdc)
 	market.RegisterCodec(cdc)
