@@ -1,7 +1,7 @@
 # Run a Validator on the public testnet
 
 ::: tip
-Information on how to join the current testnet (`genesis.json` file and seeds) is held [in our `testnet` repo](https://github.com/terra-project/networks/tree/master/latest). Please check there if you are looking to join our latest testnet. 
+Information on how to join the current testnet (`genesis.json` file and seeds) is held [in our `networks` repo](https://github.com/terra-project/networks). Please check there if you are looking to join our latest testnet. 
 :::
 
 __Note__: This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**
@@ -10,7 +10,7 @@ Before setting up your validator node, make sure you've already gone through the
 
 ## What is a Validator? 
 
-[Validators](./concepts/validator/overview.md) are responsible for committing new blocks to the blockchain through voting. To make sure validators remain loyal to the network, the Terra Protocol requires a "security deposit" of Luna tokens to be staked while the validators are active. A validator's stake is slashed if they become unavailable or sign multiple blocks at the same height. 
+[Validators](../concepts/validator/overview.md) are responsible for committing new blocks to the blockchain through voting. To make sure validators remain loyal to the network, the Terra Protocol requires a "security deposit" of Luna tokens to be staked while the validators are active. A validator's stake is slashed if they become unavailable or sign multiple blocks at the same height. 
 
 Users looking to operate a Terra validator, or are simply looking to learn more should study up on the correct [security model](../concepts/validator/security.md), study [robust network topologies](../concepts/validator/validator-faq.md#how-can-validators-protect-themselves-from-denial-of-service-attacks), and familiarize themselves with Tendermint and [general information](../concepts/validator/overview.md).
 
@@ -31,14 +31,15 @@ Don't use more Luna than you have! You can always get more by using the [Faucet]
 
 ```bash
 terracli tx staking create-validator \
-  --amount=5luna \
+  --amount=5000000mluna \
   --pubkey=$(terrad tendermint show-validator) \
   --moniker="choose a moniker" \
   --chain-id=<chain_id> \
   --from=<key_name> \
   --commission-rate="0.10" \
   --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01" 
+  --commission-max-change-rate="0.01"
+  --min-self-delegation="1"
 ```
 
 __Note__: When specifying commission parameters, the `commission-max-change-rate`

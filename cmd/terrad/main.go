@@ -25,7 +25,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	terraserver "github.com/terra-project/core/server"
 )
 
