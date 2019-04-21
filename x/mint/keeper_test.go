@@ -30,7 +30,7 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	uSDRAmout = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	uSDRAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -106,7 +106,7 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmout)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmount)})
 		require.NoError(t, err)
 	}
 
@@ -119,19 +119,19 @@ func TestKeeperIssuance(t *testing.T) {
 
 	// Should be able to claim genesis issunace
 	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmout.MulRaw(3), issuance)
+	require.Equal(t, uSDRAmount.MulRaw(3), issuance)
 
 	// Lowering issuance works
 	err := input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmout.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
+	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// ... but not too much
 	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
 	require.NotNil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmout.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
+	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// Raising issuance works, too
 	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
