@@ -9,26 +9,74 @@ import (
 )
 
 //-----------------------------------------------------------------------------
+// Schedule
+
+// Schedule no-lint
+type Schedule struct {
+	Cliff int64   `json:"cliff"`
+	Ratio sdk.Dec `json:"ratio"`
+}
+
+func NewSchedule(cliff int64, ratio sdk.Dec) Schedule {
+	return Schedule{
+		Cliff: cliff,
+		Ratio: ratio,
+	}
+}
+
+// GetRatio returns cliff
+func (s Schedule) GetCliff() int64 {
+	return s.Cliff
+}
+
+// GetRatio returns ratio
+func (s Schedule) GetRatio() sdk.Dec {
+	return s.Ratio
+}
+
+// String implements the fmt.Stringer interface
+func (s Schedule) String() string {
+	return fmt.Sprintf(`Schedule:
+	Cliff: %v,
+	Ratio: %v`,
+		s.Cliff, s.Ratio)
+}
+
+// IsValid checks that the schedule is valid.
+func (s Schedule) IsValid() bool {
+
+	cliff := s.GetCliff()
+	ratio := s.GetRatio()
+
+	return cliff >= 0 && ratio.GT(sdk.ZeroDec())
+}
+
+//-----------------------------------------------------------------------------
 // Vesting Schedule
 
 // VestingSchedule maps the ratio of tokens that becomes vested by blocktime (in nanoseconds) from genesis.
 // The sum of values in the Schedule should sum to 1.0.
 // CONTRACT: assumes that entries are
 type VestingSchedule struct {
-	Schedule map[int64]sdk.Dec `json:"vesting_schedule"` // maps blocktime to percentage vested. Should sum to 1.
+	Denom     string     `json:"denom"`
+	Schedules []Schedule `json:"schedules"` // maps blocktime to percentage vested. Should sum to 1.
 }
 
 // NewVestingSchedule creates a new vesting schedule instance.
-func NewVestingSchedule(schedule map[int64]sdk.Dec) VestingSchedule {
+func NewVestingSchedule(denom string, schedules []Schedule) VestingSchedule {
 	return VestingSchedule{
-		Schedule: schedule,
+		Denom:     denom,
+		Schedules: schedules,
 	}
 }
 
 // GetVestedRatio returns the ratio of tokens that have vested by blockTime.
 func (vs VestingSchedule) GetVestedRatio(blockTime int64) sdk.Dec {
 	sumRatio := sdk.ZeroDec()
-	for cliff, ratio := range vs.Schedule {
+	for _, schedule := range vs.Schedules {
+		cliff := schedule.GetCliff()
+		ratio := schedule.GetRatio()
+
 		if blockTime >= cliff {
 			sumRatio = sumRatio.Add(ratio)
 		}
@@ -36,15 +84,21 @@ func (vs VestingSchedule) GetVestedRatio(blockTime int64) sdk.Dec {
 	return sumRatio
 }
 
+// GetDenom returns the denom of vesting schedule
+func (vs VestingSchedule) GetDenom() string {
+	return vs.Denom
+}
+
 // IsValid checks that the vestingschedule is valid.
 func (vs VestingSchedule) IsValid() bool {
 	sumRatio := sdk.ZeroDec()
-	for time, vestRatio := range vs.Schedule {
-		if time < 0 || vestRatio.LTE(sdk.ZeroDec()) {
+	for _, schedule := range vs.Schedules {
+
+		if !schedule.IsValid() {
 			return false
 		}
 
-		sumRatio = sumRatio.Add(vestRatio)
+		sumRatio = sumRatio.Add(schedule.GetRatio())
 	}
 
 	return sumRatio.Equal(sdk.OneDec())
@@ -52,7 +106,10 @@ func (vs VestingSchedule) IsValid() bool {
 
 // String implements the fmt.Stringer interface
 func (vs VestingSchedule) String() string {
-	return fmt.Sprintf(`VestingSchedule: %v`, vs.Schedule)
+	return fmt.Sprintf(`VestingSchedule:
+	Denom: %v,
+	Schedules: %v`,
+		vs.Denom, vs.Schedules)
 }
 
 //-----------------------------------------------------------------------------
@@ -67,23 +124,34 @@ var _ auth.VestingAccount = (*GradedVestingAccount)(nil)
 type GradedVestingAccount struct {
 	*auth.BaseVestingAccount
 
-	Schedules map[string]VestingSchedule
+	VestingSchedules []VestingSchedule `json:"vesting_schedules"`
 }
 
 // NewGradedVestingAccount returns a GradedVestingAccount
-func NewGradedVestingAccount(baseAcc *auth.BaseAccount, schedules map[string]VestingSchedule) *GradedVestingAccount {
+func NewGradedVestingAccount(baseAcc *auth.BaseAccount, vestingSchedules []VestingSchedule) *GradedVestingAccount {
 	baseVestingAcc := &auth.BaseVestingAccount{
 		BaseAccount:     baseAcc,
 		OriginalVesting: baseAcc.Coins,
 		EndTime:         0,
 	}
 
-	return &GradedVestingAccount{baseVestingAcc, schedules}
+	return &GradedVestingAccount{baseVestingAcc, vestingSchedules}
 }
 
 // GetSchedules returns the VestingSchedules of the graded vesting account
-func (gva GradedVestingAccount) GetSchedules() map[string]VestingSchedule {
-	return gva.Schedules
+func (gva GradedVestingAccount) GetVestingSchedules() []VestingSchedule {
+	return gva.VestingSchedules
+}
+
+// GetVestingSchedule returns the VestingSchedule of the given denom
+func (gva GradedVestingAccount) GetVestingSchedule(denom string) (VestingSchedule, bool) {
+	for _, vs := range gva.VestingSchedules {
+		if vs.Denom == denom {
+			return vs, true
+		}
+	}
+
+	return VestingSchedule{}, false
 }
 
 // GetVestedCoins returns the total amount of vested coins for a graded vesting
@@ -91,8 +159,8 @@ func (gva GradedVestingAccount) GetSchedules() map[string]VestingSchedule {
 func (gva GradedVestingAccount) GetVestedCoins(blockTime time.Time) sdk.Coins {
 	var vestedCoins sdk.Coins
 	for _, ovc := range gva.OriginalVesting {
-		if schedule, exists := gva.Schedules[ovc.Denom]; exists {
-			vestedRatio := schedule.GetVestedRatio(blockTime.Unix())
+		if vestingSchedule, exists := gva.GetVestingSchedule(ovc.Denom); exists {
+			vestedRatio := vestingSchedule.GetVestedRatio(blockTime.Unix())
 			vestedAmt := ovc.Amount.ToDec().Mul(vestedRatio).RoundInt()
 			if vestedAmt.Equal(sdk.ZeroInt()) {
 				continue
@@ -151,10 +219,10 @@ func (gva GradedVestingAccount) String() string {
   OriginalVesting:  %s
   DelegatedFree:    %s
   DelegatedVesting: %s
-  Schedules:        %v `,
+  VestingSchedules:        %v `,
 		gva.Address, pubkey, gva.Coins, gva.AccountNumber, gva.Sequence,
 		gva.OriginalVesting, gva.DelegatedFree, gva.DelegatedVesting,
-		gva.Schedules,
+		gva.VestingSchedules,
 	)
 }
 
