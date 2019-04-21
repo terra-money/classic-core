@@ -180,8 +180,6 @@ func TerraAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []j
 		return genesisState, err
 	}
 
-	fmt.Println(genesisState)
-
 	// if there are no gen txs to be processed, return the default empty state
 	if len(appGenTxs) == 0 {
 		return genesisState, errors.New("there must be at least one genesis tx")
