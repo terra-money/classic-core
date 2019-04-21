@@ -93,12 +93,12 @@ type GenesisAccount struct {
 	AccountNumber uint64         `json:"account_number"`
 
 	// vesting account fields
-	OriginalVesting  sdk.Coins                        `json:"original_vesting"`  // total vesting coins upon initialization
-	DelegatedFree    sdk.Coins                        `json:"delegated_free"`    // delegated vested coins at time of delegation
-	DelegatedVesting sdk.Coins                        `json:"delegated_vesting"` // delegated vesting coins at time of delegation
-	StartTime        int64                            `json:"start_time"`        // vesting start time (UNIX Epoch time)
-	EndTime          int64                            `json:"end_time"`          // vesting end time (UNIX Epoch time)
-	Schedules        map[string]types.VestingSchedule `json:"vesting_schedules"` // vesting end time (UNIX Epoch time)
+	OriginalVesting  sdk.Coins               `json:"original_vesting"`  // total vesting coins upon initialization
+	DelegatedFree    sdk.Coins               `json:"delegated_free"`    // delegated vested coins at time of delegation
+	DelegatedVesting sdk.Coins               `json:"delegated_vesting"` // delegated vesting coins at time of delegation
+	StartTime        int64                   `json:"start_time"`        // vesting start time (UNIX Epoch time)
+	EndTime          int64                   `json:"end_time"`          // vesting end time (UNIX Epoch time)
+	VestingSchedules []types.VestingSchedule `json:"vesting_schedules"` // vesting end time (UNIX Epoch time)
 }
 
 // NewGenesisAccount returns new genesis account
@@ -127,7 +127,7 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 		gacc.DelegatedVesting = vacc.GetDelegatedVesting()
 		gacc.StartTime = vacc.GetStartTime()
 		gacc.EndTime = vacc.GetEndTime()
-		gacc.Schedules = vacc.GetSchedules()
+		gacc.VestingSchedules = vacc.GetVestingSchedules()
 	}
 
 	return gacc
@@ -163,7 +163,7 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 		} else {
 			return &types.GradedVestingAccount{
 				BaseVestingAccount: baseVestingAcc,
-				Schedules:          ga.Schedules,
+				VestingSchedules:   ga.VestingSchedules,
 			}
 		}
 	}
@@ -297,26 +297,28 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 
 		// validate any vesting fields
 		if !acc.OriginalVesting.IsZero() {
-			if acc.EndTime == 0 {
-				return fmt.Errorf("missing end time for vesting account; address: %s", addrStr)
-			}
 
-			if acc.StartTime >= acc.EndTime {
-				return fmt.Errorf(
-					"vesting start time must before end time; address: %s, start: %s, end: %s",
-					addrStr,
-					time.Unix(acc.StartTime, 0).UTC().Format(time.RFC3339),
-					time.Unix(acc.EndTime, 0).UTC().Format(time.RFC3339),
-				)
-			}
-
-			if acc.Schedules != nil {
-				for denom, schedule := range acc.Schedules {
-					if !schedule.IsValid() {
-						return fmt.Errorf("schedule is invalid for vesting account; address: %s, denom: %s", addrStr, denom)
+			if acc.VestingSchedules != nil && len(acc.VestingSchedules) > 0 {
+				for _, vestingSchedule := range acc.VestingSchedules {
+					if !vestingSchedule.IsValid() {
+						return fmt.Errorf("schedule is invalid for vesting account; address: %s, denom: %s", addrStr, vestingSchedule.GetDenom())
 					}
 				}
+			} else {
+				if acc.EndTime == 0 {
+					return fmt.Errorf("missing end time for vesting account; address: %s", addrStr)
+				}
+
+				if acc.StartTime >= acc.EndTime {
+					return fmt.Errorf(
+						"vesting start time must before end time; address: %s, start: %s, end: %s",
+						addrStr,
+						time.Unix(acc.StartTime, 0).UTC().Format(time.RFC3339),
+						time.Unix(acc.EndTime, 0).UTC().Format(time.RFC3339),
+					)
+				}
 			}
+
 		}
 
 		addrMap[addrStr] = true

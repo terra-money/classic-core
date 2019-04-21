@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/version"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
@@ -266,6 +267,7 @@ func MakeCodec() *codec.Codec {
 	distr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
+	types.RegisterCodec(cdc)
 	oracle.RegisterCodec(cdc)
 	budget.RegisterCodec(cdc)
 	market.RegisterCodec(cdc)

@@ -48,60 +48,51 @@ func init() {
 		}
 	}
 
-	angelSchedule = NewVestingSchedule(
-		map[int64]sdk.Dec{
-			monthlyTimes[1]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[2]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[3]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[12]: sdk.NewDecWithPrec(70, 2),
-		},
-	)
+	angelSchedule = NewVestingSchedule(assets.MicroLunaDenom, []Schedule{
+		NewSchedule(monthlyTimes[1], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[2], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[3], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[12], sdk.NewDecWithPrec(70, 2)),
+	})
 
-	seedSchedule = NewVestingSchedule(
-		map[int64]sdk.Dec{
-			monthlyTimes[1]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[2]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[3]:  sdk.NewDecWithPrec(10, 2),
-			monthlyTimes[10]: sdk.NewDecWithPrec(70, 2),
-		},
-	)
+	seedSchedule = NewVestingSchedule(assets.MicroLunaDenom, []Schedule{
+		NewSchedule(monthlyTimes[1], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[2], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[3], sdk.NewDecWithPrec(10, 2)),
+		NewSchedule(monthlyTimes[10], sdk.NewDecWithPrec(70, 2)),
+	})
 
-	privateSchedule = NewVestingSchedule(
-		map[int64]sdk.Dec{
-			monthlyTimes[3]: sdk.NewDecWithPrec(16, 2),
-			monthlyTimes[4]: sdk.NewDecWithPrec(17, 2),
-			monthlyTimes[5]: sdk.NewDecWithPrec(16, 2),
-			monthlyTimes[6]: sdk.NewDecWithPrec(17, 2),
-			monthlyTimes[7]: sdk.NewDecWithPrec(17, 2),
-			monthlyTimes[8]: sdk.NewDecWithPrec(17, 2),
-		},
-	)
+	privateSchedule = NewVestingSchedule(assets.MicroLunaDenom, []Schedule{
+		NewSchedule(monthlyTimes[3], sdk.NewDecWithPrec(16, 2)),
+		NewSchedule(monthlyTimes[4], sdk.NewDecWithPrec(17, 2)),
+		NewSchedule(monthlyTimes[5], sdk.NewDecWithPrec(16, 2)),
+		NewSchedule(monthlyTimes[6], sdk.NewDecWithPrec(17, 2)),
+		NewSchedule(monthlyTimes[7], sdk.NewDecWithPrec(17, 2)),
+		NewSchedule(monthlyTimes[8], sdk.NewDecWithPrec(17, 2)),
+	})
 
-	privateBonusSchedule = NewVestingSchedule(
-		map[int64]sdk.Dec{
-			monthlyTimes[6]:  sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[7]:  sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[8]:  sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[9]:  sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[10]: sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[11]: sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[12]: sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[13]: sdk.NewDecWithPrec(8, 2),
-			monthlyTimes[14]: sdk.NewDecWithPrec(9, 2),
-			monthlyTimes[15]: sdk.NewDecWithPrec(9, 2),
-			monthlyTimes[16]: sdk.NewDecWithPrec(9, 2),
-			monthlyTimes[17]: sdk.NewDecWithPrec(9, 2),
-		},
-	)
+	privateBonusSchedule = NewVestingSchedule(assets.MicroLunaDenom, []Schedule{
+		NewSchedule(monthlyTimes[6], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[7], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[8], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[9], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[10], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[11], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[12], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[13], sdk.NewDecWithPrec(8, 2)),
+		NewSchedule(monthlyTimes[14], sdk.NewDecWithPrec(9, 2)),
+		NewSchedule(monthlyTimes[15], sdk.NewDecWithPrec(9, 2)),
+		NewSchedule(monthlyTimes[16], sdk.NewDecWithPrec(9, 2)),
+		NewSchedule(monthlyTimes[17], sdk.NewDecWithPrec(9, 2)),
+	})
 
-	employeeSchedule = NewVestingSchedule(
-		map[int64]sdk.Dec{
-			monthlyTimes[0]:  sdk.NewDecWithPrec(5, 2),
-			monthlyTimes[12]: sdk.NewDecWithPrec(29, 2),
-			monthlyTimes[24]: sdk.NewDecWithPrec(33, 2),
-			monthlyTimes[36]: sdk.NewDecWithPrec(33, 2),
-		},
-	)
+	employeeSchedule = NewVestingSchedule(assets.MicroLunaDenom, []Schedule{
+		NewSchedule(monthlyTimes[0], sdk.NewDecWithPrec(5, 2)),
+		NewSchedule(monthlyTimes[12], sdk.NewDecWithPrec(29, 2)),
+		NewSchedule(monthlyTimes[24], sdk.NewDecWithPrec(33, 2)),
+		NewSchedule(monthlyTimes[36], sdk.NewDecWithPrec(33, 2)),
+	})
+
 }
 
 func scaleCoins(scale float64, denom string, input sdk.Coins) sdk.Coins {
@@ -126,8 +117,8 @@ func TestGetVestedCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	vestedCoins := gva.GetVestedCoins(genesis)
 	require.Nil(t, vestedCoins)
@@ -161,8 +152,8 @@ func TestGetVestingCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	vestingCoins := gva.GetVestingCoins(genesis)
 	require.Equal(t, vestingCoins, origCoins)
@@ -197,8 +188,8 @@ func TestSpendableCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 
 	spendableCoins := gva.SpendableCoins(genesis)
@@ -238,8 +229,8 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 	bacc := auth.NewBaseAccountWithAddress(addr)
 
 	bacc.SetCoins(origCoins)
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(genesis, origCoins)
 	require.Equal(t, origCoins, gva.DelegatedVesting)
@@ -248,8 +239,8 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 
 	// require the ability to delegate all vested coins
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(timeGenesis.AddDate(1, 0, 0), origCoins)
 	require.Nil(t, gva.DelegatedVesting)
@@ -259,8 +250,8 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 	// require the ability to delegate all coins half way through the vesting
 	// schedule
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(0, 3, 0), sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 3000)})
 	require.Equal(t, sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 3000)}, gva.DelegatedVesting)
@@ -273,8 +264,8 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 
 	// require no modifications when delegation amount is zero or not enough funds
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 
 	require.Panics(t, func() {
@@ -294,8 +285,8 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(genesis, origCoins)
 	gva.TrackUndelegation(origCoins)
@@ -305,8 +296,8 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 
 	// require the ability to undelegate all vested coins
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(1, 0, 0), origCoins)
 	gva.TrackUndelegation(origCoins)
@@ -316,8 +307,8 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 
 	// require no modifications when the undelegation amount is zero
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	require.Panics(t, func() {
 		gva.TrackUndelegation(sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 0)})
@@ -327,8 +318,8 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 	require.Equal(t, origCoins, gva.GetCoins())
 
 	// vest 50% and delegate to two validators
-	gva = NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(0, 3, 0), sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 5000)})
 	gva.TrackDelegation(genesis.AddDate(0, 3, 0), sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 5000)})
@@ -354,12 +345,14 @@ func TestStringGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	gva := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
-
 	require.NotNil(t, gva.String())
-	require.NotNil(t, gva.GetSchedules()[assets.MicroLunaDenom].String())
+
+	vestingSchedule, found := gva.GetVestingSchedule(assets.MicroLunaDenom)
+	require.True(t, found)
+	require.NotNil(t, vestingSchedule.String())
 }
 
 func TestIsValidGradVestingAcc(t *testing.T) {
@@ -370,23 +363,35 @@ func TestIsValidGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	angelAccount := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: angelSchedule,
+	angelAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		angelSchedule,
 	})
-	require.True(t, angelAccount.GetSchedules()[assets.MicroLunaDenom].IsValid())
 
-	seedAccount := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: seedSchedule,
-	})
-	require.True(t, seedAccount.GetSchedules()[assets.MicroLunaDenom].IsValid())
+	vestingSchedule, found := angelAccount.GetVestingSchedule(assets.MicroLunaDenom)
+	require.True(t, found)
+	require.True(t, vestingSchedule.IsValid())
 
-	privateAccount := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: privateSchedule,
+	seedAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		seedSchedule,
 	})
-	require.True(t, privateAccount.GetSchedules()[assets.MicroLunaDenom].IsValid())
 
-	employeeAccount := NewGradedVestingAccount(&bacc, map[string]VestingSchedule{
-		assets.MicroLunaDenom: employeeSchedule,
+	vestingSchedule, found = seedAccount.GetVestingSchedule(assets.MicroLunaDenom)
+	require.True(t, found)
+	require.True(t, vestingSchedule.IsValid())
+
+	privateAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		privateSchedule,
 	})
-	require.True(t, employeeAccount.GetSchedules()[assets.MicroLunaDenom].IsValid())
+
+	vestingSchedule, found = privateAccount.GetVestingSchedule(assets.MicroLunaDenom)
+	require.True(t, found)
+	require.True(t, vestingSchedule.IsValid())
+
+	employeeAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+		employeeSchedule,
+	})
+
+	vestingSchedule, found = employeeAccount.GetVestingSchedule(assets.MicroLunaDenom)
+	require.True(t, found)
+	require.True(t, vestingSchedule.IsValid())
 }
