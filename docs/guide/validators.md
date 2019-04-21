@@ -38,7 +38,7 @@ terracli tx staking create-validator \
   --from=<key_name> \
   --commission-rate="0.10" \
   --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01"
+  --commission-max-change-rate="0.01" \
   --min-self-delegation="1"
 ```
 
