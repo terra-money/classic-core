@@ -34,7 +34,7 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	mSDRAmout = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	uSDRAmout = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -140,7 +140,7 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmout)})
 		require.NoError(t, err)
 	}
 
@@ -159,10 +159,10 @@ func TestHandlerMsgSendTransfersDisabled(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmout)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmout)})
 }
 
 func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
@@ -181,11 +181,11 @@ func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := mSDRAmout.Sub(amt)
+	balance := uSDRAmout.Sub(amt)
 	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = mSDRAmout.Add(amt)
+	balance = uSDRAmout.Add(amt)
 	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }
 
@@ -280,14 +280,14 @@ func TestHandlerMsgMultiSendTax(t *testing.T) {
 	require.Equal(t, taxCollected, taxRecorded)
 
 	acc1 := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := mSDRAmout.Add(sdk.NewInt(201).MulRaw(assets.MicroUnit))
+	balance := uSDRAmout.Add(sdk.NewInt(201).MulRaw(assets.MicroUnit))
 	require.Equal(t, acc1.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc2 := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(1414), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	balance = uSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(1414), 2).MulInt64(assets.MicroUnit).TruncateInt())
 	require.Equal(t, acc2.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc3 := input.accKeeper.GetAccount(input.ctx, addrs[2])
-	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(19089), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	balance = uSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(19089), 2).MulInt64(assets.MicroUnit).TruncateInt())
 	require.Equal(t, acc3.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }

@@ -27,7 +27,7 @@ func TestEndBlockerTiming(t *testing.T) {
 		if i%params.WindowShort.Int64() == 0 {
 			// Last block should settle
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -35,7 +35,7 @@ func TestEndBlockerTiming(t *testing.T) {
 
 			// Non-last block should not settle
 			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
-			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
 
 			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -47,7 +47,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, mLunaAmt)
+			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -69,7 +69,7 @@ func reset(input testInput) testInput {
 
 	// Give everyone some luna
 	for _, addr := range addrs {
-		err := input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+		err := input.mintKeeper.Mint(input.ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 		if err != nil {
 			panic(err)
 		}
@@ -184,7 +184,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {
-			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt)})
+			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt)})
 			require.Nil(t, err)
 		}
 

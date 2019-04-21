@@ -40,7 +40,7 @@ func TestHandlerMsgSwapValidPrice(t *testing.T) {
 
 	retAmt := lnacnyRate.Quo(lnasdrRate).MulInt(offerCoin.Amount).TruncateInt()
 	trader := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	require.Equal(t, trader.GetCoins().AmountOf(offerCoin.Denom), mSDRAmt.Sub(offerCoin.Amount))
+	require.Equal(t, trader.GetCoins().AmountOf(offerCoin.Denom), uSDRAmt.Sub(offerCoin.Amount))
 	require.Equal(t, trader.GetCoins().AmountOf(askCoin.Denom), retAmt)
 }
 
@@ -54,7 +54,7 @@ func TestHandlerMsgSwapNoBalance(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Try to swap a coin I don't have enough of
-	msg.OfferCoin = sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt.Add(sdk.OneInt().MulRaw(assets.MicroUnit)))
+	msg.OfferCoin = sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt.Add(sdk.OneInt().MulRaw(assets.MicroUnit)))
 	res = handler(input.ctx, msg)
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 }
@@ -124,7 +124,7 @@ func TestHandlerExceedDailySwapLimit(t *testing.T) {
 
 	// Swapping Terra with each other should be unlimited
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.OneDec())
-	msg = NewMsgSwap(addrs[1], sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt), assets.MicroCNYDenom) // 1/3 of SDR issuance
+	msg = NewMsgSwap(addrs[1], sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt), assets.MicroCNYDenom) // 1/3 of SDR issuance
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK())
 }
