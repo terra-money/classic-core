@@ -171,15 +171,15 @@ Revenue received by a validator's pool is split between the validator and its de
 
 ### How are block provisions distributed?
 
-Block provisions are distributed proportionally to all validators relative to their total stake. This means that even though each validator gains Luna with each provision, all validators will still maintain equal weight.
+Block provisions are distributed proportionally to all validators relative to their total stake. This means that even though each validator gains TerraSDR (SDT) with each provision, all validators will still maintain equal weight.
 
-Let us take an example where we have 10 validators with equal staking power and a commission rate of 1%. Let us also assume that the provision for a block is 1000 Luna and that each validator has 20% of self-bonded Luna. These tokens do not go directly to the proposer. Instead, they are evenly spread among validators. So now each validator's pool has 100 Luna. These 100 Luna will be distributed according to each participant's stake:
+Let us take an example where we have 10 validators with equal staking power and a commission rate of 1%. Let us also assume that the provision for a block is 1000 SDT and that each validator has 20% of self-bonded Luna. These tokens do not go directly to the proposer. Instead, they are evenly spread among validators. So now each validator's pool has 100 SDT. These 100 SDT will be distributed according to each participant's stake:
 
-* Commission: `100*80%*1% = 0.8 Luna`
-* Validator gets: `100\*20% + Commission = 20.8 Luna`
-* All delegators get: `100\*80% - Commission = 79.2 Luna`
+* Commission: `100*80%*1% = 0.8 SDT`
+* Validator gets: `100\*20% + Commission = 20.8 SDT`
+* All delegators get: `100\*80% - Commission = 79.2 SDT`
 
-Then, each delegator can claim its part of the 79.2 Luna in proportion to their stake in the validator's staking pool. Note that the validator's commission is not applied on block provisions. Note that block rewards (paid in Photons) are distributed according to the same mechanism.
+Then, each delegator can claim its part of the 79.2 SDT in proportion to their stake in the validator's staking pool. Note that the validator's commission is not applied on block provisions. Note that block rewards (paid in SDT) are distributed according to the same mechanism.
 
 ### How are fees distributed?
 
@@ -187,22 +187,22 @@ Fees are similarly distributed with the exception that the block proposer can ge
 
 When a validator is selected to propose the next block, it must include at least 2/3 precommits for the previous block in the form of validator signatures. However, there is an incentive to include more than 2/3 precommits in the form of a bonus. The bonus is linear: it ranges from 1% if the proposer includes 2/3rd precommits (minimum for the block to be valid) to 5% if the proposer includes 100% precommits. Of course the proposer should not wait too long or other validators may timeout and move on to the next proposer. As such, validators have to find a balance between wait-time to get the most signatures and risk of losing out on proposing the next block. This mechanism aims to incentivize non-empty block proposals, better networking between validators as well as to mitigate censorship.
 
-Let's take a concrete example to illustrate the aforementioned concept. In this example, there are 10 validators with equal stake. Each of them applies a 1% commission and has 20% of self-bonded Luna. Now comes a successful block that collects a total of 1005 Luna in fees. Let's assume that the proposer included 100% of the signatures in its block. It thus obtains the full bonus of 5%.
+Let's take a concrete example to illustrate the aforementioned concept. In this example, there are 10 validators with equal stake. Each of them applies a 1% commission and has 20% of self-bonded Luna. Now comes a successful block that collects a total of 1005 SDT in fees. Let's assume that the proposer included 100% of the signatures in its block. It thus obtains the full bonus of 5%.
 
 We have to solve this simple equation to find the reward R for each validator:
 
 `9*R + R + R*5% = 1005 ⇔ R = 1005/10.05 = 100`
 
 * For the proposer validator:
-  * The pool obtains `R + R * 5%`: 105 Luna
-  * Commission: `105 * 80% * 1%` = 0.84 Luna
-  * Validator's reward: `105 * 20% + Commission` = 21.84 Luna
-  * Delegators' rewards: `105 * 80% - Commission` = 83.16 Luna (each delegator will be able to claim its portion of these rewards in proportion to their stake)
+  * The pool obtains `R + R * 5%`: 105 SDT
+  * Commission: `105 * 80% * 1%` = 0.84 SDT
+  * Validator's reward: `105 * 20% + Commission` = 21.84 SDT
+  * Delegators' rewards: `105 * 80% - Commission` = 83.16 SDT (each delegator will be able to claim its portion of these rewards in proportion to their stake)
 * For each non-proposer validator:
-  * The pool obtains R: 100 Luna
-  * Commission: `100 * 80% * 1%` = 0.8 Luna
-  * Validator's reward: `100 * 20% + Commission` = 20.8 Luna
-  * Delegators' rewards: `100 * 80% - Commission` = 79.2 Luna (each delegator will be able to claim its portion of these rewards in proportion to their stake)
+  * The pool obtains R: 100 SDT
+  * Commission: `100 * 80% * 1%` = 0.8 SDT
+  * Validator's reward: `100 * 20% + Commission` = 20.8 SDT
+  * Delegators' rewards: `100 * 80% - Commission` = 79.2 SDT (each delegator will be able to claim its portion of these rewards in proportion to their stake)
 
 
 ### How does Luna supply behave over time? 
