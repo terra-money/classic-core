@@ -29,9 +29,9 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit an oracle vote for the price of Luna denominated in the input denom.
 
-$ terracli oracle vote --denom "mkrw" --price "8890" --from mykey
+$ terracli oracle vote --denom "ukrw" --price "8890" --from mykey
 
-where "mkrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view. 
+where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view. 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
