@@ -19,8 +19,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/tendermint v0.31.4
-	gonum.org/v1/gonum v0.0.0-20190331200053-3d26580ed485
-	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 )
 
 replace golang.org/x/crypto => github.com/tendermint/crypto v0.0.0-20180820045704-3764759f34a5
