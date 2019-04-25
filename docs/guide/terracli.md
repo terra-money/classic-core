@@ -325,8 +325,8 @@ On the testnet, we delegate `luna`. Here's how you can bond tokens to a testnet 
 
 ```bash
 terracli tx staking delegate \
-  --amount=10luna \
-  --validator=<validator> \
+  <validator address> \
+  10000000uluna \
   --from=<key_name> \
   --chain-id=<chain_id>
 ```
@@ -403,9 +403,9 @@ A redelegation is a type delegation that allows you to bond illiquid tokens from
 
 ```bash
 terracli tx staking redelegate \
-  --addr-validator-source=<account_terraval> \
-  --addr-validator-dest=<account_terraval> \
-  --shares-fraction=50 \
+  <src validator address> \
+  <dst validator address> \
+  <amount> \
   --from=<key_name> \
   --chain-id=<chain_id>
 ```
