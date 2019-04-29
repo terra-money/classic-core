@@ -27,6 +27,7 @@ const (
 func PayTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pay --to [to_address] --coins [amount] --from [from_address or key_name]",
+		Args:  cobra.NoArgs,
 		Short: "Create and sign a pay tx",
 		Long: strings.TrimSpace(`
 Create, sign and broadcast pay tx.
