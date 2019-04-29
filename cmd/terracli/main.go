@@ -15,13 +15,7 @@ import (
 
 	"github.com/terra-project/core/app"
 	"github.com/terra-project/core/types/util"
-
-	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	"github.com/terra-project/core/version"
-	budgetClient "github.com/terra-project/core/x/budget/client"
-	marketClient "github.com/terra-project/core/x/market/client"
-	oracleClient "github.com/terra-project/core/x/oracle/client"
-	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
@@ -37,6 +31,7 @@ import (
 	budget "github.com/terra-project/core/x/budget/client/rest"
 	market "github.com/terra-project/core/x/market/client/rest"
 	oracle "github.com/terra-project/core/x/oracle/client/rest"
+	pay "github.com/terra-project/core/x/pay/client/rest"
 	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
 	bud "github.com/terra-project/core/x/budget"
@@ -54,6 +49,14 @@ import (
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
+
+	budgetClient "github.com/terra-project/core/x/budget/client"
+	marketClient "github.com/terra-project/core/x/market/client"
+	oracleClient "github.com/terra-project/core/x/oracle/client"
+	payClient "github.com/terra-project/core/x/pay/client/cli"
+	treasuryClient "github.com/terra-project/core/x/treasury/client"
+
+	crisisClient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
@@ -89,7 +92,7 @@ func main() {
 		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
 		budgetClient.NewModuleClient(bud.StoreKey, cdc),
 		marketClient.NewModuleClient(mkt.StoreKey, cdc),
-		crisisclient.NewModuleClient(sl.StoreKey, cdc),
+		crisisClient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -162,6 +165,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 
 	txCmd.AddCommand(
 		bankcmd.SendTxCmd(cdc),
+		payClient.PayTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),
@@ -199,6 +203,8 @@ func registerRoutes(rs *lcd.RestServer) {
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+	pay.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	treasury.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)

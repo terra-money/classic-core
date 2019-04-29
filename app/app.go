@@ -262,7 +262,10 @@ func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 // MakeCodec builds a custom tx codec
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
+
+	// left codec for backward compatibility
 	bank.RegisterCodec(cdc)
+	pay.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 	distr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
