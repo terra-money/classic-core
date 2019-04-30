@@ -17,8 +17,6 @@ import (
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/version"
 
-	dist "github.com/terra-project/core/x/distribution/client/rest"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
@@ -28,26 +26,28 @@ import (
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
 	bank "github.com/terra-project/core/x/bank/client/rest"
+	dist "github.com/terra-project/core/x/distribution/client/rest"
+	staking "github.com/terra-project/core/x/staking/client/rest"
+
 	budget "github.com/terra-project/core/x/budget/client/rest"
 	market "github.com/terra-project/core/x/market/client/rest"
 	oracle "github.com/terra-project/core/x/oracle/client/rest"
 	pay "github.com/terra-project/core/x/pay/client/rest"
-	staking "github.com/terra-project/core/x/staking/client/rest"
 	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
-	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bud "github.com/terra-project/core/x/budget"
 	mkt "github.com/terra-project/core/x/market"
 	ora "github.com/terra-project/core/x/oracle"
 	tre "github.com/terra-project/core/x/treasury"
 
+	dt "github.com/cosmos/cosmos-sdk/x/distribution"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
-	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
 
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/terra-project/core/x/bank/client/cli"
 	paycmd "github.com/terra-project/core/x/pay/client/cli"
 
@@ -85,7 +85,7 @@ func main() {
 	// Module clients hold cli commnads (tx,query) and lcd routes
 	// TODO: Make the lcd command take a list of ModuleClient
 	mc := []sdk.ModuleClients{
-		distClient.NewModuleClient(distcmd.StoreKey, cdc),
+		distClient.NewModuleClient(dt.StoreKey, cdc),
 		stakingClient.NewModuleClient(st.StoreKey, cdc),
 		slashingClient.NewModuleClient(sl.StoreKey, cdc),
 		oracleClient.NewModuleClient(ora.StoreKey, cdc),
@@ -199,7 +199,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, distcmd.StoreKey)
+	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, dt.StoreKey)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 

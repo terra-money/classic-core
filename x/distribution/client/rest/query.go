@@ -58,7 +58,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router,
 
 	// Get the current distribution parameter values
 	r.HandleFunc(
-		"/distribution/parameters",
+		"/distribution/params",
 		paramsHandlerFn(cliCtx, cdc, queryRoute),
 	).Methods("GET")
 
