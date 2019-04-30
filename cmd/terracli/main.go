@@ -41,7 +41,6 @@ import (
 	ora "github.com/terra-project/core/x/oracle"
 	tre "github.com/terra-project/core/x/treasury"
 
-	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
@@ -56,7 +55,6 @@ import (
 	distClient "github.com/terra-project/core/x/distribution/client"
 	marketClient "github.com/terra-project/core/x/market/client"
 	oracleClient "github.com/terra-project/core/x/oracle/client"
-
 	stakingClient "github.com/terra-project/core/x/staking/client"
 	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
@@ -204,7 +202,6 @@ func registerRoutes(rs *lcd.RestServer) {
 	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, distcmd.StoreKey)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 
 	pay.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
