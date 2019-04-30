@@ -12,12 +12,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	"github.com/terra-project/core/x/pay"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, kb keys.Keybase) {
-	r.HandleFunc("/pay/accounts/{address}/transfers", SendRequestHandlerFn(cdc, kb, cliCtx)).Methods("POST")
+	r.HandleFunc("/send/accounts/{address}/transfers", SendRequestHandlerFn(cdc, kb, cliCtx)).Methods("POST")
 }
 
 // SendReq defines the properties of a send request's body.
@@ -66,7 +66,7 @@ func SendRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context.CLIC
 			req.BaseReq.Sequence = account.GetSequence()
 		}
 
-		msg := pay.NewMsgPay(fromAddr, toAddr, req.Coins)
+		msg := bank.NewMsgSend(fromAddr, toAddr, req.Coins)
 		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

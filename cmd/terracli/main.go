@@ -27,6 +27,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
+	bank "github.com/terra-project/core/x/bank/client/rest"
 	budget "github.com/terra-project/core/x/budget/client/rest"
 	market "github.com/terra-project/core/x/market/client/rest"
 	oracle "github.com/terra-project/core/x/oracle/client/rest"
@@ -34,27 +35,28 @@ import (
 	staking "github.com/terra-project/core/x/staking/client/rest"
 	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
+	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bud "github.com/terra-project/core/x/budget"
 	mkt "github.com/terra-project/core/x/market"
 	ora "github.com/terra-project/core/x/oracle"
 	tre "github.com/terra-project/core/x/treasury"
 
-	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
+
+	bankcmd "github.com/terra-project/core/x/bank/client/cli"
+	paycmd "github.com/terra-project/core/x/pay/client/cli"
 
 	budgetClient "github.com/terra-project/core/x/budget/client"
 	distClient "github.com/terra-project/core/x/distribution/client"
 	marketClient "github.com/terra-project/core/x/market/client"
 	oracleClient "github.com/terra-project/core/x/oracle/client"
-	payClient "github.com/terra-project/core/x/pay/client/cli"
+
 	stakingClient "github.com/terra-project/core/x/staking/client"
 	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
@@ -165,7 +167,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 
 	txCmd.AddCommand(
 		bankcmd.SendTxCmd(cdc),
-		payClient.PayTxCmd(cdc),
+		paycmd.PayTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),

@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
-	"github.com/terra-project/core/x/pay"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/spf13/cobra"
 )
@@ -23,17 +23,17 @@ const (
 	flagCoins = "coins"
 )
 
-// PayTxCmd will create a pay tx and sign it with the given key.
-func PayTxCmd(cdc *codec.Codec) *cobra.Command {
+// SendTxCmd will create a send tx and sign it with the given key.
+func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pay --to [to_address] --coins [amount] --from [from_address or key_name]",
+		Use:   "send --to [to_address] --coins [amount] --from [from_address or key_name]",
 		Args:  cobra.NoArgs,
-		Short: "Create and sign a pay tx",
+		Short: "Create and sign a send tx",
 		Long: strings.TrimSpace(`
-Create, sign and broadcast pay tx.
+Create, sign and broadcast send tx.
 
 In case generate-only, --from should be specified as address not key name.
-$ terracli tx pay --to [to_address] --coins [amount] --from [from_address or key_name]
+$ terracli tx send --to [to_address] --coins [amount] --from [from_address or key_name]
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -76,7 +76,7 @@ $ terracli tx pay --to [to_address] --coins [amount] --from [from_address or key
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := pay.NewMsgPay(from, to, coins)
+			msg := bank.NewMsgSend(from, to, coins)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
 		},
 	}
