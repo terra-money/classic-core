@@ -17,7 +17,7 @@ import (
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/version"
 
-	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
+	dist "github.com/terra-project/core/x/distribution/client/rest"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -51,6 +51,7 @@ import (
 	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
 
 	budgetClient "github.com/terra-project/core/x/budget/client"
+	distClient "github.com/terra-project/core/x/distribution/client"
 	marketClient "github.com/terra-project/core/x/market/client"
 	oracleClient "github.com/terra-project/core/x/oracle/client"
 	payClient "github.com/terra-project/core/x/pay/client/cli"
@@ -58,7 +59,6 @@ import (
 	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
 	crisisClient "github.com/cosmos/cosmos-sdk/x/crisis/client"
-	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 
 	_ "github.com/terra-project/core/client/lcd/statik"
