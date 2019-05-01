@@ -9,10 +9,10 @@
 
 **Key features:**
 
-- A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY.
-- Stability achieved by creating mining incentives that are countercyclical to Terra demand
-- Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna
-- Zero-spread atomic swap amongst Terra currencies.
+- A family of stable-coins pegged to major currencies
+- Stability achieved by creating mining incentives that are _countercyclical_ to Terra demand
+- Delegated Proof-of-Stake (Tendermint) consensus formed over the staking token Luna
+- Zero-spread atomic swap amongst Terra currencies to flatten forex costs in global commerce 
 
 **Terra Core** is a golang implementation of the Terra Protocol.
 
@@ -26,14 +26,29 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Network
 
-Public testnet Soju-0007 is online. Currently the Columbus public mainnet is being prepared for launch.
+- [Mainnet 1.0](https://terra.stake.id) is online and stable. Read the [launch repo](https://github.com/terra-project/launch) for records of the network's genesis. 
 
-[Testnets](https://github.com/terra-project/networks) contains latest updates to the testnet.
+- [Testnet Soju-0008](https://soju.stake.id) is online and stable. Our [networks repo](https://github.com/terra-project/networks) contains latest upgrades to the testnet. [The Faucet](https://faucet.terra.money) should give you some free testnet tokens. 
 
+### Ecosystem
+
+- Known block explorers
+    - [Terra Finder](https://finder.terra.money)
+    - [Stake ID by Staking Fund](https://terra.stake.id)
+    - [Terra Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
+
+- Known wallets
+    - **Terra Station**: available for download for OS X and Windows at [the Terra Website](https://terra.money).
+
+- Other tools 
+    - [Terra Faucet for Soju-008](https://faucet.terra.money)
+
+- Applications 
+    - **TerraX**, a payment gateway utilizing Columbus-1 Mainnet will launch in the next few weeks. Please stay tuned for updates. 
 
 ### Terra Alliance
 
-The current state of the Terra Alliance (businesses gearing to adopt Terra upon launch) is summarized [here](https://medium.com/terra-money/state-of-the-terra-alliance-d7f3ff8f6411?fbclid=IwAR2xyZ2sRi_gTHeNPH8tL_VoXpvmDq3sdWMwXaSQCAbHhQGhIEx-yHxWRio)
+The current state of the Terra Alliance (businesses gearing to adopt TerraX for payments upon launch) is summarized [here](https://medium.com/terra-money/state-of-the-terra-alliance-d7f3ff8f6411?fbclid=IwAR2xyZ2sRi_gTHeNPH8tL_VoXpvmDq3sdWMwXaSQCAbHhQGhIEx-yHxWRio). The Terra Alliance currently spans businesses processing **25 billion USD** for **45 million monthly active users** across Asia. 
 
 
 ## Community & Contributions
@@ -44,8 +59,8 @@ Community channels actively being managed are here:
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
 
-We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money).
+We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money). 
 
 ## Documentation
 
-See the [docs](./docs/guide/README.md) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf).
+See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf).
