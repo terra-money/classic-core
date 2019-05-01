@@ -32,19 +32,19 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Ecosystem
 
-- Known block explorers
-    - [Terra Finder](https://finder.terra.money)
-    - [Stake ID by Staking Fund](https://terra.stake.id)
-    - [Terra Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
+#### Known block explorers
+- [Terra Finder](https://finder.terra.money)
+- [Stake ID by Staking Fund](https://terra.stake.id)
+- [Terra Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
 
-- Known wallets
-    - **Terra Station**: available for download for OS X and Windows at [the Terra Website](https://terra.money).
+#### Known wallets
+- **Terra Station**: available for download for OS X and Windows at [the Terra Website](https://terra.money).
 
-- Other tools 
-    - [Terra Faucet for Soju-008](https://faucet.terra.money)
+#### Other tools 
+- [Terra Faucet](https://faucet.terra.money): Offers free tokens for the Soju testnets. 
 
-- Applications 
-    - **TerraX**, a payment gateway utilizing Columbus-1 Mainnet will launch in the next few weeks. Please stay tuned for updates. 
+#### Applications 
+- **TerraX**, a payment gateway utilizing Columbus-1 Mainnet will launch in the next few weeks. Please stay tuned for updates. 
 
 ### Terra Alliance
 
