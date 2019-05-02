@@ -8,7 +8,6 @@ package pay
 
 import (
 	"github.com/terra-project/core/types/util"
-	"github.com/terra-project/core/x/pay/tags"
 	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -43,15 +42,15 @@ func handleMsgSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk auth.F
 		return bank.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	resultTags := sdk.NewTags()
-
-	payTags, err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
+	taxes, err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
-	resultTags = resultTags.AppendTags(payTags)
+	log := NewLog()
+	log = log.append(LogKeyTax, taxes.String())
 
+	resultTags := sdk.NewTags()
 	sendTags, err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
@@ -61,6 +60,7 @@ func handleMsgSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk auth.F
 
 	return sdk.Result{
 		Tags: resultTags,
+		Log:  log.String(),
 	}
 }
 
@@ -71,16 +71,20 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 		return bank.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	resultTags := sdk.NewTags()
+	totalTaxes := sdk.Coins{}
 	for _, input := range msg.Inputs {
-		payTags, taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
+		taxes, taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
 		if taxErr != nil {
 			return taxErr.Result()
 		}
 
-		resultTags = resultTags.AppendTags(payTags)
+		totalTaxes = totalTaxes.Add(taxes).Sort()
 	}
 
+	log := NewLog()
+	log = log.append(LogKeyTax, totalTaxes.String())
+
+	resultTags := sdk.NewTags()
 	sendTags, sendErr := k.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
 	if sendErr != nil {
 		return sendErr.Result()
@@ -89,14 +93,14 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 	resultTags = resultTags.AppendTags(sendTags)
 	return sdk.Result{
 		Tags: resultTags,
+		Log:  log.String(),
 	}
 }
 
 // payTax charges the stability tax on MsgSend and MsgMultiSend.
 func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper,
-	taxPayer sdk.AccAddress, principal sdk.Coins) (resultTags sdk.Tags, err sdk.Error) {
+	taxPayer sdk.AccAddress, principal sdk.Coins) (taxes sdk.Coins, err sdk.Error) {
 
-	taxes := sdk.Coins{}
 	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
 
 	if taxRate.Equal(sdk.ZeroDec()) {
@@ -116,15 +120,13 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 			continue
 		}
 
-		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
+		taxes = taxes.Add(sdk.NewCoins(sdk.NewCoin(coin.Denom, taxDue))).Sort()
 	}
 
 	_, _, err = bk.SubtractCoins(ctx, taxPayer, taxes)
 	if err != nil {
 		return nil, err
 	}
-
-	resultTags = sdk.NewTags(tags.TagKeyTax, taxes.String())
 
 	fk.AddCollectedFees(ctx, taxes)
 	tk.RecordTaxProceeds(ctx, taxes)

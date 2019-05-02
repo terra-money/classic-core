@@ -210,7 +210,7 @@ $ terracli query distr rewards --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9l
 	cmd.Flags().AddFlagSet(fsDelegator)
 
 	cmd.MarkFlagRequired(flagAddressValidator)
-	cmd.MarkFlagRquired(flagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }
