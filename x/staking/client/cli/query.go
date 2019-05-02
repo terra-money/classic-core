@@ -27,7 +27,7 @@ $ terracli query staking validator --validator terravaloper1gghjut3ccd8ay0zduzj6
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			addrStr := viper.GetString(FlagAddressValidator)
+			addrStr := viper.GetString(flagAddressValidator)
 			addr, err := sdk.ValAddressFromBech32(addrStr)
 			if err != nil {
 				return err
@@ -48,7 +48,7 @@ $ terracli query staking validator --validator terravaloper1gghjut3ccd8ay0zduzj6
 
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
@@ -94,7 +94,7 @@ $ terracli query staking unbonding-delegations-from --validator terravaloper1ggh
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			addrStr := viper.GetString(FlagAddressValidator)
+			addrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(addrStr)
 			if err != nil {
 				return err
@@ -119,7 +119,7 @@ $ terracli query staking unbonding-delegations-from --validator terravaloper1ggh
 
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
@@ -137,7 +137,7 @@ $ terrali query staking redelegations-from --validator cosmosvaloper1gghjut3ccd8
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			addrStr := viper.GetString(FlagAddressValidator)
+			addrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(addrStr)
 			if err != nil {
 				return err
@@ -162,7 +162,7 @@ $ terrali query staking redelegations-from --validator cosmosvaloper1gghjut3ccd8
 
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
@@ -180,13 +180,13 @@ $ terracli query staking delegation --delegator terra1gghjut3ccd8ay0zduzj64hwre2
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			valAddrStr := viper.GetString(FlagAddressValidator)
+			valAddrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
 			if err != nil {
 				return err
 			}
 
-			delAddrStr := viper.GetString(FlagAddressDelegator)
+			delAddrStr := viper.GetString(flagAddressDelegator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -209,8 +209,8 @@ $ terracli query staking delegation --delegator terra1gghjut3ccd8ay0zduzj64hwre2
 	cmd.Flags().AddFlagSet(fsValidator)
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
-	cmd.MarkFlagRequired(FlagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }
@@ -229,7 +229,7 @@ $ terracli query staking delegations --delegator terra1gghjut3ccd8ay0zduzj64hwre
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			delAddrStr := viper.GetString(FlagAddressValidator)
+			delAddrStr := viper.GetString(flagAddressValidator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -251,7 +251,7 @@ $ terracli query staking delegations --delegator terra1gghjut3ccd8ay0zduzj64hwre
 
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(FlagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }
@@ -270,7 +270,7 @@ $ terracli query staking delegations-to --validator terravaloper1gghjut3ccd8ay0z
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			valAddrStr := viper.GetString(FlagAddressValidator)
+			valAddrStr := viper.GetString(flagAddressValidator)
 			validatorAddr, err := sdk.ValAddressFromBech32(valAddrStr)
 			if err != nil {
 				return err
@@ -295,7 +295,7 @@ $ terracli query staking delegations-to --validator terravaloper1gghjut3ccd8ay0z
 
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
@@ -314,13 +314,13 @@ $ terracli query staking unbonding-delegation --delegator terra1gghjut3ccd8ay0zd
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			valAddrStr := viper.GetString(FlagAddressValidator)
+			valAddrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
 			if err != nil {
 				return err
 			}
 
-			delAddrStr := viper.GetString(FlagAddressDelegator)
+			delAddrStr := viper.GetString(flagAddressDelegator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -339,8 +339,8 @@ $ terracli query staking unbonding-delegation --delegator terra1gghjut3ccd8ay0zd
 	cmd.Flags().AddFlagSet(fsValidator)
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(FlagAddressValidator)
-	cmd.MarkFlagRequired(FlagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressValidator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }
@@ -359,7 +359,7 @@ $ terracli query staking unbonding-delegation --delegator terra1gghjut3ccd8ay0zd
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			delAddrStr := viper.GetString(FlagAddressDelegator)
+			delAddrStr := viper.GetString(flagAddressDelegator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -381,7 +381,7 @@ $ terracli query staking unbonding-delegation --delegator terra1gghjut3ccd8ay0zd
 
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(FlagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }
@@ -400,19 +400,19 @@ $ terracli query staking redelegation --delegator terra1gghjut3ccd8ay0zduzj64hwr
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			valSrcAddrStr := viper.GetString(FlagAddressValidatorSrc)
+			valSrcAddrStr := viper.GetString(flagAddressValidatorSrc)
 			valSrcAddr, err := sdk.ValAddressFromBech32(valSrcAddrStr)
 			if err != nil {
 				return err
 			}
 
-			valDstAddrStr := viper.GetString(FlagAddressValidatorDst)
+			valDstAddrStr := viper.GetString(flagAddressValidatorDst)
 			valDstAddr, err := sdk.ValAddressFromBech32(valDstAddrStr)
 			if err != nil {
 				return err
 			}
 
-			delAddrStr := viper.GetString(FlagAddressDelegator)
+			delAddrStr := viper.GetString(flagAddressDelegator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -430,9 +430,9 @@ $ terracli query staking redelegation --delegator terra1gghjut3ccd8ay0zduzj64hwr
 	cmd.Flags().AddFlagSet(fsDelegator)
 	cmd.Flags().AddFlagSet(fsRedelegation)
 
-	cmd.MarkFlagRequired(FlagAddressDelegator)
-	cmd.MarkFlagRequired(FlagAddressValidatorDst)
-	cmd.MarkFlagRequired(FlagAddressValidatorSrc)
+	cmd.MarkFlagRequired(flagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressValidatorDst)
+	cmd.MarkFlagRequired(flagAddressValidatorSrc)
 
 	return cmd
 }
@@ -451,7 +451,7 @@ $ terracli query staking redelegation --delegator terra1gghjut3ccd8ay0zduzj64hwr
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			delAddrStr := viper.GetString(FlagAddressDelegator)
+			delAddrStr := viper.GetString(flagAddressDelegator)
 			delAddr, err := sdk.AccAddressFromBech32(delAddrStr)
 			if err != nil {
 				return err
@@ -473,7 +473,7 @@ $ terracli query staking redelegation --delegator terra1gghjut3ccd8ay0zduzj64hwr
 
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(FlagAddressDelegator)
+	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd
 }

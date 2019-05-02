@@ -80,7 +80,7 @@ func GetCmdQueryValidatorCommission(queryRoute string, cdc *codec.Codec) *cobra.
 		Use:   "commission --validator [validator]",
 		Args:  cobra.NoArgs,
 		Short: "Query distribution validator commission",
-		Long: strings.TrimSpace(`Query validator commission rewards from delegators to that validator:
+		Long: strings.TrimSpace(`Query validator commission rewards from delegators to a validator:
 
 $ terracli query distr commission --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
 `),
@@ -210,7 +210,7 @@ $ terracli query distr rewards --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9l
 	cmd.Flags().AddFlagSet(fsDelegator)
 
 	cmd.MarkFlagRequired(flagAddressValidator)
-	cmd.MarkFlagRequired(flagAddressDelegator)
+	cmd.MarkFlagRquired(flagAddressDelegator)
 
 	return cmd
 }

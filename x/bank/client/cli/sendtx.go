@@ -84,7 +84,7 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 	cmd = client.PostCommands(cmd)[0]
 
 	cmd.Flags().String(flagTo, "", "the address which a user wants to pay")
-	cmd.Flags().String(flagCoins, "", "the amount a user wants to transfer")
+	cmd.Flags().String(flagCoins, "", "the amount a user wants to pay")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagTo)

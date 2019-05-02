@@ -43,16 +43,16 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().AddFlagSet(fsPk)
 	cmd.Flags().AddFlagSet(fsAmount)
 	cmd.Flags().AddFlagSet(fsDescriptionCreate)
-	cmd.Flags().AddFlagSet(FsCommissionCreate)
-	cmd.Flags().AddFlagSet(FsMinSelfDelegation)
+	cmd.Flags().AddFlagSet(fsCommissionCreate)
+	cmd.Flags().AddFlagSet(fsMinSelfDelegation)
 
-	cmd.Flags().String(FlagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", client.FlagGenerateOnly))
-	cmd.Flags().String(FlagNodeID, "", "The node's ID")
+	cmd.Flags().String(flagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", client.FlagGenerateOnly))
+	cmd.Flags().String(flagNodeID, "", "The node's ID")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagPubKey)
-	cmd.MarkFlagRequired(FlagMoniker)
+	cmd.MarkFlagRequired(flagAmount)
+	cmd.MarkFlagRequired(flagPubKey)
+	cmd.MarkFlagRequired(flagMoniker)
 
 	return cmd
 }
@@ -72,15 +72,15 @@ func GetCmdEditValidator(cdc *codec.Codec) *cobra.Command {
 
 			valAddr := cliCtx.GetFromAddress()
 			description := staking.Description{
-				Moniker:  viper.GetString(FlagMoniker),
-				Identity: viper.GetString(FlagIdentity),
-				Website:  viper.GetString(FlagWebsite),
-				Details:  viper.GetString(FlagDetails),
+				Moniker:  viper.GetString(flagMoniker),
+				Identity: viper.GetString(flagIdentity),
+				Website:  viper.GetString(flagWebsite),
+				Details:  viper.GetString(flagDetails),
 			}
 
 			var newRate *sdk.Dec
 
-			commissionRate := viper.GetString(FlagCommissionRate)
+			commissionRate := viper.GetString(flagCommissionRate)
 			if commissionRate != "" {
 				rate, err := sdk.NewDecFromStr(commissionRate)
 				if err != nil {
@@ -92,7 +92,7 @@ func GetCmdEditValidator(cdc *codec.Codec) *cobra.Command {
 
 			var newMinSelfDelegation *sdk.Int
 
-			minSelfDelegationString := viper.GetString(FlagMinSelfDelegation)
+			minSelfDelegationString := viper.GetString(flagMinSelfDelegation)
 			if minSelfDelegationString != "" {
 				msb, ok := sdk.NewIntFromString(minSelfDelegationString)
 				if !ok {
@@ -122,7 +122,7 @@ func GetCmdDelegate(cdc *codec.Codec) *cobra.Command {
 		Short: "delegate liquid tokens to a validator",
 		Long: strings.TrimSpace(`Delegate an amount of liquid coins to a validator from your wallet:
 
-$ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm --amount 1000stake --from mykey
+$ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm --amount 1000uluna --from mykey
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -130,7 +130,7 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			amountStr := viper.GetString(FlagAmount)
+			amountStr := viper.GetString(flagAmount)
 			amount, err := sdk.ParseCoin(amountStr)
 			if err != nil {
 				return err
@@ -138,7 +138,7 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 
 			delAddr := cliCtx.GetFromAddress()
 
-			valAddrStr := viper.GetString(FlagAddressValidator)
+			valAddrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
 			if err != nil {
 				return err
@@ -152,8 +152,8 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 	cmd.Flags().AddFlagSet(fsAmount)
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAmount)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
@@ -166,7 +166,7 @@ func GetCmdRedelegate(storeName string, cdc *codec.Codec) *cobra.Command {
 		Short: "redelegate illiquid tokens from one validator to another",
 		Long: strings.TrimSpace(`Redelegate an amount of illiquid staking tokens from one validator to another:
 
-$ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --addr-validator-dest terravaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm --amount 100stake --from mykey
+$ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --addr-validator-dest terravaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm --amount 100uluna --from mykey
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -176,19 +176,19 @@ $ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd
 
 			delAddr := cliCtx.GetFromAddress()
 
-			valSrcAddrStr := viper.GetString(FlagAddressValidatorSrc)
+			valSrcAddrStr := viper.GetString(flagAddressValidatorSrc)
 			valSrcAddr, err := sdk.ValAddressFromBech32(valSrcAddrStr)
 			if err != nil {
 				return err
 			}
 
-			valDstAddrStr := viper.GetString(FlagAddressValidatorDst)
+			valDstAddrStr := viper.GetString(flagAddressValidatorDst)
 			valDstAddr, err := sdk.ValAddressFromBech32(valDstAddrStr)
 			if err != nil {
 				return err
 			}
 
-			amountStr := viper.GetString(FlagAmount)
+			amountStr := viper.GetString(flagAmount)
 			amount, err := sdk.ParseCoin(amountStr)
 			if err != nil {
 				return err
@@ -202,9 +202,9 @@ $ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd
 	cmd.Flags().AddFlagSet(fsAmount)
 	cmd.Flags().AddFlagSet(fsRedelegation)
 
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagAddressValidatorSrc)
-	cmd.MarkFlagRequired(FlagAddressValidatorDst)
+	cmd.MarkFlagRequired(flagAmount)
+	cmd.MarkFlagRequired(flagAddressValidatorSrc)
+	cmd.MarkFlagRequired(flagAddressValidatorDst)
 
 	return cmd
 }
@@ -217,7 +217,7 @@ func GetCmdUnbond(storeName string, cdc *codec.Codec) *cobra.Command {
 		Short: "unbond shares from a validator",
 		Long: strings.TrimSpace(`Unbond an amount of bonded shares from a validator:
 
-$ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --amount 100stake --from mykey
+$ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --amount 100uluna --from mykey
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -227,13 +227,13 @@ $ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2
 
 			delAddr := cliCtx.GetFromAddress()
 
-			valAddrStr := viper.GetString(FlagAddressValidator)
+			valAddrStr := viper.GetString(flagAddressValidator)
 			valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
 			if err != nil {
 				return err
 			}
 
-			amountStr := viper.GetString(FlagAmount)
+			amountStr := viper.GetString(flagAmount)
 			amount, err := sdk.ParseCoin(amountStr)
 			if err != nil {
 				return err
@@ -247,22 +247,22 @@ $ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2
 	cmd.Flags().AddFlagSet(fsAmount)
 	cmd.Flags().AddFlagSet(fsValidator)
 
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagAddressValidator)
+	cmd.MarkFlagRequired(flagAmount)
+	cmd.MarkFlagRequired(flagAddressValidator)
 
 	return cmd
 }
 
 // BuildCreateValidatorMsg makes a new MsgCreateValidator.
 func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr authtxb.TxBuilder) (authtxb.TxBuilder, sdk.Msg, error) {
-	amounstStr := viper.GetString(FlagAmount)
+	amounstStr := viper.GetString(flagAmount)
 	amount, err := sdk.ParseCoin(amounstStr)
 	if err != nil {
 		return txBldr, nil, err
 	}
 
 	valAddr := cliCtx.GetFromAddress()
-	pkStr := viper.GetString(FlagPubKey)
+	pkStr := viper.GetString(flagPubKey)
 
 	pk, err := sdk.GetConsPubKeyBech32(pkStr)
 	if err != nil {
@@ -270,23 +270,23 @@ func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr authtxb.TxBuilder
 	}
 
 	description := staking.NewDescription(
-		viper.GetString(FlagMoniker),
-		viper.GetString(FlagIdentity),
-		viper.GetString(FlagWebsite),
-		viper.GetString(FlagDetails),
+		viper.GetString(flagMoniker),
+		viper.GetString(flagIdentity),
+		viper.GetString(flagWebsite),
+		viper.GetString(flagDetails),
 	)
 
 	// get the initial validator commission parameters
-	rateStr := viper.GetString(FlagCommissionRate)
-	maxRateStr := viper.GetString(FlagCommissionMaxRate)
-	maxChangeRateStr := viper.GetString(FlagCommissionMaxChangeRate)
+	rateStr := viper.GetString(flagCommissionRate)
+	maxRateStr := viper.GetString(flagCommissionMaxRate)
+	maxChangeRateStr := viper.GetString(flagCommissionMaxChangeRate)
 	commissionMsg, err := buildCommissionMsg(rateStr, maxRateStr, maxChangeRateStr)
 	if err != nil {
 		return txBldr, nil, err
 	}
 
 	// get the initial validator min self delegation
-	msbStr := viper.GetString(FlagMinSelfDelegation)
+	msbStr := viper.GetString(flagMinSelfDelegation)
 	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
 	if !ok {
 		return txBldr, nil, fmt.Errorf(staking.ErrMinSelfDelegationInvalid(staking.DefaultCodespace).Error())
@@ -297,8 +297,8 @@ func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr authtxb.TxBuilder
 	)
 
 	if viper.GetBool(client.FlagGenerateOnly) {
-		ip := viper.GetString(FlagIP)
-		nodeID := viper.GetString(FlagNodeID)
+		ip := viper.GetString(flagIP)
+		nodeID := viper.GetString(flagNodeID)
 		if nodeID != "" && ip != "" {
 			txBldr = txBldr.WithMemo(fmt.Sprintf("%s@%s:26656", nodeID, ip))
 		}

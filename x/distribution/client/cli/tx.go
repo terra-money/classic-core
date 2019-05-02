@@ -39,8 +39,8 @@ func GetCmdWithdrawRewards(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw-rewards --validator [validator-addr]",
 		Args:  cobra.NoArgs,
-		Short: "witdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator",
-		Long: strings.TrimSpace(`witdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator:
+		Short: "withdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator",
+		Long: strings.TrimSpace(`withdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator:
 
 $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey
 $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey --commission
@@ -67,7 +67,6 @@ $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduz
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs, false)
 		},
 	}
-
 	cmd.Flags().AddFlagSet(fsValidator)
 	cmd.Flags().Bool(flagComission, false, "also withdraw validator's commission")
 
