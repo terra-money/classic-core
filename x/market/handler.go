@@ -84,11 +84,15 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		return mintErr.Result()
 	}
 
+	log := NewLog()
+	log.append(LogKeySwapCoin, swapCoin.String())
+
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Offer, msg.OfferCoin.String(),
+			tags.Offer, msg.OfferCoin.Denom,
 			tags.Ask, swapCoin.String(),
 			tags.Trader, msg.Trader.String(),
 		),
+		Log: log.String(),
 	}
 }
