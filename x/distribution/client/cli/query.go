@@ -77,7 +77,7 @@ $ terracli query dist validator-outstanding-rewards --validator terravaloper1ggh
 // GetCmdQueryValidatorCommission implements the query validator commission command.
 func GetCmdQueryValidatorCommission(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commission --validator [validator]",
+		Use:   "validator-commission --validator [validator]",
 		Args:  cobra.NoArgs,
 		Short: "Query distribution validator commission",
 		Long: strings.TrimSpace(`Query validator commission rewards from delegators to a validator:
@@ -114,7 +114,7 @@ $ terracli query distr commission --validator terravaloper1gghjut3ccd8ay0zduzj64
 // GetCmdQueryValidatorSlashes implements the query validator slashes command.
 func GetCmdQueryValidatorSlashes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "slashes --validator [validator] --start [start-height] --end [end-height]",
+		Use:   "validator-slashes --validator [validator] --start [start-height] --end [end-height]",
 		Args:  cobra.NoArgs,
 		Short: "Query distribution validator slashes",
 		Long: strings.TrimSpace(`Query all slashes of a validator for a given block range:
@@ -209,7 +209,6 @@ $ terracli query distr rewards --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9l
 	cmd.Flags().AddFlagSet(fsValidator)
 	cmd.Flags().AddFlagSet(fsDelegator)
 
-	cmd.MarkFlagRequired(flagAddressValidator)
 	cmd.MarkFlagRequired(flagAddressDelegator)
 
 	return cmd

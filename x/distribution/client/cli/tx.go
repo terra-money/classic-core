@@ -5,9 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	amino "github.com/tendermint/go-amino"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,22 +16,6 @@ import (
 	"github.com/terra-project/core/x/distribution/client/common"
 )
 
-// GetTxCmd returns the transaction commands for this module
-func GetTxCmd(storeKey string, cdc *amino.Codec) *cobra.Command {
-	distTxCmd := &cobra.Command{
-		Use:   "dist",
-		Args:  cobra.NoArgs,
-		Short: "Distribution transactions subcommands",
-	}
-
-	distTxCmd.AddCommand(client.PostCommands(
-		GetCmdWithdrawRewards(cdc),
-		GetCmdSetWithdrawAddr(cdc),
-	)...)
-
-	return distTxCmd
-}
-
 // command to withdraw rewards
 func GetCmdWithdrawRewards(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -42,8 +24,8 @@ func GetCmdWithdrawRewards(cdc *codec.Codec) *cobra.Command {
 		Short: "withdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator",
 		Long: strings.TrimSpace(`withdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator:
 
-$ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey
-$ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey --commission
+$ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldcl4phj --from mykey
+$ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldcl4phj --from mykey --commission
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -64,11 +46,19 @@ $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduz
 				msgs = append(msgs, types.NewMsgWithdrawValidatorCommission(valAddr))
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs, false)
+			offline := viper.GetBool(flagOffline)
+			if !offline {
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs, offline)
 		},
 	}
 	cmd.Flags().AddFlagSet(fsValidator)
 	cmd.Flags().Bool(flagComission, false, "also withdraw validator's commission")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(flagAddressValidator)
 	return cmd
@@ -127,12 +117,20 @@ $ terracli tx set-withdraw-addr --withdraw-to terra1gghjut3ccd8ay0zduzj64hwre2fx
 				return err
 			}
 
+			offline := viper.GetBool(flagOffline)
+			if !offline {
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+			}
+
 			msg := types.NewMsgSetWithdrawAddress(delAddr, withdrawAddrTo)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
 	cmd.Flags().String(flagWithdrawTo, "", "Target address to withdraw")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(flagWithdrawTo)
 

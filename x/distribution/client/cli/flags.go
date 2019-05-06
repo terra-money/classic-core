@@ -13,6 +13,7 @@ const (
 	flagIsValidator       = "is-validator"
 	flagComission         = "commission"
 	flagWithdrawTo        = "withdraw-to"
+	flagOffline           = "offline"
 )
 
 var (
