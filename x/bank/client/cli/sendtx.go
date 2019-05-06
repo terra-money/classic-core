@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	flagTo    = "to"
-	flagCoins = "coins"
+	flagTo      = "to"
+	flagCoins   = "coins"
+	flagOffline = "offline"
 )
 
 // SendTxCmd will create a send tx and sign it with the given key.
@@ -41,10 +42,6 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
-			}
-
 			toStr := viper.GetString(flagTo)
 
 			to, err := sdk.AccAddressFromBech32(toStr)
@@ -61,12 +58,18 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 			}
 
 			from := cliCtx.GetFromAddress()
-			account, err := cliCtx.GetAccount(from)
-			if err != nil {
-				return err
-			}
 
-			if !cliCtx.GenerateOnly {
+			offlineFlag := viper.GetBool(flagOffline)
+			if !offlineFlag {
+
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+
+				account, err := cliCtx.GetAccount(from)
+				if err != nil {
+					return err
+				}
 
 				// ensure account has enough coins
 				if !account.GetCoins().IsAllGTE(coins) {
@@ -77,7 +80,7 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := bank.NewMsgSend(from, to, coins)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offlineFlag)
 		},
 	}
 
@@ -85,6 +88,7 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 	cmd.Flags().String(flagTo, "", "the address which a user wants to pay")
 	cmd.Flags().String(flagCoins, "", "the amount a user wants to pay")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagTo)
