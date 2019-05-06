@@ -28,6 +28,7 @@ const (
 	flagProgram     = "program"
 	flagProgramID   = "program-id"
 	flagOption      = "option"
+	flagOffline     = "offline"
 )
 
 type program struct {
@@ -75,43 +76,48 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
-			}
-
 			// Get from address
 			from := cliCtx.GetFromAddress()
-
-			// Pull associated account
-			submitter, err := cliCtx.GetAccount(from)
-			if err != nil {
-				return err
-			}
-
-			submitterCoins := submitter.GetCoins()
-
-			// Query params to get deposit amount
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
-			if err != nil {
-				return err
-			}
-
-			var params budget.Params
-			cdc.MustUnmarshalJSON(res, &params)
-
-			// Check submitter has enough coins to pay a deposit
-			if submitterCoins.AmountOf(params.Deposit.Denom).LT(params.Deposit.Amount) {
-				return fmt.Errorf(strings.TrimSpace(`
-					account %s has insufficient amount of coins to pay a deposit.\n
-					Required: %s\n
-					Given:    %s\n`),
-					from, params.Deposit.String(), submitterCoins.String())
-			}
 
 			// Get executor address
 			executorAddr, err := sdk.AccAddressFromBech32(program.Executor)
 			if err != nil {
 				return err
+			}
+
+			offline := viper.GetBool(flagOffline)
+			if !offline {
+
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+
+				// Pull associated account
+				submitter, err := cliCtx.GetAccount(from)
+				if err != nil {
+					return err
+				}
+
+				submitterCoins := submitter.GetCoins()
+
+				// Query params to get deposit amount
+				res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
+				if err != nil {
+					return err
+				}
+
+				var params budget.Params
+				cdc.MustUnmarshalJSON(res, &params)
+
+				// Check submitter has enough coins to pay a deposit
+				if submitterCoins.AmountOf(params.Deposit.Denom).LT(params.Deposit.Amount) {
+					return fmt.Errorf(strings.TrimSpace(`
+						account %s has insufficient amount of coins to pay a deposit.\n
+						Required: %s\n
+						Given:    %s\n`),
+						from, params.Deposit.String(), submitterCoins.String())
+				}
+
 			}
 
 			msg := budget.NewMsgSubmitProgram(program.Title, program.Description, from, executorAddr)
@@ -120,7 +126,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
@@ -128,6 +134,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 	cmd.Flags().String(flagDescription, "", "(optional) description of program")
 	cmd.Flags().String(flagExecutor, "", "executor of program")
 	cmd.Flags().String(flagProgram, "", "program file path (if this path is given, other program flags are ignored)")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	return cmd
 }
@@ -192,20 +199,11 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
-			}
-
 			// Get voting address
 			from := cliCtx.GetFromAddress()
 
-			// Check flag program-id is given
-			programStrID := viper.GetString(flagProgramID)
-			if len(programStrID) == 0 {
-				return fmt.Errorf("--program-id flag is required")
-			}
-
 			// Validate that the program id is a uint
+			programStrID := viper.GetString(flagProgramID)
 			programID, err := strconv.ParseUint(programStrID, 10, 64)
 			if err != nil {
 				return fmt.Errorf("given program-id {%s} is not a valid format; program-id should be formatted as integer", programStrID)
@@ -222,6 +220,14 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 				return fmt.Errorf(`given option {%s} is not valid format;\n option should be formatted as "yes" or "no"`, optionStr)
 			}
 
+			offline := viper.GetBool(flagOffline)
+
+			if !offline {
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+			}
+
 			// Build vote message and run basic validation
 			msg := budget.NewMsgVoteProgram(programID, option, from)
 			err = msg.ValidateBasic()
@@ -229,12 +235,16 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
+	cmd.MarkFlagRequired(flagProgramID)
+	cmd.MarkFlagRequired(flagOption)
+
 	cmd.Flags().String(flagProgramID, "", "the program ID to vote")
 	cmd.Flags().String(flagOption, "", "yes or no")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	return cmd
 }
@@ -255,10 +265,6 @@ $ terracli tx budget withdraw --program-id 1
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
-			}
-
 			// Get voting address
 			from := cliCtx.GetFromAddress()
 
@@ -273,6 +279,14 @@ $ terracli tx budget withdraw --program-id 1
 				return fmt.Errorf("given program-id %s not a valid int, please input a valid program-id", programStrID)
 			}
 
+			offline := viper.GetBool(flagOffline)
+
+			if !offline {
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
+			}
+
 			// Build vote message and run basic validation
 			msg := budget.NewMsgWithdrawProgram(programID, from)
 			err = msg.ValidateBasic()
@@ -280,11 +294,14 @@ $ terracli tx budget withdraw --program-id 1
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
+	cmd.MarkFlagRequired(flagProgramID)
+
 	cmd.Flags().String(flagProgramID, "", "the program ID to withdraw")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	return cmd
 }
