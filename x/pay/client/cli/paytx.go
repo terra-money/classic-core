@@ -90,6 +90,7 @@ $ terracli tx pay --to [to_address] --coins [amount] --from [from_address or key
 	cmd.Flags().String(flagCoins, "", "the amount a user wants to transfer")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
+	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagTo)
 	cmd.MarkFlagRequired(flagCoins)
 

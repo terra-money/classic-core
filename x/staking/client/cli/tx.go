@@ -25,6 +25,17 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 		Use:   "create-validator",
 		Args:  cobra.NoArgs,
 		Short: "create new validator initialized with a self-delegation to it",
+		Long: `
+		terracli tx staking create-validator \
+  --amount=5000000uluna \
+  --pubkey=$(terrad tendermint show-validator) \
+  --moniker="choose a moniker" \
+  --chain-id=<chain_id> \
+  --from=<key_name> \
+  --commission-rate="0.10" \
+  --commission-max-rate="0.20" \
+  --commission-max-change-rate="0.01" \
+  --min-self-delegation="1"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().
@@ -36,7 +47,9 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, true)
+			offline := viper.GetBool(flagOffline)
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
@@ -48,6 +61,7 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", client.FlagGenerateOnly))
 	cmd.Flags().String(flagNodeID, "", "The node's ID")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagAmount)
@@ -103,13 +117,18 @@ func GetCmdEditValidator(cdc *codec.Codec) *cobra.Command {
 
 			msg := staking.NewMsgEditValidator(sdk.ValAddress(valAddr), description, newRate, newMinSelfDelegation)
 
+			offline := viper.GetBool(flagOffline)
+
 			// build and sign the transaction, then broadcast to Tendermint
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(fsDescriptionEdit)
 	cmd.Flags().AddFlagSet(fsCommissionUpdate)
+	cmd.Flags().AddFlagSet(fsMinSelfDelegation)
+
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	return cmd
 }
@@ -145,7 +164,10 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 			}
 
 			msg := staking.NewMsgDelegate(delAddr, valAddr, amount)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+
+			offline := viper.GetBool(flagOffline)
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
@@ -155,11 +177,13 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 	cmd.MarkFlagRequired(flagAmount)
 	cmd.MarkFlagRequired(flagAddressValidator)
 
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+
 	return cmd
 }
 
 // GetCmdRedelegate the begin redelegation command.
-func GetCmdRedelegate(storeName string, cdc *codec.Codec) *cobra.Command {
+func GetCmdRedelegate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "redelegate --addr-validator-source [src-validator-addr] --addr-validator-dest [dst-validator-addr] --amount [amount]",
 		Args:  cobra.NoArgs,
@@ -195,7 +219,10 @@ $ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd
 			}
 
 			msg := staking.NewMsgBeginRedelegate(delAddr, valSrcAddr, valDstAddr, amount)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+
+			offline := viper.GetBool(flagOffline)
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
@@ -206,11 +233,13 @@ $ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd
 	cmd.MarkFlagRequired(flagAddressValidatorSrc)
 	cmd.MarkFlagRequired(flagAddressValidatorDst)
 
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+
 	return cmd
 }
 
 // GetCmdUnbond implements the unbond validator command.
-func GetCmdUnbond(storeName string, cdc *codec.Codec) *cobra.Command {
+func GetCmdUnbond(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unbond --validator [validator-addr] --amount [amount]",
 		Args:  cobra.NoArgs,
@@ -240,7 +269,10 @@ $ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2
 			}
 
 			msg := staking.NewMsgUndelegate(delAddr, valAddr, amount)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+
+			offline := viper.GetBool(flagOffline)
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
@@ -249,6 +281,8 @@ $ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2
 
 	cmd.MarkFlagRequired(flagAmount)
 	cmd.MarkFlagRequired(flagAddressValidator)
+
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	return cmd
 }
