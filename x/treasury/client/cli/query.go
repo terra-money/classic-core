@@ -24,6 +24,7 @@ const (
 func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxRate,
+		Args:  cobra.NoArgs,
 		Short: "Query the stability tax rate",
 		Long: strings.TrimSpace(`
 Query the stability tax rate at the specified epoch.
@@ -69,6 +70,7 @@ $ terracli query treasury taxrate --epoch=14
 func GetCmdQueryTaxCap(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxCap,
+		Args:  cobra.NoArgs,
 		Short: "Query the current stability tax cap of a denom asset",
 		Long: strings.TrimSpace(`
 Query the current stability tax cap of the denom asset. 
@@ -80,9 +82,6 @@ $ terracli query treasury taxcap --denom="ukrw"
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			if len(denom) == 0 {
-				return fmt.Errorf("--denom flag is required")
-			}
 
 			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap, denom), nil)
 			if err != nil {
@@ -97,6 +96,8 @@ $ terracli query treasury taxcap --denom="ukrw"
 
 	cmd.Flags().String(flagDenom, "", "the denom which you want to know the taxcap of")
 
+	cmd.MarkFlagRequired(flagDenom)
+
 	return cmd
 }
 
@@ -104,6 +105,7 @@ $ terracli query treasury taxcap --denom="ukrw"
 func GetCmdQueryIssuance(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryIssuance,
+		Args:  cobra.NoArgs,
 		Short: "Query the current issuance of a denom asset",
 		Long: strings.TrimSpace(`
 Query the current issuance of a denom asset. 
@@ -114,9 +116,6 @@ $ terracli query treasury issuance --denom="ukrw"
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			if len(denom) == 0 {
-				return fmt.Errorf("--denom flag is required")
-			}
 
 			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
 			if err != nil {
@@ -131,6 +130,8 @@ $ terracli query treasury issuance --denom="ukrw"
 
 	cmd.Flags().String(flagDenom, "", "the denom which you want to know the issueance of")
 
+	cmd.MarkFlagRequired(flagDenom)
+
 	return cmd
 }
 
@@ -138,6 +139,7 @@ $ terracli query treasury issuance --denom="ukrw"
 func GetCmdQueryActiveClaims(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryActiveClaims,
+		Args:  cobra.NoArgs,
 		Short: "Query claims that have yet to be redeemed by the treasury",
 		Long: strings.TrimSpace(`
 Query the current active claims from oracle votes and program votes . 
@@ -165,6 +167,7 @@ $ terracli query treasury active-claims
 func GetCmdQueryMiningRewardWeight(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryMiningRewardWeight,
+		Args:  cobra.NoArgs,
 		Short: "Query the mining reward weight",
 		Long: strings.TrimSpace(`
 Query the mining reward rate at the specified epoch.
@@ -211,6 +214,7 @@ $ terracli query treasury reward-weight --epoch=14
 func GetCmdQueryTaxProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryTaxProceeds,
+		Args:  cobra.NoArgs,
 		Short: "Query the tax proceeds for the epoch",
 		Long: strings.TrimSpace(`
 Query the tax proceeds corresponding to the given epoch. The return value will be sdk.Coins{} of all the taxes collected. 
@@ -257,6 +261,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 func GetCmdQuerySeigniorageProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QuerySeigniorageProceeds,
+		Args:  cobra.NoArgs,
 		Short: "Query the seigniorage proceeds for the epoch",
 		Long: strings.TrimSpace(`
 Query the seigniorage proceeds corresponding to the given epoch. The return value will be in units of Luna coins. 
@@ -303,6 +308,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 func GetCmdQueryCurrentEpoch(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryCurrentEpoch,
+		Args:  cobra.NoArgs,
 		Short: "Query the current epoch number",
 		Long: strings.TrimSpace(`
 Query the current epoch.
@@ -330,6 +336,7 @@ $ terracli query treasury current-epoch
 func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   treasury.QueryParams,
+		Args:  cobra.NoArgs,
 		Short: "Query the current Treasury params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
