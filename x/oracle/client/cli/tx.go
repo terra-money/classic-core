@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	flagDenom = "denom"
-	flagPrice = "price"
-	flagVoter = "voter"
+	flagDenom   = "denom"
+	flagPrice   = "price"
+	flagVoter   = "voter"
+	flagOffline = "offline"
 )
 
 // GetCmdPriceVote will create a send tx and sign it with the given key.
@@ -40,8 +41,12 @@ where "ukrw" is the denominating currency, and "8890" is the price of micro Luna
 				WithCodec(cdc).
 				WithAccountDecoder(cdc)
 
-			if err := cliCtx.EnsureAccountExists(); err != nil {
-				return err
+			offline := viper.GetBool(flagOffline)
+
+			if !offline {
+				if err := cliCtx.EnsureAccountExists(); err != nil {
+					return err
+				}
 			}
 
 			// Get from address
@@ -49,15 +54,9 @@ where "ukrw" is the denominating currency, and "8890" is the price of micro Luna
 
 			// Check the denom exists and valid
 			denom := viper.GetString(flagDenom)
-			if len(denom) == 0 {
-				return fmt.Errorf("--denom flag is required")
-			}
 
 			// Check the price flag exists
 			priceStr := viper.GetString(flagPrice)
-			if len(priceStr) == 0 {
-				return fmt.Errorf("--price flag is required")
-			}
 
 			// Parse the price to Dec
 			price, err := sdk.NewDecFromStr(priceStr)
@@ -71,12 +70,16 @@ where "ukrw" is the denominating currency, and "8890" is the price of micro Luna
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
 	cmd.Flags().String(flagDenom, "", "denominating currency")
 	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+
+	cmd.MarkFlagRequired(flagDenom)
+	cmd.MarkFlagRequired(flagPrice)
 
 	return cmd
 }

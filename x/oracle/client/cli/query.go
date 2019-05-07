@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/oracle"
 	"strings"
+
+	"github.com/terra-project/core/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,6 +25,7 @@ func (dl DenomList) String() (out string) {
 func GetCmdQueryPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryPrice,
+		Args:  cobra.NoArgs,
 		Short: "Query the current price of a denom asset",
 		Long: strings.TrimSpace(`
 Query the current price of a denom asset. You can find the current list of active denoms by running: terracli query oracle active
@@ -51,6 +52,8 @@ $ terracli query oracle price --denom ukrw
 	}
 
 	cmd.Flags().String(flagDenom, "", "target denom to get the price")
+
+	cmd.MarkFlagRequired(flagDenom)
 	return cmd
 }
 
@@ -58,6 +61,7 @@ $ terracli query oracle price --denom ukrw
 func GetCmdQueryActive(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryActive,
+		Args:  cobra.NoArgs,
 		Short: "Query the active list of Terra assets recognized by the oracle",
 		Long: strings.TrimSpace(`
 Query the active list of Terra assets recognized by the oracle.
@@ -85,6 +89,7 @@ $ terracli query oracle active
 func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryVotes,
+		Args:  cobra.NoArgs,
 		Short: "Query outstanding oracle votes, filtered by denom and voter address.",
 		Long: strings.TrimSpace(`
 Query outstanding oracle votes, filtered by denom and voter address.
@@ -97,13 +102,6 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			if len(denom) == 0 {
-				return fmt.Errorf("--denom flag is required")
-			}
-
-			if !assets.IsValidDenom(denom) {
-				return fmt.Errorf("The denom is not known: %s", denom)
-			}
 
 			// Check voter address exists, then valids
 			var voterAddress sdk.AccAddress
@@ -139,6 +137,8 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 	cmd.Flags().String(flagDenom, "", "filter by votes matching the denom")
 	cmd.Flags().String(flagVoter, "", "(optional) filter by votes by voter")
 
+	cmd.MarkFlagRequired(flagDenom)
+
 	return cmd
 }
 
@@ -146,6 +146,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryParams,
+		Args:  cobra.NoArgs,
 		Short: "Query the current Oracle params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

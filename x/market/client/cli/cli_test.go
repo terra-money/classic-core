@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 )
 
-func TestWithdrawRewardsTx(t *testing.T) {
+func TestSwapTx(t *testing.T) {
 	cdc, rootCmd, txCmd, _ := testutil.PrepareCmdTest()
 
 	marketTxCmd := &cobra.Command{

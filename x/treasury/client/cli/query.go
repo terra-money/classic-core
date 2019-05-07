@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/treasury"
 	"strings"
+
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -84,10 +84,6 @@ $ terracli query treasury taxcap --denom="ukrw"
 				return fmt.Errorf("--denom flag is required")
 			}
 
-			if !assets.IsValidDenom(denom) {
-				return fmt.Errorf("given denom {%s} is not a valid one", denom)
-			}
-
 			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap, denom), nil)
 			if err != nil {
 				return err
@@ -120,10 +116,6 @@ $ terracli query treasury issuance --denom="ukrw"
 			denom := viper.GetString(flagDenom)
 			if len(denom) == 0 {
 				return fmt.Errorf("--denom flag is required")
-			}
-
-			if !assets.IsValidDenom(denom) {
-				return fmt.Errorf("given denom {%s} is not a valid one", denom)
 			}
 
 			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)

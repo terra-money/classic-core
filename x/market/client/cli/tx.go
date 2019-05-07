@@ -19,6 +19,7 @@ import (
 const (
 	flagOfferCoin = "offer-coin"
 	flagAskDenom  = "ask-denom"
+	flagOffline   = "offline"
 )
 
 // GetSwapCmd will create and send a MsgSwap
@@ -53,17 +54,21 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 			}
 
 			fromAddress := cliCtx.GetFromAddress()
-			fromAccount, err := cliCtx.GetAccount(fromAddress)
-			if err != nil {
-				return err
-			}
 
-			if fromAccount.GetCoins().AmountOf(offerCoin.Denom).LT(offerCoin.Amount) {
-				return fmt.Errorf(strings.TrimSpace(`
-					account %s has insufficient amount of coins to pay the offered coins.\n
-					Required: %s\n
-					Given:    %s\n`),
-					fromAddress, offerCoin, fromAccount.GetCoins())
+			offline := viper.GetBool(flagOffline)
+			if !offline {
+				fromAccount, err := cliCtx.GetAccount(fromAddress)
+				if err != nil {
+					return err
+				}
+
+				if fromAccount.GetCoins().AmountOf(offerCoin.Denom).LT(offerCoin.Amount) {
+					return fmt.Errorf(strings.TrimSpace(`
+						account %s has insufficient amount of coins to pay the offered coins.\n
+						Required: %s\n
+						Given:    %s\n`),
+						fromAddress, offerCoin, fromAccount.GetCoins())
+				}
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
@@ -73,12 +78,13 @@ $ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, false)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
 	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000ukrw")
 	cmd.Flags().String(flagAskDenom, "", "Denom of the asset to swap to")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(flagOfferCoin)
 	cmd.MarkFlagRequired(flagAskDenom)

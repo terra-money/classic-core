@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/oracle"
 	"net/http"
+
+	"github.com/terra-project/core/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,12 +25,6 @@ func queryVotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
-
-		if !assets.IsValidDenom(denom) {
-			err := fmt.Errorf("The denom is not known: %s", denom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		voter := vars[RestVoter]
 
@@ -65,12 +59,6 @@ func queryPriceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
-
-		if !assets.IsValidDenom(denom) {
-			err := fmt.Errorf("The denom is not known: %s", denom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", oracle.QuerierRoute, oracle.QueryPrice, denom), nil)
 		if err != nil {
