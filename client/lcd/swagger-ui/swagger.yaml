@@ -1,15 +1,14 @@
-swagger: '2.0'
+---
+swagger: "2.0"
 info:
-  version: '1.0.0'
+  version: "3.0"
   title: 'Terra-Lite for Terra'
-  description: 'A REST interface for state queries, transaction generation, signing, and broadcast.'
+  description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
   - name: Tendermint
     description: Tendermint APIs, such as query blocks, transactions and validatorset
-  - name: Keys
-    description: Key management APIs
   - name: Transaction
-    description: Create, sign and broadcast transactions
+    description: Create and broadcast transactions
   - name: Staking
     description: Stake module APIs
   - name: Slashing
@@ -28,8 +27,10 @@ tags:
     description: Query app version
 schemes:
   - https
-  - http
-host: soju.terra.money:1317
+host: ricewine-lcd.terra.money
+securityDefinitions:
+  kms:
+    type: basic
 paths:
   /version:
     get:
@@ -70,9 +71,20 @@ paths:
               moniker:
                 type: string
                 example: validator-name
+              protocol_version:
+                properties:
+                  p2p:
+                    type: string
+                    example: 7
+                  block:
+                    type: string
+                    example: 10
+                  app:
+                    type: string
+                    example: 0
               network:
                 type: string
-                example: soju-0005
+                example: ricewine-0001
               channels:
                 type: string
               listen_addr:
@@ -84,9 +96,14 @@ paths:
                 example: 0.15.0
               other:
                 description: more information on versions
-                type: array
-                items:
-                  type: string
+                type: object
+                properties:
+                  tx_index:
+                    type: string
+                    example: on
+                  rpc_address:
+                    type: string
+                    example: tcp://0.0.0.0:26657
         500:
           description: Failed to query node status
   /syncing:
@@ -127,6 +144,7 @@ paths:
           description: Block height
           required: true
           type: number
+          x-example: 1
       responses:
         200:
           description: The block at a specific height
@@ -172,6 +190,7 @@ paths:
           description: Block height
           required: true
           type: number
+          x-example: 1
       responses:
         200:
           description: The validator set at a specific block height
@@ -203,6 +222,7 @@ paths:
           description: Tx hash
           required: true
           type: string
+          x-example: 88D6B85EAB87D43CDF50F39C22FC2237A37FEDC4CE723200AD0AF48CBEDBC317
       responses:
         200:
           description: Tx with the provided hash
@@ -222,23 +242,24 @@ paths:
         - in: query
           name: tag
           type: string
-          description: "transaction tags such as 'action=submit-proposal' and 'proposer=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc' which results in the following endpoint: 'GET /txs?action=submit-proposal&proposer=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc'"
+          description: "transaction tags such as 'action=submit-proposal' and 'sender=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc' which results in the following endpoint: 'GET /txs?action=submit-proposal&sender=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc'"
           required: true
+          x-example: 'TODO'
         - in: query
           name: page
-          description: Pagination page
+          description: Page number
           type: integer
+          x-example: 1
         - in: query
-          name: size
-          description: Pagination size
+          name: limit
+          description: Maximum number of items per page
           type: integer
+          x-example: 1
       responses:
         200:
           description: All txs matching the provided tags
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/TxQuery"
+            $ref: "#/definitions/PaginatedQueryTxs"
         400:
           description: Invalid search tags
         500:
@@ -246,8 +267,8 @@ paths:
     post:
       tags:
         - Tendermint
-      summary: broadcast Tx
-      description: broadcast tx with tendermint rpc
+      summary: Broadcast a signed tx
+      description: Broadcast a signed tx to a full node
       consumes:
         - application/json
       produces:
@@ -255,93 +276,28 @@ paths:
       parameters:
         - in: body
           name: txBroadcast
-          description: Build a StdTx transaction and serilize it to a byte array with amino, then the `"tx"` field in the post body will be the base64 encoding of the byte array. The supported return types includes `"block"`(return after tx commit), `"sync"`(return afer CheckTx) and `"async"`(return right away).
+          description: The tx must be a signed StdTx. The supported broadcast modes include `"block"`(return after tx commit), `"sync"`(return afer CheckTx) and `"async"`(return right away).
           required: true
           schema:
             type: object
             properties:
               tx:
-                type: string
-              return:
+                $ref: "#/definitions/StdTx"
+              mode:
                 type: string
                 example: block
       responses:
         200:
-          description: Broadcast tx result
+          description: Tx broadcasting result
           schema:
             $ref: "#/definitions/BroadcastTxCommitResult"
         500:
           description: Internal Server Error
-  /tx/sign:
+  /txs/encode:
     post:
       tags:
         - Transaction
-      summary: Sign a Tx
-      description: Sign a Tx providing locally stored account and according password
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: sendToken
-          description: sign tx
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              tx:
-                $ref: "#/definitions/StdTx"
-              append_sig:
-                type: boolean
-                example: true
-      responses:
-        200:
-          description: The signed Tx
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: The Tx was malformated or key doesn't exist
-        401:
-          description: Key password is wrong
-        500:
-          description: Server internal error
-  /tx/broadcast:
-    post:
-      tags:
-        - Transaction
-      summary: Send a signed Tx
-      description: Send a signed Tx to a Terrad full node
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: txBroadcast
-          description: broadcast tx
-          required: true
-          schema:
-            type: object
-            properties:
-              tx:
-                $ref: "#/definitions/StdTx"
-      responses:
-        202:
-          description: Tx was send and will probably be added to the next block
-          schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
-        400:
-          description: The Tx was malformated
-        500:
-          description: Server internal error
-  /tx/encode:
-    post:
-      tags:
-        - Transaction
-      summary: Encode a transaction to wire format
+      summary: Encode a transaction to the Amino wire format
       description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
       consumes:
         - application/json
@@ -350,7 +306,7 @@ paths:
       parameters:
         - in: body
           name: tx
-          description: The transaction to encode
+          description: The tx to encode
           required: true
           schema:
             type: object
@@ -359,15 +315,15 @@ paths:
                 $ref: "#/definitions/StdTx"
       responses:
         200:
-          description: Transaction was successfully decoded and re-encoded
+          description: The tx was successfully decoded and re-encoded
           schema:
             type: object
             properties:
               tx:
                 type: string
-                example: The base64-encoded Amino-serialized bytes for the transaction
+                example: The base64-encoded Amino-serialized bytes for the tx
         400:
-          description: The Tx was malformated
+          description: The tx was malformated
         500:
           description: Server internal error
   /bank/balances/{address}:
@@ -383,6 +339,7 @@ paths:
           description: Account address in bech32 format
           required: true
           type: string
+          x-example: cosmos16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
       responses:
         200:
           description: Account balances
@@ -396,8 +353,7 @@ paths:
           description: Server internal error
   /bank/accounts/{address}/transfers:
     post:
-      summary: Send coins (build -> sign -> send)
-      description: Send coins (build -> sign -> send)
+      summary: Send coins from one account to another
       tags:
         - Transaction
       consumes:
@@ -410,9 +366,10 @@ paths:
           description: Account address in bech32 format
           required: true
           type: string
+          x-example: cosmos16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
         - in: body
           name: account
-          description: The password of the account to remove from the KMS
+          description: The sender and tx information
           required: true
           schema:
             type: object
@@ -425,188 +382,13 @@ paths:
                   $ref: "#/definitions/Coin"
       responses:
         202:
-          description: Tx was send and will probably be added to the next block
+          description: Tx was succesfully generated
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Invalid request
-        401:
-          description: Key password is wrong
         500:
           description: Server internal error
-  /keys:
-    get:
-      summary: List of accounts stored locally
-      tags:
-        - Keys
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Array of accounts
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/KeyOutput"
-        500:
-          description: Server internal error
-    post:
-      summary: Create a new account locally
-      tags:
-        - Keys
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: account
-          description: The account to create
-          schema:
-            type: object
-            required:
-              - name
-              - password
-              - seed
-            properties:
-              name:
-                type: string
-              password:
-                type: string
-              seed:
-                type: string
-      responses:
-        200:
-          description: Returns account information of the created key
-          schema:
-            $ref: "#/definitions/KeyOutput"
-        400:
-          description: Invalid request
-        409:
-          description: Key name confliction
-        500:
-          description: Server internal error
-  /keys/seed:
-    get:
-      summary: Create a new seed to create a new account with
-      tags:
-        - Keys
-      responses:
-        200:
-          description: 24 word Seed
-          schema:
-            type: string
-            example: blossom pool issue kidney elevator blame furnace winter account merry vessel security depend exact travel bargain problem jelly rural net again mask roast chest
-  /keys/{name}/recover:
-    post:
-      summary: Recover a account from a seed
-      tags:
-        - Keys
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: name
-          description: Account name
-          required: true
-          type: string
-        - in: body
-          name: pwdAndSeed
-          description: Provide password and seed to recover a key
-          schema:
-            type: object
-            required:
-              - password
-              - seed
-            properties:
-              password:
-                type: string
-              seed:
-                type: string
-      responses:
-        200:
-          description: Returns account information of the recovered key
-          schema:
-            $ref: "#/definitions/KeyOutput"
-        400:
-          description: Invalid request
-        409:
-          description: Key name confliction
-        500:
-          description: Server internal error
-  /keys/{name}:
-    parameters:
-      - in: path
-        name: name
-        description: Account name
-        required: true
-        type: string
-    get:
-      summary: Get a certain locally stored account
-      tags:
-        - Keys
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Locally stored account
-          schema:
-            $ref: "#/definitions/KeyOutput"
-        404:
-          description: Key doesn't exist
-    put:
-      summary: Update the password for this account in the KMS
-      tags:
-        - Keys
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: account
-          description: The new and old password
-          schema:
-            type: object
-            required:
-              - new_password
-              - old_password
-            properties:
-              new_password:
-                type: string
-              old_password:
-                type: string
-      responses:
-        200:
-          description: Updated password
-        401:
-          description: Key password is wrong
-        404:
-          description: Key doesn't exist
-    delete:
-      summary: Remove an account
-      tags:
-        - Keys
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: account
-          description: The password of the account to remove from the KMS
-          schema:
-            type: object
-            required:
-              - password
-            properties:
-              password:
-                type: string
-      responses:
-        200:
-          description: Removed account
-        401:
-          description: Key password is wrong
-        404:
-          description: Key doesn't exist
   /auth/accounts/{address}:
     get:
       summary: Get the account information on blockchain
@@ -620,6 +402,7 @@ paths:
           description: Account address
           required: true
           type: string
+          x-example: cosmos16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
       responses:
         200:
           description: Account information on the blockchain
@@ -640,7 +423,7 @@ paths:
                     items:
                       $ref: "#/definitions/Coin"
                   public_key:
-                    $ref: "#/definitions/PubKey"
+                    type: string
                   sequence:
                     type: string
         204:
@@ -654,6 +437,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Get all delegations from a delegator
       tags:
@@ -682,9 +466,9 @@ paths:
             properties:
               base_req:
                 $ref: "#/definitions/BaseReq"
-              delegator_addr:
+              delegator_address:
                 $ref: "#/definitions/Address"
-              validator_addr:
+              validator_address:
                 $ref: "#/definitions/ValidatorAddress"
               delegation:
                 $ref: "#/definitions/Coin"
@@ -712,11 +496,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Query the current delegation between a delegator and a validator
       tags:
@@ -739,6 +525,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Get all unbonding delegations from a delegator
       tags:
@@ -767,9 +554,9 @@ paths:
             properties:
               base_req:
                 $ref: "#/definitions/BaseReq"
-              delegator_addr:
+              delegator_address:
                 $ref: "#/definitions/Address"
-              validator_addr:
+              validator_address:
                 $ref: "#/definitions/ValidatorAddress"
               shares:
                 type: string
@@ -798,11 +585,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Query all unbonding delegations between a delegator and a validator
       tags:
@@ -859,22 +648,23 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     post:
       summary: Submit a redelegation
       parameters:
         - in: body
           name: delegation
-          description: The password of the account to remove from the KMS
+          description: The sender and tx information
           schema:
             type: object
             properties:
               base_req:
                 $ref: "#/definitions/BaseReq"
-              delegator_addr:
+              delegator_address:
                 $ref: "#/definitions/Address"
-              validator_src_addr:
+              validator_src_addressess:
                 $ref: "#/definitions/ValidatorAddress"
-              validator_dst_addr:
+              validator_dst_address:
                 $ref: "#/definitions/ValidatorAddress"
               shares:
                 type: string
@@ -887,13 +677,11 @@ paths:
         - application/json
       responses:
         200:
-          description: OK
+          description: Tx was succesfully generated
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Invalid delegator address or redelegation request body
-        401:
-          description: Key password is wrong
         500:
           description: Internal Server Error
   /staking/delegators/{delegatorAddr}/validators:
@@ -903,6 +691,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Query all validators that a delegator is bonded to
       tags:
@@ -927,11 +716,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
       - in: path
         name: validatorAddr
         description: Bech32 ValAddress of Delegator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Query a validator that a delegator is bonded to
       tags:
@@ -954,6 +745,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Get all staking txs (i.e msgs) from a delegator
       tags:
@@ -975,7 +767,23 @@ paths:
           description: Internal Server Error
   /staking/validators:
     get:
-      summary: Get all validator candidates
+      summary: Get all validator candidates. By default it returns only the bonded validators.
+      parameters:
+        - in: query
+          name: status
+          type: string
+          description: The validator bond status. Must be either 'bonded', 'unbonded', or 'unbonding'.
+          x-example: bonded
+        - in: query
+          name: page
+          description: The page number.
+          type: integer
+          x-example: 1
+        - in: query
+          name: limit
+          description: The maximum number of items per page.
+          type: integer
+          x-example: 1
       tags:
         - Staking
       produces:
@@ -996,6 +804,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Query the information from a single validator
       tags:
@@ -1018,6 +827,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Get all delegations from a validator
       tags:
@@ -1042,6 +852,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Get all unbonding delegations from a validator
       tags:
@@ -1129,24 +940,50 @@ paths:
           name: validatorPubKey
           required: true
           in: path
+          x-example: cosmosvalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              start_height:
-                type: string
-              index_offset:
-                type: string
-              jailed_until:
-                type: string
-              missed_blocks_counter:
-                type: string
+            $ref: "#/definitions/SigningInfo"
         204:
           description: No sign info of this validator
         400:
           description: Invalid validator public key
+        500:
+          description: Internal Server Error
+  /slashing/signing_infos:
+    get:
+      summary: Get sign info of given all validators
+      description: Get sign info of all validators
+      produces:
+        - application/json
+      tags:
+        - Slashing
+      parameters:
+        - in: query
+          name: page
+          description: Page number
+          type: integer
+          required: true
+          x-example: 1
+        - in: query
+          name: limit
+          description: Maximum number of items per page
+          type: integer
+          required: true
+          x-example: 5
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/SigningInfo"
+        204:
+          description: No validators with sign info
+        400:
+          description: Invalid validator public key for one of the validators
         500:
           description: Internal Server Error
   /slashing/validators/{validatorAddr}/unjail:
@@ -1165,6 +1002,7 @@ paths:
           name: validatorAddr
           required: true
           in: path
+          x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
         - description: ""
           name: UnjailBody
           in: body
@@ -1173,16 +1011,14 @@ paths:
             type: object
             properties:
               base_req:
-                $ref: "#/definitions/BaseReq"
+                $ref: "#/definitions/StdTx"
       responses:
         200:
-          description: OK
+          description: Tx was succesfully generated
           schema:
             $ref: "#/definitions/BroadcastTxCommitResult"
         400:
           description: Invalid validator address or base_req
-        401:
-          description: Key password is wrong
         500:
           description: Internal Server Error
   /slashing/parameters:
@@ -1221,6 +1057,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Get the total rewards balance from all delegations
       description: Get the sum of all the rewards earned by delegations by a single delegator
@@ -1232,9 +1069,7 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            $ref: "#/definitions/DelegatorTotalRewards"
         400:
           description: Invalid delegator address
         500:
@@ -1273,11 +1108,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Query a delegation reward
       description: Query a single delegation reward by a delegator
@@ -1330,6 +1167,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
+        x-example: cosmos167w96tdvmazakdwkw2u57227eduula2cy572lf
     get:
       summary: Get the rewards withdrawal address
       description: Get the delegations' rewards withdrawal address. This is the address in which the user will receive the reward funds
@@ -1382,6 +1220,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
       summary: Validator distribution information
       description: Query the distribution information of a single validator
@@ -1398,6 +1237,29 @@ paths:
           description: Invalid validator address
         500:
           description: Internal Server Error
+  /distribution/validators/{validatorAddr}/outstanding_rewards:
+    parameters:
+      - in: path
+        name: validatorAddr
+        description: Bech32 OperatorAddress of validator
+        required: true
+        type: string
+        x-example: cosmosvaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+    get:
+      summary: Fee distribution outstanding rewards of a single validator
+      tags:
+        - Distribution
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        500:
+          description: Internal Server Error
   /distribution/validators/{validatorAddr}/rewards:
     parameters:
       - in: path
@@ -1405,11 +1267,12 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
+        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
     get:
-      summary: Commission and self-delegation rewards of a single a validator
-      description: Query the commission and self-delegation rewards of a validator.
+      summary: Commission and self-delegation rewards of a single validator
+      description: Query the commission and self-delegation rewards of validator.
       tags:
-        - Distribution
+        - ICS24
       produces:
         - application/json
       responses:
@@ -1427,7 +1290,7 @@ paths:
       summary: Withdraw the validator's rewards
       description: Withdraw the validator's self-delegation and commissions rewards
       tags:
-        - Distribution
+        - ICS24
       consumes:
         - application/json
       produces:
@@ -1450,6 +1313,22 @@ paths:
           description: Key password is wrong
         500:
           description: Internal Server Error
+  /distribution/community_pool:
+    get:
+      summary: Community pool parameters
+      tags:
+        - ICS24
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        500:
+          description: Internal Server Error
   /distribution/parameters:
     get:
       summary: Fee distribution parameters
@@ -1468,22 +1347,6 @@ paths:
                 type: string
               community_tax:
                 type: string
-        500:
-          description: Internal Server Error
-  /distribution/outstanding_rewards:
-    get:
-      summary: Fee distribution outstanding rewards
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
   /budget/program/submit:
@@ -2045,10 +1908,6 @@ definitions:
     type: string
     description: bech32 encoded address
     example: terravaloper14tdn4vj6tf6a9n2h8rx7pgqazxsagrzx3sxy46
-  PubKey:
-    type: string
-    description: public key
-    example: terrapub1addwnpepqvxwas5gsrczzdgr0u938tycdzvetpkcudtd5dp2aetahvpp4m0s6eldezg
   Coin:
     type: object
     properties:
@@ -2066,8 +1925,10 @@ definitions:
     properties:
       hash:
         type: string
+        example: "D085138D913993919295FF4B0A9107F1F2CDE0D37A87CE0644E217CBF3B49656"
       height:
         type: number
+        example: 368
       tx:
         $ref: "#/definitions/StdTx"
       result:
@@ -2077,14 +1938,36 @@ definitions:
             type: string
           gas_wanted:
             type: string
-            example: "0"
+            example: "200000"
           gas_used:
             type: string
-            example: "0"
+            example: "26354"
           tags:
             type: array
             items:
               $ref: "#/definitions/KVPair"
+  PaginatedQueryTxs:
+    type: object
+    properties:
+      total_count:
+        type: number
+        example: 1
+      count:
+        type: number
+        example: 1
+      page_number:
+        type: number
+        example: 1
+      page_total:
+        type: number
+        example: 1
+      limit:
+        type: number
+        example: 30
+      txs:
+        type: array
+        items:
+          $ref: "#/definitions/TxQuery"
   StdTx:
     type: object
     properties:
@@ -2124,21 +2007,6 @@ definitions:
           sequence:
             type: string
             example: "0"
-  KeyOutput:
-    type: object
-    properties:
-      name:
-        type: string
-        example: Main Account
-      address:
-        $ref: "#/definitions/Address"
-      pub_key:
-        $ref: "#/definitions/PubKey"
-      type:
-        type: string
-        example: local
-      seed:
-        type: string
   BlockID:
     type: object
     properties:
@@ -2157,7 +2025,7 @@ definitions:
     properties:
       chain_id:
         type: string
-        example: "soju-0004"
+        example: ricewine-0001
       height:
         type: number
         example: 1
@@ -2190,6 +2058,15 @@ definitions:
         $ref: "#/definitions/Hash"
       proposer_address:
         $ref: "#/definitions/Address"
+      version:
+        type: object
+        properties:
+          block:
+            type: string
+            example: 10
+          app:
+            type: string
+            example: 0
   Block:
     type: object
     properties:
@@ -2247,22 +2124,39 @@ definitions:
             $ref: "#/definitions/BlockID"
       block:
         $ref: "#/definitions/Block"
+  DelegationDelegatorReward:
+    type: object
+    properties:
+      validator_address:
+        $ref: "#/definitions/ValidatorAddress"
+      reward:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+  DelegatorTotalRewards:
+    type: object
+    properties:
+      rewards:
+        type: array
+        items:
+          $ref: "#/definitions/DelegationDelegatorReward"
+      total:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
   BaseReq:
     type: object
     properties:
       from:
         type: string
-        example: "my_name"
+        example: "terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc"
         description: Sender address or Keybase name to generate a transaction
-      password:
-        type: string
-        example: "12345678"
       memo:
         type: string
         example: "Sent via Terra Voyager 🚀"
       chain_id:
         type: string
-        example: "soju-0005"
+        example: "ricewine-0001"
       account_number:
         type: string
         example: "0"
@@ -2279,14 +2173,6 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Coin"
-      gas_prices:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      generate_only:
-        type: boolean
-        example: false
-        description: Create a JSON transaction that can be signed client side instead of actually signing and broadcasting
       simulate:
         type: boolean
         example: false
@@ -2297,13 +2183,55 @@ definitions:
       address:
         $ref: "#/definitions/ValidatorAddress"
       pub_key:
-        $ref: "#/definitions/PubKey"
-      power:
+        type: string
+        example: terravalconspub1zcjduepq7sjfglw7ra4mjxpw4ph7dtdhdheh7nz8dfgl6t8u2n5szuuql9mqsrwquu
+      voting_power:
         type: string
         example: "1000"
-      accum:
+      proposer_priority:
         type: string
         example: "1000"
+  TextProposal:
+    type: object
+    properties:
+      proposal_id:
+        type: integer
+      title:
+        type: string
+      description:
+        type: string
+      proposal_type:
+        type: string
+      proposal_status:
+        type: string
+      final_tally_result:
+        $ref: "#/definitions/TallyResult"
+      submit_time:
+        type: string
+      total_deposit:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      voting_start_time:
+        type: string
+  Proposer:
+    type: object
+    properties:
+      proposal_id:
+        type: integer
+      proposer:
+        type: string
+  Deposit:
+    type: object
+    properties:
+      amount:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      proposal_id:
+        type: integer
+      depositor:
+        $ref: "#/definitions/Address"
   TallyResult:
     type: object
     properties:
@@ -2319,13 +2247,23 @@ definitions:
       no_with_veto:
         type: string
         example: "0.0000000000"
+  Vote:
+    type: object
+    properties:
+      voter:
+        type: string
+      proposal_id:
+        type: integer
+      option:
+        type: string
   Validator:
     type: object
     properties:
       operator_address:
         $ref: "#/definitions/ValidatorAddress"
       consensus_pubkey:
-        $ref: "#/definitions/PubKey"
+        type: string
+        example: terravalconspub1zcjduepq7sjfglw7ra4mjxpw4ph7dtdhdheh7nz8dfgl6t8u2n5szuuql9mqsrwquu
       jailed:
         type: boolean
       status:
@@ -2375,9 +2313,9 @@ definitions:
   Delegation:
     type: object
     properties:
-      delegator_addr:
+      delegator_address:
         type: string
-      validator_addr:
+      validator_address:
         type: string
       shares:
         type: string
@@ -2386,9 +2324,9 @@ definitions:
   UnbondingDelegation:
     type: object
     properties:
-      delegator_addr:
+      delegator_address:
         type: string
-      validator_addr:
+      validator_address:
         type: string
       initial_balance:
         type: string
@@ -2401,11 +2339,11 @@ definitions:
   Redelegation:
     type: object
     properties:
-      delegator_addr:
+      delegator_address:
         type: string
-      validator_src_addr:
+      validator_src_address:
         type: string
-      validator_dst_addr:
+      validator_dst_address:
         type: string
       creation_height:
         type: integer
@@ -2422,7 +2360,7 @@ definitions:
   ValidatorDistInfo:
     type: object
     properties:
-      operator_addr:
+      operator_address:
         $ref: "#/definitions/ValidatorAddress"
       self_bond_rewards:
         type: array
@@ -2432,6 +2370,31 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Coin"
+  SigningInfo:
+    type: object
+    properties:
+      start_height:
+        type: string
+      index_offset:
+        type: string
+      jailed_until:
+        type: string
+      missed_blocks_counter:
+        type: string
+  ParamChange:
+    type: object
+    properties:
+      subspace:
+        type: string
+        example: "staking"
+      key:
+        type: string
+        example: "MaxValidators"
+      subkey:
+        type: string
+        example: ""
+      value:
+        type: object
   SwapReq:
     type: object
     properties:
