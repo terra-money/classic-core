@@ -25,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
+	authcustom "github.com/terra-project/core/x/auth/client/rest"
 	bank "github.com/terra-project/core/x/bank/client/rest"
 	dist "github.com/terra-project/core/x/distribution/client/rest"
 	staking "github.com/terra-project/core/x/staking/client/rest"
@@ -203,6 +204,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 
+	authcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	pay.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	treasury.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
