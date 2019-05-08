@@ -1272,7 +1272,7 @@ paths:
       summary: Commission and self-delegation rewards of a single validator
       description: Query the commission and self-delegation rewards of validator.
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1290,7 +1290,7 @@ paths:
       summary: Withdraw the validator's rewards
       description: Withdraw the validator's self-delegation and commissions rewards
       tags:
-        - ICS24
+        - Distribution
       consumes:
         - application/json
       produces:
@@ -1317,7 +1317,7 @@ paths:
     get:
       summary: Community pool parameters
       tags:
-        - ICS24
+        - Distribution
       produces:
         - application/json
       responses:
@@ -1365,7 +1365,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Bad Request
         500:
@@ -1383,16 +1383,20 @@ paths:
           description: Program ID
           required: true
           type: integer
+        - in: body
+          name: Post Withdraw request body
+          schema:
+            $ref: "#/definitions/withdrawReq"
       responses:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programId}/vote:
+  /budget/program/{programId}/votes:
     post:
       summary: Vote to the program by programId
       tags:
@@ -1408,40 +1412,16 @@ paths:
         - in: body
           name: Budget Vote request body
           schema:
-            $ref: "#/definitions/BudgetVoteReq"
+            $ref: "#/definitions/budgetVoteReq"
       responses:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-
-  /budget/program/{programId}:
-    get:
-      summary: Get a budget program by program-id
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: programId
-          description: Program ID
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Program"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-
   /budget/program/actives:
     get:
       summary: Get active budget programs
@@ -1478,6 +1458,28 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /budget/program/{programId}:
+    get:
+      summary: Get a budget program by program-id
+      tags:
+        - Budget
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: programId
+          description: Program ID
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Program"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /budget/program/{programID}/votes/{voter}:
     get:
       summary: Get the budget program voting record of RestVoter
@@ -1488,12 +1490,12 @@ paths:
       parameters:
         - in: path
           name: programID
-          description: Program ID
+          description: Program ID to get
           required: true
           type: integer
         - in: path
           name: voter
-          description: Voter Address, bech32
+          description: Bech32 OperatorAddress of voter
           required: true
           type: string
       responses:
@@ -1537,10 +1539,10 @@ paths:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         500:
           description: Internal Server Error
-  /oracle/vote:
+  /oracle/denoms/{denom}/votes:
     post:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
@@ -1548,6 +1550,11 @@ paths:
       produces:
         - application/json
       parameters:
+        - in: path
+          name: denom
+          description: The coin denom to vote
+          required: true
+          type: string
         - in: body
           name: Vote request body
           schema:
@@ -1556,14 +1563,35 @@ paths:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/BroadcastTxCommitResult"
+            $ref: "#/definitions/StdTx"
         400:
           description: Bad request
-        401:
-          description: Must use own address
         500:
           description: Internal Server Error
-  /oracle/vote/{denom}/{voter}:
+    get:
+      summary: Request to get the currently unelected outstanding price oracle vote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: The coin denom to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PriceVote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/denoms/{denom}/votes/{voter}:
     get:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
@@ -1591,7 +1619,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/price/{denom}:
+  /oracle/denoms/{denom}/price:
     get:
       summary: Get the current effective price in Luna for the asset
       tags:
@@ -1611,7 +1639,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/active:
+  /oracle/denoms/active:
     get:
       summary: Get all activated Coins
       tags:
@@ -1644,6 +1672,22 @@ paths:
             $ref: "#/definitions/OracleParams"
         400:
           description: Bad Request
+        500:
+          description: Internal Server Error
+  /treasury/tax-rate:
+    get:
+      summary: Get current tax rate
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "0.05"
         500:
           description: Internal Server Error
   /treasury/tax-rate/{epoch}:
@@ -1686,12 +1730,12 @@ paths:
           description: OK
           schema:
             type: integer
-            example: "1"
+            example: "100000"
         404:
           description: Not Found
-  /treasury/reward-weight/{epoch}:
+  /treasury/reward-weight:
     get:
-      summary: Get reward weight at epoch
+      summary: Get current reward weight
       tags:
         - Treasury
       produces:
@@ -1702,6 +1746,28 @@ paths:
           description: Epoch number
           required: true
           type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            example: "5"
+            description: 5%
+        500:
+      description: Internal Server Error
+  /treasury/reward-weight/{denom}:
+    get:
+      summary: Get reward weight at epoch
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: Denom
+          required: true
+          type: string
       responses:
         200:
           description: OK
@@ -1732,6 +1798,22 @@ paths:
             example: "500"
         500:
           description: Internal Server Error
+  /treasury/tax-proceeds:
+    get:
+      summary: Get current tax proceeds
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        500:
+          description: Internal Server Error
   /treasury/tax-proceeds/{epoch}:
     get:
       summary: Get tax proceeds at epoch
@@ -1754,6 +1836,21 @@ paths:
               $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
+  /treasury/seigniorage-proceeds:
+    get:
+      summary: retrieves the size of the seigniorage pool
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: integer
+            example: "0"
+        500:
+          description: Internal Server
   /treasury/seigniorage-proceeds/{epoch}:
     get:
       summary: retrieves the size of the seigniorage pool at epoch
@@ -1802,9 +1899,8 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Claim"
+            type: number
+            example: "724"
         404:
           description: Not Found
   /treasury/params:
@@ -2405,31 +2501,19 @@ definitions:
       ask_denom:
         type: string
         example: luna
-      trader_address:
-        $ref: "#/definitions/Address"
   VoteReq:
     type: object
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
-      target_price:
+      price:
         type: number
         example: "1000.0"
-      current_price:
-        type: number
-        example: "1000.0"
-      denom:
-        type: string
-        example: luna
-      voter_address:
-        $ref: "#/definitions/Address"
-  BudgetVoteReq:
+  budgetVoteReq:
     type: object
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
-      voter:
-        $ref: "#/definitions/Address"
       option:
         type: boolean
   PriceVote:
@@ -2440,10 +2524,7 @@ definitions:
         example: "0.01241"
       denom:
         type: string
-        example: "krt"
-      power:
-        type: number
-        example: "100"
+        example: "ukrt"
       voter:
         $ref: "#/definitions/Address"
   submitProgramReq:
@@ -2457,18 +2538,18 @@ definitions:
       description:
         type: string
         example: "description"
-      Program_type:
-        type: string
-        example: "PlainTextProgram, SoftwareUpgradeProgram"
-      submitter:
-        $ref: "#/definitions/Address"
       executor:
         $ref: "#/definitions/Address"
-      deposit:
-        $ref: "#/definitions/Coin"
+  withdrawReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
   Program:
     type: object
     properties:
+      program_id:
+        type: number
       title:
         type: string
       description:
@@ -2478,16 +2559,7 @@ definitions:
       executor:
         $ref: "#/definitions/Address"
       submit_time:
-        type: string
-        format: "2006-01-02T15:04:05.999999999Z07:00"
-      deposit:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      tally_result:
-        $ref: "#/definitions/TallyResult"
-      state:
-        type: string
+        type: number
   MsgVoteProgram:
     type: object
     properties:
@@ -2523,6 +2595,9 @@ definitions:
       drop_threshold:
         type: number
         example: "10"
+      oracle_reward_band:
+        type: number
+        example: "0.02"
   Claim:
     type: object
     properties:
@@ -2570,13 +2645,13 @@ definitions:
         type: number
         format: float
         example: "1.07"
-      epoch_short:
+      window_short:
         type: integer
         example: "4"
-      epoch_long:
+      window_long:
         type: integer
         example: "52"
-      epoch_probation:
+      window_probation:
         type: integer
         example: "12"
       oracle_share:
