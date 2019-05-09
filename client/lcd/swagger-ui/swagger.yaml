@@ -1754,7 +1754,7 @@ paths:
             example: "5"
             description: 5%
         500:
-      description: Internal Server Error
+          description: Internal Server Error
   /treasury/reward-weight/{denom}:
     get:
       summary: Get reward weight at epoch
