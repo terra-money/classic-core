@@ -26,9 +26,6 @@ func NewHandler(k bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper) 
 		case bank.MsgMultiSend:
 			return handleMsgMultiSend(ctx, k, tk, fk, msg)
 
-		case MsgPay, MsgMultiPay:
-			return ErrPayDisabled(DefaultCodespace).Result()
-
 		default:
 			errMsg := "Unrecognized bank Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()

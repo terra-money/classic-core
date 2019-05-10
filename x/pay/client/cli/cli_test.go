@@ -8,16 +8,16 @@ import (
 	"github.com/terra-project/core/testutil"
 )
 
-func TestPayTx(t *testing.T) {
+func TestSendTx(t *testing.T) {
 	cdc, rootCmd, txCmd, _ := testutil.PrepareCmdTest()
 
-	txCmd.AddCommand(PayTxCmd(cdc))
+	txCmd.AddCommand(SendTxCmd(cdc))
 
 	// normal case all parameter given
 	_, err := testutil.ExecuteCommand(
 		rootCmd,
 		`tx`,
-		`pay`,
+		`send`,
 		`--from=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,
 		`--coins=1000uluna`,
 		`--to=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,

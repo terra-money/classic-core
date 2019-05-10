@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/spf13/cobra"
@@ -59,8 +58,8 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 			from := cliCtx.GetFromAddress()
 
-			offlineFlag := viper.GetBool(flagOffline)
-			if !offlineFlag {
+			offline := viper.GetBool(flagOffline)
+			if !offline {
 
 				if err := cliCtx.EnsureAccountExists(); err != nil {
 					return err
@@ -80,14 +79,14 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := bank.NewMsgSend(from, to, coins)
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offlineFlag)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}
 
 	cmd = client.PostCommands(cmd)[0]
 
-	cmd.Flags().String(flagTo, "", "the address which a user wants to pay")
-	cmd.Flags().String(flagCoins, "", "the amount a user wants to pay")
+	cmd.Flags().String(flagTo, "", "the address which a user wants to send")
+	cmd.Flags().String(flagCoins, "", "the amount a user wants to transfer")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(client.FlagFrom)

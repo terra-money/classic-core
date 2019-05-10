@@ -11,8 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-
-	"github.com/terra-project/core/x/pay"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
@@ -66,7 +65,7 @@ func SendRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context.CLIC
 			req.BaseReq.Sequence = account.GetSequence()
 		}
 
-		msg := pay.NewMsgPay(fromAddr, toAddr, req.Coins)
+		msg := bank.NewMsgSend(fromAddr, toAddr, req.Coins)
 		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

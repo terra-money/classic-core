@@ -15,6 +15,9 @@ import (
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
+	tdistr "github.com/terra-project/core/x/distribution"
+	tstaking "github.com/terra-project/core/x/staking"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -206,7 +209,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 	// register message routes
 	app.Router().
 		AddRoute(bank.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
-		AddRoute(pay.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
 		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
 		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
 		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
@@ -265,10 +267,9 @@ func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 
 	// left codec for backward compatibility
-	bank.RegisterCodec(cdc)
 	pay.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
-	distr.RegisterCodec(cdc)
+	tstaking.RegisterCodec(cdc)
+	tdistr.RegisterCodec(cdc)
 	slashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	types.RegisterCodec(cdc)

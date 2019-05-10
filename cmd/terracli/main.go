@@ -26,7 +26,6 @@ import (
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
 	authcustom "github.com/terra-project/core/x/auth/client/rest"
-	bank "github.com/terra-project/core/x/bank/client/rest"
 	dist "github.com/terra-project/core/x/distribution/client/rest"
 	staking "github.com/terra-project/core/x/staking/client/rest"
 
@@ -49,7 +48,6 @@ import (
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	bankcmd "github.com/terra-project/core/x/bank/client/cli"
 	paycmd "github.com/terra-project/core/x/pay/client/cli"
 
 	budgetClient "github.com/terra-project/core/x/budget/client"
@@ -165,8 +163,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		bankcmd.SendTxCmd(cdc),
-		paycmd.PayTxCmd(cdc),
+		paycmd.SendTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),
@@ -199,7 +196,6 @@ func registerRoutes(rs *lcd.RestServer) {
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
-	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, dt.StoreKey)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
