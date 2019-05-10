@@ -45,8 +45,6 @@ type testInput struct {
 func newTestCodec() *codec.Codec {
 	cdc := codec.New()
 
-	bank.RegisterCodec(cdc)
-	oracle.RegisterCodec(cdc)
 	RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)

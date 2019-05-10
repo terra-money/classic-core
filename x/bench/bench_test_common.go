@@ -7,6 +7,7 @@ import (
 	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
 	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
 	"time"
@@ -50,7 +51,7 @@ type testInput struct {
 func newTestCodec() *codec.Codec {
 	cdc := codec.New()
 
-	bank.RegisterCodec(cdc)
+	pay.RegisterCodec(cdc)
 	treasury.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)

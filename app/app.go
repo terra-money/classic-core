@@ -16,6 +16,7 @@ import (
 	"github.com/terra-project/core/x/treasury"
 
 	tdistr "github.com/terra-project/core/x/distribution"
+	tslashing "github.com/terra-project/core/x/slashing"
 	tstaking "github.com/terra-project/core/x/staking"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -270,7 +271,7 @@ func MakeCodec() *codec.Codec {
 	pay.RegisterCodec(cdc)
 	tstaking.RegisterCodec(cdc)
 	tdistr.RegisterCodec(cdc)
-	slashing.RegisterCodec(cdc)
+	tslashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	types.RegisterCodec(cdc)
 	oracle.RegisterCodec(cdc)

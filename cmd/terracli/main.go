@@ -27,6 +27,7 @@ import (
 
 	authcustom "github.com/terra-project/core/x/auth/client/rest"
 	dist "github.com/terra-project/core/x/distribution/client/rest"
+	slashing "github.com/terra-project/core/x/slashing/client/rest"
 	staking "github.com/terra-project/core/x/staking/client/rest"
 
 	budget "github.com/terra-project/core/x/budget/client/rest"
@@ -45,7 +46,6 @@ import (
 	st "github.com/cosmos/cosmos-sdk/x/staking"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	paycmd "github.com/terra-project/core/x/pay/client/cli"
@@ -54,11 +54,11 @@ import (
 	distClient "github.com/terra-project/core/x/distribution/client"
 	marketClient "github.com/terra-project/core/x/market/client"
 	oracleClient "github.com/terra-project/core/x/oracle/client"
+	slashingClient "github.com/terra-project/core/x/slashing/client"
 	stakingClient "github.com/terra-project/core/x/staking/client"
 	treasuryClient "github.com/terra-project/core/x/treasury/client"
 
 	crisisClient "github.com/cosmos/cosmos-sdk/x/crisis/client"
-	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 
 	_ "github.com/terra-project/core/client/lcd/statik"
 )
