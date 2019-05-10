@@ -1397,6 +1397,12 @@ paths:
         500:
           description: Internal Server Error
   /budget/program/{programId}/votes:
+    parameters:
+      - in: path
+        name: programId
+        description: Program ID
+        required: true
+        type: integer
     post:
       summary: Vote to the program by programId
       tags:
@@ -1404,11 +1410,6 @@ paths:
       produces:
         - application/json
       parameters:
-        - in: path
-          name: programId
-          description: Program ID
-          required: true
-          type: integer
         - in: body
           name: Budget Vote request body
           schema:
@@ -1418,6 +1419,52 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/StdTx"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get the budget program voting records of a denom
+      tags:
+        - Budget
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Program"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /budget/program/{programID}/votes/{voter}:
+    parameters:
+      - in: path
+        name: programID
+        description: Program ID to get
+        required: true
+        type: integer
+      - in: path
+        name: voter
+        description: Bech32 OperatorAddress of voter
+        required: true
+        type: string
+    get:
+      summary: Get the budget program voting record of RestVoter
+      tags:
+        - Budget
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Program"
         400:
           description: Bad Request
         500:
@@ -1480,38 +1527,9 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programID}/votes/{voter}:
+  /budget/params:
     get:
-      summary: Get the budget program voting record of RestVoter
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: programID
-          description: Program ID to get
-          required: true
-          type: integer
-        - in: path
-          name: voter
-          description: Bech32 OperatorAddress of voter
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/MsgVoteProgram"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/program/params:
-    get:
-      summary: Get budget program params
+      summary: Get budget params
       tags:
         - Budget
       produces:
@@ -2560,15 +2578,6 @@ definitions:
         $ref: "#/definitions/Address"
       submit_time:
         type: number
-  MsgVoteProgram:
-    type: object
-    properties:
-      program_id:
-        type: number
-      option:
-        type: boolean
-      voter:
-        $ref: "#/definitions/Address"
   BudgetParams:
     type: object
     properties:
