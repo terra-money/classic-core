@@ -120,14 +120,17 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 		Sequence:      acc.GetSequence(),
 	}
 
-	vacc, ok := acc.(types.GradedVestingAccount)
+	vacc, ok := acc.(auth.VestingAccount)
 	if ok {
-		gacc.OriginalVesting = vacc.GetOriginalVesting()
-		gacc.DelegatedFree = vacc.GetDelegatedFree()
-		gacc.DelegatedVesting = vacc.GetDelegatedVesting()
-		gacc.StartTime = vacc.GetStartTime()
-		gacc.EndTime = vacc.GetEndTime()
-		gacc.VestingSchedules = vacc.GetVestingSchedules()
+		gvacc, ok := vacc.(types.GradedVestingAccount)
+		if ok {
+			gacc.OriginalVesting = gvacc.GetOriginalVesting()
+			gacc.DelegatedFree = gvacc.GetDelegatedFree()
+			gacc.DelegatedVesting = gvacc.GetDelegatedVesting()
+			gacc.StartTime = gvacc.GetStartTime()
+			gacc.EndTime = gvacc.GetEndTime()
+			gacc.VestingSchedules = gvacc.GetVestingSchedules()
+		}
 	}
 
 	return gacc
@@ -161,7 +164,7 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 				BaseVestingAccount: baseVestingAcc,
 			}
 		} else {
-			return &types.GradedVestingAccount{
+			return &types.BaseGradedVestingAccount{
 				BaseVestingAccount: baseVestingAcc,
 				VestingSchedules:   ga.VestingSchedules,
 			}
