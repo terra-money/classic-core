@@ -242,7 +242,7 @@ paths:
         - in: query
           name: tag
           type: string
-          description: "transaction tags such as 'action=submit-proposal' and 'sender=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc' which results in the following endpoint: 'GET /txs?action=submit-proposal&sender=terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc'"
+          description: "transaction tags such as 'action=submit-proposal' and 'sender=terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0' which results in the following endpoint: 'GET /txs?action=submit-proposal&sender=terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0'"
           required: true
           x-example: 'TODO'
         - in: query
@@ -1267,7 +1267,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0
     get:
       summary: Commission and self-delegation rewards of a single validator
       description: Query the commission and self-delegation rewards of validator.
@@ -2017,11 +2017,11 @@ definitions:
   Address:
     type: string
     description: bech32 encoded address
-    example: terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t
+    example: terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0
   ValidatorAddress:
     type: string
     description: bech32 encoded address
-    example: terravaloper14tdn4vj6tf6a9n2h8rx7pgqazxsagrzx3sxy46
+    example: terravaloper1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe99ymu
   Coin:
     type: object
     properties:
@@ -2263,7 +2263,7 @@ definitions:
     properties:
       from:
         type: string
-        example: "terra1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc"
+        example: "terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0"
         description: Sender address or Keybase name to generate a transaction
       memo:
         type: string
@@ -2298,7 +2298,7 @@ definitions:
         $ref: "#/definitions/ValidatorAddress"
       pub_key:
         type: string
-        example: terravalconspub1zcjduepq7sjfglw7ra4mjxpw4ph7dtdhdheh7nz8dfgl6t8u2n5szuuql9mqsrwquu
+        example: terravalconspub1zcjduepq5zuq4cp0cpfyx6rca6ygz38t446wp3hlp5lepyle4e6e00twmetqsa0vg4
       voting_power:
         type: string
         example: "1000"
@@ -2377,7 +2377,7 @@ definitions:
         $ref: "#/definitions/ValidatorAddress"
       consensus_pubkey:
         type: string
-        example: terravalconspub1zcjduepq7sjfglw7ra4mjxpw4ph7dtdhdheh7nz8dfgl6t8u2n5szuuql9mqsrwquu
+        example: terravalconspub1zcjduepq5zuq4cp0cpfyx6rca6ygz38t446wp3hlp5lepyle4e6e00twmetqsa0vg4
       jailed:
         type: boolean
       status:
