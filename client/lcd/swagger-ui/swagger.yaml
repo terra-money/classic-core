@@ -1086,7 +1086,7 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /staking/parameters:
+  /staking/params:
     get:
       summary: Get the current staking parameter values
       tags:
@@ -1450,7 +1450,7 @@ paths:
           description: Key password is wrong
         500:
           description: Internal Server Error
-  /distribution/parameters:
+  /distribution/params:
     get:
       summary: Fee distribution parameters
       tags:
