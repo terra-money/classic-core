@@ -21,7 +21,7 @@ func TestKeeperSwapCoins(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	retCoin, err := input.marketKeeper.SwapCoins(input.ctx, offerCoin, askCoin.Denom)
+	retCoin, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, askCoin.Denom)
 	require.Nil(t, err)
 
 	require.Equal(t, retCoin, askCoin)
@@ -38,7 +38,7 @@ func TestKeeperSwapDecCoins(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	retCoin, err := input.marketKeeper.SwapDecCoins(input.ctx, offerCoin, askCoin.Denom)
+	retCoin, err := input.marketKeeper.GetSwapDecCoins(input.ctx, offerCoin, askCoin.Denom)
 	require.Nil(t, err)
 
 	require.Equal(t, retCoin, askCoin)

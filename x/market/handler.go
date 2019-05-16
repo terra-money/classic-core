@@ -26,7 +26,7 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // Returns true if the amount of total coins swapped INTO Luna during a 24 hr window
 // (block approximation) exceeds 1% of coinissuance.
-func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
+func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin, dailyLimit sdk.Dec) bool {
 	curDay := ctx.BlockHeight() / util.BlocksPerDay
 
 	// Start limits on day 2
@@ -38,7 +38,7 @@ func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
 			dailyDelta := curIssuance.Sub(prevIssuance).Add(swapCoin.Amount)
 
 			// If daily inflation is greater than 1%
-			if dailyDelta.MulRaw(100).GT(curIssuance) {
+			if dailyDelta.MulRaw(sdk.NewDec(1).Quo(dailyLimit).TruncateInt64()).GT(curIssuance) {
 				return true
 			}
 		}
@@ -50,20 +50,25 @@ func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
 // handleMsgSwap handles the logic of a MsgSwap
 func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
+	params := k.GetParams(ctx)
+
 	// Can't swap to the same coin
 	if msg.OfferCoin.Denom == msg.AskDenom {
 		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom).Result()
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
+	swapCoin, swapErr := k.GetSwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
 	if swapErr != nil {
 		return swapErr.Result()
 	}
 
+	// Apply exchange spread
+	swapCoin.Amount = sdk.NewDec(1).Sub(params.Spread).MulInt(swapCoin.Amount).TruncateInt()
+
 	// We've passed the daily swap limit for Luna. Fail.
 	// TODO: add safety checks for Terra as well.
-	if msg.OfferCoin.Denom == assets.MicroLunaDenom && exceedsDailySwapLimit(ctx, k, swapCoin) {
+	if msg.OfferCoin.Denom == assets.MicroLunaDenom && exceedsDailySwapLimit(ctx, k, swapCoin, params.DailySwapLimit) {
 		return ErrExceedsDailySwapLimit(DefaultCodespace, swapCoin.Denom).Result()
 	}
 
