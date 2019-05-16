@@ -169,7 +169,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 		// Tax cap does not exist for the asset; compute it by
 		// comparing it with the tax cap for TerraSDR
 		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
-		reqCap, err := k.mk.SwapCoins(ctx, referenceCap, denom)
+		reqCap, err := k.mk.GetSwapCoins(ctx, referenceCap, denom)
 
 		// The coin is more valuable than TaxPolicy asset. just follow the Policy Cap.
 		if err != nil {

@@ -174,6 +174,7 @@ func TestQueryDelegatorRewards(t *testing.T) {
 	// Check Flags
 	validatorFlag := queryDelegatroRewards.Flag(flagAddressValidator)
 	require.NotNil(t, validatorFlag)
+	require.Nil(t, validatorFlag.Annotations[cobra.BashCompOneRequiredFlag])
 
 	delegatorFlag := queryDelegatroRewards.Flag(flagAddressDelegator)
 	require.NotNil(t, delegatorFlag)

@@ -56,7 +56,8 @@ $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduz
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs, offline)
 		},
 	}
-	cmd.Flags().AddFlagSet(fsValidator)
+
+	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
 	cmd.Flags().Bool(flagComission, false, "also withdraw validator's commission")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 

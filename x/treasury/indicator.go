@@ -25,7 +25,7 @@ func TaxRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 	taxRewardInMicroSDR := sdk.ZeroDec()
 	for _, coinReward := range taxRewards {
 		if coinReward.Denom != assets.MicroSDRDenom {
-			swappedReward, err := k.mk.SwapDecCoins(ctx, coinReward, assets.MicroSDRDenom)
+			swappedReward, err := k.mk.GetSwapDecCoins(ctx, coinReward, assets.MicroSDRDenom)
 			if err != nil {
 				continue
 			}
@@ -44,7 +44,7 @@ func SeigniorageRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.De
 	rewardAmt := k.GetRewardWeight(ctx, epoch).MulInt(seignioragePool)
 	seigniorageReward := sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardAmt)
 
-	microSDRReward, err := k.mk.SwapDecCoins(ctx, seigniorageReward, assets.MicroSDRDenom)
+	microSDRReward, err := k.mk.GetSwapDecCoins(ctx, seigniorageReward, assets.MicroSDRDenom)
 	if err != nil {
 		return sdk.ZeroDec()
 	}

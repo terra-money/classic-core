@@ -39,7 +39,7 @@ func GetCmdQueryValidatorOutstandingRewards(queryRoute string, cdc *codec.Codec)
 	cmd := &cobra.Command{
 		Use:   "validator-outstanding-rewards --validator [validator-address]",
 		Args:  cobra.NoArgs,
-		Short: "Query distribution outstanding (un-withdrawn) rewards",
+		Short: "Query distribution validator outstanding (un-withdrawn) rewards",
 		Long: strings.TrimSpace(`Query distribution outstanding (un-withdrawn) rewards for a validator and all their delegations:
 
 $ terracli query dist validator-outstanding-rewards --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
@@ -67,7 +67,7 @@ $ terracli query dist validator-outstanding-rewards --validator terravaloper1ggh
 		},
 	}
 
-	cmd.Flags().AddFlagSet(fsValidator)
+	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
 
 	cmd.MarkFlagRequired(flagAddressValidator)
 
@@ -104,7 +104,7 @@ $ terracli query distr commission --validator terravaloper1gghjut3ccd8ay0zduzj64
 		},
 	}
 
-	cmd.Flags().AddFlagSet(fsValidator)
+	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
 
 	cmd.MarkFlagRequired(flagAddressValidator)
 
@@ -159,7 +159,7 @@ $ terracli query distr slashes --validator terravaloper1gghjut3ccd8ay0zduzj64hwr
 		},
 	}
 
-	cmd.Flags().AddFlagSet(fsValidator)
+	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
 	cmd.Flags().String(flagStartHeight, "", "The start height of given query")
 	cmd.Flags().String(flagEndHeight, "", "The end height of given query")
 
@@ -173,7 +173,7 @@ $ terracli query distr slashes --validator terravaloper1gghjut3ccd8ay0zduzj64hwr
 // GetCmdQueryDelegatorRewards implements the query delegator rewards command.
 func GetCmdQueryDelegatorRewards(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rewards --delegator [delegator-addr] -validator [validator-addr]",
+		Use:   "rewards --delegator [delegator-addr] --validator [validator-addr]",
 		Args:  cobra.NoArgs,
 		Short: "Query all distribution delegator rewards or rewards from a particular validator",
 		Long: strings.TrimSpace(`Query all rewards earned by a delegator, optionally restrict to rewards from a single validator:
@@ -206,8 +206,8 @@ $ terracli query distr rewards --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9l
 		},
 	}
 
-	cmd.Flags().AddFlagSet(fsValidator)
-	cmd.Flags().AddFlagSet(fsDelegator)
+	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
+	cmd.Flags().String(flagAddressDelegator, "", "The Bech32 address of the delegator")
 
 	cmd.MarkFlagRequired(flagAddressDelegator)
 

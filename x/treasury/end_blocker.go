@@ -72,7 +72,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	// Convert seigniorage to TerraSDR for rewards
 	seigPool := k.mtk.PeekSeignioragePool(ctx, curEpoch)
-	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
+	rewardPool, err := k.mk.GetSwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
 	if err != nil {
 		return // No or too little seigniorage
 	}

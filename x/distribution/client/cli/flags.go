@@ -1,9 +1,5 @@
 package cli
 
-import (
-	flag "github.com/spf13/pflag"
-)
-
 const (
 	flagAddressValidator  = "validator"
 	flagAddressDelegator  = "delegator"
@@ -15,13 +11,3 @@ const (
 	flagWithdrawTo        = "withdraw-to"
 	flagOffline           = "offline"
 )
-
-var (
-	fsValidator = flag.NewFlagSet("", flag.ContinueOnError)
-	fsDelegator = flag.NewFlagSet("", flag.ContinueOnError)
-)
-
-func init() {
-	fsValidator.String(flagAddressValidator, "", "The Bech32 address of the validator")
-	fsDelegator.String(flagAddressDelegator, "", "The Bech32 address of the delegator")
-}
