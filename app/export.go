@@ -187,4 +187,11 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 			return false
 		},
 	)
+
+	// reset submit height on program infos
+	app.budgetKeeper.IteratePrograms(ctx, false, func(programID uint64, program budget.Program) (stop bool) {
+		program.SubmitBlock = 0
+		app.budgetKeeper.SetProgram(ctx, programID, program)
+		return false
+	})
 }
