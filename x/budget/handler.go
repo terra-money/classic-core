@@ -48,7 +48,7 @@ func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk
 		ctx.BlockHeight(),
 	)
 
-	k.SetProgram(ctx, programID, program)
+	k.StoreProgram(ctx, program)
 	k.CandQueueInsert(ctx, program.getVotingEndBlock(ctx, k), programID)
 
 	return sdk.Result{

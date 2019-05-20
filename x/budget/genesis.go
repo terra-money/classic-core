@@ -41,11 +41,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 
 	for _, program := range data.ActivePrograms {
-		keeper.SetProgram(ctx, program.ProgramID, program)
+		keeper.StoreProgram(ctx, program)
 	}
 
 	for _, program := range data.CandidatePrograms {
-		keeper.SetProgram(ctx, program.ProgramID, program)
+		keeper.StoreProgram(ctx, program)
 		keeper.CandQueueInsert(ctx, data.Params.VotePeriod, program.ProgramID)
 	}
 
@@ -61,7 +61,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	params := keeper.GetParams(ctx)
 
 	var activePrograms Programs
-	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
+	keeper.IteratePrograms(ctx, true, func(program Program) (stop bool) {
 		activePrograms = append(activePrograms, program)
 		return false
 	})

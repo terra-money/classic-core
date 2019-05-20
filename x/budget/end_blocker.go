@@ -16,10 +16,8 @@ func tally(ctx sdk.Context, k Keeper, targetProgramID uint64) (votePower sdk.Int
 	votePower = sdk.ZeroInt()
 	totalPower = k.valset.TotalBondedTokens(ctx)
 
-	voteCount := 0
 	targetProgramIDPrefix := keyVote(targetProgramID, sdk.AccAddress{})
 	k.IterateVotesWithPrefix(ctx, targetProgramIDPrefix, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
-		voteCount++
 		valAddr := sdk.ValAddress(voter)
 
 		if validator := k.valset.Validator(ctx, valAddr); validator != nil {
@@ -86,13 +84,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 	claims = types.ClaimPool{}
 
 	// iterate programs and weight them
-	k.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
-		votePower, totalPower := tally(ctx, k, programID)
+	k.IteratePrograms(ctx, true, func(program Program) (stop bool) {
+		votePower, totalPower := tally(ctx, k, program.ProgramID)
 
 		// Need to check if the program should be legacied
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
-			k.DeleteProgram(ctx, programID)
-			k.DeleteVote(ctx, programID, sdk.AccAddress{})
+			k.DeleteProgram(ctx, program.ProgramID)
+			k.DeleteVote(ctx, program.ProgramID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
@@ -101,7 +99,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		resTags.AppendTags(
 			sdk.NewTags(
-				tags.ProgramID, strconv.FormatUint(programID, 10),
+				tags.ProgramID, strconv.FormatUint(program.ProgramID, 10),
 				tags.Weight, votePower.String(),
 			),
 		)

@@ -159,11 +159,11 @@ func (k Keeper) GetProgram(ctx sdk.Context, programID uint64) (res Program, err 
 	return
 }
 
-// SetProgram sets a Program to the store
-func (k Keeper) SetProgram(ctx sdk.Context, programID uint64, program Program) {
+// StoreProgram sets a Program to the store
+func (k Keeper) StoreProgram(ctx sdk.Context, program Program) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(program)
-	store.Set(keyProgram(programID), bz)
+	store.Set(keyProgram(program.ProgramID), bz)
 }
 
 // DeleteProgram deletes a program from the store
@@ -173,27 +173,24 @@ func (k Keeper) DeleteProgram(ctx sdk.Context, programID uint64) {
 }
 
 // IteratePrograms iterates programs in the store
-func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler func(uint64, Program) (stop bool)) {
+func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler func(Program) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	iter := sdk.KVStorePrefixIterator(store, prefixProgram)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		programStoreKey := string(iter.Key())
+
 		var program Program
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
 
-		elems := strings.Split(programStoreKey, ":")
-		if programID, err := strconv.ParseUint(elems[1], 10, 0); err == nil {
-
-			// Filter out candidate programs if filterInactive is true
-			if filterInactive && k.CandQueueHas(ctx, program.getVotingEndBlock(ctx, k), programID) {
-				continue
-			}
-
-			if handler(programID, program) {
-				break
-			}
+		// Filter out candidate programs if filterInactive is true
+		if filterInactive && k.CandQueueHas(ctx, program.getVotingEndBlock(ctx, k), program.ProgramID) {
+			continue
 		}
+
+		if handler(program) {
+			break
+		}
+
 	}
 }
 

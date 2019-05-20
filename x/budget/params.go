@@ -38,7 +38,7 @@ func DefaultParams() Params {
 }
 
 func validateParams(params Params) error {
-	if params.ActiveThreshold.LT(sdk.ZeroDec()) {
+	if params.ActiveThreshold.LTE(sdk.ZeroDec()) {
 		return fmt.Errorf("budget active threshold should be greater than 0, is %s", params.ActiveThreshold.String())
 	}
 	if params.LegacyThreshold.LT(sdk.ZeroDec()) {

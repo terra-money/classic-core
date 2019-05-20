@@ -99,26 +99,31 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 
 	if bz := store.Get(keyIssuance(denom, day)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
-	} else {
-		// Genesis epoch; nothing exists in store so we must read it
-		// from accountkeeper
-		if day.LTE(sdk.ZeroInt()) {
+		return
+	}
+
+	for d := day; d.GTE(sdk.ZeroInt()); d = d.Sub(sdk.OneInt()) {
+
+		if bz := store.Get(keyIssuance(denom, d)); bz != nil {
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
+			break
+		} else if d.LTE(sdk.ZeroInt()) {
+			// Genesis epoch; nothing exists in store so we must read it
+			// from accountkeeper
 			issuance = sdk.ZeroInt()
 			countIssuance := func(acc auth.Account) (stop bool) {
 				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
 				return false
 			}
-			k.ak.IterateAccounts(ctx, countIssuance)
-		} else {
-			// Fetch the issuance snapshot of the previous epoch
-			issuance = k.GetIssuance(ctx, denom, day.Sub(sdk.OneInt()))
-		}
 
-		// Set issuance to the store
-		store := ctx.KVStore(k.key)
-		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-		store.Set(keyIssuance(denom, day), bz)
+			k.ak.IterateAccounts(ctx, countIssuance)
+			break
+		}
 	}
+
+	// Set issuance to the store
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+	store.Set(keyIssuance(denom, day), bz)
 
 	return
 }
