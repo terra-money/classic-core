@@ -123,9 +123,9 @@ type GradedVestingAccount interface {
 	GetVestingSchedule(denom string) (VestingSchedule, bool)
 }
 
-// BaseGradedVestingAccount implements the VestingAccount interface. It vests all
+// BaseGradedVestingAccount implements the GradedVestingAccount interface. It vests all
 // coins according to a predefined schedule.
-var _ auth.VestingAccount = (*BaseGradedVestingAccount)(nil)
+var _ GradedVestingAccount = (*BaseGradedVestingAccount)(nil)
 
 // BaseGradedVestingAccount implements the VestingAccount interface. It vests tokens according to
 // a predefined set of vesting cliffs.
