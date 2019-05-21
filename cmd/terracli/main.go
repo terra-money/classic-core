@@ -25,6 +25,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
+	txcustom "github.com/terra-project/core/client/tx"
+
 	authcustom "github.com/terra-project/core/x/auth/client/rest"
 	dist "github.com/terra-project/core/x/distribution/client/rest"
 	slashing "github.com/terra-project/core/x/slashing/client/rest"
@@ -194,7 +196,7 @@ func registerRoutes(rs *lcd.RestServer) {
 
 	registerSwaggerUI(rs)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	txcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
 	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, dt.StoreKey)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)

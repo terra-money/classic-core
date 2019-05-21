@@ -2087,18 +2087,6 @@ definitions:
       total_count:
         type: number
         example: 1
-      count:
-        type: number
-        example: 1
-      page_number:
-        type: number
-        example: 1
-      page_total:
-        type: number
-        example: 1
-      limit:
-        type: number
-        example: 30
       txs:
         type: array
         items:
