@@ -213,7 +213,7 @@ terracli tx send <destination_terraaccaddr> 10faucetToken \
 ```bash
 terracli tx sign \
   --chain-id=<chain_id> \
-  --from=<key_name>
+  --from=<key_name> \
   unsignedSendTx.json > signedSendTx.json
 ```
 
@@ -588,6 +588,7 @@ terracli tx sign \
   --multisig=<multisig_address> \
   --from=p1 \
   --output-document=p1signature.json \
+  --chain-id=<chain_id>
 ```
 
 Once the signature is generated, `p1` transmits both `unsignedTx.json` and
@@ -600,6 +601,7 @@ terracli tx sign \
   --multisig=<multisig_address> \
   --from=p2 \
   --output-document=p2signature.json \
+  --chain-id=<chain_id>
 ```
 
 `p1p2p3` is a 2-of-3 multisig key, therefore one additional signature
@@ -610,13 +612,16 @@ transaction by combining the required signature files:
 terracli tx multisign \
   unsignedTx.json \
   p1p2p3 \
-  p1signature.json p2signature.json > signedTx.json
+  p1signature.json p2signature.json \
+  --output-document=signedTx.json \
+  --chain-id=<chain_id>
 ```
 
 The transaction can now be sent to the node:
 
 ```bash
-terracli tx broadcast signedTx.json
+terracli tx broadcast signedTx.json \
+  --chain-id=<chain_id>
 ```
 
 ## Shells completion scripts
