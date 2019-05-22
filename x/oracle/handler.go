@@ -13,6 +13,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgPriceFeed:
 			return handleMsgPriceFeed(ctx, k, msg)
+		case MsgDelegateFeederPermission:
+			return handleMsgDelegateFeederPermission(ctx, k, msg)
 		default:
 			errMsg := "Unrecognized oracle Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -23,23 +25,52 @@ func NewHandler(k Keeper) sdk.Handler {
 // handleMsgPriceFeed handles a MsgPriceFeed
 func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Result {
 	valset := keeper.valset
-	signer := pfm.Feeder
 
-	// Check the feeder is a validator
-	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
+	if !pfm.Feeder.Equals(pfm.Validator) {
+		delegate := keeper.GetFeedDelegate(ctx, pfm.Validator)
+		if !delegate.Equals(pfm.Feeder) {
+			return ErrNoVotingPermission(DefaultCodespace, pfm.Feeder, pfm.Validator).Result()
+		}
+	}
+
+	// Check that the given validator exists
+	val := valset.Validator(ctx, sdk.ValAddress(pfm.Validator.Bytes()))
 	if val == nil {
 		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
 	}
 
 	// Add the vote to the store
-	vote := NewPriceVote(pfm.Price, pfm.Denom, signer)
+	vote := NewPriceVote(pfm.Price, pfm.Denom, pfm.Validator)
 	keeper.addVote(ctx, vote)
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Denom, pfm.Denom,
-			tags.Voter, pfm.Feeder.String(),
+			tags.Voter, pfm.Validator.String(),
+			tags.FeedDelegate, pfm.Feeder.String(),
 			tags.Price, pfm.Price.String(),
+		),
+	}
+}
+
+// handleMsgPriceFeed handles a MsgPriceFeed
+func handleMsgDelegateFeederPermission(ctx sdk.Context, keeper Keeper, pfm MsgDelegateFeederPermission) sdk.Result {
+	valset := keeper.valset
+	signer := pfm.Operator
+
+	// Check the delegator is a validator
+	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
+	if val == nil {
+		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
+	}
+
+	// Set the delegation
+	keeper.SetFeedDelegate(ctx, signer, pfm.FeedDelegate)
+
+	return sdk.Result{
+		Tags: sdk.NewTags(
+			tags.Operator, pfm.Operator.String(),
+			tags.FeedDelegate, pfm.FeedDelegate.String(),
 		),
 	}
 }

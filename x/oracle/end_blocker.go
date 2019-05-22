@@ -28,7 +28,7 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 				bondSize := validator.GetBondedTokens()
 
 				ballotWinners = append(ballotWinners, types.Claim{
-					Recipient: vote.Voter,
+					Recipient: sdk.AccAddress(vote.Voter),
 					Weight:    bondSize,
 					Class:     types.OracleClaimClass,
 				})

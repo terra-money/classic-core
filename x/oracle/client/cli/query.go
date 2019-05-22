@@ -163,3 +163,32 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	return cmd
 }
+
+// GetCmdQueryFeederDelegation implements the query feeder delegation command
+func GetCmdQueryFeederDelegation(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   oracle.QueryActive,
+		Short: "Query the account the validator's voting right is delegated to",
+		Long: strings.TrimSpace(`
+Query the account the validator's voting right is delegated to.
+
+$ terracli query oracle feeder-delegation --validator terravaloper1ifji3ifj
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryActive), nil)
+			if err != nil {
+				return err
+			}
+
+			var actives DenomList
+			cdc.MustUnmarshalJSON(res, &actives)
+			return cliCtx.PrintOutput(actives)
+		},
+	}
+
+	cmd.Flags().String(flagValidator, "", "validator to get the delegation for")
+
+	return cmd
+}

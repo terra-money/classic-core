@@ -8,13 +8,14 @@ import (
 )
 
 var (
-	prefixVote          = []byte("vote")
-	prefixPrice         = []byte("price")
-	prefixDropCounter   = []byte("drop")
-	paramStoreKeyParams = []byte("params")
+	prefixVote             = []byte("vote")
+	prefixPrice            = []byte("price")
+	prefixDropCounter      = []byte("drop")
+	paramStoreKeyParams    = []byte("params")
+	prefixFeederDelegation = []byte("feederdelegation")
 )
 
-func keyVote(denom string, voter sdk.AccAddress) []byte {
+func keyVote(denom string, voter sdk.ValAddress) []byte {
 	return []byte(fmt.Sprintf("%s:%s:%s", prefixVote, denom, voter))
 }
 
@@ -30,4 +31,8 @@ func paramKeyTable() params.KeyTable {
 	return params.NewKeyTable(
 		paramStoreKeyParams, Params{},
 	)
+}
+
+func keyFeederDelegation(delegate sdk.ValAddress) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixFeederDelegation, delegate))
 }

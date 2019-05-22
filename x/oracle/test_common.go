@@ -38,8 +38,8 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	uSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
-	uLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
+	mSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
+	mLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
 
 	oracleDecPrecision = 8
 )
@@ -105,14 +105,14 @@ func createTestInput(t *testing.T) testInput {
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
 		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{
-			sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt),
-			sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt),
+			sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt),
+			sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt),
 		})
 
 		require.NoError(t, err)
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), uLunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 
