@@ -34,7 +34,10 @@ Submit an oracle vote for the price of Luna denominated in the input denom.
 
 $ terracli oracle vote --denom "ukrw" --price "8890" --from mykey
 
-where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view. 
+where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
+
+If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
+$ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -107,7 +110,7 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 Delegate the permission to vote for the oracle to an address.
 That way you can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli oracle set-feeder --delegate terra1abceuihfu93fud --from mykey
+$ terracli oracle set-feeder --delegate terra1...... --from mykey
 
 where "terra1abceuihfu93fud" is the address you want to delegate your voting rights to.
 `),

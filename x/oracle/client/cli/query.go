@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/oracle"
 	"strings"
@@ -118,7 +119,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 				}
 			}
 
-			params := oracle.NewQueryVoteParams(voterAddress, denom)
+			params := oracle.NewQueryVoteParams(sdk.ValAddress(voterAddress), denom)
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -167,7 +168,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdQueryFeederDelegation implements the query feeder delegation command
 func GetCmdQueryFeederDelegation(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   oracle.QueryActive,
+		Use:   oracle.QueryFeederDelegation,
 		Short: "Query the account the validator's voting right is delegated to",
 		Long: strings.TrimSpace(`
 Query the account the validator's voting right is delegated to.
@@ -177,7 +178,22 @@ $ terracli query oracle feeder-delegation --validator terravaloper1ifji3ifj
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryActive), nil)
+			valString := viper.GetString(flagValidator)
+			if len(valString) == 0 {
+				return fmt.Errorf("--validator flag is required")
+			}
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return errors.Wrap(err, "invalid validator address")
+			}
+
+			params := oracle.NewQueryFeederDelegationParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryFeederDelegation), bz)
 			if err != nil {
 				return err
 			}

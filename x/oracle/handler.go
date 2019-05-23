@@ -34,7 +34,7 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	}
 
 	// Check that the given validator exists
-	val := valset.Validator(ctx, sdk.ValAddress(pfm.Validator.Bytes()))
+	val := valset.Validator(ctx, pfm.Validator)
 	if val == nil {
 		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
 	}
@@ -59,7 +59,7 @@ func handleMsgDelegateFeederPermission(ctx sdk.Context, keeper Keeper, pfm MsgDe
 	signer := pfm.Operator
 
 	// Check the delegator is a validator
-	val := valset.Validator(ctx, sdk.ValAddress(signer.Bytes()))
+	val := valset.Validator(ctx, signer)
 	if val == nil {
 		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
 	}
