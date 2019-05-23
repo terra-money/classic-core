@@ -4,18 +4,11 @@ This guide will explain how to install the `terrad` and `terracli` entrypoints o
 
 ### Install Go
 
-Install `go` by following the [official docs](https://golang.org/doc/install).
+Install `go` by following the [official docs](https://golang.org/doc/install). 
 
 ::: tip
 **Go 1.12+ +** is required for Terra Core.
 :::
-
-Linux example:
-```bash
-sudo snap install go --classic
-sudo apt install golang-statik
-curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
-```
 
 ### Install the binaries
 
