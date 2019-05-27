@@ -2734,3 +2734,7 @@ definitions:
       sequence_number:
         type: int
         example: "1"
+      pubkey:
+        type: string
+        example: "terrapub1addwnpepqw98wtmdc08scr8gn8dj7f34chvqp9uhkzyc8s2pf7wqlvnn4v9mku3d7al"
+        description: "(optional) In case the multisig account never reveals its pubkey, this field is required."

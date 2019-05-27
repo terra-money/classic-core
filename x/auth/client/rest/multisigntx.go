@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -28,6 +29,7 @@ type MultiSignReq struct {
 	Signatures    []auth.StdSignature `json:"signatures"`
 	SignatureOnly bool                `json:"signature_only"`
 	Sequence      uint64              `json:"sequence_number"`
+	Pubkey        string              `json:"pubkey"` // (optional) In case the multisig account never reveals its pubkey, it is required.
 }
 
 // MultiSignRequestHandlerFn - http request handler to build multisign transaction.
@@ -49,9 +51,6 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
-		multisigPub := multiSignAccount.GetPubKey().(multisig.PubKeyMultisigThreshold)
-		multisigSig := multisig.NewMultisig(len(multisigPub.PubKeys))
-
 		// Decode request body
 		var req MultiSignReq
 		body, err := ioutil.ReadAll(r.Body)
@@ -66,10 +65,31 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
+		var multisigPub multisig.PubKeyMultisigThreshold
+		if multiSignAccount.GetPubKey() != nil {
+			multisigPub = multiSignAccount.GetPubKey().(multisig.PubKeyMultisigThreshold)
+		} else {
+			pubKey, err := sdk.GetAccPubKeyBech32(req.Pubkey)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			multisigPub = pubKey.(multisig.PubKeyMultisigThreshold)
+		}
+
+		multisigSig := multisig.NewMultisig(len(multisigPub.PubKeys))
+
 		accountNumber := multiSignAccount.GetAccountNumber()
 		sequence := req.Sequence
 		if req.Sequence == 0 {
 			sequence = multiSignAccount.GetSequence()
+		}
+
+		if len(req.Signatures) < int(multisigPub.K) {
+			err := fmt.Errorf("threashold: %v, # of given signatures: %v", len(req.Signatures), multisigPub.K)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// read each signature and add it to the multisig if valid
