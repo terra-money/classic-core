@@ -66,8 +66,8 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
-		sequence := req.Sequence
 		accountNumber := multiSignAccount.GetAccountNumber()
+		sequence := req.Sequence
 		if req.Sequence == 0 {
 			sequence = multiSignAccount.GetSequence()
 		}
