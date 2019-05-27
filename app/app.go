@@ -29,6 +29,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -281,6 +285,12 @@ func MakeCodec() *codec.Codec {
 	crisis.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
+
+	stakingtypes.SetMsgCodec(cdc)
+	distrtypes.SetMsgCodec(cdc)
+	bank.SetMsgCodec(cdc)
+	slashing.SetMsgCodec(cdc)
+
 	return cdc
 }
 

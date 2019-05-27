@@ -2731,3 +2731,6 @@ definitions:
           $ref: "#/definitions/StdSignature"
       signature_only:
         type: boolean
+      sequence_number:
+        type: int
+        example: "1"

@@ -1,4 +1,4 @@
-package types
+package staking
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"

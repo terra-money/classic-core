@@ -27,6 +27,7 @@ type MultiSignReq struct {
 	ChainID       string              `json:"chain_id"`
 	Signatures    []auth.StdSignature `json:"signatures"`
 	SignatureOnly bool                `json:"signature_only"`
+	Sequence      uint64              `json:"sequence_number"`
 }
 
 // MultiSignRequestHandlerFn - http request handler to build multisign transaction.
@@ -65,8 +66,11 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
+		sequence := req.Sequence
 		accountNumber := multiSignAccount.GetAccountNumber()
-		sequence := multiSignAccount.GetSequence()
+		if req.Sequence == 0 {
+			sequence = multiSignAccount.GetSequence()
+		}
 
 		// read each signature and add it to the multisig if valid
 		for i := 0; i < len(req.Signatures); i++ {
