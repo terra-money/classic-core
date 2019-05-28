@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/terra-project/core/x/oracle"
 
@@ -21,7 +22,7 @@ const (
 	flagPrice     = "price"
 	flagVoter     = "voter"
 	flagValidator = "validator"
-	flagDelegate  = "delegate"
+	flagDelegatee = "delegated"
 )
 
 // GetCmdPriceVote will create a send tx and sign it with the given key.
@@ -110,7 +111,7 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 Delegate the permission to vote for the oracle to an address.
 That way you can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli oracle set-feeder --delegate terra1...... --from mykey
+$ terracli oracle set-feeder --delegatee terra1...... --from mykey
 
 where "terra1abceuihfu93fud" is the address you want to delegate your voting rights to.
 `),
@@ -131,16 +132,16 @@ where "terra1abceuihfu93fud" is the address you want to delegate your voting rig
 			// The address the right is being delegated from
 			validator := sdk.ValAddress(voter)
 
-			delegateStr := viper.GetString(flagDelegate)
-			if len(delegateStr) == 0 {
+			delegateeStr := viper.GetString(flagDelegatee)
+			if len(delegateeStr) == 0 {
 				return fmt.Errorf("--delegate flag is required")
 			}
-			delegate, err := sdk.AccAddressFromBech32(delegateStr)
+			delegatee, err := sdk.AccAddressFromBech32(delegateeStr)
 			if err != nil {
 				return errors.Wrap(err, "delegate is not a valid account address")
 			}
 
-			msg := oracle.NewMsgDelegateFeederPermission(validator, delegate)
+			msg := oracle.NewMsgDelegateFeederPermission(validator, delegatee)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -150,7 +151,9 @@ where "terra1abceuihfu93fud" is the address you want to delegate your voting rig
 		},
 	}
 
-	cmd.Flags().String(flagDelegate, "", "account the voting right will be delegated to")
+	cmd.Flags().String(flagDelegatee, "", "account the voting right will be delegated to")
+
+	cmd.MarkFlagRequired(flagDelegatee)
 
 	return cmd
 }

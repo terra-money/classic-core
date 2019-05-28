@@ -23,8 +23,7 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, b
 
 	for _, vote := range pb {
 		if vote.Price.GTE(weightedMedian.Sub(rewardSpread)) && vote.Price.LTE(weightedMedian.Add(rewardSpread)) {
-			valAddr := sdk.ValAddress(vote.Voter)
-			if validator := k.valset.Validator(ctx, valAddr); validator != nil {
+			if validator := k.valset.Validator(ctx, vote.Voter); validator != nil {
 				bondSize := validator.GetBondedTokens()
 
 				ballotWinners = append(ballotWinners, types.Claim{

@@ -2,10 +2,11 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/x/oracle"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -198,9 +199,9 @@ $ terracli query oracle feeder-delegation --validator terravaloper1ifji3ifj
 				return err
 			}
 
-			var actives DenomList
-			cdc.MustUnmarshalJSON(res, &actives)
-			return cliCtx.PrintOutput(actives)
+			var delegatee sdk.AccAddress
+			cdc.MustUnmarshalJSON(res, &delegatee)
+			return cliCtx.PrintOutput(delegatee)
 		},
 	}
 
