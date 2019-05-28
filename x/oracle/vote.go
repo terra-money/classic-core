@@ -10,11 +10,11 @@ import (
 type PriceVote struct {
 	Price sdk.Dec        `json:"price"` // Price of Luna in target fiat currency
 	Denom string         `json:"denom"` // Ticker name of target fiat currency
-	Voter sdk.AccAddress `json:"voter"` // account address of validator
+	Voter sdk.ValAddress `json:"voter"` // account address of validator
 }
 
 // NewPriceVote creates a PriceVote instance
-func NewPriceVote(price sdk.Dec, denom string, voter sdk.AccAddress) PriceVote {
+func NewPriceVote(price sdk.Dec, denom string, voter sdk.ValAddress) PriceVote {
 	return PriceVote{
 		Price: price,
 		Denom: denom,
@@ -23,8 +23,7 @@ func NewPriceVote(price sdk.Dec, denom string, voter sdk.AccAddress) PriceVote {
 }
 
 func (pv PriceVote) getPower(ctx sdk.Context, valset sdk.ValidatorSet) (sdk.Int, sdk.Error) {
-	valAddr := sdk.ValAddress(pv.Voter)
-	if validator := valset.Validator(ctx, valAddr); validator != nil {
+	if validator := valset.Validator(ctx, pv.Voter); validator != nil {
 		return validator.GetBondedTokens(), nil
 	}
 
