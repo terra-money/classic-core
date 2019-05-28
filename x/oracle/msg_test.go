@@ -24,7 +24,7 @@ func TestMsgPriceFeed(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgPriceFeed(tc.denom, tc.price, tc.voter)
+		msg := NewMsgPriceFeed(tc.denom, tc.price, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

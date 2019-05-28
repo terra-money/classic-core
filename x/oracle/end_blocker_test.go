@@ -32,7 +32,7 @@ func TestOracleThreshold(t *testing.T) {
 	input, h := setup(t)
 
 	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0])
+	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	res := h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
@@ -43,13 +43,13 @@ func TestOracleThreshold(t *testing.T) {
 	require.NotNil(t, err)
 
 	// More than the threshold signs, msg succeeds
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	h(input.ctx, msg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1], sdk.ValAddress(addrs[1]))
 	h(input.ctx, msg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2], sdk.ValAddress(addrs[2]))
 	h(input.ctx, msg)
 
 	EndBlocker(input.ctx, input.oracleKeeper)
@@ -63,10 +63,10 @@ func TestOracleThreshold(t *testing.T) {
 	input.valset.Validators = append(input.valset.Validators, newValidator)
 	input.oracleKeeper.valset = input.valset
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	h(input.ctx, msg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1], sdk.ValAddress(addrs[1]))
 	h(input.ctx, msg)
 
 	EndBlocker(input.ctx, input.oracleKeeper)
@@ -80,27 +80,27 @@ func TestOracleMultiVote(t *testing.T) {
 	input, h := setup(t)
 
 	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0])
+	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	res := h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1], sdk.ValAddress(addrs[1]))
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2], sdk.ValAddress(addrs[2]))
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1], sdk.ValAddress(addrs[1]))
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[2])
+	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[2], sdk.ValAddress(addrs[2]))
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
@@ -116,7 +116,7 @@ func TestOracleWhitelist(t *testing.T) {
 	input, h := setup(t)
 
 	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0])
+	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	res := h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
@@ -130,7 +130,7 @@ func TestOracleDrop(t *testing.T) {
 	dropThreshold := input.oracleKeeper.GetParams(input.ctx).DropThreshold
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, randomPrice)
 
-	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0])
+	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
 	h(input.ctx, msg)
 
 	input.ctx = input.ctx.WithBlockHeight(1)
@@ -179,9 +179,10 @@ func TestOracleTally(t *testing.T) {
 			assets.MicroSDRDenom,
 			decPrice,
 			valAccAddrs[i],
+			sdk.ValAddress(valAccAddrs[i]),
 		)
 
-		vote := NewPriceVote(decPrice, assets.MicroSDRDenom, valAccAddrs[i])
+		vote := NewPriceVote(decPrice, assets.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
 		ballot = append(ballot, vote)
 
 		res := h(input.ctx, pfm)
@@ -199,7 +200,7 @@ func TestOracleTally(t *testing.T) {
 
 	for _, vote := range ballot {
 		if vote.Price.GTE(weightedMedian.Sub(maxSpread)) && vote.Price.LTE(weightedMedian.Add(maxSpread)) {
-			rewardees = append(rewardees, vote.Voter)
+			rewardees = append(rewardees, sdk.AccAddress(vote.Voter))
 		}
 	}
 
@@ -218,6 +219,7 @@ func TestOracleTallyTiming(t *testing.T) {
 			assets.MicroSDRDenom,
 			sdk.OneDec(),
 			addr,
+			sdk.ValAddress(addr),
 		)
 
 		res := h(input.ctx, pfm)

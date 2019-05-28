@@ -34,7 +34,7 @@ func BenchmarkOracleFeedVotePerBlock(b *testing.B) {
 
 		for j := 0; j < numOfValidators; j++ {
 			for d := 0; d < len(denoms); d++ {
-				voteMsg := oracle.NewMsgPriceFeed(denoms[d], sdk.NewDec(1), addrs[j])
+				voteMsg := oracle.NewMsgPriceFeed(denoms[d], sdk.NewDec(1), addrs[j], sdk.ValAddress(addrs[j]))
 
 				res := h(ctx, voteMsg)
 				if !res.IsOK() {

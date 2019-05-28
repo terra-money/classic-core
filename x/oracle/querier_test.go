@@ -64,7 +64,7 @@ func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 	return actives
 }
 
-func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.AccAddress, denom string) PriceBallot {
+func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.ValAddress, denom string) PriceBallot {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryVotes}, "/"),
 		Data: cdc.MustMarshalJSON(NewQueryVoteParams(voter, denom)),
@@ -78,6 +78,22 @@ func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 	err2 := cdc.UnmarshalJSON(bz, &votes)
 	require.Nil(t, err2)
 	return votes
+}
+
+func getQueriedFeederDelegation(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, validator sdk.ValAddress) sdk.AccAddress {
+	query := abci.RequestQuery{
+		Path: strings.Join([]string{custom, QuerierRoute, QueryFeederDelegation}, "/"),
+		Data: cdc.MustMarshalJSON(NewQueryFeederDelegationParams(validator)),
+	}
+
+	bz, err := querier(ctx, []string{QueryFeederDelegation}, query)
+	require.Nil(t, err)
+	require.NotNil(t, bz)
+
+	var delegate sdk.AccAddress
+	err2 := cdc.UnmarshalJSON(bz, &delegate)
+	require.Nil(t, err2)
+	return delegate
 }
 
 func TestQueryParams(t *testing.T) {
@@ -130,34 +146,47 @@ func TestQueryVotes(t *testing.T) {
 
 	votes := []PriceVote{
 		// first voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[0]),
-		NewPriceVote(testPrice, assets.MicroKRWDenom, addrs[0]),
-		NewPriceVote(testPrice, assets.MicroUSDDenom, addrs[0]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0])),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.ValAddress(addrs[0])),
+		NewPriceVote(testPrice, assets.MicroUSDDenom, sdk.ValAddress(addrs[0])),
 
 		// Second voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[1]),
-		NewPriceVote(testPrice, assets.MicroKRWDenom, addrs[1]),
-		NewPriceVote(testPrice, assets.MicroGBPDenom, addrs[1]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1])),
+		NewPriceVote(testPrice, assets.MicroKRWDenom, sdk.ValAddress(addrs[1])),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.ValAddress(addrs[1])),
 
 		// Third voter votes
-		NewPriceVote(testPrice, assets.MicroSDRDenom, addrs[2]),
-		NewPriceVote(testPrice, assets.MicroCNYDenom, addrs[2]),
-		NewPriceVote(testPrice, assets.MicroGBPDenom, addrs[2]),
+		NewPriceVote(testPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[2])),
+		NewPriceVote(testPrice, assets.MicroCNYDenom, sdk.ValAddress(addrs[2])),
+		NewPriceVote(testPrice, assets.MicroGBPDenom, sdk.ValAddress(addrs[2])),
 	}
 
 	for _, vote := range votes {
 		input.oracleKeeper.addVote(input.ctx, vote)
 	}
 
-	voterOneSDR := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], assets.MicroSDRDenom)
+	voterOneSDR := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.ValAddress(addrs[0]), assets.MicroSDRDenom)
 	require.Equal(t, 1, len(voterOneSDR))
 
-	voterOne := getQueriedVotes(t, input.ctx, input.cdc, querier, addrs[0], "")
+	voterOne := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.ValAddress(addrs[0]), "")
 	require.Equal(t, 3, len(voterOne))
 
-	assetKRW := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, assets.MicroKRWDenom)
+	assetKRW := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.ValAddress{}, assets.MicroKRWDenom)
 	require.Equal(t, 2, len(assetKRW))
 
-	noFilters := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.AccAddress{}, "")
+	noFilters := getQueriedVotes(t, input.ctx, input.cdc, querier, sdk.ValAddress{}, "")
 	require.Equal(t, 9, len(noFilters))
+}
+
+func TestQueryFeederDelegations(t *testing.T) {
+	input := createTestInput(t)
+	querier := NewQuerier(input.oracleKeeper)
+
+	input.oracleKeeper.SetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]), addrs[1])
+
+	delegate := getQueriedFeederDelegation(t, input.ctx, input.cdc, querier, sdk.ValAddress(addrs[0]))
+
+	require.Equal(t, sdk.AccAddress(sdk.ValAddress(addrs[1])), delegate)
+	require.Equal(t, sdk.AccAddress(sdk.ValAddress(addrs[2])), addrs[2])
+	require.NotEqual(t, sdk.AccAddress(sdk.ValAddress(addrs[2])), addrs[1])
 }
