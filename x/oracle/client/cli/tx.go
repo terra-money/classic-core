@@ -24,7 +24,7 @@ const (
 	flagOffline = "offline"
 
 	flagValidator = "validator"
-	flagDelegatee = "delegatee"
+	flagFeeder    = "feeder"
 )
 
 // GetCmdPriceVote will create a send tx and sign it with the given key.
@@ -115,7 +115,7 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 Delegate the permission to vote for the oracle to an address.
 That way you can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli oracle set-feeder --delegatee terra1...... --from mykey
+$ terracli oracle set-feeder --feeder terra1...... --from mykey
 
 where "terra1abceuihfu93fud" is the address you want to delegate your voting rights to.
 `),
@@ -136,16 +136,14 @@ where "terra1abceuihfu93fud" is the address you want to delegate your voting rig
 			// The address the right is being delegated from
 			validator := sdk.ValAddress(voter)
 
-			delegateeStr := viper.GetString(flagDelegatee)
-			if len(delegateeStr) == 0 {
-				return fmt.Errorf("--delegate flag is required")
-			}
-			delegatee, err := sdk.AccAddressFromBech32(delegateeStr)
+			feederStr := viper.GetString(flagFeeder)
+
+			feeder, err := sdk.AccAddressFromBech32(feederStr)
 			if err != nil {
-				return errors.Wrap(err, "delegate is not a valid account address")
+				return err
 			}
 
-			msg := oracle.NewMsgDelegateFeederPermission(validator, delegatee)
+			msg := oracle.NewMsgDelegateFeederPermission(validator, feeder)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -155,9 +153,9 @@ where "terra1abceuihfu93fud" is the address you want to delegate your voting rig
 		},
 	}
 
-	cmd.Flags().String(flagDelegatee, "", "account the voting right will be delegated to")
+	cmd.Flags().String(flagFeeder, "", "account the voting right will be delegated to")
 
-	cmd.MarkFlagRequired(flagDelegatee)
+	cmd.MarkFlagRequired(flagFeeder)
 
 	return cmd
 }

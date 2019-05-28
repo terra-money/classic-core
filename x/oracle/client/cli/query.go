@@ -173,7 +173,7 @@ func GetCmdQueryFeederDelegation(queryRoute string, cdc *codec.Codec) *cobra.Com
 		Long: strings.TrimSpace(`
 Query the account the validator's voting right is delegated to.
 
-$ terracli query oracle feeder-delegation --validator terravaloper1ifji3ifj
+$ terracli query oracle feeder --validator terravaloper1ifji3ifj
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

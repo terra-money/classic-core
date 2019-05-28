@@ -18,10 +18,12 @@ var (
 		"price":  true,
 		"active": true,
 		"votes":  true,
+		"feeder": true,
 	}
 
 	txCmdList = map[string]bool{
-		"vote": true,
+		"vote":       true,
+		"set-feeder": true,
 	}
 )
 

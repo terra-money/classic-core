@@ -13,7 +13,7 @@ const (
 	QueryVotes            = "votes"
 	QueryActive           = "active"
 	QueryParams           = "params"
-	QueryFeederDelegation = "feeder-delegation"
+	QueryFeederDelegation = "feeder"
 )
 
 // NewQuerier is the module level router for state queries

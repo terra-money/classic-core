@@ -19,7 +19,7 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Cod
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/price", RestDenom), queryPriceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/params", queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/delegation", RestVoter), queryFeederDelegationHandlerFn(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cdc, cliCtx)).Methods("GET")
 }
 
 func queryVotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -123,8 +123,8 @@ func queryFeederDelegationHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext)
 			return
 		}
 
-		var delegatee sdk.AccAddress
-		cdc.MustUnmarshalJSON(res, &delegatee)
+		var feeder sdk.AccAddress
+		cdc.MustUnmarshalJSON(res, &feeder)
 
 		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
 	}

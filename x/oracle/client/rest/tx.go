@@ -17,7 +17,7 @@ import (
 
 func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/delegation", RestVoter), submitDelegateHandlerFunction(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cdc, cliCtx)).Methods("POST")
 }
 
 //VoteReq ...
@@ -69,8 +69,8 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 // DelegateReq is request body to set feeder of validator
 type DelegateReq struct {
-	BaseReq   rest.BaseReq `json:"base_req"`
-	Delegatee string       `json:"delegatee"`
+	BaseReq rest.BaseReq `json:"base_req"`
+	Feeder  string       `json:"feeder"`
 }
 
 func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -109,14 +109,14 @@ func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) 
 			return
 		}
 
-		delegateeAddress, err := sdk.AccAddressFromBech32(req.Delegatee)
+		feeder, err := sdk.AccAddressFromBech32(req.Feeder)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// create the message
-		msg := oracle.NewMsgDelegateFeederPermission(valAddress, delegateeAddress)
+		msg := oracle.NewMsgDelegateFeederPermission(valAddress, feeder)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
