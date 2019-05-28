@@ -35,6 +35,7 @@ func queryVotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 			voterAddress, err := sdk.AccAddressFromBech32(voter)
 			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
 			params.Voter = voterAddress
@@ -42,6 +43,7 @@ func queryVotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 		bz, err := cdc.MarshalJSON(params)
 		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -62,7 +64,7 @@ func queryPriceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", oracle.QuerierRoute, oracle.QueryPrice, denom), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -75,7 +77,7 @@ func queryActivesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) ht
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", oracle.QuerierRoute, oracle.QueryActive), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -88,7 +90,7 @@ func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Hand
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", oracle.QuerierRoute, oracle.QueryParams), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
