@@ -25,6 +25,8 @@ type VoteReq struct {
 	BaseReq   rest.BaseReq `json:"base_req"`
 	Price     sdk.Dec      `json:"price"`
 	Validator string       `json:"validator"`
+	Hash      string       `json:"hash"`
+	Salt      string       `json:"salt"`
 }
 
 func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -56,7 +58,7 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		}
 
 		// create the message
-		msg := oracle.NewMsgPriceFeed(denom, req.Price, fromAddress, valAddress)
+		msg := oracle.NewMsgPriceFeed(req.Hash, req.Salt, denom, fromAddress, valAddress, req.Price)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

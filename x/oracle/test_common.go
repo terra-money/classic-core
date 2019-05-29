@@ -41,8 +41,22 @@ var (
 	uSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
 	uLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
 
+	randomPrice        = sdk.NewDecWithPrec(1049, 2) // swap rate
+	anotherRandomPrice = sdk.NewDecWithPrec(4882, 2) // swap rate
+
 	oracleDecPrecision = 8
 )
+
+func setup(t *testing.T) (testInput, sdk.Handler) {
+	input := createTestInput(t)
+	h := NewHandler(input.oracleKeeper)
+
+	defaultOracleParams := DefaultParams()
+	defaultOracleParams.VotePeriod = int64(1) // Set to one block for convinience
+	input.oracleKeeper.SetParams(input.ctx, defaultOracleParams)
+
+	return input, h
+}
 
 type testInput struct {
 	ctx          sdk.Context

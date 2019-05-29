@@ -13,6 +13,7 @@ func RegisterCodec(cdc *codec.Codec) {
 
 	cdc.RegisterConcrete(&PriceBallot{}, "oracle/PriceBallot", nil)
 	cdc.RegisterConcrete(&PriceVote{}, "oracle/PriceVote", nil)
+	cdc.RegisterConcrete(&PricePrevote{}, "oracle/PricePrevote", nil)
 }
 
 func init() {

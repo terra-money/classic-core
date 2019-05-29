@@ -1,9 +1,11 @@
 package oracle
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 //-------------------------------------------------
@@ -12,20 +14,29 @@ import (
 // MsgPriceFeed - struct for voting on the price of Luna denominated in various Terra assets.
 // For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
 // what the price field would be, and if 1213.34 for KRW, same.
+// (Hash,Denom,Feeder,Validator) are the contents for prevote of price feed msg,
+// in vote period feeder should submit proof price to verify prevote hash
 type MsgPriceFeed struct {
+	Hash      string         `json:"hash"` // hex string
 	Denom     string         `json:"denom"`
-	Price     sdk.Dec        `json:"price"` // the effective price of Luna in {Denom}
 	Feeder    sdk.AccAddress `json:"feeder"`
 	Validator sdk.ValAddress `json:"validator"`
+
+	Salt  string  `json:"salt"`
+	Price sdk.Dec `json:"price"` // the effective price of Luna in {Denom}
 }
 
 // NewMsgPriceFeed creates a MsgPriceFeed instance
-func NewMsgPriceFeed(denom string, price sdk.Dec, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPriceFeed {
+// price and salt are for prevote hash
+func NewMsgPriceFeed(VoteHash string, salt string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress, price sdk.Dec) MsgPriceFeed {
 	return MsgPriceFeed{
+		Hash: VoteHash,
+		Salt: salt,
+
 		Denom:     denom,
-		Price:     price,
 		Feeder:    feederAddress,
 		Validator: valAddress,
+		Price:     price,
 	}
 }
 
@@ -47,6 +58,14 @@ func (msg MsgPriceFeed) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements sdk.Msg
 func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
+	if len(msg.Hash) > 0 {
+		if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
+			return ErrInvalidHashLength(DefaultCodespace, len([]byte(msg.Hash)))
+		}
+	} else if msg.Price.Equal(sdk.ZeroDec()) {
+		return ErrInvalidMsgFormat(DefaultCodespace, "cannot skip both of hash and price")
+	}
+
 	if len(msg.Denom) == 0 {
 		return ErrUnknownDenomination(DefaultCodespace, "")
 	}
@@ -59,9 +78,16 @@ func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	if msg.Price.LTE(sdk.ZeroDec()) {
-		return ErrInvalidPrice(DefaultCodespace, msg.Price)
+	if !msg.Price.Equal(sdk.ZeroDec()) {
+		if len(msg.Salt) < 1 || len(msg.Salt) > 4 {
+			return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+		}
 	}
+
+	// For initial prevote, the price is not required
+	// if msg.Price.LTE(sdk.ZeroDec()) {
+	// 	return ErrInvalidPrice(DefaultCodespace, msg.Price)
+	// }
 
 	return nil
 }
@@ -69,11 +95,12 @@ func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
 // String Implements Msg
 func (msg MsgPriceFeed) String() string {
 	return fmt.Sprintf(`MsgPriceFeed
+	hash: %s,
 	feeder:    %s, 
 	validator:    %s, 
 	denom:     %s, 
 	price:     %s`,
-		msg.Feeder, msg.Validator, msg.Denom, msg.Price)
+		msg.Hash, msg.Feeder, msg.Validator, msg.Denom, msg.Price)
 }
 
 // MsgDelegateFeederPermission - struct for delegating oracle voting rights to another address.

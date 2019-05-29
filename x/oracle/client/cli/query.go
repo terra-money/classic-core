@@ -94,9 +94,9 @@ func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle votes, filtered by denom and voter address.
 
-$ terracli query oracle votes --denom="uusd" --voter="terrad8duyufdshs..."
+$ terracli query oracle votes --denom="uusd" --validator="terravaloper..."
 
-returns oracle votes submitted by terrad8duyufdshs... for denom uusd 
+returns oracle votes submitted by terravaloper... for denom uusd 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -104,19 +104,19 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 			denom := viper.GetString(flagDenom)
 
 			// Check voter address exists, then valids
-			var voterAddress sdk.AccAddress
+			var voterAddress sdk.ValAddress
 
-			bechVoterAddr := viper.GetString(flagVoter)
+			bechVoterAddr := viper.GetString(flagValidator)
 			if len(bechVoterAddr) != 0 {
 				var err error
 
-				voterAddress, err = sdk.AccAddressFromBech32(bechVoterAddr)
+				voterAddress, err = sdk.ValAddressFromBech32(bechVoterAddr)
 				if err != nil {
 					return err
 				}
 			}
 
-			params := oracle.NewQueryVoteParams(sdk.ValAddress(voterAddress), denom)
+			params := oracle.NewQueryVoteParams(voterAddress, denom)
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -135,7 +135,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 	}
 
 	cmd.Flags().String(flagDenom, "", "filter by votes matching the denom")
-	cmd.Flags().String(flagVoter, "", "(optional) filter by votes by voter")
+	cmd.Flags().String(flagValidator, "", "(optional) filter by votes by validator")
 
 	cmd.MarkFlagRequired(flagDenom)
 

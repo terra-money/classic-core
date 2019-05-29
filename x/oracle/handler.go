@@ -1,6 +1,9 @@
 package oracle
 
 import (
+	"bytes"
+	"encoding/hex"
+
 	"github.com/terra-project/core/x/oracle/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,17 +42,55 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 		return staking.ErrNoValidatorFound(DefaultCodespace).Result()
 	}
 
-	// Add the vote to the store
-	vote := NewPriceVote(pfm.Price, pfm.Denom, pfm.Validator)
-	keeper.addVote(ctx, vote)
+	params := keeper.GetParams(ctx)
+
+	// For zero price, it will just replace prevote without checking the price and submitting vote. It is useful to change price before vote period
+	if !pfm.Price.Equal(sdk.ZeroDec()) {
+
+		// Get prevote
+
+		if prevote, err := keeper.getPrevote(ctx, pfm.Denom, pfm.Validator); err == nil {
+
+			// Check a msg is submitted porper period
+			if (ctx.BlockHeight()-prevote.SubmitBlock)/params.VotePeriod != 1 {
+				return ErrNotRevealPeriod(DefaultCodespace).Result()
+			}
+
+			// If there is an prevote, we verify a price with prevote hash and move prevote to vote with given price
+			bz, _ := hex.DecodeString(prevote.Hash) // prevote hash
+			bz2, err := VoteHash(pfm.Salt, pfm.Price, prevote.Denom, prevote.Voter)
+			if err != nil {
+				return ErrVerificationFailed(DefaultCodespace, bz, []byte{}).Result()
+			}
+
+			if !bytes.Equal(bz, bz2) {
+				return ErrVerificationFailed(DefaultCodespace, bz, bz2).Result()
+			}
+
+			// Add the vote to the store
+			vote := NewPriceVote(pfm.Price, prevote.Denom, prevote.Voter)
+			keeper.deletePrevote(ctx, prevote)
+			keeper.addVote(ctx, vote)
+		}
+
+	}
+
+	// Add the prevote to the store
+	if len(pfm.Hash) != 0 {
+		prevote := NewPricePrevote(pfm.Hash, pfm.Denom, pfm.Validator, ctx.BlockHeight())
+		keeper.addPrevote(ctx, prevote)
+	}
+
+	log := NewLog()
+	log = log.append(LogKeyPrice, pfm.Price.String())
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Denom, pfm.Denom,
 			tags.Voter, pfm.Validator.String(),
 			tags.FeedDelegate, pfm.Feeder.String(),
-			tags.Price, pfm.Price.String(),
 		),
+		Log: log.String(),
 	}
 }
 

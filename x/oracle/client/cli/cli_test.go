@@ -37,6 +37,7 @@ func TestPriceVoteTx(t *testing.T) {
 		`--from=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,
 		`--denom=ukrw`,
 		`--price=5555.55`,
+		`--salt=1234`,
 		`--generate-only`,
 		`--offline`,
 		`--chain-id=columbus`,
@@ -90,7 +91,7 @@ func TestGetCmdQueryVotes(t *testing.T) {
 	require.NotNil(t, denomFlag)
 	require.Equal(t, []string{"true"}, denomFlag.Annotations[cobra.BashCompOneRequiredFlag])
 
-	voterFlag := queryVotesCmd.Flag(flagVoter)
+	voterFlag := queryVotesCmd.Flag(flagValidator)
 	require.NotNil(t, voterFlag)
 }
 
