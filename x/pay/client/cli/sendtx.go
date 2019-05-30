@@ -32,7 +32,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Create, sign and broadcast send tx.
 
-In case generate-only, --from should be specified as address not key name.
+For generate-only, --from should be specified as address not key name.
 $ terracli tx send --to [to_address] --coins [amount] --from [from_address or key_name]
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -85,8 +85,8 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 	cmd = client.PostCommands(cmd)[0]
 
-	cmd.Flags().String(flagTo, "", "the address which a user wants to send")
-	cmd.Flags().String(flagCoins, "", "the amount a user wants to transfer")
+	cmd.Flags().String(flagTo, "", "Destination address for sending")
+	cmd.Flags().String(flagCoins, "", "Amount of coins (e.g. 1000uluna,100usdr)")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(client.FlagFrom)

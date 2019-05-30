@@ -65,7 +65,7 @@ func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Long: strings.TrimSpace(`Query genesis parameters for the slashing module:
 
-$ gaiacli query slashing params
+$ terracli query slashing params
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
