@@ -41,13 +41,13 @@ func BenchmarkOracleFeedVotePerBlock(b *testing.B) {
 					panic(err)
 				}
 
-				voteMsg := oracle.NewMsgPriceFeed(hex.EncodeToString(bz), "", denoms[d], addrs[j], sdk.ValAddress(addrs[j]), sdk.ZeroDec())
-				res := h(ctx, voteMsg)
+				prevoteMsg := oracle.NewMsgPricePrevote(hex.EncodeToString(bz), denoms[d], addrs[j], sdk.ValAddress(addrs[j]))
+				res := h(ctx, prevoteMsg)
 				if !res.IsOK() {
 					panic(res.Log)
 				}
 
-				voteMsg = oracle.NewMsgPriceFeed("", salt, denoms[d], addrs[j], sdk.ValAddress(addrs[j]), sdk.OneDec())
+				voteMsg := oracle.NewMsgPriceVote(sdk.OneDec(), salt, denoms[d], addrs[j], sdk.ValAddress(addrs[j]))
 				res = h(ctx.WithBlockHeight(1), voteMsg)
 				if !res.IsOK() {
 					panic(res.Log)

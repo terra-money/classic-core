@@ -45,6 +45,7 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	}
 
 	oracleTxCmd.AddCommand(client.PostCommands(
+		cli.GetCmdPricePrevote(mc.cdc),
 		cli.GetCmdPriceVote(mc.cdc),
 		cli.GetCmdDelegateFeederPermission(mc.cdc),
 	)...)

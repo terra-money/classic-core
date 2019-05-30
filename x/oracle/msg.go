@@ -11,59 +11,47 @@ import (
 //-------------------------------------------------
 //-------------------------------------------------
 
-// MsgPriceFeed - struct for voting on the price of Luna denominated in various Terra assets.
-// For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
-// what the price field would be, and if 1213.34 for KRW, same.
-// (Hash,Denom,Feeder,Validator) are the contents for prevote of price feed msg,
-// in vote period feeder should submit proof price to verify prevote hash
-type MsgPriceFeed struct {
+// MsgPricePrevote - struct for prevoting on the PriceVote.
+// The purpose of prevote is to hide vote price with hash
+// which is formatted as hex string in SHA256("salt:price:denom:voter")
+type MsgPricePrevote struct {
 	Hash      string         `json:"hash"` // hex string
 	Denom     string         `json:"denom"`
 	Feeder    sdk.AccAddress `json:"feeder"`
 	Validator sdk.ValAddress `json:"validator"`
-
-	Salt  string  `json:"salt"`
-	Price sdk.Dec `json:"price"` // the effective price of Luna in {Denom}
 }
 
-// NewMsgPriceFeed creates a MsgPriceFeed instance
-// price and salt are for prevote hash
-func NewMsgPriceFeed(VoteHash string, salt string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress, price sdk.Dec) MsgPriceFeed {
-	return MsgPriceFeed{
-		Hash: VoteHash,
-		Salt: salt,
-
+// NewMsgPricePrevote creates a MsgPricePrevote instance
+func NewMsgPricePrevote(VoteHash string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPricePrevote {
+	return MsgPricePrevote{
+		Hash:      VoteHash,
 		Denom:     denom,
 		Feeder:    feederAddress,
 		Validator: valAddress,
-		Price:     price,
 	}
 }
 
 // Route Implements Msg
-func (msg MsgPriceFeed) Route() string { return RouterKey }
+func (msg MsgPricePrevote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgPriceFeed) Type() string { return "pricefeed" }
+func (msg MsgPricePrevote) Type() string { return "priceprevote" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgPriceFeed) GetSignBytes() []byte {
+func (msg MsgPricePrevote) GetSignBytes() []byte {
 	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgPriceFeed) GetSigners() []sdk.AccAddress {
+func (msg MsgPricePrevote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
-	if len(msg.Hash) > 0 {
-		if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
-			return ErrInvalidHashLength(DefaultCodespace, len([]byte(msg.Hash)))
-		}
-	} else if msg.Price.Equal(sdk.ZeroDec()) {
-		return ErrInvalidMsgFormat(DefaultCodespace, "cannot skip both of hash and price")
+func (msg MsgPricePrevote) ValidateBasic() sdk.Error {
+
+	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
+		return ErrInvalidHashLength(DefaultCodespace, len([]byte(msg.Hash)))
 	}
 
 	if len(msg.Denom) == 0 {
@@ -78,29 +66,92 @@ func (msg MsgPriceFeed) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	if !msg.Price.Equal(sdk.ZeroDec()) {
-		if len(msg.Salt) < 1 || len(msg.Salt) > 4 {
-			return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
-		}
+	return nil
+}
+
+// String Implements Msg
+func (msg MsgPricePrevote) String() string {
+	return fmt.Sprintf(`MsgPriceVote
+	hash:     %s,
+	feeder:    %s, 
+	validator:    %s, 
+	denom:     %s`,
+		msg.Hash, msg.Feeder, msg.Validator, msg.Denom)
+}
+
+// MsgPriceVote - struct for voting on the price of Luna denominated in various Terra assets.
+// For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
+// what the price field would be, and if 1213.34 for KRW, same.
+type MsgPriceVote struct {
+	Price     sdk.Dec        `json:"price"` // the effective price of Luna in {Denom}
+	Salt      string         `json:"salt"`
+	Denom     string         `json:"denom"`
+	Feeder    sdk.AccAddress `json:"feeder"`
+	Validator sdk.ValAddress `json:"validator"`
+}
+
+// NewMsgPriceVote creates a MsgPriceVote instance
+func NewMsgPriceVote(price sdk.Dec, salt string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPriceVote {
+	return MsgPriceVote{
+		Price:     price,
+		Salt:      salt,
+		Denom:     denom,
+		Feeder:    feederAddress,
+		Validator: valAddress,
+	}
+}
+
+// Route Implements Msg
+func (msg MsgPriceVote) Route() string { return RouterKey }
+
+// Type implements sdk.Msg
+func (msg MsgPriceVote) Type() string { return "pricevote" }
+
+// GetSignBytes implements sdk.Msg
+func (msg MsgPriceVote) GetSignBytes() []byte {
+	return sdk.MustSortJSON(msgCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners implements sdk.Msg
+func (msg MsgPriceVote) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Feeder}
+}
+
+// ValidateBasic Implements sdk.Msg
+func (msg MsgPriceVote) ValidateBasic() sdk.Error {
+
+	if len(msg.Denom) == 0 {
+		return ErrUnknownDenomination(DefaultCodespace, "")
 	}
 
-	// For initial prevote, the price is not required
-	// if msg.Price.LTE(sdk.ZeroDec()) {
-	// 	return ErrInvalidPrice(DefaultCodespace, msg.Price)
-	// }
+	if msg.Feeder.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if msg.Validator.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if msg.Price.LTE(sdk.ZeroDec()) {
+		return ErrInvalidPrice(DefaultCodespace, msg.Price)
+	}
+
+	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
+		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+	}
 
 	return nil
 }
 
 // String Implements Msg
-func (msg MsgPriceFeed) String() string {
-	return fmt.Sprintf(`MsgPriceFeed
-	hash: %s,
+func (msg MsgPriceVote) String() string {
+	return fmt.Sprintf(`MsgPriceVote
+	price:     %s,
+	salt:     %s,
 	feeder:    %s, 
 	validator:    %s, 
-	denom:     %s, 
-	price:     %s`,
-		msg.Hash, msg.Feeder, msg.Validator, msg.Denom, msg.Price)
+	denom:     %s`,
+		msg.Price, msg.Salt, msg.Feeder, msg.Validator, msg.Denom)
 }
 
 // MsgDelegateFeederPermission - struct for delegating oracle voting rights to another address.

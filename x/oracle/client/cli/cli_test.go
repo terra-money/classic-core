@@ -14,6 +14,38 @@ import (
 	"github.com/terra-project/core/x/oracle"
 )
 
+func TestPricePrevoteTx(t *testing.T) {
+	cdc, rootCmd, txCmd, _ := testutil.PrepareCmdTest()
+
+	oracleTxCmd := &cobra.Command{
+		Use:   "oracle",
+		Short: "Oracle transaction subcommands",
+	}
+
+	txCmd.AddCommand(oracleTxCmd)
+
+	oracleTxCmd.AddCommand(client.PostCommands(
+		GetCmdPricePrevote(cdc),
+	)...)
+
+	// normal case all parameter given
+	_, err := testutil.ExecuteCommand(
+		rootCmd,
+		`tx`,
+		`oracle`,
+		`prevote`,
+		`--from=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,
+		`--denom=ukrw`,
+		`--price=5555.55`,
+		`--salt=1234`,
+		`--generate-only`,
+		`--offline`,
+		`--chain-id=columbus`,
+	)
+
+	require.Nil(t, err)
+}
+
 func TestPriceVoteTx(t *testing.T) {
 	cdc, rootCmd, txCmd, _ := testutil.PrepareCmdTest()
 
@@ -38,6 +70,36 @@ func TestPriceVoteTx(t *testing.T) {
 		`--denom=ukrw`,
 		`--price=5555.55`,
 		`--salt=1234`,
+		`--generate-only`,
+		`--offline`,
+		`--chain-id=columbus`,
+	)
+
+	require.Nil(t, err)
+}
+
+func TestDelegateFeederPermissionTx(t *testing.T) {
+	cdc, rootCmd, txCmd, _ := testutil.PrepareCmdTest()
+
+	oracleTxCmd := &cobra.Command{
+		Use:   "oracle",
+		Short: "Oracle transaction subcommands",
+	}
+
+	txCmd.AddCommand(oracleTxCmd)
+
+	oracleTxCmd.AddCommand(client.PostCommands(
+		GetCmdDelegateFeederPermission(cdc),
+	)...)
+
+	// normal case all parameter given
+	_, err := testutil.ExecuteCommand(
+		rootCmd,
+		`tx`,
+		`oracle`,
+		`set-feeder`,
+		`--from=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,
+		`--feeder=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv`,
 		`--generate-only`,
 		`--offline`,
 		`--chain-id=columbus`,

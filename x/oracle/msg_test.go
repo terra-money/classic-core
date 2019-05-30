@@ -12,10 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgPriceFeed(t *testing.T) {
+func TestMsgPricePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
-	salt := "1"
 	bz, err := VoteHash("1", sdk.OneDec(), assets.MicroSDRDenom, types.ValAddress(addrs[0]))
 	require.Nil(t, err)
 
@@ -23,18 +22,44 @@ func TestMsgPriceFeed(t *testing.T) {
 		hash       string
 		denom      string
 		voter      sdk.AccAddress
+		expectPass bool
+	}{
+		{hex.EncodeToString(bz), "", addrs[0], false},
+		{hex.EncodeToString(bz), assets.MicroCNYDenom, addrs[0], true},
+		{hex.EncodeToString(bz), assets.MicroCNYDenom, addrs[0], true},
+		{hex.EncodeToString(bz), assets.MicroCNYDenom, sdk.AccAddress{}, false},
+		{"", assets.MicroCNYDenom, addrs[0], false},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgPricePrevote(tc.hash, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgPriceVote(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
+
+	tests := []struct {
+		denom      string
+		voter      sdk.AccAddress
 		salt       string
 		price      sdk.Dec
 		expectPass bool
 	}{
-		{hex.EncodeToString(bz), "", addrs[0], salt, sdk.OneDec(), false},
-		{hex.EncodeToString(bz), assets.MicroCNYDenom, addrs[0], salt, sdk.OneDec().MulInt64(assets.MicroUnit), true},
-		{hex.EncodeToString(bz), assets.MicroCNYDenom, addrs[0], "123", sdk.ZeroDec(), true},
-		{hex.EncodeToString(bz), assets.MicroCNYDenom, sdk.AccAddress{}, salt, sdk.OneDec().MulInt64(assets.MicroUnit), false},
+		{"", addrs[0], "123", sdk.OneDec(), false},
+		{assets.MicroCNYDenom, addrs[0], "123", sdk.OneDec().MulInt64(assets.MicroUnit), true},
+		{assets.MicroCNYDenom, addrs[0], "123", sdk.ZeroDec(), false},
+		{assets.MicroCNYDenom, sdk.AccAddress{}, "123", sdk.OneDec().MulInt64(assets.MicroUnit), false},
+		{assets.MicroCNYDenom, addrs[0], "", sdk.OneDec().MulInt64(assets.MicroUnit), false},
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgPriceFeed(tc.hash, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter), tc.price)
+		msg := NewMsgPriceVote(tc.price, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

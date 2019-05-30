@@ -22,21 +22,27 @@ func TestOracleFilters(t *testing.T) {
 	res := h(input.ctx, bankMsg)
 	require.False(t, res.IsOK())
 
-	// Case 2: Normal MsgPriceFeed submission goes through
+	// Case 2: Normal MsgPricePrevote submission goes through
 	salt := "1"
-	bz, err := VoteHash("1", randomPrice, assets.MicroSDRDenom, types.ValAddress(addrs[0]))
+	bz, err := VoteHash(salt, randomPrice, assets.MicroSDRDenom, types.ValAddress(addrs[0]))
 	require.Nil(t, err)
-	msg := NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, msg)
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	// Case 3: a non-validator sending an oracle message fails
+	// Case 3: Normal MsgPriceVote submission goes through
+	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]))
+	res = h(input.ctx.WithBlockHeight(1), voteMsg)
+	require.True(t, res.IsOK())
+
+	// Case 4: a non-validator sending an oracle message fails
 	_, randoAddrs := cosmock.GeneratePrivKeyAddressPairs(1)
 	salt = "2"
-	bz, err = VoteHash("1", randomPrice, assets.MicroSDRDenom, types.ValAddress(randoAddrs[0]))
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, types.ValAddress(randoAddrs[0]))
 	require.Nil(t, err)
-	msg = NewMsgPriceFeed("", salt, assets.MicroSDRDenom, randoAddrs[0], types.ValAddress(randoAddrs[0]), randomPrice)
-	res = h(input.ctx, msg)
+
+	prevoteMsg = NewMsgPricePrevote("", assets.MicroSDRDenom, randoAddrs[0], types.ValAddress(randoAddrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 }
 
@@ -47,30 +53,24 @@ func TestPrevoteCheck(t *testing.T) {
 	bz, err := VoteHash(salt, randomPrice, assets.MicroSDRDenom, types.ValAddress(addrs[0]))
 	require.Nil(t, err)
 
-	priceMsg := NewMsgPriceFeed(hex.EncodeToString(bz), "", assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]), sdk.ZeroDec())
-	res := h(input.ctx, priceMsg)
+	pricePrevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]))
+	res := h(input.ctx, pricePrevoteMsg)
 	require.True(t, res.IsOK())
 
 	// Invalid price reveal period
-	priceMsg = NewMsgPriceFeed("", salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
+	priceVoteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]))
+	res = h(input.ctx, priceVoteMsg)
 	require.False(t, res.IsOK())
 
 	input.ctx = input.ctx.WithBlockHeight(2)
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
+	priceVoteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]))
+	res = h(input.ctx, priceVoteMsg)
 	require.False(t, res.IsOK())
 
 	// valid price reveal submission
 	input.ctx = input.ctx.WithBlockHeight(1)
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
-	require.True(t, res.IsOK())
-
-	// valid hash change submission with zero price
-	input.ctx = input.ctx.WithBlockHeight(1)
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), "", assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]), sdk.ZeroDec())
-	res = h(input.ctx, priceMsg)
+	priceVoteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, sdk.AccAddress(addrs[0]), types.ValAddress(addrs[0]))
+	res = h(input.ctx, priceVoteMsg)
 	require.True(t, res.IsOK())
 
 }
@@ -87,14 +87,14 @@ func TestFeederDelegation(t *testing.T) {
 	res := h(input.ctx, bankMsg)
 	require.False(t, res.IsOK())
 
-	// Case 2: Normal Vote - without delegation
-	priceMsg := NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
+	// Case 2: Normal Prevote - without delegation
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], types.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	// Case 2.1: Normal Vote - with delegation fails
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, addrs[1], types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
+	// Case 2.1: Normal Prevote - with delegation fails
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], types.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
 	// Case 3: Normal MsgDelegateFeederPermission succeeds
@@ -102,13 +102,13 @@ func TestFeederDelegation(t *testing.T) {
 	res = h(input.ctx, msg)
 	require.True(t, res.IsOK())
 
-	// Case 4: Normal Vote - without delegation fails
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, addrs[2], types.ValAddress(addrs[0]), randomPrice)
-	res = h(input.ctx, priceMsg)
+	// Case 4: Normal Prevote - without delegation fails
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[2], types.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
-	// Case 5: Normal Vote - with delegation succeeds
-	priceMsg = NewMsgPriceFeed(hex.EncodeToString(bz), salt, assets.MicroSDRDenom, addrs[1], types.ValAddress(addrs[0]), sdk.ZeroDec())
-	res = h(input.ctx, priceMsg)
+	// Case 5: Normal Prevote - with delegation succeeds
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], types.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 }

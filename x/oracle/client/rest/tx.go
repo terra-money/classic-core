@@ -17,30 +17,28 @@ import (
 )
 
 func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
+	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), submitPrevoteHandlerFunction(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cdc, cliCtx)).Methods("POST")
 }
 
-//VoteReq ...
-type VoteReq struct {
+// PrevoteReq ...
+type PrevoteReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
 	Hash  string  `json:"hash"`
 	Price sdk.Dec `json:"price"`
 	Salt  string  `json:"salt"`
 
-	ProofSalt  string  `json:"proof_salt"`
-	ProofPrice sdk.Dec `json:"proof_price"`
-
 	Validator string `json:"validator"`
 }
 
-func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func submitPrevoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
 
-		var req VoteReq
+		var req PrevoteReq
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			return
 		}
@@ -75,7 +73,57 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		}
 
 		// create the message
-		msg := oracle.NewMsgPriceFeed(req.Hash, req.ProofSalt, denom, fromAddress, valAddress, req.ProofPrice)
+		msg := oracle.NewMsgPricePrevote(req.Hash, denom, fromAddress, valAddress)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+//VoteReq ...
+type VoteReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+
+	Price sdk.Dec `json:"price"`
+	Salt  string  `json:"salt"`
+
+	Validator string `json:"validator"`
+}
+
+func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		denom := vars[RestDenom]
+
+		var req VoteReq
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		valAddress, err := sdk.ValAddressFromBech32(req.Validator)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// create the message
+		msg := oracle.NewMsgPriceVote(req.Price, req.Salt, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

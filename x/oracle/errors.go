@@ -77,7 +77,7 @@ func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error
 	return sdk.NewError(codespace, CodeInvalidSaltLength, fmt.Sprintf("Salt legnth should be 1~4, but given %d", saltLength))
 }
 
-// ErrInvalidMsgFormat called when the has invalid format
+// ErrInvalidMsgFormat called when the msg has invalid format
 func ErrInvalidMsgFormat(codespace sdk.CodespaceType, msg string) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidMsgFormat, fmt.Sprintf("Invalid Msg Format: %s", msg))
 }

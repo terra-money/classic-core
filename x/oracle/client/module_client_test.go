@@ -23,6 +23,7 @@ var (
 	}
 
 	txCmdList = map[string]bool{
+		"prevote":    true,
 		"vote":       true,
 		"set-feeder": true,
 	}
