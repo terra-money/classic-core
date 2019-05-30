@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -22,11 +23,16 @@ func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec
 
 //VoteReq ...
 type VoteReq struct {
-	BaseReq   rest.BaseReq `json:"base_req"`
-	Price     sdk.Dec      `json:"price"`
-	Validator string       `json:"validator"`
-	Hash      string       `json:"hash"`
-	Salt      string       `json:"salt"`
+	BaseReq rest.BaseReq `json:"base_req"`
+
+	Hash  string  `json:"hash"`
+	Price sdk.Dec `json:"price"`
+	Salt  string  `json:"salt"`
+
+	ProofSalt  string  `json:"proof_salt"`
+	ProofPrice sdk.Dec `json:"proof_price"`
+
+	Validator string `json:"validator"`
 }
 
 func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -57,8 +63,19 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
+		// If hash is not given, then retrieve hash from price and salt
+		if len(req.Hash) == 0 && (!req.Price.Equal(sdk.ZeroDec()) && len(req.Salt) > 0) {
+			hashBytes, err := oracle.VoteHash(req.Salt, req.Price, denom, valAddress)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			req.Hash = hex.EncodeToString(hashBytes)
+		}
+
 		// create the message
-		msg := oracle.NewMsgPriceFeed(req.Hash, req.Salt, denom, fromAddress, valAddress, req.Price)
+		msg := oracle.NewMsgPriceFeed(req.Hash, req.ProofSalt, denom, fromAddress, valAddress, req.ProofPrice)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

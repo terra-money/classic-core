@@ -38,9 +38,13 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Ke
 
 // Mint credits {coin} to the {recipient} account, and reflects the increase in issuance
 func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error) {
-	_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
-	if err != nil {
-		return err
+
+	// recipient could be empty in case minting to validator outstanding rewards
+	if !recipient.Empty() {
+		_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
+		if err != nil {
+			return err
+		}
 	}
 
 	if coin.Denom == assets.MicroLunaDenom {

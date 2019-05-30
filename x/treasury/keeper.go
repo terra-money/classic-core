@@ -3,8 +3,6 @@ package treasury
 import (
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/mint"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,21 +16,25 @@ type Keeper struct {
 
 	valset sdk.ValidatorSet
 
-	mtk mint.Keeper
-	mk  market.Keeper
+	mtk MintKeeper
+	mk  MarketKeeper
+	dk  DistributionKeeper
+	fck FeeCollectionKeeper
 
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet,
-	mtk mint.Keeper, mk market.Keeper, paramspace params.Subspace) Keeper {
+	mtk MintKeeper, mk MarketKeeper, dk DistributionKeeper, fck FeeCollectionKeeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
 		valset:     valset,
 		mtk:        mtk,
 		mk:         mk,
+		dk:         dk,
+		fck:        fck,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }

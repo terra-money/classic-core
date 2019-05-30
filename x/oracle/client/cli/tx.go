@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -18,11 +19,14 @@ import (
 )
 
 const (
-	flagDenom = "denom"
+	flagProofPrice = "proof-price"
+	flagProofSalt  = "proof-salt"
+
+	flagSalt  = "salt"
 	flagPrice = "price"
 	flagHash  = "Hash"
-	flagSalt  = "salt"
 
+	flagDenom     = "denom"
 	flagValidator = "validator"
 	flagFeeder    = "feeder"
 
@@ -37,9 +41,17 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit an oracle prevote and vote for the price of Luna denominated in the input denom.
 This message has piggybacking structure. Firstly users should submit the hash of real vote (prevote). After then in next vote period,
-users should submit vote with proof (= price and slat) to proof prevote and make real vote.
+users should submit vote with proof (= price and slat) to verify prevote and make real vote.
 
-$ terracli oracle vote --denom "ukrw" --price "8890" --hash "72f374291b0428453bf481ec9d4b0b2440299b62" --salt "1234" --from mykey
+# Prevote and Vote Both
+$ terracli oracle vote --denom "ukrw" --proof-price "8890" --hash "72f374291b0428453bf481ec9d4b0b2440299b62" --proof-salt "1234" --from mykey
+$ terracli oracle vote --denom "ukrw" --proof-price "8890" --price "8888" --salt "4321" --proof-salt "1234" --from mykey
+
+# Vote Only
+$ terracli oracle vote --denom "ukrw" --proof-price "8890" --proof-salt "1234" --from mykey
+
+# Prevote Only
+$ terracli oracle vote --denom "ukrw" --price "8888" --salt "4321"--from mykey
 
 where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
 
@@ -67,6 +79,8 @@ $ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator te
 			priceStr := viper.GetString(flagPrice)
 			hash := viper.GetString(flagHash)
 			salt := viper.GetString(flagSalt)
+			proofPriceStr := viper.GetString(flagProofPrice)
+			proofSalt := viper.GetString(flagProofSalt)
 
 			// By default the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
@@ -82,18 +96,32 @@ $ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator te
 			}
 
 			// Parse the price to Dec
-			var price sdk.Dec
-			if len(priceStr) == 0 {
-				price = sdk.ZeroDec()
+			var proofPrice sdk.Dec
+			if len(proofPriceStr) == 0 {
+				proofPrice = sdk.ZeroDec()
 			} else {
-				var err error
-				price, err = sdk.NewDecFromStr(priceStr)
+				var err sdk.Error
+				proofPrice, err = sdk.NewDecFromStr(proofPriceStr)
 				if err != nil {
-					return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", priceStr)
+					return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", proofPriceStr)
 				}
 			}
 
-			msg := oracle.NewMsgPriceFeed(hash, salt, denom, voter, validator, price)
+			if len(hash) == 0 && (len(priceStr) > 0 && len(salt) > 0) {
+				price, err := sdk.NewDecFromStr(priceStr)
+				if err != nil {
+					return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", priceStr)
+				}
+
+				hashBytes, err2 := oracle.VoteHash(salt, price, denom, validator)
+				if err2 != nil {
+					return err2
+				}
+
+				hash = hex.EncodeToString(hashBytes)
+			}
+
+			msg := oracle.NewMsgPriceFeed(hash, proofSalt, denom, voter, validator, proofPrice)
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -106,8 +134,10 @@ $ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator te
 	cmd.Flags().String(flagDenom, "", "denominating currency")
 	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
 	cmd.Flags().String(flagHash, "", "hex string; hash of next vote; empty == skip prevote")
-	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency was used to proof prevote hash; initial prevote does not require this field")
-	cmd.Flags().String(flagSalt, "", "salt was used to proof prevote hash; initial prevote does not require this field")
+	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
+	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
+	cmd.Flags().String(flagProofPrice, "", "proof price of Luna in denom currency was used to make prevote hash; initial prevote does not require this field")
+	cmd.Flags().String(flagProofSalt, "", "proof salt was used to make prevote hash; initial prevote does not require this field")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
 
 	cmd.MarkFlagRequired(flagDenom)

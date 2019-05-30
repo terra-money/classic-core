@@ -123,7 +123,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 	}
 
 	// Clear all prevotes
-	k.iteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) { k.deletePrevote(ctx, prevote); return false })
+	k.iteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
+		if (ctx.BlockHeight() - prevote.SubmitBlock) > params.VotePeriod {
+			k.deletePrevote(ctx, prevote)
+		}
+
+		return false
+	})
 
 	// Clear all votes
 	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })

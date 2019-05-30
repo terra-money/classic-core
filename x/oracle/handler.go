@@ -48,11 +48,10 @@ func handleMsgPriceFeed(ctx sdk.Context, keeper Keeper, pfm MsgPriceFeed) sdk.Re
 	if !pfm.Price.Equal(sdk.ZeroDec()) {
 
 		// Get prevote
-
 		if prevote, err := keeper.getPrevote(ctx, pfm.Denom, pfm.Validator); err == nil {
 
 			// Check a msg is submitted porper period
-			if (ctx.BlockHeight()-prevote.SubmitBlock)/params.VotePeriod != 1 {
+			if (ctx.BlockHeight()/params.VotePeriod)-(prevote.SubmitBlock/params.VotePeriod) != 1 {
 				return ErrNotRevealPeriod(DefaultCodespace).Result()
 			}
 

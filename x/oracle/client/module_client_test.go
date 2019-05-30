@@ -14,11 +14,12 @@ const (
 
 var (
 	queryCmdList = map[string]bool{
-		"params": true,
-		"price":  true,
-		"active": true,
-		"votes":  true,
-		"feeder": true,
+		"params":   true,
+		"price":    true,
+		"active":   true,
+		"votes":    true,
+		"prevotes": true,
+		"feeder":   true,
 	}
 
 	txCmdList = map[string]bool{

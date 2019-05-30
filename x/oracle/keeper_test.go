@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"encoding/hex"
+
 	"github.com/terra-project/core/types/assets"
 
 	"testing"
@@ -42,7 +44,7 @@ func TestKeeperPrice(t *testing.T) {
 func TestKeeperVote(t *testing.T) {
 	input := createTestInput(t)
 
-	// Test addvote
+	// Test addVote
 	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	input.oracleKeeper.addVote(input.ctx, vote)
 
@@ -66,6 +68,33 @@ func TestKeeperVote(t *testing.T) {
 	// Test deletevote
 	input.oracleKeeper.deleteVote(input.ctx, vote)
 	_, err = input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	require.NotNil(t, err)
+}
+
+func TestKeeperPrevote(t *testing.T) {
+	input := createTestInput(t)
+
+	hash, _ := VoteHash("1234", sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	hexHas := hex.EncodeToString(hash)
+
+	// Test addPrevote
+	prevote := NewPricePrevote(hexHas, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]), 1)
+	input.oracleKeeper.addPrevote(input.ctx, prevote)
+
+	// Test getPrevote
+	prevoteQuery, err := input.oracleKeeper.getPrevote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	require.Nil(t, err)
+	require.Equal(t, prevote, prevoteQuery)
+
+	// Test iteratevotes
+	input.oracleKeeper.iteratePrevotes(input.ctx, func(prevote PricePrevote) bool {
+		require.Equal(t, prevote, prevoteQuery)
+		return true
+	})
+
+	// Test deletevote
+	input.oracleKeeper.deletePrevote(input.ctx, prevote)
+	_, err = input.oracleKeeper.getPrevote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	require.NotNil(t, err)
 }
 

@@ -11,6 +11,7 @@ import (
 const (
 	QueryPrice            = "price"
 	QueryVotes            = "votes"
+	QueryPrevotes         = "prevotes"
 	QueryActive           = "active"
 	QueryParams           = "params"
 	QueryFeederDelegation = "feeder"
@@ -26,6 +27,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryActive(ctx, req, keeper)
 		case QueryVotes:
 			return queryVotes(ctx, req, keeper)
+		case QueryPrevotes:
+			return queryPrevotes(ctx, req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
 		case QueryFeederDelegation:
@@ -77,6 +80,17 @@ func NewQueryVoteParams(voter sdk.ValAddress, denom string) QueryVoteParams {
 	}
 }
 
+// QueryPrevoteParams for query 'custom/oracle/prevotes'
+type QueryPrevoteParams QueryVoteParams
+
+// NewQueryPrevoteParams creates a new instance of QueryVoteParams
+func NewQueryPrevoteParams(voter sdk.ValAddress, denom string) QueryPrevoteParams {
+	return QueryPrevoteParams{
+		Voter: voter,
+		Denom: denom,
+	}
+}
+
 func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params QueryVoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
@@ -84,7 +98,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := PriceBallot{}
+	filteredVotes := PriceVotes{}
 
 	// collects all votes without filter
 	prefix := prefixVote
@@ -112,6 +126,47 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	keeper.iterateVotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params QueryVoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	filteredPrevotes := []PricePrevote{}
+
+	// collects all votes without filter
+	prefix := prefixPrevote
+	handler := func(prevote PricePrevote) (stop bool) {
+		filteredPrevotes = append(filteredPrevotes, prevote)
+		return false
+	}
+
+	// applies filter
+	if len(params.Denom) != 0 && !params.Voter.Empty() {
+		prefix = keyPrevote(params.Denom, params.Voter)
+	} else if len(params.Denom) != 0 {
+		prefix = keyPrevote(params.Denom, sdk.ValAddress{})
+	} else if !params.Voter.Empty() {
+		handler = func(prevote PricePrevote) (stop bool) {
+
+			if prevote.Voter.Equals(params.Voter) {
+				filteredPrevotes = append(filteredPrevotes, prevote)
+			}
+
+			return false
+		}
+	}
+
+	keeper.iteratePrevotesWithPrefix(ctx, prefix, handler)
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredPrevotes)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

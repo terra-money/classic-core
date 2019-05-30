@@ -95,6 +95,26 @@ func TestGetCmdQueryVotes(t *testing.T) {
 	require.NotNil(t, voterFlag)
 }
 
+func TestGetCmdQueryPrevotes(t *testing.T) {
+	cdc, _, _, _ := testutil.PrepareCmdTest()
+
+	queryPrevotesCmd := GetCmdQueryPrevotes(oracle.QuerierRoute, cdc)
+
+	// Name check
+	require.Equal(t, oracle.QueryPrevotes, queryPrevotesCmd.Name())
+
+	// NoArg check
+	require.Equal(t, testutil.FS(cobra.PositionalArgs(cobra.NoArgs)), testutil.FS(queryPrevotesCmd.Args))
+
+	// Check Flags
+	denomFlag := queryPrevotesCmd.Flag(flagDenom)
+	require.NotNil(t, denomFlag)
+	require.Equal(t, []string{"true"}, denomFlag.Annotations[cobra.BashCompOneRequiredFlag])
+
+	voterFlag := queryPrevotesCmd.Flag(flagValidator)
+	require.NotNil(t, voterFlag)
+}
+
 func TestQueryParams(t *testing.T) {
 	cdc, _, _, _ := testutil.PrepareCmdTest()
 

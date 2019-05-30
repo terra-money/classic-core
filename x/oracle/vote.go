@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -23,6 +24,26 @@ func NewPricePrevote(hash string, denom string, voter sdk.ValAddress, submitBloc
 		Voter:       voter,
 		SubmitBlock: submitBlock,
 	}
+}
+
+// String implements fmt.Stringer
+func (pp PricePrevote) String() string {
+	return fmt.Sprintf(`PricePrevote
+	Hash:    %s, 
+	Denom:    %s, 
+	Voter:    %s, 
+	SubmitBlock:    %d`,
+		pp.Hash, pp.Denom, pp.Voter, pp.SubmitBlock)
+}
+
+// PricePrevotes is a collection of PreicePrevote
+type PricePrevotes []PricePrevote
+
+func (v PricePrevotes) String() (out string) {
+	for _, val := range v {
+		out += val.String() + "\n"
+	}
+	return strings.TrimSpace(out)
 }
 
 // VoteHash computes hash value of PriceVote
@@ -64,4 +85,14 @@ func (pv PriceVote) String() string {
 	Voter:    %s, 
 	Price:    %s`,
 		pv.Denom, pv.Voter, pv.Price)
+}
+
+// PriceVotes is a collection of PriceVote
+type PriceVotes []PriceVote
+
+func (v PriceVotes) String() (out string) {
+	for _, val := range v {
+		out += val.String() + "\n"
+	}
+	return strings.TrimSpace(out)
 }
