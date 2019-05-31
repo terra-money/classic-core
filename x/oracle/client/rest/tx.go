@@ -17,12 +17,14 @@ import (
 
 func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/delegation", RestVoter), submitDelegateHandlerFunction(cdc, cliCtx)).Methods("POST")
 }
 
 //VoteReq ...
 type VoteReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-	Price   sdk.Dec      `json:"price"`
+	BaseReq   rest.BaseReq `json:"base_req"`
+	Price     sdk.Dec      `json:"price"`
+	Validator string       `json:"validator"`
 }
 
 func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
@@ -47,8 +49,74 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
+		valAddress, err := sdk.ValAddressFromBech32(req.Validator)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		// create the message
-		msg := oracle.NewMsgPriceFeed(denom, req.Price, fromAddress)
+		msg := oracle.NewMsgPriceFeed(denom, req.Price, fromAddress, valAddress)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+// DelegateReq is request body to set feeder of validator
+type DelegateReq struct {
+	BaseReq   rest.BaseReq `json:"base_req"`
+	Delegatee string       `json:"delegatee"`
+}
+
+func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		// Get voter validator address
+		valAddress, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req DelegateReq
+		if !rest.ReadRESTReq(w, r, cdc, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// Bytes comparison, so do not require type conversion
+		if !valAddress.Equals(fromAddress) {
+			err := fmt.Errorf("[%v] can not change [%v] delegation", fromAddress, valAddress)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		delegateeAddress, err := sdk.AccAddressFromBech32(req.Delegatee)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// create the message
+		msg := oracle.NewMsgDelegateFeederPermission(valAddress, delegateeAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

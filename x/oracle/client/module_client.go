@@ -29,6 +29,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 		cli.GetCmdQueryVotes(mc.storeKey, mc.cdc),
 		cli.GetCmdQueryActive(mc.storeKey, mc.cdc),
 		cli.GetCmdQueryParams(mc.storeKey, mc.cdc),
+		cli.GetCmdQueryFeederDelegation(mc.storeKey, mc.cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -44,6 +45,7 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 
 	oracleTxCmd.AddCommand(client.PostCommands(
 		cli.GetCmdPriceVote(mc.cdc),
+		cli.GetCmdDelegateFeederPermission(mc.cdc),
 	)...)
 
 	return oracleTxCmd

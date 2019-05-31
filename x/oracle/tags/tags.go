@@ -16,4 +16,7 @@ var (
 	Voter  = "voter"
 	Power  = "power"
 	Price  = "price"
+
+	Operator     = "operator"
+	FeedDelegate = "feed_delegate"
 )
