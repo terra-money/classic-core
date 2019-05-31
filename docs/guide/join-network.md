@@ -98,7 +98,7 @@ Fetch the testnet's `genesis.json` file into `terrad`'s config directory.
 
 ```bash
 mkdir -p $HOME/.terrad/config
-curl https://raw.githubusercontent.com/terra-project/networks/master/latest/genesis.json > $HOME/.terrad/config/genesis.json
+curl https://raw.githubusercontent.com/terra-project/launch/master/genesis.json > $HOME/.terrad/config/genesis.json
 ```
 
 Note we use the `latest` directory in the [networks repo](https://github.com/terra-project/networks)
