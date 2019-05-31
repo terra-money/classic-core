@@ -10,4 +10,10 @@ const (
 	flagComission         = "commission"
 	flagWithdrawTo        = "withdraw-to"
 	flagOffline           = "offline"
+	flagMaxMessagesPerTx  = "max-msgs"
+)
+
+const (
+	// MaxMessagesPerTxDefault is max # of msg to prevent tx ledger fails due to memory constraint
+	MaxMessagesPerTxDefault = 5
 )

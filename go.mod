@@ -19,10 +19,10 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tendermint/go-amino v0.14.1
-	github.com/tendermint/tendermint v0.31.4
+	github.com/tendermint/tendermint v0.31.5
 	google.golang.org/grpc v1.21.0 // indirect
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/YunSuk-Yeo/cosmos-sdk v0.34.4-terra-2
+replace github.com/cosmos/cosmos-sdk => github.com/YunSuk-Yeo/cosmos-sdk v0.34.6-terra
 
 replace golang.org/x/crypto => github.com/tendermint/crypto v0.0.0-20180820045704-3764759f34a5
