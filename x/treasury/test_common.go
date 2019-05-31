@@ -39,7 +39,7 @@ var (
 		sdk.AccAddress(pubKeys[2].Address()),
 	}
 
-	mLunaAmt = sdk.NewInt(1000).MulRaw(assets.MicroUnit)
+	uLunaAmt = sdk.NewInt(1000).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -124,11 +124,11 @@ func createTestInput(t *testing.T) testInput {
 
 	valset := mock.NewMockValSet()
 	for _, addr := range addrs {
-		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, mLunaAmt))
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 		require.NoError(t, err2)
 
 		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), mLunaAmt)
+		validator := mock.NewMockValidator(sdk.ValAddress(addr.Bytes()), uLunaAmt)
 		valset.Validators = append(valset.Validators, validator)
 	}
 
