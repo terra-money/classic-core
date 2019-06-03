@@ -18,8 +18,13 @@ def process_raw_genesis(genesis, vesting_info, parsed_args):
     # modify i-4 type accounts vesting schedule
     accounts = genesis['app_state']['accounts']
 
+    # vesting accouts who need to be updated
+    update_vesting_accounts = []
+    for row in vesting_info:
+        update_vesting_accounts.append(row)
+
     for account in accounts:
-        for row in vesting_info:
+        for row in update_vesting_accounts:
             if len(row) != 3:
                 sys.exit('invalid cvs format')
 
