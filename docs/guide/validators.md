@@ -153,7 +153,7 @@ You can edit your validator's public description. This info is to identify your 
 The `--identity` can be used as to verify identity with systems like Keybase or UPort. When using with Keybase `--identity` should be populated with a 16-digit string that is generated with a [keybase.io](https://keybase.io) account. It's a cryptographically secure method of verifying your identity across multiple online networks. The Keybase API allows us to retrieve your Keybase avatar. This is how you can add a logo to your validator profile.
 
 ```bash
-terracli tx staking edit-validator
+terracli tx staking edit-validator \
   --moniker="choose a moniker" \
   --website="https://terra.money" \
   --identity=6A0D65E29A4CBC8E \
