@@ -117,7 +117,7 @@ $ terracli oracle prevote --denom "ukrw" --price "8890" --from mykey --validator
 	cmd.Flags().String(flagHash, "", "hex string; hash of next vote; empty == skip prevote")
 	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
 	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
 
@@ -199,7 +199,7 @@ $ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator te
 	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
 	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
 	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
 	cmd.MarkFlagRequired(flagPrice)
@@ -259,7 +259,7 @@ where "terra1abceuihfu93fud" is the address you want to delegate your voting rig
 		},
 	}
 
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 	cmd.Flags().String(flagFeeder, "", "account the voting right will be delegated to")
 
 	cmd.MarkFlagRequired(flagFeeder)

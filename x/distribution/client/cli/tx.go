@@ -92,7 +92,7 @@ $ terracli tx distr withdraw-rewards --validator terravaloper1gghjut3ccd8ay0zduz
 
 	cmd.Flags().String(flagAddressValidator, "", "The Bech32 address of the validator")
 	cmd.Flags().Bool(flagComission, false, "also withdraw validator's commission")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	cmd.MarkFlagRequired(flagAddressValidator)
 	return cmd
@@ -168,7 +168,7 @@ $ terracli tx set-withdraw-addr --withdraw-to terra1gghjut3ccd8ay0zduzj64hwre2fx
 	}
 
 	cmd.Flags().String(flagWithdrawTo, "", "Target address to withdraw")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	cmd.MarkFlagRequired(flagWithdrawTo)
 

@@ -134,7 +134,7 @@ $ terracli budget submit-program --title="Test program" --description="My awesom
 	cmd.Flags().String(flagDescription, "", "(optional) description of program")
 	cmd.Flags().String(flagExecutor, "", "executor of program")
 	cmd.Flags().String(flagProgram, "", "program file path (if this path is given, other program flags are ignored)")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
@@ -244,7 +244,7 @@ $ terracli tx budget vote --program-id 1  --option yes --from mykey
 
 	cmd.Flags().String(flagProgramID, "", "the program ID to vote")
 	cmd.Flags().String(flagOption, "", "yes or no")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
@@ -301,7 +301,7 @@ $ terracli tx budget withdraw --program-id 1
 	cmd.MarkFlagRequired(flagProgramID)
 
 	cmd.Flags().String(flagProgramID, "", "the program ID to withdraw")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }

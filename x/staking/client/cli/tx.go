@@ -61,7 +61,7 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", client.FlagGenerateOnly))
 	cmd.Flags().String(flagNodeID, "", "The node's ID")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagAmount)
@@ -128,7 +128,7 @@ func GetCmdEditValidator(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().AddFlagSet(fsCommissionUpdate)
 	cmd.Flags().AddFlagSet(fsMinSelfDelegation)
 
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
@@ -177,7 +177,7 @@ $ terracli tx staking delegate --validator terravaloper1l2rsakp388kuv9k8qzq6lrm9
 	cmd.MarkFlagRequired(flagAmount)
 	cmd.MarkFlagRequired(flagAddressValidator)
 
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
@@ -233,7 +233,7 @@ $ terracli tx staking redelegate --addr-validator-source terravaloper1gghjut3ccd
 	cmd.MarkFlagRequired(flagAddressValidatorSrc)
 	cmd.MarkFlagRequired(flagAddressValidatorDst)
 
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
@@ -282,7 +282,7 @@ $ terracli tx staking unbond --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2
 	cmd.MarkFlagRequired(flagAmount)
 	cmd.MarkFlagRequired(flagAddressValidator)
 
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Do not query a full node")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
 
 	return cmd
 }
