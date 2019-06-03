@@ -18,14 +18,17 @@ def process_raw_genesis(genesis, vesting_info, parsed_args):
     # modify i-4 type accounts vesting schedule
     accounts = genesis['app_state']['accounts']
 
-    for row in vesting_info:
-        if len(row) != 3:
-            sys.exit('invalid csv format')
+    for account in accounts:
+        for row in vesting_info:
+            if len(row) != 3:
+                sys.exit('invalid cvs format')
 
-        for account in accounts:
             if account['address'] == row[0]:
                 change_vesting_schedule(account, row[1], row[2], genesis_date)
 
+        # Change wallet address of translink capital
+        if account['address'] == 'terra1d4v2k6h7ltc4mpkk9pgtp277yp2flte7296ypq':
+            account['address'] = 'terra1vulcsvfla6sej0p5y0n99w4ldke5tte3rsukyk'
 
 
     # Set new chain ID and genesis start time
