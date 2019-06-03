@@ -58,8 +58,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 		votePower, totalPower := tally(ctx, k, programID)
 
 		if !clearsThreshold(votePower, totalPower, params.ActiveThreshold) {
+			k.DeleteVotesForProgram(ctx, programID)
 			k.DeleteProgram(ctx, programID)
-			k.DeleteVote(ctx, programID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramRejected)
 		} else {
 			resTags.AppendTag(tags.Action, tags.ActionProgramPassed)
