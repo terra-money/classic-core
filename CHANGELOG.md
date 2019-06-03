@@ -9,6 +9,7 @@
 ### Improvements
 #### [\#140](https://github.com/terra-project/core/pull/140) Msg Types
 
+```
 cosmos-sdk/MsgSend => pay/MsgSend
 cosmos-sdk/MsgMultiSend => pay/MsgMultiSend
 
@@ -23,6 +24,7 @@ cosmos-sdk/MsgWithdrawValidatorCommission => distribution/MsgWithdrawValidatorCo
 cosmos-sdk/MsgModifyWithdrawAddress => distribution/MsgModifyWithdrawAddress
 
 cosmos-sdk/MsgUnjail => slashing/MsgUnjail
+```
   
 #### [\#140](https://github.com/terra-project/core/pull/140) Oracle updates prevoting/voting
 MsgPriceFeed is split into ```MsgPricePrevote``` and ```MsgPriceVote```
