@@ -69,7 +69,7 @@ func ErrNoVotingPermission(codespace sdk.CodespaceType, feeder sdk.AccAddress, o
 
 // ErrNotRevealPeriod called when the feeder submit price reveal vote in wrong period.
 func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("Now is not proper reveal period. In order to change prevote hash, vote's price should be set to 0."))
+	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("Now is not proper reveal period."))
 }
 
 // ErrInvalidSaltLength called when the salt length is not equal 1

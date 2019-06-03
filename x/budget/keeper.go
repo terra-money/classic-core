@@ -63,6 +63,15 @@ func (k Keeper) DeleteVote(ctx sdk.Context, programID uint64, voter sdk.AccAddre
 	store.Delete(keyVote(programID, voter))
 }
 
+// DeleteVotesForProgram deletes the vote from the store
+func (k Keeper) DeleteVotesForProgram(ctx sdk.Context, programID uint64) {
+	targetProgramIDPrefix := keyVote(programID, sdk.AccAddress{})
+	k.IterateVotesWithPrefix(ctx, targetProgramIDPrefix, func(programID uint64, voter sdk.AccAddress, option bool) (stop bool) {
+		k.DeleteVote(ctx, programID, voter)
+		return false
+	})
+}
+
 // IterateVotes iterates votes in the store
 func (k Keeper) IterateVotes(ctx sdk.Context, handler func(uint64, sdk.AccAddress, bool) (stop bool)) {
 	k.IterateVotesWithPrefix(ctx, prefixVote, handler)

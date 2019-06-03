@@ -79,6 +79,9 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 		if err != nil {
 			return ErrRefundFailed(msg.Submitter, msg.ProgramID).Result()
 		}
+
+		// Delete all votes on target program
+		k.DeleteVotesForProgram(ctx, msg.ProgramID)
 	}
 
 	k.DeleteProgram(ctx, msg.ProgramID)

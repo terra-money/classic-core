@@ -89,8 +89,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) (claims types.ClaimPool, resTags sdk.
 
 		// Need to check if the program should be legacied
 		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
+			// Delete all votes on target program
+			k.DeleteVotesForProgram(ctx, program.ProgramID)
 			k.DeleteProgram(ctx, program.ProgramID)
-			k.DeleteVote(ctx, program.ProgramID, sdk.AccAddress{})
 			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
 		} else {
 			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
