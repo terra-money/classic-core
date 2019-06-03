@@ -6,7 +6,7 @@
 
 * [\#140](https://github.com/terra-project/core/pull/140) Client querier bug fix (distr outstanding rewards)
 
-* [\#140](https://github.com/terra-project/core/pull/140) Fix budget module to delete all votes when submitter withdraws the program and DeleteVote to iterate all votes for a program.
+* [\#140](https://github.com/terra-project/core/pull/140) Fix budget module to delete all votes when submitter withdraws the program and to use DeleteVotesForProgram to delete all votes for a program.
 
 ### Improvements
 #### [\#140](https://github.com/terra-project/core/pull/140) Msg Types
