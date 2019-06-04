@@ -2,7 +2,6 @@ package bench
 
 import (
 	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/mock"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
@@ -14,6 +13,7 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -33,6 +33,9 @@ const numOfValidators = 100
 var (
 	pubKeys [numOfValidators]crypto.PubKey
 	addrs   [numOfValidators]sdk.AccAddress
+
+	valConsPubKeys [numOfValidators]crypto.PubKey
+	valConsAddrs   [numOfValidators]sdk.ConsAddress
 
 	uLunaAmt = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
 	uSDRAmt  = sdk.NewInt(10000000000).MulRaw(assets.MicroUnit)
@@ -66,6 +69,7 @@ func createTestInput() testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyBudget := sdk.NewKVStoreKey(budget.StoreKey)
@@ -84,6 +88,7 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyBudget, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
@@ -120,49 +125,9 @@ func createTestInput() testInput {
 	)
 
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
-	stakingKeeper.SetParams(ctx, staking.DefaultParams())
-
-	mintKeeper := mint.NewKeeper(
-		cdc,
-		keyMint,
-		stakingKeeper,
-		bankKeeper,
-		accKeeper,
-	)
-
-	valset := mock.NewMockValSet()
-	for i := 0; i < 100; i++ {
-		pubKeys[i] = secp256k1.GenPrivKey().PubKey()
-		addrs[i] = sdk.AccAddress(pubKeys[i].Address())
-
-		err := mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
-		if err != nil {
-			panic(err)
-		}
-
-		err = mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt))
-		if err != nil {
-			panic(err)
-		}
-
-		// Add validators
-		validator := mock.NewMockValidator(sdk.ValAddress(addrs[i].Bytes()), uLunaAmt)
-		valset.Validators = append(valset.Validators, validator)
-	}
-
-	budgetKeeper := budget.NewKeeper(
-		cdc, keyBudget, mintKeeper, valset,
-		paramsKeeper.Subspace(budget.DefaultParamspace),
-	)
-
-	oracleKeeper := oracle.NewKeeper(
-		cdc,
-		keyOracle,
-		valset,
-		paramsKeeper.Subspace(oracle.DefaultParamspace),
-	)
-
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
+	stakingParams := staking.DefaultParams()
+	stakingParams.BondDenom = assets.MicroLunaDenom
+	stakingKeeper.SetParams(ctx, stakingParams)
 
 	feeKeeper := auth.NewFeeCollectionKeeper(
 		cdc, keyFee,
@@ -173,15 +138,69 @@ func createTestInput() testInput {
 		bankKeeper, stakingKeeper, feeKeeper, distr.DefaultCodespace,
 	)
 
+	mintKeeper := mint.NewKeeper(
+		cdc,
+		keyMint,
+		stakingKeeper,
+		bankKeeper,
+		accKeeper,
+	)
+
+	sh := staking.NewHandler(stakingKeeper)
+	for i := 0; i < 100; i++ {
+		pubKeys[i] = secp256k1.GenPrivKey().PubKey()
+		addrs[i] = sdk.AccAddress(pubKeys[i].Address())
+
+		valConsPubKeys[i] = ed25519.GenPrivKey().PubKey()
+		valConsAddrs[i] = sdk.ConsAddress(valConsPubKeys[i].Address())
+
+		err2 := mintKeeper.Mint(ctx, addrs[i], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt.MulRaw(3)))
+		if err2 != nil {
+			panic(err2)
+		}
+
+		// Add validators
+		commission := staking.NewCommissionMsg(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
+		msg := staking.NewMsgCreateValidator(sdk.ValAddress(addrs[i]), valConsPubKeys[i],
+			sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt), staking.Description{}, commission, sdk.OneInt())
+		res := sh(ctx, msg)
+		if !res.IsOK() {
+			panic(res.Log)
+		}
+
+		distrKeeper.Hooks().AfterValidatorCreated(ctx, sdk.ValAddress(addrs[i]))
+		staking.EndBlocker(ctx, stakingKeeper)
+	}
+
+	oracleKeeper := oracle.NewKeeper(
+		cdc,
+		keyOracle,
+		mintKeeper,
+		distrKeeper,
+		feeKeeper,
+		stakingKeeper.GetValidatorSet(),
+		paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
+
+	marketKeeper := market.NewKeeper(
+		cdc,
+		keyMarket,
+		oracleKeeper,
+		mintKeeper,
+		paramsKeeper.Subspace(market.DefaultParamspace))
+
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
-		valset,
+		stakingKeeper.GetValidatorSet(),
 		mintKeeper,
 		marketKeeper,
-		distrKeeper,
-		feeKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
+	)
+
+	budgetKeeper := budget.NewKeeper(
+		cdc, keyBudget, marketKeeper, mintKeeper, treasuryKeeper, stakingKeeper.GetValidatorSet(),
+		paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
 
 	budget.InitGenesis(ctx, budgetKeeper, budget.DefaultGenesisState())

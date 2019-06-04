@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -183,8 +183,8 @@ func TestKeeperSeigniorage(t *testing.T) {
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
 	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
 
-	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch - 1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
 	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
-	
+
 	require.Equal(t, sdk.NewInt(100), seigniorage)
 }

@@ -130,7 +130,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 
 			k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
 				rewardAmt := rewardPoolCoin.Amount.MulInt(weight).QuoInt(weightSum).TruncateInt()
-				k.mk.Mint(ctx, recipient, sdk.NewCoin(rewardPoolCoin.Denom, rewardAmt))
+
+				// never return err, but handle err for lint
+				err := k.mk.Mint(ctx, recipient, sdk.NewCoin(rewardPoolCoin.Denom, rewardAmt))
+				if err != nil {
+					panic(err)
+				}
+
 				return false
 			})
 		}

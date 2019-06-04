@@ -1,8 +1,6 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/types"
-	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/treasury/tags"
 
@@ -37,5 +35,5 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		tags.Action, tags.ActionPolicyUpdate,
 		tags.Tax, taxRate.String(),
 		tags.MinerReward, rewardWeight.String(),
-	),
+	)
 }
