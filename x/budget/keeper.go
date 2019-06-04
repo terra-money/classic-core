@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,20 +17,26 @@ type Keeper struct {
 	key    sdk.StoreKey     // Key to our module's store
 	valset sdk.ValidatorSet // Needed to compute voting power.
 
-	mk         mint.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
+	mrk        MarketKeeper   // Needed to handle claims. This module only requires read swap rate between SDR and LUNA
+	mk         MintKeeper     // Needed to handle deposits. This module only requires read/writes to Terra balance and read seigniorage
+	tk         TreasuryKeeper // Needed to handle claims. This module only requires read current reward weight
 	paramSpace params.Subspace
 }
 
 // NewKeeper crates a new keeper
 func NewKeeper(cdc *codec.Codec,
 	key sdk.StoreKey,
-	mk mint.Keeper,
+	mrk MarketKeeper,
+	mk MintKeeper,
+	tk TreasuryKeeper,
 	valset sdk.ValidatorSet,
 	paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
+		mrk:        mrk,
 		mk:         mk,
+		tk:         tk,
 		valset:     valset,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
@@ -63,6 +69,16 @@ func (k Keeper) DeleteVote(ctx sdk.Context, programID uint64, voter sdk.AccAddre
 	store.Delete(keyVote(programID, voter))
 }
 
+// DeleteVotesForProgram deletes the votes for the program from the store
+func (k Keeper) DeleteVotesForProgram(ctx sdk.Context, programID uint64) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, keyVote(programID, sdk.AccAddress{}))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
+}
+
 // IterateVotes iterates votes in the store
 func (k Keeper) IterateVotes(ctx sdk.Context, handler func(uint64, sdk.AccAddress, bool) (stop bool)) {
 	k.IterateVotesWithPrefix(ctx, prefixVote, handler)
@@ -93,7 +109,6 @@ func (k Keeper) IterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler f
 		if handler(programID, voterAddr, option) {
 			break
 		}
-
 	}
 }
 
@@ -159,11 +174,11 @@ func (k Keeper) GetProgram(ctx sdk.Context, programID uint64) (res Program, err 
 	return
 }
 
-// SetProgram sets a Program to the store
-func (k Keeper) SetProgram(ctx sdk.Context, programID uint64, program Program) {
+// StoreProgram sets a Program to the store
+func (k Keeper) StoreProgram(ctx sdk.Context, program Program) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(program)
-	store.Set(keyProgram(programID), bz)
+	store.Set(keyProgram(program.ProgramID), bz)
 }
 
 // DeleteProgram deletes a program from the store
@@ -173,27 +188,24 @@ func (k Keeper) DeleteProgram(ctx sdk.Context, programID uint64) {
 }
 
 // IteratePrograms iterates programs in the store
-func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler func(uint64, Program) (stop bool)) {
+func (k Keeper) IteratePrograms(ctx sdk.Context, filterInactive bool, handler func(Program) (stop bool)) {
 	store := ctx.KVStore(k.key)
 	iter := sdk.KVStorePrefixIterator(store, prefixProgram)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		programStoreKey := string(iter.Key())
+
 		var program Program
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &program)
 
-		elems := strings.Split(programStoreKey, ":")
-		if programID, err := strconv.ParseUint(elems[1], 10, 0); err == nil {
-
-			// Filter out candidate programs if filterInactive is true
-			if filterInactive && k.CandQueueHas(ctx, program.getVotingEndBlock(ctx, k), programID) {
-				continue
-			}
-
-			if handler(programID, program) {
-				break
-			}
+		// Filter out candidate programs if filterInactive is true
+		if filterInactive && k.CandQueueHas(ctx, program.getVotingEndBlock(ctx, k), program.ProgramID) {
+			continue
 		}
+
+		if handler(program) {
+			break
+		}
+
 	}
 }
 
@@ -248,4 +260,52 @@ func (k Keeper) CandQueueHas(ctx sdk.Context, endBlock int64, programID uint64) 
 func (k Keeper) CandQueueRemove(ctx sdk.Context, endBlock int64, programID uint64) {
 	store := ctx.KVStore(k.key)
 	store.Delete(keyCandidate(endBlock, programID))
+}
+
+//-----------------------------------
+// Claim pool logic
+
+// Iterate over oracle reward claims in the store
+func (k Keeper) iterateClaimPool(ctx sdk.Context, handler func(recipient sdk.AccAddress, weight sdk.Int) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixClaim)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		recipientAddress := strings.Split(string(iter.Key()), ":")[1]
+		recipient, _ := sdk.AccAddressFromBech32(recipientAddress)
+
+		var weight sdk.Int
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &weight)
+		if handler(recipient, weight) {
+			break
+		}
+	}
+}
+
+// addClaimPool adds a claim to the the claim pool in the store
+func (k Keeper) addClaimPool(ctx sdk.Context, pool types.ClaimPool) {
+	store := ctx.KVStore(k.key)
+
+	for _, claim := range pool {
+		storeKeyClaim := keyClaim(claim.Recipient)
+		b := store.Get(storeKeyClaim)
+		weight := claim.Weight
+		if b != nil {
+			var prevWeight sdk.Int
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevWeight)
+
+			weight = weight.Add(prevWeight)
+		}
+		b = k.cdc.MustMarshalBinaryLengthPrefixed(weight)
+		store.Set(storeKeyClaim, b)
+	}
+}
+
+// clearClaimPool clears the claim pool from the store
+func (k Keeper) clearClaimPool(ctx sdk.Context) {
+	store := ctx.KVStore(k.key)
+	k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		store.Delete(keyClaim(recipient))
+		return false
+	})
 }

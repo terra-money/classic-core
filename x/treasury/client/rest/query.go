@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/treasury"
 	"net/http"
+
+	"github.com/terra-project/core/x/treasury"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -70,12 +70,6 @@ func queryTaxCapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) htt
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
 
-		if !assets.IsValidDenom(denom) {
-			err := fmt.Errorf("given denom {%s} is not a valid one", denom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap, denom), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
@@ -124,12 +118,6 @@ func queryIssuanceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
-
-		if !assets.IsValidDenom(denom) {
-			err := fmt.Errorf("given denom {%s} is not a valid one", denom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
 		if err != nil {

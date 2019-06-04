@@ -1,110 +1,142 @@
 package oracle
 
 import (
+	"encoding/hex"
 	"math"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/mock"
-	mcVal "github.com/terra-project/core/types/mock"
 )
-
-var (
-	randomPrice        = sdk.NewDecWithPrec(1049, 2) // swap rate
-	anotherRandomPrice = sdk.NewDecWithPrec(4882, 2) // swap rate
-)
-
-func setup(t *testing.T) (testInput, sdk.Handler) {
-	input := createTestInput(t)
-	h := NewHandler(input.oracleKeeper)
-
-	defaultOracleParams := DefaultParams()
-	defaultOracleParams.VotePeriod = int64(1) // Set to one block for convinience
-	input.oracleKeeper.SetParams(input.ctx, defaultOracleParams)
-
-	return input, h
-}
 
 func TestOracleThreshold(t *testing.T) {
 	input, h := setup(t)
 
 	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	res := h(input.ctx, msg)
+	// Prevote without price
+	salt := "1"
+	bz, err := VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	res := h(input.ctx.WithBlockHeight(0), prevoteMsg)
 	require.True(t, res.IsOK())
 
-	input.ctx = input.ctx.WithBlockHeight(1)
-	EndBlocker(input.ctx, input.oracleKeeper)
+	// Vote and new Prevote
+	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	res = h(input.ctx.WithBlockHeight(1), voteMsg)
+	require.True(t, res.IsOK())
 
-	_, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroSDRDenom)
+	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
+
+	_, err = input.oracleKeeper.GetLunaSwapRate(input.ctx.WithBlockHeight(1), assets.MicroSDRDenom)
 	require.NotNil(t, err)
 
 	// More than the threshold signs, msg succeeds
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	h(input.ctx, msg)
+	salt = "1"
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1], sdk.ValAddress(addrs[1]))
-	h(input.ctx, msg)
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2], sdk.ValAddress(addrs[2]))
-	h(input.ctx, msg)
+	salt = "2"
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
 
-	EndBlocker(input.ctx, input.oracleKeeper)
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
 
-	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroSDRDenom)
+	salt = "3"
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[2]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[2], sdk.ValAddress(addrs[2]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[2], sdk.ValAddress(addrs[2]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
+
+	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx.WithBlockHeight(1), assets.MicroSDRDenom)
 	require.Nil(t, err)
 	require.Equal(t, randomPrice, price)
 
-	// A new validator joins, we are now below threshold. Price update should now fail
-	newValidator := mock.NewMockValidator(sdk.ValAddress(addrs[2].Bytes()), sdk.NewInt(30))
-	input.valset.Validators = append(input.valset.Validators, newValidator)
-	input.oracleKeeper.valset = input.valset
+	// Less than the threshold signs, msg fails
+	val, _ := input.stakingKeeper.GetValidator(input.ctx, sdk.ValAddress(addrs[2]))
+	input.stakingKeeper.Delegate(input.ctx.WithBlockHeight(0), addrs[2], uLunaAmt.MulRaw(2), val, false)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	h(input.ctx, msg)
+	salt = "1"
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1], sdk.ValAddress(addrs[1]))
-	h(input.ctx, msg)
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
 
-	EndBlocker(input.ctx, input.oracleKeeper)
+	salt = "2"
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
 
-	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroSDRDenom)
-	require.Nil(t, err)
-	require.Equal(t, randomPrice, price)
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
+
+	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx.WithBlockHeight(1), assets.MicroSDRDenom)
+	require.NotNil(t, err)
 }
 
 func TestOracleMultiVote(t *testing.T) {
 	input, h := setup(t)
 
 	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	res := h(input.ctx, msg)
+	salt := "1"
+	bz, err := VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	res := h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[1], sdk.ValAddress(addrs[1]))
-	res = h(input.ctx, msg)
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, randomPrice, addrs[2], sdk.ValAddress(addrs[2]))
-	res = h(input.ctx, msg)
+	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[2]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[2], sdk.ValAddress(addrs[2]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	res = h(input.ctx, msg)
+	bz, err = VoteHash(salt, anotherRandomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[1], sdk.ValAddress(addrs[1]))
-	res = h(input.ctx, msg)
+	bz, err = VoteHash(salt, anotherRandomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
-	msg = NewMsgPriceFeed(assets.MicroSDRDenom, anotherRandomPrice, addrs[2], sdk.ValAddress(addrs[2]))
-	res = h(input.ctx, msg)
+	bz, err = VoteHash(salt, anotherRandomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[2]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[2], sdk.ValAddress(addrs[2]))
+	res = h(input.ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
+	// Reveal Price
 	input.ctx = input.ctx.WithBlockHeight(1)
+	voteMsg := NewMsgPriceVote(anotherRandomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	res = h(input.ctx, voteMsg)
+	require.True(t, res.IsOK())
+
+	voteMsg = NewMsgPriceVote(anotherRandomPrice, salt, assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	res = h(input.ctx, voteMsg)
+	require.True(t, res.IsOK())
+
+	voteMsg = NewMsgPriceVote(anotherRandomPrice, salt, assets.MicroSDRDenom, addrs[2], sdk.ValAddress(addrs[2]))
+	res = h(input.ctx, voteMsg)
+	require.True(t, res.IsOK())
+
 	EndBlocker(input.ctx, input.oracleKeeper)
 
 	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroSDRDenom)
@@ -112,57 +144,25 @@ func TestOracleMultiVote(t *testing.T) {
 	require.Equal(t, price, anotherRandomPrice)
 }
 
-func TestOracleWhitelist(t *testing.T) {
-	input, h := setup(t)
-
-	// Less than the threshold signs, msg fails
-	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	res := h(input.ctx, msg)
-	require.True(t, res.IsOK())
-
-	input.ctx = input.ctx.WithBlockHeight(1)
-	EndBlocker(input.ctx, input.oracleKeeper)
-}
-
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	dropThreshold := input.oracleKeeper.GetParams(input.ctx).DropThreshold
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, randomPrice)
 
-	msg := NewMsgPriceFeed(assets.MicroKRWDenom, randomPrice, addrs[0], sdk.ValAddress(addrs[0]))
-	h(input.ctx, msg)
+	salt := "1"
+	bz, err := VoteHash(salt, randomPrice, assets.MicroKRWDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroKRWDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx, prevoteMsg)
 
 	input.ctx = input.ctx.WithBlockHeight(1)
-	for i := 0; i < int(dropThreshold.Int64())-1; i++ {
-		EndBlocker(input.ctx, input.oracleKeeper)
-	}
+	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroKRWDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx, voteMsg)
 
-	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroKRWDenom)
-	require.Nil(t, err)
-	require.Equal(t, price, randomPrice)
-
-	// Going over dropthreshold should blacklist the price
+	// Immediately swap halt after an illiquid oracle vote
 	EndBlocker(input.ctx, input.oracleKeeper)
 
 	_, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroKRWDenom)
 	require.NotNil(t, err)
-}
-
-func generateValset(valWeights []int64) mock.MockValset {
-	mockValset := mock.NewMockValSet()
-
-	for i := 0; i < len(valWeights); i++ {
-		valAccAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-		power := sdk.NewInt(valWeights[i])
-		mockValAddr := sdk.ValAddress(valAccAddr.Bytes())
-		mockVal := mcVal.NewMockValidator(mockValAddr, power)
-
-		mockValset.Validators = append(mockValset.Validators, mockVal)
-	}
-
-	return mockValset
 }
 
 func TestOracleTally(t *testing.T) {
@@ -175,18 +175,34 @@ func TestOracleTally(t *testing.T) {
 	for i, price := range prices {
 
 		decPrice := sdk.NewDecWithPrec(int64(price*math.Pow10(oracleDecPrecision)), int64(oracleDecPrecision))
-		pfm := NewMsgPriceFeed(
+
+		salt := string(i)
+		bz, err := VoteHash(salt, decPrice, assets.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
+		require.Nil(t, err)
+
+		prevoteMsg := NewMsgPricePrevote(
+			hex.EncodeToString(bz),
 			assets.MicroSDRDenom,
-			decPrice,
 			valAccAddrs[i],
 			sdk.ValAddress(valAccAddrs[i]),
 		)
 
+		res := h(input.ctx.WithBlockHeight(0), prevoteMsg)
+		require.True(t, res.IsOK())
+
+		voteMsg := NewMsgPriceVote(
+			decPrice,
+			salt,
+			assets.MicroSDRDenom,
+			valAccAddrs[i],
+			sdk.ValAddress(valAccAddrs[i]),
+		)
+
+		res = h(input.ctx.WithBlockHeight(1), voteMsg)
+		require.True(t, res.IsOK())
+
 		vote := NewPriceVote(decPrice, assets.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
 		ballot = append(ballot, vote)
-
-		res := h(input.ctx, pfm)
-		require.True(t, res.IsOK())
 
 		// change power of every three validator
 		if i%3 == 0 {
@@ -204,9 +220,9 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, tallyClaims := tally(input.ctx, input.oracleKeeper, ballot)
+	tallyMedian := tally(input.ctx, input.oracleKeeper, ballot)
 
-	require.Equal(t, len(tallyClaims), len(rewardees))
+	require.Equal(t, countClaimPool(input.ctx, input.oracleKeeper), len(rewardees))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
 }
 
@@ -215,27 +231,81 @@ func TestOracleTallyTiming(t *testing.T) {
 
 	// all the addrs vote for the block ... not last period block yet, so tally fails
 	for _, addr := range addrs {
-		pfm := NewMsgPriceFeed(
+		salt := "1"
+		bz, err := VoteHash(salt, sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addr))
+		require.Nil(t, err)
+
+		prevoteMsg := NewMsgPricePrevote(
+			hex.EncodeToString(bz),
 			assets.MicroSDRDenom,
-			sdk.OneDec(),
 			addr,
 			sdk.ValAddress(addr),
 		)
 
-		res := h(input.ctx, pfm)
+		res := h(input.ctx, prevoteMsg)
+		require.True(t, res.IsOK())
+
+		voteMsg := NewMsgPriceVote(
+			sdk.OneDec(),
+			salt,
+			assets.MicroSDRDenom,
+			addr,
+			sdk.ValAddress(addr),
+		)
+
+		res = h(input.ctx.WithBlockHeight(1), voteMsg)
 		require.True(t, res.IsOK())
 	}
 
 	params := input.oracleKeeper.GetParams(input.ctx)
 	params.VotePeriod = 10 // set vote period to 10 for now, for convinience
 	input.oracleKeeper.SetParams(input.ctx, params)
-
 	require.Equal(t, 0, int(input.ctx.BlockHeight()))
-	rewardees, _ := EndBlocker(input.ctx, input.oracleKeeper)
-	require.Equal(t, 0, len(rewardees))
+
+	EndBlocker(input.ctx, input.oracleKeeper)
+	require.Equal(t, 0, countClaimPool(input.ctx, input.oracleKeeper))
 
 	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod - 1)
 
-	rewardees, _ = EndBlocker(input.ctx, input.oracleKeeper)
-	require.Equal(t, len(addrs), len(rewardees))
+	EndBlocker(input.ctx, input.oracleKeeper)
+	require.Equal(t, len(addrs), countClaimPool(input.ctx, input.oracleKeeper))
+}
+
+func countClaimPool(ctx sdk.Context, oracleKeeper Keeper) (claimCount int) {
+	oracleKeeper.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		claimCount++
+		return false
+	})
+
+	return claimCount
+}
+
+func TestOracleRewardDistribution(t *testing.T) {
+	input, h := setup(t)
+
+	salt := "1"
+	bz, _ := VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	salt = "2"
+	bz, _ = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	input.oracleKeeper.AddSwapFeePool(input.ctx.WithBlockHeight(1), sdk.NewCoins(sdk.NewCoin(assets.MicroSDRDenom, uLunaAmt.MulRaw(100))))
+
+	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
+	EndBlocker(input.ctx.WithBlockHeight(2), input.oracleKeeper)
+
+	rewards := input.distrKeeper.GetValidatorOutstandingRewards(input.ctx.WithBlockHeight(2), sdk.ValAddress(addrs[0]))
+	require.Equal(t, uLunaAmt.MulRaw(50), rewards.AmountOf(assets.MicroSDRDenom).TruncateInt())
+	rewards = input.distrKeeper.GetValidatorOutstandingRewards(input.ctx.WithBlockHeight(2), sdk.ValAddress(addrs[1]))
+	require.Equal(t, uLunaAmt.MulRaw(50), rewards.AmountOf(assets.MicroSDRDenom).TruncateInt())
 }

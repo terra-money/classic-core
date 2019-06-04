@@ -15,16 +15,7 @@ import (
 
 	"github.com/terra-project/core/app"
 	"github.com/terra-project/core/types/util"
-
-	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	"github.com/terra-project/core/version"
-	budgetClient "github.com/terra-project/core/x/budget/client"
-	marketClient "github.com/terra-project/core/x/market/client"
-	oracleClient "github.com/terra-project/core/x/oracle/client"
-	treasuryClient "github.com/terra-project/core/x/treasury/client"
-
-	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
-	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -34,9 +25,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	at "github.com/cosmos/cosmos-sdk/x/auth"
 
+	txcustom "github.com/terra-project/core/client/tx"
+
+	authcustom "github.com/terra-project/core/x/auth/client/rest"
+	dist "github.com/terra-project/core/x/distribution/client/rest"
+	slashing "github.com/terra-project/core/x/slashing/client/rest"
+	staking "github.com/terra-project/core/x/staking/client/rest"
+
 	budget "github.com/terra-project/core/x/budget/client/rest"
 	market "github.com/terra-project/core/x/market/client/rest"
 	oracle "github.com/terra-project/core/x/oracle/client/rest"
+	pay "github.com/terra-project/core/x/pay/client/rest"
 	treasury "github.com/terra-project/core/x/treasury/client/rest"
 
 	bud "github.com/terra-project/core/x/budget"
@@ -44,19 +43,24 @@ import (
 	ora "github.com/terra-project/core/x/oracle"
 	tre "github.com/terra-project/core/x/treasury"
 
-	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
-	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	dt "github.com/cosmos/cosmos-sdk/x/distribution"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
-	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
 
+	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
-	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
-	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
+	paycmd "github.com/terra-project/core/x/pay/client/cli"
+
+	budgetClient "github.com/terra-project/core/x/budget/client"
+	distClient "github.com/terra-project/core/x/distribution/client"
+	marketClient "github.com/terra-project/core/x/market/client"
+	oracleClient "github.com/terra-project/core/x/oracle/client"
+	slashingClient "github.com/terra-project/core/x/slashing/client"
+	stakingClient "github.com/terra-project/core/x/staking/client"
+	treasuryClient "github.com/terra-project/core/x/treasury/client"
+
+	crisisClient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 
 	_ "github.com/terra-project/core/client/lcd/statik"
 )
@@ -82,14 +86,14 @@ func main() {
 	// Module clients hold cli commnads (tx,query) and lcd routes
 	// TODO: Make the lcd command take a list of ModuleClient
 	mc := []sdk.ModuleClients{
-		distClient.NewModuleClient(distcmd.StoreKey, cdc),
+		distClient.NewModuleClient(dt.StoreKey, cdc),
 		stakingClient.NewModuleClient(st.StoreKey, cdc),
 		slashingClient.NewModuleClient(sl.StoreKey, cdc),
 		oracleClient.NewModuleClient(ora.StoreKey, cdc),
 		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
 		budgetClient.NewModuleClient(bud.StoreKey, cdc),
 		marketClient.NewModuleClient(mkt.StoreKey, cdc),
-		crisisclient.NewModuleClient(sl.StoreKey, cdc),
+		crisisClient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -161,7 +165,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		bankcmd.SendTxCmd(cdc),
+		paycmd.SendTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),
@@ -192,13 +196,14 @@ func registerRoutes(rs *lcd.RestServer) {
 
 	registerSwaggerUI(rs)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	txcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
-	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, distcmd.StoreKey)
+	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, dt.StoreKey)
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+
+	authcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	pay.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	treasury.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)

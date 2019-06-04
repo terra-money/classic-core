@@ -19,9 +19,6 @@ type Params struct {
 	WindowShort     sdk.Int `json:"window_short"`
 	WindowLong      sdk.Int `json:"window_long"`
 	WindowProbation sdk.Int `json:"window_probation"`
-
-	OracleClaimShare sdk.Dec `json:"oracle_share"`
-	BudgetClaimShare sdk.Dec `json:"budget_share"`
 }
 
 // NewParams creates a new param instance
@@ -30,7 +27,6 @@ func NewParams(
 	seigniorageBurden sdk.Dec,
 	miningIncrement sdk.Dec,
 	windowShort, windowLong, windowProbation sdk.Int,
-	oracleShare, budgetShare sdk.Dec,
 ) Params {
 	return Params{
 		TaxPolicy:               taxPolicy,
@@ -40,8 +36,6 @@ func NewParams(
 		WindowShort:             windowShort,
 		WindowLong:              windowLong,
 		WindowProbation:         windowProbation,
-		OracleClaimShare:        oracleShare,
-		BudgetClaimShare:        budgetShare,
 	}
 }
 
@@ -60,7 +54,7 @@ func DefaultParams() Params {
 		// Reward update policy
 		PolicyConstraints{
 			RateMin:       sdk.NewDecWithPrec(5, 2),             // 5%
-			RateMax:       sdk.NewDecWithPrec(20, 2),            // 20%
+			RateMax:       sdk.NewDecWithPrec(90, 2),            // 90%
 			ChangeRateMax: sdk.NewDecWithPrec(25, 3),            // 2.5%
 			Cap:           sdk.NewCoin("unused", sdk.ZeroInt()), // UNUSED
 		},
@@ -71,9 +65,6 @@ func DefaultParams() Params {
 		sdk.NewInt(4),
 		sdk.NewInt(52),
 		sdk.NewInt(12),
-
-		sdk.NewDecWithPrec(1, 1), // 10%
-		sdk.NewDecWithPrec(9, 1), // 90%
 	)
 }
 
@@ -96,11 +87,6 @@ func validateParams(params Params) error {
 		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be >= 0, is %s", params.RewardPolicy.RateMin.String())
 	}
 
-	shareSum := params.OracleClaimShare.Add(params.BudgetClaimShare)
-	if !shareSum.Equal(sdk.OneDec()) {
-		return fmt.Errorf("treasury parameter ClaimShares must sum to 1, but sums to %s", shareSum.String())
-	}
-
 	return nil
 }
 
@@ -115,10 +101,6 @@ func (params Params) String() string {
 
   WindowShort        : %v
   WindowLong         : %v
-
-  OracleClaimShare  : %v
-  BudgetClaimShare  : %v
   `, params.TaxPolicy, params.RewardPolicy, params.SeigniorageBurdenTarget,
-		params.MiningIncrement, params.WindowShort, params.WindowLong,
-		params.OracleClaimShare, params.BudgetClaimShare)
+		params.MiningIncrement, params.WindowShort, params.WindowLong)
 }

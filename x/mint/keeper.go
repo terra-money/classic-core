@@ -38,6 +38,7 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Ke
 
 // Mint credits {coin} to the {recipient} account, and reflects the increase in issuance
 func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error) {
+
 	_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (
 		k.sk.SetPool(ctx, pool)
 	}
 
-	return k.changeIssuance(ctx, coin.Denom, coin.Amount)
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount)
 }
 
 // Burn deducts {coin} from the {payer} account, and reflects the decrease in issuance
@@ -65,27 +66,29 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 		k.sk.SetPool(ctx, pool)
 	}
 
-	return k.changeIssuance(ctx, coin.Denom, coin.Amount.Neg())
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount.Neg())
 }
 
 // ChangeIssuance updates the issuance to reflect
-func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
+func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
 	store := ctx.KVStore(k.key)
-	curEpoch := util.GetEpoch(ctx)
+	curDay := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
 
-	issuanceOnDisk := store.Has(keyIssuance(denom, curEpoch))
-	curIssuance := k.GetIssuance(ctx, denom, curEpoch)
-
-	// If the issuance is not on disk, GetIssuance will do a fresh read of account balances
+	// If genesis issuance is not on disk, GetIssuance will do a fresh read of account balances
 	// and the change in issuance should be reported automatically.
-	if issuanceOnDisk {
-		newIssuance := curIssuance.Add(delta)
-		if newIssuance.IsNegative() {
-			err = sdk.ErrInternal("Issuance should never fall below 0")
-		} else {
-			bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
-			store.Set(keyIssuance(denom, curEpoch), bz)
-		}
+	if !store.Has(keyIssuance(denom, sdk.ZeroInt())) {
+		k.GetIssuance(ctx, denom, curDay)
+		return
+	}
+
+	curIssuance := k.GetIssuance(ctx, denom, curDay)
+	newIssuance := curIssuance.Add(delta)
+
+	if newIssuance.IsNegative() {
+		err = sdk.ErrInternal("Issuance should never fall below 0")
+	} else {
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
+		store.Set(keyIssuance(denom, curDay), bz)
 	}
 
 	return
@@ -123,25 +126,25 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 	return
 }
 
-// AddSeigniorage adds seigniorage to the current epochal seigniorage pool
-func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
-	curEpoch := util.GetEpoch(ctx)
-	seignioragePool := k.PeekSeignioragePool(ctx, curEpoch)
-	seignioragePool = seignioragePool.Add(seigniorage)
+// PeekEpochSeigniorage retrieves the size of the seigniorage pool at epoch
+func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeigniorage sdk.Int) {
 
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(seignioragePool)
-	store.Set(keySeignioragePool(curEpoch), bz)
-}
+	daysPerEpoch := util.BlocksPerEpoch / util.BlocksPerDay
+	epochLastDay := epoch.Add(sdk.OneInt()).MulRaw(daysPerEpoch).Sub(sdk.OneInt())
 
-// PeekSeignioragePool retrieves the size of the seigniorage pool at epoch
-func (k Keeper) PeekSeignioragePool(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int) {
-	store := ctx.KVStore(k.key)
-	b := store.Get(keySeignioragePool(epoch))
-	if b == nil {
-		seignioragePool = sdk.ZeroInt()
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &seignioragePool)
+	//fmt.Println(epochLastDay)
+	today := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
+	if epochLastDay.GT(today) {
+		epochLastDay = today
 	}
+
+	prevEpochLastDay := epochLastDay.SubRaw(daysPerEpoch)
+	if prevEpochLastDay.IsNegative() {
+		prevEpochLastDay = sdk.ZeroInt()
+	}
+
+	prevEpochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, prevEpochLastDay)
+	epochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, epochLastDay)
+	epochSeigniorage = epochIssuance.Sub(prevEpochIssuance)
 	return
 }

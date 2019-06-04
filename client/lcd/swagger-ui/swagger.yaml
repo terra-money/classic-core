@@ -27,7 +27,7 @@ tags:
     description: Query app version
 schemes:
   - https
-host: ricewine-lcd.terra.money
+host: lcd.terra.dev
 securityDefinitions:
   kms:
     type: basic
@@ -325,7 +325,7 @@ paths:
         400:
           description: The tx was malformated
         500:
-          description: Server internal error
+          description: Server internal error  
   /bank/balances/{address}:
     get:
       summary: Get the account balances
@@ -405,29 +405,50 @@ paths:
           x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
       responses:
         200:
-          description: Account information on the blockchain
+          description: Account information on the blockchain (one of Account and GradedVestingAccount)
           schema:
             type: object
             properties:
-              type:
-                type: string
-              value:
-                type: object
-                properties:
-                  account_number:
-                    type: string
-                  address:
-                    type: string
-                  coins:
-                    type: array
-                    items:
-                      $ref: "#/definitions/Coin"
-                  public_key:
-                    type: string
-                  sequence:
-                    type: string
+              Account:
+                $ref: "#/definitions/Account"
+              GradedVestingAccount:
+                $ref: "#/definitions/GradedVestingAccount"
+                
+          
         204:
           description: No content about this account address
+        500:
+          description: Server internel error
+  /auth/accounts/{address}/multisign:
+    post:
+      summary: "Generate multisig signatures for transactions generated offline"
+      tags:
+        - Keys
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: address
+          description: Account address
+          required: true
+          type: string
+          x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
+        - in: body
+          name: multisig_req
+          description: multisign request information
+          required: true
+          schema:
+            $ref: "#/definitions/MultiSignReq"
+      responses:
+        200:
+          description: Generated multisigned tx or multisig
+          schema:
+            type: object
+            properties:
+              MultiSignedTx:
+                $ref: "#/definitions/StdTx"
+              MultiSig:
+                $ref: "#/definitions/StdSignature"
         500:
           description: Server internel error
   /staking/delegators/{delegatorAddr}/delegations:
@@ -897,7 +918,7 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /staking/parameters:
+  /staking/params:
     get:
       summary: Get the current staking parameter values
       tags:
@@ -1329,7 +1350,7 @@ paths:
               $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /distribution/parameters:
+  /distribution/params:
     get:
       summary: Fee distribution parameters
       tags:
@@ -1349,7 +1370,7 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /budget/program/submit:
+  /budget/programs/submit:
     post:
       summary: Posting new budget program
       tags:
@@ -1370,7 +1391,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programId}/withdraw:
+  /budget/programs/{programId}/withdraw:
     post:
       summary: Send withdraw request
       tags:
@@ -1396,7 +1417,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programId}/votes:
+  /budget/programs/{programId}/votes:
     parameters:
       - in: path
         name: programId
@@ -1435,12 +1456,12 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/Program"
+              $ref: "#/definitions/MsgVoteProgram"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programID}/votes/{voter}:
+  /budget/programs/{programID}/votes/{voter}:
     parameters:
       - in: path
         name: programID
@@ -1464,12 +1485,12 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/Program"
+              $ref: "#/definitions/MsgVoteProgram"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/actives:
+  /budget/programs/actives:
     get:
       summary: Get active budget programs
       tags:
@@ -1487,7 +1508,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/candidates:
+  /budget/programs/candidates:
     get:
       summary: Get candidate budget programs
       tags:
@@ -1505,7 +1526,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /budget/program/{programId}:
+  /budget/programs/{programId}:
     get:
       summary: Get a budget program by program-id
       tags:
@@ -1562,7 +1583,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/{denom}/votes:
     post:
-      summary: Request to get the currently unelected outstanding price oracle vote
+      summary: Generate oracle price vote message containing price and salt for an prevote
       tags:
         - Oracle
       produces:
@@ -1637,6 +1658,83 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/denoms/{denom}/prevotes:
+    post:
+      summary: Generate oracle price prevote message containing hash of an vote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: The coin denom to prevote
+          required: true
+          type: string
+        - in: body
+          name: Vote request body
+          schema:
+            $ref: "#/definitions/PrevoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Request to get the currently outstanding price oracle prevote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: The coin denom to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PricePrevote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/denoms/{denom}/prevotes/{voter}:
+    get:
+      summary: Request to get the currently outstanding price oracle prevote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: The coin denom to get
+          required: true
+          type: string
+        - in: path
+          name: voter
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PricePrevote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/denoms/{denom}/price:
     get:
       summary: Get the current effective price in Luna for the asset
@@ -1657,7 +1755,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/denoms/active:
+  /oracle/denoms/actives:
     get:
       summary: Get all activated Coins
       tags:
@@ -2082,6 +2180,21 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/TxQuery"
+  StdSignature:
+    type: object
+    properties:
+      signature:
+        type: string
+        example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+      pub_key:
+        type: object
+        properties:
+          type:
+            type: string
+            example: "tendermint/PubKeySecp256k1"
+          value:
+            type: string
+            example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
   StdTx:
     type: object
     properties:
@@ -2100,27 +2213,31 @@ definitions:
               $ref: "#/definitions/Coin"
       memo:
         type: string
-      signature:
+      signatures:
+        type: array
+        items:
+          $ref: "#/definitions/StdSignature"
+  UnsignedStdTx:
+    type: object
+    properties:
+      msg:
+        type: array
+        items:
+          $ref: "#/definitions/Msg"
+      fee:
         type: object
         properties:
-          signature:
+          gas:
             type: string
-            example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-          pub_key:
-            type: object
-            properties:
-              type:
-                type: string
-                example: "tendermint/PubKeySecp256k1"
-              value:
-                type: string
-                example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
-          account_number:
-            type: string
-            example: "0"
-          sequence:
-            type: string
-            example: "0"
+          amount:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+      memo:
+        type: string
+      signatures:
+        type: string
+        example: null
   BlockID:
     type: object
     properties:
@@ -2291,6 +2408,94 @@ definitions:
         type: boolean
         example: false
         description: Estimate gas for a transaction (cannot be used in conjunction with generate_only)
+            
+  BaseAccount:
+    type: object
+    properties:
+      account_number:
+        type: string
+      address:
+        type: string
+      coins:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      public_key:
+        type: string
+      sequence:
+        type: string
+        
+  Account:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "auth/Account"
+      value:
+        $ref: "#/definitions/BaseAccount"
+  
+  BaseVestingAccount:
+    type: object
+    properties:
+      BaseAccount:
+        $ref: "#/definitions/BaseAccount"
+      original_vesting:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      delegated_free:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      delegated_vesting:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      end_time:
+        type: string
+        example: "0"
+
+  Schedule:
+    type: object
+    properties:
+      cliff:
+        type: string
+        example: "1556085600"
+      ratio:
+        type: string
+        example: "0.100000000000000000"
+
+  VestingSchedule:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: "usdr"
+      schedules:
+        type: array
+        items:
+          $ref: "#/definitions/Schedule"
+
+  BaseGradedVestingAccount:
+    type: object
+    properties:
+      BaseVestingAccount:
+        $ref: "#/definitions/BaseVestingAccount"
+      vesting_schedules:
+        type: array
+        items:
+          $ref: "#/definitions/VestingSchedule"
+        
+        
+  GradedVestingAccount:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "core/GradedVestingAccount"
+      value:
+        $ref: "#/definitions/BaseGradedVestingAccount"
+        
   TendermintValidator:
     type: object
     properties:
@@ -2440,6 +2645,25 @@ definitions:
       ask_denom:
         type: string
         example: luna
+  PrevoteReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      price:
+        type: number
+        example: "1000.0"
+        description: "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash"
+      salt:
+        type: string
+        example: "abcd"
+        description: "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash"
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
+        description: "hex string; hash of next vote; empty == skip prevote"
+      validator:
+        $ref: "#/definitions/ValidatorAddress"
   VoteReq:
     type: object
     properties:
@@ -2448,6 +2672,13 @@ definitions:
       price:
         type: number
         example: "1000.0"
+        description: "proof price of Luna in denom currency was used to make prevote hash; initial prevote does not require this field"
+      salt:
+        type: string
+        example: "abcd"
+        description: "proof salt was used to make prevote hash; initial prevote does not require this field"
+      validator:
+        $ref: "#/definitions/ValidatorAddress"
   budgetVoteReq:
     type: object
     properties:
@@ -2465,7 +2696,21 @@ definitions:
         type: string
         example: "ukrt"
       voter:
-        $ref: "#/definitions/Address"
+        $ref: "#/definitions/ValidatorAddress"
+  PricePrevote:
+    type: object
+    properties:
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
+      denom:
+        type: string
+        example: "uusd"
+      voter:
+        $ref: "#/definitions/ValidatorAddress"
+      submit_block:
+        type: number
+        example: "1"
   submitProgramReq:
     type: object
     properties:
@@ -2499,6 +2744,15 @@ definitions:
         $ref: "#/definitions/Address"
       submit_time:
         type: number
+  MsgVoteProgram:
+    type: object
+    properties:
+      program_id:
+        type: number
+      option:
+        type: boolean
+      voter:
+        $ref: "#/definitions/Address"
   BudgetParams:
     type: object
     properties:
@@ -2592,3 +2846,17 @@ definitions:
         type: number
         format: float
         example: "0.9"
+  MultiSignReq:
+    type: object
+    properties:
+      tx:
+        $ref: "#/definitions/UnsignedStdTx"
+      chain_id:
+        type: string
+        example: "columbus-2"
+      signatures:
+        type: array
+        items:
+          $ref: "#/definitions/StdSignature"
+      signature_only:
+        type: boolean

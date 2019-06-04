@@ -48,7 +48,7 @@ func handleMsgSubmitProgram(ctx sdk.Context, k Keeper, msg MsgSubmitProgram) sdk
 		ctx.BlockHeight(),
 	)
 
-	k.SetProgram(ctx, programID, program)
+	k.StoreProgram(ctx, program)
 	k.CandQueueInsert(ctx, program.getVotingEndBlock(ctx, k), programID)
 
 	return sdk.Result{
@@ -81,6 +81,8 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 		}
 	}
 
+	// Delete all votes on target program
+	k.DeleteVotesForProgram(ctx, msg.ProgramID)
 	k.DeleteProgram(ctx, msg.ProgramID)
 
 	return sdk.Result{
