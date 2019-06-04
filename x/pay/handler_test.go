@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -33,6 +35,18 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
+	}
+
+	valConsPubKeys = []crypto.PubKey{
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+	}
+
+	valConsAddrs = []sdk.ConsAddress{
+		sdk.ConsAddress(valConsPubKeys[0].Address()),
+		sdk.ConsAddress(valConsPubKeys[1].Address()),
+		sdk.ConsAddress(valConsPubKeys[2].Address()),
 	}
 
 	uSDRAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
@@ -62,13 +76,14 @@ func createTestInput(t *testing.T) testInput {
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
-	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
+	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -79,13 +94,14 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -110,6 +126,16 @@ func createTestInput(t *testing.T) testInput {
 		staking.DefaultCodespace,
 	)
 
+	feeCollectionKeeper := auth.NewFeeCollectionKeeper(
+		cdc,
+		keyFeeCollection,
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		bankKeeper, &stakingKeeper, feeCollectionKeeper, distr.DefaultCodespace,
+	)
+
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
@@ -124,30 +150,23 @@ func createTestInput(t *testing.T) testInput {
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
+		mintKeeper,
+		distrKeeper,
+		feeCollectionKeeper,
 		&stakingKeeper,
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper,
+	marketKeeper := market.NewKeeper(cdc, keyMarket, oracleKeeper, mintKeeper,
 		paramsKeeper.Subspace(market.DefaultParamspace))
-
-	feeKeeper := auth.NewFeeCollectionKeeper(
-		cdc, keyFee,
-	)
-
-	distrKeeper := distr.NewKeeper(
-		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
-		bankKeeper, stakingKeeper, feeKeeper, distr.DefaultCodespace,
-	)
+	marketKeeper.SetParams(ctx, market.DefaultParams())
 
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
-		&stakingKeeper,
+		stakingKeeper.GetValidatorSet(),
 		mintKeeper,
 		marketKeeper,
-		distrKeeper,
-		feeKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 
@@ -156,7 +175,7 @@ func createTestInput(t *testing.T) testInput {
 		require.NoError(t, err)
 	}
 
-	return testInput{ctx, accKeeper, bankKeeper, treasuryKeeper, feeKeeper}
+	return testInput{ctx, accKeeper, bankKeeper, treasuryKeeper, feeCollectionKeeper}
 }
 
 func TestHandlerMsgSendTransfersDisabled(t *testing.T) {

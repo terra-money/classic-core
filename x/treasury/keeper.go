@@ -1,7 +1,6 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,23 +17,19 @@ type Keeper struct {
 
 	mtk MintKeeper
 	mk  MarketKeeper
-	dk  DistributionKeeper
-	fck FeeCollectionKeeper
 
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet,
-	mtk MintKeeper, mk MarketKeeper, dk DistributionKeeper, fck FeeCollectionKeeper, paramspace params.Subspace) Keeper {
+	mtk MintKeeper, mk MarketKeeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
 		valset:     valset,
 		mtk:        mtk,
 		mk:         mk,
-		dk:         dk,
-		fck:        fck,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }
@@ -75,40 +70,6 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sd
 	store.Set(keyRewardWeight(epoch), bz)
 
 	return
-}
-
-//-----------------------------------
-// Claims logic
-
-// AddClaim adds a claim to the store, to be settled and cleared at the end of the epoch
-func (k Keeper) AddClaim(ctx sdk.Context, claim types.Claim) {
-	store := ctx.KVStore(k.key)
-	claimKey := keyClaim(claim.ID())
-
-	// If the recipient has an existing claim in the same class, add to the previous claim
-	if bz := store.Get(claimKey); bz != nil {
-		var prevClaim types.Claim
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &prevClaim)
-		claim.Weight = claim.Weight.Add(prevClaim.Weight)
-	}
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(claim)
-	store.Set(claimKey, bz)
-}
-
-// IterateClaims iterates over all the claims in the store.
-func (k Keeper) IterateClaims(ctx sdk.Context, handler func(types.Claim) (stop bool)) {
-	store := ctx.KVStore(k.key)
-	claimIter := sdk.KVStorePrefixIterator(store, PrefixClaim)
-
-	defer claimIter.Close()
-	for ; claimIter.Valid(); claimIter.Next() {
-		var claim types.Claim
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(claimIter.Value(), &claim)
-
-		if handler(claim) {
-			break
-		}
-	}
 }
 
 //-----------------------------------
@@ -174,7 +135,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 		// Tax cap does not exist for the asset; compute it by
 		// comparing it with the tax cap for TerraSDR
 		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
-		reqCap, err := k.mk.GetSwapCoins(ctx, referenceCap, denom)
+		reqCap, _, err := k.mk.GetSwapCoin(ctx, referenceCap, denom, true)
 
 		// The coin is more valuable than TaxPolicy asset. just follow the Policy Cap.
 		if err != nil {

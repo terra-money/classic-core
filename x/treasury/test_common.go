@@ -89,6 +89,7 @@ func createTestInput(t *testing.T) testInput {
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
 	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -106,6 +107,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -172,11 +174,21 @@ func createTestInput(t *testing.T) testInput {
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
+		mintKeeper,
+		distrKeeper,
+		feeCollectionKeeper,
 		stakingKeeper.GetValidatorSet(),
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
+	marketKeeper := market.NewKeeper(
+		cdc,
+		keyMarket,
+		oracleKeeper,
+		mintKeeper,
+		paramsKeeper.Subspace(market.DefaultParamspace))
+
+	marketKeeper.SetParams(ctx, market.DefaultParams())
 
 	treasuryKeeper := NewKeeper(
 		cdc,
@@ -184,8 +196,6 @@ func createTestInput(t *testing.T) testInput {
 		stakingKeeper.GetValidatorSet(),
 		mintKeeper,
 		marketKeeper,
-		distrKeeper,
-		feeCollectionKeeper,
 		paramsKeeper.Subspace(DefaultParamspace),
 	)
 

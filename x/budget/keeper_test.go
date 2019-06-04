@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/terra-project/core/types"
 )
 
 func TestKeeperProgramID(t *testing.T) {
@@ -213,4 +214,31 @@ func TestKeeperCandidateQueue(t *testing.T) {
 	}
 
 	require.Equal(t, numTests, counter)
+}
+
+func TestKeeperClaimPool(t *testing.T) {
+	input := createTestInput(t)
+
+	// Test addClaimPool
+	claim := types.NewClaim(sdk.NewInt(10), addrs[0])
+	claim2 := types.NewClaim(sdk.NewInt(20), addrs[1])
+	claimPool := types.ClaimPool{claim, claim2}
+	input.budgetKeeper.addClaimPool(input.ctx, claimPool)
+
+	claim = types.NewClaim(sdk.NewInt(15), addrs[0])
+	claim2 = types.NewClaim(sdk.NewInt(30), addrs[2])
+	claimPool = types.ClaimPool{claim, claim2}
+	input.budgetKeeper.addClaimPool(input.ctx, claimPool)
+
+	// Test iterateClaimPool
+	input.budgetKeeper.iterateClaimPool(input.ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		if recipient.Equals(addrs[0]) {
+			require.Equal(t, sdk.NewInt(25), weight)
+		} else if recipient.Equals(addrs[1]) {
+			require.Equal(t, sdk.NewInt(20), weight)
+		} else if recipient.Equals(addrs[2]) {
+			require.Equal(t, sdk.NewInt(30), weight)
+		}
+		return false
+	})
 }

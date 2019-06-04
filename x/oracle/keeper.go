@@ -3,6 +3,7 @@ package oracle
 import (
 	"strings"
 
+	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,15 +16,24 @@ type Keeper struct {
 	cdc *codec.Codec
 	key sdk.StoreKey
 
+	mk  MintKeeper
+	dk  DistributionKeeper
+	fck FeeCollectionKeeper
+
 	valset     sdk.ValidatorSet
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, mk MintKeeper, dk DistributionKeeper, fck FeeCollectionKeeper,
+	valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
+
+		mk:  mk,
+		dk:  dk,
+		fck: fck,
 
 		valset:     valset,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
@@ -155,32 +165,6 @@ func (k Keeper) deleteVote(ctx sdk.Context, vote PriceVote) {
 }
 
 //-----------------------------------
-// Drop counter logic
-
-// Increment drop counter. Called when an oracle vote is illiquid.
-func (k Keeper) incrementDropCounter(ctx sdk.Context, denom string) (counter sdk.Int) {
-	store := ctx.KVStore(k.key)
-	b := store.Get(keyDropCounter(denom))
-	if b == nil {
-		counter = sdk.ZeroInt()
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &counter)
-	}
-
-	// Increment counter
-	counter = counter.Add(sdk.OneInt())
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(counter)
-	store.Set(keyDropCounter(denom), bz)
-	return
-}
-
-// resets the drop counter.
-func (k Keeper) resetDropCounter(ctx sdk.Context, denom string) {
-	store := ctx.KVStore(k.key)
-	store.Delete(keyDropCounter(denom))
-}
-
-//-----------------------------------
 // Price logic
 
 // GetLunaSwapRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
@@ -257,18 +241,6 @@ func (k Keeper) GetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress) (deleg
 	return
 }
 
-// GetOperatorForDelegate gets the operator address that the feeder right was delegated from.
-func (k Keeper) GetOperatorsForDelegate(ctx sdk.Context, delegate sdk.AccAddress) (operators []sdk.ValAddress) {
-	handler := func(del sdk.AccAddress, op sdk.ValAddress) bool {
-		if del.Equals(delegate) {
-			operators = append(operators, op)
-		}
-		return false
-	}
-	k.iterateFeederDelegations(ctx, handler)
-	return
-}
-
 // SetFeedDelegate sets the account address that the feeder right was delegated to by the validator operator.
 func (k Keeper) SetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress, delegatedFeeder sdk.AccAddress) {
 	store := ctx.KVStore(k.key)
@@ -291,4 +263,82 @@ func (k Keeper) iterateFeederDelegations(ctx sdk.Context, handler func(delegate 
 			break
 		}
 	}
+}
+
+//-----------------------------------
+// Swap fee pool logic
+
+// GetSwapFeePool retrieves the swap fee pool from the store
+func (k Keeper) GetSwapFeePool(ctx sdk.Context) (pool sdk.Coins) {
+	store := ctx.KVStore(k.key)
+	b := store.Get(keySwapFeePool)
+	if b == nil {
+		return sdk.Coins{}
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &pool)
+	return
+}
+
+// setSwapFeePool sets the swap fee pool to the store
+func (k Keeper) AddSwapFeePool(ctx sdk.Context, fees sdk.Coins) {
+	pool := k.GetSwapFeePool(ctx)
+	pool = pool.Add(fees)
+
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(keySwapFeePool, bz)
+}
+
+// clearSwapFeePool clears the swap fee pool from the store
+func (k Keeper) clearSwapFeePool(ctx sdk.Context) {
+	store := ctx.KVStore(k.key)
+	store.Delete(keySwapFeePool)
+}
+
+//-----------------------------------
+// Claim pool logic
+
+// Iterate over oracle reward claims in the store
+func (k Keeper) iterateClaimPool(ctx sdk.Context, handler func(recipient sdk.AccAddress, weight sdk.Int) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixClaim)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		recipientAddress := strings.Split(string(iter.Key()), ":")[1]
+		recipient, _ := sdk.AccAddressFromBech32(recipientAddress)
+
+		var weight sdk.Int
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &weight)
+		if handler(recipient, weight) {
+			break
+		}
+	}
+}
+
+// addClaimPool adds a claim to the the claim pool in the store
+func (k Keeper) addClaimPool(ctx sdk.Context, pool types.ClaimPool) {
+	store := ctx.KVStore(k.key)
+
+	for _, claim := range pool {
+		storeKeyClaim := keyClaim(claim.Recipient)
+		b := store.Get(storeKeyClaim)
+		weight := claim.Weight
+		if b != nil {
+			var prevWeight sdk.Int
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevWeight)
+
+			weight = weight.Add(prevWeight)
+		}
+		b = k.cdc.MustMarshalBinaryLengthPrefixed(weight)
+		store.Set(storeKeyClaim, b)
+	}
+}
+
+// clearClaimPool clears the claim pool from the store
+func (k Keeper) clearClaimPool(ctx sdk.Context) {
+	store := ctx.KVStore(k.key)
+	k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		store.Delete(keyClaim(recipient))
+		return false
+	})
 }

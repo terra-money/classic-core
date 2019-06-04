@@ -1,6 +1,7 @@
 package mint
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -122,19 +123,19 @@ func TestKeeperIssuance(t *testing.T) {
 	require.Equal(t, uSDRAmount.MulRaw(3), issuance)
 
 	// Lowering issuance works
-	err := input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
+	err := input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// ... but not too much
-	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
+	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
 	require.NotNil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// Raising issuance works, too
-	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
+	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, sdk.NewInt(4000).MulRaw(assets.MicroUnit), issuance)
@@ -180,14 +181,63 @@ func TestKeeperMintBurn(t *testing.T) {
 func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
-	for e := 0; e < 3; e++ {
-		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * int64(e))
-		for i := 0; i < 100; i++ {
-			input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(int64(10*(e+1))))
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
+
+	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
+
+	require.Equal(t, sdk.NewInt(100), seigniorage)
+}
+
+func TestKeeperMintStress(t *testing.T) {
+	input := createTestInput(t)
+	rand.Seed(int64(time.Now().Nanosecond()))
+
+	balance := int64(20000)
+	epochDelta := int64(0)
+
+	// Genesis mint
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(balance)))
+
+	for day := int64(0); day < 100; day++ {
+		input.ctx = input.ctx.WithBlockHeight(day * util.BlocksPerDay)
+		amt := rand.Int63()%100 + 1 // Cap at 100; prevents possibility of balance falling negative
+		option := rand.Int63() % 3
+
+		switch option {
+		case 0: // mint
+			err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
+			require.Nil(t, err)
+
+			balance += amt
+			epochDelta += amt
+			break
+		case 1: // burn
+			err := input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
+			require.Nil(t, err)
+
+			balance -= amt
+			epochDelta -= amt
+			break
+		case 2: // skip
+			amt = 0
+			break
+		}
+
+		// Ignore first update; just how seigniorage recording works
+		if day == 0 {
+			epochDelta = 0
+		}
+
+		issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, sdk.NewInt(day))
+		require.Equal(t, sdk.NewInt(balance), issuance)
+
+		// last day of epoch
+		if (day+1)*util.BlocksPerDay%util.BlocksPerEpoch == 0 {
+			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
+			require.Equal(t, sdk.NewInt(epochDelta), seigniorage)
+			epochDelta = 0
 		}
 	}
-
-	require.Equal(t, sdk.NewInt(1000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(0)))
-	require.Equal(t, sdk.NewInt(2000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(1)))
-	require.Equal(t, sdk.NewInt(3000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(2)))
 }

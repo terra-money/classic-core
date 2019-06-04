@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,20 +17,26 @@ type Keeper struct {
 	key    sdk.StoreKey     // Key to our module's store
 	valset sdk.ValidatorSet // Needed to compute voting power.
 
-	mk         mint.Keeper // Needed to handle deposits. This module only requires read/writes to Terra balance
+	mrk        MarketKeeper   // Needed to handle claims. This module only requires read swap rate between SDR and LUNA
+	mk         MintKeeper     // Needed to handle deposits. This module only requires read/writes to Terra balance and read seigniorage
+	tk         TreasuryKeeper // Needed to handle claims. This module only requires read current reward weight
 	paramSpace params.Subspace
 }
 
 // NewKeeper crates a new keeper
 func NewKeeper(cdc *codec.Codec,
 	key sdk.StoreKey,
-	mk mint.Keeper,
+	mrk MarketKeeper,
+	mk MintKeeper,
+	tk TreasuryKeeper,
 	valset sdk.ValidatorSet,
 	paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
+		mrk:        mrk,
 		mk:         mk,
+		tk:         tk,
 		valset:     valset,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
@@ -103,7 +109,6 @@ func (k Keeper) IterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler f
 		if handler(programID, voterAddr, option) {
 			break
 		}
-
 	}
 }
 
@@ -255,4 +260,52 @@ func (k Keeper) CandQueueHas(ctx sdk.Context, endBlock int64, programID uint64) 
 func (k Keeper) CandQueueRemove(ctx sdk.Context, endBlock int64, programID uint64) {
 	store := ctx.KVStore(k.key)
 	store.Delete(keyCandidate(endBlock, programID))
+}
+
+//-----------------------------------
+// Claim pool logic
+
+// Iterate over oracle reward claims in the store
+func (k Keeper) iterateClaimPool(ctx sdk.Context, handler func(recipient sdk.AccAddress, weight sdk.Int) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixClaim)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		recipientAddress := strings.Split(string(iter.Key()), ":")[1]
+		recipient, _ := sdk.AccAddressFromBech32(recipientAddress)
+
+		var weight sdk.Int
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &weight)
+		if handler(recipient, weight) {
+			break
+		}
+	}
+}
+
+// addClaimPool adds a claim to the the claim pool in the store
+func (k Keeper) addClaimPool(ctx sdk.Context, pool types.ClaimPool) {
+	store := ctx.KVStore(k.key)
+
+	for _, claim := range pool {
+		storeKeyClaim := keyClaim(claim.Recipient)
+		b := store.Get(storeKeyClaim)
+		weight := claim.Weight
+		if b != nil {
+			var prevWeight sdk.Int
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevWeight)
+
+			weight = weight.Add(prevWeight)
+		}
+		b = k.cdc.MustMarshalBinaryLengthPrefixed(weight)
+		store.Set(storeKeyClaim, b)
+	}
+}
+
+// clearClaimPool clears the claim pool from the store
+func (k Keeper) clearClaimPool(ctx sdk.Context) {
+	store := ctx.KVStore(k.key)
+	k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		store.Delete(keyClaim(recipient))
+		return false
+	})
 }

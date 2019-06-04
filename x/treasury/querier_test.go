@@ -1,11 +1,12 @@
 package treasury
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
-	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -246,12 +247,15 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.treasuryKeeper)
 
+	getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
+
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
 	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
-	input.mintKeeper.AddSeigniorage(input.ctx, seigniorageProceeds.Amount)
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
-	require.Equal(t, queriedSeigniorageProceeds, seigniorageProceeds)
+	require.Equal(t, seigniorageProceeds, queriedSeigniorageProceeds)
 }
 
 func TestQueryIssuance(t *testing.T) {
@@ -264,30 +268,5 @@ func TestQueryIssuance(t *testing.T) {
 
 	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.MicroSDRDenom)
 
-	require.Equal(t, queriedIssuance, issuance)
-}
-
-func TestQueryActiveClaims(t *testing.T) {
-	input := createTestInput(t)
-	querier := NewQuerier(input.treasuryKeeper)
-
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[0],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.BudgetClaimClass, sdk.NewInt(10), addrs[0],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[1],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.BudgetClaimClass, sdk.NewInt(10), addrs[1],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[2],
-	))
-
-	queriedActiveClaims := getQueriedActiveClaims(t, input.ctx, input.cdc, querier)
-
-	require.Equal(t, 5, len(queriedActiveClaims))
+	require.Equal(t, issuance, queriedIssuance)
 }
