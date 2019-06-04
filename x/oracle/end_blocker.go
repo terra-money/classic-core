@@ -11,11 +11,11 @@ import (
 )
 
 // At the end of every VotePeriod, we give out all the market swap fees collected to the
-// oracle voters that voted faithfully. 
+// oracle voters that voted faithfully.
 func rewardPrevBallotWinners(ctx sdk.Context, k Keeper) {
 	// Sum weight of the claimpool
-	var prevBallotWeightSum sdk.Int 
-	k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int)  (stop bool) {
+	prevBallotWeightSum := sdk.ZeroInt()
+	k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int) (stop bool) {
 		prevBallotWeightSum = prevBallotWeightSum.Add(weight)
 		return false
 	})
@@ -26,24 +26,34 @@ func rewardPrevBallotWinners(ctx sdk.Context, k Keeper) {
 		if !accmFeePool.Empty() {
 
 			// Dole out rewards
-			for _, feeCoin := range accmFeePool {
-				k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+			var distributedFee sdk.Coins
+			k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
 
+				rewardCoins := sdk.NewCoins()
+				rewardeeVal := k.valset.Validator(ctx, sdk.ValAddress(recipient))
+				for _, feeCoin := range accmFeePool {
 					rewardAmt := sdk.NewDecCoinFromCoin(feeCoin).Amount.QuoInt(prevBallotWeightSum).MulInt(weight).TruncateInt()
-					rewardeeVal := k.valset.Validator(ctx, sdk.ValAddress(recipient))
-					rewardCoins := sdk.NewCoins(sdk.NewCoin(feeCoin.Denom, rewardAmt))
+					rewardCoins = rewardCoins.Add(sdk.NewCoins(sdk.NewCoin(feeCoin.Denom, rewardAmt)))
+				}
 
-					// In case absence of the validator, we collect the rewards to fee collect keeper
-					if rewardeeVal != nil {
-						k.dk.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
-					} else {
-						k.fck.AddCollectedFees(ctx, rewardCoins)
-					}
+				// In case absence of the validator, we collect the rewards to fee collect keeper
+				if rewardeeVal != nil {
+					k.dk.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
+				} else {
+					k.fck.AddCollectedFees(ctx, rewardCoins)
+				}
 
-					return false
-				})
+				distributedFee = distributedFee.Add(rewardCoins)
+
+				return false
+			})
+
+			// move left fees to fee collect keeper
+			leftFee := accmFeePool.Sub(distributedFee)
+			if !leftFee.Empty() && leftFee.IsValid() {
+				k.fck.AddCollectedFees(ctx, leftFee)
 			}
-			
+
 			// Clear swap fee pool
 			k.clearSwapFeePool(ctx)
 		}
@@ -69,14 +79,14 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) sdk.Dec {
 			if validator := k.valset.Validator(ctx, vote.Voter); validator != nil {
 				bondSize := validator.GetBondedTokens()
 
-				ballotWinners = append(ballotWinners, types.Claim {
+				ballotWinners = append(ballotWinners, types.Claim{
 					Recipient: sdk.AccAddress(vote.Voter),
 					Weight:    bondSize,
 				})
 			}
 		}
 	}
-	
+
 	// add claim winners to the store
 	k.addClaimPool(ctx, ballotWinners)
 
@@ -126,17 +136,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 				tags.Denom, denom,
 				tags.Price, mod.String(),
 			)
-		} else { 
+		} else {
 			resTags = sdk.NewTags(
 				tags.Action, tags.ActionTallyDropped,
 				tags.Denom, denom,
 			)
-		} 
+		}
 	}
 
 	// Clear all prevotes
 	k.iteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock + params.VotePeriod {
+		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
 			k.deletePrevote(ctx, prevote)
 		}
 
@@ -144,9 +154,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	})
 
 	// Clear all votes
-	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { 
+	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) {
 		k.deleteVote(ctx, vote)
-		return false 
+		return false
 	})
 
 	return
