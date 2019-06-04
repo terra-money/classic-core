@@ -8,12 +8,13 @@ import (
 type MintKeeper interface {
 	Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error)
 	Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err sdk.Error)
-	PeekSeignioragePool(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int)
+	PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeigniorage sdk.Int)
 }
 
 // expected treasury keeper
 type TreasuryKeeper interface {
 	GetRewardWeight(ctx sdk.Context, epoch sdk.Int) (rewardWeight sdk.Dec)
+	SetRewardWeight(ctx sdk.Context, weight sdk.Dec)
 }
 
 // expected market keeper

@@ -34,6 +34,7 @@ func NewKeeper(cdc *codec.Codec,
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
+		mrk:        mrk,
 		mk:         mk,
 		tk:         tk,
 		valset:     valset,

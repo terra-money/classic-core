@@ -112,25 +112,31 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	if util.IsPeriodLastBlock(ctx, util.BlocksPerEpoch) {
 		epoch := util.GetEpoch(ctx)
 		rewardWeight := k.tk.GetRewardWeight(ctx, epoch)
-		seigniorage := k.mk.PeekSeignioragePool(ctx, epoch)
+		seigniorage := k.mk.PeekEpochSeigniorage(ctx, epoch)
 		rewardPool := sdk.OneDec().Sub(rewardWeight).MulInt(seigniorage)
-		rewardPoolCoin, err := k.mrk.GetSwapDecCoin(ctx, sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool), assets.MicroSDRDenom)
-		if err != nil {
-			// No SDR swap rate exists
-			rewardPoolCoin = sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool)
+
+		if rewardPool.GT(sdk.ZeroDec()) {
+			rewardPoolCoin, err := k.mrk.GetSwapDecCoin(ctx, sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool), assets.MicroSDRDenom)
+			if err != nil {
+				// No SDR swap rate exists
+				rewardPoolCoin = sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool)
+			}
+
+			weightSum := sdk.ZeroInt()
+			k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int) (stop bool) {
+				weightSum = weightSum.Add(weight)
+				return false
+			})
+
+			k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+				rewardAmt := rewardPoolCoin.Amount.MulInt(weight).QuoInt(weightSum).TruncateInt()
+				k.mk.Mint(ctx, recipient, sdk.NewCoin(rewardPoolCoin.Denom, rewardAmt))
+				return false
+			})
 		}
 
-		weightSum := sdk.ZeroInt()
-		k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int) (stop bool) {
-			weightSum = weightSum.Add(weight)
-			return false
-		})
-
-		k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
-			rewardAmt := rewardPoolCoin.Amount.MulInt(weight).QuoInt(weightSum).TruncateInt()
-			k.mk.Mint(ctx, recipient, sdk.NewCoin(rewardPoolCoin.Denom, rewardAmt))
-			return false
-		})
+		// Clear all claims
+		k.clearClaimPool(ctx)
 	}
 	return
 }
