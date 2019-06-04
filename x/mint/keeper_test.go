@@ -202,7 +202,7 @@ func TestKeeperMintStress(t *testing.T) {
 
 	for day := int64(0); day < 100; day++ {
 		input.ctx = input.ctx.WithBlockHeight(day * util.BlocksPerDay)
-		amt := rand.Int63() % 100 // Cap at 100; prevents possibility of balance falling negative
+		amt := rand.Int63()%100 + 1 // Cap at 100; prevents possibility of balance falling negative
 		option := rand.Int63() % 3
 
 		switch option {
