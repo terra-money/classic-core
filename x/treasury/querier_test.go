@@ -247,7 +247,7 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	querier := NewQuerier(input.treasuryKeeper)
 
 	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
-	input.mintKeeper.AddSeigniorage(input.ctx, seigniorageProceeds.Amount)
+	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, seigniorageProceeds.Amount)
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
@@ -265,29 +265,4 @@ func TestQueryIssuance(t *testing.T) {
 	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.MicroSDRDenom)
 
 	require.Equal(t, queriedIssuance, issuance)
-}
-
-func TestQueryActiveClaims(t *testing.T) {
-	input := createTestInput(t)
-	querier := NewQuerier(input.treasuryKeeper)
-
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[0],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.BudgetClaimClass, sdk.NewInt(10), addrs[0],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[1],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.BudgetClaimClass, sdk.NewInt(10), addrs[1],
-	))
-	input.treasuryKeeper.AddClaim(input.ctx, types.NewClaim(
-		types.OracleClaimClass, sdk.NewInt(10), addrs[2],
-	))
-
-	queriedActiveClaims := getQueriedActiveClaims(t, input.ctx, input.cdc, querier)
-
-	require.Equal(t, 5, len(queriedActiveClaims))
 }

@@ -40,7 +40,7 @@ func TaxRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
 
 // SeigniorageRewardsForEpoch returns seigniorage rewards for the epoch
 func SeigniorageRewardsForEpoch(ctx sdk.Context, k Keeper, epoch sdk.Int) sdk.Dec {
-	seignioragePool := k.mtk.PeekSeignioragePool(ctx, epoch)
+	seignioragePool := k.mtk.PeekEpochSeigniorage(ctx, epoch)
 	rewardAmt := k.GetRewardWeight(ctx, epoch).MulInt(seignioragePool)
 	seigniorageReward := sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardAmt)
 

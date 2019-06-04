@@ -1,6 +1,8 @@
 package mint
 
 import (
+	"fmt"
+
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
@@ -72,10 +74,10 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 // ChangeIssuance updates the issuance to reflect
 func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
 	store := ctx.KVStore(k.key)
-	curEpoch := util.GetEpoch(ctx)
+	curDay := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
 
-	issuanceOnDisk := store.Has(keyIssuance(denom, curEpoch))
-	curIssuance := k.GetIssuance(ctx, denom, curEpoch)
+	issuanceOnDisk := store.Has(keyIssuance(denom, sdk.ZeroInt()))
+	curIssuance := k.GetIssuance(ctx, denom, curDay)
 
 	// If the issuance is not on disk, GetIssuance will do a fresh read of account balances
 	// and the change in issuance should be reported automatically.
@@ -85,7 +87,7 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 			err = sdk.ErrInternal("Issuance should never fall below 0")
 		} else {
 			bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
-			store.Set(keyIssuance(denom, curEpoch), bz)
+			store.Set(keyIssuance(denom, curDay), bz)
 		}
 	}
 
@@ -100,54 +102,53 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 
 	if bz := store.Get(keyIssuance(denom, day)); bz != nil {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
-		return
-	}
-
-	for d := day; d.GTE(sdk.ZeroInt()); d = d.Sub(sdk.OneInt()) {
-
-		if bz := store.Get(keyIssuance(denom, d)); bz != nil {
-			k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
-			break
-		} else if d.LTE(sdk.ZeroInt()) {
-			// Genesis epoch; nothing exists in store so we must read it
-			// from accountkeeper
+	} else {
+		// Genesis epoch; nothing exists in store so we must read it
+		// from accountkeeper
+		if day.LTE(sdk.ZeroInt()) {
 			issuance = sdk.ZeroInt()
 			countIssuance := func(acc auth.Account) (stop bool) {
 				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
 				return false
 			}
-
 			k.ak.IterateAccounts(ctx, countIssuance)
-			break
+		} else {
+			// Fetch the issuance snapshot of the previous epoch
+			issuance = k.GetIssuance(ctx, denom, day.Sub(sdk.OneInt()))
 		}
-	}
 
-	// Set issuance to the store
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-	store.Set(keyIssuance(denom, day), bz)
+		// Set issuance to the store
+		store := ctx.KVStore(k.key)
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+		store.Set(keyIssuance(denom, day), bz)
+	}
 
 	return
 }
 
-// AddSeigniorage adds seigniorage to the current epochal seigniorage pool
-func (k Keeper) AddSeigniorage(ctx sdk.Context, seigniorage sdk.Int) {
-	curEpoch := util.GetEpoch(ctx)
-	seignioragePool := k.PeekSeignioragePool(ctx, curEpoch)
-	seignioragePool = seignioragePool.Add(seigniorage)
+// PeekEpochSeigniorage retrieves the size of the seigniorage pool at epoch
+func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeigniorage sdk.Int) {
 
-	store := ctx.KVStore(k.key)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(seignioragePool)
-	store.Set(keySeignioragePool(curEpoch), bz)
-}
+	daysPerEpoch := util.BlocksPerEpoch / util.BlocksPerDay
+	epochLastDay := epoch.Add(sdk.OneInt()).MulRaw(daysPerEpoch).Sub(sdk.OneInt())
 
-// PeekSeignioragePool retrieves the size of the seigniorage pool at epoch
-func (k Keeper) PeekSeignioragePool(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int) {
-	store := ctx.KVStore(k.key)
-	b := store.Get(keySeignioragePool(epoch))
-	if b == nil {
-		seignioragePool = sdk.ZeroInt()
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &seignioragePool)
+	//fmt.Println(epochLastDay)
+	today := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
+	if epochLastDay.GT(today) {
+		epochLastDay = today
 	}
+
+	prevEpochLastDay := epochLastDay.SubRaw(daysPerEpoch)
+	if prevEpochLastDay.IsNegative() {
+		prevEpochLastDay = sdk.ZeroInt()
+	}
+
+	prevEpochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, prevEpochLastDay)
+	epochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, epochLastDay)
+
+	//fmt.Println("")
+	fmt.Printf("%v %v %v %v %v \n", epochLastDay, today, prevEpochLastDay, epochIssuance, prevEpochIssuance)
+
+	epochSeigniorage = epochIssuance.Sub(prevEpochIssuance)
 	return
 }

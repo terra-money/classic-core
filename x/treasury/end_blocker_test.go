@@ -28,7 +28,7 @@ func TestEndBlockerTiming(t *testing.T) {
 		if i%params.WindowShort.Int64() == 0 {
 			// Last block should settle
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
+			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -36,7 +36,7 @@ func TestEndBlockerTiming(t *testing.T) {
 
 			// Non-last block should not settle
 			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
-			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
+			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
 
 			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -48,7 +48,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.AddSeigniorage(input.ctx, uLunaAmt)
+			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -97,7 +97,7 @@ func updatePolicy(input testInput, startIndex int,
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
 
 		seigniorageRevenue := seigniorageRevenues[i]
-		input.mintKeeper.AddSeigniorage(input.ctx, seigniorageRevenue)
+		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, seigniorageRevenue)
 
 		// Call endblocker
 		EndBlocker(input.ctx, input.treasuryKeeper)

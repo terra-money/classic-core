@@ -37,8 +37,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryTaxProceeds(ctx, path[1:], req, keeper)
 		case QuerySeigniorageProceeds:
 			return querySeigniorageProceeds(ctx, path[1:], req, keeper)
-		case QueryActiveClaims:
-			return queryActiveClaims(ctx, req, keeper)
 		case QueryIssuance:
 			return queryIssuance(ctx, path[1:], req, keeper)
 		case QueryCurrentEpoch:
@@ -128,7 +126,7 @@ func querySeigniorageProceeds(ctx sdk.Context, path []string, req abci.RequestQu
 		return nil, sdk.ErrInternal("epoch parameter is not correctly formatted")
 	}
 
-	pool := keeper.mtk.PeekSeignioragePool(ctx, epoch)
+	pool := keeper.mtk.PeekEpochSeigniorage(ctx, epoch)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -139,20 +137,6 @@ func querySeigniorageProceeds(ctx sdk.Context, path []string, req abci.RequestQu
 func queryCurrentEpoch(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	curEpoch := util.GetEpoch(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, curEpoch)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-func queryActiveClaims(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	claims := types.ClaimPool{}
-	keeper.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
-		claims = append(claims, claim)
-		return false
-	})
-
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, claims)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

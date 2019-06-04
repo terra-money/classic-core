@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -180,14 +180,11 @@ func TestKeeperMintBurn(t *testing.T) {
 func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
-	for e := 0; e < 3; e++ {
-		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * int64(e))
-		for i := 0; i < 100; i++ {
-			input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(int64(10*(e+1))))
-		}
-	}
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
 
-	require.Equal(t, sdk.NewInt(1000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(0)))
-	require.Equal(t, sdk.NewInt(2000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(1)))
-	require.Equal(t, sdk.NewInt(3000), input.mintKeeper.PeekSeignioragePool(input.ctx, sdk.NewInt(2)))
+	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch - 1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
+	
+	require.Equal(t, sdk.NewInt(100), seigniorage)
 }
