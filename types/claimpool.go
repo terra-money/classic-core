@@ -1,8 +1,6 @@
 package types
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // ClaimPool is a list of Claims
 type ClaimPool []Claim

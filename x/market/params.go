@@ -8,38 +8,26 @@ import (
 
 // Params market parameters
 type Params struct {
-	DailyLunaDeltaCap sdk.Dec `json:"daily_luna_delta_limit"` // daily % inflation or deflation cap on Luna
-	MinSwapSpread     sdk.Dec `json:"min_swap_spread"`        // minimum spread for swaps involving Luna
-	MaxSwapSpread     sdk.Dec `json:"max_swap_spread"`        // maximum spread for swaps involving Luna
+	DailySwapLimit sdk.Dec `json:"daily_swap_limit"` // daily % inflation cap on a currency from swaps
 }
 
 // NewParams creates a new param instance
-func NewParams(dailyLunaDeltaCap, minSwapSpread, maxSwapSpread sdk.Dec) Params {
+func NewParams(dailySwapLimit sdk.Dec) Params {
 	return Params{
-		DailyLunaDeltaCap: dailyLunaDeltaCap,
-		MinSwapSpread:     minSwapSpread,
-		MaxSwapSpread:     maxSwapSpread,
+		DailySwapLimit: dailySwapLimit,
 	}
 }
 
 // DefaultParams creates default market module parameters
 func DefaultParams() Params {
 	return NewParams(
-		sdk.NewDecWithPrec(5, 3),  // 0.5%
-		sdk.NewDecWithPrec(2, 2),  // 2%
-		sdk.NewDecWithPrec(10, 2), // 10%
+		sdk.NewDecWithPrec(1, 2), // 1%
 	)
 }
 
 func validateParams(params Params) error {
-	if params.DailyLunaDeltaCap.IsNegative() {
-		return fmt.Errorf("market daily luna issuance change should be non-negative, is %s", params.DailyLunaDeltaCap.String())
-	}
-	if params.MinSwapSpread.IsNegative() {
-		return fmt.Errorf("market minimum swap spead should be non-negative, is %s", params.MinSwapSpread.String())
-	}
-	if params.MaxSwapSpread.LT(params.MinSwapSpread) {
-		return fmt.Errorf("market maximum swap spead should be larger or equal to the minimum, is %s", params.MaxSwapSpread.String())
+	if params.DailySwapLimit.IsNegative() {
+		return fmt.Errorf("market daily swap limit should be non-negative, is %s", params.DailySwapLimit.String())
 	}
 
 	return nil
@@ -47,8 +35,6 @@ func validateParams(params Params) error {
 
 func (params Params) String() string {
 	return fmt.Sprintf(`market Params:
-	DailyLunaDeltaCap: %v,
-	MinSwapSpread:  %v,
-	MaxSwapSpread:  %v
-  `, params.DailyLunaDeltaCap, params.MinSwapSpread, params.MaxSwapSpread)
+	DailySwapLimit: %v
+	`, params.DailySwapLimit)
 }

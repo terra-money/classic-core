@@ -5,10 +5,8 @@ import (
 )
 
 const (
-	// LogKeySwapCoin is the amount of swapped coin
+	// LogKeyTax is to record treasury tax for a pay msg
 	LogKeySwapCoin = string("swap_coin")
-	// LogKeySwapFee is the fee for swap operation
-	LogKeySwapFee = string("swap_fee")
 )
 
 // Log is map type object to organize msg result

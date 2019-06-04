@@ -5,9 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/mock"
-	"github.com/terra-project/core/types/util"
 
 	"github.com/stretchr/testify/require"
 
@@ -97,62 +95,16 @@ func TestEndBlockerTiming(t *testing.T) {
 	}
 
 	// No claims should have been settled yet
-	EndBlocker(input.ctx, input.budgetKeeper)
-
-	claimCount := countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 0, claimCount)
+	claims, _ := EndBlocker(input.ctx, input.budgetKeeper)
+	require.Equal(t, 0, len(claims))
 
 	// Advance block height by voteperiod - 1, and the program should be settled.
 	params := input.budgetKeeper.GetParams(input.ctx)
 	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod - 1)
-	EndBlocker(input.ctx, input.budgetKeeper)
+	claims, _ = EndBlocker(input.ctx, input.budgetKeeper)
 
-	claimCount = countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 1, claimCount)
-
-	input.budgetKeeper.iterateClaimPool(input.ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
-		require.Equal(t, input.budgetKeeper.valset.TotalBondedTokens(input.ctx), weight)
-		return true
-	})
-
-}
-
-func TestEndBlockerClaimDistribution(t *testing.T) {
-	input := createTestInput(t)
-
-	// create test program
-	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-
-	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
-
-	// Add a vote each from validators
-	for _, addr := range addrs {
-		input.budgetKeeper.AddVote(input.ctx, testProgram.ProgramID, addr, true)
-	}
-
-	// No claims should have been settled yet
-	EndBlocker(input.ctx, input.budgetKeeper)
-
-	claimCount := countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 0, claimCount)
-
-	// Advance block height by voteperiod - 1, and the program should be settled.
-	params := input.budgetKeeper.GetParams(input.ctx)
-	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod - 1)
-	EndBlocker(input.ctx, input.budgetKeeper)
-
-	claimCount = countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 1, claimCount)
-
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(1000)))
-
-	// after 5 week, distribution date reach
-	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch*5 - 1)
-	input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.NewDecWithPrec(1, 1))
-	EndBlocker(input.ctx, input.budgetKeeper)
-
-	claimCount = countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 0, claimCount)
+	require.Equal(t, 1, len(claims))
+	require.Equal(t, input.budgetKeeper.valset.TotalBondedTokens(input.ctx), claims[0].Weight)
 }
 
 func TestEndBlockerLegacy(t *testing.T) {
@@ -175,9 +127,8 @@ func TestEndBlockerLegacy(t *testing.T) {
 	}
 
 	// Claims should have been settled
-	EndBlocker(ctx, input.budgetKeeper)
-	claimCount := countClaimPool(input.ctx, input.budgetKeeper)
-	require.Equal(t, 1, claimCount)
+	claims, _ := EndBlocker(ctx, input.budgetKeeper)
+	require.Equal(t, 1, len(claims))
 
 	ctx = input.ctx.WithBlockHeight(2)
 
@@ -186,8 +137,10 @@ func TestEndBlockerLegacy(t *testing.T) {
 	}
 
 	// Program should be legacy
-	EndBlocker(ctx, input.budgetKeeper)
-	_, err := input.budgetKeeper.GetProgram(ctx, testProgram.ProgramID)
+	claims, _ = EndBlocker(ctx, input.budgetKeeper)
+	require.Equal(t, 0, len(claims))
+
+	_, err := input.budgetKeeper.GetProgram(ctx, 1)
 	require.Error(t, err)
 }
 
@@ -240,13 +193,4 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 	EndBlocker(input.ctx, input.budgetKeeper)
 	_, err = input.budgetKeeper.GetProgram(input.ctx, testProgram2.ProgramID)
 	require.Nil(t, err)
-}
-
-func countClaimPool(ctx sdk.Context, keeper Keeper) (claimCount int) {
-	keeper.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
-		claimCount++
-		return false
-	})
-
-	return claimCount
 }

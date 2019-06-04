@@ -10,78 +10,15 @@ import (
 	"github.com/terra-project/core/x/oracle/tags"
 )
 
-// At the end of every VotePeriod, we give out all the market swap fees collected to the
-// oracle voters that voted faithfully.
-func rewardPrevBallotWinners(ctx sdk.Context, k Keeper) {
-	// Sum weight of the claimpool
-	prevBallotWeightSum := sdk.ZeroInt()
-	k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int) (stop bool) {
-		prevBallotWeightSum = prevBallotWeightSum.Add(weight)
-		return false
-	})
-
-	if !prevBallotWeightSum.IsZero() {
-
-		accmFeePool := k.GetSwapFeePool(ctx)
-		if !accmFeePool.Empty() {
-
-			// Dole out rewards
-			var distributedFee sdk.Coins
-			k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
-
-				rewardCoins := sdk.NewCoins()
-				rewardeeVal := k.valset.Validator(ctx, sdk.ValAddress(recipient))
-				for _, feeCoin := range accmFeePool {
-					rewardAmt := sdk.NewDecCoinFromCoin(feeCoin).Amount.QuoInt(prevBallotWeightSum).MulInt(weight).TruncateInt()
-					rewardCoins = rewardCoins.Add(sdk.NewCoins(sdk.NewCoin(feeCoin.Denom, rewardAmt)))
-				}
-
-				// In case absence of the validator, we collect the rewards to fee collect keeper
-				if rewardeeVal != nil {
-					k.dk.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
-				} else {
-					k.fck.AddCollectedFees(ctx, rewardCoins)
-				}
-
-				distributedFee = distributedFee.Add(rewardCoins)
-
-				return false
-			})
-
-			// move left fees to fee collect keeper
-			leftFee := accmFeePool.Sub(distributedFee)
-			if !leftFee.Empty() && leftFee.IsValid() {
-				k.fck.AddCollectedFees(ctx, leftFee)
-			}
-
-			// Change Issuerance
-			for _, feeCoin := range accmFeePool {
-
-				// never return err, but handle err for lint
-				err := k.mk.ChangeIssuance(ctx, feeCoin.Denom, feeCoin.Amount)
-				if err != nil {
-					panic(err)
-				}
-			}
-
-			// Clear swap fee pool
-			k.clearSwapFeePool(ctx)
-		}
-
-		// Clear claim and fee pool
-		k.clearClaimPool(ctx)
-	}
-}
-
-// Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
-// a reasonable spread from the weighted median to the store
-func tally(ctx sdk.Context, k Keeper, pb PriceBallot) sdk.Dec {
+// Calculates the median and returns the set of voters to be rewarded, i.e. voted within
+// a reasonable spread from the weighted median.
+func tally(ctx sdk.Context, k Keeper, pb PriceBallot) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}
 
-	ballotWinners := types.ClaimPool{}
-	weightedMedian := pb.weightedMedian(ctx, k.valset)
+	ballotWinners = types.ClaimPool{}
+	weightedMedian = pb.weightedMedian(ctx, k.valset)
 	rewardSpread := k.GetParams(ctx).OracleRewardBand.QuoInt64(2)
 
 	for _, vote := range pb {
@@ -92,15 +29,34 @@ func tally(ctx sdk.Context, k Keeper, pb PriceBallot) sdk.Dec {
 				ballotWinners = append(ballotWinners, types.Claim{
 					Recipient: sdk.AccAddress(vote.Voter),
 					Weight:    bondSize,
+					Class:     types.OracleClaimClass,
 				})
 			}
 		}
 	}
 
-	// add claim winners to the store
-	k.addClaimPool(ctx, ballotWinners)
+	return
+}
 
-	return weightedMedian
+// Drop the ballot. If the ballot drops params.DropThreshold times sequentially, then blacklist
+func dropBallot(ctx sdk.Context, k Keeper, denom string, params Params) sdk.Tags {
+	actionTag := tags.ActionTallyDropped
+
+	// Not enough votes received
+	dropCounter := k.incrementDropCounter(ctx, denom)
+	if dropCounter.GTE(params.DropThreshold) {
+
+		// Too many drops, blacklist currency
+		k.deletePrice(ctx, denom)
+		k.resetDropCounter(ctx, denom)
+
+		actionTag = tags.ActionBlacklist
+	}
+
+	return sdk.NewTags(
+		tags.Action, actionTag,
+		tags.Denom, denom,
+	)
 }
 
 // ballot for the asset is passing the threshold amount of voting power
@@ -110,7 +66,7 @@ func ballotIsPassing(totalBondedTokens sdk.Int, voteThreshold sdk.Dec, ballotPow
 }
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
+func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags sdk.Tags) {
 	params := k.GetParams(ctx)
 
 	// Not yet time for a tally
@@ -118,17 +74,18 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		return
 	}
 
-	// Reward previous ballot winners
-	rewardPrevBallotWinners(ctx, k)
-
 	actives := k.getActiveDenoms(ctx)
 	votes := k.collectVotes(ctx)
 
-	// Clear swap rates
+	// Iterate through active oracle assets and drop assets that have no votes received.
 	for _, activeDenom := range actives {
-		k.deletePrice(ctx, activeDenom)
+		if _, found := votes[activeDenom]; !found {
+			dropTags := dropBallot(ctx, k, activeDenom, params)
+			resTags = resTags.AppendTags(dropTags)
+		}
 	}
 
+	rewardees = types.ClaimPool{}
 	totalBondedTokens := k.valset.TotalBondedTokens(ctx)
 
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
@@ -136,27 +93,38 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		if ballotIsPassing(totalBondedTokens, params.VoteThreshold, filteredVotes.power(ctx, k.valset)) {
 
 			// Get weighted median prices, and faithful respondants
-			mod := tally(ctx, k, filteredVotes)
+			mod, ballotWinners := tally(ctx, k, filteredVotes)
+
+			// Append ballot winners for the denom
+			rewardees = append(rewardees, ballotWinners...)
+
+			actionTag := tags.ActionPriceUpdate
+			if _, err := k.GetLunaSwapRate(ctx, denom); err != nil {
+				actionTag = tags.ActionWhitelist
+			}
 
 			// Set price to the store
 			k.SetLunaSwapRate(ctx, denom, mod)
 
-			resTags = sdk.NewTags(
-				tags.Action, tags.ActionPriceUpdate,
-				tags.Denom, denom,
-				tags.Price, mod.String(),
+			// Reset drop counter for the passed ballot
+			k.resetDropCounter(ctx, denom)
+
+			resTags = resTags.AppendTags(
+				sdk.NewTags(
+					tags.Action, actionTag,
+					tags.Denom, denom,
+					tags.Price, mod.String(),
+				),
 			)
 		} else {
-			resTags = sdk.NewTags(
-				tags.Action, tags.ActionTallyDropped,
-				tags.Denom, denom,
-			)
+			dropTags := dropBallot(ctx, k, denom, params)
+			resTags = resTags.AppendTags(dropTags)
 		}
 	}
 
 	// Clear all prevotes
 	k.iteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
+		if (ctx.BlockHeight() - prevote.SubmitBlock) > params.VotePeriod {
 			k.deletePrevote(ctx, prevote)
 		}
 
@@ -164,10 +132,10 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	})
 
 	// Clear all votes
-	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) {
-		k.deleteVote(ctx, vote)
-		return false
-	})
+	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })
+
+	// Sort rewardees before we return
+	rewardees.Sort()
 
 	return
 }

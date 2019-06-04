@@ -1,10 +1,10 @@
 package treasury
 
 import (
-	"testing"
-
+	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -54,6 +54,33 @@ func TestTax(t *testing.T) {
 	require.Equal(t, sdrCap.Amount, readSdrCap)
 	require.Equal(t, sdrCap.Amount.MulRaw(10), cnyCap)
 	require.Equal(t, sdrCap.Amount.MulRaw(100), krwCap)
+}
+
+func TestClaim(t *testing.T) {
+	input := createTestInput(t)
+
+	for i := 0; i < 99; i++ {
+		oracleClaim := types.NewClaim(
+			types.OracleClaimClass, sdk.OneInt(), addrs[i%3],
+		)
+		input.treasuryKeeper.AddClaim(input.ctx, oracleClaim)
+
+		budgetClaim := types.NewClaim(
+			types.OracleClaimClass, sdk.OneInt(), addrs[i%3],
+		)
+		input.treasuryKeeper.AddClaim(input.ctx, budgetClaim)
+	}
+
+	// There should only be 3 unique claims, for each of the three addresses.
+	// Each claim should have coalesced its weight to 33.
+	counter := 0
+	input.treasuryKeeper.IterateClaims(input.ctx, func(claim types.Claim) bool {
+		counter++
+		require.Equal(t, int64(66), claim.Weight.Int64())
+		return false
+	})
+
+	require.Equal(t, 3, counter)
 }
 
 func TestParams(t *testing.T) {

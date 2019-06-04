@@ -1,10 +1,9 @@
 package treasury
 
 import (
-	"testing"
-
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -41,15 +40,11 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	sAmt := sdk.NewInt(1000)
 	lnasdrRate := sdk.NewDec(10)
 
-	SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
-
 	// Set random prices
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
-	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
-
 	// Add seigniorage
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))
+	input.mintKeeper.AddSeigniorage(input.ctx, sAmt)
 
 	// Get seigniorage rewards
 	seigniorageProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -77,7 +72,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	})
 
 	// Add seigniorage
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, amt))
+	input.mintKeeper.AddSeigniorage(input.ctx, amt)
 
 	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -170,13 +165,11 @@ func TestRollingAverageIndicator(t *testing.T) {
 
 	// Test all of our reporting functions
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.OneDec())
-	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.ZeroInt())
 
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
-		input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit)))
-
+		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(i).MulRaw(assets.MicroUnit))
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
 
