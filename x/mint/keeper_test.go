@@ -3,6 +3,8 @@ package mint
 import (
 	"testing"
 	"time"
+	"fmt"
+	"math/rand"
 
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/types/assets"
@@ -187,4 +189,62 @@ func TestKeeperSeigniorage(t *testing.T) {
 	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
 	
 	require.Equal(t, sdk.NewInt(100), seigniorage)
+}
+
+func TestKeeperMintStress(t *testing.T) {
+	input := createTestInput(t)
+	rand.Seed(int64(time.Now().Nanosecond()))
+
+	balance := int64(20000)
+	epochDelta := int64(0)
+
+	// Genesis mint 
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(balance)))
+
+	for day := int64(0); day < 100; day ++ {
+		input.ctx = input.ctx.WithBlockHeight(day * util.BlocksPerDay)
+		amt := rand.Int63() % 100 // Cap at 100; prevents possibility of balance falling negative
+		option := rand.Int63() % 3
+
+		switch option {
+		case 0: // mint
+			err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
+			if err != nil {
+				fmt.Println(err)
+			}
+			require.Nil(t, err)
+
+			balance += amt
+			epochDelta += amt
+			break
+		case 1: // burn
+			err := input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
+			if err != nil {
+				fmt.Println(err)
+			}
+			require.Nil(t, err)
+
+			balance -= amt
+			epochDelta -= amt
+			break
+		case 2: // skip
+			amt = 0
+			break
+		}
+
+		// Ignore first update; just how seigniorage recording works
+		if day == 0 {
+			epochDelta = 0
+		}
+
+		issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, sdk.NewInt(day))	
+		require.Equal(t, sdk.NewInt(balance), issuance)
+
+		// last day of epoch
+		if (day + 1) * util.BlocksPerDay % util.BlocksPerEpoch == 0 {
+			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
+			require.Equal(t, sdk.NewInt(epochDelta), seigniorage)
+			epochDelta = 0
+		}	
+	}
 }

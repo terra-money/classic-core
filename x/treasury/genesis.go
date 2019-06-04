@@ -3,7 +3,6 @@ package treasury
 import (
 	"fmt"
 
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

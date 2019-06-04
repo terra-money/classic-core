@@ -1,7 +1,7 @@
 package mint
 
 import (
-	"fmt"
+	//"fmt"
 
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
@@ -76,22 +76,24 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 
 // ChangeIssuance updates the issuance to reflect
 func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
+
 	store := ctx.KVStore(k.key)
 	curDay := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
 
-	issuanceOnDisk := store.Has(keyIssuance(denom, sdk.ZeroInt()))
-	curIssuance := k.GetIssuance(ctx, denom, curDay)
-
-	// If the issuance is not on disk, GetIssuance will do a fresh read of account balances
+	// If genesis issuance is not on disk, GetIssuance will do a fresh read of account balances
 	// and the change in issuance should be reported automatically.
-	if issuanceOnDisk {
-		newIssuance := curIssuance.Add(delta)
-		if newIssuance.IsNegative() {
-			err = sdk.ErrInternal("Issuance should never fall below 0")
-		} else {
-			bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
-			store.Set(keyIssuance(denom, curDay), bz)
-		}
+	if !store.Has(keyIssuance(denom, sdk.ZeroInt())) {
+		return 
+	}
+
+	curIssuance := k.GetIssuance(ctx, denom, curDay)
+	newIssuance := curIssuance.Add(delta)
+
+	if newIssuance.IsNegative() {
+		err = sdk.ErrInternal("Issuance should never fall below 0")
+	} else {
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(newIssuance)
+		store.Set(keyIssuance(denom, curDay), bz)
 	}
 
 	return
@@ -148,10 +150,6 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeign
 
 	prevEpochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, prevEpochLastDay)
 	epochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, epochLastDay)
-
-	//fmt.Println("")
-	fmt.Printf("%v %v %v %v %v \n", epochLastDay, today, prevEpochLastDay, epochIssuance, prevEpochIssuance)
-
 	epochSeigniorage = epochIssuance.Sub(prevEpochIssuance)
 	return
 }

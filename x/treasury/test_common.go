@@ -172,11 +172,14 @@ func createTestInput(t *testing.T) testInput {
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
+		distrKeeper,
+		feeCollectionKeeper,
 		stakingKeeper.GetValidatorSet(),
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
 	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
+	marketKeeper.SetParams(ctx, market.DefaultParams())
 
 	treasuryKeeper := NewKeeper(
 		cdc,

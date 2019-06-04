@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/treasury/tags"
@@ -18,37 +17,13 @@ func TestEndBlockerTiming(t *testing.T) {
 	input := createTestInput(t)
 	input = reset(input)
 
-	// First endblocker should fail
-	tTags := EndBlocker(input.ctx, input.treasuryKeeper)
-	require.True(t, len(tTags.ToKVPairs()) == 0)
-
-	// Subsequent endblocker should settle, but NOT update policy
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	for i := int64(1); i < params.WindowProbation.Int64(); i++ {
-		if i%params.WindowShort.Int64() == 0 {
-			// Last block should settle
-			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
-
-			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
-
-			require.Equal(t, 4, len(tTags))
-
-			// Non-last block should not settle
-			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
-			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
-
-			tTags = EndBlocker(input.ctx, input.treasuryKeeper)
-
-			require.Equal(t, 0, len(tTags))
-		}
-	}
-
+	
 	// After probationary period, we should also be updating policy variables
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
+			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -97,7 +72,7 @@ func updatePolicy(input testInput, startIndex int,
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
 
 		seigniorageRevenue := seigniorageRevenues[i]
-		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, seigniorageRevenue)
+		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, seigniorageRevenue))
 
 		// Call endblocker
 		EndBlocker(input.ctx, input.treasuryKeeper)

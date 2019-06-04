@@ -1,7 +1,6 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
