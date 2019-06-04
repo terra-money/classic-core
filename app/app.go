@@ -15,6 +15,8 @@ import (
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
+	"github.com/terra-project/core/types/assets"
+
 	tdistr "github.com/terra-project/core/x/distribution"
 	tslashing "github.com/terra-project/core/x/slashing"
 	tstaking "github.com/terra-project/core/x/staking"
@@ -425,6 +427,9 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 			}
 		}
 	}
+
+	// GetIssuance needs to be called once to read account balances to the store
+	app.mintKeeper.GetIssuance(ctx, assets.MicroLunaDenom, sdk.ZeroInt())
 
 	// assert runtime invariants
 	app.assertRuntimeInvariants()
