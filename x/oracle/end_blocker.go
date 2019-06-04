@@ -54,6 +54,11 @@ func rewardPrevBallotWinners(ctx sdk.Context, k Keeper) {
 				k.fck.AddCollectedFees(ctx, leftFee)
 			}
 
+			// Change Issuerance
+			for _, feeCoin := range accmFeePool {
+				k.mk.ChangeIssuance(ctx, feeCoin.Denom, feeCoin.Amount)
+			}
+
 			// Clear swap fee pool
 			k.clearSwapFeePool(ctx)
 		}

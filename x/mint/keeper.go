@@ -39,12 +39,9 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Ke
 // Mint credits {coin} to the {recipient} account, and reflects the increase in issuance
 func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error) {
 
-	// recipient could be empty in case minting to validator outstanding rewards
-	if !recipient.Empty() {
-		_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
-		if err != nil {
-			return err
-		}
+	_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
+	if err != nil {
+		return err
 	}
 
 	if coin.Denom == assets.MicroLunaDenom {
@@ -53,7 +50,7 @@ func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (
 		k.sk.SetPool(ctx, pool)
 	}
 
-	return k.changeIssuance(ctx, coin.Denom, coin.Amount)
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount)
 }
 
 // Burn deducts {coin} from the {payer} account, and reflects the decrease in issuance
@@ -69,11 +66,11 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 		k.sk.SetPool(ctx, pool)
 	}
 
-	return k.changeIssuance(ctx, coin.Denom, coin.Amount.Neg())
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount.Neg())
 }
 
 // ChangeIssuance updates the issuance to reflect
-func (k Keeper) changeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
+func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error) {
 	store := ctx.KVStore(k.key)
 	curEpoch := util.GetEpoch(ctx)
 

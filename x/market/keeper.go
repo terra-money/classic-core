@@ -4,20 +4,25 @@ import (
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper holds data structures for the market module
 type Keeper struct {
+	cdc        *codec.Codec // Codec to encore/decode structs
+	key        sdk.StoreKey // Key to our module's store
 	ok         OracleKeeper
 	mk         MintKeeper
 	paramSpace params.Subspace
 }
 
 // NewKeeper creates a new Keeper for the market module
-func NewKeeper(ok OracleKeeper, mk MintKeeper, paramspace params.Subspace) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, ok OracleKeeper, mk MintKeeper, paramspace params.Subspace) Keeper {
 	return Keeper{
+		cdc:        cdc,
+		key:        key,
 		ok:         ok,
 		mk:         mk,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
@@ -44,12 +49,12 @@ func (k Keeper) ComputeLunaDelta(ctx sdk.Context, change sdk.Int) sdk.Dec {
 	return sdk.ZeroDec()
 }
 
-// GetSwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
+// GetSwapCoin returns the amount of asked coins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
 // Ignores caps and spreads if isInternal = true.
-func (k Keeper) GetSwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (retCoin sdk.Coin, spread sdk.Dec, err sdk.Error) {
+func (k Keeper) GetSwapCoin(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (retCoin sdk.Coin, spread sdk.Dec, err sdk.Error) {
 	params := k.GetParams(ctx)
 
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
@@ -94,11 +99,11 @@ func (k Keeper) GetSwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom strin
 	return sdk.NewCoin(askDenom, retAmount), spread, nil
 }
 
-// GetSwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
+// GetSwapDecCoin returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Different from swapcoins, SwapDecCoins does not charge a spread as its use is system internal.
 // Similar to SwapCoins, but operates over sdk.DecCoins for convenience and accuracy.
-func (k Keeper) GetSwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
+func (k Keeper) GetSwapDecCoin(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/budget/tags"
 
@@ -45,7 +46,6 @@ func clearsThreshold(votePower, totalPower sdk.Int, threshold sdk.Dec) bool {
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	params := k.GetParams(ctx)
-	claims = types.ClaimPool{}
 	resTags = sdk.EmptyTags()
 
 	k.CandQueueIterateExpired(ctx, ctx.BlockHeight(), func(programID uint64) (stop bool) {
@@ -77,35 +77,60 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	})
 
 	// Time to re-weight programs
-	if !util.IsPeriodLastBlock(ctx, params.VotePeriod) {
-		return
+	if util.IsPeriodLastBlock(ctx, params.VotePeriod) {
+		claims := types.ClaimPool{}
+
+		// iterate programs and weight them
+		k.IteratePrograms(ctx, true, func(program Program) (stop bool) {
+			votePower, totalPower := tally(ctx, k, program.ProgramID)
+
+			// Need to check if the program should be legacied
+			if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
+				// Delete all votes on target program
+				k.DeleteVotesForProgram(ctx, program.ProgramID)
+				k.DeleteProgram(ctx, program.ProgramID)
+				resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
+			} else {
+				claims = append(claims, types.NewClaim(votePower, program.Executor))
+				resTags.AppendTag(tags.Action, tags.ActionProgramGranted)
+			}
+
+			resTags.AppendTags(
+				sdk.NewTags(
+					tags.ProgramID, strconv.FormatUint(program.ProgramID, 10),
+					tags.Weight, votePower.String(),
+				),
+			)
+
+			return false
+		})
+
+		k.addClaimPool(ctx, claims)
 	}
 
-	claims := types.ClaimPool{}
-
-	// iterate programs and weight them
-	k.IteratePrograms(ctx, true, func(program Program) (stop bool) {
-		votePower, totalPower := tally(ctx, k, program.ProgramID)
-
-		// Need to check if the program should be legacied
-		if !clearsThreshold(votePower, totalPower, params.LegacyThreshold) {
-			// Delete all votes on target program
-			k.DeleteVotesForProgram(ctx, program.ProgramID)
-			k.DeleteProgram(ctx, program.ProgramID)
-			resTags.AppendTag(tags.Action, tags.ActionProgramLegacied)
-		} else {
-			claims = append(claims, types.NewClaim(types.BudgetClaimClass, votePower, program.Executor))
-			resTags.AppendTag(tags.Action, tags.ActionProgramGranted)
+	// Time to distribute rewards to claims
+	if util.IsPeriodLastBlock(ctx, util.BlocksPerEpoch) {
+		epoch := util.GetEpoch(ctx)
+		rewardWeight := k.tk.GetRewardWeight(ctx, epoch)
+		seigniorage := k.mk.PeekSeignioragePool(ctx, epoch)
+		rewardPool := sdk.OneDec().Sub(rewardWeight).MulInt(seigniorage)
+		rewardPoolCoin, err := k.mrk.GetSwapDecCoin(ctx, sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool), assets.MicroSDRDenom)
+		if err != nil {
+			// No SDR swap rate exists
+			rewardPoolCoin = sdk.NewDecCoinFromDec(assets.MicroLunaDenom, rewardPool)
 		}
 
-		resTags.AppendTags(
-			sdk.NewTags(
-				tags.ProgramID, strconv.FormatUint(program.ProgramID, 10),
-				tags.Weight, votePower.String(),
-			),
-		)
+		weightSum := sdk.ZeroInt()
+		k.iterateClaimPool(ctx, func(_ sdk.AccAddress, weight sdk.Int) (stop bool) {
+			weightSum = weightSum.Add(weight)
+			return false
+		})
 
-		return false
-	})
+		k.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+			rewardAmt := rewardPoolCoin.Amount.MulInt(weight).QuoInt(weightSum).TruncateInt()
+			k.mk.Mint(ctx, recipient, sdk.NewCoin(rewardPoolCoin.Denom, rewardAmt))
+			return false
+		})
+	}
 	return
 }

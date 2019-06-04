@@ -11,3 +11,8 @@ type DistributionKeeper interface {
 type FeeCollectionKeeper interface {
 	AddCollectedFees(ctx sdk.Context, coins sdk.Coins) sdk.Coins
 }
+
+// expected mint keeper
+type MintKeeper interface {
+	ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (err sdk.Error)
+}

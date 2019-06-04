@@ -30,7 +30,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, spread, swapErr := k.GetSwapCoins(ctx, msg.OfferCoin, msg.AskDenom, false)
+	swapCoin, spread, swapErr := k.GetSwapCoin(ctx, msg.OfferCoin, msg.AskDenom, false)
 	if swapErr != nil {
 		return swapErr.Result()
 	}

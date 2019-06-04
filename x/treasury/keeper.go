@@ -1,7 +1,6 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -140,7 +139,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 		// Tax cap does not exist for the asset; compute it by
 		// comparing it with the tax cap for TerraSDR
 		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
-		reqCap, _, err := k.mk.GetSwapCoins(ctx, referenceCap, denom, true)
+		reqCap, _, err := k.mk.GetSwapCoin(ctx, referenceCap, denom, true)
 
 		// The coin is more valuable than TaxPolicy asset. just follow the Policy Cap.
 		if err != nil {

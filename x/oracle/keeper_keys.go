@@ -14,7 +14,7 @@ var (
 	prefixDropCounter      = []byte("drop")
 	paramStoreKeyParams    = []byte("params")
 	prefixFeederDelegation = []byte("feederdelegation")
-	prefixClaim   = []byte("claim")
+	prefixClaim            = []byte("claim")
 
 	keySwapFeePool = []byte("swapfeepool")
 )

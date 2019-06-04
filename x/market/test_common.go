@@ -120,14 +120,6 @@ func createTestInput(t *testing.T) testInput {
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	oracleKeeper := oracle.NewKeeper(
-		cdc,
-		keyOracle,
-		distrKeeper,
-		feeCollectionKeeper,
-		stakingKeeper.GetValidatorSet(),
-		paramsKeeper.Subspace(oracle.DefaultParamspace),
-	)
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
@@ -136,8 +128,22 @@ func createTestInput(t *testing.T) testInput {
 		accKeeper,
 	)
 
+	oracleKeeper := oracle.NewKeeper(
+		cdc,
+		keyOracle,
+		mintKeeper,
+		distrKeeper,
+		feeCollectionKeeper,
+		stakingKeeper.GetValidatorSet(),
+		paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
+
 	marketKeeper := NewKeeper(
-		oracleKeeper, mintKeeper, paramsKeeper.Subspace(DefaultParamspace),
+		cdc,
+		keyMarket,
+		oracleKeeper,
+		mintKeeper,
+		paramsKeeper.Subspace(DefaultParamspace),
 	)
 
 	marketKeeper.SetParams(ctx, DefaultParams())

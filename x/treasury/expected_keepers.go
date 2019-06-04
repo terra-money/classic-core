@@ -11,8 +11,8 @@ type MintKeeper interface {
 
 // expected market keeper
 type MarketKeeper interface {
-	GetSwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error)
-	GetSwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (sdk.Coin, sdk.Dec, sdk.Error)
+	GetSwapDecCoin(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error)
+	GetSwapCoin(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (sdk.Coin, sdk.Dec, sdk.Error)
 }
 
 // expected coin keeper
