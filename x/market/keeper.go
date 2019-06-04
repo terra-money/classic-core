@@ -89,7 +89,7 @@ func (k Keeper) GetSwapCoin(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 
 	// Do not allow swaps beyond the daily cap
 	maxDelta := params.DailyLunaDeltaCap
-	if dailyDelta.Abs().GT(maxDelta) {
+	if dailyDelta.GT(maxDelta) {
 		return sdk.Coin{}, sdk.ZeroDec(), ErrExceedsDailySwapLimit(DefaultCodespace)
 	}
 
