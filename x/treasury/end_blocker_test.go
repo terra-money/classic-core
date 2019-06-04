@@ -27,7 +27,7 @@ func TestEndBlockerTiming(t *testing.T) {
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
-			require.Equal(t, tTags.ToKVPairs()[4].GetValue(), []byte(tags.ActionPolicyUpdate))
+			require.Equal(t, tTags.ToKVPairs()[0].GetValue(), []byte(tags.ActionPolicyUpdate))
 		}
 	}
 }

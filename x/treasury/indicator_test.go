@@ -41,8 +41,12 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	sAmt := sdk.NewInt(1000)
 	lnasdrRate := sdk.NewDec(10)
 
+	SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
+
 	// Set random prices
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
+
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
 
 	// Add seigniorage
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))

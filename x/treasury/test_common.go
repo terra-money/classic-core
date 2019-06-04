@@ -188,6 +188,8 @@ func createTestInput(t *testing.T) testInput {
 		mintKeeper,
 		paramsKeeper.Subspace(market.DefaultParamspace))
 
+	marketKeeper.SetParams(ctx, market.DefaultParams())
+
 	treasuryKeeper := NewKeeper(
 		cdc,
 		keyTreasury,
