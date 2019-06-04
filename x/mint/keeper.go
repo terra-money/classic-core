@@ -1,8 +1,6 @@
 package mint
 
 import (
-	"fmt"
-
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
@@ -145,9 +143,6 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeign
 
 	prevEpochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, prevEpochLastDay)
 	epochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, epochLastDay)
-
-	//fmt.Println("")
-	fmt.Printf("%v %v %v %v %v \n", epochLastDay, today, prevEpochLastDay, epochIssuance, prevEpochIssuance)
 
 	epochSeigniorage = epochIssuance.Sub(prevEpochIssuance)
 	return

@@ -25,15 +25,6 @@ func TestEndBlockerTiming(t *testing.T) {
 	params := input.treasuryKeeper.GetParams(input.ctx)
 	for i := int64(1); i < params.WindowProbation.Int64(); i++ {
 		if i%params.WindowShort.Int64() == 0 {
-			// Last block should settle
-			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
-
-			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
-
-			require.Equal(t, 4, len(tTags))
-
-			// Non-last block should not settle
 			input.ctx = input.ctx.WithBlockHeight(i * util.BlocksPerEpoch)
 			input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 
@@ -51,7 +42,7 @@ func TestEndBlockerTiming(t *testing.T) {
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
-			require.Equal(t, tTags.ToKVPairs()[4].GetValue(), []byte(tags.ActionPolicyUpdate))
+			require.Equal(t, tTags.ToKVPairs()[0].GetValue(), []byte(tags.ActionPolicyUpdate))
 		}
 	}
 }

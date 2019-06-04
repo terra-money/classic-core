@@ -247,12 +247,15 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.treasuryKeeper)
 
+	getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
+
+	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
 	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
-	require.Equal(t, queriedSeigniorageProceeds, seigniorageProceeds)
+	require.Equal(t, seigniorageProceeds, queriedSeigniorageProceeds)
 }
 
 func TestQueryIssuance(t *testing.T) {
@@ -265,5 +268,5 @@ func TestQueryIssuance(t *testing.T) {
 
 	queriedIssuance := getQueriedIssuance(t, input.ctx, input.cdc, querier, assets.MicroSDRDenom)
 
-	require.Equal(t, queriedIssuance, issuance)
+	require.Equal(t, issuance, queriedIssuance)
 }
