@@ -40,7 +40,7 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
     - [Big Dipper by Forbole](https://terra.bigdipper.live/)
 
 - Wallet 
-    -[Terra Station](https://terra.money): Available for download on the Terra website
+    - [Terra Station](https://terra.money): Available for download on the Terra website
 
 
 ### Terra Alliance
@@ -52,12 +52,13 @@ The current state of the Terra Alliance (businesses gearing to adopt Terra upon 
 
 Community channels actively being managed are here:
 - [Website](https://terra.money/)
+- [Discord](https://discord.gg/vutpqa)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
 
-We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money).
+We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:core@terra.money).
 
 ## Documentation
 
-See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf). Read the [Changelog](./CHANGELOG.md) for major changes in each release. 
+See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf). Read the [Changelog](./CHANGELOG.md) for major release updates.
