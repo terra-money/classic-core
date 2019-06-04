@@ -227,7 +227,9 @@ func TestKeeperMintStress(t *testing.T) {
 
 		// Ignore first update; just how seigniorage recording works
 		if day == 0 {
+			input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
 			epochDelta = 0
+			
 		}
 
 		issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, sdk.NewInt(day))
