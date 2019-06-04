@@ -24,8 +24,6 @@ func NewHandler(k Keeper) sdk.Handler {
 // handleMsgSwap handles the logic of a MsgSwap
 func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
-	params := k.GetParams(ctx)
-
 	// Can't swap to the same coin
 	if msg.OfferCoin.Denom == msg.AskDenom {
 		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom).Result()
@@ -43,10 +41,9 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		swapFeeAmt := spread.MulInt(swapCoin.Amount).TruncateInt()
 		if swapFeeAmt.IsPositive() {
 			swapFee = sdk.NewCoin(swapCoin.Denom, swapFeeAmt)
-			k.ok.addSwapFeePool(ctx, sdk.NewCoins(swapFee))
+			k.ok.AddSwapFeePool(ctx, sdk.NewCoins(swapFee))
 
-			retAmt := swapCoin.Amount.Sub(swapFeeAmt)
-			swapCoin = sdk.NewCoin(swapCoin.Denom, retAmt)
+			swapCoin = swapCoin.Sub(swapFee)
 		}
 	}
 
@@ -63,13 +60,12 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	}
 
 	log := NewLog()
-	log.append(LogKeySwapCoin, swapCoin.String())
+	log = log.append(LogKeySwapCoin, swapCoin.String())
+	log = log.append(LogKeySwapFee, swapFee.String())
 
 	return sdk.Result{
 		Tags: sdk.NewTags(
 			tags.Offer, msg.OfferCoin.Denom,
-			tags.SwapFee, swapFee.String(),
-			tags.Return, swapCoin.String(),
 			tags.Trader, msg.Trader.String(),
 		),
 		Log: log.String(),

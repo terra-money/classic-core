@@ -19,6 +19,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -62,6 +63,9 @@ func createTestInput(t *testing.T) testInput {
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
+	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
+	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -76,6 +80,9 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -100,15 +107,27 @@ func createTestInput(t *testing.T) testInput {
 		staking.DefaultCodespace,
 	)
 
+	feeCollectionKeeper := auth.NewFeeCollectionKeeper(
+		cdc,
+		keyFeeCollection,
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		bankKeeper, &stakingKeeper, feeCollectionKeeper, distr.DefaultCodespace,
+	)
+
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	var valset sdk.ValidatorSet
 	oracleKeeper := oracle.NewKeeper(
-		cdc, keyOracle, valset,
+		cdc,
+		keyOracle,
+		distrKeeper,
+		feeCollectionKeeper,
+		stakingKeeper.GetValidatorSet(),
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
-
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
@@ -124,7 +143,7 @@ func createTestInput(t *testing.T) testInput {
 	marketKeeper.SetParams(ctx, DefaultParams())
 
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt)})
+		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt))
 		require.NoError(t, err)
 	}
 

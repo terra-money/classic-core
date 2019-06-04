@@ -1,6 +1,7 @@
 package market
 
 import (
+	"math"
 	"testing"
 
 	"github.com/terra-project/core/types/assets"
@@ -22,9 +23,9 @@ func TestKeeperSwapCoinsBasic(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	retCoin, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, askCoin.Denom)
+	retCoin, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, askCoin.Denom, false)
 	require.Nil(t, err)
-	require.Zero(t, spread, "Spread should be 0 for non luna swaps")
+	require.Zero(t, spread.TruncateInt64(), "Spread should be 0 for non luna swaps")
 
 	require.Equal(t, retCoin, askCoin)
 }
@@ -37,38 +38,37 @@ func TestKeeperSwapCoinsLunaCap(t *testing.T) {
 	params := DefaultParams()
 	input.marketKeeper.SetParams(input.ctx, params)
 
+	baseAmount := sdk.NewInt(int64(math.Pow10(9)))
 	// Set day to 2 and issuance as the same as the day before
-	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10^9)))
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, baseAmount))
 	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerDay + 1)
-
-	lunaCoin := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(4).MulRaw(assets.MicroUnit))
 
 	// Set exchange rate. Keep it at 1:1 for simplicity
 	lnasdrRate := sdk.NewDec(1)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
-	maxDelta := params.DailyLunaDeltaCap.MulInt(sdk.NewInt(10 ^ 9)).TruncateInt()
+	maxDelta := params.DailyLunaDeltaCap.MulInt(baseAmount).TruncateInt()
 
 	// Check cap luna -> sdr swap, at the cap. Should succeed
 	offerCoin := sdk.NewCoin(assets.MicroLunaDenom, maxDelta)
-	retCoin, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom)
+	_, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom, false)
 	require.Nil(t, err)
-	require.Equal(t, spread, params.MaxSwapSpread)
+	require.Equal(t, params.MaxSwapSpread, spread)
 
 	// Check cap luna -> sdr swap, 1 coin higher than the cap. Should fail
 	offerCoin = sdk.NewCoin(assets.MicroLunaDenom, maxDelta.Add(sdk.OneInt()))
-	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom)
+	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom, false)
 	require.NotNil(t, err)
 
 	// Check cap sdr -> luna swap,at the cap. Should succeed
 	offerCoin = sdk.NewCoin(assets.MicroSDRDenom, maxDelta)
-	_, spread, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom)
+	_, spread, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom, false)
 	require.Nil(t, err)
-	require.Equal(t, spread, params.MaxSwapSpread)
+	require.Equal(t, params.MaxSwapSpread, spread)
 
 	// Check cap sdr -> luna swap, 1 coin higher than the cap. Should fail
 	offerCoin = sdk.NewCoin(assets.MicroSDRDenom, maxDelta.Add(sdk.OneInt()))
-	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom)
+	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom, false)
 	require.NotNil(t, err)
 }
 

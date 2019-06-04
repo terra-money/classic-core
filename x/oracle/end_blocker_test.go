@@ -7,10 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/mock"
-	mcVal "github.com/terra-project/core/types/mock"
 )
 
 func TestOracleThreshold(t *testing.T) {
@@ -65,10 +62,9 @@ func TestOracleThreshold(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, randomPrice, price)
 
-	// A new validator joins, we are now below threshold. Price update should now fail
-	newValidator := mock.NewMockValidator(sdk.ValAddress(addrs[2].Bytes()), sdk.NewInt(30))
-	input.valset.Validators = append(input.valset.Validators, newValidator)
-	input.oracleKeeper.valset = input.valset
+	// Less than the threshold signs, msg fails
+	val, _ := input.stakingKeeper.GetValidator(input.ctx, sdk.ValAddress(addrs[2]))
+	input.stakingKeeper.Delegate(input.ctx.WithBlockHeight(0), addrs[2], uLunaAmt.MulRaw(2), val, false)
 
 	salt = "1"
 	bz, err = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
@@ -89,8 +85,7 @@ func TestOracleThreshold(t *testing.T) {
 	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
 
 	price, err = input.oracleKeeper.GetLunaSwapRate(input.ctx.WithBlockHeight(1), assets.MicroSDRDenom)
-	require.Nil(t, err)
-	require.Equal(t, randomPrice, price)
+	require.NotNil(t, err)
 }
 
 func TestOracleMultiVote(t *testing.T) {
@@ -152,7 +147,6 @@ func TestOracleMultiVote(t *testing.T) {
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	dropThreshold := input.oracleKeeper.GetParams(input.ctx).DropThreshold
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroKRWDenom, randomPrice)
 
 	salt := "1"
@@ -164,35 +158,11 @@ func TestOracleDrop(t *testing.T) {
 	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroKRWDenom, addrs[0], sdk.ValAddress(addrs[0]))
 	h(input.ctx, voteMsg)
 
-	for i := 0; i < int(dropThreshold.Int64())-1; i++ {
-		EndBlocker(input.ctx, input.oracleKeeper)
-	}
-
-	price, err := input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroKRWDenom)
-	require.Nil(t, err)
-	require.Equal(t, price, randomPrice)
-
-	// Going over dropthreshold should blacklist the price
+	// Immediately swap halt after an illiquid oracle vote
 	EndBlocker(input.ctx, input.oracleKeeper)
 
 	_, err = input.oracleKeeper.GetLunaSwapRate(input.ctx, assets.MicroKRWDenom)
 	require.NotNil(t, err)
-}
-
-func generateValset(valWeights []int64) mock.MockValset {
-	mockValset := mock.NewMockValSet()
-
-	for i := 0; i < len(valWeights); i++ {
-		valAccAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-
-		power := sdk.NewInt(valWeights[i])
-		mockValAddr := sdk.ValAddress(valAccAddr.Bytes())
-		mockVal := mcVal.NewMockValidator(mockValAddr, power)
-
-		mockValset.Validators = append(mockValset.Validators, mockVal)
-	}
-
-	return mockValset
 }
 
 func TestOracleTally(t *testing.T) {
@@ -252,8 +222,7 @@ func TestOracleTally(t *testing.T) {
 
 	tallyMedian := tally(input.ctx, input.oracleKeeper, ballot)
 
-	claimPool := input.oracleKeeper.GetClaimPool(input.ctx)
-	require.Equal(t, len(claimPool), len(rewardees))
+	require.Equal(t, countClaimPool(input.ctx, input.oracleKeeper), len(rewardees))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
 }
 
@@ -291,15 +260,52 @@ func TestOracleTallyTiming(t *testing.T) {
 	params := input.oracleKeeper.GetParams(input.ctx)
 	params.VotePeriod = 10 // set vote period to 10 for now, for convinience
 	input.oracleKeeper.SetParams(input.ctx, params)
-
 	require.Equal(t, 0, int(input.ctx.BlockHeight()))
+
 	EndBlocker(input.ctx, input.oracleKeeper)
-	claimPool := input.oracleKeeper.GetClaimPool(input.ctx)
-	require.Equal(t, 0, len(claimPool))
+	require.Equal(t, 0, countClaimPool(input.ctx, input.oracleKeeper))
 
 	input.ctx = input.ctx.WithBlockHeight(params.VotePeriod - 1)
 
 	EndBlocker(input.ctx, input.oracleKeeper)
-	claimPool = input.oracleKeeper.GetClaimPool(input.ctx)
-	require.Equal(t, len(addrs), len(claimPool))
+	require.Equal(t, len(addrs), countClaimPool(input.ctx, input.oracleKeeper))
+}
+
+func countClaimPool(ctx sdk.Context, oracleKeeper Keeper) (claimCount int) {
+	oracleKeeper.iterateClaimPool(ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		claimCount++
+		return false
+	})
+
+	return claimCount
+}
+
+func TestOracleRewardDistribution(t *testing.T) {
+	input, h := setup(t)
+
+	salt := "1"
+	bz, _ := VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg := NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	salt = "2"
+	bz, _ = VoteHash(salt, randomPrice, assets.MicroSDRDenom, sdk.ValAddress(addrs[1]))
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, assets.MicroSDRDenom, addrs[1], sdk.ValAddress(addrs[1]))
+	h(input.ctx.WithBlockHeight(1), voteMsg)
+
+	input.oracleKeeper.AddSwapFeePool(input.ctx.WithBlockHeight(1), sdk.NewCoins(sdk.NewCoin(assets.MicroSDRDenom, uLunaAmt.MulRaw(100))))
+
+	EndBlocker(input.ctx.WithBlockHeight(1), input.oracleKeeper)
+	EndBlocker(input.ctx.WithBlockHeight(2), input.oracleKeeper)
+
+	rewards := input.distrKeeper.GetValidatorOutstandingRewards(input.ctx.WithBlockHeight(2), sdk.ValAddress(addrs[0]))
+	require.Equal(t, uLunaAmt.MulRaw(50), rewards.AmountOf(assets.MicroSDRDenom).TruncateInt())
+	rewards = input.distrKeeper.GetValidatorOutstandingRewards(input.ctx.WithBlockHeight(2), sdk.ValAddress(addrs[1]))
+	require.Equal(t, uLunaAmt.MulRaw(50), rewards.AmountOf(assets.MicroSDRDenom).TruncateInt())
 }

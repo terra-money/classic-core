@@ -25,7 +25,7 @@ func NewParams(dailyLunaDeltaCap, minSwapSpread, maxSwapSpread sdk.Dec) Params {
 // DefaultParams creates default market module parameters
 func DefaultParams() Params {
 	return NewParams(
-		sdk.NewDecWithPrec(5, 3),  // 0.1%
+		sdk.NewDecWithPrec(5, 3),  // 0.5%
 		sdk.NewDecWithPrec(2, 2),  // 2%
 		sdk.NewDecWithPrec(10, 2), // 10%
 	)

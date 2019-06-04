@@ -3,6 +3,7 @@ package oracle
 import (
 	"encoding/hex"
 
+	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 
 	"testing"
@@ -41,6 +42,50 @@ func TestKeeperPrice(t *testing.T) {
 	require.Equal(t, sdk.OneDec(), price)
 }
 
+func TestKeeperSwapPool(t *testing.T) {
+	input := createTestInput(t)
+
+	// Test AddSwapFeePool
+	fees := sdk.NewCoins(sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(1000)))
+	input.oracleKeeper.AddSwapFeePool(input.ctx, fees)
+
+	// Test GetSwapFeePool
+	feesQuery := input.oracleKeeper.GetSwapFeePool(input.ctx)
+	require.Equal(t, fees, feesQuery)
+
+	// Test clearSwapFeePool
+	input.oracleKeeper.clearSwapFeePool(input.ctx)
+	feesQuery = input.oracleKeeper.GetSwapFeePool(input.ctx)
+
+	require.True(t, feesQuery.Empty())
+}
+
+func TestKeeperClaimPool(t *testing.T) {
+	input := createTestInput(t)
+
+	// Test addClaimPool
+	claim := types.NewClaim(sdk.NewInt(10), addrs[0])
+	claim2 := types.NewClaim(sdk.NewInt(20), addrs[1])
+	claimPool := types.ClaimPool{claim, claim2}
+	input.oracleKeeper.addClaimPool(input.ctx, claimPool)
+
+	claim = types.NewClaim(sdk.NewInt(15), addrs[0])
+	claim2 = types.NewClaim(sdk.NewInt(30), addrs[2])
+	claimPool = types.ClaimPool{claim, claim2}
+	input.oracleKeeper.addClaimPool(input.ctx, claimPool)
+
+	// Test iterateClaimPool
+	input.oracleKeeper.iterateClaimPool(input.ctx, func(recipient sdk.AccAddress, weight sdk.Int) (stop bool) {
+		if recipient.Equals(addrs[0]) {
+			require.Equal(t, sdk.NewInt(25), weight)
+		} else if recipient.Equals(addrs[1]) {
+			require.Equal(t, sdk.NewInt(20), weight)
+		} else if recipient.Equals(addrs[2]) {
+			require.Equal(t, sdk.NewInt(30), weight)
+		}
+		return false
+	})
+}
 func TestKeeperVote(t *testing.T) {
 	input := createTestInput(t)
 
@@ -98,20 +143,6 @@ func TestKeeperPrevote(t *testing.T) {
 	require.NotNil(t, err)
 }
 
-func TestKeeperDropCounter(t *testing.T) {
-	input := createTestInput(t)
-
-	for i := 1; i < 40; i++ {
-		counter := input.oracleKeeper.incrementDropCounter(input.ctx, assets.MicroSDRDenom)
-		require.Equal(t, sdk.NewInt(int64(i)), counter)
-	}
-
-	input.oracleKeeper.resetDropCounter(input.ctx, assets.MicroSDRDenom)
-	store := input.ctx.KVStore(input.oracleKeeper.key)
-	b := store.Get(keyDropCounter(assets.MicroSDRDenom))
-	require.Nil(t, b)
-}
-
 func TestKeeperParams(t *testing.T) {
 	input := createTestInput(t)
 
@@ -124,10 +155,9 @@ func TestKeeperParams(t *testing.T) {
 	votePeriod := int64(10)
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	dropThreshold := sdk.NewInt(10)
 
 	// Should really test validateParams, but skipping because obvious
-	newParams := NewParams(votePeriod, voteThreshold, oracleRewardBand, dropThreshold)
+	newParams := NewParams(votePeriod, voteThreshold, oracleRewardBand)
 	input.oracleKeeper.SetParams(input.ctx, newParams)
 
 	storedParams := input.oracleKeeper.GetParams(input.ctx)
@@ -145,11 +175,4 @@ func TestKeeperFeederDelegation(t *testing.T) {
 	input.oracleKeeper.SetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]), addrs[1])
 	delegate = input.oracleKeeper.GetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]))
 	require.Equal(t, delegate, addrs[1])
-
-	// Test iterator
-	input.oracleKeeper.SetFeedDelegate(input.ctx, sdk.ValAddress(addrs[1]), addrs[1])
-	delegations := input.oracleKeeper.GetOperatorsForDelegate(input.ctx, addrs[1])
-	require.Equal(t, len(delegations), 2)
-	require.Contains(t, delegations, sdk.ValAddress(addrs[0]))
-	require.Contains(t, delegations, sdk.ValAddress(addrs[1]))
 }
