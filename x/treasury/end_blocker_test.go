@@ -18,7 +18,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	input = reset(input)
 
 	params := input.treasuryKeeper.GetParams(input.ctx)
-	
+
 	// After probationary period, we should also be updating policy variables
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {

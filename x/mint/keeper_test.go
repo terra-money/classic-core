@@ -234,7 +234,7 @@ func TestKeeperMintStress(t *testing.T) {
 		require.Equal(t, sdk.NewInt(balance), issuance)
 
 		// last day of epoch
-		if (day+1) * util.BlocksPerDay % util.BlocksPerEpoch == 0 {
+		if (day+1)*util.BlocksPerDay%util.BlocksPerEpoch == 0 {
 			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
 			require.Equal(t, sdk.NewInt(epochDelta), seigniorage)
 			epochDelta = 0

@@ -93,10 +93,10 @@ func TestUnitIndicator(t *testing.T) {
 
 	// Just get an indicator to multiply the unit value by the expected rval.
 	// the unit indicator function obviously should return the expected rval.
-	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx), 
+	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx),
 		func(_ sdk.Context, _ Keeper, _ sdk.Int) sdk.Dec {
 			return sdk.NewDecFromInt(lunaTotalBondedAmount.MulRaw(20))
-	})
+		})
 
 	require.Equal(t, sdk.NewDec(20), actual)
 }
@@ -170,6 +170,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 
 	// Test all of our reporting functions
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, sdk.OneDec())
+	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.ZeroInt())
 
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
