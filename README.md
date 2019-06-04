@@ -9,7 +9,7 @@
 
 **Key features:**
 
-- A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY.
+- A family of stable-coins pegged to major currencies, e.g. SDR, USD, KRW, JPY, EUR, and CNY.
 - Stability achieved by creating mining incentives that are countercyclical to Terra demand
 - Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna
 - Zero-spread atomic swap amongst Terra currencies.
