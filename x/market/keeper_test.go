@@ -23,7 +23,7 @@ func TestKeeperSwapCoinsBasic(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	retCoin, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, askCoin.Denom, false)
+	retCoin, spread, err := input.marketKeeper.GetSwapCoin(input.ctx, offerCoin, askCoin.Denom, false)
 	require.Nil(t, err)
 	require.Zero(t, spread.TruncateInt64(), "Spread should be 0 for non luna swaps")
 
@@ -51,24 +51,24 @@ func TestKeeperSwapCoinsLunaCap(t *testing.T) {
 
 	// Check cap luna -> sdr swap, at the cap. Should succeed
 	offerCoin := sdk.NewCoin(assets.MicroLunaDenom, maxDelta)
-	_, spread, err := input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom, false)
+	_, spread, err := input.marketKeeper.GetSwapCoin(input.ctx, offerCoin, assets.MicroSDRDenom, false)
 	require.Nil(t, err)
 	require.Equal(t, params.MaxSwapSpread, spread)
 
 	// Check cap luna -> sdr swap, 1 coin higher than the cap. Should fail
 	offerCoin = sdk.NewCoin(assets.MicroLunaDenom, maxDelta.Add(sdk.OneInt()))
-	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroSDRDenom, false)
+	_, _, err = input.marketKeeper.GetSwapCoin(input.ctx, offerCoin, assets.MicroSDRDenom, false)
 	require.NotNil(t, err)
 
 	// Check cap sdr -> luna swap,at the cap. Should succeed
 	offerCoin = sdk.NewCoin(assets.MicroSDRDenom, maxDelta)
-	_, spread, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom, false)
+	_, spread, err = input.marketKeeper.GetSwapCoin(input.ctx, offerCoin, assets.MicroLunaDenom, false)
 	require.Nil(t, err)
 	require.Equal(t, params.MaxSwapSpread, spread)
 
 	// Check cap sdr -> luna swap, 1 coin higher than the cap. Should fail
 	offerCoin = sdk.NewCoin(assets.MicroSDRDenom, maxDelta.Add(sdk.OneInt()))
-	_, _, err = input.marketKeeper.GetSwapCoins(input.ctx, offerCoin, assets.MicroLunaDenom, false)
+	_, _, err = input.marketKeeper.GetSwapCoin(input.ctx, offerCoin, assets.MicroLunaDenom, false)
 	require.NotNil(t, err)
 }
 
@@ -83,7 +83,7 @@ func TestKeeperSwapDecCoins(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, offerCoin.Denom, lnasdrRate)
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, askCoin.Denom, lnacnyRate)
 
-	retCoin, err := input.marketKeeper.GetSwapDecCoins(input.ctx, offerCoin, askCoin.Denom)
+	retCoin, err := input.marketKeeper.GetSwapDecCoin(input.ctx, offerCoin, askCoin.Denom)
 	require.Nil(t, err)
 
 	require.Equal(t, retCoin, askCoin)

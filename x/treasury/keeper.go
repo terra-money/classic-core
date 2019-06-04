@@ -17,23 +17,19 @@ type Keeper struct {
 
 	mtk MintKeeper
 	mk  MarketKeeper
-	dk  DistributionKeeper
-	fck FeeCollectionKeeper
 
 	paramSpace params.Subspace
 }
 
 // NewKeeper constructs a new keeper
 func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet,
-	mtk MintKeeper, mk MarketKeeper, dk DistributionKeeper, fck FeeCollectionKeeper, paramspace params.Subspace) Keeper {
+	mtk MintKeeper, mk MarketKeeper, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
 		valset:     valset,
 		mtk:        mtk,
 		mk:         mk,
-		dk:         dk,
-		fck:        fck,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
 	}
 }
@@ -139,7 +135,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 		// Tax cap does not exist for the asset; compute it by
 		// comparing it with the tax cap for TerraSDR
 		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
-		reqCap, _, err := k.mk.GetSwapCoins(ctx, referenceCap, denom, true)
+		reqCap, _, err := k.mk.GetSwapCoin(ctx, referenceCap, denom, true)
 
 		// The coin is more valuable than TaxPolicy asset. just follow the Policy Cap.
 		if err != nil {

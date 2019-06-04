@@ -54,6 +54,16 @@ func rewardPrevBallotWinners(ctx sdk.Context, k Keeper) {
 				k.fck.AddCollectedFees(ctx, leftFee)
 			}
 
+			// Change Issuerance
+			for _, feeCoin := range accmFeePool {
+
+				// never return err, but handle err for lint
+				err := k.mk.ChangeIssuance(ctx, feeCoin.Denom, feeCoin.Amount)
+				if err != nil {
+					panic(err)
+				}
+			}
+
 			// Clear swap fee pool
 			k.clearSwapFeePool(ctx)
 		}

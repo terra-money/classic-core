@@ -28,7 +28,7 @@ func BenchmarkTreasuryUpdatePerEpoch(b *testing.B) {
 	for i := int64(0); i < int64(b.N)+probationEpoch; i++ {
 
 		input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, uLunaAmt)
+		input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{
 			sdk.NewCoin(assets.MicroSDRDenom, taxAmount),

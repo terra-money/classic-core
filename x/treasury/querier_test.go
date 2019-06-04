@@ -1,11 +1,12 @@
 package treasury
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
-	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -247,7 +248,7 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	querier := NewQuerier(input.treasuryKeeper)
 
 	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
-	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 

@@ -1,9 +1,10 @@
 package treasury
 
 import (
+	"testing"
+
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -44,8 +45,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
 	// Add seigniorage
-	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom,sAmt))
-
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))
 
 	// Get seigniorage rewards
 	seigniorageProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -73,7 +73,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	})
 
 	// Add seigniorage
-	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom,amt))
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, amt))
 
 	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -89,10 +89,10 @@ func TestUnitIndicator(t *testing.T) {
 
 	// Just get an indicator to multiply the unit value by the expected rval.
 	// the unit indicator function obviously should return the expected rval.
-	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx),
+	actual := UnitLunaIndicator(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx), 
 		func(_ sdk.Context, _ Keeper, _ sdk.Int) sdk.Dec {
 			return sdk.NewDecFromInt(lunaTotalBondedAmount.MulRaw(20))
-		})
+	})
 
 	require.Equal(t, sdk.NewDec(20), actual)
 }
@@ -170,8 +170,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
-		coin := sdk.NewCoin(assets.MicroLunaDenom,sdk.NewInt(i).MulRaw(assets.MicroUnit))
-		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, coin)
+		input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit)))
 
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}

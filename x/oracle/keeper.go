@@ -16,6 +16,7 @@ type Keeper struct {
 	cdc *codec.Codec
 	key sdk.StoreKey
 
+	mk  MintKeeper
 	dk  DistributionKeeper
 	fck FeeCollectionKeeper
 
@@ -24,12 +25,13 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, dk DistributionKeeper, fck FeeCollectionKeeper,
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, mk MintKeeper, dk DistributionKeeper, fck FeeCollectionKeeper,
 	valset sdk.ValidatorSet, paramspace params.Subspace) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
 
+		mk:  mk,
 		dk:  dk,
 		fck: fck,
 

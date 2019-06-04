@@ -23,7 +23,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	for i := params.WindowProbation.Int64(); i < params.WindowProbation.Int64()+12; i++ {
 		if i%params.WindowShort.Int64() == 0 {
 			input.ctx = input.ctx.WithBlockHeight(i*util.BlocksPerEpoch - 1)
-			input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
+			input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
 
 			tTags := EndBlocker(input.ctx, input.treasuryKeeper)
 
@@ -72,7 +72,7 @@ func updatePolicy(input testInput, startIndex int,
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, taxRevenue)})
 
 		seigniorageRevenue := seigniorageRevenues[i]
-		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroLunaDenom, seigniorageRevenue))
+		input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageRevenue))
 
 		// Call endblocker
 		EndBlocker(input.ctx, input.treasuryKeeper)
@@ -115,4 +115,3 @@ func TestEndBlockerUpdatePolicy(t *testing.T) {
 	require.Equal(t, taxRate, newTaxRate)
 	require.Equal(t, rewardWeight, newSeigniorageWeight)
 }
-

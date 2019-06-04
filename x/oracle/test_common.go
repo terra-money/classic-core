@@ -185,6 +185,7 @@ func createTestInput(t *testing.T) testInput {
 	oracleKeeper := NewKeeper(
 		cdc,
 		keyOracle,
+		mintKeeper,
 		distrKeeper,
 		feeCollectionKeeper,
 		stakingKeeper.GetValidatorSet(),

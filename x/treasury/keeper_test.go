@@ -1,11 +1,12 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/util"
 	"testing"
 
-	"github.com/stretchr/testif y/require"
+	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
+
+	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -124,19 +124,19 @@ func TestKeeperIssuance(t *testing.T) {
 	require.Equal(t, uSDRAmount.MulRaw(3), issuance)
 
 	// Lowering issuance works
-	err := input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
+	err := input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// ... but not too much
-	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
+	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
 	require.NotNil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// Raising issuance works, too
-	err = input.mintKeeper.changeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
+	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
 	require.Equal(t, sdk.NewInt(4000).MulRaw(assets.MicroUnit), issuance)
@@ -185,9 +185,9 @@ func TestKeeperSeigniorage(t *testing.T) {
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
 	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
 
-	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch - 1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
 	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
-	
+
 	require.Equal(t, sdk.NewInt(100), seigniorage)
 }
 

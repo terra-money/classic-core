@@ -166,14 +166,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		app.bankKeeper,
 		app.feeCollectionKeeper,
 	)
-	app.oracleKeeper = oracle.NewKeeper(
-		app.cdc,
-		app.keyOracle,
-		app.distrKeeper, 
-		app.feeCollectionKeeper,
-		stakingKeeper.GetValidatorSet(),
-		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
-	)
 	app.mintKeeper = mint.NewKeeper(
 		app.cdc,
 		app.keyMint,
@@ -181,7 +173,18 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		app.bankKeeper,
 		app.accountKeeper,
 	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.cdc,
+		app.keyOracle,
+		app.mintKeeper,
+		app.distrKeeper,
+		app.feeCollectionKeeper,
+		stakingKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
 	app.marketKeeper = market.NewKeeper(
+		app.cdc,
+		app.keyMarket,
 		app.oracleKeeper,
 		app.mintKeeper,
 		app.paramsKeeper.Subspace(market.DefaultParamspace),
@@ -192,14 +195,14 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		stakingKeeper.GetValidatorSet(),
 		app.mintKeeper,
 		app.marketKeeper,
-		app.distrKeeper,
-		app.feeCollectionKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.budgetKeeper = budget.NewKeeper(
 		app.cdc,
 		app.keyBudget,
+		app.marketKeeper,
 		app.mintKeeper,
+		app.treasuryKeeper,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
@@ -322,7 +325,7 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
-	
+
 	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
 
