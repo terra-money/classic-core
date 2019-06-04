@@ -1,10 +1,9 @@
 package mint
 
 import (
+	"math/rand"
 	"testing"
 	"time"
-	"fmt"
-	"math/rand"
 
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
@@ -198,10 +197,10 @@ func TestKeeperMintStress(t *testing.T) {
 	balance := int64(20000)
 	epochDelta := int64(0)
 
-	// Genesis mint 
+	// Genesis mint
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(balance)))
 
-	for day := int64(0); day < 100; day ++ {
+	for day := int64(0); day < 100; day++ {
 		input.ctx = input.ctx.WithBlockHeight(day * util.BlocksPerDay)
 		amt := rand.Int63() % 100 // Cap at 100; prevents possibility of balance falling negative
 		option := rand.Int63() % 3
@@ -209,9 +208,6 @@ func TestKeeperMintStress(t *testing.T) {
 		switch option {
 		case 0: // mint
 			err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
-			if err != nil {
-				fmt.Println(err)
-			}
 			require.Nil(t, err)
 
 			balance += amt
@@ -219,9 +215,6 @@ func TestKeeperMintStress(t *testing.T) {
 			break
 		case 1: // burn
 			err := input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(amt)))
-			if err != nil {
-				fmt.Println(err)
-			}
 			require.Nil(t, err)
 
 			balance -= amt
@@ -237,14 +230,14 @@ func TestKeeperMintStress(t *testing.T) {
 			epochDelta = 0
 		}
 
-		issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, sdk.NewInt(day))	
+		issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, sdk.NewInt(day))
 		require.Equal(t, sdk.NewInt(balance), issuance)
 
 		// last day of epoch
-		if (day + 1) * util.BlocksPerDay % util.BlocksPerEpoch == 0 {
+		if (day+1) * util.BlocksPerDay % util.BlocksPerEpoch == 0 {
 			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
 			require.Equal(t, sdk.NewInt(epochDelta), seigniorage)
 			epochDelta = 0
-		}	
+		}
 	}
 }

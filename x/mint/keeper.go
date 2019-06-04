@@ -79,7 +79,7 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 	// If genesis issuance is not on disk, GetIssuance will do a fresh read of account balances
 	// and the change in issuance should be reported automatically.
 	if !store.Has(keyIssuance(denom, sdk.ZeroInt())) {
-		return 
+		return
 	}
 
 	curIssuance := k.GetIssuance(ctx, denom, curDay)
