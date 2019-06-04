@@ -44,7 +44,8 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroSDRDenom, lnasdrRate)
 
 	// Add seigniorage
-	input.mintKeeper.AddSeigniorage(input.ctx, sAmt)
+	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sAmt)
+
 
 	// Get seigniorage rewards
 	seigniorageProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -72,7 +73,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	})
 
 	// Add seigniorage
-	input.mintKeeper.AddSeigniorage(input.ctx, amt)
+	input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, amt)
 
 	tProceeds := TaxRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 	sProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -169,7 +170,8 @@ func TestRollingAverageIndicator(t *testing.T) {
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
-		input.mintKeeper.AddSeigniorage(input.ctx, sdk.NewInt(i).MulRaw(assets.MicroUnit))
+		input.mintKeeper.Mint(input.ctx, sdk.AccAddress{}, sdk.NewInt(i).MulRaw(assets.MicroUnit))
+
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
 

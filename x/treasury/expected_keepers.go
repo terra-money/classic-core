@@ -4,7 +4,7 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 
 // expected mint keeper
 type MintKeeper interface {
-	PeekSeignioragePool(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int)
+	PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (seignioragePool sdk.Int)
 	Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error)
 	GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuance sdk.Int)
 }
