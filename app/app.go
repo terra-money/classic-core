@@ -15,6 +15,10 @@ import (
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
+	tdistr "github.com/terra-project/core/x/distribution"
+	tslashing "github.com/terra-project/core/x/slashing"
+	tstaking "github.com/terra-project/core/x/staking"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +29,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -182,6 +190,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		stakingKeeper.GetValidatorSet(),
 		app.mintKeeper,
 		app.marketKeeper,
+		app.distrKeeper,
+		app.feeCollectionKeeper,
 		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 	app.budgetKeeper = budget.NewKeeper(
@@ -262,10 +272,12 @@ func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 // MakeCodec builds a custom tx codec
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
-	bank.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
-	distr.RegisterCodec(cdc)
-	slashing.RegisterCodec(cdc)
+
+	// left codec for backward compatibility
+	pay.RegisterCodec(cdc)
+	tstaking.RegisterCodec(cdc)
+	tdistr.RegisterCodec(cdc)
+	tslashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	types.RegisterCodec(cdc)
 	oracle.RegisterCodec(cdc)
@@ -275,6 +287,12 @@ func MakeCodec() *codec.Codec {
 	crisis.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
+
+	stakingtypes.SetMsgCodec(cdc)
+	distrtypes.SetMsgCodec(cdc)
+	bank.SetMsgCodec(cdc)
+	slashing.SetMsgCodec(cdc)
+
 	return cdc
 }
 

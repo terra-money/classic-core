@@ -54,7 +54,7 @@ func queryProgram(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, program)
 	if err != nil {
-		panic("could not marshal result to JSON")
+		return nil, sdk.ErrInternal("could not marshal result to JSON")
 	}
 
 	return bz, nil
@@ -120,7 +120,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 
 	programs := Programs{}
-	keeper.IteratePrograms(ctx, true, func(programID uint64, program Program) (stop bool) {
+	keeper.IteratePrograms(ctx, true, func(program Program) (stop bool) {
 		programs = append(programs, program)
 		return false
 	})

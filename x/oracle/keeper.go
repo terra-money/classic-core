@@ -1,8 +1,9 @@
 package oracle
 
 import (
-	"github.com/terra-project/core/types/assets"
 	"strings"
+
+	"github.com/terra-project/core/types/assets"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +27,37 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, valset sdk.ValidatorSet, para
 
 		valset:     valset,
 		paramSpace: paramspace.WithKeyTable(paramKeyTable()),
+	}
+}
+
+//-----------------------------------
+// Prevote logic
+
+// Iterate over prevotes in the store
+func (k Keeper) iteratePrevotes(ctx sdk.Context, handler func(prevote PricePrevote) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixPrevote)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var prevote PricePrevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
+		if handler(prevote) {
+			break
+		}
+	}
+}
+
+// Iterate over votes in the store
+func (k Keeper) iteratePrevotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote PricePrevote) (stop bool)) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var prevote PricePrevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
+		if handler(prevote) {
+			break
+		}
 	}
 }
 
@@ -70,6 +102,31 @@ func (k Keeper) iterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler f
 			break
 		}
 	}
+}
+
+// Retrieves a prevote from the store
+func (k Keeper) getPrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) (prevote PricePrevote, err sdk.Error) {
+	store := ctx.KVStore(k.key)
+	b := store.Get(keyPrevote(denom, voter))
+	if b == nil {
+		err = ErrNoPrevote(DefaultCodespace, voter, denom)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevote)
+	return
+}
+
+// Add a prevote to the store
+func (k Keeper) addPrevote(ctx sdk.Context, prevote PricePrevote) {
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(prevote)
+	store.Set(keyPrevote(prevote.Denom, prevote.Voter), bz)
+}
+
+// Delete a prevote from the store
+func (k Keeper) deletePrevote(ctx sdk.Context, prevote PricePrevote) {
+	store := ctx.KVStore(k.key)
+	store.Delete(keyPrevote(prevote.Denom, prevote.Voter))
 }
 
 // Retrieves a vote from the store

@@ -72,7 +72,7 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	// Convert seigniorage to TerraSDR for rewards
 	seigPool := k.mtk.PeekSeignioragePool(ctx, curEpoch)
-	rewardPool, err := k.mk.SwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
+	rewardPool, err := k.mk.GetSwapDecCoins(ctx, sdk.NewDecCoin(assets.MicroLunaDenom, seigPool), assets.MicroSDRDenom)
 	if err != nil {
 		return // No or too little seigniorage
 	}
@@ -96,15 +96,29 @@ func (k Keeper) settleClaims(ctx sdk.Context) (settleTags sdk.Tags) {
 
 	// Settle and delete all claims from the store
 	k.IterateClaims(ctx, func(claim types.Claim) (stop bool) {
-		var rewardAmt sdk.Int
+
+		var err error
 		if claim.Class == types.OracleClaimClass {
-			rewardAmt = rewardPool.Amount.Mul(oracleScale).MulInt(claim.Weight).TruncateInt()
+			rewardAmt := rewardPool.Amount.Mul(oracleScale).MulInt(claim.Weight).TruncateInt()
+			rewardeeVallidator := k.valset.Validator(ctx, sdk.ValAddress(claim.Recipient))
+			rewardCoins := sdk.NewCoins(sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
+
+			// In case absence of the validator, we collect the rewards to fee collect keeper
+			if rewardeeVallidator != nil {
+				k.dk.AllocateTokensToValidator(ctx, rewardeeVallidator, sdk.NewDecCoins(rewardCoins))
+			} else {
+				k.fck.AddCollectedFees(ctx, rewardCoins)
+			}
+
+			// Minted amount is goes to validator outstanding pool or fee pool, so no repcipient is specified
+			err = k.mtk.Mint(ctx, sdk.AccAddress{}, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
 		} else {
-			rewardAmt = rewardPool.Amount.Mul(budgetScale).MulInt(claim.Weight).TruncateInt()
+			rewardAmt := rewardPool.Amount.Mul(budgetScale).MulInt(claim.Weight).TruncateInt()
+
+			// Credit the recipient's account with the reward
+			err = k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
 		}
 
-		// Credit the recipient's account with the reward
-		err := k.mtk.Mint(ctx, claim.Recipient, sdk.NewCoin(assets.MicroSDRDenom, rewardAmt))
 		if err != nil {
 			return false
 		}

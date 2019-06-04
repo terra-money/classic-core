@@ -1,13 +1,14 @@
 package treasury
 
 import (
+	"math/rand"
+	"testing"
+	"time"
+
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/treasury/tags"
-	"math/rand"
-	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -185,6 +186,7 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 		// clear SDR balances for testing; keep luna for policy update safety
 		for _, addr := range addrs {
 			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt)})
+			input.distrKeeper.Hooks().AfterValidatorCreated(input.ctx, sdk.ValAddress(addr))
 			require.Nil(t, err)
 		}
 
@@ -199,8 +201,10 @@ func TestEndBlockerSettleClaims(t *testing.T) {
 		EndBlocker(input.ctx, input.treasuryKeeper)
 
 		for j, addr := range addrs {
+
 			balance := input.bankKeeper.GetCoins(input.ctx, addr).AmountOf(assets.MicroSDRDenom)
-			require.Equal(t, balance, sdk.NewInt(tc.sdrRewards[j]), "test: %v", i)
+			outstandingBalance := input.distrKeeper.GetValidatorOutstandingRewards(input.ctx, sdk.ValAddress(addr)).AmountOf(assets.MicroSDRDenom)
+			require.Equal(t, balance.Add(outstandingBalance.TruncateInt()), sdk.NewInt(tc.sdrRewards[j]), "test: %v", i)
 		}
 
 		counter := 0

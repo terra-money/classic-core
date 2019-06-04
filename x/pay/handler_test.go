@@ -23,6 +23,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -66,6 +67,8 @@ func createTestInput(t *testing.T) testInput {
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
+	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -81,6 +84,8 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -126,17 +131,24 @@ func createTestInput(t *testing.T) testInput {
 	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper,
 		paramsKeeper.Subspace(market.DefaultParamspace))
 
+	feeKeeper := auth.NewFeeCollectionKeeper(
+		cdc, keyFee,
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		bankKeeper, stakingKeeper, feeKeeper, distr.DefaultCodespace,
+	)
+
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
 		&stakingKeeper,
 		mintKeeper,
 		marketKeeper,
+		distrKeeper,
+		feeKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
-	)
-
-	feeKeeper := auth.NewFeeCollectionKeeper(
-		cdc, keyFee,
 	)
 
 	for _, addr := range addrs {

@@ -29,7 +29,7 @@ func NewParams(votePeriod int64, voteThreshold, oracleRewardBand sdk.Dec, dropTh
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
 	return NewParams(
-		util.BlocksPerMinute*15,   // 15 minutes
+		util.BlocksPerMinute/2,    // 30 seconds
 		sdk.NewDecWithPrec(67, 2), // 67%
 		sdk.NewDecWithPrec(1, 2),  // 1%
 		sdk.NewInt(10),

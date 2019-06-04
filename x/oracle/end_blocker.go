@@ -120,10 +120,19 @@ func EndBlocker(ctx sdk.Context, k Keeper) (rewardees types.ClaimPool, resTags s
 			dropTags := dropBallot(ctx, k, denom, params)
 			resTags = resTags.AppendTags(dropTags)
 		}
-
-		// Clear all votes
-		k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })
 	}
+
+	// Clear all prevotes
+	k.iteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
+		if (ctx.BlockHeight() - prevote.SubmitBlock) > params.VotePeriod {
+			k.deletePrevote(ctx, prevote)
+		}
+
+		return false
+	})
+
+	// Clear all votes
+	k.iterateVotes(ctx, func(vote PriceVote) (stop bool) { k.deleteVote(ctx, vote); return false })
 
 	// Sort rewardees before we return
 	rewardees.Sort()

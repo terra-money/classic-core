@@ -24,11 +24,11 @@ func NewKeeper(ok oracle.Keeper, mk mint.Keeper, paramspace params.Subspace) Kee
 	}
 }
 
-// SwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
+// GetSwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
-func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
+func (k Keeper) GetSwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
@@ -47,10 +47,10 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 	return sdk.NewCoin(askDenom, retAmount), nil
 }
 
-// SwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
+// GetSwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
-// Similar to SwapCoins, but operates over sdk.DecCoins for convinience and accuracy.
-func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
+// Similar to GetSwapCoins, but operates over sdk.DecCoins for convinience and accuracy.
+func (k Keeper) GetSwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)

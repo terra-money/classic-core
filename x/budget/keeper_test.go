@@ -77,7 +77,7 @@ func TestKeeperProgram(t *testing.T) {
 		action := rand.Int() % 2
 		if action == 0 {
 			programBitmap[programID] = true
-			input.budgetKeeper.SetProgram(input.ctx, programID, testProgram)
+			input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 		} else {
 			programBitmap[programID] = false
 			input.budgetKeeper.DeleteProgram(input.ctx, programID)
@@ -97,8 +97,8 @@ func TestKeeperProgram(t *testing.T) {
 	}
 
 	actualLivePrgmCount := 0
-	input.budgetKeeper.IteratePrograms(input.ctx, false, func(programID uint64, program Program) (stop bool) {
-		require.True(t, programBitmap[programID])
+	input.budgetKeeper.IteratePrograms(input.ctx, false, func(program Program) (stop bool) {
+		require.True(t, programBitmap[program.ProgramID])
 		actualLivePrgmCount++
 		return false
 	})

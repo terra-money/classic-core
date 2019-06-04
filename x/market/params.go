@@ -29,11 +29,12 @@ func validateParams(params Params) error {
 	if params.DailySwapLimit.IsNegative() {
 		return fmt.Errorf("market daily swap limit should be non-negative, is %s", params.DailySwapLimit.String())
 	}
+
 	return nil
 }
 
 func (params Params) String() string {
 	return fmt.Sprintf(`market Params:
 	DailySwapLimit: %v
-  `, params.DailySwapLimit)
+	`, params.DailySwapLimit)
 }

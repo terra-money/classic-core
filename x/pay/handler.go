@@ -33,24 +33,31 @@ func NewHandler(k bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper) 
 	}
 }
 
-// Handle MsgSend.
+// Handle MsgPay.
 func handleMsgSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper, msg bank.MsgSend) sdk.Result {
 	if !k.GetSendEnabled(ctx) {
 		return bank.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
+	taxes, err := payTax(ctx, k, tk, fk, msg.FromAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
 
-	tags, err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
+	log := NewLog()
+	log = log.append(LogKeyTax, taxes.String())
+
+	resultTags := sdk.NewTags()
+	sendTags, err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}
+
+	resultTags = resultTags.AppendTags(sendTags)
 
 	return sdk.Result{
-		Tags: tags,
+		Tags: resultTags,
+		Log:  log.String(),
 	}
 }
 
@@ -61,34 +68,40 @@ func handleMsgMultiSend(ctx sdk.Context, k bank.Keeper, tk treasury.Keeper, fk a
 		return bank.ErrSendDisabled(k.Codespace()).Result()
 	}
 
-	tags := sdk.NewTags()
+	totalTaxes := sdk.Coins{}
 	for _, input := range msg.Inputs {
-		taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
+		taxes, taxErr := payTax(ctx, k, tk, fk, input.Address, input.Coins)
 		if taxErr != nil {
 			return taxErr.Result()
 		}
+
+		totalTaxes = totalTaxes.Add(taxes).Sort()
 	}
 
+	log := NewLog()
+	log = log.append(LogKeyTax, totalTaxes.String())
+
+	resultTags := sdk.NewTags()
 	sendTags, sendErr := k.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
 	if sendErr != nil {
 		return sendErr.Result()
 	}
 
-	tags = tags.AppendTags(sendTags)
+	resultTags = resultTags.AppendTags(sendTags)
 	return sdk.Result{
-		Tags: tags,
+		Tags: resultTags,
+		Log:  log.String(),
 	}
 }
 
 // payTax charges the stability tax on MsgSend and MsgMultiSend.
 func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeCollectionKeeper,
-	taxPayer sdk.AccAddress, principal sdk.Coins) (err sdk.Error) {
+	taxPayer sdk.AccAddress, principal sdk.Coins) (taxes sdk.Coins, err sdk.Error) {
 
-	taxes := sdk.Coins{}
 	taxRate := tk.GetTaxRate(ctx, util.GetEpoch(ctx))
 
 	if taxRate.Equal(sdk.ZeroDec()) {
-		return nil
+		return nil, nil
 	}
 
 	for _, coin := range principal {
@@ -104,12 +117,12 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 			continue
 		}
 
-		taxes = append(taxes, sdk.NewCoin(coin.Denom, taxDue))
+		taxes = taxes.Add(sdk.NewCoins(sdk.NewCoin(coin.Denom, taxDue))).Sort()
 	}
 
 	_, _, err = bk.SubtractCoins(ctx, taxPayer, taxes)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fk.AddCollectedFees(ctx, taxes)

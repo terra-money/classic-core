@@ -19,7 +19,7 @@ func TestEndBlockerTallyBasic(t *testing.T) {
 	// create test program
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
 
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	// Add validators and their votes; to keep things simple, let's assume each validator holds 1 token
 	valset := mock.NewMockValSet()
@@ -46,7 +46,7 @@ func TestEndBlockerTallyRandom(t *testing.T) {
 
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
 
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numValidators := rand.Int() % 100 // cap validator count by a 100
@@ -87,7 +87,7 @@ func TestEndBlockerTiming(t *testing.T) {
 	// create test program
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
 
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	// Add a vote each from validators
 	for _, addr := range addrs {
@@ -119,7 +119,7 @@ func TestEndBlockerLegacy(t *testing.T) {
 	// Create test program
 	testProgram := generateTestProgram(ctx, input.budgetKeeper)
 
-	input.budgetKeeper.SetProgram(ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(ctx, testProgram)
 
 	// Add a vote each from validators
 	for _, addr := range addrs {
@@ -164,7 +164,7 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 
 	// create test program
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgram.ProgramID)
 
 	// vote slightly such that the sum falls short of the threshold; tally should fail and program not activated.
@@ -182,7 +182,7 @@ func TestEndBlockerPassOrReject(t *testing.T) {
 
 	// vote above the threshold; the tally should now pass
 	testProgram2 := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram2.ProgramID, testProgram2)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram2)
 	input.budgetKeeper.CandQueueInsert(input.ctx, testProgram2.getVotingEndBlock(input.ctx, input.budgetKeeper), testProgram2.ProgramID)
 
 	for i := 0; i < int(minNumTokensToPass.Int64())+1; i++ {
