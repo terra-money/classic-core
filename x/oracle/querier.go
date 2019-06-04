@@ -9,10 +9,12 @@ import (
 
 // query endpoints supported by the oracle Querier
 const (
-	QueryPrice  = "price"
-	QueryVotes  = "votes"
-	QueryActive = "active"
-	QueryParams = "params"
+	QueryPrice            = "price"
+	QueryVotes            = "votes"
+	QueryPrevotes         = "prevotes"
+	QueryActive           = "active"
+	QueryParams           = "params"
+	QueryFeederDelegation = "feeder"
 )
 
 // NewQuerier is the module level router for state queries
@@ -25,8 +27,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryActive(ctx, req, keeper)
 		case QueryVotes:
 			return queryVotes(ctx, req, keeper)
+		case QueryPrevotes:
+			return queryPrevotes(ctx, req, keeper)
 		case QueryParams:
 			return queryParams(ctx, req, keeper)
+		case QueryFeederDelegation:
+			return queryFeederDelegation(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -62,13 +68,24 @@ func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 // QueryVoteParams for query 'custom/oracle/votes'
 type QueryVoteParams struct {
-	Voter sdk.AccAddress
+	Voter sdk.ValAddress
 	Denom string
 }
 
 // NewQueryVoteParams creates a new instance of QueryVoteParams
-func NewQueryVoteParams(voter sdk.AccAddress, denom string) QueryVoteParams {
+func NewQueryVoteParams(voter sdk.ValAddress, denom string) QueryVoteParams {
 	return QueryVoteParams{
+		Voter: voter,
+		Denom: denom,
+	}
+}
+
+// QueryPrevoteParams for query 'custom/oracle/prevotes'
+type QueryPrevoteParams QueryVoteParams
+
+// NewQueryPrevoteParams creates a new instance of QueryVoteParams
+func NewQueryPrevoteParams(voter sdk.ValAddress, denom string) QueryPrevoteParams {
+	return QueryPrevoteParams{
 		Voter: voter,
 		Denom: denom,
 	}
@@ -81,7 +98,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredVotes := PriceBallot{}
+	filteredVotes := PriceVotes{}
 
 	// collects all votes without filter
 	prefix := prefixVote
@@ -94,7 +111,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	if len(params.Denom) != 0 && !params.Voter.Empty() {
 		prefix = keyVote(params.Denom, params.Voter)
 	} else if len(params.Denom) != 0 {
-		prefix = keyVote(params.Denom, sdk.AccAddress{})
+		prefix = keyVote(params.Denom, sdk.ValAddress{})
 	} else if !params.Voter.Empty() {
 		handler = func(vote PriceVote) (stop bool) {
 
@@ -115,8 +132,75 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	return bz, nil
 }
 
+func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params QueryVoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	filteredPrevotes := []PricePrevote{}
+
+	// collects all votes without filter
+	prefix := prefixPrevote
+	handler := func(prevote PricePrevote) (stop bool) {
+		filteredPrevotes = append(filteredPrevotes, prevote)
+		return false
+	}
+
+	// applies filter
+	if len(params.Denom) != 0 && !params.Voter.Empty() {
+		prefix = keyPrevote(params.Denom, params.Voter)
+	} else if len(params.Denom) != 0 {
+		prefix = keyPrevote(params.Denom, sdk.ValAddress{})
+	} else if !params.Voter.Empty() {
+		handler = func(prevote PricePrevote) (stop bool) {
+
+			if prevote.Voter.Equals(params.Voter) {
+				filteredPrevotes = append(filteredPrevotes, prevote)
+			}
+
+			return false
+		}
+	}
+
+	keeper.iteratePrevotesWithPrefix(ctx, prefix, handler)
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredPrevotes)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
 func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetParams(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+// QueryFeederDelegationParams for query 'custom/oracle/feeder-delegation'
+type QueryFeederDelegationParams struct {
+	Validator sdk.ValAddress
+}
+
+// NewQueryFeederDelegationParams creates a new instance of QueryFeederDelegationParams
+func NewQueryFeederDelegationParams(validator sdk.ValAddress) QueryFeederDelegationParams {
+	return QueryFeederDelegationParams{
+		Validator: validator,
+	}
+}
+
+func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params QueryFeederDelegationParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetFeedDelegate(ctx, params.Validator))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

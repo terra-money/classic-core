@@ -9,7 +9,7 @@
 
 **Key features:**
 
-- A family of stable-coins pegged to major currencies, at genesis SDR, USD, KRW, JPY, EUR, and CNY.
+- A family of stable-coins pegged to major currencies, e.g. SDR, USD, KRW, JPY, EUR, and CNY.
 - Stability achieved by creating mining incentives that are countercyclical to Terra demand
 - Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna
 - Zero-spread atomic swap amongst Terra currencies.
@@ -26,9 +26,21 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Network
 
-Public testnet Soju-0007 is online. Currently the Columbus public mainnet is being prepared for launch.
+- Mainnet Columbus-1 is online. [The launch repo](https://github.com/terra-project/launch) contains snapshot of the launch as well as network launch updates. 
 
-[Testnets](https://github.com/terra-project/networks) contains latest updates to the testnet.
+- Public testnet Soju-0007 is online. [Our networks repo](https://github.com/terra-project/networks) contains latest configuration files for the testnet. [The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnet. 
+
+
+### Ecosystem
+
+- Block Explorers
+    - [Terra Finder](https://finder.terra.money)
+    - [Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
+    - [Stake ID by StakingFund](https://terra.stake.id)
+    - [Big Dipper by Forbole](https://terra.bigdipper.live/)
+
+- Wallet 
+    - [Terra Station](https://terra.money): Available for download on the Terra website
 
 
 ### Terra Alliance
@@ -40,12 +52,13 @@ The current state of the Terra Alliance (businesses gearing to adopt Terra upon 
 
 Community channels actively being managed are here:
 - [Website](https://terra.money/)
+- [Discord](https://discord.gg/vutpqa)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
 
-We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money).
+We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:core@terra.money).
 
 ## Documentation
 
-See the [docs](./docs/guide/README.md) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf).
+See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf). Read the [Changelog](./CHANGELOG.md) for major release updates.

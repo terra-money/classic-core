@@ -3,7 +3,7 @@ version: 2.1
 defaults: &linux_defaults
   working_directory: /go/src/core
   docker:
-    - image: circleci/golang:1.11.5
+    - image: circleci/golang:1.12.3
   environment:
     GOBIN: /tmp/workspace/bin
 

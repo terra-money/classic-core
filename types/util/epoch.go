@@ -6,7 +6,7 @@ import (
 
 // nolint
 const (
-	BlocksPerMinute = int64(12)
+	BlocksPerMinute = int64(10)
 	BlocksPerHour   = BlocksPerMinute * 60
 	BlocksPerDay    = BlocksPerHour * 24
 	BlocksPerWeek   = BlocksPerDay * 7

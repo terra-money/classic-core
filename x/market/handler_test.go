@@ -6,7 +6,6 @@ import (
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -98,7 +97,7 @@ func TestHandlerExceedDailySwapLimit(t *testing.T) {
 	input := createTestInput(t)
 	handler := NewHandler(input.marketKeeper)
 
-	offerCoin := sdk.NewInt64Coin(assets.MicroSDRDenom, 100)
+	offerCoin := sdk.NewInt64Coin(assets.MicroSDRDenom, 1000)
 
 	// Set oracle price
 	offerLunaPrice := sdk.NewDec(1)
@@ -111,14 +110,13 @@ func TestHandlerExceedDailySwapLimit(t *testing.T) {
 
 	// Day 1+ ... Set luna issuance, try to oscillate within the limit, and things should be ok
 	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerWeek)
-	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 1000000))
-	assert.Nil(t, err)
+	offerCoin = sdk.NewCoin(offerCoin.Denom, sdk.NewInt(4))
 	msg = NewMsgSwap(addrs[0], offerCoin, assets.MicroLunaDenom)
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK())
 
 	// Day 1+ ... Outside of the limit fails
-	msg = NewMsgSwap(addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 10005), assets.MicroLunaDenom)
+	msg = NewMsgSwap(addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 6), assets.MicroLunaDenom)
 	res = handler(input.ctx, msg)
 	require.False(t, res.IsOK())
 

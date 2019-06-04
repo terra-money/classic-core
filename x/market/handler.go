@@ -3,9 +3,6 @@ package market
 import (
 	"reflect"
 
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/types/util"
-
 	"github.com/terra-project/core/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,29 +21,6 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// Returns true if the amount of total coins swapped INTO Luna during a 24 hr window
-// (block approximation) exceeds 1% of coinissuance.
-func exceedsDailySwapLimit(ctx sdk.Context, k Keeper, swapCoin sdk.Coin) bool {
-	curDay := ctx.BlockHeight() / util.BlocksPerDay
-
-	// Start limits on day 2
-	if curDay != 0 {
-		curIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay))
-		prevIssuance := k.mk.GetIssuance(ctx, swapCoin.Denom, sdk.NewInt(curDay-1))
-
-		if curIssuance.GT(prevIssuance) {
-			dailyDelta := curIssuance.Sub(prevIssuance).Add(swapCoin.Amount)
-
-			// If daily inflation is greater than 1%
-			if dailyDelta.MulRaw(100).GT(curIssuance) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 // handleMsgSwap handles the logic of a MsgSwap
 func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
@@ -56,15 +30,21 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
+	swapCoin, spread, swapErr := k.GetSwapCoin(ctx, msg.OfferCoin, msg.AskDenom, false)
 	if swapErr != nil {
 		return swapErr.Result()
 	}
 
-	// We've passed the daily swap limit for Luna. Fail.
-	// TODO: add safety checks for Terra as well.
-	if msg.OfferCoin.Denom == assets.MicroLunaDenom && exceedsDailySwapLimit(ctx, k, swapCoin) {
-		return ErrExceedsDailySwapLimit(DefaultCodespace, swapCoin.Denom).Result()
+	// Charge a spread if applicable; distributed to vote winners in the oracle module
+	swapFee := sdk.Coin{}
+	if spread.IsPositive() {
+		swapFeeAmt := spread.MulInt(swapCoin.Amount).TruncateInt()
+		if swapFeeAmt.IsPositive() {
+			swapFee = sdk.NewCoin(swapCoin.Denom, swapFeeAmt)
+			k.ok.AddSwapFeePool(ctx, sdk.NewCoins(swapFee))
+
+			swapCoin = swapCoin.Sub(swapFee)
+		}
 	}
 
 	// Burn offered coins and subtract from the trader's account
@@ -73,22 +53,21 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		return burnErr.Result()
 	}
 
-	// Record seigniorage if the offered coin is Luna
-	if msg.OfferCoin.Denom == assets.MicroLunaDenom {
-		k.mk.AddSeigniorage(ctx, msg.OfferCoin.Amount)
-	}
-
 	// Mint asked coins and credit Trader's account
 	mintErr := k.mk.Mint(ctx, msg.Trader, swapCoin)
 	if mintErr != nil {
 		return mintErr.Result()
 	}
 
+	log := NewLog()
+	log = log.append(LogKeySwapCoin, swapCoin.String())
+	log = log.append(LogKeySwapFee, swapFee.String())
+
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Offer, msg.OfferCoin.String(),
-			tags.Ask, swapCoin.String(),
+			tags.Offer, msg.OfferCoin.Denom,
 			tags.Trader, msg.Trader.String(),
 		),
+		Log: log.String(),
 	}
 }

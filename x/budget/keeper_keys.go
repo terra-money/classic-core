@@ -15,6 +15,7 @@ var (
 	prefixProgram   = []byte("program")
 	prefixVote      = []byte("vote")
 	prefixCandQueue = []byte("candidate-queue")
+	prefixClaim     = []byte("claim")
 
 	paramStoreKeyParams = []byte("params")
 )
@@ -33,6 +34,10 @@ func prefixCandQueueEndBlock(endBlock int64) []byte {
 
 func keyCandidate(endBlock int64, programID uint64) []byte {
 	return []byte(fmt.Sprintf("%s:%020d:%d", prefixCandQueue, endBlock, programID))
+}
+
+func keyClaim(recipient sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("%s:%s", prefixClaim, recipient))
 }
 
 func paramKeyTable() params.KeyTable {

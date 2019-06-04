@@ -116,7 +116,7 @@ func TestQueryProgram(t *testing.T) {
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	queriedProgram := getQueriedProgram(t, input.ctx, input.cdc, querier, testProgram.ProgramID)
 
@@ -128,7 +128,7 @@ func TestQueryVotes(t *testing.T) {
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	var votes Votes
 	for _, addr := range addrs {
@@ -160,7 +160,7 @@ func TestQueryActiveList(t *testing.T) {
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 
 	queriedActiveList := getQueriedActiveList(t, input.ctx, input.cdc, querier)
 
@@ -172,7 +172,7 @@ func TestQueryCandidateList(t *testing.T) {
 	querier := NewQuerier(input.budgetKeeper)
 
 	testProgram := generateTestProgram(input.ctx, input.budgetKeeper)
-	input.budgetKeeper.SetProgram(input.ctx, testProgram.ProgramID, testProgram)
+	input.budgetKeeper.StoreProgram(input.ctx, testProgram)
 	input.budgetKeeper.CandQueueInsert(input.ctx, 0, testProgram.ProgramID)
 
 	queriedCandidateList := getQueriedCandidateList(t, input.ctx, input.cdc, querier)
