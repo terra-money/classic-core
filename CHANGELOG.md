@@ -86,3 +86,24 @@ Add **swap_coin** log to swap transaction for recording the amount of swapped co
   ]
 }
 ```
+
+#### [\#150](https://github.com/terra-project/core/pull/150) Market Swap protections
+
+##### Add bidirectional Luna supply change cap on market swaps. 
+A daily trading cap (luna supply change cap) protects excessive luna volatility. Capping Luna deflation prevents divesting attacks (attacker swaps large amount into terra to avoid slippage) and consensus attacks by limiting access to staking tokens. Early parameters are 2% - 10% on both sides of the trade. 
+
+##### Add bidirectional Luna spread fees on market swaps 
+To protect against short term price deviations between the open market and the on-chain oracle, we now charge a 2-10% spread on swaps that involve luna. 
+
+##### Change oracle reward scheme from monthly seigniorage to validators to minute distribution
+Swap spreads are distributed to oracle ballot winners on the oracle VotePeriod; this vastly shortens distribution periods. Also, all stakeholders receive oracle rewards (includes delegators).
+
+##### Swaps halt immediately after an illiquid oracle vote
+Previously we facilitated swaps for 10 VotePeriods after the last valid oracle ballot. We now stop swaps immediately to prevent arbitrage attacks from price drift.
+
+
+### Parameter Changes 
+
+#### [\#150](https://github.com/terra-project/core/pull/150) Change MiningRewardWeight.Max from 20% to 90%. This is to reduce volatility in fees at network infancy. 
+
+#### Changed BlocksPerMinute from 12 to 5 to more accurately reflect Columbus block times.
