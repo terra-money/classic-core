@@ -3,8 +3,6 @@ package market
 import (
 	"reflect"
 
-	"github.com/terra-project/core/types/assets"
-
 	"github.com/terra-project/core/x/market/tags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,15 +24,30 @@ func NewHandler(k Keeper) sdk.Handler {
 // handleMsgSwap handles the logic of a MsgSwap
 func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 
+	params := k.GetParams(ctx)
+
 	// Can't swap to the same coin
 	if msg.OfferCoin.Denom == msg.AskDenom {
 		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom).Result()
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, swapErr := k.SwapCoins(ctx, msg.OfferCoin, msg.AskDenom)
+	swapCoin, spread, swapErr := k.GetSwapCoins(ctx, msg.OfferCoin, msg.AskDenom, false)
 	if swapErr != nil {
 		return swapErr.Result()
+	}
+
+	// Charge a spread if applicable; distributed to vote winners in the oracle module
+	swapFee := sdk.Coin{}
+	if spread.IsPositive() {
+		swapFeeAmt := spread.MulInt(swapCoin.Amount).TruncateInt()
+		if swapFeeAmt.IsPositive() {
+			swapFee = sdk.NewCoin(swapCoin.Denom, swapFeeAmt)
+			k.ok.addSwapFeePool(ctx, sdk.NewCoins(swapFee))
+
+			retAmt := swapCoin.Amount.Sub(swapFeeAmt)
+			swapCoin = sdk.NewCoin(swapCoin.Denom, retAmt)
+		}
 	}
 
 	// Burn offered coins and subtract from the trader's account
@@ -43,22 +56,22 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, msg MsgSwap) sdk.Result {
 		return burnErr.Result()
 	}
 
-	// Record seigniorage if the offered coin is Luna
-	if msg.OfferCoin.Denom == assets.MicroLunaDenom {
-		k.mk.AddSeigniorage(ctx, msg.OfferCoin.Amount)
-	}
-
 	// Mint asked coins and credit Trader's account
 	mintErr := k.mk.Mint(ctx, msg.Trader, swapCoin)
 	if mintErr != nil {
 		return mintErr.Result()
 	}
 
+	log := NewLog()
+	log.append(LogKeySwapCoin, swapCoin.String())
+
 	return sdk.Result{
 		Tags: sdk.NewTags(
-			tags.Offer, msg.OfferCoin.String(),
-			tags.Ask, swapCoin.String(),
+			tags.Offer, msg.OfferCoin.Denom,
+			tags.SwapFee, swapFee.String(),
+			tags.Return, swapCoin.String(),
 			tags.Trader, msg.Trader.String(),
 		),
+		Log: log.String(),
 	}
 }

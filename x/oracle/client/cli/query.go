@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/terra-project/core/types/assets"
-	"github.com/terra-project/core/x/oracle"
 	"strings"
+
+	"github.com/terra-project/core/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,6 +25,7 @@ func (dl DenomList) String() (out string) {
 func GetCmdQueryPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryPrice,
+		Args:  cobra.NoArgs,
 		Short: "Query the current price of a denom asset",
 		Long: strings.TrimSpace(`
 Query the current price of a denom asset. You can find the current list of active denoms by running: terracli query oracle active
@@ -51,6 +52,8 @@ $ terracli query oracle price --denom ukrw
 	}
 
 	cmd.Flags().String(flagDenom, "", "target denom to get the price")
+
+	cmd.MarkFlagRequired(flagDenom)
 	return cmd
 }
 
@@ -58,6 +61,7 @@ $ terracli query oracle price --denom ukrw
 func GetCmdQueryActive(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryActive,
+		Args:  cobra.NoArgs,
 		Short: "Query the active list of Terra assets recognized by the oracle",
 		Long: strings.TrimSpace(`
 Query the active list of Terra assets recognized by the oracle.
@@ -85,34 +89,28 @@ $ terracli query oracle active
 func GetCmdQueryVotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryVotes,
+		Args:  cobra.NoArgs,
 		Short: "Query outstanding oracle votes, filtered by denom and voter address.",
 		Long: strings.TrimSpace(`
 Query outstanding oracle votes, filtered by denom and voter address.
 
-$ terracli query oracle votes --denom="uusd" --voter="terrad8duyufdshs..."
+$ terracli query oracle votes --denom="uusd" --validator="terravaloper..."
 
-returns oracle votes submitted by terrad8duyufdshs... for denom uusd 
+returns oracle votes submitted by terravaloper... for denom uusd 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
-			if len(denom) == 0 {
-				return fmt.Errorf("--denom flag is required")
-			}
-
-			if !assets.IsValidDenom(denom) {
-				return fmt.Errorf("The denom is not known: %s", denom)
-			}
 
 			// Check voter address exists, then valids
-			var voterAddress sdk.AccAddress
+			var voterAddress sdk.ValAddress
 
-			bechVoterAddr := viper.GetString(flagVoter)
+			bechVoterAddr := viper.GetString(flagValidator)
 			if len(bechVoterAddr) != 0 {
 				var err error
 
-				voterAddress, err = sdk.AccAddressFromBech32(bechVoterAddr)
+				voterAddress, err = sdk.ValAddressFromBech32(bechVoterAddr)
 				if err != nil {
 					return err
 				}
@@ -129,7 +127,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 				return err
 			}
 
-			var matchingVotes oracle.PriceBallot
+			var matchingVotes oracle.PriceVotes
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
 			return cliCtx.PrintOutput(matchingVotes)
@@ -137,7 +135,66 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 	}
 
 	cmd.Flags().String(flagDenom, "", "filter by votes matching the denom")
-	cmd.Flags().String(flagVoter, "", "(optional) filter by votes by voter")
+	cmd.Flags().String(flagValidator, "", "(optional) filter by votes by validator")
+
+	cmd.MarkFlagRequired(flagDenom)
+
+	return cmd
+}
+
+// GetCmdQueryPrevotes implements the query prevote command.
+func GetCmdQueryPrevotes(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   oracle.QueryPrevotes,
+		Args:  cobra.NoArgs,
+		Short: "Query outstanding oracle prevotes, filtered by denom and voter address.",
+		Long: strings.TrimSpace(`
+Query outstanding oracle prevotes, filtered by denom and voter address.
+
+$ terracli query oracle prevotes --denom="uusd" --validator="terravaloper..."
+
+returns oracle prevotes submitted by terravaloper... for denom uusd 
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			denom := viper.GetString(flagDenom)
+
+			// Check voter address exists, then valids
+			var voterAddress sdk.ValAddress
+
+			bechVoterAddr := viper.GetString(flagValidator)
+			if len(bechVoterAddr) != 0 {
+				var err error
+
+				voterAddress, err = sdk.ValAddressFromBech32(bechVoterAddr)
+				if err != nil {
+					return err
+				}
+			}
+
+			params := oracle.NewQueryPrevoteParams(voterAddress, denom)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryPrevotes), bz)
+			if err != nil {
+				return err
+			}
+
+			var matchingPrevotes oracle.PricePrevotes
+			cdc.MustUnmarshalJSON(res, &matchingPrevotes)
+
+			return cliCtx.PrintOutput(matchingPrevotes)
+		},
+	}
+
+	cmd.Flags().String(flagDenom, "", "filter by prevotes matching the denom")
+	cmd.Flags().String(flagValidator, "", "(optional) filter by prevotes by validator")
+
+	cmd.MarkFlagRequired(flagDenom)
 
 	return cmd
 }
@@ -146,6 +203,7 @@ returns oracle votes submitted by terrad8duyufdshs... for denom uusd
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryParams,
+		Args:  cobra.NoArgs,
 		Short: "Query the current Oracle params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -160,6 +218,52 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(params)
 		},
 	}
+
+	return cmd
+}
+
+// GetCmdQueryFeederDelegation implements the query feeder delegation command
+func GetCmdQueryFeederDelegation(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   oracle.QueryFeederDelegation,
+		Short: "Query the account the validator's voting right is delegated to",
+		Long: strings.TrimSpace(`
+Query the account the validator's voting right is delegated to.
+
+$ terracli query oracle feeder --validator terravaloper1ifji3ifj
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := viper.GetString(flagValidator)
+			if len(valString) == 0 {
+				return fmt.Errorf("--validator flag is required")
+			}
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := oracle.NewQueryFeederDelegationParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryFeederDelegation), bz)
+			if err != nil {
+				return err
+			}
+
+			var delegatee sdk.AccAddress
+			cdc.MustUnmarshalJSON(res, &delegatee)
+			return cliCtx.PrintOutput(delegatee)
+		},
+	}
+
+	cmd.Flags().String(flagValidator, "", "validator to get the delegation for")
+
+	cmd.MarkFlagRequired(flagValidator)
 
 	return cmd
 }

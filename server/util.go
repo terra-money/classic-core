@@ -65,10 +65,11 @@ func PersistentPreRunEFn(context *server.Context) func(*cobra.Command, []string)
 func interceptLoadConfig() (conf *cfg.Config, err error) {
 	tmpConf := cfg.DefaultConfig()
 	err = viper.Unmarshal(tmpConf)
+
 	if err != nil {
-		// TODO: Handle with #870
-		panic(err)
+		return tmpConf, err
 	}
+
 	rootDir := tmpConf.RootDir
 	configFilePath := filepath.Join(rootDir, "config/config.toml")
 	// Intercept only if the file doesn't already exist

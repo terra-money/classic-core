@@ -7,6 +7,7 @@ import (
 	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
 	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
 	"time"
@@ -22,6 +23,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -50,7 +52,7 @@ type testInput struct {
 func newTestCodec() *codec.Codec {
 	cdc := codec.New()
 
-	bank.RegisterCodec(cdc)
+	pay.RegisterCodec(cdc)
 	treasury.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
@@ -65,11 +67,14 @@ func createTestInput() testInput {
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyBudget := sdk.NewKVStoreKey(budget.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
+	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -85,6 +90,9 @@ func createTestInput() testInput {
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
 
 	if err := ms.LoadLatestVersion(); err != nil {
 		panic(err)
@@ -156,12 +164,23 @@ func createTestInput() testInput {
 
 	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper, paramsKeeper.Subspace(market.DefaultParamspace))
 
+	feeKeeper := auth.NewFeeCollectionKeeper(
+		cdc, keyFee,
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		bankKeeper, stakingKeeper, feeKeeper, distr.DefaultCodespace,
+	)
+
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
 		valset,
 		mintKeeper,
 		marketKeeper,
+		distrKeeper,
+		feeKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 

@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"encoding/hex"
+
 	"github.com/terra-project/core/types/assets"
 
 	"testing"
@@ -42,12 +44,12 @@ func TestKeeperPrice(t *testing.T) {
 func TestKeeperVote(t *testing.T) {
 	input := createTestInput(t)
 
-	// Test addvote
-	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, addrs[0])
+	// Test addVote
+	vote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	input.oracleKeeper.addVote(input.ctx, vote)
 
 	// Test getVote
-	voteQuery, err := input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, addrs[0])
+	voteQuery, err := input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	require.Nil(t, err)
 	require.Equal(t, vote, voteQuery)
 
@@ -65,7 +67,34 @@ func TestKeeperVote(t *testing.T) {
 
 	// Test deletevote
 	input.oracleKeeper.deleteVote(input.ctx, vote)
-	_, err = input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, addrs[0])
+	_, err = input.oracleKeeper.getVote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	require.NotNil(t, err)
+}
+
+func TestKeeperPrevote(t *testing.T) {
+	input := createTestInput(t)
+
+	hash, _ := VoteHash("1234", sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	hexHas := hex.EncodeToString(hash)
+
+	// Test addPrevote
+	prevote := NewPricePrevote(hexHas, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]), 1)
+	input.oracleKeeper.addPrevote(input.ctx, prevote)
+
+	// Test getPrevote
+	prevoteQuery, err := input.oracleKeeper.getPrevote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
+	require.Nil(t, err)
+	require.Equal(t, prevote, prevoteQuery)
+
+	// Test iteratevotes
+	input.oracleKeeper.iteratePrevotes(input.ctx, func(prevote PricePrevote) bool {
+		require.Equal(t, prevote, prevoteQuery)
+		return true
+	})
+
+	// Test deletevote
+	input.oracleKeeper.deletePrevote(input.ctx, prevote)
+	_, err = input.oracleKeeper.getPrevote(input.ctx, assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	require.NotNil(t, err)
 }
 
@@ -104,4 +133,23 @@ func TestKeeperParams(t *testing.T) {
 	storedParams := input.oracleKeeper.GetParams(input.ctx)
 	require.NotNil(t, storedParams)
 	require.Equal(t, newParams, storedParams)
+}
+
+func TestKeeperFeederDelegation(t *testing.T) {
+	input := createTestInput(t)
+
+	// Test default getters and setters
+	delegate := input.oracleKeeper.GetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]))
+	require.Equal(t, delegate, addrs[0])
+
+	input.oracleKeeper.SetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]), addrs[1])
+	delegate = input.oracleKeeper.GetFeedDelegate(input.ctx, sdk.ValAddress(addrs[0]))
+	require.Equal(t, delegate, addrs[1])
+
+	// Test iterator
+	input.oracleKeeper.SetFeedDelegate(input.ctx, sdk.ValAddress(addrs[1]), addrs[1])
+	delegations := input.oracleKeeper.GetOperatorsForDelegate(input.ctx, addrs[1])
+	require.Equal(t, len(delegations), 2)
+	require.Contains(t, delegations, sdk.ValAddress(addrs[0]))
+	require.Contains(t, delegations, sdk.ValAddress(addrs[1]))
 }

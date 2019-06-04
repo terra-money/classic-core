@@ -56,7 +56,7 @@ func TestPBPower(t *testing.T) {
 	ballotPower := sdk.ZeroInt()
 
 	for i := 0; i < len(mockValset.Validators); i++ {
-		vote := NewPriceVote(sdk.ZeroDec(), assets.MicroSDRDenom, valAccAddrs[i])
+		vote := NewPriceVote(sdk.ZeroDec(), assets.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
 		pb = append(pb, vote)
 
 		valPower, err := vote.getPower(input.ctx, mockValset)
@@ -68,7 +68,7 @@ func TestPBPower(t *testing.T) {
 	require.Equal(t, ballotPower, pb.power(input.ctx, mockValset))
 
 	// Mix in a fake validator, the total power should not have changed.
-	fakeVote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, addrs[0])
+	fakeVote := NewPriceVote(sdk.OneDec(), assets.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 	pb = append(pb, fakeVote)
 	require.Equal(t, ballotPower, pb.power(input.ctx, mockValset))
 }
@@ -125,7 +125,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			if tc.isValidator[i] {
 				mockValset.Validators = append(mockValset.Validators, mockVal)
 			}
-			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), assets.MicroSDRDenom, valAccAddr)
+			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), assets.MicroSDRDenom, sdk.ValAddress(valAccAddr))
 			pb = append(pb, vote)
 		}
 

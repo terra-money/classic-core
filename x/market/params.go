@@ -41,6 +41,7 @@ func validateParams(params Params) error {
 	if params.MaxSwapSpread.LT(params.MinSwapSpread) {
 		return fmt.Errorf("market maximum swap spead should be larger or equal to the minimum, is %s", params.MaxSwapSpread.String())
 	}
+
 	return nil
 }
 

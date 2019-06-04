@@ -117,7 +117,7 @@ func TestGetVestedCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	vestedCoins := gva.GetVestedCoins(genesis)
@@ -152,7 +152,7 @@ func TestGetVestingCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	vestingCoins := gva.GetVestingCoins(genesis)
@@ -188,7 +188,7 @@ func TestSpendableCoinsGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require no coins are vested until schedule maturation
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 
@@ -229,7 +229,7 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 	bacc := auth.NewBaseAccountWithAddress(addr)
 
 	bacc.SetCoins(origCoins)
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(genesis, origCoins)
@@ -239,7 +239,7 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 
 	// require the ability to delegate all vested coins
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(timeGenesis.AddDate(1, 0, 0), origCoins)
@@ -250,7 +250,7 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 	// require the ability to delegate all coins half way through the vesting
 	// schedule
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(0, 3, 0), sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 3000)})
@@ -264,7 +264,7 @@ func TestTrackDelegationGradVestingAcc(t *testing.T) {
 
 	// require no modifications when delegation amount is zero or not enough funds
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 
@@ -285,7 +285,7 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(genesis, origCoins)
@@ -296,7 +296,7 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 
 	// require the ability to undelegate all vested coins
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(1, 0, 0), origCoins)
@@ -307,7 +307,7 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 
 	// require no modifications when the undelegation amount is zero
 	bacc.SetCoins(origCoins)
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	require.Panics(t, func() {
@@ -318,7 +318,7 @@ func TestTrackUndelegationGradVestingAcc(t *testing.T) {
 	require.Equal(t, origCoins, gva.GetCoins())
 
 	// vest 50% and delegate to two validators
-	gva = NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva = NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	gva.TrackDelegation(genesis.AddDate(0, 3, 0), sdk.Coins{sdk.NewInt64Coin(assets.MicroLunaDenom, 5000)})
@@ -345,7 +345,7 @@ func TestStringGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	gva := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	gva := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 	require.NotNil(t, gva.String())
@@ -363,7 +363,7 @@ func TestIsValidGradVestingAcc(t *testing.T) {
 	bacc.SetCoins(origCoins)
 
 	// require the ability to undelegate all vesting coins
-	angelAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	angelAccount := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		angelSchedule,
 	})
 
@@ -371,7 +371,7 @@ func TestIsValidGradVestingAcc(t *testing.T) {
 	require.True(t, found)
 	require.True(t, vestingSchedule.IsValid())
 
-	seedAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	seedAccount := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		seedSchedule,
 	})
 
@@ -379,7 +379,7 @@ func TestIsValidGradVestingAcc(t *testing.T) {
 	require.True(t, found)
 	require.True(t, vestingSchedule.IsValid())
 
-	privateAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	privateAccount := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		privateSchedule,
 	})
 
@@ -387,7 +387,7 @@ func TestIsValidGradVestingAcc(t *testing.T) {
 	require.True(t, found)
 	require.True(t, vestingSchedule.IsValid())
 
-	employeeAccount := NewGradedVestingAccount(&bacc, []VestingSchedule{
+	employeeAccount := NewBaseGradedVestingAccount(&bacc, []VestingSchedule{
 		employeeSchedule,
 	})
 

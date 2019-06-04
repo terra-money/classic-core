@@ -1,6 +1,10 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // ClaimPool is a list of Claims
 type ClaimPool []Claim
@@ -26,6 +30,15 @@ func (cp ClaimPool) Sort() ClaimPool {
 	}
 
 	return cp
+}
+
+// TotalWeight gets the sum of the weights of claims in the claimpool
+func (cp ClaimPool) TotalWeight() sdk.Int {
+	sum := sdk.ZeroInt()
+	for _, claim := range cp {
+		sum = sum.Add(claim.Weight)
+	}
+	return sum
 }
 
 func (cp ClaimPool) String() (out string) {

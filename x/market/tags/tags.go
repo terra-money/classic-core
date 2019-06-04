@@ -2,7 +2,8 @@ package tags
 
 // Market tags
 var (
-	Offer  = "offer"
-	Ask    = "ask"
-	Trader = "trader"
+	Offer   = "offer"
+	SwapFee = "swap_fee"
+	Return  = "return"
+	Trader  = "trader"
 )

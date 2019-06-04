@@ -2,6 +2,8 @@ package treasury
 
 import (
 	"fmt"
+
+	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/util"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,10 +11,9 @@ import (
 
 // GenesisState - all treasury state that must be provided at genesis
 type GenesisState struct {
-	Params Params `json:"params"` // treasury params
-
-	GenesisTaxRate      sdk.Dec `json:"tax_rate"`
-	GenesisRewardWeight sdk.Dec `json:"reward_weight"`
+	Params              Params        `json:"params"` // treasury params
+	GenesisTaxRate      sdk.Dec       `json:"tax_rate"`
+	GenesisRewardWeight sdk.Dec       `json:"reward_weight"`
 }
 
 // NewGenesisState constructs a new genesis state
@@ -48,6 +49,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 	params := k.GetParams(ctx)
 	taxRate := k.GetTaxRate(ctx, sdk.ZeroInt())
 	rewardWeight := k.GetRewardWeight(ctx, util.GetEpoch(ctx))
+
 	return NewGenesisState(params, taxRate, rewardWeight)
 }
 

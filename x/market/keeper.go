@@ -43,33 +43,33 @@ func (k Keeper) ComputeLunaDelta(ctx sdk.Context, change sdk.Int) sdk.Dec {
 	return sdk.ZeroDec()
 }
 
-
-
-// SwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
+// GetSwapCoins returns the amount of asked coins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
-func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (sdk.Coin, sdk.Error) {
+// Ignores caps and spreads if isInternal = true. 
+func (k Keeper) GetSwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) 
+(retCoin sdk.Coin, spread sdk.Dec, err sdk.Error) {
 	params := k.GetParams(ctx)
 
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
-		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
+		return sdk.Coin{}, sdk.ZeroDec(), ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
 	}
 
 	askRate, err := k.ok.GetLunaSwapRate(ctx, askDenom)
 	if err != nil {
-		return sdk.Coin{}, ErrNoEffectivePrice(DefaultCodespace, askDenom)
+		return sdk.Coin{}, sdk.ZeroDec(), ErrNoEffectivePrice(DefaultCodespace, askDenom)
 	}
 
 	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(askRate).Quo(offerRate).TruncateInt()
 	if retAmount.Equal(sdk.ZeroInt()) {
-		return sdk.Coin{}, ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
+		return sdk.Coin{}, sdk.ZeroDec(), ErrInsufficientSwapCoins(DefaultCodespace, offerCoin.Amount)
 	}
 
-	// We only charge spread for swaps involving luna; if not, just pass. 
-	if offerCoin.Denom != assets.MicroLunaDenom && askDenom != assets.MicroLunaDenom {
-		return sdk.NewCoin(askDenom, retAmount), nil
+	// We only charge spread for NON-INTERNAL swaps involving luna; if not, just pass. 
+	if isInternal || (offerCoin.Denom != assets.MicroLunaDenom && askDenom != assets.MicroLunaDenom) {
+		return sdk.NewCoin(askDenom, retAmount), sdk.ZeroDec(), nil
 	}
 
 	dailyDelta := sdk.ZeroDec()
@@ -82,21 +82,20 @@ func (k Keeper) SwapCoins(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) 
 	// Do not allow swaps beyond the daily cap
 	maxDelta := params.DailyLunaDeltaCap
 	if dailyDelta.Abs().GT(maxDelta) {
-		return sdk.Coin{}, ErrExceedsDailySwapLimit(DefaultCodespace)
+		return sdk.Coin{}, sdk.ZeroDec(), ErrExceedsDailySwapLimit(DefaultCodespace)
 	}
 
 	// Compute a spread, which is at most MinSwapSpread and grows linearly to MaxSwapSpread with delta
-	spread := dailyDelta.Quo(maxDelta).Mul(params.MaxSwapSpread.Sub(params.MinSwapSpread))
+	spread = dailyDelta.Quo(maxDelta).Mul(params.MaxSwapSpread.Sub(params.MinSwapSpread))
 	
-
-	return sdk.NewCoin(askDenom, retAmount), nil
+	return sdk.NewCoin(askDenom, retAmount), spread, nil
 }
 
-// SwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
+// GetSwapDecCoins returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Different from swapcoins, SwapDecCoins does not charge a spread as its use is system internal. 
-// Similar to SwapCoins, but operates over sdk.DecCoins for convinience and accuracy.
-func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
+// Similar to SwapCoins, but operates over sdk.DecCoins for convenience and accuracy.
+func (k Keeper) GetSwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
 	offerRate, err := k.ok.GetLunaSwapRate(ctx, offerCoin.Denom)
 	if err != nil {
 		return sdk.DecCoin{}, ErrNoEffectivePrice(DefaultCodespace, offerCoin.Denom)
@@ -113,6 +112,30 @@ func (k Keeper) SwapDecCoins(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom st
 	}
 
 	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil
+}
+
+//-----------------------------------
+// Swap fee pool logic
+
+// GetSwapFeePool retrieves the claim pool from the store
+func (k Keeper) GetSwapFeePool(ctx sdk.Context) (pool sdk.Coins) {
+	store := ctx.KVStore(k.key)
+	b := store.Get(keySwapFeePool)
+	if b == nil {
+		return sdk.Coins{}
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &pool)
+	return
+}
+
+// setSwapFeePool sets the claim pool to the store
+func (k Keeper) addSwapFeePool(ctx sdk.Context, fees sdk.Coins) {
+	pool := k.GetSwapFeePool(ctx)
+	pool = pool.Add(fees)
+	
+	store := ctx.KVStore(k.key)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(keySwapFeePool, bz)
 }
 
 //-----------------------------------

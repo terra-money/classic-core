@@ -1,13 +1,14 @@
 package treasury
 
 import (
+	"math/rand"
+	"testing"
+	"time"
+
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/treasury/tags"
-	"math/rand"
-	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -140,75 +141,3 @@ func TestEndBlockerUpdatePolicy(t *testing.T) {
 	require.Equal(t, rewardWeight, newSeigniorageWeight)
 }
 
-func TestEndBlockerSettleClaims(t *testing.T) {
-	input := createTestInput(t)
-	input = reset(input)
-
-	tests := []struct {
-		claims      []types.Claim
-		seigniorage sdk.Int
-		sdrRewards  []int64
-	}{
-		// Test 1: no claims
-		{[]types.Claim{}, sdk.NewInt(1000), []int64{0, 0, 0}},
-
-		// Test 2: two claims of the same class
-		{[]types.Claim{
-			types.NewClaim(types.OracleClaimClass, sdk.NewInt(10), addrs[0]),
-			types.NewClaim(types.OracleClaimClass, sdk.NewInt(90), addrs[1]),
-		}, sdk.NewInt(1000), []int64{10, 90, 0}},
-
-		// Test 3: similar to case 2, except different class
-		{[]types.Claim{
-			types.NewClaim(types.BudgetClaimClass, sdk.NewInt(10), addrs[0]),
-			types.NewClaim(types.BudgetClaimClass, sdk.NewInt(90), addrs[1]),
-		}, sdk.NewInt(1000), []int64{90, 810, 0}},
-
-		// Test 4: Many claims of different classes
-		{[]types.Claim{
-			types.NewClaim(types.OracleClaimClass, sdk.NewInt(10), addrs[0]),
-			types.NewClaim(types.BudgetClaimClass, sdk.NewInt(10), addrs[0]),
-			types.NewClaim(types.OracleClaimClass, sdk.NewInt(10), addrs[1]),
-			types.NewClaim(types.OracleClaimClass, sdk.NewInt(80), addrs[2]),
-			types.NewClaim(types.BudgetClaimClass, sdk.NewInt(90), addrs[2]),
-		}, sdk.NewInt(1000), []int64{100, 10, 890}},
-	}
-
-	params := input.treasuryKeeper.GetParams(input.ctx)
-	blocksPerEpoch := util.BlocksPerEpoch
-
-	for i, tc := range tests {
-
-		// Advance blockcount
-		input.ctx = input.ctx.WithBlockHeight(params.WindowShort.Int64()*blocksPerEpoch*int64(i) - 1)
-
-		// clear SDR balances for testing; keep luna for policy update safety
-		for _, addr := range addrs {
-			err := input.bankKeeper.SetCoins(input.ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt)})
-			require.Nil(t, err)
-		}
-
-		// Reset reward weight
-		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.ZeroDec())
-		input.mintKeeper.AddSeigniorage(input.ctx, tc.seigniorage)
-
-		// Call endblocker
-		for _, claim := range tc.claims {
-			input.treasuryKeeper.AddClaim(input.ctx, claim)
-		}
-		EndBlocker(input.ctx, input.treasuryKeeper)
-
-		for j, addr := range addrs {
-			balance := input.bankKeeper.GetCoins(input.ctx, addr).AmountOf(assets.MicroSDRDenom)
-			require.Equal(t, balance, sdk.NewInt(tc.sdrRewards[j]), "test: %v", i)
-		}
-
-		counter := 0
-		input.treasuryKeeper.IterateClaims(input.ctx, func(claim types.Claim) bool {
-			counter++
-			return false
-		})
-
-		require.Equal(t, 0, counter, "Claims expected to be cleared after treasury update")
-	}
-}
