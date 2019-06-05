@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -23,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -34,7 +37,19 @@ var (
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	mSDRAmout = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	valConsPubKeys = []crypto.PubKey{
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+	}
+
+	valConsAddrs = []sdk.ConsAddress{
+		sdk.ConsAddress(valConsPubKeys[0].Address()),
+		sdk.ConsAddress(valConsPubKeys[1].Address()),
+		sdk.ConsAddress(valConsPubKeys[2].Address()),
+	}
+
+	uSDRAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -61,11 +76,14 @@ func createTestInput(t *testing.T) testInput {
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
-	keyFee := sdk.NewKVStoreKey(auth.FeeStoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
+	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
+	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -76,11 +94,14 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyFee, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -105,6 +126,16 @@ func createTestInput(t *testing.T) testInput {
 		staking.DefaultCodespace,
 	)
 
+	feeCollectionKeeper := auth.NewFeeCollectionKeeper(
+		cdc,
+		keyFeeCollection,
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		bankKeeper, &stakingKeeper, feeCollectionKeeper, distr.DefaultCodespace,
+	)
+
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
@@ -119,32 +150,32 @@ func createTestInput(t *testing.T) testInput {
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
+		mintKeeper,
+		distrKeeper,
+		feeCollectionKeeper,
 		&stakingKeeper,
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	marketKeeper := market.NewKeeper(oracleKeeper, mintKeeper,
+	marketKeeper := market.NewKeeper(cdc, keyMarket, oracleKeeper, mintKeeper,
 		paramsKeeper.Subspace(market.DefaultParamspace))
+	marketKeeper.SetParams(ctx, market.DefaultParams())
 
 	treasuryKeeper := treasury.NewKeeper(
 		cdc,
 		keyTreasury,
-		&stakingKeeper,
+		stakingKeeper.GetValidatorSet(),
 		mintKeeper,
 		marketKeeper,
 		paramsKeeper.Subspace(treasury.DefaultParamspace),
 	)
 
-	feeKeeper := auth.NewFeeCollectionKeeper(
-		cdc, keyFee,
-	)
-
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmount)})
 		require.NoError(t, err)
 	}
 
-	return testInput{ctx, accKeeper, bankKeeper, treasuryKeeper, feeKeeper}
+	return testInput{ctx, accKeeper, bankKeeper, treasuryKeeper, feeCollectionKeeper}
 }
 
 func TestHandlerMsgSendTransfersDisabled(t *testing.T) {
@@ -159,10 +190,10 @@ func TestHandlerMsgSendTransfersDisabled(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmount)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, mSDRAmout)})
+	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmount)})
 }
 
 func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
@@ -181,11 +212,11 @@ func TestHandlerMsgSendTransfersEnabled(t *testing.T) {
 	require.True(t, res.IsOK(), "expected successful message execution: %v", res.Log)
 
 	from := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := mSDRAmout.Sub(amt)
+	balance := uSDRAmount.Sub(amt)
 	require.Equal(t, from.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	to := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = mSDRAmout.Add(amt)
+	balance = uSDRAmount.Add(amt)
 	require.Equal(t, to.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }
 
@@ -280,14 +311,14 @@ func TestHandlerMsgMultiSendTax(t *testing.T) {
 	require.Equal(t, taxCollected, taxRecorded)
 
 	acc1 := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	balance := mSDRAmout.Add(sdk.NewInt(201).MulRaw(assets.MicroUnit))
+	balance := uSDRAmount.Add(sdk.NewInt(201).MulRaw(assets.MicroUnit))
 	require.Equal(t, acc1.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc2 := input.accKeeper.GetAccount(input.ctx, addrs[1])
-	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(1414), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	balance = uSDRAmount.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(1414), 2).MulInt64(assets.MicroUnit).TruncateInt())
 	require.Equal(t, acc2.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 
 	acc3 := input.accKeeper.GetAccount(input.ctx, addrs[2])
-	balance = mSDRAmout.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(19089), 2).MulInt64(assets.MicroUnit).TruncateInt())
+	balance = uSDRAmount.Sub(sdk.NewDecFromIntWithPrec(sdk.NewInt(19089), 2).MulInt64(assets.MicroUnit).TruncateInt())
 	require.Equal(t, acc3.GetCoins(), sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, balance)})
 }

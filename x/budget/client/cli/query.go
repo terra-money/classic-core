@@ -20,6 +20,7 @@ import (
 func GetCmdQueryProgram(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "program",
+		Args:  cobra.NoArgs,
 		Short: "Query details of a single program",
 		Long: strings.TrimSpace(`
 Query details for a program. 
@@ -59,6 +60,9 @@ $ terracli query budget program --program-id 1
 	}
 
 	cmd.Flags().String(flagProgramID, "", "the program ID to query")
+
+	cmd.MarkFlagRequired(flagProgramID)
+
 	return cmd
 }
 
@@ -66,6 +70,7 @@ $ terracli query budget program --program-id 1
 func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryActiveList,
+		Args:  cobra.NoArgs,
 		Short: "Query active programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -89,6 +94,7 @@ func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 func GetCmdQueryCandidates(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryCandidateList,
+		Args:  cobra.NoArgs,
 		Short: "Query candidate programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -112,6 +118,7 @@ func GetCmdQueryCandidates(cdc *codec.Codec) *cobra.Command {
 func GetCmdQueryVotes(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryVotes,
+		Args:  cobra.NoArgs,
 		Short: "Query votes, filtered by voter and program id ",
 		Long: strings.TrimSpace(`
 Query vote details filtered by voter address and program id.
@@ -136,9 +143,6 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 			}
 
 			programIDStr := viper.GetString(flagProgramID)
-			if len(programIDStr) == 0 {
-				return fmt.Errorf("--program-id flag is required")
-			}
 
 			// validate that the program id is a uint
 			programID, err := strconv.ParseUint(programIDStr, 10, 64)
@@ -165,7 +169,7 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 		},
 	}
 
-	cmd.Flags().String(flagProgramID, "", "the program ID to query; defalut 0 for all programs")
+	cmd.Flags().String(flagProgramID, "0", "(optional) the program ID to query; defalut 0 for all programs")
 	cmd.Flags().String(flagVoter, "", "(optional) voter for the program")
 
 	return cmd
@@ -175,6 +179,7 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   budget.QueryParams,
+		Args:  cobra.NoArgs,
 		Short: "Query the current budget params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

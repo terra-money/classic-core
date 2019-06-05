@@ -6,7 +6,6 @@ import (
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,7 +39,7 @@ func TestHandlerMsgSwapValidPrice(t *testing.T) {
 
 	retAmt := lnacnyRate.Quo(lnasdrRate).MulInt(offerCoin.Amount).TruncateInt()
 	trader := input.accKeeper.GetAccount(input.ctx, addrs[0])
-	require.Equal(t, trader.GetCoins().AmountOf(offerCoin.Denom), mSDRAmt.Sub(offerCoin.Amount))
+	require.Equal(t, trader.GetCoins().AmountOf(offerCoin.Denom), uSDRAmt.Sub(offerCoin.Amount))
 	require.Equal(t, trader.GetCoins().AmountOf(askCoin.Denom), retAmt)
 }
 
@@ -54,7 +53,7 @@ func TestHandlerMsgSwapNoBalance(t *testing.T) {
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 
 	// Try to swap a coin I don't have enough of
-	msg.OfferCoin = sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt.Add(sdk.OneInt().MulRaw(assets.MicroUnit)))
+	msg.OfferCoin = sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt.Add(sdk.OneInt().MulRaw(assets.MicroUnit)))
 	res = handler(input.ctx, msg)
 	require.False(t, res.IsOK(), "expected failed message execution: %v", res.Log)
 }
@@ -98,7 +97,7 @@ func TestHandlerExceedDailySwapLimit(t *testing.T) {
 	input := createTestInput(t)
 	handler := NewHandler(input.marketKeeper)
 
-	offerCoin := sdk.NewInt64Coin(assets.MicroSDRDenom, 100)
+	offerCoin := sdk.NewInt64Coin(assets.MicroSDRDenom, 1000)
 
 	// Set oracle price
 	offerLunaPrice := sdk.NewDec(1)
@@ -111,20 +110,19 @@ func TestHandlerExceedDailySwapLimit(t *testing.T) {
 
 	// Day 1+ ... Set luna issuance, try to oscillate within the limit, and things should be ok
 	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerWeek)
-	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 1000000))
-	assert.Nil(t, err)
+	offerCoin = sdk.NewCoin(offerCoin.Denom, sdk.NewInt(4))
 	msg = NewMsgSwap(addrs[0], offerCoin, assets.MicroLunaDenom)
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK())
 
 	// Day 1+ ... Outside of the limit fails
-	msg = NewMsgSwap(addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 10005), assets.MicroLunaDenom)
+	msg = NewMsgSwap(addrs[0], sdk.NewInt64Coin(assets.MicroLunaDenom, 6), assets.MicroLunaDenom)
 	res = handler(input.ctx, msg)
 	require.False(t, res.IsOK())
 
 	// Swapping Terra with each other should be unlimited
 	input.oracleKeeper.SetLunaSwapRate(input.ctx, assets.MicroCNYDenom, sdk.OneDec())
-	msg = NewMsgSwap(addrs[1], sdk.NewCoin(assets.MicroSDRDenom, mSDRAmt), assets.MicroCNYDenom) // 1/3 of SDR issuance
+	msg = NewMsgSwap(addrs[1], sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt), assets.MicroCNYDenom) // 1/3 of SDR issuance
 	res = handler(input.ctx, msg)
 	require.True(t, res.IsOK())
 }

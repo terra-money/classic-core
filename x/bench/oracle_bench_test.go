@@ -1,6 +1,7 @@
 package bench
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/terra-project/core/types/assets"
@@ -34,12 +35,24 @@ func BenchmarkOracleFeedVotePerBlock(b *testing.B) {
 
 		for j := 0; j < numOfValidators; j++ {
 			for d := 0; d < len(denoms); d++ {
-				voteMsg := oracle.NewMsgPriceFeed(denoms[d], sdk.NewDec(1), addrs[j])
+				salt := string(j)
+				bz, err := oracle.VoteHash(salt, sdk.OneDec(), denoms[d], sdk.ValAddress(addrs[j]))
+				if err != nil {
+					panic(err)
+				}
 
-				res := h(ctx, voteMsg)
+				prevoteMsg := oracle.NewMsgPricePrevote(hex.EncodeToString(bz), denoms[d], addrs[j], sdk.ValAddress(addrs[j]))
+				res := h(ctx, prevoteMsg)
 				if !res.IsOK() {
 					panic(res.Log)
 				}
+
+				voteMsg := oracle.NewMsgPriceVote(sdk.OneDec(), salt, denoms[d], addrs[j], sdk.ValAddress(addrs[j]))
+				res = h(ctx.WithBlockHeight(1), voteMsg)
+				if !res.IsOK() {
+					panic(res.Log)
+				}
+
 			}
 		}
 

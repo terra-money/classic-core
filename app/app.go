@@ -15,6 +15,12 @@ import (
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
 
+	"github.com/terra-project/core/types/assets"
+
+	tdistr "github.com/terra-project/core/x/distribution"
+	tslashing "github.com/terra-project/core/x/slashing"
+	tstaking "github.com/terra-project/core/x/staking"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +31,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -158,12 +168,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		app.bankKeeper,
 		app.feeCollectionKeeper,
 	)
-	app.oracleKeeper = oracle.NewKeeper(
-		app.cdc,
-		app.keyOracle,
-		stakingKeeper.GetValidatorSet(),
-		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
-	)
 	app.mintKeeper = mint.NewKeeper(
 		app.cdc,
 		app.keyMint,
@@ -171,7 +175,18 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		app.bankKeeper,
 		app.accountKeeper,
 	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.cdc,
+		app.keyOracle,
+		app.mintKeeper,
+		app.distrKeeper,
+		app.feeCollectionKeeper,
+		stakingKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
 	app.marketKeeper = market.NewKeeper(
+		app.cdc,
+		app.keyMarket,
 		app.oracleKeeper,
 		app.mintKeeper,
 		app.paramsKeeper.Subspace(market.DefaultParamspace),
@@ -187,7 +202,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 	app.budgetKeeper = budget.NewKeeper(
 		app.cdc,
 		app.keyBudget,
+		app.marketKeeper,
 		app.mintKeeper,
+		app.treasuryKeeper,
 		stakingKeeper.GetValidatorSet(),
 		app.paramsKeeper.Subspace(budget.DefaultParamspace),
 	)
@@ -262,10 +279,12 @@ func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 // MakeCodec builds a custom tx codec
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
-	bank.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
-	distr.RegisterCodec(cdc)
-	slashing.RegisterCodec(cdc)
+
+	// left codec for backward compatibility
+	pay.RegisterCodec(cdc)
+	tstaking.RegisterCodec(cdc)
+	tdistr.RegisterCodec(cdc)
+	tslashing.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
 	types.RegisterCodec(cdc)
 	oracle.RegisterCodec(cdc)
@@ -275,6 +294,12 @@ func MakeCodec() *codec.Codec {
 	crisis.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
+
+	stakingtypes.SetMsgCodec(cdc)
+	distrtypes.SetMsgCodec(cdc)
+	bank.SetMsgCodec(cdc)
+	slashing.SetMsgCodec(cdc)
+
 	return cdc
 }
 
@@ -300,17 +325,11 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
 
-	oracleClaims, oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
 	tags = append(tags, oracleTags...)
-	for _, oracleClaim := range oracleClaims {
-		app.treasuryKeeper.AddClaim(ctx, oracleClaim)
-	}
 
-	budgetClaims, budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
 	tags = append(tags, budgetTags...)
-	for _, budgetClaim := range budgetClaims {
-		app.treasuryKeeper.AddClaim(ctx, budgetClaim)
-	}
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
@@ -408,6 +427,9 @@ func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 			}
 		}
 	}
+
+	// GetIssuance needs to be called once to read account balances to the store
+	app.mintKeeper.GetIssuance(ctx, assets.MicroLunaDenom, sdk.ZeroInt())
 
 	// assert runtime invariants
 	app.assertRuntimeInvariants()

@@ -32,7 +32,7 @@ func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
 }
 
-// ErrExceedsDailySwapLimit called when the coin swap exceeds the daily swap limit
-func ErrExceedsDailySwapLimit(codespace sdk.CodespaceType, denom string) sdk.Error {
-	return sdk.NewError(codespace, CodeExceedsSwapLimit, "Exceeded the daily swap limit for the ask denomination: "+denom)
+// ErrExceedsDailySwapLimit called when the coin swap exceeds the daily swap limit for Luna
+func ErrExceedsDailySwapLimit(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeExceedsSwapLimit, "Exceeded the daily swap limit for Luna")
 }
