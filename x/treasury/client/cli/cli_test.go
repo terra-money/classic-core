@@ -60,18 +60,6 @@ func TestQueryIssuance(t *testing.T) {
 	require.Equal(t, []string{"true"}, denomFlag.Annotations[cobra.BashCompOneRequiredFlag])
 }
 
-func TestQueryActiveClaims(t *testing.T) {
-	cdc, _, _, _ := testutil.PrepareCmdTest()
-
-	queryActiveClaims := GetCmdQueryActiveClaims(cdc)
-
-	// Name check
-	require.Equal(t, treasury.QueryActiveClaims, queryActiveClaims.Name())
-
-	// NoArg check
-	require.Equal(t, testutil.FS(cobra.PositionalArgs(cobra.NoArgs)), testutil.FS(queryActiveClaims.Args))
-}
-
 func TestQueryMiningRewardWeight(t *testing.T) {
 	cdc, _, _, _ := testutil.PrepareCmdTest()
 
