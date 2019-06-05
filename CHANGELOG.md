@@ -55,6 +55,8 @@ By using the oracle/MsgDelegateFeederPermission a validator can assign the right
 (GET/POST) "/oracle/denoms/{%s}/votes"
 (GET/POST) "/oracle/denoms/{%s}/prevotes"
 (GET/POST) "/oracle/voters/{%s}/feeder"
+(GET/POST) "/market/swap"
+(GET/POST) "/market/params"
 ```
 
 #### [\#140](https://github.com/terra-project/core/pull/140) Add transaction logs for tax and swap amount
