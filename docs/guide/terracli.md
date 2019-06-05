@@ -704,36 +704,119 @@ terracli oracle set-feeder --feeder <feeder-address> --from mykey
 
 where `feeder-address` is the address you want to delegate your voting rights to.
 
-### Budget
-
-#### Submit a budget program application
-
-#### Withdraw a budget program application
-
-#### Vote on a budget program (application and active)
-
-#### Query a program 
-
-#### Query the active program list 
-
-#### Query the candidate program list
-
-#### Query outstanding votes
-
-#### Query parameters
-
-
-
-
-
-
-
-
 
 ### Market
 
 #### Swap currencies
 
+All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run: 
+
+```bash
+terracli market swap --offer-coin="1000krw" --ask-denom=<denom>
+```
+
+Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into. 
+
+For Terra <> Luna swaps, a daily cap and a spread is enforced to limit consensus related attack vectors. Terra <> Terra swaps have no limits and no spread.  
+
+
+### Budget
+
+#### Submit a budget program application
+
+To submit a budget program application, run: 
+
+```bash
+terracli budget submit-program --program="path/to/program.json" --from mykey
+```
+
+where program.json contains:
+
+```bash
+{
+  "title": "Test program",
+  "description": "My awesome program (include a website link for impact)",
+  "executor": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
+}
+```
+
+Alternatively, you can decided to specify all the parameters by running: 
+
+```bash
+terracli budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
+```
+
+Upon successful completion, a small deposit will be withdrawn from the sender's wallet to prevent spamming. The deposit is returned on application withdrawal. 
+
+#### Withdraw a budget program application
+
+A budget program that has not been accepted yet (is still in the candidate set) can be withdrawn for the deposit to be reclaimed. To do so, run: 
+
+```bash
+terracli tx budget withdraw --program-id <program-id>
+```
+
+Where `program-id` is the id of the program that had been generated when the application had been submitted. Only the original submitter of the program can withdraw the application. 
+
+#### Vote on a budget program (application and active)
+
+The same command can be used to vote for both active and candidate programs. To do so, run: 
+
+```bash
+terracli tx budget vote --program-id <program-id>  --option yes --from mykey
+```
+
+Where `program-id` is the id of the program that had been generated when the application had been submitted. `option` is one of `yes` or `no`. 
+
+#### Query a program 
+
+To query the details of a program by its id, run: 
+
+```bash
+terracli query budget program --program-id <program-id>
+```
+
+Where `program-id` is the id of the program that had been generated when the application had been submitted.
+
+#### Query the active program list 
+
+To query the list of active programs: 
+
+```bash
+terracli query budget candidate-list
+```
+
+#### Query the candidate program list
+
+To query the list of candidate programs: 
+
+```bash
+terracli query budget candidate-list
+```
+
+#### Query outstanding votes
+
+
+To query the list of outstanding program votes, both candidate and active: 
+
+```bash
+terracli query budget votes
+```
+
+#### Query parameters
+
+Parameters define high level settings for the budget module. You can get the current values by using:
+
+```bash
+terracli query budget params
+```
+
+With the above command you will get the values for:
+
+- Threshold in voting power for candidate programs to become active
+- Threshold in voting power for active programs to become legacied
+- Budget vote period
+- Deposit required to submit program applications
 
 ### Treasury
 
