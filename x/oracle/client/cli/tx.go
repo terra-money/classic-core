@@ -41,13 +41,13 @@ The purpose of prevote is to hide vote price with hash which is formatted
 as hex string in SHA256("salt:price:denom:voter")
 
 # Prevote
-$ terracli oracle prevote --denom "ukrw" --hash "72f374291b0428453bf481ec9d4b0b2440299b62" --from mykey
-$ terracli oracle prevote --denom "ukrw" --price "8888" --salt "4321" --from mykey
+$ terracli tx oracle prevote --denom "ukrw" --hash "72f374291b0428453bf481ec9d4b0b2440299b62" --from mykey
+$ terracli tx oracle prevote --denom "ukrw" --price "8888" --salt "4321" --from mykey
 
 where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli oracle prevote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
+$ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -130,14 +130,14 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Use:   "vote",
 		Short: "Submit an oracle vote for the price of Luna",
 		Long: strings.TrimSpace(`
-Submit an oracle prevote and vote for the price of Luna denominated in the input denom.
+Submit an oracle tx vote and vote for the price of Luna denominated in the input denom.
 
-$ terracli oracle vote --denom "ukrw" --price "8890" --salt "1234" --from mykey
+$ terracli tx oracle vote --denom "ukrw" --price "8890" --salt "1234" --from mykey
 
 where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
+$ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -217,7 +217,7 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 Delegate the permission to vote for the oracle to an address.
 That way you can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli oracle set-feeder --feeder terra1...... --from mykey
+$ terracli tx oracle set-feeder --feeder terra1...... --from mykey
 
 where "terra1abceuihfu93fud" is the address you want to delegate your voting rights to.
 `),
