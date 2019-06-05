@@ -10,7 +10,7 @@ The market module facilitates swaps between all terra currencies that have an ac
 
 - A user cap swap any of the Terra currencies for Luna at the oracle exchange rate. Using the same exchange rates in the above example, a user can swap 1 SDT for 0.1 Luna, or 0.1 Luna for 1 SDT. 
 
-## Safety nechanisms for Luna swaps
+## Safety mechanisms for Luna swaps
 
 - A daily Luna supply change cap is enforced, such that Luna supply can inflate or deflate only up to the cap in any given 24 hour period. Swap transactions after the cap has been hit fails. This is to prevent excessive volatility in Luna supply which can lead to divesting attacks (a large increase in Terra supply putting the peg at risk) or consensus attacks (a large increase in Luna supply being staked can lead to a consensus attack on the blockchain). 
 
