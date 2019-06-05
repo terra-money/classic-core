@@ -9,10 +9,10 @@
 
 **Key features:**
 
-- A family of stable-coins pegged to major currencies
-- Stability achieved by creating mining incentives that are _countercyclical_ to Terra demand
-- Delegated Proof-of-Stake (Tendermint) consensus formed over the staking token Luna
-- Zero-spread atomic swap amongst Terra currencies to flatten forex costs in global commerce 
+- A family of stable-coins pegged to major currencies, e.g. SDR, USD, KRW, JPY, EUR, and CNY.
+- Stability achieved by creating mining incentives that are countercyclical to Terra demand
+- Delegated Proof-of-Stake (Tendermint) consensus formed over the mining token Luna
+- Zero-spread atomic swap amongst Terra currencies.
 
 **Terra Core** is a golang implementation of the Terra Protocol.
 
@@ -26,9 +26,21 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Network
 
-- [Mainnet 1.0](https://terra.stake.id) is online and stable. Read the [launch repo](https://github.com/terra-project/launch) for records of the network's genesis. 
+- Mainnet Columbus-1 is online. [The launch repo](https://github.com/terra-project/launch) contains snapshot of the launch as well as network launch updates. 
 
-- [Testnet Soju-0008](https://soju.stake.id) is online and stable. Our [networks repo](https://github.com/terra-project/networks) contains latest upgrades to the testnet. [The Faucet](https://faucet.terra.money) should give you some free testnet tokens. 
+- Public testnet Soju-0007 is online. [Our networks repo](https://github.com/terra-project/networks) contains latest configuration files for the testnet. [The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnet. 
+
+
+### Ecosystem
+
+- Block Explorers
+    - [Terra Finder](https://finder.terra.money)
+    - [Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
+    - [Stake ID by StakingFund](https://terra.stake.id)
+    - [Big Dipper by Forbole](https://terra.bigdipper.live/)
+
+- Wallet 
+    - [Terra Station](https://terra.money): Available for download on the Terra website
 
 ### Ecosystem
 
@@ -55,12 +67,13 @@ The current state of the Terra Alliance (businesses gearing to adopt TerraX for 
 
 Community channels actively being managed are here:
 - [Website](https://terra.money/)
+- [Discord](https://discord.gg/vutpqa)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
 
-We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:general@terra.money). 
+We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:core@terra.money).
 
 ## Documentation
 
-See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf).
+See the [docs](https://docs.terra.money) and the [white paper](https://terra.money/static/Terra_White_Paper.pdf). Read the [Changelog](./CHANGELOG.md) for major release updates.

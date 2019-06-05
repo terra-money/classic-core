@@ -80,17 +80,6 @@ func NewQueryVoteParams(voter sdk.ValAddress, denom string) QueryVoteParams {
 	}
 }
 
-// QueryPrevoteParams for query 'custom/oracle/prevotes'
-type QueryPrevoteParams QueryVoteParams
-
-// NewQueryPrevoteParams creates a new instance of QueryVoteParams
-func NewQueryPrevoteParams(voter sdk.ValAddress, denom string) QueryPrevoteParams {
-	return QueryPrevoteParams{
-		Voter: voter,
-		Denom: denom,
-	}
-}
-
 func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params QueryVoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
@@ -132,8 +121,19 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	return bz, nil
 }
 
+// QueryPrevoteParams for query 'custom/oracle/prevotes'
+type QueryPrevoteParams QueryVoteParams
+
+// NewQueryPrevoteParams creates a new instance of QueryVoteParams
+func NewQueryPrevoteParams(voter sdk.ValAddress, denom string) QueryPrevoteParams {
+	return QueryPrevoteParams{
+		Voter: voter,
+		Denom: denom,
+	}
+}
+
 func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryVoteParams
+	var params QueryPrevoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))

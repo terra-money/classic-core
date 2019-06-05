@@ -96,13 +96,13 @@ func handleMsgWithdrawProgram(ctx sdk.Context, k Keeper, msg MsgWithdrawProgram)
 func handleMsgVoteProgram(ctx sdk.Context, k Keeper, msg MsgVoteProgram) sdk.Result {
 	resTags := sdk.NewTags()
 
-	program, err := k.GetProgram(ctx, msg.ProgramID)
+	_, err := k.GetProgram(ctx, msg.ProgramID)
 	if err != nil {
 		return ErrProgramNotFound(msg.ProgramID).Result()
 	}
 
 	// Check the voter is a validator
-	val := k.valset.Validator(ctx, sdk.ValAddress(program.Submitter))
+	val := k.valset.Validator(ctx, sdk.ValAddress(msg.Voter))
 	if val == nil {
 		return staking.ErrNoDelegatorForAddress(DefaultCodespace).Result()
 	}
