@@ -34,7 +34,6 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 		treasuryCli.GetCmdQueryIssuance(mc.cdc),
 		treasuryCli.GetCmdQueryTaxProceeds(mc.cdc),
 		treasuryCli.GetCmdQuerySeigniorageProceeds(mc.cdc),
-		treasuryCli.GetCmdQueryActiveClaims(mc.cdc),
 		treasuryCli.GetCmdQueryCurrentEpoch(mc.cdc),
 		treasuryCli.GetCmdQueryParams(mc.cdc),
 	)...)

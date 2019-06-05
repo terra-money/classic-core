@@ -26,7 +26,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QuerySeigniorageProceeds), querySgProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QuerySeigniorageProceeds, RestEpoch), querySgProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
 
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryActiveClaims), queryActiveClaimsHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryCurrentEpoch), queryCurrentEpochHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryParams), queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
 }
@@ -188,19 +187,6 @@ func querySgProceedsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext)
 		}
 
 		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QuerySeigniorageProceeds, epoch), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
-	}
-}
-
-func queryActiveClaimsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryActiveClaims), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

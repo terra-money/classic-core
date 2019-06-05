@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/terra-project/core/testutil"
+	"github.com/terra-project/core/x/market"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )
@@ -41,4 +42,37 @@ func TestSwapTx(t *testing.T) {
 	)
 
 	require.Nil(t, err)
+}
+
+func TestQuerySwap(t *testing.T) {
+	cdc, _, _, _ := testutil.PrepareCmdTest()
+
+	querySwapCmd := GetCmdQuerySwap(cdc)
+
+	// Name check
+	require.Equal(t, market.QuerySwap, querySwapCmd.Name())
+
+	// NoArg check
+	require.Equal(t, testutil.FS(cobra.PositionalArgs(cobra.NoArgs)), testutil.FS(querySwapCmd.Args))
+
+	// Check Flags
+	askDenomFlag := querySwapCmd.Flag(flagAskDenom)
+	require.NotNil(t, askDenomFlag)
+	require.Equal(t, []string{"true"}, askDenomFlag.Annotations[cobra.BashCompOneRequiredFlag])
+
+	offerCoinFlag := querySwapCmd.Flag(flagOfferCoin)
+	require.NotNil(t, offerCoinFlag)
+	require.Equal(t, []string{"true"}, offerCoinFlag.Annotations[cobra.BashCompOneRequiredFlag])
+}
+
+func TestQueryParams(t *testing.T) {
+	cdc, _, _, _ := testutil.PrepareCmdTest()
+
+	queryParamsCmd := GetCmdQueryParams(cdc)
+
+	// Name check
+	require.Equal(t, market.QueryParams, queryParamsCmd.Name())
+
+	// NoArg check
+	require.Equal(t, testutil.FS(cobra.PositionalArgs(cobra.NoArgs)), testutil.FS(queryParamsCmd.Args))
 }

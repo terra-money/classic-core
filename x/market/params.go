@@ -27,7 +27,7 @@ func DefaultParams() Params {
 	return NewParams(
 		sdk.NewDecWithPrec(5, 3),  // 0.5%
 		sdk.NewDecWithPrec(2, 2),  // 2%
-		sdk.NewDecWithPrec(10, 2), // 10%
+		sdk.NewDecWithPrec(10, 1), // 10%
 	)
 }
 

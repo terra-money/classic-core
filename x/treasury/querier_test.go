@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 
@@ -100,23 +99,6 @@ func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Cod
 	require.Nil(t, err2)
 
 	return sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds)
-}
-
-func getQueriedActiveClaims(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) types.ClaimPool {
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, QuerierRoute, QueryActiveClaims}, "/"),
-		Data: []byte{},
-	}
-
-	bz, err := querier(ctx, []string{QueryActiveClaims}, query)
-	require.Nil(t, err)
-	require.NotNil(t, bz)
-
-	var activeClaims types.ClaimPool
-	err2 := cdc.UnmarshalJSON(bz, &activeClaims)
-	require.Nil(t, err2)
-
-	return activeClaims
 }
 
 func getQueriedIssuance(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, denom string) sdk.Int {
