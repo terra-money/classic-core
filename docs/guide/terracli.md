@@ -657,21 +657,82 @@ Refer to the user's manual of your interpreter provided by your
 operating system for information on how to enable shell autocompletion.
 :::
 
-
 ### Oracle
 
-#### Set up a Validator
+#### Submit a price vote 
 
+Validators must submit two price votes; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly. 
 
+To submit a prevote, run: 
+
+```bash
+terracli oracle prevote \
+  --denom <denom> \ 
+  --hash <hash> \
+  --from mykey
+```
+
+Where hash is the leading 20 bytes of the SHA256 hexa string run over the string of the format `salt:price:denom:validator-address`. 
+
+Or to avoid having to create the hash yourself, run: 
+
+```bash
+terracli oracle prevote \
+  --denom <denom> \
+  --price "8888" \ 
+  --salt <salt string>
+  --from mykey
+```
+
+After VotePeriod has expired from the submission of the prevote, the voter must submit the actual price vote. To do so, run: 
+
+```bash
+terracli oracle vote \
+  --denom <denom> \
+  --price "8890"  \
+  --from mykey 
+  --validator <validator-address>
+```
+
+#### Delegate price voting rights 
+
+A voter may also elect to delegate price voting to another signing key. 
+
+```bash
+terracli oracle set-feeder --feeder <feeder-address> --from mykey
+```
+
+where `feeder-address` is the address you want to delegate your voting rights to.
 
 ### Budget
 
-#### Set up a Validator
+#### Submit a budget program application
+
+#### Withdraw a budget program application
+
+#### Vote on a budget program (application and active)
+
+#### Query a program 
+
+#### Query the active program list 
+
+#### Query the candidate program list
+
+#### Query outstanding votes
+
+#### Query parameters
+
+
+
+
+
+
+
 
 
 ### Market
 
-#### Set up a Validator
+#### Swap currencies
 
 
 ### Treasury
