@@ -656,3 +656,90 @@ echo '. terracli_completion' >> ~/.bashrc
 Refer to the user's manual of your interpreter provided by your
 operating system for information on how to enable shell autocompletion.
 :::
+
+
+### Oracle
+
+#### Set up a Validator
+
+
+
+### Budget
+
+#### Set up a Validator
+
+
+### Market
+
+#### Set up a Validator
+
+
+### Treasury
+
+#### Query Current Epoch
+
+Treasury macroeconomic parameters are updated on a periodic basis each Epoch (currently around 1 week). To check the current epoch number (starting from 0):
+
+```bash
+terracli query treasury current-epoch
+```
+
+#### Query Tax Rate 
+
+Terra transactions charge a % fee on each outbound transaction from the sender's wallet. To get the effective stability fee rate for a given epoch, run:
+
+```bash
+terracli query treasury tax-rate <epoch-number>
+```
+
+#### Query Tax Cap 
+
+Stability fees are capped at some fixed amount of SDT to avoid penalizing large transactions. To get the current tax cap denominated in a given denom (micro units), run: 
+
+```bash
+terracli query treasury tax-cap <denom>
+```
+
+#### Query Tax Proceeds 
+
+To query the cumulative tax proceeds of a given epoch, run: 
+
+```bash
+terracli query treasury tax-proceeds <epoch-number> 
+```
+
+#### Query Mining Reward Weight
+
+The mining reward weight is the portion of seigniorage that is burned to reward miners. To query the weight of a given epoch, run: 
+
+```bash
+terracli query treasury reward-weight <epoch-number> 
+```
+
+#### Query Seigniorage Proceeds
+
+The treasury measures the amount of Terra seigniorage accumulated over epochs, denominated in units of `uluna`. To query the seigniorage proceeds of a given epoch, run: 
+
+```bash
+terracli query treasury seigniorage-proceeds <epoch-number> 
+```
+
+#### Query Parameters
+
+Parameters define high level settings for the treasury. You can get the current values by using:
+
+```bash
+terracli query treasury params
+```
+
+With the above command you will get the values for:
+
+- Tax update policy 
+- Reward weight update policy
+- Seigniorage burden target
+- Mining Increment
+- Window short (update parameter)
+- Window long (update parameter)
+- Window probabtion (update parameter)
+
+
