@@ -10,6 +10,9 @@ const (
 	// RouterKey is the msg router key for the market module
 	RouterKey = ModuleName
 
+	// QuerierRoute is the query router key for the oracle module
+	QuerierRoute = ModuleName
+
 	// DefaultParamspace is for the paramspace notation
 	DefaultParamspace = ModuleName
 )

@@ -2,9 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/terra-project/core/x/budget"
-	"github.com/terra-project/core/x/oracle"
 	"net/http"
+
+	"github.com/terra-project/core/x/budget"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -121,7 +121,7 @@ func queryVotesHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.Handl
 func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, oracle.QueryParams), nil)
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", budget.QuerierRoute, budget.QueryParams), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

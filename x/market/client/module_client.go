@@ -20,7 +20,16 @@ func NewModuleClient(storeKey string, cdc *amino.Codec) ModuleClient {
 
 // GetQueryCmd returns the cli query commands for this module
 func (mc ModuleClient) GetQueryCmd() *cobra.Command {
-	return &cobra.Command{Hidden: true}
+	marketQueryCmd := &cobra.Command{
+		Use:   "market",
+		Short: "Market query subcommands",
+	}
+
+	marketQueryCmd.AddCommand(client.GetCommands(
+		cli.GetCmdQuerySwap(mc.cdc),
+	)...)
+
+	return marketQueryCmd
 }
 
 // GetTxCmd returns the transaction commands for this module

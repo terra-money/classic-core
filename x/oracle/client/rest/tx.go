@@ -55,10 +55,16 @@ func submitPrevoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 			return
 		}
 
-		valAddress, err := sdk.ValAddressFromBech32(req.Validator)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		// Default validator is self address
+		var valAddress sdk.ValAddress
+		if len(req.Validator) == 0 {
+			valAddress = sdk.ValAddress(fromAddress)
+		} else {
+			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 		}
 
 		// If hash is not given, then retrieve hash from price and salt
@@ -116,10 +122,16 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 			return
 		}
 
-		valAddress, err := sdk.ValAddressFromBech32(req.Validator)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
+		// Default validator is self address
+		var valAddress sdk.ValAddress
+		if len(req.Validator) == 0 {
+			valAddress = sdk.ValAddress(fromAddress)
+		} else {
+			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 		}
 
 		// create the message
