@@ -15,7 +15,6 @@ const (
 	QueryTaxCap              = "tax-cap"
 	QueryMiningRewardWeight  = "reward-weight"
 	QuerySeigniorageProceeds = "seigniorage-proceeds"
-	QueryActiveClaims        = "active-claims"
 	QueryCurrentEpoch        = "current-epoch"
 	QueryParams              = "params"
 	QueryIssuance            = "issuance"

@@ -19,7 +19,6 @@ var (
 		"tax-cap":              true,
 		"reward-weight":        true,
 		"seigniorage-proceeds": true,
-		"active-claims":        true,
 		"current-epoch":        true,
 		"issuance":             true,
 		"tax-proceeds":         true,

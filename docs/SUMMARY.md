@@ -1,22 +1,32 @@
-# Summary
+# Table of contents
+
+* [Introduction](README.md)
 
 ## Features
 
-* [What is Terra?](concepts/README.md)
-* [Stability](concepts/stability.md)
-* [Adoption](concepts/adoption.md)
-* [Exchange](concepts/terra-exchange.md)
-* [Validator](concepts/validator/overview.md)
-    * [Security](concepts/validator/security.md)
-    * [FAQ](concepts/validator/validator-faq.md)
+* [What is Terra?](features/concepts.md)
+* [Stability](features/stability.md)
+* [Adoption](features/adoption.md)
+* [Exchange](features/terra-exchange.md)
+* [Validator](features/overview/README.md)
+  * [Security](features/overview/security.md)
+  * [FAQ](features/overview/validator-faq.md)
 
-    
 ## Guide
 
-* [Getting started](guide/README.md)
+* [Getting started](guide/guide.md)
 * [Installation](guide/installation.md)
 * [Join a network](guide/join-network.md)
 * [Deploy a testnet](guide/deploy-testnet.md)
 * [Interacting with the network: CLI](guide/terracli.md)
 * [For non-validating users](guide/users.md)
 * [Notes on validators](guide/validators.md)
+
+## Specifications
+
+* [Pay](spec/pay.md)
+* [Mint](spec/mint.md)
+* [Oracle](spec/oracle.md)
+* [Market](spec/market.md)
+* [Treasury](spec/treasury.md)
+* [Budget](spec/budget.md)

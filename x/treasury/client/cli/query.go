@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury"
 
 	"github.com/spf13/cobra"
@@ -131,34 +130,6 @@ $ terracli query treasury issuance --denom="ukrw"
 	cmd.Flags().String(flagDenom, "", "the denom which you want to know the issueance of")
 
 	cmd.MarkFlagRequired(flagDenom)
-
-	return cmd
-}
-
-// GetCmdQueryActiveClaims implements the query active-claims command.
-func GetCmdQueryActiveClaims(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   treasury.QueryActiveClaims,
-		Args:  cobra.NoArgs,
-		Short: "Query claims that have yet to be redeemed by the treasury",
-		Long: strings.TrimSpace(`
-Query the current active claims from oracle votes and program votes . 
-
-$ terracli query treasury active-claims
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryActiveClaims), nil)
-			if err != nil {
-				return err
-			}
-
-			var claims types.ClaimPool
-			cdc.MustUnmarshalJSON(res, &claims)
-			return cliCtx.PrintOutput(claims)
-		},
-	}
 
 	return cmd
 }
