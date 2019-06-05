@@ -33,12 +33,20 @@ def process_raw_genesis(genesis, vesting_info, parsed_args):
 
         # Change wallet address of translink capital
         if account['address'] == 'terra1d4v2k6h7ltc4mpkk9pgtp277yp2flte7296ypq':
-            account['address'] = 'terra1vulcsvfla6sej0p5y0n99w4ldke5tte3rsukyk'
+            account['address'] = 'terra1y9n2ywyu5dahtxar6k4z4jz97ynt8km4catuk6'
 
 
     # Set new chain ID and genesis start time
     genesis['chain_id'] = parsed_args.chain_id.strip()
     genesis['genesis_time'] = parsed_args.start_time
+
+    genesis['app_state']['market']['params']['daily_luna_delta_limit'] = "0.005"
+    genesis['app_state']['market']['params']['max_swap_spread'] = "0.1"
+    genesis['app_state']['market']['params']['min_swap_spread'] = "0.02"
+
+    genesis['app_state']['oracle']['params']['vote_period'] = "12"
+
+    genesis['app_state']['treasury']['params']['reward_policy']['rate_max'] = "0.9"
 
     return genesis
 
