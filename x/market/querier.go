@@ -47,6 +47,10 @@ func querySwap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
+	if askDenom == params.OfferCoin.Denom {
+		return nil, ErrRecursiveSwap(DefaultCodespace, askDenom)
+	}
+
 	swapCoin, spread, err := keeper.GetSwapCoin(ctx, params.OfferCoin, askDenom, false)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Failed to get swapped coin amount", err.Error()))
