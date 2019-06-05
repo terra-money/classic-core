@@ -48,3 +48,5 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 ```
 
 GetIssuance fetches the total issuance count of the coin matching `denom` for the `day`. If the `day` applies to a previous period, fetches the last stored snapshot issuance of the coin. For virgin calls, iterates through the accountkeeper and computes the genesis issuance.
+
+For day 0, seigniorage is not recorded as mint mint starts its issuance memory from day 0. 
