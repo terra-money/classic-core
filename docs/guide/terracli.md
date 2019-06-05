@@ -475,8 +475,6 @@ You can also query all of the delegations to a particular validator:
   terracli query delegations-to <account_terraval>
 ```
 
-
-
 ### Fee Distribution
 
 #### Query distribution parameters
