@@ -22,3 +22,11 @@
 * [For non-validating users](guide/users.md)
 * [Notes on validators](guide/validators.md)
 
+## Specifications
+
+* [Pay](spec/pay.md)
+* [Mint](spec/mint.md)
+* [Oracle](spec/oracle.md)
+* [Market](spec/market.md)
+* [Treasury](spec/treasury.md)
+* [Budget](spec/budget.md)
