@@ -27,6 +27,7 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 
 	marketQueryCmd.AddCommand(client.GetCommands(
 		cli.GetCmdQuerySwap(mc.cdc),
+		cli.GetCmdQueryParams(mc.cdc),
 	)...)
 
 	return marketQueryCmd

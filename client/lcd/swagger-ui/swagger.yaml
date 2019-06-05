@@ -1581,6 +1581,48 @@ paths:
             $ref: "#/definitions/StdTx"
         500:
           description: Internal Server Error
+    get:
+      summary: Query swap result amount
+      tags:
+        - Market
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: offer_coin
+          description: coin expression want to swap
+          type: string
+          required: true
+          x-example: 1000000uluna
+        - in: query
+          name: ask_denom
+          description: Then coin denom want to ask
+          type: string
+          required: true
+          x-example: usdr
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Coin"
+        500:
+          description: Internal Server Error
+  /market/params:
+    get:
+      summary: Get market params
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/MarketParams"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/denoms/{denom}/votes:
     post:
       summary: Generate oracle price vote message containing price and salt for an prevote
@@ -2767,6 +2809,18 @@ definitions:
         example: "1000000"
       deposit:
         $ref: "#/definitions/Coin"
+  MarketParams:
+    type: object
+    properties:
+      daily_luna_delta_limit:
+        type: number
+        example: "0.005"
+      min_swap_spread:
+        type: number
+        example: "0.02"
+      max_swap_spread:
+        type: number
+        example: "0.1"
   OracleParams:
     type: object
     properties:
