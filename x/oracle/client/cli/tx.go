@@ -47,7 +47,7 @@ $ terracli tx oracle prevote --denom "ukrw" --price "8888" --salt "4321" --from 
 where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
+$ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -117,7 +117,7 @@ $ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --valida
 	cmd.Flags().String(flagHash, "", "hex string; hash of next vote; empty == skip prevote")
 	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
 	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
 
@@ -130,14 +130,16 @@ func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 		Use:   "vote",
 		Short: "Submit an oracle vote for the price of Luna",
 		Long: strings.TrimSpace(`
-Submit an oracle tx vote and vote for the price of Luna denominated in the input denom.
+Submit a vote for the price of Luna denominated in the input denom. Companion to a prevote submitted in the previous vote period. 
 
 $ terracli tx oracle vote --denom "ukrw" --price "8890" --salt "1234" --from mykey
 
 where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
 
+"salt" should match the salt used to generate the SHA256 hex in the associated pre-vote. 
+
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1.......
+$ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -199,7 +201,7 @@ $ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator
 	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
 	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
 	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
 	cmd.MarkFlagRequired(flagPrice)
@@ -215,11 +217,12 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 		Short: "Delegate the permission to vote for the oracle to an address",
 		Long: strings.TrimSpace(`
 Delegate the permission to vote for the oracle to an address.
-That way you can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli tx oracle set-feeder --feeder terra1...... --from mykey
+Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
-where "terra1abceuihfu93fud" is the address you want to delegate your voting rights to.
+$ terracli tx oracle set-feeder --feeder terra1... --from mykey
+
+where "terra1..." is the address you want to delegate your voting rights to.
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 

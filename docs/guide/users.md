@@ -49,7 +49,7 @@ If you participated in the fundraiser, you should be in possession of a 24-word 
 
 #### On a ledger device
 
-At the core of a ledger device, there is a mnemonic used to generate accounts on multiple blockchains \(including Terra Core\). Usually, you will create a new mnemonic when you initialize your ledger device. However, it is possible to tell the ledger device to use a mnemonic provided by the user instead. Let us go ahead and see how you can input the mnemonic you obtained during the fundraiser as the seed of your ledger device.
+At the core of a ledger device, there is a mnemonic used to generate accounts on multiple blockchains \(including Terra\). Usually, you will create a new mnemonic when you initialize your ledger device. However, it is possible to tell the ledger device to use a mnemonic provided by the user instead. Let us go ahead and see how you can input the mnemonic you obtained during the fundraiser as the seed of your ledger device.
 
 ::: warning _NOTE: To do this, **it is preferable to use a brand new ledger device.**. Indeed, there can be only one mnemonic per ledger device. If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in_ `Settings`_&gt;_`Device`_&gt;_`Reset All`_. **Please note that this will wipe out the seed currently stored on the device. If you have not properly secured the associated mnemonic, you could lose your funds!!!**_ :::
 
@@ -128,8 +128,6 @@ history -c
 rm ~/.bash_history
 ```
 
-:::
-
 * `<yourKeyName>` is the name of the account. It is a reference to the account number used to derive the key pair from the mnemonic. You will use this name to identify your account when you want to send a transaction.
 * You can add the optional `--account` flag to specify the path \(`0`, `1`, `2`, ...\) you want to use to generate your account. By default, account `0` is generated. 
 
@@ -201,7 +199,7 @@ terracli config chain-id gos-6
 
 ::: tip **Before you can bond luna and withdraw rewards, you need to** [**set up** `terracli`](users.md#setting-up-terracli) :::
 
-`terracli` lets you query all relevant information from the blockchain, like account balances, amount of bonded tokens, outstanding rewards, governance proposals and more. Next is a list of the most useful commands for delegator.
+`terracli` lets you query all relevant information from the blockchain, like account balances, amount of bonded tokens, outstanding rewards, and more. Next is a list of the most useful commands for delegator.
 
 ```bash
 // query account balances and other account-related information

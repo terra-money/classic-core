@@ -8,7 +8,7 @@ Install `go` by following the [official docs](https://golang.org/doc/install).
 
 ::: tip **Go 1.12+ +** is required for Terra Core. :::
 
-Before installing `terrad` and `terracli` binaries, let's add the golang binaries to your `PATH` variable. Open your `.bash_profile` or `.zshrc` and append `$HOME/go/bin` to your PATH variable (i.e. `export PATH=$HOME/bin:$HOME/go/bin`).
+> _NOTE_: Before installing `terrad` and `terracli` binaries, let's add the golang binaries to your `PATH` variable. Open your `.bash_profile` or `.zshrc` and append `$HOME/go/bin` to your PATH variable (i.e. `export PATH=$HOME/bin:$HOME/go/bin`). 
 
 ### Install the binaries
 
@@ -32,7 +32,7 @@ $ terracli version --long
 `terracli` for instance should output something similar to:
 
 ```text
-terra-money: 0.1
+terra-money: 0.2.1
 git commit: 1fba7308fa226e971964cd6baad9527d4b51d9fc
 vendor hash: 1aec7edfad9888a967b3e9063e42f66b28f447e6
 build tags: netgo ledger

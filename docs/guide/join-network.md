@@ -1,6 +1,6 @@
 # Join a network
 
-::: tip Current Testnet See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file. :::
+::: tip See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file. :::
 
 ::: warning **You need to** [**install terra**](installation.md) **before you go further** :::
 
