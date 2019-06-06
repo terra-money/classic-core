@@ -26,9 +26,9 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 ### Network
 
-- Mainnet Columbus-1 is online. [The launch repo](https://github.com/terra-project/launch) contains snapshot of the launch as well as network launch updates. 
+- Mainnet Columbus-2 is online. [The launch repo](https://github.com/terra-project/launch) contains snapshot of the launch as well as network updates. 
 
-- Public testnet Soju-0007 is online. [Our networks repo](https://github.com/terra-project/networks) contains latest configuration files for the testnet. [The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnet. 
+- Public testnet Soju-0009 is online. [Our networks repo](https://github.com/terra-project/networks) contains latest configuration files for the testnet. [The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnet. 
 
 
 ### Ecosystem
