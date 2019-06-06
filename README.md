@@ -35,7 +35,7 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 - Block Explorers
     - [Terra Finder](https://finder.terra.money)
-    - [Figment Hubble](https://hubble.figment.network/terra/chains/columbus-1)
+    - [Figment Hubble](https://hubble.figment.network/terra/chains/columbus-2)
     - [Stake ID by StakingFund](https://terra.stake.id)
     - [Big Dipper by Forbole](https://terra.bigdipper.live/)
 

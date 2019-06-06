@@ -140,10 +140,13 @@ terracli query account <account_terra>
 The following command could be used to send coins from one account to another:
 
 ```bash
-terracli tx send <destination_terra> 10faucetToken \
+terracli tx send \
+  --to <destination_terra> \
+  --coins 10000000uluna \
   --chain-id=<chain_id> \
   --from=<key_name> \
 ```
+where `destination_terra` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
 
 ::: warning Note The `--amount` flag accepts the format `--amount=<value|coin_name>`. :::
 
@@ -165,7 +168,9 @@ terracli query account <account_terra> --block=<block_height>
 You can simulate a transaction without actually broadcasting it by appending the `--dry-run` flag to the command line:
 
 ```bash
-terracli tx send <destination_terraaccaddr> 10faucetToken \
+terracli tx send \
+  --to <destination_terra> \
+  --coins 10000000uluna \
   --chain-id=<chain_id> \
   --from=<key_name> \
   --dry-run
@@ -174,7 +179,9 @@ terracli tx send <destination_terraaccaddr> 10faucetToken \
 Furthermore, you can build a transaction and print its JSON format to STDOUT by appending `--generate-only` to the list of the command line arguments:
 
 ```bash
-terracli tx send <destination_terraaccaddr> 10faucetToken \
+terracli tx send \
+  --to <destination_terraaccaddr> \ 
+  --coins 10000000uluna \
   --chain-id=<chain_id> \
   --from=<key_name> \
   --generate-only > unsignedSendTx.json
@@ -418,7 +425,6 @@ With the above command you will get the values for:
 * Maximum numbers of validators
 * Coin denomination for staking
 
-All these values will be subject to updates though a `governance` process by `ParameterChange` proposals.
 
 #### Query Pool
 
@@ -576,7 +582,7 @@ terracli tx broadcast signedTx.json \
   --chain-id=<chain_id>
 ```
 
-## Shells completion scripts
+### Shells completion scripts
 
 Completion scripts for popular UNIX shell interpreters such as `Bash` and `Zsh` can be generated through the `completion` command, which is available for both `terrad` and `terracli`.
 
@@ -609,7 +615,7 @@ operating system for information on how to enable shell autocompletion.
 
 #### Submit a price vote 
 
-Validators must submit two price votes; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly. 
+Validators must submit two price vote transactions to participate in the oracle; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly. 
 
 To submit a prevote, run: 
 
@@ -628,7 +634,7 @@ Or to avoid having to create the hash yourself, run:
 terracli oracle prevote \
   --denom <denom> \
   --price "8888" \ 
-  --salt <salt string>
+  --salt <salt string> \
   --from mykey
 ```
 
@@ -638,9 +644,11 @@ After VotePeriod has expired from the submission of the prevote, the voter must 
 terracli oracle vote \
   --denom <denom> \
   --price "8890"  \
-  --from mykey 
+  --from mykey \
   --validator <validator-address>
 ```
+
+Given that oracle votes have to be submitted in a feed over short time intervals, prevotes / votes will need to be submitted via some persistent server daemon, and not manually. For more information on how to do this, read [the oracle specs](../spec/oracle.md). 
 
 #### Delegate price voting rights 
 
@@ -650,7 +658,7 @@ A voter may also elect to delegate price voting to another signing key.
 terracli oracle set-feeder --feeder <feeder-address> --from mykey
 ```
 
-where `feeder-address` is the address you want to delegate your voting rights to.
+where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit. 
 
 
 ### Market

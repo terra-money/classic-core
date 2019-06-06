@@ -4,27 +4,27 @@ The Oracle module forms a consensus on the exchange rate of Luna with respect to
 
 ## Overview
 
-The objective of the oracle module is to get accurate exchange rates of Luna with various fiat currencies such that the system can facilitate fair exchanges of Terra stablecoins and Luna. Should the system fail to gain an accurate understanding of Luna, a small set of arbitrageurs could profit at the cost of the system. 
+The objective of the oracle module is to get accurate exchange rates of Luna with various fiat currencies such that the system can facilitate fair exchanges of Terra stablecoins and Luna. Should the system fail to gain an accurate understanding of Luna, a small set of arbitrageurs could profit at the cost of the entire system. 
 
 In order to get fair exchange rates, the oracle operates in the following way: 
 
-- Over a `VotePeriod`, validators submit price feed votes, and the weighted-by-Luna-stake median of the votes is tallied to be the correct price of Luna in the subsequent period. Winners of the ballot, i.e. voters that have managed to vote within a small band around the weighted median, get rewarded by the fees that are collected in Market swap operations. The VotePeriod is kept extremely tight (currently 1 minute) to minimize the risk of price drift. 
+- Let P = {P1, P2, ...} be a time series split up by `params.VotePeriod`, currently 1 minute. In each P, validators must submit two votes: 
+	- A `MsgPricePrevote`, containing the SHA256 hash of the exchange rate of Luna is with respect to a Terra peg. For example, in order to support swaps for Terra currencies pegged to KRW, USD, SDR, three prevotes must be submitted each containing the Luna<>KRW, Luna<>USD, and Luna<>SDR exchange rates. 
+	- A `MsgPriceVote`, containing the salt used to create the hash for the prevote submitted in P-1.  
+- At the end of each P, votes submitted are tallied. 
+	- The submitted salt of each vote is used to verify consistency with the prevote submitted by the validator in P-1. If the validator has not submitted a prevote, or the SHA256 resulting from the salt does not match the hash from the prevote, the vote is dropped.
+	- For each currency, if the total voting power of submitted votes exceeds 50%, a weighted median price of the vote is taken and is record on-chain as the effective exchange rate for Luna w.r.t. said currency for P+1.
+	- Winners of the ballot for P-1, i.e. voters that have managed to vote within a small band around the weighted median, get rewarded by spread fees collected by swap operations during P. For spread rewards, see [this](./market.md#spread-rewards).
+- If an insufficient amount of votes have been received for a currency, below `VoteThreshold`, its exchange rate is deleted from the store, and no swaps can be made with it during P. 
 
-- A spread is charged for transactions involving Luna (2 ~ 10%), and the fees collected here is used to compensate ballot winners. Oracle swap rewards are doled out the end of every `VotePeriod`, and rewards the validator and its delegations in accordance with the logic of the distribution module. 
-
-- In order to minimize the risk of oracle frontrunning (people waiting to see where the price consensus forms and voting to receive the reward at the very end of the  `VotePeriod`), oracle votes are demarcated into two: prevotes and votes. 
 ```
 Period  |  P1 |  P2 |  P3 |  ...    |
 Prevote |  O  |  O  |  O  |  ...    |
         |-----\-----\-----\-----    |
 Vote    |     |  O  |  O  |  ...    |
 ```
-In the prevote stage, a validator should submit the hash of the part of real vote msg to prove the validator is not just copying other validators price vote. In vote phrase, the validator should reveal the real price by submitting `MsgPriceVote` with the salt.
 
-The submission order has to be kept in (vote -> prevote) order. If an prevote comes early, it will replace previous prevote so next vote, which reveals the proof for previous prevote, will be failed.
-
-- If an insufficient amount of votes have been received for a currency, below `VoteThreshold`, its exchange rate is deleted from the store, and no swaps can be made with it. 
-
+Effectively this scheme forces the voter to commit to a firm price submission before knowing the votes of others, and thereby reduces centralization and free-rider risk in the oracle. 
 
 ## Vote procedure
 
@@ -42,9 +42,16 @@ type MsgPricePrevote struct {
 }
 ```
 
-The `MsgPricePrevote` is just the submission of the leading 20 bytes of the SHA256 hex string run over a string containing the metadata of the actual `MsgPriceVote` to follow in the next period. The string is of the format: `salt:price:denom:voter`. 
+The `MsgPricePrevote` is just the submission of the leading 20 bytes of the SHA256 hex string run over a string containing the metadata of the actual `MsgPriceVote` to follow in the next period. The string is of the format: `salt:price:denom:voter`. Note that since in the subsequent `MsgPriceVote` the salt will have to be revealed, the salt used must be regenerated for each prevote submission. 
 
-Effectively this scheme forces the voter to commit to a firm price submission before knowing the votes of others, and thereby reduces centralization and free-rider risk in the oracle. 
+`Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is "usd". 
+
+The price used in the hash must be the open market price of Luna w.r.t. to the currency matching `Denom`. For example, if `Denom` is "usd" and the going price for Luna is 1 USD, then "1" must be used as the price. 
+
+`Feeder` is used if the validator wishes to delegate oracle vote signing to a separate key to de-risk exposing their validator signing key. 
+
+`Validator` is the validator address of the original validator.
+
 
 ### Submit a vote
 
@@ -61,7 +68,7 @@ type MsgPriceVote struct {
 }
 ```
 
-The `MsgPriceVote` contains the actual price vote. the `Salt` parameter must match the salt used to create the prevote, otherwise the voter cannot be rewarded. 
+The `MsgPriceVote` contains the actual price vote. The `Salt` parameter must match the salt used to create the prevote, otherwise the voter cannot be rewarded. 
 
 ## Parameters
 
