@@ -1,3 +1,7 @@
+## 0.2.1
+
+- [\#166](https://github.com/terra-project/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed. 
+
 ## 0.2.0
 
 ### Bug Fixes
