@@ -1,3 +1,6 @@
+## 0.2.1
+* [\#165](https://github.com/terra-project/core/pull/165) Updated final parameter of genesis
+
 ## 0.2.0
 
 ### Bug Fixes
