@@ -26,9 +26,9 @@ func GetCmdQueryPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryPrice,
 		Args:  cobra.NoArgs,
-		Short: "Query the current price of a denom asset",
+		Short: "Query the current Luna exchange rate w.r.t an asset",
 		Long: strings.TrimSpace(`
-Query the current price of a denom asset. You can find the current list of active denoms by running: terracli query oracle active
+Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
 
 $ terracli query oracle price --denom ukrw
 `),
@@ -96,7 +96,7 @@ Query outstanding oracle votes, filtered by denom and voter address.
 
 $ terracli query oracle votes --denom="uusd" --validator="terravaloper..."
 
-returns oracle votes submitted by terravaloper... for denom uusd 
+returns oracle votes submitted by the validator for the denom uusd 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -153,7 +153,7 @@ Query outstanding oracle prevotes, filtered by denom and voter address.
 
 $ terracli query oracle prevotes --denom="uusd" --validator="terravaloper..."
 
-returns oracle prevotes submitted by terravaloper... for denom uusd 
+returns oracle prevotes submitted by the validator for denom uusd 
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -226,11 +226,11 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 func GetCmdQueryFeederDelegation(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   oracle.QueryFeederDelegation,
-		Short: "Query the account the validator's voting right is delegated to",
+		Short: "Query the oracle feeder delegate account",
 		Long: strings.TrimSpace(`
-Query the account the validator's voting right is delegated to.
+Query the account the validator's oracle voting right is delegated to.
 
-$ terracli query oracle feeder --validator terravaloper1ifji3ifj
+$ terracli query oracle feeder --validator terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -261,7 +261,7 @@ $ terracli query oracle feeder --validator terravaloper1ifji3ifj
 		},
 	}
 
-	cmd.Flags().String(flagValidator, "", "validator to get the delegation for")
+	cmd.Flags().String(flagValidator, "", "validator which owns the oracle voting rights")
 
 	cmd.MarkFlagRequired(flagValidator)
 
