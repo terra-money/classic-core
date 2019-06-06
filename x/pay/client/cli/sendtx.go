@@ -87,7 +87,7 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 	cmd.Flags().String(flagTo, "", "Destination address for sending")
 	cmd.Flags().String(flagCoins, "", "Amount of coins (e.g. 1000uluna,100usdr)")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
+	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
 
 	cmd.MarkFlagRequired(client.FlagFrom)
 	cmd.MarkFlagRequired(flagTo)

@@ -668,7 +668,7 @@ where `feeder-address` is the address you want to delegate your voting rights to
 All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run: 
 
 ```bash
-terracli market swap --offer-coin="1000krw" --ask-denom=<denom>
+terracli market swap --offer-coin="1000ukrw" --ask-denom=<denom>
 ```
 
 Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into. 

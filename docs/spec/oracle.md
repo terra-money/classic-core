@@ -44,9 +44,9 @@ type MsgPricePrevote struct {
 
 The `MsgPricePrevote` is just the submission of the leading 20 bytes of the SHA256 hex string run over a string containing the metadata of the actual `MsgPriceVote` to follow in the next period. The string is of the format: `salt:price:denom:voter`. Note that since in the subsequent `MsgPriceVote` the salt will have to be revealed, the salt used must be regenerated for each prevote submission. 
 
-`Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is "usd". 
+`Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is "uusd", which is 10^-6 USD. 
 
-The price used in the hash must be the open market price of Luna w.r.t. to the currency matching `Denom`. For example, if `Denom` is "usd" and the going price for Luna is 1 USD, then "1" must be used as the price. 
+The price used in the hash must be the open market price of `uluna`, or 10^-6 Luna, w.r.t. to the currency matching `Denom`. For example, if `Denom` is "uusd" and the going price for Luna is 1 USD, then "1" must be used as the price. 
 
 `Feeder` is used if the validator wishes to delegate oracle vote signing to a separate key to de-risk exposing their validator signing key. 
 
