@@ -50,6 +50,22 @@ By using the oracle/MsgDelegateFeederPermission a validator can assign the right
 "/staking/parameters" => "/staking/params"
 ```
 
+##### Change request body
+```
+Send request body
+From:
+type SendReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Amount   sdk.Coins    `json:"coins"`
+}
+
+To:
+type SendReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Coins   sdk.Coins    `json:"coins"`
+}
+```
+
 ##### New rest interfaces
 ```
 (GET/POST) "/oracle/denoms/{%s}/votes"
