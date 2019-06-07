@@ -20,9 +20,9 @@ func GetCmdQuerySwap(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "swap",
 		Args:  cobra.NoArgs,
-		Short: "Query the real amount of swap operation",
+		Short: "Query a quote for a swap operation",
 		Long: strings.TrimSpace(`
-Query the real amount of swap operation which a user can receive. 
+Query a quote for how many coins can be received in a swap operation. Note; rates are dynamic and can quickly change.
 
 $ terracli query query swap --ask-denom usdr --offer-coin 5000000uluna
 `),

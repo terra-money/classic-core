@@ -30,7 +30,7 @@ func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Swap the offer-coin to the ask-denom currency at the oracle's effective exchange rate. 
 
-$ terracli market swap --offer-coin="1000krw" --ask-denom="usd"
+$ terracli market swap --offer-coin="1000ukrw" --ask-denom="uusd"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().

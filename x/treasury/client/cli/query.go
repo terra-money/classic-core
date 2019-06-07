@@ -63,7 +63,7 @@ $ terracli query treasury taxrate --epoch=14
 		},
 	}
 
-	cmd.Flags().String(flagEpoch, "", "(optional) a epoch number which you wants to get tax rate of; default is current epoch")
+	cmd.Flags().String(flagEpoch, "", "(optional) an epoch number which you wants to get tax rate of; default is current epoch")
 	return cmd
 }
 
@@ -95,7 +95,7 @@ $ terracli query treasury taxcap --denom="ukrw"
 		},
 	}
 
-	cmd.Flags().String(flagDenom, "", "the denom which you want to know the taxcap of")
+	cmd.Flags().String(flagDenom, "", "the denom for which you want to know the taxcap of")
 
 	cmd.MarkFlagRequired(flagDenom)
 
@@ -187,7 +187,7 @@ $ terracli query treasury reward-weight --epoch=14
 		},
 	}
 
-	cmd.Flags().String(flagEpoch, "", "(optional) a epoch number which you wants to get reward weight of; default is current epoch")
+	cmd.Flags().String(flagEpoch, "", "(optional) an epoch number which you wants to get reward weight of; default is current epoch")
 
 	return cmd
 }
@@ -234,7 +234,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 		},
 	}
 
-	cmd.Flags().String(flagEpoch, "", "(optional) a epoch number which you wants to get tax proceeds of; default is current epoch")
+	cmd.Flags().String(flagEpoch, "", "(optional) an epoch number which you wants to get tax proceeds of; default is current epoch")
 
 	return cmd
 }
@@ -246,7 +246,7 @@ func GetCmdQuerySeigniorageProceeds(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Query the seigniorage proceeds for the epoch",
 		Long: strings.TrimSpace(`
-Query the seigniorage proceeds corresponding to the given epoch. The return value will be in units of Luna coins. 
+Query the seigniorage proceeds corresponding to the given epoch. The return value will be in units of 'uluna' coins. 
 
 $ terracli query treasury seigniorage-proceeds --epoch=14
 `),
@@ -281,7 +281,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 		},
 	}
 
-	cmd.Flags().String(flagEpoch, "", "(optional) a epoch number which you wants to get seigniorage proceeds of; default is current epoch")
+	cmd.Flags().String(flagEpoch, "", "(optional) an epoch number which you wants to get seigniorage proceeds of; default is current epoch")
 
 	return cmd
 }
@@ -293,7 +293,7 @@ func GetCmdQueryCurrentEpoch(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Query the current epoch number",
 		Long: strings.TrimSpace(`
-Query the current epoch.
+Query the current epoch, starting at 0.
 
 $ terracli query treasury current-epoch
 `),

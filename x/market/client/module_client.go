@@ -22,7 +22,7 @@ func NewModuleClient(storeKey string, cdc *amino.Codec) ModuleClient {
 func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	marketQueryCmd := &cobra.Command{
 		Use:   "market",
-		Short: "Market query subcommands",
+		Short: "Querying commands for the market module",
 	}
 
 	marketQueryCmd.AddCommand(client.GetCommands(

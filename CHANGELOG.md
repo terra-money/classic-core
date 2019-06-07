@@ -1,3 +1,7 @@
+## 0.2.1
+
+- [\#166](https://github.com/terra-project/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed. 
+
 ## 0.2.0
 
 ### Bug Fixes
@@ -48,6 +52,22 @@ By using the oracle/MsgDelegateFeederPermission a validator can assign the right
 ```
 "/distribution/parameters" => "/distribution/params"
 "/staking/parameters" => "/staking/params"
+```
+
+##### Change request body
+```
+Send request body
+From:
+type SendReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Amount   sdk.Coins    `json:"coins"`
+}
+
+To:
+type SendReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Coins   sdk.Coins    `json:"coins"`
+}
 ```
 
 ##### New rest interfaces

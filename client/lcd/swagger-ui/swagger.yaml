@@ -376,7 +376,7 @@ paths:
             properties:
               base_req:
                 $ref: "#/definitions/BaseReq"
-              amount:
+              coins:
                 type: array
                 items:
                   $ref: "#/definitions/Coin"
