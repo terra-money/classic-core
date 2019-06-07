@@ -24,9 +24,10 @@
 
 ## Specifications
 
-* [Pay](spec/pay.md)
-* [Mint](spec/mint.md)
-* [Oracle](spec/oracle.md)
-* [Market](spec/market.md)
-* [Treasury](spec/treasury.md)
-* [Budget](spec/budget.md)
+* [Pay](specifications/pay.md)
+* [Mint](specifications/mint.md)
+* [Oracle](specifications/oracle.md)
+* [Market](specifications/market.md)
+* [Treasury](specifications/treasury.md)
+* [Budget](specifications/budget.md)
+

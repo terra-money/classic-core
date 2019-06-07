@@ -124,7 +124,7 @@ Validators, and by association delegators, receive block provisions, block rewar
 
 ### Can a validator run away with its delegators' Luna?
 
-By delegating to a validator, a user delegates staking power. The more staking power a validator has, the more weight it has in the consensus and  processes. This does not mean that the validator has custody of its delegators' Luna. _By no means can a validator run away with its delegator's funds_.
+By delegating to a validator, a user delegates staking power. The more staking power a validator has, the more weight it has in the consensus and processes. This does not mean that the validator has custody of its delegators' Luna. _By no means can a validator run away with its delegator's funds_.
 
 Even though delegated funds cannot be stolen by their validators, delegators are still liable if their validators misbehave. In such case, each delegators' stake will be partially slashed in proportion to their relative stake.
 
@@ -144,7 +144,7 @@ Each member of a validator's staking pool earns different types of revenue:
 
 This total revenue is divided among validators' staking pools according to each validator's weight. Then, within each validator's staking pool the revenue is divided among delegators in proportion to each delegator's stake. Note that a commission on delegators' revenue is applied by the validator before it is distributed.
 
-Besides revenue, there are scarcity incentives: 
+Besides revenue, there are scarcity incentives:
 
 * **Seigniorage rewards**: To stabilize the value of Luna, the protocol commits to using some variable portion of Terra seigniorage \(see the market and treasury modules for how this functions\) to buy back and burn Luna tokens. This creates scarcity for Luna tokens and indirectly rewards validators. 
 
