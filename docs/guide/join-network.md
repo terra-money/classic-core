@@ -62,7 +62,7 @@ Now it is time to upgrade the software. Go to the project directory, and run:
 
 ```bash
 git fetch --all && git checkout master
-make
+make update_tools install
 ```
 
 ::: tip _NOTE_: If you have issues at this step, please check that you have the latest stable version of GO installed. :::
@@ -79,7 +79,7 @@ Fetch the testnet's `genesis.json` file into `terrad`'s config directory.
 
 ```bash
 mkdir -p $HOME/.terrad/config
-curl https://raw.githubusercontent.com/terra-project/networks/master/soju-0009/genesis.json > $HOME/.terrad/config/genesis.json
+curl https://raw.githubusercontent.com/terra-project/launch/master/genesis.json > $HOME/.terrad/config/genesis.json
 ```
 
 Note we use the `latest` directory in the [networks repo](https://github.com/terra-project/networks) which contains details for the latest testnet. If you are connecting to a different testnet, ensure you get the right files.
@@ -92,7 +92,7 @@ terrad start
 
 ### Add Seed Nodes
 
-Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.terrad/config/config.toml`. The `testnets` repo contains links to the seed nodes for each testnet. If you are looking to join the running testnet please [check the repository for details](https://github.com/terra-project/networks/blob/master/README.md#persistent-peers) on which nodes to use.
+Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.terrad/config/config.toml`. The `testnets` repo contains links to the seed nodes for each testnet. If you are looking to join the running testnet please [check the repository for details](https://github.com/terra-project/networks) on which nodes to use.
 
 If those seeds aren't working, you can find more seeds and persistent peers on the [Terra Station](https://station.terra.money). Open the the `Full Nodes` pane and select nodes that do not have private \(`10.x.x.x`\) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
 
