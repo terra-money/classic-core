@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/terra-project/core/x/treasury"
@@ -16,6 +17,7 @@ import (
 
 const (
 	flagDenom = "denom"
+	flagDay   = "day"
 	flagEpoch = "epoch"
 )
 
@@ -109,14 +111,22 @@ func GetCmdQueryIssuance(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current issuance of a denom asset. 
 
-$ terracli query treasury issuance --denom="ukrw"
+$ terracli query treasury issuance --denom="ukrw --day 0"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
+			dayStr := viper.GetString(flagDay)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
+			if len(dayStr) != 0 {
+				_, err := strconv.ParseInt(dayStr, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom, dayStr), nil)
 			if err != nil {
 				return err
 			}
@@ -128,6 +138,7 @@ $ terracli query treasury issuance --denom="ukrw"
 	}
 
 	cmd.Flags().String(flagDenom, "", "the denom which you want to know the issueance of")
+	cmd.Flags().String(flagDay, "", "the # of date after genesis time, a user want to query")
 
 	cmd.MarkFlagRequired(flagDenom)
 

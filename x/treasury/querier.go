@@ -1,6 +1,8 @@
 package treasury
 
 import (
+	"strconv"
+
 	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -77,9 +79,19 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 // nolint: unparam
 func queryIssuance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
+	var dayStr string
+	if len(path) == 2 {
+		dayStr = path[1]
+	}
 
-	curDay := ctx.BlockHeight() / util.BlocksPerDay
-	issuance := keeper.mtk.GetIssuance(ctx, denom, sdk.NewInt(curDay))
+	var day int64
+	if len(dayStr) == 0 {
+		day = ctx.BlockHeight() / util.BlocksPerDay
+	} else {
+		day, _ = strconv.ParseInt(dayStr, 10, 64)
+	}
+
+	issuance := keeper.mtk.GetIssuance(ctx, denom, sdk.NewInt(day))
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

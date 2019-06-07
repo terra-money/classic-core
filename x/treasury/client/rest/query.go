@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/terra-project/core/x/treasury"
 
@@ -21,6 +22,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Co
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryMiningRewardWeight), queryMiningWeightHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryMiningRewardWeight, RestDenom), queryMiningWeightHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryIssuance, RestDenom), queryIssuanceHandlerFunction(cdc, cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}/{%s}", treasury.QueryIssuance, RestDenom, RestDay), queryIssuanceHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryTaxProceeds), queryTaxProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryTaxProceeds, RestEpoch), queryTaxProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QuerySeigniorageProceeds), querySgProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
@@ -117,8 +119,17 @@ func queryIssuanceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
+		dayStr := vars[RestDay]
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
+		if len(dayStr) != 0 {
+			_, err := strconv.ParseInt(dayStr, 10, 64)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
+		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom, dayStr), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

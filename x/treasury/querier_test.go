@@ -111,6 +111,10 @@ func getQueriedIssuance(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
+	bz, err = querier(ctx, []string{QueryIssuance, denom, "0"}, query)
+	require.Nil(t, err)
+	require.NotNil(t, bz)
+
 	var issuance sdk.Int
 	err2 := cdc.UnmarshalJSON(bz, &issuance)
 	require.Nil(t, err2)

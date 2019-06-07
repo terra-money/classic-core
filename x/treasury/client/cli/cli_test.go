@@ -58,6 +58,9 @@ func TestQueryIssuance(t *testing.T) {
 	denomFlag := queryIssuance.Flag(flagDenom)
 	require.NotNil(t, denomFlag)
 	require.Equal(t, []string{"true"}, denomFlag.Annotations[cobra.BashCompOneRequiredFlag])
+
+	dayFlag := queryIssuance.Flag(flagDenom)
+	require.NotNil(t, dayFlag)
 }
 
 func TestQueryMiningRewardWeight(t *testing.T) {
