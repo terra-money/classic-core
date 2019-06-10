@@ -491,7 +491,7 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              delegation:
+              amount:
                 $ref: "#/definitions/Coin"
       tags:
         - Staking
@@ -579,9 +579,8 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              shares:
-                type: string
-                example: "100"
+              amount:
+                $ref: "#/definitions/Coin"
       tags:
         - Staking
       consumes:
@@ -687,9 +686,8 @@ paths:
                 $ref: "#/definitions/ValidatorAddress"
               validator_dst_address:
                 $ref: "#/definitions/ValidatorAddress"
-              shares:
-                type: string
-                example: "100"
+              amount:
+                $ref: "#/definitions/Coin"
       tags:
         - Staking
       consumes:
@@ -1937,7 +1935,7 @@ paths:
           description: Internal Server Error
   /treasury/issuance/{denom}:
     get:
-      summary: Get total issuance count of denom
+      summary: Get total issuance count of denom at current height
       tags:
         - Treasury
       produces:
@@ -1946,6 +1944,32 @@ paths:
         - in: path
           name: denom
           description: Denom to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: integer
+            example: "500"
+        500:
+          description: Internal Server Error
+  /treasury/issuance/{denom}/{day}:
+    get:
+      summary: Get total issuance count of denom at specific day
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: Denom to get
+          required: true
+          type: string
+        - in: path
+          name: day
+          description: the \# of date after genesis time, a user want to query
           required: true
           type: string
       responses:
