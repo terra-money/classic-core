@@ -115,8 +115,8 @@ $ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --valida
 	cmd.Flags().String(flagDenom, "", "denominating currency")
 	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
 	cmd.Flags().String(flagHash, "", "hex string; hash of next vote; empty == skip prevote")
-	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
-	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
+	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absence of hash")
+	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
@@ -199,8 +199,8 @@ $ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator
 
 	cmd.Flags().String(flagDenom, "", "denominating currency")
 	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
-	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash")
-	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash")
+	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absence of hash")
+	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash")
 	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
 
 	cmd.MarkFlagRequired(flagDenom)
