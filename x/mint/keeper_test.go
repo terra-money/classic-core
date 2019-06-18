@@ -1,6 +1,7 @@
 package mint
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 	"time"
@@ -236,7 +237,7 @@ func TestKeeperMintStress(t *testing.T) {
 		// last day of epoch
 		if (day+1)*util.BlocksPerDay%util.BlocksPerEpoch == 0 {
 			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
-			require.Equal(t, sdk.NewInt(epochDelta), seigniorage)
+			require.Equal(t, int64(math.Max(float64(epochDelta), 0)), seigniorage.Int64())
 			epochDelta = 0
 		}
 	}

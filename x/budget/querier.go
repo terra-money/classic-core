@@ -2,6 +2,7 @@ package budget
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -66,6 +67,16 @@ type QueryVotesParams struct {
 	ProgramID uint64
 }
 
+// JSON response format
+type QueryVotesResponse struct {
+	Votes Votes `json:"votes"`
+}
+
+func (r QueryVotesResponse) String() (out string) {
+	out = r.Votes.String()
+	return strings.TrimSpace(out)
+}
+
 // creates a new instance of QueryVoteParams
 func NewQueryVotesParams(voter sdk.AccAddress, programID uint64) QueryVotesParams {
 	return QueryVotesParams{
@@ -108,12 +119,22 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 
 	keeper.IterateVotesWithPrefix(ctx, prefix, handler)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryVotesResponse{Votes: filteredVotes})
 	if err != nil {
 		panic("could not marshal result to JSON")
 	}
 
 	return bz, nil
+}
+
+// JSON response format
+type QueryActiveListResponse struct {
+	Actives Programs `json:"actives"`
+}
+
+func (r QueryActiveListResponse) String() (out string) {
+	out = r.Actives.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -125,12 +146,22 @@ func queryActiveList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 		return false
 	})
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryActiveListResponse{Actives: programs})
 	if err != nil {
 		panic("could not marshal result to JSON")
 	}
 
 	return bz, nil
+}
+
+// JSON response format
+type QueryCandidateListResponse struct {
+	Candidates Programs `json:"candidates"`
+}
+
+func (r QueryCandidateListResponse) String() (out string) {
+	out = r.Candidates.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -147,7 +178,7 @@ func queryCandidateList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 		return false
 	})
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, programs)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryCandidateListResponse{Candidates: programs})
 	if err != nil {
 		panic("could not marshal result to JSON")
 	}

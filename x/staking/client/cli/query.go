@@ -131,7 +131,7 @@ func GetCmdQueryValidatorRedelegations(storeKey string, cdc *codec.Codec) *cobra
 		Short: "Query all outgoing redelegatations from a validator",
 		Long: strings.TrimSpace(`Query delegations that are redelegating _from_ a validator:
 
-$ terrali query staking redelegations-from --validator cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
+$ terrali query staking redelegations-from --validator terravaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
 `),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -446,7 +446,7 @@ func GetCmdQueryRedelegations(storeName string, cdc *codec.Codec) *cobra.Command
 		Short: "Query all redelegations records for one delegator",
 		Long: strings.TrimSpace(`Query all redelegation records for an individual delegator:
 
-$ terracli query staking redelegation --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9ld75ru9p
+$ terracli query staking redelegations --delegator terra1gghjut3ccd8ay0zduzj64hwre2fxs9ld75ru9p
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

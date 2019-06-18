@@ -45,7 +45,10 @@ func queryTaxRateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) ht
 				return
 			}
 
-			cdc.MustUnmarshalJSON(res, &epoch)
+			var epochResponse treasury.QueryCurrentEpochResponse
+			cdc.MustUnmarshalJSON(res, &epochResponse)
+
+			epoch = epochResponse.CurrentEpoch
 		} else {
 			var ok bool
 			epoch, ok = sdk.NewIntFromString(epochStr)
@@ -94,7 +97,10 @@ func queryMiningWeightHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContex
 				return
 			}
 
-			cdc.MustUnmarshalJSON(res, &epoch)
+			var epochResponse treasury.QueryCurrentEpochResponse
+			cdc.MustUnmarshalJSON(res, &epochResponse)
+
+			epoch = epochResponse.CurrentEpoch
 		} else {
 			var ok bool
 			epoch, ok = sdk.NewIntFromString(epochStr)
@@ -152,7 +158,10 @@ func queryTaxProceedsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext
 				return
 			}
 
-			cdc.MustUnmarshalJSON(res, &epoch)
+			var epochResponse treasury.QueryCurrentEpochResponse
+			cdc.MustUnmarshalJSON(res, &epochResponse)
+
+			epoch = epochResponse.CurrentEpoch
 		} else {
 			var ok bool
 			epoch, ok = sdk.NewIntFromString(epochStr)
@@ -186,7 +195,10 @@ func querySgProceedsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext)
 				return
 			}
 
-			cdc.MustUnmarshalJSON(res, &epoch)
+			var epochResponse treasury.QueryCurrentEpochResponse
+			cdc.MustUnmarshalJSON(res, &epochResponse)
+
+			epoch = epochResponse.CurrentEpoch
 		} else {
 			var ok bool
 			epoch, ok = sdk.NewIntFromString(epochStr)
