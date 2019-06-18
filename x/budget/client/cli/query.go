@@ -80,7 +80,7 @@ func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			var actives budget.Programs
+			var actives budget.QueryActiveListResponse
 			cdc.MustUnmarshalJSON(res, &actives)
 
 			return cliCtx.PrintOutput(actives)
@@ -104,7 +104,7 @@ func GetCmdQueryCandidates(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			var candidates budget.Programs
+			var candidates budget.QueryCandidateListResponse
 			cdc.MustUnmarshalJSON(res, &candidates)
 
 			return cliCtx.PrintOutput(candidates)
@@ -162,7 +162,7 @@ $ terracli query budget votes --program-id 1 --voter terra1nk5lsuvy0rcfjcdr8au8z
 				return err
 			}
 
-			var matchingVotes budget.Votes
+			var matchingVotes budget.QueryVotesResponse
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
 			return cliCtx.PrintOutput(matchingVotes)

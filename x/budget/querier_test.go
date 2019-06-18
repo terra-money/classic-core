@@ -41,11 +41,11 @@ func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var votes Votes
-	err2 := cdc.UnmarshalJSON(bz, &votes)
+	var response QueryVotesResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return votes
+	return response.Votes
 }
 
 func getQueriedActiveList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Programs {
@@ -58,11 +58,11 @@ func getQueriedActiveList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, queri
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var activeList Programs
-	err2 := cdc.UnmarshalJSON(bz, &activeList)
+	var response QueryActiveListResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return activeList
+	return response.Actives
 }
 
 func getQueriedCandidateList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Programs {
@@ -75,11 +75,11 @@ func getQueriedCandidateList(t *testing.T, ctx sdk.Context, cdc *codec.Codec, qu
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var candidateList Programs
-	err2 := cdc.UnmarshalJSON(bz, &candidateList)
+	var response QueryCandidateListResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return candidateList
+	return response.Candidates
 }
 
 func getQueriedParams(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Params {

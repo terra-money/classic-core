@@ -26,11 +26,11 @@ func getQueriedTaxRate(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier 
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var taxRate sdk.Dec
-	err2 := cdc.UnmarshalJSON(bz, &taxRate)
+	var reseponse QueryTaxRateResponse
+	err2 := cdc.UnmarshalJSON(bz, &reseponse)
 	require.Nil(t, err2)
 
-	return taxRate
+	return reseponse.TaxRate
 }
 
 func getQueriedTaxCap(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, denom string) sdk.Int {
@@ -43,11 +43,11 @@ func getQueriedTaxCap(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var taxCap sdk.Int
-	err2 := cdc.UnmarshalJSON(bz, &taxCap)
+	var response QueryTaxCapResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return taxCap
+	return response.TaxCap
 }
 
 func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch sdk.Int) sdk.Dec {
@@ -60,11 +60,11 @@ func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.Codec, que
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var rewardWeight sdk.Dec
-	err2 := cdc.UnmarshalJSON(bz, &rewardWeight)
+	var response QueryMiningRewardWeightResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return rewardWeight
+	return response.RewardWeight
 }
 
 func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch sdk.Int) sdk.Coins {
@@ -77,11 +77,11 @@ func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, quer
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var taxProceeds sdk.Coins
-	err2 := cdc.UnmarshalJSON(bz, &taxProceeds)
+	var response QueryTaxProceedsResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return taxProceeds
+	return response.TaxProceeds
 }
 
 func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch sdk.Int) sdk.Coin {
@@ -94,11 +94,11 @@ func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Cod
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var seigniorageProceeds sdk.Int
-	err2 := cdc.UnmarshalJSON(bz, &seigniorageProceeds)
+	var response QuerySeigniorageProceedsResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds)
+	return sdk.NewCoin(assets.MicroLunaDenom, response.SeigniorageProceeds)
 }
 
 func getQueriedIssuance(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, denom string) sdk.Int {
@@ -115,11 +115,11 @@ func getQueriedIssuance(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var issuance sdk.Int
-	err2 := cdc.UnmarshalJSON(bz, &issuance)
+	var response QueryIssuanceResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return issuance
+	return response.Issuance
 }
 
 func getQueriedCurrentEpoch(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) sdk.Int {
@@ -132,11 +132,11 @@ func getQueriedCurrentEpoch(t *testing.T, ctx sdk.Context, cdc *codec.Codec, que
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var curEpoch sdk.Int
-	err2 := cdc.UnmarshalJSON(bz, &curEpoch)
+	var response QueryCurrentEpochResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
-	return curEpoch
+	return response.CurrentEpoch
 }
 
 func getQueriedParams(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) Params {
