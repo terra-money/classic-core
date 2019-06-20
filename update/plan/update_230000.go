@@ -169,11 +169,9 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 1, 0).Unix(), genesisTime.AddDate(0, 2, 0).Unix(), sdk.NewDecWithPrec(10, 2)),
 		types.NewLazySchedule(
-			genesisTime.AddDate(0, 2, 0).Unix(), genesisTime.AddDate(0, 11, 0).Unix(), sdk.NewDecWithPrec(27, 2)),
+			genesisTime.AddDate(0, 2, 0).Unix(), genesisTime.AddDate(0, 12, 0).Unix(), sdk.NewDecWithPrec(27, 2)),
 		types.NewLazySchedule(
-			genesisTime.AddDate(0, 11, 0).Unix(), genesisTime.AddDate(0, 13, 0).Unix(), sdk.NewDecWithPrec(8, 2)),
-		types.NewLazySchedule(
-			genesisTime.AddDate(0, 13, 0).Unix(), genesisTime.AddDate(0, 17, 0).Unix(), sdk.NewDecWithPrec(40, 2)),
+			genesisTime.AddDate(0, 12, 0).Unix(), genesisTime.AddDate(0, 17, 0).Unix(), sdk.NewDecWithPrec(48, 2)),
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 17, 0).Unix(), genesisTime.AddDate(0, 18, 0).Unix(), sdk.NewDecWithPrec(15, 2)),
 	)
