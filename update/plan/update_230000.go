@@ -194,12 +194,12 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 	ratio := sdk.OneDec()
 
 	fmt.Println(gvacc.GetAddress().String())
-	// strict preseed account check
+	// strict seed account check
 	if gvacc.GetAddress().String() == "terra1y9n2ywyu5dahtxar6k4z4jz97ynt8km4catuk6" {
 		ratio = sdk.NewDecWithPrec(467, 3)
 
 		if len(vestingSchedule.Schedules) != 5 {
-			panic("Invalid Preseed Account")
+			panic("Invalid Seed Account")
 		}
 
 		for _, s := range vestingSchedule.Schedules {
@@ -214,12 +214,12 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 			} else if s.GetCliff() == 1603519200 && s.GetRatio().Equal(sdk.NewDecWithPrec(533, 3)) {
 				continue
 			} else {
-				panic("Invalid Pressed Account")
+				panic("Invalid Seed Account")
 			}
 		}
 	} else {
 		if len(vestingSchedule.Schedules) != 4 {
-			panic("Invalid Preseed Account")
+			panic("Invalid Seed Account")
 		}
 
 		for _, s := range vestingSchedule.Schedules {
@@ -232,7 +232,7 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 			} else if s.GetCliff() == 1582524000 && s.GetRatio().Equal(sdk.NewDecWithPrec(70, 2)) {
 				continue
 			} else {
-				panic("Invalid Pressed Account")
+				panic("Invalid Seed Account")
 			}
 		}
 	}
@@ -246,9 +246,7 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 1, 0).Unix(), genesisTime.AddDate(0, 2, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(10, 2))),
 		types.NewLazySchedule(
-			genesisTime.AddDate(0, 2, 0).Unix(), genesisTime.AddDate(0, 4, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(6, 2))),
-		types.NewLazySchedule(
-			genesisTime.AddDate(0, 4, 0).Unix(), genesisTime.AddDate(0, 10, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(24, 2))),
+			genesisTime.AddDate(0, 2, 0).Unix(), genesisTime.AddDate(0, 10, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(30, 2))),
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 10, 0).Unix(), genesisTime.AddDate(0, 13, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(60, 2))),
 	)

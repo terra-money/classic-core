@@ -294,21 +294,17 @@ func TestSeedAccountUpdate(t *testing.T) {
 		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(10, 2)), lazySchedule[0].GetRatio())
 
 		require.Equal(t, genesisTime.AddDate(0, 2, 0).Unix(), lazySchedule[1].GetStartTime())
-		require.Equal(t, genesisTime.AddDate(0, 4, 0).Unix(), lazySchedule[1].GetEndTime())
-		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(6, 2)), lazySchedule[1].GetRatio())
+		require.Equal(t, genesisTime.AddDate(0, 10, 0).Unix(), lazySchedule[1].GetEndTime())
+		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(30, 2)), lazySchedule[1].GetRatio())
 
-		require.Equal(t, genesisTime.AddDate(0, 4, 0).Unix(), lazySchedule[2].GetStartTime())
-		require.Equal(t, genesisTime.AddDate(0, 10, 0).Unix(), lazySchedule[2].GetEndTime())
-		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(24, 2)), lazySchedule[2].GetRatio())
-
-		require.Equal(t, genesisTime.AddDate(0, 10, 0).Unix(), lazySchedule[3].GetStartTime())
-		require.Equal(t, genesisTime.AddDate(0, 13, 0).Unix(), lazySchedule[3].GetEndTime())
-		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(60, 2)), lazySchedule[3].GetRatio())
+		require.Equal(t, genesisTime.AddDate(0, 10, 0).Unix(), lazySchedule[2].GetStartTime())
+		require.Equal(t, genesisTime.AddDate(0, 13, 0).Unix(), lazySchedule[2].GetEndTime())
+		require.Equal(t, ratio.Mul(sdk.NewDecWithPrec(60, 2)), lazySchedule[2].GetRatio())
 
 		if !ratio.Equal(sdk.OneDec()) {
-			require.Equal(t, genesisTime.AddDate(0, 18, 0).Unix(), lazySchedule[4].GetStartTime())
-			require.Equal(t, genesisTime.AddDate(0, 19, 0).Unix(), lazySchedule[4].GetEndTime())
-			require.Equal(t, sdk.OneDec().Sub(ratio), lazySchedule[4].GetRatio())
+			require.Equal(t, genesisTime.AddDate(0, 18, 0).Unix(), lazySchedule[3].GetStartTime())
+			require.Equal(t, genesisTime.AddDate(0, 19, 0).Unix(), lazySchedule[3].GetEndTime())
+			require.Equal(t, sdk.OneDec().Sub(ratio), lazySchedule[3].GetRatio())
 		}
 
 		require.True(t, lazyVestingSchedules[0].IsValid())
