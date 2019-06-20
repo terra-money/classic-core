@@ -14,7 +14,11 @@ func EndBlocker(
 	accountKeeper auth.AccountKeeper,
 	oracleKeeper oracle.Keeper) (resTags sdk.Tags) {
 
-	plan.Update230000(ctx, accountKeeper, oracleKeeper)
+	updated := plan.Update230000(ctx, accountKeeper, oracleKeeper)
+
+	if updated {
+		resTags.AppendTag(plan.TagUpdate230000, "updated")
+	}
 
 	return
 }

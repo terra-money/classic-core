@@ -28,6 +28,9 @@ var (
 		"terra1zjkr4t3dglt8mzykhtvrq5wltapstlmpdly87u",
 		"terra1y4umfuqfg76t8mfcff6zzx7elvy93jtp4xcdvw",
 	}
+
+	// TagUpdate230000 is tag key for update 230000
+	TagUpdate230000 = "update_230000"
 )
 
 const (
@@ -38,11 +41,11 @@ const (
 )
 
 // Update230000 update vesting schedule and oracle param
-func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper oracle.Keeper) {
+func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper oracle.Keeper) bool {
 
 	// check update height
 	if ctx.BlockHeight() != 230000 {
-		return
+		return false
 	}
 
 	// update vesting schedule
@@ -130,6 +133,8 @@ func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper or
 	oracleParams := oracleKeeper.GetParams(ctx)
 	oracleParams.OracleRewardBand = sdk.NewDecWithPrec(2, 2) // 2%
 	oracleKeeper.SetParams(ctx, oracleParams)
+
+	return true
 }
 
 // preseed account does not have any other schedules
@@ -187,7 +192,7 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSchedule {
 	vestingSchedules := gvacc.GetVestingSchedules()
 	if len(vestingSchedules) != 1 || vestingSchedules[0].GetDenom() != assets.MicroLunaDenom {
-		panic("Invalid Preseed Account")
+		panic("Invalid Seed Account")
 	}
 
 	vestingSchedule := vestingSchedules[0]
