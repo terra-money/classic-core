@@ -14,6 +14,7 @@ import (
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/update"
 
 	"github.com/terra-project/core/types/assets"
 
@@ -334,6 +335,9 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
+
+	updateTags := update.EndBlocker(ctx, app.accountKeeper, app.oracleKeeper)
+	tags = append(tags, updateTags...)
 
 	if app.assertInvariantsBlockly {
 		app.assertRuntimeInvariants()

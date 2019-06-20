@@ -93,12 +93,13 @@ type GenesisAccount struct {
 	AccountNumber uint64         `json:"account_number"`
 
 	// vesting account fields
-	OriginalVesting  sdk.Coins               `json:"original_vesting"`  // total vesting coins upon initialization
-	DelegatedFree    sdk.Coins               `json:"delegated_free"`    // delegated vested coins at time of delegation
-	DelegatedVesting sdk.Coins               `json:"delegated_vesting"` // delegated vesting coins at time of delegation
-	StartTime        int64                   `json:"start_time"`        // vesting start time (UNIX Epoch time)
-	EndTime          int64                   `json:"end_time"`          // vesting end time (UNIX Epoch time)
-	VestingSchedules []types.VestingSchedule `json:"vesting_schedules"` // vesting end time (UNIX Epoch time)
+	OriginalVesting      sdk.Coins                   `json:"original_vesting"`       // total vesting coins upon initialization
+	DelegatedFree        sdk.Coins                   `json:"delegated_free"`         // delegated vested coins at time of delegation
+	DelegatedVesting     sdk.Coins                   `json:"delegated_vesting"`      // delegated vesting coins at time of delegation
+	StartTime            int64                       `json:"start_time"`             // vesting start time (UNIX Epoch time)
+	EndTime              int64                       `json:"end_time"`               // vesting end time (UNIX Epoch time)
+	VestingSchedules     []types.VestingSchedule     `json:"vesting_schedules"`      // vesting schedule (clif: UNIX Epoch time, ratio: dec)
+	LazyVestingSchedules []types.LazyVestingSchedule `json:"lazy_vesting_schedules"` // lazy vesting schedule (start_time&end_time: UNIX Epoch time, ratio: dec)
 }
 
 // NewGenesisAccount returns new genesis account
@@ -122,14 +123,20 @@ func NewGenesisAccountI(acc auth.Account) GenesisAccount {
 
 	vacc, ok := acc.(auth.VestingAccount)
 	if ok {
+		gacc.OriginalVesting = vacc.GetOriginalVesting()
+		gacc.DelegatedFree = vacc.GetDelegatedFree()
+		gacc.DelegatedVesting = vacc.GetDelegatedVesting()
+		gacc.StartTime = vacc.GetStartTime()
+		gacc.EndTime = vacc.GetEndTime()
+
 		gvacc, ok := vacc.(types.GradedVestingAccount)
 		if ok {
-			gacc.OriginalVesting = gvacc.GetOriginalVesting()
-			gacc.DelegatedFree = gvacc.GetDelegatedFree()
-			gacc.DelegatedVesting = gvacc.GetDelegatedVesting()
-			gacc.StartTime = gvacc.GetStartTime()
-			gacc.EndTime = gvacc.GetEndTime()
 			gacc.VestingSchedules = gvacc.GetVestingSchedules()
+		}
+
+		lgvacc, ok := vacc.(types.LazyGradedVestingAccount)
+		if ok {
+			gacc.LazyVestingSchedules = lgvacc.GetLazyVestingSchedules()
 		}
 	}
 
@@ -163,10 +170,15 @@ func (ga *GenesisAccount) ToAccount() auth.Account {
 			return &auth.DelayedVestingAccount{
 				BaseVestingAccount: baseVestingAcc,
 			}
-		} else {
+		} else if ga.VestingSchedules != nil {
 			return &types.BaseGradedVestingAccount{
 				BaseVestingAccount: baseVestingAcc,
 				VestingSchedules:   ga.VestingSchedules,
+			}
+		} else if ga.LazyVestingSchedules != nil {
+			return &types.BaseLazyGradedVestingAccount{
+				BaseVestingAccount:   baseVestingAcc,
+				LazyVestingSchedules: ga.LazyVestingSchedules,
 			}
 		}
 	}
@@ -305,6 +317,12 @@ func validateGenesisStateAccounts(accs []GenesisAccount) error {
 				for _, vestingSchedule := range acc.VestingSchedules {
 					if !vestingSchedule.IsValid() {
 						return fmt.Errorf("schedule is invalid for vesting account; address: %s, denom: %s", addrStr, vestingSchedule.GetDenom())
+					}
+				}
+			} else if acc.LazyVestingSchedules != nil && len(acc.LazyVestingSchedules) > 0 {
+				for _, lazyVestingSchedule := range acc.LazyVestingSchedules {
+					if !lazyVestingSchedule.IsValid() {
+						return fmt.Errorf("lazy schedule is invalid for vesting account; address: %s, denom: %s", addrStr, lazyVestingSchedule.GetDenom())
 					}
 				}
 			} else {
