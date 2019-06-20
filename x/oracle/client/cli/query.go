@@ -13,14 +13,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// DenomList is array of denom
-type DenomList []string
-
-func (dl DenomList) String() (out string) {
-	out = strings.Join(dl, "\n")
-	return
-}
-
 // GetCmdQueryPrice implements the query price command.
 func GetCmdQueryPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -45,7 +37,7 @@ $ terracli query oracle price --denom ukrw
 				return err
 			}
 
-			var price sdk.Dec
+			var price oracle.QueryPriceResponse
 			cdc.MustUnmarshalJSON(res, &price)
 			return cliCtx.PrintOutput(price)
 		},
@@ -76,7 +68,7 @@ $ terracli query oracle active
 				return err
 			}
 
-			var actives DenomList
+			var actives oracle.QueryActiveResponse
 			cdc.MustUnmarshalJSON(res, &actives)
 			return cliCtx.PrintOutput(actives)
 		},
@@ -116,7 +108,7 @@ returns oracle votes submitted by the validator for the denom uusd
 				}
 			}
 
-			params := oracle.NewQueryVoteParams(voterAddress, denom)
+			params := oracle.NewQueryVotesParams(voterAddress, denom)
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -127,7 +119,7 @@ returns oracle votes submitted by the validator for the denom uusd
 				return err
 			}
 
-			var matchingVotes oracle.PriceVotes
+			var matchingVotes oracle.QueryVotesResponse
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
 			return cliCtx.PrintOutput(matchingVotes)
@@ -173,7 +165,7 @@ returns oracle prevotes submitted by the validator for denom uusd
 				}
 			}
 
-			params := oracle.NewQueryPrevoteParams(voterAddress, denom)
+			params := oracle.NewQueryPrevotesParams(voterAddress, denom)
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -184,7 +176,7 @@ returns oracle prevotes submitted by the validator for denom uusd
 				return err
 			}
 
-			var matchingPrevotes oracle.PricePrevotes
+			var matchingPrevotes oracle.QueryPrevotesResponse
 			cdc.MustUnmarshalJSON(res, &matchingPrevotes)
 
 			return cliCtx.PrintOutput(matchingPrevotes)
@@ -255,7 +247,7 @@ $ terracli query oracle feeder --validator terravaloper...
 				return err
 			}
 
-			var delegatee sdk.AccAddress
+			var delegatee oracle.QueryFeederDelegationResponse
 			cdc.MustUnmarshalJSON(res, &delegatee)
 			return cliCtx.PrintOutput(delegatee)
 		},

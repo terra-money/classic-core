@@ -1454,9 +1454,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/MsgVoteProgram"
+            type: object
+            properties:
+              votes:
+                type: array
+                items:
+                  $ref: "#/definitions/MsgVoteProgram"
         400:
           description: Bad Request
         500:
@@ -1483,9 +1486,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/MsgVoteProgram"
+            type: object
+            properties:
+              votes:
+                type: array
+                items:
+                  $ref: "#/definitions/MsgVoteProgram"
         400:
           description: Bad Request
         500:
@@ -1501,9 +1507,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Program"
+            type: object
+            properties:
+              actives:
+                type: array
+                items:
+                  $ref: "#/definitions/Program"
         400:
           description: Bad Request
         500:
@@ -1519,9 +1528,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Program"
+            type: object
+            properties:
+              candidates:
+                type: array
+                items:
+                  $ref: "#/definitions/Program"
         400:
           description: Bad Request
         500:
@@ -1665,9 +1677,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/PriceVote"
+            type: object
+            properties:
+              votes:
+                type: array
+                items:
+                  $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -1693,9 +1708,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/PriceVote"
+            type: object
+            properties:
+              votes:
+                type: array
+                items:
+                  $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -1742,9 +1760,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/PricePrevote"
+            type: object
+            properties:
+              prevotes:
+                type: array
+                items:
+                  $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -1770,9 +1791,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/PricePrevote"
+            type: object
+            properties:
+              prevotes:
+                type: array
+                items:
+                  $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -1793,6 +1817,12 @@ paths:
       responses:
         200:
           description: current price of denom i.e. "1000.0"
+          schema:
+            type: object
+            properties:
+              price:
+                type: number
+                example: "1872.000000000000000000"
         400:
           description: Bad Request
         500:
@@ -1808,10 +1838,13 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              type: string
-            example: ["terra", "luna"]
+            type: object
+            properties:
+              actives:
+                type: array
+                items:
+                  type: string
+                example: ["uluna", "usdr"]
         400:
           description: Bad Request
         500:
@@ -1843,9 +1876,12 @@ paths:
         200:
           description: OK
           schema:
-            type: number
-            format: float
-            example: "0.05"
+            type: object
+            properties:
+              tax_rate:
+                type: number
+                format: float
+                example: "0.05"
         500:
           description: Internal Server Error
   /treasury/tax-rate/{epoch}:
@@ -1865,9 +1901,12 @@ paths:
         200:
           description: OK
           schema:
-            type: number
-            format: float
-            example: "0.05"
+            type: object
+            properties:
+              tax_rate:
+                type: number
+                format: float
+                example: "0.05"
         500:
           description: Internal Server Error
   /treasury/tax-cap/{denom}:
@@ -1887,8 +1926,11 @@ paths:
         200:
           description: OK
           schema:
-            type: integer
-            example: "100000"
+            type: object
+            properties:
+              tax_cap:
+                type: integer
+                example: "100000"
         404:
           description: Not Found
   /treasury/reward-weight:
@@ -1908,9 +1950,12 @@ paths:
         200:
           description: OK
           schema:
-            type: number
-            example: "5"
-            description: 5%
+            type: object
+            properties:
+              reward_weight:
+                type: number
+                example: "5"
+                description: 5%
         500:
           description: Internal Server Error
   /treasury/reward-weight/{denom}:
@@ -1930,9 +1975,12 @@ paths:
         200:
           description: OK
           schema:
-            type: number
-            example: "5"
-            description: 5%
+            type: object
+            properties:
+              reward_weight:
+                type: number
+                example: "5"
+                description: 5%
         500:
           description: Internal Server Error
   /treasury/issuance/{denom}:
@@ -1952,8 +2000,11 @@ paths:
         200:
           description: OK
           schema:
-            type: integer
-            example: "500"
+            type: object
+            properties:
+              issuance:
+                type: integer
+                example: "500"
         500:
           description: Internal Server Error
   /treasury/issuance/{denom}/{day}:
@@ -1978,8 +2029,11 @@ paths:
         200:
           description: OK
           schema:
-            type: integer
-            example: "500"
+            type: object
+            properties:
+              issuance:
+                type: integer
+                example: "500"
         500:
           description: Internal Server Error
   /treasury/tax-proceeds:
@@ -1993,9 +2047,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            type: object
+            properties:
+              tax_proceeds:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
   /treasury/tax-proceeds/{epoch}:
@@ -2015,9 +2072,12 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            type: object
+            properties:
+              tax_proceeds:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
   /treasury/seigniorage-proceeds:
@@ -2031,8 +2091,11 @@ paths:
         200:
           description: OK
           schema:
-            type: integer
-            example: "0"
+            type: object
+            properties:
+              seigniorage_proceeds:
+                type: integer
+                example: "0"
         500:
           description: Internal Server
   /treasury/seigniorage-proceeds/{epoch}:
@@ -2052,26 +2115,13 @@ paths:
         200:
           description: OK
           schema:
-            type: integer
-            example: "0"
+            type: object
+            properties:
+              seigniorage_proceeds:
+                type: integer
+                example: "0"
         500:
           description: Internal Server Error
-  /treasury/active-claims:
-    get:
-      summary: Get all active Claims
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Claim"
-        404:
-          description: Not Found
   /treasury/current-epoch:
     get:
       summary: Get current epoch
@@ -2083,8 +2133,11 @@ paths:
         200:
           description: OK
           schema:
-            type: number
-            example: "724"
+            type: object
+            properties:
+              current_epoch:
+                type: number
+                example: "724"
         404:
           description: Not Found
   /treasury/params:

@@ -2,6 +2,7 @@ package treasury
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/terra-project/core/types/util"
 
@@ -49,6 +50,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
+// JSON response format
+type QueryTaxRateResponse struct {
+	TaxRate sdk.Dec `json:"tax_rate"`
+}
+
+func (r QueryTaxRateResponse) String() (out string) {
+	out = r.TaxRate.String()
+	return strings.TrimSpace(out)
+}
+
 // nolint: unparam
 func queryTaxRate(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	epoch, ok := sdk.NewIntFromString(path[0])
@@ -57,11 +68,21 @@ func queryTaxRate(ctx sdk.Context, path []string, req abci.RequestQuery, keeper 
 	}
 
 	taxRate := keeper.GetTaxRate(ctx, epoch)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxRate)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryTaxRateResponse{TaxRate: taxRate})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+// JSON response format
+type QueryTaxCapResponse struct {
+	TaxCap sdk.Int `json:"tax_cap"`
+}
+
+func (r QueryTaxCapResponse) String() (out string) {
+	out = r.TaxCap.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -69,11 +90,21 @@ func queryTaxCap(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 	denom := path[0]
 	taxCap := keeper.GetTaxCap(ctx, denom)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryTaxCapResponse{TaxCap: taxCap})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+// JSON response format
+type QueryIssuanceResponse struct {
+	Issuance sdk.Int `json:"issuance"`
+}
+
+func (r QueryIssuanceResponse) String() (out string) {
+	out = r.Issuance.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -92,11 +123,21 @@ func queryIssuance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper
 	}
 
 	issuance := keeper.mtk.GetIssuance(ctx, denom, sdk.NewInt(day))
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, issuance)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryIssuanceResponse{Issuance: issuance})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+// JSON response format
+type QueryMiningRewardWeightResponse struct {
+	RewardWeight sdk.Dec `json:"reward_weight"`
+}
+
+func (r QueryMiningRewardWeightResponse) String() (out string) {
+	out = r.RewardWeight.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -107,11 +148,21 @@ func queryMiningRewardWeight(ctx sdk.Context, path []string, req abci.RequestQue
 	}
 
 	rewardWeight := keeper.GetRewardWeight(ctx, epoch)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, rewardWeight)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryMiningRewardWeightResponse{RewardWeight: rewardWeight})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+// JSON response format
+type QueryTaxProceedsResponse struct {
+	TaxProceeds sdk.Coins `json:"tax_proceeds"`
+}
+
+func (r QueryTaxProceedsResponse) String() (out string) {
+	out = r.TaxProceeds.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -122,11 +173,21 @@ func queryTaxProceeds(ctx sdk.Context, path []string, req abci.RequestQuery, kee
 	}
 
 	pool := keeper.PeekTaxProceeds(ctx, epoch)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryTaxProceedsResponse{TaxProceeds: pool})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
+}
+
+// JSON response format
+type QuerySeigniorageProceedsResponse struct {
+	SeigniorageProceeds sdk.Int `json:"seigniorage_proceeds"`
+}
+
+func (r QuerySeigniorageProceedsResponse) String() (out string) {
+	out = r.SeigniorageProceeds.String()
+	return strings.TrimSpace(out)
 }
 
 // nolint: unparam
@@ -137,16 +198,26 @@ func querySeigniorageProceeds(ctx sdk.Context, path []string, req abci.RequestQu
 	}
 
 	pool := keeper.mtk.PeekEpochSeigniorage(ctx, epoch)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, pool)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QuerySeigniorageProceedsResponse{SeigniorageProceeds: pool})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
 }
 
+// JSON response format
+type QueryCurrentEpochResponse struct {
+	CurrentEpoch sdk.Int `json:"current_epoch"`
+}
+
+func (r QueryCurrentEpochResponse) String() (out string) {
+	out = r.CurrentEpoch.String()
+	return strings.TrimSpace(out)
+}
+
 func queryCurrentEpoch(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	curEpoch := util.GetEpoch(ctx)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, curEpoch)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryCurrentEpochResponse{CurrentEpoch: curEpoch})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

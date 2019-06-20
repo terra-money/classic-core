@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,6 +41,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
+// JSON response format
+type QueryPriceResponse struct {
+	Price sdk.Dec `json:"price"`
+}
+
+func (r QueryPriceResponse) String() (out string) {
+	out = r.Price.String()
+	return strings.TrimSpace(out)
+}
+
 func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denom := path[0]
 
@@ -47,7 +59,7 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 		return nil, ErrUnknownDenomination(DefaultCodespace, denom)
 	}
 
-	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, price)
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, QueryPriceResponse{Price: price})
 	if err2 != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
 	}
@@ -55,10 +67,20 @@ func queryPrice(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 	return bz, nil
 }
 
+// JSON response format
+type QueryActiveResponse struct {
+	Actives DenomList `json:"actives"`
+}
+
+func (r QueryActiveResponse) String() (out string) {
+	out = r.Actives.String()
+	return strings.TrimSpace(out)
+}
+
 func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	denoms := keeper.getActiveDenoms(ctx)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryActiveResponse{Actives: denoms})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -67,21 +89,31 @@ func queryActive(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 }
 
 // QueryVoteParams for query 'custom/oracle/votes'
-type QueryVoteParams struct {
+type QueryVotesParams struct {
 	Voter sdk.ValAddress
 	Denom string
 }
 
-// NewQueryVoteParams creates a new instance of QueryVoteParams
-func NewQueryVoteParams(voter sdk.ValAddress, denom string) QueryVoteParams {
-	return QueryVoteParams{
+// NewQueryVotesParams creates a new instance of QueryVotesParams
+func NewQueryVotesParams(voter sdk.ValAddress, denom string) QueryVotesParams {
+	return QueryVotesParams{
 		Voter: voter,
 		Denom: denom,
 	}
 }
 
+// JSON response format
+type QueryVotesResponse struct {
+	Votes PriceVotes `json:"votes"`
+}
+
+func (r QueryVotesResponse) String() (out string) {
+	out = r.Votes.String()
+	return strings.TrimSpace(out)
+}
+
 func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryVoteParams
+	var params QueryVotesParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
@@ -114,32 +146,42 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 
 	keeper.iterateVotesWithPrefix(ctx, prefix, handler)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryVotesResponse{Votes: filteredVotes})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
 }
 
-// QueryPrevoteParams for query 'custom/oracle/prevotes'
-type QueryPrevoteParams QueryVoteParams
+// QueryPrevotesParams for query 'custom/oracle/prevotes'
+type QueryPrevotesParams QueryVotesParams
 
-// NewQueryPrevoteParams creates a new instance of QueryVoteParams
-func NewQueryPrevoteParams(voter sdk.ValAddress, denom string) QueryPrevoteParams {
-	return QueryPrevoteParams{
+// NewQueryPrevotesParams creates a new instance of QueryPrevotesParams
+func NewQueryPrevotesParams(voter sdk.ValAddress, denom string) QueryPrevotesParams {
+	return QueryPrevotesParams{
 		Voter: voter,
 		Denom: denom,
 	}
 }
 
+// JSON response format
+type QueryPrevotesResponse struct {
+	Prevotes PricePrevotes `json:"prevotes"`
+}
+
+func (r QueryPrevotesResponse) String() (out string) {
+	out = r.Prevotes.String()
+	return strings.TrimSpace(out)
+}
+
 func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params QueryPrevoteParams
+	var params QueryPrevotesParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	filteredPrevotes := []PricePrevote{}
+	filteredPrevotes := PricePrevotes{}
 
 	// collects all votes without filter
 	prefix := prefixPrevote
@@ -166,7 +208,7 @@ func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 
 	keeper.iteratePrevotesWithPrefix(ctx, prefix, handler)
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredPrevotes)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryPrevotesResponse{Prevotes: filteredPrevotes})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -193,6 +235,16 @@ func NewQueryFeederDelegationParams(validator sdk.ValAddress) QueryFeederDelegat
 	}
 }
 
+// JSON response format
+type QueryFeederDelegationResponse struct {
+	Delegatee sdk.AccAddress `json:"delegatee"`
+}
+
+func (r QueryFeederDelegationResponse) String() (out string) {
+	out = r.Delegatee.String()
+	return strings.TrimSpace(out)
+}
+
 func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params QueryFeederDelegationParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
@@ -200,7 +252,8 @@ func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetFeedDelegate(ctx, params.Validator))
+	delegatee := keeper.GetFeedDelegate(ctx, params.Validator)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, QueryFeederDelegationResponse{Delegatee: delegatee})
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
