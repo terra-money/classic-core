@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/update"
 	"github.com/terra-project/core/version"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
@@ -14,7 +15,6 @@ import (
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/pay"
 	"github.com/terra-project/core/x/treasury"
-	"github.com/terra-project/core/update"
 
 	"github.com/terra-project/core/types/assets"
 
