@@ -327,8 +327,9 @@ func TestUpdate230000(t *testing.T) {
 		input.accKeeper.SetAccount(input.ctx, acc)
 	}
 
-	Update230000(input.ctx.WithBlockHeight(229999), input.accKeeper, input.oracleKeeper)
+	updated := Update230000(input.ctx.WithBlockHeight(229999), input.accKeeper, input.oracleKeeper)
 	require.Equal(t, sdk.NewDecWithPrec(1, 2), input.oracleKeeper.GetParams(input.ctx).OracleRewardBand)
+	require.False(t, updated)
 
 	// not yet changed
 	input.accKeeper.IterateAccounts(input.ctx, func(acc auth.Account) (stop bool) {
@@ -342,8 +343,9 @@ func TestUpdate230000(t *testing.T) {
 		return
 	})
 
-	Update230000(input.ctx.WithBlockHeight(230000), input.accKeeper, input.oracleKeeper)
+	updated = Update230000(input.ctx.WithBlockHeight(230000), input.accKeeper, input.oracleKeeper)
 	require.Equal(t, sdk.NewDecWithPrec(2, 2), input.oracleKeeper.GetParams(input.ctx).OracleRewardBand)
+	require.True(t, updated)
 
 	// not yet changed
 	input.accKeeper.IterateAccounts(input.ctx, func(acc auth.Account) (stop bool) {
