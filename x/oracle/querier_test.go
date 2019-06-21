@@ -43,13 +43,13 @@ func getQueriedPrice(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sd
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var price sdk.Dec
-	err2 := cdc.UnmarshalJSON(bz, &price)
+	var response QueryPriceResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
-	return price
+	return response.Price
 }
 
-func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) []string {
+func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) DenomList {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryActive}, "/"),
 		Data: []byte{},
@@ -59,42 +59,42 @@ func getQueriedActive(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var actives []string
-	err2 := cdc.UnmarshalJSON(bz, &actives)
+	var response QueryActiveResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
-	return actives
+	return response.Actives
 }
 
 func getQueriedVotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.ValAddress, denom string) PriceVotes {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryVotes}, "/"),
-		Data: cdc.MustMarshalJSON(NewQueryVoteParams(voter, denom)),
+		Data: cdc.MustMarshalJSON(NewQueryVotesParams(voter, denom)),
 	}
 
 	bz, err := querier(ctx, []string{QueryVotes}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var votes PriceVotes
-	err2 := cdc.UnmarshalJSON(bz, &votes)
+	var response QueryVotesResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
-	return votes
+	return response.Votes
 }
 
 func getQueriedPrevotes(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, voter sdk.ValAddress, denom string) PricePrevotes {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, QuerierRoute, QueryPrevotes}, "/"),
-		Data: cdc.MustMarshalJSON(NewQueryPrevoteParams(voter, denom)),
+		Data: cdc.MustMarshalJSON(NewQueryPrevotesParams(voter, denom)),
 	}
 
 	bz, err := querier(ctx, []string{QueryPrevotes}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var prevotes PricePrevotes
-	err2 := cdc.UnmarshalJSON(bz, &prevotes)
+	var response QueryPrevotesResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
-	return prevotes
+	return response.Prevotes
 }
 
 func getQueriedFeederDelegation(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, validator sdk.ValAddress) sdk.AccAddress {
@@ -107,10 +107,10 @@ func getQueriedFeederDelegation(t *testing.T, ctx sdk.Context, cdc *codec.Codec,
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
-	var delegate sdk.AccAddress
-	err2 := cdc.UnmarshalJSON(bz, &delegate)
+	var response QueryFeederDelegationResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
-	return delegate
+	return response.Delegatee
 }
 
 func TestQueryParams(t *testing.T) {

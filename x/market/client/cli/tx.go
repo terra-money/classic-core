@@ -45,7 +45,7 @@ $ terracli market swap --offer-coin="1000ukrw" --ask-denom="uusd"
 
 			offerCoinStr := viper.GetString(flagOfferCoin)
 			if len(offerCoinStr) == 0 {
-				return fmt.Errorf("--offset-coin flag is required")
+				return fmt.Errorf("--offer-coin flag is required")
 			}
 
 			offerCoin, err := sdk.ParseCoin(offerCoinStr)

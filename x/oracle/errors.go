@@ -27,7 +27,7 @@ const (
 // ----------------------------------------
 // Error constructors
 
-// ErrUnknownDenomination called when the denom is not known
+// ErrInvalidHashLength called when the denom is not known
 func ErrInvalidHashLength(codespace sdk.CodespaceType, hashLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidHashLength, fmt.Sprintf("The hash length should equal %d but given %d", tmhash.TruncatedSize, hashLength))
 }
@@ -49,7 +49,7 @@ func ErrVoterNotValidator(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk
 
 // ErrInvalidSignature called when no prevote exists
 func ErrVerificationFailed(codespace sdk.CodespaceType, hash []byte, retrivedHash []byte) sdk.Error {
-	return sdk.NewError(codespace, CodeVerificationFailed, fmt.Sprintf("Retrived hash [%s] differs from prevote hash [%s]", retrivedHash, hash))
+	return sdk.NewError(codespace, CodeVerificationFailed, fmt.Sprintf("Retrieved hash [%s] differs from prevote hash [%s]", retrivedHash, hash))
 }
 
 // ErrNoPrevote called when no prevote exists

@@ -196,8 +196,8 @@ func (k Keeper) deletePrice(ctx sdk.Context, denom string) {
 }
 
 // Get all active oracle asset denoms from the store
-func (k Keeper) getActiveDenoms(ctx sdk.Context) (denoms []string) {
-	denoms = []string{}
+func (k Keeper) getActiveDenoms(ctx sdk.Context) (denoms DenomList) {
+	denoms = DenomList{}
 
 	store := ctx.KVStore(k.key)
 	iter := sdk.KVStorePrefixIterator(store, prefixPrice)
