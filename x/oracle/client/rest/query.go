@@ -32,7 +32,7 @@ func queryVotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		voter := vars[RestVoter]
 
 		var voterAddress sdk.ValAddress
-		params := oracle.NewQueryVoteParams(voterAddress, denom)
+		params := oracle.NewQueryVotesParams(voterAddress, denom)
 
 		if len(voter) != 0 {
 
@@ -68,7 +68,7 @@ func queryPrevotesHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 		voter := vars[RestVoter]
 
 		var voterAddress sdk.ValAddress
-		params := oracle.NewQueryPrevoteParams(voterAddress, denom)
+		params := oracle.NewQueryPrevotesParams(voterAddress, denom)
 
 		if len(voter) != 0 {
 

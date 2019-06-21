@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/terra-project/core/x/treasury"
@@ -16,6 +17,7 @@ import (
 
 const (
 	flagDenom = "denom"
+	flagDay   = "day"
 	flagEpoch = "epoch"
 )
 
@@ -28,7 +30,7 @@ func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the stability tax rate at the specified epoch.
 
-$ terracli query treasury taxrate --epoch=14
+$ terracli query treasury tax-rate --epoch=14
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -41,7 +43,10 @@ $ terracli query treasury taxrate --epoch=14
 					return err
 				}
 
-				cdc.MustUnmarshalJSON(res, &epoch)
+				var epochResponse treasury.QueryCurrentEpochResponse
+				cdc.MustUnmarshalJSON(res, &epochResponse)
+
+				epoch = epochResponse.CurrentEpoch
 			} else {
 				var ok bool
 				epoch, ok = sdk.NewIntFromString(epochStr)
@@ -55,7 +60,7 @@ $ terracli query treasury taxrate --epoch=14
 				return err
 			}
 
-			var taxRate sdk.Dec
+			var taxRate treasury.QueryTaxRateResponse
 			cdc.MustUnmarshalJSON(res, &taxRate)
 			return cliCtx.PrintOutput(taxRate)
 		},
@@ -75,7 +80,7 @@ func GetCmdQueryTaxCap(cdc *codec.Codec) *cobra.Command {
 Query the current stability tax cap of the denom asset. 
 The stability tax levied on a tx is at most tax cap, regardless of the size of the transaction. 
 
-$ terracli query treasury taxcap --denom="ukrw"
+$ terracli query treasury tax-cap --denom="ukrw"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -87,9 +92,9 @@ $ terracli query treasury taxcap --denom="ukrw"
 				return err
 			}
 
-			var price sdk.Dec
-			cdc.MustUnmarshalJSON(res, &price)
-			return cliCtx.PrintOutput(price)
+			var taxCap treasury.QueryTaxCapResponse
+			cdc.MustUnmarshalJSON(res, &taxCap)
+			return cliCtx.PrintOutput(taxCap)
 		},
 	}
 
@@ -109,25 +114,34 @@ func GetCmdQueryIssuance(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current issuance of a denom asset. 
 
-$ terracli query treasury issuance --denom="ukrw"
+$ terracli query treasury issuance --denom="ukrw --day 0"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := viper.GetString(flagDenom)
+			dayStr := viper.GetString(flagDay)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom), nil)
+			if len(dayStr) != 0 {
+				_, err := strconv.ParseInt(dayStr, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom, dayStr), nil)
 			if err != nil {
 				return err
 			}
 
-			var issuance sdk.Int
+			var issuance treasury.QueryIssuanceResponse
 			cdc.MustUnmarshalJSON(res, &issuance)
 			return cliCtx.PrintOutput(issuance)
 		},
 	}
 
 	cmd.Flags().String(flagDenom, "", "the denom which you want to know the issueance of")
+	cmd.Flags().String(flagDay, "", "the # of date after genesis time, a user want to query")
 
 	cmd.MarkFlagRequired(flagDenom)
 
@@ -156,7 +170,10 @@ $ terracli query treasury reward-weight --epoch=14
 					return err
 				}
 
-				cdc.MustUnmarshalJSON(res, &epoch)
+				var epochResponse treasury.QueryCurrentEpochResponse
+				cdc.MustUnmarshalJSON(res, &epochResponse)
+
+				epoch = epochResponse.CurrentEpoch
 			} else {
 				var ok bool
 				epoch, ok = sdk.NewIntFromString(epochStr)
@@ -170,7 +187,7 @@ $ terracli query treasury reward-weight --epoch=14
 				return err
 			}
 
-			var rewardWeight sdk.Dec
+			var rewardWeight treasury.QueryMiningRewardWeightResponse
 			cdc.MustUnmarshalJSON(res, &rewardWeight)
 			return cliCtx.PrintOutput(rewardWeight)
 		},
@@ -203,7 +220,10 @@ $ terracli query treasury tax-proceeds --epoch=14
 					return err
 				}
 
-				cdc.MustUnmarshalJSON(res, &epoch)
+				var epochResponse treasury.QueryCurrentEpochResponse
+				cdc.MustUnmarshalJSON(res, &epochResponse)
+
+				epoch = epochResponse.CurrentEpoch
 			} else {
 				var ok bool
 				epoch, ok = sdk.NewIntFromString(epochStr)
@@ -217,7 +237,7 @@ $ terracli query treasury tax-proceeds --epoch=14
 				return err
 			}
 
-			var taxProceeds sdk.Coins
+			var taxProceeds treasury.QueryTaxProceedsResponse
 			cdc.MustUnmarshalJSON(res, &taxProceeds)
 			return cliCtx.PrintOutput(taxProceeds)
 		},
@@ -250,7 +270,10 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 					return err
 				}
 
-				cdc.MustUnmarshalJSON(res, &epoch)
+				var epochResponse treasury.QueryCurrentEpochResponse
+				cdc.MustUnmarshalJSON(res, &epochResponse)
+
+				epoch = epochResponse.CurrentEpoch
 			} else {
 				var ok bool
 				epoch, ok = sdk.NewIntFromString(epochStr)
@@ -264,7 +287,7 @@ $ terracli query treasury seigniorage-proceeds --epoch=14
 				return err
 			}
 
-			var seigniorageProceeds sdk.Int
+			var seigniorageProceeds treasury.QuerySeigniorageProceedsResponse
 			cdc.MustUnmarshalJSON(res, &seigniorageProceeds)
 			return cliCtx.PrintOutput(seigniorageProceeds)
 		},
@@ -294,7 +317,7 @@ $ terracli query treasury current-epoch
 				return err
 			}
 
-			var curEpoch sdk.Int
+			var curEpoch treasury.QueryCurrentEpochResponse
 			cdc.MustUnmarshalJSON(res, &curEpoch)
 			return cliCtx.PrintOutput(curEpoch)
 		},

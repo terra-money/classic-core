@@ -11,6 +11,7 @@ import (
 // nolint
 const (
 	RestDenom = "denom"
+	RestDay   = "day"
 	RestEpoch = "epoch"
 )
 
