@@ -9,7 +9,7 @@ The objective of the oracle module is to get accurate exchange rates of Luna wit
 In order to get fair exchange rates, the oracle operates in the following way:
 
 * Let P = {P1, P2, ...} be a time series split up by `params.VotePeriod`, currently 1 minute. In each P, validators must submit two votes: 
-  * A `MsgPricePrevote`, containing the SHA256 hash of the exchange rate of Luna is with respect to a Terra peg. For example, in order to support swaps for Terra currencies pegged to KRW, USD, SDR, three prevotes must be submitted each containing the Luna&lt;&gt;KRW, Luna&lt;&gt;USD, and Luna&lt;&gt;SDR exchange rates. 
+  * A `MsgPricePrevote`, containing the SHA256 hash of the exchange rate of Luna is with respect to a Terra peg. For example, in order to support swaps for Terra currencies pegged to KRW, USD, SDR, three prevotes must be submitted each containing the uluna&lt;&gt;ukrw, uluna&lt;&gt;uusd, and uluna&lt;&gt;usdr exchange rates. 
   * A `MsgPriceVote`, containing the salt used to create the hash for the prevote submitted in P-1.  
 * At the end of each P, votes submitted are tallied. 
   * The submitted salt of each vote is used to verify consistency with the prevote submitted by the validator in P-1. If the validator has not submitted a prevote, or the SHA256 resulting from the salt does not match the hash from the prevote, the vote is dropped.
@@ -44,9 +44,9 @@ type MsgPricePrevote struct {
 
 The `MsgPricePrevote` is just the submission of the leading 20 bytes of the SHA256 hex string run over a string containing the metadata of the actual `MsgPriceVote` to follow in the next period. The string is of the format: `salt:price:denom:voter`. Note that since in the subsequent `MsgPriceVote` the salt will have to be revealed, the salt used must be regenerated for each prevote submission.
 
-`Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is "usd"
+`Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is `uusd`.
 
-The price used in the hash must be the open market price of Luna, w.r.t. to the currency matching `Denom`. For example, if `Denom` is "usd" and the going price for Luna is 1 USD, then "1" must be used as the price. 
+The price used in the hash must be the open market price of Luna, w.r.t. to the currency matching `Denom`. For example, if `Denom` is `uusd` and the going price for Luna is 1 USD, then "1" must be used as the price, as 1 `uluna` = 1 `uusd`. 
 
 `Feeder` is used if the validator wishes to delegate oracle vote signing to a separate key to de-risk exposing their validator signing key.
 
@@ -68,6 +68,24 @@ type MsgPriceVote struct {
 ```
 
 The `MsgPriceVote` contains the actual price vote. The `Salt` parameter must match the salt used to create the prevote, otherwise the voter cannot be rewarded.
+
+
+### Delegate voting rights to another key
+
+Validators may also elect to delegate voting rights to another key to prevent the block signing key from being kept online. To do so, they must submit a `MsgDelegateFeederPermission`, delegating their oracle voting rights to a `FeedDelegate`, which in turn sign `MsgPricePrevote` and `MsgPriceVote` on behalf of the validator. 
+
+::: tip Make sure to populate the delegate address with some coins by which to pay fees. :::
+
+```go
+// MsgDelegateFeederPermission - struct for delegating oracle voting rights to another address.
+type MsgDelegateFeederPermission struct {
+	Operator     sdk.ValAddress `json:"operator"`
+	FeedDelegate sdk.AccAddress `json:"feed_delegate"`
+}
+```
+
+The `Operator` field contains the operator address of the validator. The `FeedDelegate` field is the address of the delegate account that will be submitting price related votes and prevotes on behalf of the `Operator`. 
+
 
 ## Parameters
 
