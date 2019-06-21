@@ -36,7 +36,7 @@ var (
 const (
 	// seconds per 30 days
 	secondsPerMonth = 30 * 24 * 60 * 60
-
+	// columbus-1 genesis time = 2019-04-24T06:00:00.000000Z
 	genesisUnixTime = 1556085600
 )
 
