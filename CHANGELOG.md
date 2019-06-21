@@ -1,3 +1,18 @@
+## 0.2.2
+
+- [\#183](https://github.com/terra-project/core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
+
+### Changes
+#### oracle param update
+OracleRewardBand: 1% => 2%
+
+#### market param update
+DailyLunaDeltaCap: 0.5% => 0.1%
+
+#### LazyGradedVestingAccount
+Spread out the cliffs for presale investors, with varying degrees of severity
+details [\#180](https://github.com/terra-project/core/issues/180)
+
 ## 0.2.1
 
 - [\#166](https://github.com/terra-project/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed. 
