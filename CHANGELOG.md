@@ -3,17 +3,17 @@
 - [\#183](https://github.com/terra-project/core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
 
 ### Changes
-#### [\#183](https://github.com/terra-project/core/pull/183)Oracle param update
+#### [\#183](https://github.com/terra-project/core/pull/183) Oracle param update
 ```
 OracleRewardBand: 1% => 2%
 ```
 
-#### [\#183](https://github.com/terra-project/core/pull/183)Market param update
+#### [\#183](https://github.com/terra-project/core/pull/183) Market param update
 ```
 DailyLunaDeltaCap: 0.5% => 0.1%
 ```
 
-#### [\#183](https://github.com/terra-project/core/pull/183)LazyGradedVestingAccount
+#### [\#183](https://github.com/terra-project/core/pull/183) LazyGradedVestingAccount
 
 * details [\#180](https://github.com/terra-project/core/issues/180) Spread out the cliffs for presale investors, with varying degrees of severity
 
