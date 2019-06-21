@@ -15,7 +15,7 @@ DailyLunaDeltaCap: 0.5% => 0.1%
 
 #### [\#183](https://github.com/terra-project/core/pull/183) LazyGradedVestingAccount
 
-* details [\#180](https://github.com/terra-project/core/issues/180) Spread out the cliffs for presale investors, with varying degrees of severity
+* Spread out the cliffs for presale investors, with varying degrees of severity (details [\#180](https://github.com/terra-project/core/issues/180))
 
 ## 0.2.1
 
