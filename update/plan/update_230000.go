@@ -98,7 +98,7 @@ func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper or
 
 			for _, lvs := range lazyVestingSchedules {
 				if !lvs.IsValid() {
-					panic("not valid schdule")
+					panic(fmt.Sprintf("not valid schdule: %v\n %v", gvacc, lvs))
 				}
 			}
 
@@ -142,12 +142,12 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 
 	vestingSchedules := gvacc.GetVestingSchedules()
 	if len(vestingSchedules) != 1 || vestingSchedules[0].GetDenom() != assets.MicroLunaDenom {
-		panic("Invalid Preseed Account")
+		panic(fmt.Sprintf("Invalid Preseed Account: %v", gvacc))
 	}
 
 	vestingSchedule := vestingSchedules[0]
 	if len(vestingSchedule.Schedules) != 4 {
-		panic("Invalid Preseed Account")
+		panic(fmt.Sprintf("Invalid Preseed Account: %v", gvacc))
 	}
 
 	// strict preseed account check
@@ -161,7 +161,7 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 		} else if s.GetCliff() == 1587708000 && s.GetRatio().Equal(sdk.NewDecWithPrec(70, 2)) {
 			continue
 		} else {
-			panic("Invalid Pressed Account")
+			panic(fmt.Sprintf("Invalid Preseed Account: %v", gvacc))
 		}
 	}
 
@@ -192,19 +192,18 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSchedule {
 	vestingSchedules := gvacc.GetVestingSchedules()
 	if len(vestingSchedules) != 1 || vestingSchedules[0].GetDenom() != assets.MicroLunaDenom {
-		panic("Invalid Seed Account")
+		panic(fmt.Sprintf("Invalid Seed Account: %v", gvacc))
 	}
 
 	vestingSchedule := vestingSchedules[0]
 	ratio := sdk.OneDec()
 
-	fmt.Println(gvacc.GetAddress().String())
 	// strict seed account check
 	if gvacc.GetAddress().String() == "terra1y9n2ywyu5dahtxar6k4z4jz97ynt8km4catuk6" {
 		ratio = sdk.NewDecWithPrec(467, 3)
 
 		if len(vestingSchedule.Schedules) != 5 {
-			panic("Invalid Seed Account")
+			panic(fmt.Sprintf("Invalid Seed Account: %v", gvacc))
 		}
 
 		for _, s := range vestingSchedule.Schedules {
@@ -219,12 +218,12 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 			} else if s.GetCliff() == 1603519200 && s.GetRatio().Equal(sdk.NewDecWithPrec(533, 3)) {
 				continue
 			} else {
-				panic("Invalid Seed Account")
+				panic(fmt.Sprintf("Invalid Seed Account: %v", gvacc))
 			}
 		}
 	} else {
 		if len(vestingSchedule.Schedules) != 4 {
-			panic("Invalid Seed Account")
+			panic(fmt.Sprintf("Invalid Seed Account: %v", gvacc))
 		}
 
 		for _, s := range vestingSchedule.Schedules {
@@ -234,10 +233,10 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 				continue
 			} else if s.GetCliff() == 1563948000 && s.GetRatio().Equal(sdk.NewDecWithPrec(10, 2)) {
 				continue
-			} else if s.GetCliff() == 1582524000 && s.GetRatio().Equal(sdk.NewDecWithPrec(70, 2)) {
+			} else if (s.GetCliff() == 1582524000 || s.GetCliff() == 1579845600) && s.GetRatio().Equal(sdk.NewDecWithPrec(70, 2)) {
 				continue
 			} else {
-				panic("Invalid Seed Account")
+				panic(fmt.Sprintf("Invalid Seed Account: %v", gvacc))
 			}
 		}
 	}
