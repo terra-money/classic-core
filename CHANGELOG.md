@@ -4,14 +4,14 @@
 
 ### Changes
 #### oracle param update
-OracleRewardBand: 1% => 2%
+* OracleRewardBand: 1% => 2%
 
 #### market param update
-DailyLunaDeltaCap: 0.5% => 0.1%
+* DailyLunaDeltaCap: 0.5% => 0.1%
 
 #### LazyGradedVestingAccount
-Spread out the cliffs for presale investors, with varying degrees of severity
-details [\#180](https://github.com/terra-project/core/issues/180)
+
+* details [\#180](https://github.com/terra-project/core/issues/180) Spread out the cliffs for presale investors, with varying degrees of severity
 
 ## 0.2.1
 
