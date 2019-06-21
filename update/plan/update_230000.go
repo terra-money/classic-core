@@ -137,7 +137,7 @@ func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper or
 
 	// update market swap delta limit param
 	marketParams := marketKeeper.GetParams(ctx)
-	marketParams.DailyLunaDeltaCap = sdk.NewDecWithPrec(1, 3)
+	marketParams.DailyLunaDeltaCap = sdk.NewDecWithPrec(1, 3) // 0.1%
 	marketKeeper.SetParams(ctx, marketParams)
 
 	return true
