@@ -327,8 +327,9 @@ func TestUpdate230000(t *testing.T) {
 		input.accKeeper.SetAccount(input.ctx, acc)
 	}
 
-	updated := Update230000(input.ctx.WithBlockHeight(229999), input.accKeeper, input.oracleKeeper)
+	updated := Update230000(input.ctx.WithBlockHeight(229999), input.accKeeper, input.oracleKeeper, input.marketKeeper)
 	require.Equal(t, sdk.NewDecWithPrec(1, 2), input.oracleKeeper.GetParams(input.ctx).OracleRewardBand)
+	require.Equal(t, sdk.NewDecWithPrec(5, 3), input.marketKeeper.GetParams(input.ctx).DailyLunaDeltaCap)
 	require.False(t, updated)
 
 	// not yet changed
@@ -343,8 +344,9 @@ func TestUpdate230000(t *testing.T) {
 		return
 	})
 
-	updated = Update230000(input.ctx.WithBlockHeight(230000), input.accKeeper, input.oracleKeeper)
+	updated = Update230000(input.ctx.WithBlockHeight(230000), input.accKeeper, input.oracleKeeper, input.marketKeeper)
 	require.Equal(t, sdk.NewDecWithPrec(2, 2), input.oracleKeeper.GetParams(input.ctx).OracleRewardBand)
+	require.Equal(t, sdk.NewDecWithPrec(1, 3), input.marketKeeper.GetParams(input.ctx).DailyLunaDeltaCap)
 	require.True(t, updated)
 
 	// not yet changed

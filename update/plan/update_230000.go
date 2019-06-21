@@ -9,6 +9,7 @@ import (
 
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/oracle"
 )
 
@@ -41,7 +42,7 @@ const (
 )
 
 // Update230000 update vesting schedule and oracle param
-func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper oracle.Keeper) bool {
+func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper oracle.Keeper, marketKeeper market.Keeper) bool {
 
 	// check update height
 	if ctx.BlockHeight() != 230000 {
@@ -133,6 +134,11 @@ func Update230000(ctx sdk.Context, accKeeper auth.AccountKeeper, oracleKeeper or
 	oracleParams := oracleKeeper.GetParams(ctx)
 	oracleParams.OracleRewardBand = sdk.NewDecWithPrec(2, 2) // 2%
 	oracleKeeper.SetParams(ctx, oracleParams)
+
+	// update market swap delta limit param
+	marketParams := marketKeeper.GetParams(ctx)
+	marketParams.DailyLunaDeltaCap = sdk.NewDecWithPrec(1, 3)
+	marketKeeper.SetParams(ctx, marketParams)
 
 	return true
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/terra-project/core/types"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
 	"github.com/terra-project/core/x/oracle"
 
@@ -37,6 +38,10 @@ func setup(t *testing.T) testInput {
 	defaultOracleParams.VotePeriod = int64(1) // Set to one block for convinience
 	input.oracleKeeper.SetParams(input.ctx, defaultOracleParams)
 
+	defaultMarketParams := market.DefaultParams()
+	defaultMarketParams.DailyLunaDeltaCap = sdk.NewDecWithPrec(5, 3)
+	input.marketKeeper.SetParams(input.ctx, defaultMarketParams)
+
 	return input
 }
 
@@ -45,6 +50,7 @@ type testInput struct {
 	cdc          *codec.Codec
 	accKeeper    auth.AccountKeeper
 	oracleKeeper oracle.Keeper
+	marketKeeper market.Keeper
 }
 
 func newTestCodec() *codec.Codec {
@@ -65,6 +71,7 @@ func createTestInput(t *testing.T) testInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
@@ -86,6 +93,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -143,5 +151,13 @@ func createTestInput(t *testing.T) testInput {
 		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	return testInput{ctx, cdc, accKeeper, oracleKeeper}
+	marketKeeper := market.NewKeeper(
+		cdc,
+		keyMarket,
+		oracleKeeper,
+		mintKeeper,
+		paramsKeeper.Subspace(market.DefaultParamspace),
+	)
+
+	return testInput{ctx, cdc, accKeeper, oracleKeeper, marketKeeper}
 }
