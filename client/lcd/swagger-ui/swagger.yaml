@@ -405,7 +405,7 @@ paths:
           x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
       responses:
         200:
-          description: Account information on the blockchain (one of Account and GradedVestingAccount)
+          description: Account information on the blockchain (one of Account and GradedVestingAccount and LazyGradedVestingAccount)
           schema:
             type: object
             properties:
@@ -413,6 +413,8 @@ paths:
                 $ref: "#/definitions/Account"
               GradedVestingAccount:
                 $ref: "#/definitions/GradedVestingAccount"
+              LazyGradedVestingAccount:
+                $ref: "#/definitions/LazyGradedVestingAccount"
                 
           
         204:
@@ -2583,7 +2585,6 @@ definitions:
       ratio:
         type: string
         example: "0.100000000000000000"
-
   VestingSchedule:
     type: object
     properties:
@@ -2594,7 +2595,6 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Schedule"
-
   BaseGradedVestingAccount:
     type: object
     properties:
@@ -2603,9 +2603,7 @@ definitions:
       vesting_schedules:
         type: array
         items:
-          $ref: "#/definitions/VestingSchedule"
-        
-        
+          $ref: "#/definitions/VestingSchedule" 
   GradedVestingAccount:
     type: object
     properties:
@@ -2614,6 +2612,46 @@ definitions:
         example: "core/GradedVestingAccount"
       value:
         $ref: "#/definitions/BaseGradedVestingAccount"
+
+  LazySchedule:
+    type: object
+    properties:
+      start_time:
+        type: string
+        example: "1556085600"
+      end_time:
+        type: string
+        example: "1556085600"
+      ratio:
+        type: string
+        example: "0.100000000000000000"
+  LazyVestingSchedule:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: "usdr"
+      lazy_schedules:
+        type: array
+        items:
+          $ref: "#/definitions/LazySchedule"
+  BaseLazyGradedVestingAccount:
+    type: object
+    properties:
+      BaseVestingAccount:
+        $ref: "#/definitions/BaseVestingAccount"
+      lazy_vesting_schedules:
+        type: array
+        items:
+          $ref: "#/definitions/LazyVestingSchedule"
+  LazyGradedVestingAccount:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "core/LazyGradedVestingAccount"
+      value:
+        $ref: "#/definitions/BaseLazyGradedVestingAccount"
         
   TendermintValidator:
     type: object

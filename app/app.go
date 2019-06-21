@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/update"
 	"github.com/terra-project/core/version"
 	"github.com/terra-project/core/x/budget"
 	"github.com/terra-project/core/x/market"
@@ -334,6 +335,9 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
+
+	updateTags := update.EndBlocker(ctx, app.accountKeeper, app.oracleKeeper, app.marketKeeper)
+	tags = append(tags, updateTags...)
 
 	if app.assertInvariantsBlockly {
 		app.assertRuntimeInvariants()

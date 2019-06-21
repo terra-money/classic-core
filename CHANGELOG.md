@@ -1,3 +1,43 @@
+## 0.2.2
+
+- [\#185](https://github.com/terra-project/core/pull/185): Improve oracle specs
+- [\#184](https://github.com/terra-project/core/pull/184): Fix `terracli` docs
+- [\#183](https://github.com/terra-project/core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
+- [\#179](https://github.com/terra-project/core/pull/179): Conform querier responses to be returned in JSON format 
+- [\#178](https://github.com/terra-project/core/pull/178): Change BIP44 PATH to 330
+
+### Changes
+#### [\#185](https://github.com/terra-project/core/pull/185) Oracle `MsgFeederDelegatePermission` specs
+Added docs for using `MsgFeederDelegatePermission` to oracle specs
+
+#### [\#185](https://github.com/terra-project/core/pull/185) Oracle price vote denom error fix 
+Oracle specs now specify micro units `uluna` and `uusd` for correct denominations for price prevotes and votes 
+
+#### [\#184](https://github.com/terra-project/core/pull/184) Minor terracli fix 
+
+#### [\#183](https://github.com/terra-project/core/pull/183) Oracle param update
+```
+OracleRewardBand: 1% => 2%
+```
+
+#### [\#183](https://github.com/terra-project/core/pull/183) Market param update
+```
+DailyLunaDeltaCap: 0.5% => 0.1%
+```
+
+#### [\#183](https://github.com/terra-project/core/pull/183) LazyGradedVestingAccount
+
+* Spread out the cliffs for presale investors, with varying degrees of severity (details [\#180](https://github.com/terra-project/core/issues/180))
+
+#### [\#179](https://github.com/terra-project/core/pull/179) Align Querier responses to JSON
+
+* Querier was returning misaligned formats for return values, now aligned to JSON format
+
+#### [\#178](https://github.com/terra-project/core/pull/178) Correctly use 330 as the coin type field in BIP 44 PATH
+
+* We were previously using the Cosmos coin type field for the BIP44 path. Changed to Terra's own 330. 
+
+
 ## 0.2.1
 
 - [\#166](https://github.com/terra-project/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed. 
