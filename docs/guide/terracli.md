@@ -618,7 +618,7 @@ Validators must submit two price vote transactions to participate in the oracle;
 To submit a prevote, run:
 
 ```bash
-terracli oracle prevote \
+terracli tx oracle prevote \
   --denom <denom> \ 
   --hash <hash> \
   --from mykey
@@ -629,7 +629,7 @@ Where hash is the leading 20 bytes of the SHA256 hexa string run over the string
 Or to avoid having to create the hash yourself, run:
 
 ```bash
-terracli oracle prevote \
+terracli tx oracle prevote \
   --denom <denom> \
   --price "8888" \ 
   --salt <salt string> \
@@ -639,7 +639,7 @@ terracli oracle prevote \
 After VotePeriod has expired from the submission of the prevote, the voter must submit the actual price vote. To do so, run:
 
 ```bash
-terracli oracle vote \
+terracli tx oracle vote \
   --denom <denom> \
   --price "8890"  \
   --from mykey \
@@ -653,7 +653,7 @@ Given that oracle votes have to be submitted in a feed over short time intervals
 A voter may also elect to delegate price voting to another signing key.
 
 ```bash
-terracli oracle set-feeder --feeder <feeder-address> --from mykey
+terracli tx oracle set-feeder --feeder <feeder-address> --from mykey
 ```
 
 where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
@@ -665,7 +665,7 @@ where `feeder-address` is the address you want to delegate your voting rights to
 All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run:
 
 ```bash
-terracli market swap --offer-coin="1000ukrw" --ask-denom=<denom>
+terracli tx market swap --offer-coin="1000ukrw" --ask-denom=<denom>
 ```
 
 Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into.
@@ -679,7 +679,7 @@ For Terra &lt;&gt; Luna swaps, a daily cap and a spread is enforced to limit con
 To submit a budget program application, run:
 
 ```bash
-terracli budget submit-program --program="path/to/program.json" --from mykey
+terracli tx budget submit-program --program="path/to/program.json" --from mykey
 ```
 
 where program.json contains:
@@ -695,7 +695,7 @@ where program.json contains:
 Alternatively, you can decided to specify all the parameters by running:
 
 ```bash
-terracli budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
+terracli tx budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
 ```
 
 Upon successful completion, a small deposit will be withdrawn from the sender's wallet to prevent spamming. The deposit is returned on application withdrawal.
