@@ -5,7 +5,7 @@ The basic principle behind Terra’s stability has always been the same: adjust 
 * When the price of Terra rises above the target the protocol needs to expand its supply
 * When its price falls below the target the protocol needs to contract its supply
 
-The latter is the difficult part of course — printing money is easy when you hold the printing press.
+The latter is the difficult part of course — printing money is easy when you hold the printing press.
 
 Contracting and expanding Terra’s supply simply means buying or selling Terra at its target price respectively. The protocol uses Luna to facilitate those exchanges, essentially acting as a market maker for Terra:
 

@@ -27,7 +27,7 @@ const (
 // ----------------------------------------
 // Error constructors
 
-// ErrUnknownDenomination called when the denom is not known
+// ErrInvalidHashLength called when the denom is not known
 func ErrInvalidHashLength(codespace sdk.CodespaceType, hashLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidHashLength, fmt.Sprintf("The hash length should equal %d but given %d", tmhash.TruncatedSize, hashLength))
 }

@@ -4,7 +4,7 @@
 
 ## Features
 
-* [What is Terra?](features/concepts.md)
+* [What is Terra?](features/README.md)
 * [Stability](features/stability.md)
 * [Adoption](features/adoption.md)
 * [Exchange](features/terra-exchange.md)
@@ -14,7 +14,7 @@
 
 ## Guide
 
-* [Getting started](guide/guide.md)
+* [Getting started](guide/README.md)
 * [Installation](guide/installation.md)
 * [Join a network](guide/join-network.md)
 * [Deploy a testnet](guide/deploy-testnet.md)
@@ -24,9 +24,10 @@
 
 ## Specifications
 
-* [Pay](spec/pay.md)
-* [Mint](spec/mint.md)
-* [Oracle](spec/oracle.md)
-* [Market](spec/market.md)
-* [Treasury](spec/treasury.md)
-* [Budget](spec/budget.md)
+* [Pay](specifications/pay.md)
+* [Mint](specifications/mint.md)
+* [Oracle](specifications/oracle.md)
+* [Market](specifications/market.md)
+* [Treasury](specifications/treasury.md)
+* [Budget](specifications/budget.md)
+

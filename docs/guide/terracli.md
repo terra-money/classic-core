@@ -146,6 +146,7 @@ terracli tx send \
   --chain-id=<chain_id> \
   --from=<key_name> \
 ```
+
 where `destination_terra` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
 
 ::: warning Note The `--amount` flag accepts the format `--amount=<value|coin_name>`. :::
@@ -425,7 +426,6 @@ With the above command you will get the values for:
 * Maximum numbers of validators
 * Coin denomination for staking
 
-
 #### Query Pool
 
 A staking `Pool` defines the dynamic parameters of the current state. You can query them with the following command:
@@ -607,83 +607,79 @@ echo '. terrad_completion' >> ~/.bashrc
 echo '. terracli_completion' >> ~/.bashrc
 ```
 
-Refer to the user's manual of your interpreter provided by your
-operating system for information on how to enable shell autocompletion.
-:::
+Refer to the user's manual of your interpreter provided by your operating system for information on how to enable shell autocompletion. :::
 
 ### Oracle
 
-#### Submit a price vote 
+#### Submit a price vote
 
-Validators must submit two price vote transactions to participate in the oracle; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly. 
+Validators must submit two price vote transactions to participate in the oracle; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly.
 
-To submit a prevote, run: 
+To submit a prevote, run:
 
 ```bash
-terracli oracle prevote \
+terracli tx oracle prevote \
   --denom <denom> \ 
   --hash <hash> \
   --from mykey
 ```
 
-Where hash is the leading 20 bytes of the SHA256 hexa string run over the string of the format `salt:price:denom:validator-address`. 
+Where hash is the leading 20 bytes of the SHA256 hexa string run over the string of the format `salt:price:denom:validator-address`.
 
-Or to avoid having to create the hash yourself, run: 
+Or to avoid having to create the hash yourself, run:
 
 ```bash
-terracli oracle prevote \
+terracli tx oracle prevote \
   --denom <denom> \
   --price "8888" \ 
   --salt <salt string> \
   --from mykey
 ```
 
-After VotePeriod has expired from the submission of the prevote, the voter must submit the actual price vote. To do so, run: 
+After VotePeriod has expired from the submission of the prevote, the voter must submit the actual price vote. To do so, run:
 
 ```bash
-terracli oracle vote \
+terracli tx oracle vote \
   --denom <denom> \
   --price "8890"  \
   --from mykey \
   --validator <validator-address>
 ```
 
-Given that oracle votes have to be submitted in a feed over short time intervals, prevotes / votes will need to be submitted via some persistent server daemon, and not manually. For more information on how to do this, read [the oracle specs](../spec/oracle.md). 
+Given that oracle votes have to be submitted in a feed over short time intervals, prevotes / votes will need to be submitted via some persistent server daemon, and not manually. For more information on how to do this, read [the oracle specs](../specifications/oracle.md).
 
-#### Delegate price voting rights 
+#### Delegate price voting rights
 
-A voter may also elect to delegate price voting to another signing key. 
+A voter may also elect to delegate price voting to another signing key.
 
 ```bash
-terracli oracle set-feeder --feeder <feeder-address> --from mykey
+terracli tx oracle set-feeder --feeder <feeder-address> --from mykey
 ```
 
-where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit. 
-
+where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
 
 ### Market
 
 #### Swap currencies
 
-All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run: 
+All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run:
 
 ```bash
-terracli market swap --offer-coin="1000ukrw" --ask-denom=<denom>
+terracli tx market swap --offer-coin="1000ukrw" --ask-denom=<denom>
 ```
 
-Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into. 
+Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into.
 
-For Terra <> Luna swaps, a daily cap and a spread is enforced to limit consensus related attack vectors. Terra <> Terra swaps have no limits and no spread.  
-
+For Terra &lt;&gt; Luna swaps, a daily cap and a spread is enforced to limit consensus related attack vectors. Terra &lt;&gt; Terra swaps have no limits and no spread.
 
 ### Budget
 
 #### Submit a budget program application
 
-To submit a budget program application, run: 
+To submit a budget program application, run:
 
 ```bash
-terracli budget submit-program --program="path/to/program.json" --from mykey
+terracli tx budget submit-program --program="path/to/program.json" --from mykey
 ```
 
 where program.json contains:
@@ -696,37 +692,37 @@ where program.json contains:
 }
 ```
 
-Alternatively, you can decided to specify all the parameters by running: 
+Alternatively, you can decided to specify all the parameters by running:
 
 ```bash
-terracli budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
+terracli tx budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
 ```
 
-Upon successful completion, a small deposit will be withdrawn from the sender's wallet to prevent spamming. The deposit is returned on application withdrawal. 
+Upon successful completion, a small deposit will be withdrawn from the sender's wallet to prevent spamming. The deposit is returned on application withdrawal.
 
 #### Withdraw a budget program application
 
-A budget program that has not been accepted yet (is still in the candidate set) can be withdrawn for the deposit to be reclaimed. To do so, run: 
+A budget program that has not been accepted yet \(is still in the candidate set\) can be withdrawn for the deposit to be reclaimed. To do so, run:
 
 ```bash
 terracli tx budget withdraw --program-id <program-id>
 ```
 
-Where `program-id` is the id of the program that had been generated when the application had been submitted. Only the original submitter of the program can withdraw the application. 
+Where `program-id` is the id of the program that had been generated when the application had been submitted. Only the original submitter of the program can withdraw the application.
 
-#### Vote on a budget program (application and active)
+#### Vote on a budget program \(application and active\)
 
-The same command can be used to vote for both active and candidate programs. To do so, run: 
+The same command can be used to vote for both active and candidate programs. To do so, run:
 
 ```bash
 terracli tx budget vote --program-id <program-id>  --option yes --from mykey
 ```
 
-Where `program-id` is the id of the program that had been generated when the application had been submitted. `option` is one of `yes` or `no`. 
+Where `program-id` is the id of the program that had been generated when the application had been submitted. `option` is one of `yes` or `no`.
 
-#### Query a program 
+#### Query a program
 
-To query the details of a program by its id, run: 
+To query the details of a program by its id, run:
 
 ```bash
 terracli query budget program --program-id <program-id>
@@ -734,9 +730,9 @@ terracli query budget program --program-id <program-id>
 
 Where `program-id` is the id of the program that had been generated when the application had been submitted.
 
-#### Query the active program list 
+#### Query the active program list
 
-To query the list of active programs: 
+To query the list of active programs:
 
 ```bash
 terracli query budget candidate-list
@@ -744,7 +740,7 @@ terracli query budget candidate-list
 
 #### Query the candidate program list
 
-To query the list of candidate programs: 
+To query the list of candidate programs:
 
 ```bash
 terracli query budget candidate-list
@@ -752,8 +748,7 @@ terracli query budget candidate-list
 
 #### Query outstanding votes
 
-
-To query the list of outstanding program votes, both candidate and active: 
+To query the list of outstanding program votes, both candidate and active:
 
 ```bash
 terracli query budget votes
@@ -769,22 +764,22 @@ terracli query budget params
 
 With the above command you will get the values for:
 
-- Threshold in voting power for candidate programs to become active
-- Threshold in voting power for active programs to become legacied
-- Budget vote period
-- Deposit required to submit program applications
+* Threshold in voting power for candidate programs to become active
+* Threshold in voting power for active programs to become legacied
+* Budget vote period
+* Deposit required to submit program applications
 
 ### Treasury
 
 #### Query Current Epoch
 
-Treasury macroeconomic parameters are updated on a periodic basis each Epoch (currently around 1 week). To check the current epoch number (starting from 0):
+Treasury macroeconomic parameters are updated on a periodic basis each Epoch \(currently around 1 week\). To check the current epoch number \(starting from 0\):
 
 ```bash
 terracli query treasury current-epoch
 ```
 
-#### Query Tax Rate 
+#### Query Tax Rate
 
 Terra transactions charge a % fee on each outbound transaction from the sender's wallet. To get the effective stability fee rate for a given epoch, run:
 
@@ -792,36 +787,36 @@ Terra transactions charge a % fee on each outbound transaction from the sender's
 terracli query treasury tax-rate <epoch-number>
 ```
 
-#### Query Tax Cap 
+#### Query Tax Cap
 
-Stability fees are capped at some fixed amount of SDT to avoid penalizing large transactions. To get the current tax cap denominated in a given denom (micro units), run: 
+Stability fees are capped at some fixed amount of SDT to avoid penalizing large transactions. To get the current tax cap denominated in a given denom \(micro units\), run:
 
 ```bash
 terracli query treasury tax-cap <denom>
 ```
 
-#### Query Tax Proceeds 
+#### Query Tax Proceeds
 
-To query the cumulative tax proceeds of a given epoch, run: 
+To query the cumulative tax proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury tax-proceeds <epoch-number> 
+terracli query treasury tax-proceeds <epoch-number>
 ```
 
 #### Query Mining Reward Weight
 
-The mining reward weight is the portion of seigniorage that is burned to reward miners. To query the weight of a given epoch, run: 
+The mining reward weight is the portion of seigniorage that is burned to reward miners. To query the weight of a given epoch, run:
 
 ```bash
-terracli query treasury reward-weight <epoch-number> 
+terracli query treasury reward-weight <epoch-number>
 ```
 
 #### Query Seigniorage Proceeds
 
-The treasury measures the amount of Terra seigniorage accumulated over epochs, denominated in units of `uluna`. To query the seigniorage proceeds of a given epoch, run: 
+The treasury measures the amount of Terra seigniorage accumulated over epochs, denominated in units of `uluna`. To query the seigniorage proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury seigniorage-proceeds <epoch-number> 
+terracli query treasury seigniorage-proceeds <epoch-number>
 ```
 
 #### Query Parameters
@@ -834,12 +829,11 @@ terracli query treasury params
 
 With the above command you will get the values for:
 
-- Tax update policy 
-- Reward weight update policy
-- Seigniorage burden target
-- Mining Increment
-- Window short (update parameter)
-- Window long (update parameter)
-- Window probabtion (update parameter)
-
+* Tax update policy 
+* Reward weight update policy
+* Seigniorage burden target
+* Mining Increment
+* Window short \(update parameter\)
+* Window long \(update parameter\)
+* Window probabtion \(update parameter\)
 

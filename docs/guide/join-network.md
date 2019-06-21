@@ -61,8 +61,8 @@ Your node is now in a pristine state while keeping the original `priv_validator.
 Now it is time to upgrade the software. Go to the project directory, and run:
 
 ```bash
-git fetch --all && git checkout master
-make update_tools install
+git checkout master && git pull
+make
 ```
 
 ::: tip _NOTE_: If you have issues at this step, please check that you have the latest stable version of GO installed. :::
