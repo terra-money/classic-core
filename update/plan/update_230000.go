@@ -175,7 +175,7 @@ func updatePreseedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestin
 	var lazyVestingSchedule types.LazyVestingSchedule
 	var lazySchedules []types.LazySchedule
 
-	genesisTime := time.Unix(genesisUnixTime, 0)
+	genesisTime := time.Unix(genesisUnixTime, 0).UTC()
 	lazySchedules = append(lazySchedules,
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 1, 0).Unix(), genesisTime.AddDate(0, 2, 0).Unix(), sdk.NewDecWithPrec(10, 2)),
@@ -251,7 +251,7 @@ func updateSeedSchedules(gvacc types.GradedVestingAccount) []types.LazyVestingSc
 	var lazyVestingSchedule types.LazyVestingSchedule
 	var lazySchedules []types.LazySchedule
 
-	genesisTime := time.Unix(genesisUnixTime, 0)
+	genesisTime := time.Unix(genesisUnixTime, 0).UTC()
 	lazySchedules = append(lazySchedules,
 		types.NewLazySchedule(
 			genesisTime.AddDate(0, 1, 0).Unix(), genesisTime.AddDate(0, 2, 0).Unix(), ratio.Mul(sdk.NewDecWithPrec(10, 2))),

@@ -41,6 +41,8 @@ func init() {
 		panic(err)
 	}
 
+	timeGenesis = timeGenesis.UTC()
+
 	monthlyTimes = []int64{}
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 12; j++ {
