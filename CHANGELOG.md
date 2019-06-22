@@ -1,3 +1,17 @@
+## 0.2.3
+- [\#187](https://github.com/terra-project/core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
+
+### Changes
+#### [\#187](https://github.com/terra-project/core/pull/187) Bugfix/fix-time-zone
+In update_230000.go, we change genesis time derivation from 
+```
+genesisTime := time.Unix(genesisUnixTime, 0)
+```
+to
+```
+genesisTime := time.Unix(genesisUnixTime, 0).UTC()
+```
+
 ## 0.2.2
 
 - [\#185](https://github.com/terra-project/core/pull/185): Improve oracle specs
