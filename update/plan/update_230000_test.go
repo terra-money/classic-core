@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	genesisTime = time.Unix(1556085600, 0)
+	genesisTime = time.Unix(1556085600, 0).UTC()
 
 	preseedSchedule types.VestingSchedule
 	seedSchedule    types.VestingSchedule
@@ -242,6 +242,18 @@ func init() {
 
 		normalAccounts = append(normalAccounts, gradedVestingAccount)
 	}
+}
+
+func TestTimeZone(t *testing.T) {
+	genesisTime := time.Unix(1556085600, 0)
+	location, _ := time.LoadLocation("Europe/Budapest")
+	genesisTime = genesisTime.In(location)
+	result := genesisTime.AddDate(0, 10, 0).Unix()
+	require.NotEqual(t, int64(1582524000), result)
+
+	genesisTime = genesisTime.UTC()
+	result = genesisTime.AddDate(0, 10, 0).Unix()
+	require.Equal(t, int64(1582524000), result)
 }
 
 func TestPreseedAccountUpdate(t *testing.T) {
