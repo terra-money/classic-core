@@ -336,10 +336,8 @@ func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.
 	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
 	tags = append(tags, treasuryTags...)
 
-	if ctx.ChainID() == "columbus-2" {
-		updateTags := update.EndBlocker(ctx, app.accountKeeper, app.oracleKeeper, app.marketKeeper)
-		tags = append(tags, updateTags...)
-	}
+	updateTags := update.EndBlocker(ctx, app.accountKeeper, app.oracleKeeper, app.marketKeeper)
+	tags = append(tags, updateTags...)
 
 	if app.assertInvariantsBlockly {
 		app.assertRuntimeInvariants()
