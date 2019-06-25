@@ -16,10 +16,11 @@ func EndBlocker(
 	oracleKeeper oracle.Keeper,
 	marketKeeper market.Keeper) (resTags sdk.Tags) {
 
-	updated := plan.Update230000(ctx, accountKeeper, oracleKeeper, marketKeeper)
-
-	if updated {
-		resTags.AppendTag(plan.TagUpdate230000, "updated")
+	if ctx.ChainID() == "columbus-2" {
+		updated := plan.Update230000(ctx, accountKeeper, oracleKeeper, marketKeeper)
+		if updated {
+			resTags.AppendTag(plan.TagUpdate230000, "updated")
+		}
 	}
 
 	return
