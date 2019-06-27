@@ -128,7 +128,7 @@ distclean: clean
 test: test_unit
 
 test_unit:
-	@VERSION=$(VERSION) go test $(PACKAGES_NOSIMULATION)
+	@VERSION=$(VERSION) go test $(PACKAGES_NOSIMULATION) -coverprofile cp.out
 
 test_race:
 	@VERSION=$(VERSION) go test -race $(PACKAGES_NOSIMULATION)
