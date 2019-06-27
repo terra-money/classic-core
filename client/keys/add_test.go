@@ -262,9 +262,10 @@ func Test_runAddCmdInteractive(t *testing.T) {
 	password := "test1234\n"
 	mnemonic := "candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach\n"
 	bip39Passphrase := "hihi\nhihi\n"
+	option := "1\n"
 
 	// Valid Choice
-	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic + bip39Passphrase)))
+	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic + bip39Passphrase + option)))
 	defer cleanUp1()
 
 	err := runAddCmd(cmd, []string{keyName})
