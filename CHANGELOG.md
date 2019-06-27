@@ -1,3 +1,23 @@
+## 0.2.4
+- [\#193](https://github.com/terra-project/core/pull/193)
+
+### Changes
+#### [\#193](https://github.com/terra-project/core/pull/193) Feature/recover-old-hd-path
+Upgrade `$terracli keys add --recover` to support old version hd path
+
+In order to support old bip44 path (atom), address chose option is appended at recover.
+```
+$ terracli keys add tmp2 --recover
+Enter a passphrase to encrypt your key to disk:
+Repeat the passphrase:
+> Enter your bip39 mnemonic
+candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach
+> 
+1) terra1wxuq9hkt4kes7r9kxh953l7p2cpcw8l73ek5dg
+2) terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs
+Please select the address want to recover(1 or 2):
+```
+
 ## 0.2.3
 - [\#187](https://github.com/terra-project/core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
 
