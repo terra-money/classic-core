@@ -22,7 +22,6 @@
 * [For non-validating users](guide/users.md)
 * [Notes on validators](guide/validators.md)
 * [Light Client Daemon](guide/light-client.md)
-* [Ledger Support](guide/ledger-nano-support.md)
 
 ## Specifications
 
