@@ -41,6 +41,8 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	sAmt := sdk.NewInt(1000)
 	lnasdrRate := sdk.NewDec(10)
 
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))
+
 	SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
 
 	// Set random prices
@@ -49,7 +51,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
 
 	// Add seigniorage
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))
+	input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sAmt))
 
 	// Get seigniorage rewards
 	seigniorageProceeds := SeigniorageRewardsForEpoch(input.ctx, input.treasuryKeeper, util.GetEpoch(input.ctx))
@@ -138,6 +140,8 @@ func TestSumIndicator(t *testing.T) {
 func TestRollingAverageIndicator(t *testing.T) {
 	input := createTestInput(t)
 
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100000000*assets.MicroUnit)))
+
 	// Case 1: at epoch 0 and averaging over 0 epochs
 	rval := RollingAverageIndicator(input.ctx, input.treasuryKeeper, sdk.ZeroInt(), linearFn)
 	require.Equal(t, sdk.ZeroDec(), rval)
@@ -175,7 +179,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	for i := int64(201); i <= 500; i++ {
 		input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch * i)
 		input.treasuryKeeper.RecordTaxProceeds(input.ctx, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit))})
-		input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit)))
+		input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(i).MulRaw(assets.MicroUnit)))
 
 		input.treasuryKeeper.SetRewardWeight(input.ctx, sdk.OneDec())
 	}
