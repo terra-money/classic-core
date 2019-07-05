@@ -131,9 +131,7 @@ After receiving tokens to your address, you can view your account's balance by t
 terracli query account <account_terra>
 ```
 
-::: warning Note When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state.` This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.
-
-:::
+::: warning Note When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state.` This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.:::
 
 ### Send Tokens
 
