@@ -33,4 +33,4 @@ terracli rest-server --chain-id=test \
     --ssl-certfile=mycert.pem --ssl-keyfile=mykey.key
 ```
 
-For more information about the Terra-Lite RPC, see the [swagger documentation](https://swagger.terra.money/)
+For more information about the Terra-Lite RPC, see the [swagger documentation](https://swagger.terra.dev/)
