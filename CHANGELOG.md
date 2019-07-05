@@ -1,3 +1,10 @@
+## 0.2.4
+- [\#196](https://github.com/terra-project/core/pull/196): Fix PeekEpochSeigniorage
+
+### Changes
+#### [\#196](https://github.com/terra-project/core/pull/196): Bugfix/peek epoch seigniorage
+Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuance from previous issuance
+
 ## 0.2.3
 - [\#187](https://github.com/terra-project/core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
 
