@@ -23,13 +23,13 @@ import (
 
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/multisig"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
 const (
 	flagInteractive = "interactive"
 	flagRecover     = "recover"
+	flagOldHdPath   = "old-hd-path"
 	flagNoBackup    = "no-backup"
 	flagDryRun      = "dry-run"
 	flagAccount     = "account"
@@ -73,6 +73,7 @@ the flag --nosort is set.
 	cmd.Flags().Bool(flagDryRun, false, "Perform action, but don't add key to local keystore")
 	cmd.Flags().Uint32(flagAccount, 0, "Account number for HD derivation")
 	cmd.Flags().Uint32(flagIndex, 0, "Address index number for HD derivation")
+	cmd.Flags().Bool(flagOldHdPath, false, "Recover key with old hd path")
 	cmd.Flags().Bool(client.FlagIndentResponse, false, "Add indent to JSON response")
 	return cmd
 }
@@ -243,37 +244,8 @@ func runAddCmd(_ *cobra.Command, args []string) error {
 	}
 
 	coinType := util.CoinType
-	if viper.GetBool(flagRecover) || viper.GetBool(flagInteractive) {
-
-		// Luna Coin Type derivation
-		lunaTypeAddress, err := getAddress(mnemonic, bip39Passphrase, util.CoinType, account, index)
-		if err != nil {
-			return err
-		}
-
-		// Cosmos Coin Type derivation
-		cosmosTypeAddress, err := getAddress(mnemonic, bip39Passphrase, sdk.CoinType, account, index)
-		if err != nil {
-			return err
-		}
-
-		for {
-			option, err := client.GetString(
-				fmt.Sprintf("\n1) %s\n2) %s\nPlease select the address want to recover(1 or 2): ",
-					lunaTypeAddress, cosmosTypeAddress), buf)
-
-			if err != nil {
-				return err
-			}
-
-			if option == "1" {
-				coinType = util.CoinType
-				break
-			} else if option == "2" {
-				coinType = sdk.CoinType
-				break
-			}
-		}
+	if (viper.GetBool(flagRecover) || viper.GetBool(flagInteractive)) && viper.GetBool(flagOldHdPath) {
+		coinType = sdk.CoinType
 	}
 
 	hdParams := hd.NewFundraiserParams(account, coinType, index)
@@ -290,22 +262,6 @@ func runAddCmd(_ *cobra.Command, args []string) error {
 	}
 
 	return printCreate(info, showMnemonic, mnemonic)
-}
-
-func getAddress(mnemonic, bip39Passphrase string, coinType, account, index uint32) (sdk.AccAddress, error) {
-	seed, err := bip39.NewSeedWithErrorChecking(mnemonic, bip39Passphrase)
-	if err != nil {
-		return nil, err
-	}
-
-	masterPriv, ch := hd.ComputeMastersFromSeed(seed)
-	derivedPriv, err := hd.DerivePrivateKeyForPath(masterPriv, ch, hd.NewParams(44, coinType, account, false, index).String())
-	if err != nil {
-		return nil, err
-	}
-
-	pubk := secp256k1.PrivKeySecp256k1(derivedPriv).PubKey()
-	return pubk.Address().Bytes(), nil
 }
 
 func printCreate(info keys.Info, showMnemonic bool, mnemonic string) error {

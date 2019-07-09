@@ -103,14 +103,14 @@ func Test_runAddCmdRecover(t *testing.T) {
 	/// Test Text
 	viper.Set(cli.OutputFlag, OutputFormatText)
 	viper.Set(flagRecover, true)
+	viper.Set(flagOldHdPath, false)
 
 	keyName := "keyname1"
 	password := "test1234\n"
 	mnemonic := "candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach\n"
-	choice := "1\n"
 
-	// Valid Choice
-	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic + choice)))
+	// New HD Path
+	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic)))
 	defer cleanUp1()
 
 	err := runAddCmd(cmd, []string{"keyname1"})
@@ -120,10 +120,9 @@ func Test_runAddCmdRecover(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "terra1wxuq9hkt4kes7r9kxh953l7p2cpcw8l73ek5dg", info.GetAddress().String())
 
-	// Valid Choice
-	choice = "2\n"
-
-	cleanUp2 := client.OverrideStdin(bufio.NewReader(strings.NewReader("y\n" + password + mnemonic + choice)))
+	// Old HD Path
+	viper.Set(flagOldHdPath, true)
+	cleanUp2 := client.OverrideStdin(bufio.NewReader(strings.NewReader("y\n" + password + mnemonic)))
 	defer cleanUp2()
 
 	err = runAddCmd(cmd, []string{"keyname1"})
@@ -133,22 +132,12 @@ func Test_runAddCmdRecover(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs", info.GetAddress().String())
 
-	// Invalid Choice
-	choice = "3\n"
-
-	cleanUp3 := client.OverrideStdin(bufio.NewReader(strings.NewReader("y\n" + password + mnemonic + choice)))
-	defer cleanUp3()
-
-	err = runAddCmd(cmd, []string{"keyname1"})
-	assert.Error(t, err)
-
 	// recover with dry-run flag (default password)
 	viper.Set(flagDryRun, true)
+	viper.Set(flagOldHdPath, true)
 
-	choice = "1\n"
-
-	cleanUp4 := client.OverrideStdin(bufio.NewReader(strings.NewReader(mnemonic + choice)))
-	defer cleanUp4()
+	cleanUp3 := client.OverrideStdin(bufio.NewReader(strings.NewReader(mnemonic)))
+	defer cleanUp3()
 
 	err = runAddCmd(cmd, []string{"keyname1"})
 	assert.NoError(t, err)
@@ -257,15 +246,15 @@ func Test_runAddCmdInteractive(t *testing.T) {
 	/// Test Text
 	viper.Set(cli.OutputFlag, OutputFormatText)
 	viper.Set(flagInteractive, true)
+	viper.Set(flagOldHdPath, false)
 
 	keyName := "keyname1"
 	password := "test1234\n"
 	mnemonic := "candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach\n"
 	bip39Passphrase := "hihi\nhihi\n"
-	option := "1\n"
 
-	// Valid Choice
-	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic + bip39Passphrase + option)))
+	// New HD path
+	cleanUp1 := client.OverrideStdin(bufio.NewReader(strings.NewReader(password + mnemonic + bip39Passphrase)))
 	defer cleanUp1()
 
 	err := runAddCmd(cmd, []string{keyName})
@@ -274,6 +263,18 @@ func Test_runAddCmdInteractive(t *testing.T) {
 	info, err := GetKeyInfo(keyName)
 	assert.NoError(t, err)
 	assert.Equal(t, "terra1smea3fuwun5ggfjep25gd7yv8kvw3mvx2hw3zm", info.GetAddress().String())
+
+	viper.Set(flagOldHdPath, true)
+	// Old HD path
+	cleanUp2 := client.OverrideStdin(bufio.NewReader(strings.NewReader("y\n" + password + mnemonic + bip39Passphrase)))
+	defer cleanUp2()
+
+	err = runAddCmd(cmd, []string{keyName})
+	assert.NoError(t, err)
+
+	info, err = GetKeyInfo(keyName)
+	assert.NoError(t, err)
+	assert.Equal(t, "terra1nv4nsd7tfl8xc2dm7rry5exwcf350wjguk0x2c", info.GetAddress().String())
 
 	recoverInitialViperState()
 }
