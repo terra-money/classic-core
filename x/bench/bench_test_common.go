@@ -144,6 +144,7 @@ func createTestInput() testInput {
 		stakingKeeper,
 		bankKeeper,
 		accKeeper,
+		feeKeeper,
 	)
 
 	sh := staking.NewHandler(stakingKeeper)

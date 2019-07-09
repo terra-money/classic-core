@@ -159,6 +159,7 @@ func createTestInput(t *testing.T) testInput {
 		stakingKeeper,
 		bankKeeper,
 		accKeeper,
+		feeCollectionKeeper,
 	)
 
 	oracleKeeper := oracle.NewKeeper(

@@ -134,6 +134,7 @@ func createTestInput(t *testing.T) testInput {
 		stakingKeeper,
 		bankKeeper,
 		accKeeper,
+		feeCollectionKeeper,
 	)
 
 	stakingKeeper.SetPool(ctx, staking.InitialPool())

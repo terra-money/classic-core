@@ -23,16 +23,18 @@ type Keeper struct {
 	sk  staking.Keeper
 	bk  bank.Keeper
 	ak  auth.AccountKeeper
+	fck auth.FeeCollectionKeeper
 }
 
 // NewKeeper creates a new instance of the mint module.
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Keeper, ak auth.AccountKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Keeper, ak auth.AccountKeeper, fck auth.FeeCollectionKeeper) Keeper {
 	return Keeper{
 		cdc: cdc,
 		key: key,
 		sk:  sk,
 		bk:  bk,
 		ak:  ak,
+		fck: fck,
 	}
 }
 
@@ -60,6 +62,28 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 		return err
 	}
 
+	if coin.Denom == assets.MicroLunaDenom {
+		pool := k.sk.GetPool(ctx)
+		pool.NotBondedTokens = pool.NotBondedTokens.Sub(coin.Amount)
+		k.sk.SetPool(ctx, pool)
+	}
+
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount.Neg())
+}
+
+// InternalMint mints {coin} for internal usage(fee pool), and reflects the increase in issuance
+func (k Keeper) InternalMint(ctx sdk.Context, coin sdk.Coin) sdk.Error {
+	if coin.Denom == assets.MicroLunaDenom {
+		pool := k.sk.GetPool(ctx)
+		pool.NotBondedTokens = pool.NotBondedTokens.Add(coin.Amount)
+		k.sk.SetPool(ctx, pool)
+	}
+
+	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount)
+}
+
+// InternalBurn burns internal(fee pool) {coin}, and reflects the decrease in issuance
+func (k Keeper) InternalBurn(ctx sdk.Context, coin sdk.Coin) sdk.Error {
 	if coin.Denom == assets.MicroLunaDenom {
 		pool := k.sk.GetPool(ctx)
 		pool.NotBondedTokens = pool.NotBondedTokens.Sub(coin.Amount)
@@ -112,6 +136,7 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 				return false
 			}
 			k.ak.IterateAccounts(ctx, countIssuance)
+			issuance = issuance.Add(k.fck.GetCollectedFees(ctx).AmountOf(denom))
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, day.Sub(sdk.OneInt()))

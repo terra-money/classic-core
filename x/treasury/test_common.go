@@ -153,6 +153,7 @@ func createTestInput(t *testing.T) testInput {
 		stakingKeeper,
 		bankKeeper,
 		accKeeper,
+		feeCollectionKeeper,
 	)
 
 	sh := staking.NewHandler(stakingKeeper)

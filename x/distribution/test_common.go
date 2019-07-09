@@ -1,17 +1,16 @@
-package oracle
+package distribution
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/types/assets"
+	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/mint"
-
-	"time"
+	"github.com/terra-project/core/x/oracle"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -27,58 +26,24 @@ import (
 )
 
 var (
-	pubKeys = []crypto.PubKey{
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-	}
-
 	addrs = []sdk.AccAddress{
-		sdk.AccAddress(pubKeys[0].Address()),
-		sdk.AccAddress(pubKeys[1].Address()),
-		sdk.AccAddress(pubKeys[2].Address()),
+		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
+		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
+		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	valConsPubKeys = []crypto.PubKey{
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
-	}
-
-	valConsAddrs = []sdk.ConsAddress{
-		sdk.ConsAddress(valConsPubKeys[0].Address()),
-		sdk.ConsAddress(valConsPubKeys[1].Address()),
-		sdk.ConsAddress(valConsPubKeys[2].Address()),
-	}
-
-	uSDRAmt  = sdk.NewInt(1005 * assets.MicroUnit)
-	uLunaAmt = sdk.NewInt(10 * assets.MicroUnit)
-
-	randomPrice        = sdk.NewDecWithPrec(1049, 2) // swap rate
-	anotherRandomPrice = sdk.NewDecWithPrec(4882, 2) // swap rate
-
-	oracleDecPrecision = 8
+	uSDRAmt = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
-func setup(t *testing.T) (testInput, sdk.Handler) {
-	input := createTestInput(t)
-	h := NewHandler(input.oracleKeeper)
-
-	defaultOracleParams := DefaultParams()
-	defaultOracleParams.VotePeriod = int64(1) // Set to one block for convinience
-	input.oracleKeeper.SetParams(input.ctx, defaultOracleParams)
-
-	return input, h
-}
-
 type testInput struct {
-	ctx           sdk.Context
-	cdc           *codec.Codec
-	accKeeper     auth.AccountKeeper
-	bankKeeper    bank.Keeper
-	oracleKeeper  Keeper
-	stakingKeeper staking.Keeper
-	distrKeeper   distr.Keeper
+	ctx                 sdk.Context
+	accKeeper           auth.AccountKeeper
+	bankKeeper          bank.Keeper
+	marketKeeper        market.Keeper
+	oracleKeeper        oracle.Keeper
+	mintKeeper          mint.Keeper
+	distrKeeper         distr.Keeper
+	feeCollectionKeeper auth.FeeCollectionKeeper
 }
 
 func newTestCodec() *codec.Codec {
@@ -96,10 +61,11 @@ func createTestInput(t *testing.T) testInput {
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
-	keyOracle := sdk.NewKVStoreKey(StoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
+	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyMint := sdk.NewKVStoreKey(mint.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
+	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	tKeyDistr := sdk.NewTransientStoreKey(distr.TStoreKey)
 	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
@@ -112,10 +78,11 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyDistr, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
@@ -153,6 +120,9 @@ func createTestInput(t *testing.T) testInput {
 		bankKeeper, &stakingKeeper, feeCollectionKeeper, distr.DefaultCodespace,
 	)
 
+	stakingKeeper.SetPool(ctx, staking.InitialPool())
+	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+
 	mintKeeper := mint.NewKeeper(
 		cdc,
 		keyMint,
@@ -162,36 +132,30 @@ func createTestInput(t *testing.T) testInput {
 		feeCollectionKeeper,
 	)
 
-	stakingKeeper.SetPool(ctx, staking.InitialPool())
-	stakingParams := staking.DefaultParams()
-	stakingParams.BondDenom = assets.MicroLunaDenom
-	stakingKeeper.SetParams(ctx, stakingParams)
-
-	sh := staking.NewHandler(stakingKeeper)
-	for i, addr := range addrs {
-		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt.MulRaw(3)))
-		require.NoError(t, err2)
-
-		// Add validators
-		commission := staking.NewCommissionMsg(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
-		msg := staking.NewMsgCreateValidator(sdk.ValAddress(addr), valConsPubKeys[i],
-			sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt), staking.Description{}, commission, sdk.OneInt())
-		res := sh(ctx, msg)
-		require.True(t, res.IsOK())
-
-		distrKeeper.Hooks().AfterValidatorCreated(ctx, sdk.ValAddress(addr))
-		staking.EndBlocker(ctx, stakingKeeper)
-	}
-
-	oracleKeeper := NewKeeper(
+	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle,
 		mintKeeper,
 		distrKeeper,
 		feeCollectionKeeper,
 		stakingKeeper.GetValidatorSet(),
-		paramsKeeper.Subspace(DefaultParamspace),
+		paramsKeeper.Subspace(oracle.DefaultParamspace),
 	)
 
-	return testInput{ctx, cdc, accKeeper, bankKeeper, oracleKeeper, stakingKeeper, distrKeeper}
+	marketKeeper := market.NewKeeper(
+		cdc,
+		keyMarket,
+		oracleKeeper,
+		mintKeeper,
+		paramsKeeper.Subspace(market.DefaultParamspace),
+	)
+
+	marketKeeper.SetParams(ctx, market.DefaultParams())
+
+	for _, addr := range addrs {
+		err := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt))
+		require.NoError(t, err)
+	}
+
+	return testInput{ctx, accKeeper, bankKeeper, marketKeeper, oracleKeeper, mintKeeper, distrKeeper, feeCollectionKeeper}
 }

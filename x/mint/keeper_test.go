@@ -60,6 +60,7 @@ func createTestInput(t *testing.T) testInput {
 	keyMint := sdk.NewKVStoreKey(StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tKeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keyFeeCollection := sdk.NewKVStoreKey(auth.FeeStoreKey)
 
 	cdc := newTestCodec()
 	db := dbm.NewMemDB()
@@ -72,6 +73,7 @@ func createTestInput(t *testing.T) testInput {
 	ms.MountStoreWithDB(keyMint, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyFeeCollection, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -81,6 +83,11 @@ func createTestInput(t *testing.T) testInput {
 		keyAcc,
 		paramsKeeper.Subspace(auth.DefaultParamspace),
 		auth.ProtoBaseAccount,
+	)
+
+	feeCollectionKeeper := auth.NewFeeCollectionKeeper(
+		cdc,
+		keyFeeCollection,
 	)
 
 	bankKeeper := bank.NewBaseKeeper(
@@ -105,6 +112,7 @@ func createTestInput(t *testing.T) testInput {
 		stakingKeeper,
 		bankKeeper,
 		accKeeper,
+		feeCollectionKeeper,
 	)
 
 	for _, addr := range addrs {

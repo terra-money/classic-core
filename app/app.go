@@ -175,6 +175,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 		stakingKeeper,
 		app.bankKeeper,
 		app.accountKeeper,
+		app.feeCollectionKeeper,
 	)
 	app.oracleKeeper = oracle.NewKeeper(
 		app.cdc,
@@ -309,7 +310,7 @@ func MakeCodec() *codec.Codec {
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
 	// distribute rewards for the previous block
-	distr.BeginBlocker(ctx, req, app.distrKeeper)
+	tdistr.BeginBlocker(ctx, req, app.distrKeeper, app.feeCollectionKeeper, app.marketKeeper, app.mintKeeper)
 
 	// slash anyone who double signed.
 	// NOTE: This should happen after distr.BeginBlocker so that
