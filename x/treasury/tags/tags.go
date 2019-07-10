@@ -14,6 +14,7 @@ var (
 	Amount      = "amount"
 	Rewardee    = "rewardee"
 	Tax         = "tax"
+	TaxCap      = "tax-cap"
 	Class       = "class"
 	MinerReward = "miner-weight"
 	Oracle      = "oracle-reward"

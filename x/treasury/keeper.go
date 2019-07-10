@@ -1,6 +1,8 @@
 package treasury
 
 import (
+	"strings"
+
 	"github.com/terra-project/core/types/util"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -123,6 +125,30 @@ func (k Keeper) setTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 	store := ctx.KVStore(k.key)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cap)
 	store.Set(keyTaxCap(denom), bz)
+}
+
+func (k Keeper) updateTaxCaps(ctx sdk.Context) (taxCaps sdk.Coins) {
+	store := ctx.KVStore(k.key)
+	iter := sdk.KVStorePrefixIterator(store, prefixTaxCap)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		taxCapKey := string(iter.Key())
+
+		elems := strings.Split(taxCapKey, ":")
+		denom := elems[1]
+
+		referenceCap := k.GetParams(ctx).TaxPolicy.Cap
+		reqCap, _, err := k.mk.GetSwapCoin(ctx, referenceCap, denom, true)
+
+		if err != nil {
+			continue
+		}
+
+		taxCaps = append(taxCaps, reqCap)
+		k.setTaxCap(ctx, reqCap.Denom, reqCap.Amount)
+	}
+
+	return
 }
 
 // GetTaxCap gets the Tax Cap. Denominated in integer units of the reference {denom}

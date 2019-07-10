@@ -7,6 +7,7 @@
 package pay
 
 import (
+	"github.com/terra-project/core/types/assets"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/x/treasury"
 
@@ -105,6 +106,11 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 	}
 
 	for _, coin := range principal {
+		// no tax fee for uluna
+		if coin.Denom == assets.MicroLunaDenom {
+			continue
+		}
+
 		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
 
 		// If tax due is greater than the tax cap, cap!
@@ -118,6 +124,10 @@ func payTax(ctx sdk.Context, bk bank.Keeper, tk treasury.Keeper, fk auth.FeeColl
 		}
 
 		taxes = taxes.Add(sdk.NewCoins(sdk.NewCoin(coin.Denom, taxDue))).Sort()
+	}
+
+	if taxes.Empty() {
+		return taxes, nil
 	}
 
 	_, _, err = bk.SubtractCoins(ctx, taxPayer, taxes)

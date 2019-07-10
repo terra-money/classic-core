@@ -28,6 +28,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 	}
 
 	// Update policy weights
+	updatedTaxCaps := k.updateTaxCaps(ctx)
 	taxRate := updateTaxPolicy(ctx, k)
 	rewardWeight := updateRewardPolicy(ctx, k)
 
@@ -35,5 +36,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) (resTags sdk.Tags) {
 		tags.Action, tags.ActionPolicyUpdate,
 		tags.Tax, taxRate.String(),
 		tags.MinerReward, rewardWeight.String(),
+		tags.TaxCap, updatedTaxCaps.String(),
 	)
 }

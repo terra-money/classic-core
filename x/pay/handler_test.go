@@ -49,7 +49,8 @@ var (
 		sdk.ConsAddress(valConsPubKeys[2].Address()),
 	}
 
-	uSDRAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	uSDRAmount  = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	uLunaAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
@@ -276,6 +277,32 @@ func TestHandlerMsgSendTax(t *testing.T) {
 	require.Equal(t, expectedRemainingBalance, remainingBalance)
 	require.Equal(t, expectedReceivedBalance, receivedBalance)
 	require.Equal(t, expectedTaxCollected, taxCollected)
+}
+
+func TestLunaSendTax(t *testing.T) {
+	input := createTestInput(t)
+	input.bankKeeper.SetSendEnabled(input.ctx, true)
+	params := treasury.DefaultParams()
+
+	input.treasuryKeeper.SetTaxRate(input.ctx, sdk.NewDecWithPrec(1, 3)) // 0.1%
+	input.treasuryKeeper.SetParams(input.ctx, params)
+
+	_, _, err := input.bankKeeper.AddCoins(input.ctx, addrs[0], sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, uLunaAmount)})
+	require.NoError(t, err)
+
+	handler := NewHandler(input.bankKeeper, input.treasuryKeeper, input.feeKeeper)
+	amt := sdk.NewInt(1000).MulRaw(assets.MicroUnit)
+	msg := bank.NewMsgSend(addrs[0], addrs[1], sdk.Coins{sdk.NewCoin(assets.MicroLunaDenom, amt)})
+
+	handler(input.ctx, msg)
+
+	taxCollected := input.feeKeeper.GetCollectedFees(input.ctx)
+	taxRecorded := input.treasuryKeeper.PeekTaxProceeds(input.ctx, util.GetEpoch(input.ctx))
+	require.Equal(t, sdk.Coins{}, taxCollected)
+	require.Equal(t, taxCollected, taxRecorded)
+
+	require.Equal(t, amt, input.bankKeeper.GetCoins(input.ctx, addrs[1]).AmountOf(assets.MicroLunaDenom))
+	require.Equal(t, uLunaAmount.Sub(amt), input.bankKeeper.GetCoins(input.ctx, addrs[0]).AmountOf(assets.MicroLunaDenom))
 }
 
 func TestHandlerMsgMultiSendTax(t *testing.T) {
