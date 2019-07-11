@@ -14,11 +14,11 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/terra-project/core/app"
+	"github.com/terra-project/core/client/keys"
 	"github.com/terra-project/core/types/util"
 	"github.com/terra-project/core/version"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -74,8 +74,8 @@ func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
-	config.SetCoinType(330)
-	config.SetFullFundraiserPath("44'/330'/0'/0/0")
+	config.SetCoinType(util.CoinType)
+	config.SetFullFundraiserPath(util.FullFundraiserPath)
 	config.SetBech32PrefixForAccount(util.Bech32PrefixAccAddr, util.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(util.Bech32PrefixValAddr, util.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(util.Bech32PrefixConsAddr, util.Bech32PrefixConsPub)
