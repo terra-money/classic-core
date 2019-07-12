@@ -14,6 +14,8 @@ github.com/YunSuk-Yeo/cosmos-sdk v0.35.0-terra h1:IvNkhC53iJpUruq8ErQv13l9JD/cPX
 github.com/YunSuk-Yeo/cosmos-sdk v0.35.0-terra/go.mod h1:ruF+G4D7hRf34uzZQvf/SIja9fsIThU5D7GirwTMQ9I=
 github.com/YunSuk-Yeo/cosmos-sdk v0.35.1-terra h1:Xwjfh2FY54ptyIBPs4SA1Rk4uwGj6eavs9KkwbtcegQ=
 github.com/YunSuk-Yeo/cosmos-sdk v0.35.1-terra/go.mod h1:ruF+G4D7hRf34uzZQvf/SIja9fsIThU5D7GirwTMQ9I=
+github.com/YunSuk-Yeo/cosmos-sdk v0.35.2-terra h1:8Vf1FfsRTn7mo6DryoE0ldhenhGzjXtjuf3aMpKwyA0=
+github.com/YunSuk-Yeo/cosmos-sdk v0.35.2-terra/go.mod h1:ruF+G4D7hRf34uzZQvf/SIja9fsIThU5D7GirwTMQ9I=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

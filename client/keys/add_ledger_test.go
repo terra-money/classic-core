@@ -53,6 +53,8 @@ func Test_runAddCmdLedger(t *testing.T) {
 	assert.Equal(t, "keyname1", key1.GetName())
 	assert.Equal(t, keys.TypeLedger, key1.GetType())
 	assert.Equal(t,
-		"terrapub1addwnpepqd87l8xhcnrrtzxnkql7k55ph8fr9jarf4hn6udwukfprlalu8lgw0fsqm8",
+		"terrapub1addwnpepqvpg7r26nl2pvqqern00m6s9uaax3hauu2rzg8qpjzq9hy6xve7sw0d84m6",
 		sdk.MustBech32ifyAccPub(key1.GetPubKey()))
+
+	viper.Set(client.FlagUseLedger, false)
 }
