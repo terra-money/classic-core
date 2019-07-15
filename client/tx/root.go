@@ -14,4 +14,5 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) 
 	r.HandleFunc("/txs", QueryTxsByTagsRequestHandlerFn(cliCtx, cdc)).Methods("GET")
 	r.HandleFunc("/txs", sdktx.BroadcastTxRequest(cliCtx, cdc)).Methods("POST")
 	r.HandleFunc("/txs/encode", sdktx.EncodeTxRequestHandlerFn(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc("/txs/estimate_fee", EstimateTxFeeRequestHandlerFn(cdc, cliCtx)).Methods("POST")
 }

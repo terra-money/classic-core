@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+
+	"github.com/terra-project/core/client/tx"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
@@ -66,6 +69,37 @@ func SendRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context.CLIC
 		}
 
 		msg := bank.NewMsgSend(fromAddr, toAddr, req.Coins)
+
+		if req.BaseReq.Fees.Empty() {
+			fees, gas, err := tx.ComputeFees(cliCtx, cdc, tx.ComputeReqParams{
+				Memo:          req.BaseReq.Memo,
+				ChainID:       req.BaseReq.ChainID,
+				AccountNumber: req.BaseReq.AccountNumber,
+				Sequence:      req.BaseReq.Sequence,
+				GasPrices:     req.BaseReq.GasPrices,
+				Gas:           req.BaseReq.Gas,
+				GasAdjustment: req.BaseReq.GasAdjustment,
+
+				Msgs: []sdk.Msg{msg},
+			})
+
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			}
+
+			req.BaseReq.Fees = fees
+			req.BaseReq.Gas = fmt.Sprintf("%d", gas)
+			req.BaseReq.GasPrices = sdk.DecCoins{}
+		}
+
+		totalAmount := req.Coins.Add(req.BaseReq.Fees)
+
+		// ensure account has enough coins
+		if !account.GetCoins().IsAllGTE(totalAmount) {
+			err = fmt.Errorf("address %s doesn't have enough coins to pay for %s", req.BaseReq.From, totalAmount.String())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
 		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

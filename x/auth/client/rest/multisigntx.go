@@ -118,9 +118,9 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 		var json []byte
 		switch {
 		case sigOnly:
-			json, err = cdc.MarshalJSONIndent(newTx.Signatures[0], "", "  ")
+			json, err = cdc.MarshalJSONIndent(newTx.Signatures, "", "  ")
 		case sigOnly && !cliCtx.Indent:
-			json, err = cdc.MarshalJSON(newTx.Signatures[0])
+			json, err = cdc.MarshalJSON(newTx.Signatures)
 		case !sigOnly && cliCtx.Indent:
 			json, err = cdc.MarshalJSONIndent(newTx, "", "  ")
 		default:

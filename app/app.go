@@ -18,6 +18,7 @@ import (
 
 	"github.com/terra-project/core/types/assets"
 
+	tauth "github.com/terra-project/core/x/auth"
 	tdistr "github.com/terra-project/core/x/distribution"
 	tslashing "github.com/terra-project/core/x/slashing"
 	tstaking "github.com/terra-project/core/x/staking"
@@ -223,7 +224,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 
 	// register message routes
 	app.Router().
-		AddRoute(bank.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
+		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
 		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
 		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
 		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
@@ -251,7 +252,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 	)
 	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
+	app.SetAnteHandler(tauth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper, app.treasuryKeeper))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {

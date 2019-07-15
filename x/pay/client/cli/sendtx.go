@@ -14,6 +14,8 @@ import (
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
+	"github.com/terra-project/core/client/tx"
+
 	"github.com/spf13/cobra"
 )
 
@@ -58,6 +60,8 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 
 			from := cliCtx.GetFromAddress()
 
+			msg := bank.NewMsgSend(from, to, coins)
+
 			offline := viper.GetBool(flagOffline)
 			if !offline {
 
@@ -70,15 +74,41 @@ $ terracli tx send --to [to_address] --coins [amount] --from [from_address or ke
 					return err
 				}
 
-				// ensure account has enough coins
-				if !account.GetCoins().IsAllGTE(coins) {
-					return fmt.Errorf("address %s doesn't have enough coins to pay for this transaction", from)
+				if txBldr.Fees().Empty() {
+					fees, gas, err := tx.ComputeFees(cliCtx, cdc, tx.ComputeReqParams{
+						Memo:          txBldr.Memo(),
+						ChainID:       txBldr.ChainID(),
+						AccountNumber: txBldr.AccountNumber(),
+						Sequence:      txBldr.Sequence(),
+						GasPrices:     txBldr.GasPrices(),
+						Gas:           fmt.Sprintf("%d", txBldr.Gas()),
+						GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
+
+						Msgs: []sdk.Msg{msg},
+					})
+
+					if err != nil {
+						return err
+					}
+
+					// Reset txBlder with computed values
+					client.GasFlagVar.Gas = gas
+					client.GasFlagVar.Simulate = false
+					viper.Set(client.FlagFees, fees.String())
+					viper.Set(client.FlagGasPrices, "")
+
+					txBldr = authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 				}
 
+				totalAmount := coins.Add(txBldr.Fees())
+
+				// ensure account has enough coins
+				if !account.GetCoins().IsAllGTE(totalAmount) {
+					return fmt.Errorf("address %s doesn't have enough coins to pay for %s", from, totalAmount.String())
+				}
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := bank.NewMsgSend(from, to, coins)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
 		},
 	}

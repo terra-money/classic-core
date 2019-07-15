@@ -173,6 +173,7 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 		authcmd.GetMultiSignCommand(cdc),
 		tx.GetBroadcastCommand(cdc),
 		tx.GetEncodeCommand(cdc),
+		txcustom.GetExstimateTxFeesCommand(cdc),
 		client.LineBreak,
 	)
 

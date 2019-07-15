@@ -5,7 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/terra-project/core/testutil"
+	"github.com/terra-project/core/types/assets"
 )
 
 func TestSendTx(t *testing.T) {
@@ -27,4 +30,10 @@ func TestSendTx(t *testing.T) {
 	)
 
 	require.Nil(t, err)
+}
+
+func TestSetManualFees(t *testing.T) {
+	coins := sdk.NewCoins(sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(1000)), sdk.NewCoin(assets.MicroKRWDenom, sdk.NewInt(10000)))
+	_, err := sdk.ParseCoins(coins.String())
+	require.NoError(t, err)
 }

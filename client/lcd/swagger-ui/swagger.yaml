@@ -326,6 +326,48 @@ paths:
           description: The tx was malformated
         500:
           description: Server internal error  
+  /txs/estiamte_fee:
+    post:
+      tags:
+        - Transaction
+      summary: Estimate fees and gas of a transaction
+      description: Estimate fees and gas of a transaction according to given parameters
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: estimate_req
+          description: The tx and gas params to compute fees
+          required: true
+          schema:
+            type: object
+            properties:
+              tx:
+                $ref: "#/definitions/StdTx"
+              gas_adjustment:
+                type: string
+                description: only used when tx's gas is "0", default "1"
+                example: "1.4"
+              gas_prices:
+                description: used to compute gas fees = (gas * gas_prices), default 0
+                type: array
+                items:
+                  $ref: "#/definitions/DecCoin"
+      responses:
+        200:
+          description: The tx was successfully decoded and re-encoded
+          schema:
+            type: object
+            properties:
+              tx:
+                type: string
+                example: The base64-encoded Amino-serialized bytes for the tx
+        400:
+          description: The tx was malformated
+        500:
+          description: Server internal error  
   /bank/balances/{address}:
     get:
       summary: Get the account balances
@@ -2250,6 +2292,15 @@ definitions:
       amount:
         type: string
         example: "50"
+  DecCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: luna
+      amount:
+        type: string
+        example: "0.015"
   Hash:
     type: string
     example: EE5F3404034C524501629B56E0DDC38FAD651F04
