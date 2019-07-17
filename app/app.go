@@ -214,7 +214,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest,
 	// NOTE: The stakingKeeper above is passed by reference, so that it can be
 	// modified like below:
 	app.stakingKeeper = *stakingKeeper.SetHooks(
-		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
+		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks(), app.mintKeeper.Hooks()))
 
 	// register the crisis routes
 	bank.RegisterInvariants(&app.crisisKeeper, app.accountKeeper)
@@ -458,11 +458,12 @@ var _ sdk.StakingHooks = StakingHooks{}
 type StakingHooks struct {
 	dh distr.Hooks
 	sh slashing.Hooks
+	mh mint.Hooks
 }
 
 // NewStakingHooks nolint
-func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks) StakingHooks {
-	return StakingHooks{dh, sh}
+func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks, mh mint.Hooks) StakingHooks {
+	return StakingHooks{dh, sh, mh}
 }
 
 // AfterValidatorCreated nolint
@@ -493,34 +494,40 @@ func (h StakingHooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAdd
 func (h StakingHooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
 	h.sh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
+	h.mh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
 }
 
 // BeforeDelegationCreated nolint
 func (h StakingHooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationCreated(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationCreated(ctx, delAddr, valAddr)
+	h.mh.BeforeDelegationCreated(ctx, delAddr, valAddr)
 }
 
 // BeforeDelegationSharesModified nolint
 func (h StakingHooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+	h.mh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 }
 
 // BeforeDelegationRemoved nolint
 func (h StakingHooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 	h.sh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
+	h.mh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 }
 
 // AfterDelegationModified nolint
 func (h StakingHooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	h.dh.AfterDelegationModified(ctx, delAddr, valAddr)
 	h.sh.AfterDelegationModified(ctx, delAddr, valAddr)
+	h.mh.AfterDelegationModified(ctx, delAddr, valAddr)
 }
 
 // BeforeValidatorSlashed nolint
 func (h StakingHooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
 	h.dh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 	h.sh.BeforeValidatorSlashed(ctx, valAddr, fraction)
+	h.mh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 }

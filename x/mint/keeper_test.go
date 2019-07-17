@@ -13,6 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
@@ -26,20 +28,40 @@ import (
 )
 
 var (
-	addrs = []sdk.AccAddress{
-		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
-		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
-		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
+	pubKeys = []crypto.PubKey{
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
 	}
 
-	uSDRAmount = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
+	addrs = []sdk.AccAddress{
+		sdk.AccAddress(pubKeys[0].Address()),
+		sdk.AccAddress(pubKeys[1].Address()),
+		sdk.AccAddress(pubKeys[2].Address()),
+	}
+
+	valConsPubKeys = []crypto.PubKey{
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+	}
+
+	valConsAddrs = []sdk.ConsAddress{
+		sdk.ConsAddress(valConsPubKeys[0].Address()),
+		sdk.ConsAddress(valConsPubKeys[1].Address()),
+		sdk.ConsAddress(valConsPubKeys[2].Address()),
+	}
+
+	uLunaAmt = sdk.NewInt(100000000).MulRaw(assets.MicroUnit)
+	uSDRAmt  = sdk.NewInt(1005).MulRaw(assets.MicroUnit)
 )
 
 type testInput struct {
-	ctx        sdk.Context
-	accKeeper  auth.AccountKeeper
-	bankKeeper bank.Keeper
-	mintKeeper Keeper
+	ctx           sdk.Context
+	accKeeper     auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	mintKeeper    Keeper
+	stakingKeeper staking.Keeper
 }
 
 func newTestCodec() *codec.Codec {
@@ -97,7 +119,9 @@ func createTestInput(t *testing.T) testInput {
 	)
 
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
-	stakingKeeper.SetParams(ctx, staking.DefaultParams())
+	stakingParams := staking.DefaultParams()
+	stakingParams.BondDenom = assets.MicroLunaDenom
+	stakingKeeper.SetParams(ctx, stakingParams)
 
 	mintKeeper := NewKeeper(
 		cdc,
@@ -107,12 +131,28 @@ func createTestInput(t *testing.T) testInput {
 		accKeeper,
 	)
 
+	stakingKeeper.SetHooks(mintKeeper.Hooks())
+	sh := staking.NewHandler(stakingKeeper)
+	for i, addr := range addrs {
+		err2 := mintKeeper.Mint(ctx, addr, sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
+		require.NoError(t, err2)
+
+		// Add validators
+		commission := staking.NewCommissionMsg(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
+		msg := staking.NewMsgCreateValidator(sdk.ValAddress(addr), valConsPubKeys[i],
+			sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt), staking.Description{}, commission, sdk.OneInt())
+		res := sh(ctx, msg)
+		require.True(t, res.IsOK())
+
+		staking.EndBlocker(ctx, stakingKeeper)
+	}
+
 	for _, addr := range addrs {
-		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmount)})
+		_, _, err := bankKeeper.AddCoins(ctx, addr, sdk.Coins{sdk.NewCoin(assets.MicroSDRDenom, uSDRAmt)})
 		require.NoError(t, err)
 	}
 
-	return testInput{ctx, accKeeper, bankKeeper, mintKeeper}
+	return testInput{ctx, accKeeper, bankKeeper, mintKeeper, stakingKeeper}
 }
 
 func TestKeeperIssuance(t *testing.T) {
@@ -121,19 +161,19 @@ func TestKeeperIssuance(t *testing.T) {
 
 	// Should be able to claim genesis issunace
 	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmount.MulRaw(3), issuance)
+	require.Equal(t, uSDRAmt.MulRaw(3), issuance)
 
 	// Lowering issuance works
 	err := input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.OneInt().MulRaw(assets.MicroUnit).Neg())
 	require.Nil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
+	require.Equal(t, uSDRAmt.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// ... but not too much
 	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(5000).MulRaw(assets.MicroUnit).Neg())
 	require.NotNil(t, err)
 	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroSDRDenom, curDay)
-	require.Equal(t, uSDRAmount.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
+	require.Equal(t, uSDRAmt.MulRaw(3).Sub(sdk.OneInt().MulRaw(assets.MicroUnit)), issuance)
 
 	// Raising issuance works, too
 	err = input.mintKeeper.ChangeIssuance(input.ctx, assets.MicroSDRDenom, sdk.NewInt(986).MulRaw(assets.MicroUnit))
@@ -182,13 +222,33 @@ func TestKeeperMintBurn(t *testing.T) {
 func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
-	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
-
-	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	require.NoError(t, err)
+	err = input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	require.NoError(t, err)
 	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
 
 	require.Equal(t, sdk.NewInt(100), seigniorage)
+}
+
+func TestDelegationIssuanceUpdate(t *testing.T) {
+	input := createTestInput(t)
+	curDay := sdk.ZeroInt()
+
+	err := input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
+	require.NoError(t, err)
+
+	issuance := input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, curDay)
+	require.Equal(t, uLunaAmt, issuance)
+
+	msg := staking.NewMsgDelegate(addrs[0], sdk.ValAddress(addrs[0]), sdk.NewCoin(assets.MicroLunaDenom, uLunaAmt))
+	require.Nil(t, msg.ValidateBasic())
+
+	sh := staking.NewHandler(input.stakingKeeper)
+	require.True(t, sh(input.ctx, msg).IsOK())
+
+	issuance = input.mintKeeper.GetIssuance(input.ctx, assets.MicroLunaDenom, curDay)
+	require.Equal(t, sdk.ZeroInt(), issuance)
 }
 
 func TestKeeperMintStress(t *testing.T) {

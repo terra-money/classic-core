@@ -169,6 +169,8 @@ func createTestInput(t *testing.T) testInput {
 
 		distrKeeper.Hooks().AfterValidatorCreated(ctx, sdk.ValAddress(addr))
 		staking.EndBlocker(ctx, stakingKeeper)
+
+		mintKeeper.Hooks().AfterValidatorBonded(ctx, sdk.ConsAddress{}, sdk.ValAddress{})
 	}
 
 	oracleKeeper := oracle.NewKeeper(

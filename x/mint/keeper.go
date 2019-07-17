@@ -36,18 +36,15 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, sk staking.Keeper, bk bank.Ke
 	}
 }
 
+// Create new distribution hooks
+func (k Keeper) Hooks() Hooks { return Hooks{k} }
+
 // Mint credits {coin} to the {recipient} account, and reflects the increase in issuance
 func (k Keeper) Mint(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) (err sdk.Error) {
 
 	_, _, err = k.bk.AddCoins(ctx, recipient, sdk.Coins{coin})
 	if err != nil {
 		return err
-	}
-
-	if coin.Denom == assets.MicroLunaDenom {
-		pool := k.sk.GetPool(ctx)
-		pool.NotBondedTokens = pool.NotBondedTokens.Add(coin.Amount)
-		k.sk.SetPool(ctx, pool)
 	}
 
 	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount)
@@ -60,13 +57,16 @@ func (k Keeper) Burn(ctx sdk.Context, payer sdk.AccAddress, coin sdk.Coin) (err 
 		return err
 	}
 
-	if coin.Denom == assets.MicroLunaDenom {
-		pool := k.sk.GetPool(ctx)
-		pool.NotBondedTokens = pool.NotBondedTokens.Sub(coin.Amount)
-		k.sk.SetPool(ctx, pool)
-	}
-
 	return k.ChangeIssuance(ctx, coin.Denom, coin.Amount.Neg())
+}
+
+// SetIssuance sets bond denom's issuance to not bonded tokens
+func (k Keeper) SetIssuance(ctx sdk.Context) {
+	store := ctx.KVStore(k.key)
+	curDay := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
+	pool := k.sk.GetPool(ctx)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool.NotBondedTokens)
+	store.Set(keyIssuance(k.sk.BondDenom(ctx), curDay), bz)
 }
 
 // ChangeIssuance updates the issuance to reflect
@@ -74,15 +74,24 @@ func (k Keeper) ChangeIssuance(ctx sdk.Context, denom string, delta sdk.Int) (er
 	store := ctx.KVStore(k.key)
 	curDay := sdk.NewInt(ctx.BlockHeight() / util.BlocksPerDay)
 
-	// If genesis issuance is not on disk, GetIssuance will do a fresh read of account balances
-	// and the change in issuance should be reported automatically.
-	if !store.Has(keyIssuance(denom, sdk.ZeroInt())) {
-		k.GetIssuance(ctx, denom, curDay)
-		return
-	}
+	var newIssuance sdk.Int
+	if denom == k.sk.BondDenom(ctx) {
+		pool := k.sk.GetPool(ctx)
+		pool.NotBondedTokens = pool.NotBondedTokens.Add(delta)
+		k.sk.SetPool(ctx, pool)
 
-	curIssuance := k.GetIssuance(ctx, denom, curDay)
-	newIssuance := curIssuance.Add(delta)
+		newIssuance = pool.NotBondedTokens
+	} else {
+		// If genesis issuance is not on disk, GetIssuance will do a fresh read of account balances
+		// and the change in issuance should be reported automatically.
+		if !store.Has(keyIssuance(denom, sdk.ZeroInt())) {
+			k.GetIssuance(ctx, denom, curDay)
+			return
+		}
+
+		curIssuance := k.GetIssuance(ctx, denom, curDay)
+		newIssuance = curIssuance.Add(delta)
+	}
 
 	if newIssuance.IsNegative() {
 		err = sdk.ErrInternal("Issuance should never fall below 0")
@@ -106,12 +115,21 @@ func (k Keeper) GetIssuance(ctx sdk.Context, denom string, day sdk.Int) (issuanc
 		// Genesis epoch; nothing exists in store so we must read it
 		// from accountkeeper
 		if day.LTE(sdk.ZeroInt()) {
+
 			issuance = sdk.ZeroInt()
-			countIssuance := func(acc auth.Account) (stop bool) {
-				issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
-				return false
+
+			// for the bond denom, just return notBondedTokens
+			if denom == k.sk.BondDenom(ctx) {
+				pool := k.sk.GetPool(ctx)
+				issuance = pool.NotBondedTokens
+			} else {
+				countIssuance := func(acc auth.Account) (stop bool) {
+					issuance = issuance.Add(acc.GetCoins().AmountOf(denom))
+					return false
+				}
+				k.ak.IterateAccounts(ctx, countIssuance)
 			}
-			k.ak.IterateAccounts(ctx, countIssuance)
+
 		} else {
 			// Fetch the issuance snapshot of the previous epoch
 			issuance = k.GetIssuance(ctx, denom, day.Sub(sdk.OneInt()))
