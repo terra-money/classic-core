@@ -25,7 +25,7 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx, newTaxRate)
+	k.SetTaxRate(ctx.WithBlockHeight(ctx.BlockHeight()+1), newTaxRate)
 	return
 }
 
@@ -52,6 +52,6 @@ func updateRewardPolicy(ctx sdk.Context, k Keeper) (newRewardWeight sdk.Dec) {
 	newRewardWeight = params.RewardPolicy.Clamp(oldWeight, newRewardWeight)
 
 	// Set the new reward weight
-	k.SetRewardWeight(ctx, newRewardWeight)
+	k.SetRewardWeight(ctx.WithBlockHeight(ctx.BlockHeight()+1), newRewardWeight)
 	return
 }
