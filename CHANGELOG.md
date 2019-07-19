@@ -1,9 +1,22 @@
 ## 0.2.4
-- [\#196](https://github.com/terra-project/core/pull/196): Fix PeekEpochSeigniorage
-
-### Changes
-#### [\#196](https://github.com/terra-project/core/pull/196): Bugfix/peek epoch seigniorage
+### Bug fix
+#### [\#196](https://github.com/terra-project/core/pull/196) peek epoch seigniorage
 Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuance from previous issuance
+
+### Feature
+#### [\#193](https://github.com/terra-project/core/pull/193) Recover old hd path
+Added `--old-hd-path` option to `$terracli keys add` command for recovering old bip44 path(for atom)
+##### Example
+```
+$ terracli keys add tmp --recover --old-hd-path
+Enter a passphrase to encrypt your key to disk:
+Repeat the passphrase:
+> Enter your bip39 mnemonic
+candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach
+
+NAME:	TYPE:	ADDRESS:					PUBKEY:
+tmp   local	terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs	terrapub1addwnpepqv6tse2pyag9ts5vy6dk4h3qh7xc9qhat4jx449n6nrfve3jhzldz3f3l7p
+```
 
 ## 0.2.3
 - [\#187](https://github.com/terra-project/core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation

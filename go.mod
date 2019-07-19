@@ -3,10 +3,11 @@ module github.com/terra-project/core
 go 1.12
 
 require (
+	github.com/bartekn/go-bip39 v0.0.0-20171116152956-a05967ea095d
 	github.com/btcsuite/btcd v0.0.0-20190315201642-aa6e0f35703c // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190316010144-3ac1210f4b38 // indirect
 	github.com/cosmos/cosmos-sdk v0.0.0-00010101000000-000000000000
-	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d // indirect
+	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/golangci/golangci-lint v1.17.1 // indirect
 	github.com/gorilla/mux v1.7.0
 	github.com/pkg/errors v0.8.1
@@ -23,6 +24,6 @@ require (
 	google.golang.org/grpc v1.21.0 // indirect
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/YunSuk-Yeo/cosmos-sdk v0.35.1-terra
+replace github.com/cosmos/cosmos-sdk => github.com/YunSuk-Yeo/cosmos-sdk v0.35.2-terra
 
 replace golang.org/x/crypto => github.com/tendermint/crypto v0.0.0-20180820045704-3764759f34a5
