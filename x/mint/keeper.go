@@ -145,7 +145,7 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch sdk.Int) (epochSeign
 
 	prevEpochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, prevEpochLastDay)
 	epochIssuance := k.GetIssuance(ctx, assets.MicroLunaDenom, epochLastDay)
-	epochSeigniorage = epochIssuance.Sub(prevEpochIssuance)
+	epochSeigniorage = prevEpochIssuance.Sub(epochIssuance)
 
 	if epochSeigniorage.LT(sdk.ZeroInt()) {
 		epochSeigniorage = sdk.ZeroInt()

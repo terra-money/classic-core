@@ -233,11 +233,13 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	input := createTestInput(t)
 	querier := NewQuerier(input.treasuryKeeper)
 
+	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
+	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
+
 	getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 
 	input.ctx = input.ctx.WithBlockHeight(util.BlocksPerEpoch)
-	seigniorageProceeds := sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(10).MulRaw(assets.MicroUnit))
-	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
+	input.mintKeeper.Burn(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, seigniorageProceeds.Amount))
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.ctx, input.cdc, querier, util.GetEpoch(input.ctx))
 

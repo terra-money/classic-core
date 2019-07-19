@@ -183,10 +183,11 @@ func TestKeeperSeigniorage(t *testing.T) {
 	input := createTestInput(t)
 
 	input.mintKeeper.Mint(input.ctx, addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
-	input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
+	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(0))
+	require.Equal(t, int64(0), seigniorage.Int64())
 
-	input.mintKeeper.Mint(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
-	seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
+	input.mintKeeper.Burn(input.ctx.WithBlockHeight(util.BlocksPerEpoch-1), addrs[0], sdk.NewCoin(assets.MicroLunaDenom, sdk.NewInt(100)))
+	seigniorage = input.mintKeeper.PeekEpochSeigniorage(input.ctx.WithBlockHeight(util.BlocksPerEpoch), sdk.NewInt(0))
 
 	require.Equal(t, sdk.NewInt(100), seigniorage)
 }
@@ -237,7 +238,7 @@ func TestKeeperMintStress(t *testing.T) {
 		// last day of epoch
 		if (day+1)*util.BlocksPerDay%util.BlocksPerEpoch == 0 {
 			seigniorage := input.mintKeeper.PeekEpochSeigniorage(input.ctx, sdk.NewInt(day))
-			require.Equal(t, int64(math.Max(float64(epochDelta), 0)), seigniorage.Int64())
+			require.Equal(t, int64(math.Max(float64(-epochDelta), 0)), seigniorage.Int64())
 			epochDelta = 0
 		}
 	}

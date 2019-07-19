@@ -1,21 +1,21 @@
 ## 0.2.4
-- [\#193](https://github.com/terra-project/core/pull/193)
+### Bug fix
+#### [\#196](https://github.com/terra-project/core/pull/196) peek epoch seigniorage
+Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuance from previous issuance
 
-### Changes
-#### [\#193](https://github.com/terra-project/core/pull/193) Feature/recover-old-hd-path
-Upgrade `$terracli keys add --recover` to support old version hd path
-
-In order to support old bip44 path (atom), address chose option is appended at recover.
+### Feature
+#### [\#193](https://github.com/terra-project/core/pull/193) Recover old hd path
+Added `--old-hd-path` option to `$terracli keys add` command for recovering old bip44 path(for atom)
+##### Example
 ```
-$ terracli keys add tmp2 --recover
+$ terracli keys add tmp --recover --old-hd-path
 Enter a passphrase to encrypt your key to disk:
 Repeat the passphrase:
 > Enter your bip39 mnemonic
 candy hint hamster cute inquiry bright industry decide assist wedding carpet fiber arm menu machine lottery type alert fan march argue adapt recycle stomach
-> 
-1) terra1wxuq9hkt4kes7r9kxh953l7p2cpcw8l73ek5dg
-2) terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs
-Please select the address want to recover(1 or 2):
+
+NAME:	TYPE:	ADDRESS:					PUBKEY:
+tmp   local	terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs	terrapub1addwnpepqv6tse2pyag9ts5vy6dk4h3qh7xc9qhat4jx449n6nrfve3jhzldz3f3l7p
 ```
 
 ## 0.2.3
