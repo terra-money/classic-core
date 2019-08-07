@@ -160,7 +160,7 @@ This command will prompt you to input a passphrase as well as your mnemonic. Cha
 In order to query the state and send transactions, you need a way to access the network. To do so, you can either run your own full-node, or connect to someone else's.
 
 {% hint style="danger" %}
-    **NOTE: Do not share your mnemonic \(12 or 24 words\) with anyone. The only person who should ever need to know it is you. This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support. No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic.**
+    **Do not share your mnemonic \(12 or 24 words\) with anyone. The only person who should ever need to know it is you. This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support. No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic.**
 {% endhint %}
 
 ### Running your own full-node
