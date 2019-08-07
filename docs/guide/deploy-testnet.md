@@ -158,7 +158,9 @@ terracli keys list --home ./build/node0/terracli
 
 Now that accounts exists, you may create new accounts and send those accounts funds!
 
-::: tip **Note**: Each node's seed is located at `./build/nodeN/terracli/key_seed.json` and can be restored to the CLI using the `terracli keys add --restore` command :::
+{% hint style="info" %}
+    Each node's seed is located at `./build/nodeN/terracli/key_seed.json` and can be restored to the CLI using the `terracli keys add --restore` command.
+{% endhint %}
 
 ### Special binaries
 

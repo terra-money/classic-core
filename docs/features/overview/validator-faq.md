@@ -1,6 +1,8 @@
 # FAQ
 
-::: warning Disclaimer This is work in progress. Mechanisms and values are susceptible to change. :::
+{% hint style="warning" %}
+    Disclaimer This is work in progress. Mechanisms and values are susceptible to change.
+{% endhint %}
 
 ## General Concepts
 

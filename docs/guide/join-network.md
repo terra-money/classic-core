@@ -1,8 +1,12 @@
 # Join a network
 
-::: tip See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file. :::
+{% hint style="info" %}
+    See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file.
+{% endhint %}
 
-::: warning **You need to** [**install terra**](installation.md) **before you go further** :::
+{% hint style="warning" %}
+    You need to [install terra](installation.md) before going further.
+{% endhint %}
 
 ## Setting Up a New Node
 
@@ -16,7 +20,9 @@ First, initialize the node and create the necessary config files:
 terrad init <your_custom_moniker>
 ```
 
-::: warning Note Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable. :::
+{% hint style="warning" %}
+    warning Note Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable.
+{% endhint %}
 
 You can edit this `moniker` later, in the `~/.terrad/config/config.toml` file:
 
@@ -54,7 +60,9 @@ terrad unsafe-reset-all
 
 Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before, your node will still try to connect to them, but may fail if they haven't also been upgraded.
 
-::: danger Warning Make sure that every node has a unique `priv_validator.json`. Do not copy the `priv_validator.json` from an old node to multiple new nodes. Running two nodes with the same `priv_validator.json` will cause you to double sign. :::
+{% hint style="danger" %}
+    Make sure that every node has a unique `priv_validator.json`. Do not copy the `priv_validator.json` from an old node to multiple new nodes. Running two nodes with the same `priv_validator.json` will cause you to double sign.
+{% endhint %}
 
 ### Software Upgrade
 
@@ -65,7 +73,9 @@ git checkout master && git pull
 make
 ```
 
-::: tip _NOTE_: If you have issues at this step, please check that you have the latest stable version of GO installed. :::
+{% hint style="info" %}
+    If you have issues at this step, please check that you have the latest stable version of GO installed.
+{% endhint %}
 
 Note we use `master` here since it contains the latest stable release. See the [testnet repo](https://github.com/terra-project/networks) for details on which version is needed for which testnet, and the [SDK release page](https://github.com/terra-project/core//releases) for details on each release.
 

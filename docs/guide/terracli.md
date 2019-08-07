@@ -70,7 +70,9 @@ terrad tendermint show-validator
 
 Note that this is the Tendermint signing key, _not_ the operator key you will use in delegation transactions.
 
-::: danger Warning We strongly recommend _NOT_ using the same passphrase for multiple keys. The Terra team will not be responsible for the loss of funds. :::
+{% hint style="danger" %}
+    We strongly recommend _NOT_ using the same passphrase for multiple keys. The Terra team will not be responsible for the loss of funds.
+{% endhint %}
 
 #### Generate multisig public keys
 
@@ -131,7 +133,9 @@ After receiving tokens to your address, you can view your account's balance by t
 terracli query account <account_terra>
 ```
 
-::: warning Note When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state.` This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.:::
+{% hint style="warning" %}
+    When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state.` This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.
+{% endhint %}
 
 ### Send Tokens
 
@@ -147,9 +151,13 @@ terracli tx send \
 
 where `destination_terra` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
 
-::: warning Note The `--amount` flag accepts the format `--amount=<value|coin_name>`. :::
+{% hint style="warning" %}
+    The `--amount` flag accepts the format `--amount=<value|coin_name>`.
+{% endhint %}
 
-::: tip Note You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag. If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction. Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully. The adjustment can be controlled via the `--gas-adjustment` flag, whose default value is 1.0. :::
+{% hint style="info" %}
+    You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag. If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction. Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully. The adjustment can be controlled via the `--gas-adjustment` flag, whose default value is 1.0.
+{% endhint %}
 
 Now, view the updated balances of the origin and destination accounts:
 
@@ -230,12 +238,10 @@ The pagination is supported as well via `page` and `limit`:
 ```bash
 terracli query txs --tags='<tag>:<value>' --page=1 --limit=20
 ```
-
-::: tip Note
-
-The action tag always equals the message type returned by the `Type()` function of the relevant message.
-
-You can find a list of available `tags` on each module by looking at the /tags directory of each module. :::
+{% hint style="info" %}
+    The action tag always equals the message type returned by the `Type()` function of the relevant message.
+    You can find a list of available `tags` on each module by looking at the /tags directory of each module.
+{% endhint %}
 
 #### Matching a transaction's hash
 
@@ -317,7 +323,9 @@ where `[name]` is the name of the key you specified when you initialized `terrad
 
 While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
 
-::: tip Note Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucet.terra.money/)! :::
+{% hint style="info" %}
+    Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
+{% endhint %}
 
 **Query Delegations**
 
@@ -598,14 +606,16 @@ terrad completion --zsh > terrad_completion
 terracli completion --zsh > terracli_completion
 ```
 
-::: tip Note On most UNIX systems, such scripts may be loaded in `.bashrc` or `.bash_profile` to enable Bash autocompletion:
+{% hint style="info" %}
+    On most UNIX systems, such scripts may be loaded in `.bashrc` or `.bash_profile` to enable Bash autocompletion.
 
-```bash
-echo '. terrad_completion' >> ~/.bashrc
-echo '. terracli_completion' >> ~/.bashrc
-```
+    ```bash
+    echo '. terrad_completion' >> ~/.bashrc
+    echo '. terracli_completion' >> ~/.bashrc
+    ```
 
-Refer to the user's manual of your interpreter provided by your operating system for information on how to enable shell autocompletion. :::
+    Refer to the user's manual of your interpreter provided by your operating system for information on how to enable shell autocompletion.
+{% endhint %}
 
 ### Oracle
 
@@ -834,4 +844,3 @@ With the above command you will get the values for:
 * Window short \(update parameter\)
 * Window long \(update parameter\)
 * Window probabtion \(update parameter\)
-
