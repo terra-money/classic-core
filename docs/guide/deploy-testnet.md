@@ -159,7 +159,7 @@ terracli keys list --home ./build/node0/terracli
 Now that accounts exists, you may create new accounts and send those accounts funds!
 
 {% hint style="info" %}
-    Each node's seed is located at `./build/nodeN/terracli/key_seed.json` and can be restored to the CLI using the `terracli keys add --restore` command.
+Each node's seed is located at `./build/nodeN/terracli/key_seed.json` and can be restored to the CLI using the `terracli keys add --restore` command.
 {% endhint %}
 
 ### Special binaries
@@ -239,4 +239,3 @@ You can install the DataDog agent with:
 ```text
 make datadog-install
 ```
-

@@ -1,11 +1,11 @@
 # Join a network
 
 {% hint style="info" %}
-    See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file.
+See the [testnet repo](https://github.com/terra-project/networks) for information on the latest testnet, including the correct version of the Terra Core to use and details about the genesis file.
 {% endhint %}
 
 {% hint style="warning" %}
-    You need to [install terra](installation.md) before going further.
+You need to [install terra](installation.md) before going further.
 {% endhint %}
 
 ## Setting Up a New Node
@@ -21,7 +21,8 @@ terrad init <your_custom_moniker>
 ```
 
 {% hint style="warning" %}
-    Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable.
+Monikers can contain only ASCII characters.
+Using Unicode characters will render your node unreachable.
 {% endhint %}
 
 You can edit this `moniker` later, in the `~/.terrad/config/config.toml` file:
@@ -61,7 +62,9 @@ terrad unsafe-reset-all
 Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before, your node will still try to connect to them, but may fail if they haven't also been upgraded.
 
 {% hint style="danger" %}
-    Make sure that every node has a unique `priv_validator.json`. Do not copy the `priv_validator.json` from an old node to multiple new nodes. Running two nodes with the same `priv_validator.json` will cause you to double sign.
+Make sure that every node has a unique `priv_validator.json`.
+Do not copy the `priv_validator.json` from an old node to multiple new nodes.
+Running two nodes with the same `priv_validator.json` will cause you to double sign.
 {% endhint %}
 
 ### Software Upgrade
@@ -74,7 +77,7 @@ make
 ```
 
 {% hint style="info" %}
-    If you have issues at this step, please check that you have the latest stable version of GO installed.
+If you have issues at this step, please check that you have the latest stable version of GO installed.
 {% endhint %}
 
 Note we use `master` here since it contains the latest stable release. See the [testnet repo](https://github.com/terra-project/networks) for details on which version is needed for which testnet, and the [SDK release page](https://github.com/terra-project/core//releases) for details on each release.
@@ -149,4 +152,3 @@ terrad export --height [height] --for-zero-height > [filename].json
 ## Upgrade to Validator Node
 
 You now have an active full node. What's the next step? You can upgrade your full node to become a Terra Validator. The top 100 validators have the ability to propose new blocks to the Terra network. Continue onto [the Validator Setup](validators.md).
-

@@ -1,7 +1,8 @@
 # FAQ
 
 {% hint style="warning" %}
-    Disclaimer This is work in progress. Mechanisms and values are susceptible to change.
+Disclaimer This is work in progress.
+Mechanisms and values are susceptible to change.
 {% endhint %}
 
 ## General Concepts
@@ -283,4 +284,3 @@ Sentry nodes can be quickly spun up or change their IP addresses. Because the li
 It is expected that good operating procedures on that part of validators will completely mitigate these threats.
 
 For more on sentry node architecture, see [this](https://forum.cosmos.network/t/sentry-node-architecture-overview/454).
-
