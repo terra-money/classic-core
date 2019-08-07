@@ -21,7 +21,7 @@ terrad init <your_custom_moniker>
 ```
 
 {% hint style="warning" %}
-    warning Note Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable.
+    Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable.
 {% endhint %}
 
 You can edit this `moniker` later, in the `~/.terrad/config/config.toml` file:
