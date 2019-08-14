@@ -1,0 +1,61 @@
+# Running for production
+In this section, we will talk about how to run a node for production. At the moment we will focus on Linux (Redhat Compatiable) only.
+
+`terrad` does not require super user account. We **strongly** recommend to run `terrad` as a normal user. However, at the configuration, we need super user permission for creating/modifying files.
+
+This guide is for general purpose only. We recommend to read [Validator](https://docs.terra.money/features/overview) section for operating validator node.
+
+## Firewall configuration
+`terrad` uses several TCP port for each purposes.
+
+* `26656` is default port for P2P protocol. This port has to be opened to communicate with other nodes. This port must be opened for joining the network. **However,** it does not have to be opened to public. For validator nodes, we recommened to configure `persistent_peers` and close this port to public.
+* `26657` is default port for RPC protocol. This port is used for querying / sending transaction. In other words, this port needs to be opened for serving query from `terracli`. It is safe not to open this port to the public unless you are planning to run public node.
+* `1317` is default port for Lite Client Daemon(LCD), which can be executed by `terracli rest-server`. LCD provides HTTP RESTFul API layer to interact with `terrad` node(RPC). You can check `https://lcd.terra.dev/swagger-ui/` out for example. Again, you don't need to open this port unless you need to.
+* `26660` is default port for interacting with [Prometheus](https://prometheus.io) database which can be used for monitoring environment. This port is not opened in default configuration.
+
+## Unlimit the maximum number of opened files for one process
+`terrad` can open more than 1024(which is default max opened file configuration) files at some moment. We should increase this limit. Modify `/etc/security/limits.conf` to unlimit `nofile`
+```
+*                soft    nofile          65535
+*                hard    nofile          65535
+```
+
+## Running server as a daemon
+There are several ways to run a node, we recommend to register `terrad` as a `systemd` service.
+
+### Register terrad service
+We have to make a service definition file in `/etc/systemd/system` directory.
+
+#### Sample file: `/etc/systemd/system/terrad.service`
+```
+[Unit]
+Description=Terra Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=terra
+ExecStart=/data/terra/go/bin/terrad start
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+LimitNOFILE=65535
+```
+Modify `Service` Section from above given sample to suit your settings. Note that even we unlimited # of open files for a process, we still need `LimitNOFILE` section.
+
+After creating a service definition file, you need to execute `systemctl daemon-reload`
+
+### Controlling service
+Use systemctl to control (start, stop, restart)
+
+* Start: `systemctl start terrad`
+* Stop: `systemctl stop terrad`
+* Restart: `systemctl restart terrad`
+
+#### Accessing log file
+* Entire log: `journalctl -t terrad`
+* Entire log reversed: `journalctl -t terrad -r`
+* Latest and continuous: `journalctl -t terrad -f
