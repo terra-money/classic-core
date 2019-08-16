@@ -60,4 +60,4 @@ Use systemctl to control (start, stop, restart)
 #### Accessing log file
 * Entire log: `journalctl -t terrad`
 * Entire log reversed: `journalctl -t terrad -r`
-* Latest and continuous: `journalctl -t terrad -f
+* Latest and continuous: `journalctl -t terrad -f`
