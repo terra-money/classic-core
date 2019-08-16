@@ -11,7 +11,7 @@ This guide is for general purpose only. We recommend to read [Validator](https:/
 * `26656` is default port for P2P protocol. This port has to be opened to communicate with other nodes. This port must be opened for joining the network. **However,** it does not have to be opened to public. For validator nodes, we recommened to configure `persistent_peers` and close this port to public.
 * `26657` is default port for RPC protocol. This port is used for querying / sending transaction. In other words, this port needs to be opened for serving query from `terracli`. It is safe _NOT_ to open this port to the public unless you are planning to run public node.
 * `1317` is default port for Lite Client Daemon(LCD), whichcan be executed by `terracli rest-server`. LCD provides HTTP RESTFul API layer to interact with `terrad` node(RPC). You can check `https://lcd.terra.dev/swagger-ui/` out for example. Again, you don't need to open this port unless you need to.
-* `26660` is default port for interacting with [Prometheus](https://prometheus.io) database which can be used for monitoring environment. This port is not opened in default configuration.
+* `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database which can be used for monitoring the environment. This port is not opened in the default configuration.
 
 ## Unlimit the maximum number of opened files for one process
 `terrad` can open more than 1024(which is default max opened file configuration) files at some moment. We should increase this limit. Modify `/etc/security/limits.conf` to unlimit `nofile`
