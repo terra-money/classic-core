@@ -1,7 +1,7 @@
 # Running for production
 In this section, we will talk about how to run a node for production. At the moment we will focus on Linux (Redhat Compatiable) only.
 
-`terrad` does not require super user account. We **strongly** recommend to run `terrad` as a normal user. However, at the configuration, we need super user permission for creating/modifying files.
+`terrad` does not require super user account. We **strongly** recommend to run `terrad` as a normal user. However, during the setup process, we need super user permission for creating/modifying files.
 
 This guide is for general purpose only. We recommend to read [Validator](https://docs.terra.money/features/overview) section for operating validator node.
 
