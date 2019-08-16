@@ -7,7 +7,7 @@ Hardware requirements for running a node:
 
 * CPU cores: 2 or more
 * Storage: 128G or more
-* Network Bandwidth: 2.5 ~ 5Mbps (more traffic can be used at syncing up)
+* Network Bandwidth: 2.5 ~ 5Mbps (more traffic can be used while syncing up)
 
 ## Install Go
 
