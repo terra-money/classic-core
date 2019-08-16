@@ -3,7 +3,7 @@ In this section, we will talk about how to run a node for production. At the mom
 
 `terrad` does not require super user account. We **strongly** recommend to run `terrad` as a normal user. However, during the setup process, we need super user permission for creating/modifying files.
 
-This guide is for general purpose only. We recommend to read [Validator](https://docs.terra.money/features/overview) section for operating validator node.
+This guide is for general purpose only. We recommend to read [Validator](https://docs.terra.money/features/overview) section for operating a validator node.
 
 ## Firewall configuration
 `terrad` uses several TCP port for each purposes.
