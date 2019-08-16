@@ -6,7 +6,7 @@ In this section, we will talk about how to run a node for production. At the mom
 This guide is for general purpose only. We recommend to read [Validator](https://docs.terra.money/features/overview) section for operating a validator node.
 
 ## Firewall configuration
-`terrad` uses several TCP port for each purposes.
+`terrad` uses several TCP ports for each purposes.
 
 * `26656` is default port for P2P protocol. This port has to be opened to communicate with other nodes. This port must be opened for joining the network. **However,** it does not have to be opened to public. For validator nodes, we recommened to configure `persistent_peers` and close this port to public.
 * `26657` is default port for RPC protocol. This port is used for querying / sending transaction. In other words, this port needs to be opened for serving query from `terracli`. It is safe _NOT_ to open this port to the public unless you are planning to run public node.
