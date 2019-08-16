@@ -2,6 +2,13 @@
 
 This guide will explain how to install the `terrad` and `terracli` entrypoints onto your system. With these installed on a server, you can participate in the latest testnet as either a [Full Node](join-network.md#run-a-full-node) or a [Validator](https://github.com/terra-project/core/tree/f8be66ca87e5a7d50a28875f1bea04dbfe69b9c6/docs/guide/setup-validator.md).
 
+## Minimum Hardware Requirements
+Hardware requirements for running a node:
+
+* CPU cores: 2 or more
+* Storage: 128G or more
+* Network Bandwidth: 2.5 ~ 5Mbps (more traffic can be used while syncing up)
+
 ## Install Go
 
 Install `go` by following the [official docs](https://golang.org/doc/install).
