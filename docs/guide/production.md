@@ -1,5 +1,5 @@
 # Running for production
-In this section, we will talk about how to run a node for production. At the moment we will focus on Linux (Redhat Compatiable) only.
+In this section, we will talk about how to run a node for production. At the moment we will focus on Linux (RPM based) only.
 
 `terrad` does not require super user account. We **strongly** recommend to run `terrad` as a normal user. However, during the setup process, we need super user permission for creating/modifying files.
 
