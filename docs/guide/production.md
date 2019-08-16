@@ -46,7 +46,8 @@ WantedBy=multi-user.target
 [Service]
 LimitNOFILE=65535
 ```
-Modify `Service` Section from above given sample to suit your settings. Note that even we unlimited # of open files for a process, we still need `LimitNOFILE` section.
+Modify the `Service` Section from the above given sample to suit your settings.
+Note that even if we raised the number of open files for a process, we still need the `LimitNOFILE` section.
 
 After creating a service definition file, you need to execute `systemctl daemon-reload`
 
