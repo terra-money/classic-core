@@ -16,6 +16,7 @@
 
 * [Getting started](guide/README.md)
 * [Installation](guide/installation.md)
+* [Running node in production](guide/production.md)
 * [Join a network](guide/join-network.md)
 * [Deploy a testnet](guide/deploy-testnet.md)
 * [Interacting with the network: CLI](guide/terracli.md)
