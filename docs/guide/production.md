@@ -14,7 +14,9 @@ This guide is for general purpose only. We recommend to read [Validator](https:/
 * `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database which can be used for monitoring the environment. This port is not opened in the default configuration.
 
 ## Unlimit the maximum number of opened files for one process
-`terrad` can open more than 1024(which is default max opened file configuration) files at some moment. We should increase this limit. Modify `/etc/security/limits.conf` to unlimit `nofile`
+`terrad` can open more than 1024 files (which is default maximum) concurrently.
+We should increase this limit.
+Modify `/etc/security/limits.conf` to raise the `nofile` capability.
 ```
 *                soft    nofile          65535
 *                hard    nofile          65535
