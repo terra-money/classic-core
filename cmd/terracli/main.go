@@ -2,11 +2,18 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path"
+	"strings"
 
-	"github.com/rakyll/statik/fs"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -14,55 +21,14 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/terra-project/core/app"
-	"github.com/terra-project/core/client/keys"
-	"github.com/terra-project/core/types/util"
-	"github.com/terra-project/core/version"
+	"github.com/terra-project/core/client/lcd"
+	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/auth"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	at "github.com/cosmos/cosmos-sdk/x/auth"
-
-	txcustom "github.com/terra-project/core/client/tx"
-
-	authcustom "github.com/terra-project/core/x/auth/client/rest"
-	dist "github.com/terra-project/core/x/distribution/client/rest"
-	slashing "github.com/terra-project/core/x/slashing/client/rest"
-	staking "github.com/terra-project/core/x/staking/client/rest"
-
-	budget "github.com/terra-project/core/x/budget/client/rest"
-	market "github.com/terra-project/core/x/market/client/rest"
-	oracle "github.com/terra-project/core/x/oracle/client/rest"
-	pay "github.com/terra-project/core/x/pay/client/rest"
-	treasury "github.com/terra-project/core/x/treasury/client/rest"
-
-	bud "github.com/terra-project/core/x/budget"
-	mkt "github.com/terra-project/core/x/market"
-	ora "github.com/terra-project/core/x/oracle"
-	tre "github.com/terra-project/core/x/treasury"
-
-	dt "github.com/cosmos/cosmos-sdk/x/distribution"
-	sl "github.com/cosmos/cosmos-sdk/x/slashing"
-	st "github.com/cosmos/cosmos-sdk/x/staking"
-
-	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	paycmd "github.com/terra-project/core/x/pay/client/cli"
-
-	budgetClient "github.com/terra-project/core/x/budget/client"
-	distClient "github.com/terra-project/core/x/distribution/client"
-	marketClient "github.com/terra-project/core/x/market/client"
-	oracleClient "github.com/terra-project/core/x/oracle/client"
-	slashingClient "github.com/terra-project/core/x/slashing/client"
-	stakingClient "github.com/terra-project/core/x/staking/client"
-	treasuryClient "github.com/terra-project/core/x/treasury/client"
-
-	crisisClient "github.com/cosmos/cosmos-sdk/x/crisis/client"
-
-	_ "github.com/terra-project/core/client/lcd/statik"
+	tauthcmd "github.com/terra-project/core/x/auth/client/cli"
+	tauthrest "github.com/terra-project/core/x/auth/client/rest"
+	"github.com/terra-project/core/x/bank"
+	tbankcmd "github.com/terra-project/core/x/bank/client/cli"
 )
 
 func main() {
@@ -74,29 +40,16 @@ func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
-	config.SetCoinType(util.CoinType)
-	config.SetFullFundraiserPath(util.FullFundraiserPath)
-	config.SetBech32PrefixForAccount(util.Bech32PrefixAccAddr, util.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(util.Bech32PrefixValAddr, util.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(util.Bech32PrefixConsAddr, util.Bech32PrefixConsPub)
+	config.SetCoinType(core.CoinType)
+	config.SetFullFundraiserPath(core.FullFundraiserPath)
+	config.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
 	config.Seal()
 
 	// TODO: setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
 	// with the cdc
-
-	// Module clients hold cli commnads (tx,query) and lcd routes
-	// TODO: Make the lcd command take a list of ModuleClient
-	mc := []sdk.ModuleClients{
-		distClient.NewModuleClient(dt.StoreKey, cdc),
-		stakingClient.NewModuleClient(st.StoreKey, cdc),
-		slashingClient.NewModuleClient(sl.StoreKey, cdc),
-		oracleClient.NewModuleClient(ora.StoreKey, cdc),
-		treasuryClient.NewModuleClient(tre.StoreKey, cdc),
-		budgetClient.NewModuleClient(bud.StoreKey, cdc),
-		marketClient.NewModuleClient(mkt.StoreKey, cdc),
-		crisisClient.NewModuleClient(sl.StoreKey, cdc),
-	}
 
 	rootCmd := &cobra.Command{
 		Use:   "terracli",
@@ -113,18 +66,20 @@ func main() {
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		client.ConfigCmd(app.DefaultCLIHome),
-		queryCmd(cdc, mc),
-		txCmd(cdc, mc),
+		queryCmd(cdc),
+		txCmd(cdc),
 		client.LineBreak,
 		lcd.ServeCommand(cdc, registerRoutes),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
-		version.VersionCmd,
+		version.Cmd,
 		client.NewCompletionCmd(rootCmd, true),
 	)
 
-	// Add flags and prefix all env exposed with GA
+	changeDescription(rootCmd)
+
+	// Add flags and prefix all env exposed with TE
 	executor := cli.PrepareMainCmd(rootCmd, "TE", app.DefaultCLIHome)
 
 	err := executor.Execute()
@@ -134,7 +89,23 @@ func main() {
 	}
 }
 
-func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+// change cosmos prefix to terra
+func changeDescription(command *cobra.Command) {
+	childCommands := command.Commands()
+	if len(childCommands) == 0 {
+		return
+	}
+
+	for _, childCommand := range childCommands {
+		childCommand.Long = strings.ReplaceAll(childCommand.Long, "cosmos", "terra")
+		childCommand.Long = strings.ReplaceAll(childCommand.Long, "<appcli>", "terracli")
+		childCommand.Long = strings.ReplaceAll(childCommand.Long, "Atoms", "Lunas")
+
+		changeDescription(childCommand)
+	}
+}
+
+func queryCmd(cdc *amino.Codec) *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:     "query",
 		Aliases: []string{"q"},
@@ -142,83 +113,65 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	queryCmd.AddCommand(
+		authcmd.GetAccountCmd(cdc),
+		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
-		tx.SearchTxCmd(cdc),
-		tx.QueryTxCmd(cdc),
+		authcmd.QueryTxsByEventsCmd(cdc),
+		authcmd.QueryTxCmd(cdc),
 		client.LineBreak,
-		authcmd.GetAccountCmd(at.StoreKey, cdc),
 	)
 
-	for _, m := range mc {
-		mQueryCmd := m.GetQueryCmd()
-		if mQueryCmd != nil {
-			queryCmd.AddCommand(mQueryCmd)
-		}
-	}
+	// add modules' query commands
+	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
 
 	return queryCmd
 }
 
-func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+func txCmd(cdc *amino.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:   "tx",
 		Short: "Transactions subcommands",
 	}
 
 	txCmd.AddCommand(
-		paycmd.SendTxCmd(cdc),
+		tbankcmd.SendTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
 		authcmd.GetMultiSignCommand(cdc),
-		tx.GetBroadcastCommand(cdc),
-		tx.GetEncodeCommand(cdc),
 		client.LineBreak,
+		authcmd.GetBroadcastCommand(cdc),
+		authcmd.GetEncodeCommand(cdc),
+		client.LineBreak,
+		tauthcmd.GetExstimateTxFeesCommand(cdc),
 	)
 
-	for _, m := range mc {
-		txCmd.AddCommand(m.GetTxCmd())
+	// add modules' tx commands
+	app.ModuleBasics.AddTxCommands(txCmd, cdc)
+
+	// remove auth and bank commands as they're mounted under the root tx command
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range txCmd.Commands() {
+		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
 	}
 
-	return txCmd
-}
+	txCmd.RemoveCommand(cmdsToRemove...)
 
-// CLIVersionRequestHandler cli version REST handler endpoint
-func CLIVersionRequestHandler(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(fmt.Sprintf("{\"version\": \"%s\"}", version.Version)))
+	return txCmd
 }
 
 // registerRoutes registers the routes from the different modules for the LCD.
 // NOTE: details on the routes added for each module are in the module documentation
 // NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
 func registerRoutes(rs *lcd.RestServer) {
-
-	rs.Mux.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
-
-	registerSwaggerUI(rs)
-	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	txcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, at.StoreKey)
-	dist.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, dt.StoreKey)
-	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-
-	authcustom.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	pay.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	oracle.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	treasury.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	market.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	budget.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-}
-
-func registerSwaggerUI(rs *lcd.RestServer) {
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-	staticServer := http.FileServer(statikFS)
-	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+	client.RegisterRoutes(rs.CliCtx, rs.Mux)
+	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
+	tauthrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
+	tauthrest.RegisterRoutes(rs.CliCtx, rs.Mux)
+	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
 func initConfig(cmd *cobra.Command) error {

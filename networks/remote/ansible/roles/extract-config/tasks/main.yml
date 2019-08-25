@@ -12,9 +12,3 @@
   become: yes
   become_user: terrad
 
-- name: Fetch priv_validator_state.json
-  fetch: "src=/home/terrad/.terrad/data/priv_validator_state.json dest={{CONFIGFILE}} flat=yes"
-  run_once: yes
-  become: yes
-  become_user: terrad
-

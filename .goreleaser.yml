@@ -2,7 +2,7 @@ project_name: terra
 
 before:
   hooks:
-    - make get_tools
+    - make tools
     - make go-mod-cache
 
 builds:

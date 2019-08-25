@@ -5,21 +5,20 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/oracle/internal/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/gorilla/mux"
 )
 
-func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), submitPrevoteHandlerFunction(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cdc, cliCtx)).Methods("POST")
+func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router) {
+	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), submitPrevoteHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cliCtx)).Methods("POST")
 }
 
 // PrevoteReq ...
@@ -33,13 +32,13 @@ type PrevoteReq struct {
 	Validator string `json:"validator"`
 }
 
-func submitPrevoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
 
 		var req PrevoteReq
-		if !rest.ReadRESTReq(w, r, cdc, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
 
@@ -69,7 +68,7 @@ func submitPrevoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 
 		// If hash is not given, then retrieve hash from price and salt
 		if len(req.Hash) == 0 && (!req.Price.Equal(sdk.ZeroDec()) && len(req.Salt) > 0) {
-			hashBytes, err := oracle.VoteHash(req.Salt, req.Price, denom, valAddress)
+			hashBytes, err := types.VoteHash(req.Salt, req.Price, denom, valAddress)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
@@ -79,14 +78,14 @@ func submitPrevoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) h
 		}
 
 		// create the message
-		msg := oracle.NewMsgPricePrevote(req.Hash, denom, fromAddress, valAddress)
+		msg := types.NewMsgPricePrevote(req.Hash, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
@@ -100,13 +99,13 @@ type VoteReq struct {
 	Validator string `json:"validator"`
 }
 
-func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func submitVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
 
 		var req VoteReq
-		if !rest.ReadRESTReq(w, r, cdc, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
 
@@ -135,14 +134,14 @@ func submitVoteHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http
 		}
 
 		// create the message
-		msg := oracle.NewMsgPriceVote(req.Price, req.Salt, denom, fromAddress, valAddress)
+		msg := types.NewMsgPriceVote(req.Price, req.Salt, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
@@ -152,7 +151,7 @@ type DelegateReq struct {
 	Feeder  string       `json:"feeder"`
 }
 
-func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func submitDelegateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		voter := vars[RestVoter]
@@ -165,7 +164,7 @@ func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) 
 		}
 
 		var req DelegateReq
-		if !rest.ReadRESTReq(w, r, cdc, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
 
@@ -195,13 +194,13 @@ func submitDelegateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) 
 		}
 
 		// create the message
-		msg := oracle.NewMsgDelegateFeederPermission(valAddress, feeder)
+		msg := types.NewMsgDelegateFeederPermission(valAddress, feeder)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		clientrest.WriteGenerateStdTxResponse(w, cdc, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

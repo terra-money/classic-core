@@ -17,7 +17,7 @@ COPY . .
 
 # Install minimum necessary dependencies, build Cosmos SDK, remove packages
 RUN apk add --no-cache $PACKAGES && \
-    make get_tools && \
+    make tools && \
     make go-mod-cache && \
     make build-linux && \
     make install

@@ -5,9 +5,13 @@ info:
   title: 'Terra-Lite for Terra'
   description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
-  - name: Tendermint
+  - name: Transactions
+    description: Search, encode, or broadcast transactions.
+  - name: Tendermint RPC
     description: Tendermint APIs, such as query blocks, transactions and validatorset
-  - name: Transaction
+  - name: Auth
+    description: Authenticate accounts
+  - name: Bank
     description: Create and broadcast transactions
   - name: Staking
     description: Stake module APIs
@@ -15,8 +19,8 @@ tags:
     description: Slashing module APIs
   - name: Distribution
     description: Fee distribution module APIs
-  - name: Budget
-    description: Budget program modules APIs
+  - name: Supply
+    description: Supply module APIs
   - name: Market
     description: Market modules APIs
   - name: Oracle
@@ -24,6 +28,7 @@ tags:
   - name: Treasury
     description: Treasury modules APIs
   - name: version
+  - name: Misc
     description: Query app version
 schemes:
   - https
@@ -32,32 +37,12 @@ securityDefinitions:
   kms:
     type: basic
 paths:
-  /version:
-    get:
-      summary: Version of Terra-lite
-      tags:
-        - version
-      description: Get the version of terra-lite running locally to compare against expected
-      responses:
-        200:
-          description: Plaintext version i.e. "v0.25.0"
-  /node_version:
-    get:
-      summary: Version of the connected node
-      tags:
-        - version
-      description: Get the version of the SDK running on the connected node to compare against expected
-      responses:
-        200:
-          description: Plaintext version i.e. "v0.25.0"
-        500:
-          description: failed to query node version
   /node_info:
     get:
       description: Information about the connected node
       summary: The properties of the connected node
       tags:
-        - Tendermint
+        - Tendermint RPC
       produces:
         - application/json
       responses:
@@ -66,62 +51,87 @@ paths:
           schema:
             type: object
             properties:
-              id:
-                type: string
-              moniker:
-                type: string
-                example: validator-name
-              protocol_version:
+              application_version:
                 properties:
-                  p2p:
+                  build_tags:
                     type: string
-                    example: 7
-                  block:
+                  client_name:
                     type: string
-                    example: 10
-                  app:
+                  commit:
                     type: string
-                    example: 0
-              network:
-                type: string
-                example: ricewine-0001
-              channels:
-                type: string
-              listen_addr:
-                type: string
-                example: 192.168.56.1:26656
-              version:
-                description: Tendermint version
-                type: string
-                example: 0.15.0
-              other:
-                description: more information on versions
-                type: object
+                  go:
+                    type: string
+                  name:
+                    type: string
+                  server_name:
+                    type: string
+                  version:
+                    type: string
+              node_info:
                 properties:
-                  tx_index:
+                  id:
                     type: string
-                    example: on
-                  rpc_address:
+                  moniker:
                     type: string
-                    example: tcp://0.0.0.0:26657
+                    example: validator-name
+                  protocol_version:
+                    properties:
+                      p2p:
+                        type: string
+                        example: 7
+                      block:
+                        type: string
+                        example: 10
+                      app:
+                        type: string
+                        example: 0
+                  network:
+                    type: string
+                    example: gaia-2
+                  channels:
+                    type: string
+                  listen_addr:
+                    type: string
+                    example: 192.168.56.1:26656
+                  version:
+                    description: Tendermint version
+                    type: string
+                    example: 0.15.0
+                  other:
+                    description: more information on versions
+                    type: object
+                    properties:
+                      tx_index:
+                        type: string
+                        example: on
+                      rpc_address:
+                        type: string
+                        example: tcp://0.0.0.0:26657
         500:
           description: Failed to query node status
   /syncing:
     get:
       summary: Syncing state of node
       tags:
-        - Tendermint
+        - Tendermint RPC
       description: Get if the node is currently syning with other nodes
+      produces:
+        - application/json
       responses:
         200:
-          description: '"true" or "false"'
+          description: Node syncing status
+          schema:
+            type: object
+            properties:
+              syncing:
+                type: boolean
         500:
           description: Server internal error
   /blocks/latest:
     get:
       summary: Get the latest block
       tags:
-        - Tendermint
+        - Tendermint RPC
       produces:
         - application/json
       responses:
@@ -135,7 +145,7 @@ paths:
     get:
       summary: Get a block at a certain height
       tags:
-        - Tendermint
+        - Tendermint RPC
       produces:
         - application/json
       parameters:
@@ -160,7 +170,7 @@ paths:
     get:
       summary: Get the latest validator set
       tags:
-        - Tendermint
+        - Tendermint RPC
       produces:
         - application/json
       responses:
@@ -170,7 +180,7 @@ paths:
             type: object
             properties:
               block_height:
-                type: number
+                type: string
               validators:
                 type: array
                 items:
@@ -181,7 +191,7 @@ paths:
     get:
       summary: Get a validator set a certain height
       tags:
-        - Tendermint
+        - Tendermint RPC
       produces:
         - application/json
       parameters:
@@ -198,7 +208,7 @@ paths:
             type: object
             properties:
               block_height:
-                type: number
+                type: string
               validators:
                 type: array
                 items:
@@ -213,7 +223,8 @@ paths:
     get:
       summary: Get a Tx by hash
       tags:
-        - Tendermint
+        - Transactions
+      description: Retrieve a transaction using its hash.
       produces:
         - application/json
       parameters:
@@ -222,7 +233,7 @@ paths:
           description: Tx hash
           required: true
           type: string
-          x-example: 88D6B85EAB87D43CDF50F39C22FC2237A37FEDC4CE723200AD0AF48CBEDBC317
+          x-example: BCBE20E8D46758B96AE5883B792858296AC06E51435490FBDCAE25A72B3CC76B
       responses:
         200:
           description: Tx with the provided hash
@@ -233,18 +244,22 @@ paths:
   /txs:
     get:
       tags:
-        - Tendermint
+        - Transactions
       summary: Search transactions
-      description: Search transactions by tag(s).
+      description: Search transactions by events.
       produces:
         - application/json
       parameters:
         - in: query
-          name: tag
+          name: message.action
           type: string
-          description: "transaction tags such as 'action=submit-proposal' and 'sender=terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0' which results in the following endpoint: 'GET /txs?action=submit-proposal&sender=terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0'"
-          required: true
-          x-example: 'TODO'
+          description: "transaction events such as 'message.action=send' which results in the following endpoint: 'GET /txs?message.action=send'"
+          x-example: "send"
+        - in: query
+          name: message.sender
+          type: string
+          description: "transaction tags with sender: 'GET /txs?message.action=send&message.sender=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv'"
+          x-example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
         - in: query
           name: page
           description: Page number
@@ -257,16 +272,16 @@ paths:
           x-example: 1
       responses:
         200:
-          description: All txs matching the provided tags
+          description: All txs matching the provided events
           schema:
             $ref: "#/definitions/PaginatedQueryTxs"
         400:
-          description: Invalid search tags
+          description: Invalid search events
         500:
           description: Internal Server Error
     post:
       tags:
-        - Tendermint
+        - Transactions
       summary: Broadcast a signed tx
       description: Broadcast a signed tx to a full node
       consumes:
@@ -296,7 +311,7 @@ paths:
   /txs/encode:
     post:
       tags:
-        - Transaction
+        - Transactions
       summary: Encode a transaction to the Amino wire format
       description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
       consumes:
@@ -325,12 +340,50 @@ paths:
         400:
           description: The tx was malformated
         500:
-          description: Server internal error  
+          description: Server internal error
+  /txs/estimate_fee:
+    post:
+      tags:
+        - Transactions
+      summary: Estimate fees and gas of a transaction
+      description: Estimate fees and gas of a transaction according to given parameters
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: estimate_req
+          description: The tx and gas params to compute fees
+          required: true
+          schema:
+            type: object
+            properties:
+              tx:
+                $ref: "#/definitions/StdTx"
+              gas_adjustment:
+                type: string
+                description: only used when tx's gas is "0", default "1"
+                example: "1.4"
+              gas_prices:
+                description: used to compute gas fees = (gas * gas_prices), default 0
+                type: array
+                items:
+                  $ref: "#/definitions/DecCoin"
+      responses:
+        200:
+          description: Estimated gas and fees object
+          schema:
+            $ref: "#/definitions/EstimateFeeResp"
+        400:
+          description: The tx was malformated
+        500:
+          description: Server internal error
   /bank/balances/{address}:
     get:
       summary: Get the account balances
       tags:
-        - Transaction
+        - Bank
       produces:
         - application/json
       parameters:
@@ -339,7 +392,7 @@ paths:
           description: Account address in bech32 format
           required: true
           type: string
-          x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       responses:
         200:
           description: Account balances
@@ -347,15 +400,13 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Coin"
-        204:
-          description: There is no data for the requested account
         500:
           description: Server internal error
   /bank/accounts/{address}/transfers:
     post:
       summary: Send coins from one account to another
       tags:
-        - Transaction
+        - Bank
       consumes:
         - application/json
       produces:
@@ -366,7 +417,7 @@ paths:
           description: Account address in bech32 format
           required: true
           type: string
-          x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
         - in: body
           name: account
           description: The sender and tx information
@@ -393,7 +444,7 @@ paths:
     get:
       summary: Get the account information on blockchain
       tags:
-        - Keys
+        - Auth
       produces:
         - application/json
       parameters:
@@ -402,21 +453,17 @@ paths:
           description: Account address
           required: true
           type: string
-          x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       responses:
         200:
-          description: Account information on the blockchain (one of Account and GradedVestingAccount and LazyGradedVestingAccount)
+          description: Account information on the blockchain (one of Account and LazyGradedVestingAccount)
           schema:
             type: object
             properties:
               Account:
                 $ref: "#/definitions/Account"
-              GradedVestingAccount:
-                $ref: "#/definitions/GradedVestingAccount"
               LazyGradedVestingAccount:
                 $ref: "#/definitions/LazyGradedVestingAccount"
-                
-          
         204:
           description: No content about this account address
         500:
@@ -425,7 +472,7 @@ paths:
     post:
       summary: "Generate multisig signatures for transactions generated offline"
       tags:
-        - Keys
+        - Auth
       produces:
         - application/json
       parameters:
@@ -434,10 +481,10 @@ paths:
           description: Account address
           required: true
           type: string
-          x-example: terra16gdxm24ht2mxtpz9cma6tr6a6d47x63hlq4pxt
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
         - in: body
           name: multisig_req
-          description: multisign request information
+          description: multisign request information; pubkey is optional param in case multisig account never used before
           required: true
           schema:
             $ref: "#/definitions/MultiSignReq"
@@ -460,7 +507,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
       summary: Get all delegations from a delegator
       tags:
@@ -493,7 +540,7 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              amount:
+              delegation:
                 $ref: "#/definitions/Coin"
       tags:
         - Staking
@@ -519,13 +566,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Query the current delegation between a delegator and a validator
       tags:
@@ -548,7 +595,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
       summary: Get all unbonding delegations from a delegator
       tags:
@@ -581,8 +628,9 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              amount:
-                $ref: "#/definitions/Coin"
+              shares:
+                type: string
+                example: "100"
       tags:
         - Staking
       consumes:
@@ -607,13 +655,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Query all unbonding delegations between a delegator and a validator
       tags:
@@ -624,9 +672,7 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/UnbondingDelegation"
+            $ref: "#/definitions/UnbondingDelegationPair"
         400:
           description: Invalid delegator address or validator address
         500:
@@ -670,7 +716,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     post:
       summary: Submit a redelegation
       parameters:
@@ -688,8 +734,9 @@ paths:
                 $ref: "#/definitions/ValidatorAddress"
               validator_dst_address:
                 $ref: "#/definitions/ValidatorAddress"
-              amount:
-                $ref: "#/definitions/Coin"
+              shares:
+                type: string
+                example: "100"
       tags:
         - Staking
       consumes:
@@ -712,7 +759,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
       summary: Query all validators that a delegator is bonded to
       tags:
@@ -737,13 +784,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       - in: path
         name: validatorAddr
         description: Bech32 ValAddress of Delegator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Query a validator that a delegator is bonded to
       tags:
@@ -918,7 +965,7 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /staking/params:
+  /staking/parameters:
     get:
       summary: Get the current staking parameter values
       tags:
@@ -1001,8 +1048,6 @@ paths:
             type: array
             items:
               $ref: "#/definitions/SigningInfo"
-        204:
-          description: No validators with sign info
         400:
           description: Invalid validator public key for one of the validators
         500:
@@ -1056,19 +1101,19 @@ paths:
             type: object
             properties:
               max_evidence_age:
-                type: integer
+                type: string
               signed_blocks_window:
-                type: integer
+                type: string
               min_signed_per_window:
-                type: integer
+                type: string
               double_sign_unbond_duration:
-                type: integer
+                type: string
               downtime_unbond_duration:
-                type: integer
+                type: string
               slash_fraction_double_sign:
-                type: integer
+                type: string
               slash_fraction_downtime:
-                type: integer
+                type: string
         500:
           description: Internal Server Error
   /distribution/delegators/{delegatorAddr}/rewards:
@@ -1078,7 +1123,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
       summary: Get the total rewards balance from all delegations
       description: Get the sum of all the rewards earned by delegations by a single delegator
@@ -1129,13 +1174,13 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       - in: path
         name: validatorAddr
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Query a delegation reward
       description: Query a single delegation reward by a delegator
@@ -1188,7 +1233,7 @@ paths:
         description: Bech32 AccAddress of Delegator
         required: true
         type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
       summary: Get the rewards withdrawal address
       description: Get the delegations' rewards withdrawal address. This is the address in which the user will receive the reward funds
@@ -1241,7 +1286,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Validator distribution information
       description: Query the distribution information of a single validator
@@ -1265,7 +1310,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Fee distribution outstanding rewards of a single validator
       tags:
@@ -1288,7 +1333,7 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
       summary: Commission and self-delegation rewards of a single validator
       description: Query the commission and self-delegation rewards of validator.
@@ -1370,210 +1415,43 @@ paths:
                 type: string
         500:
           description: Internal Server Error
-  /budget/programs/submit:
-    post:
-      summary: Posting new budget program
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Post Program request body
-          schema:
-            $ref: "#/definitions/submitProgramReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/programs/{programId}/withdraw:
-    post:
-      summary: Send withdraw request
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: programId
-          description: Program ID
-          required: true
-          type: integer
-        - in: body
-          name: Post Withdraw request body
-          schema:
-            $ref: "#/definitions/withdrawReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/programs/{programId}/votes:
-    parameters:
-      - in: path
-        name: programId
-        description: Program ID
-        required: true
-        type: integer
-    post:
-      summary: Vote to the program by programId
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Budget Vote request body
-          schema:
-            $ref: "#/definitions/budgetVoteReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
+  /supply/total:
     get:
-      summary: Get the budget program voting records of a denom
+      summary: Total supply of coins in the chain
       tags:
-        - Budget
+        - Supply
       produces:
         - application/json
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              votes:
-                type: array
-                items:
-                  $ref: "#/definitions/MsgVoteProgram"
-        400:
-          description: Bad Request
+            $ref: "#/definitions/Supply"
         500:
           description: Internal Server Error
-  /budget/programs/{programID}/votes/{voter}:
+  /supply/total/{denomination}:
     parameters:
       - in: path
-        name: programID
-        description: Program ID to get
-        required: true
-        type: integer
-      - in: path
-        name: voter
-        description: Bech32 OperatorAddress of voter
+        name: denomination
+        description: Coin denomination
         required: true
         type: string
+        x-example: uatom
     get:
-      summary: Get the budget program voting record of RestVoter
+      summary: Total supply of a single coin denomination
       tags:
-        - Budget
+        - Supply
       produces:
         - application/json
       responses:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              votes:
-                type: array
-                items:
-                  $ref: "#/definitions/MsgVoteProgram"
+             type: string
         400:
-          description: Bad Request
+          description: Invalid coin denomination
         500:
           description: Internal Server Error
-  /budget/programs/actives:
-    get:
-      summary: Get active budget programs
-      tags:
-        - Budget
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              actives:
-                type: array
-                items:
-                  $ref: "#/definitions/Program"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/programs/candidates:
-    get:
-      summary: Get candidate budget programs
-      tags:
-        - Budget
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              candidates:
-                type: array
-                items:
-                  $ref: "#/definitions/Program"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/programs/{programId}:
-    get:
-      summary: Get a budget program by program-id
-      tags:
-        - Budget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: programId
-          description: Program ID
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Program"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /budget/params:
-    get:
-      summary: Get budget params
-      tags:
-        - Budget
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/BudgetParams"
-        404:
-          description: Not Found
   /market/swap:
     post:
       summary: Swap coin with another coin
@@ -1619,7 +1497,25 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/params:
+  /market/last_day_issuance:
+    get:
+      summary: Get last day issuance
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/parameters:
     get:
       summary: Get market params
       tags:
@@ -1677,12 +1573,9 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              votes:
-                type: array
-                items:
-                  $ref: "#/definitions/PriceVote"
+            type: array
+            items:
+              $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -1708,12 +1601,9 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              votes:
-                type: array
-                items:
-                  $ref: "#/definitions/PriceVote"
+            type: array
+            items:
+              $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -1760,12 +1650,9 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              prevotes:
-                type: array
-                items:
-                  $ref: "#/definitions/PricePrevote"
+            type: array
+            items:
+              $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -1791,12 +1678,9 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              prevotes:
-                type: array
-                items:
-                  $ref: "#/definitions/PricePrevote"
+            type: array
+            items:
+              $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -1818,11 +1702,8 @@ paths:
         200:
           description: current price of denom i.e. "1000.0"
           schema:
-            type: object
-            properties:
-              price:
-                type: number
-                example: "1872.000000000000000000"
+            type: number
+            example: "1872.000000000000000000"
         400:
           description: Bad Request
         500:
@@ -1838,18 +1719,67 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              actives:
-                type: array
-                items:
-                  type: string
-                example: ["uluna", "usdr"]
+            type: array
+            items:
+              type: string
+            example: ["uluna", "usdr"]
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/params:
+  /oracle/voters/{voter}/voting_info:
+    get:
+      summary: Get voting info of a voter
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: voter
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/VotingInfo"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/voting_infos:
+    get:
+      summary: Get voting infos
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: page
+          description: Page number
+          type: integer
+          required: true
+          x-example: 1
+        - in: query
+          name: limit
+          description: Maximum number of items per page
+          type: integer
+          required: true
+          x-example: 5
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/VotingInfo"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/parameters:
     get:
       summary: Get oracle params
       tags:
@@ -1865,7 +1795,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /treasury/tax-rate:
+  /treasury/tax_rate:
     get:
       summary: Get current tax rate
       tags:
@@ -1876,15 +1806,12 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              tax_rate:
-                type: number
-                format: float
-                example: "0.05"
+            type: number
+            format: float
+            example: "0.05"
         500:
           description: Internal Server Error
-  /treasury/tax-rate/{epoch}:
+  /treasury/tax_rate/{epoch}:
     get:
       summary: Get tax rate at epoch
       tags:
@@ -1901,15 +1828,12 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              tax_rate:
-                type: number
-                format: float
-                example: "0.05"
+            type: number
+            format: float
+            example: "0.05"
         500:
           description: Internal Server Error
-  /treasury/tax-cap/{denom}:
+  /treasury/tax_cap/{denom}:
     get:
       summary: Get tax cap of the denom
       tags:
@@ -1926,16 +1850,53 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              tax_cap:
-                type: integer
-                example: "100000"
+            type: integer
+            example: "100000"
         404:
           description: Not Found
-  /treasury/reward-weight:
+  /treasury/reward_weight:
     get:
       summary: Get current reward weight
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "0.05"
+            description: 5%
+        500:
+          description: Internal Server Error
+  /treasury/reward_weight/{epoch}:
+    get:
+      summary: Get reward weight at epoch
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: epoch
+          description: Epoch number
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "0.05"
+            description: 5%
+        500:
+          description: Internal Server Error
+  /treasury/historical_issuance/{epoch}:
+    get:
+      summary: Get total issuance at the epoch
       tags:
         - Treasury
       produces:
@@ -1950,93 +1911,12 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              reward_weight:
-                type: number
-                example: "5"
-                description: 5%
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /treasury/reward-weight/{denom}:
-    get:
-      summary: Get reward weight at epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: Denom
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              reward_weight:
-                type: number
-                example: "5"
-                description: 5%
-        500:
-          description: Internal Server Error
-  /treasury/issuance/{denom}:
-    get:
-      summary: Get total issuance count of denom at current height
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: Denom to get
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              issuance:
-                type: integer
-                example: "500"
-        500:
-          description: Internal Server Error
-  /treasury/issuance/{denom}/{day}:
-    get:
-      summary: Get total issuance count of denom at specific day
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: Denom to get
-          required: true
-          type: string
-        - in: path
-          name: day
-          description: the \# of date after genesis time, a user want to query
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              issuance:
-                type: integer
-                example: "500"
-        500:
-          description: Internal Server Error
-  /treasury/tax-proceeds:
+  /treasury/tax_proceeds:
     get:
       summary: Get current tax proceeds
       tags:
@@ -2047,15 +1927,12 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              tax_proceeds:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /treasury/tax-proceeds/{epoch}:
+  /treasury/tax_proceeds/{epoch}:
     get:
       summary: Get tax proceeds at epoch
       tags:
@@ -2072,15 +1949,12 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              tax_proceeds:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /treasury/seigniorage-proceeds:
+  /treasury/seigniorage_proceeds:
     get:
       summary: retrieves the size of the seigniorage pool
       tags:
@@ -2091,14 +1965,11 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              seigniorage_proceeds:
-                type: integer
-                example: "0"
+            type: integer
+            example: "0"
         500:
           description: Internal Server
-  /treasury/seigniorage-proceeds/{epoch}:
+  /treasury/seigniorage_proceeds/{epoch}:
     get:
       summary: retrieves the size of the seigniorage pool at epoch
       tags:
@@ -2115,14 +1986,11 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              seigniorage_proceeds:
-                type: integer
-                example: "0"
+            type: integer
+            example: "0"
         500:
           description: Internal Server Error
-  /treasury/current-epoch:
+  /treasury/current_epoch:
     get:
       summary: Get current epoch
       tags:
@@ -2133,14 +2001,11 @@ paths:
         200:
           description: OK
           schema:
-            type: object
-            properties:
-              current_epoch:
-                type: number
-                example: "724"
+            type: number
+            example: "724"
         404:
           description: Not Found
-  /treasury/params:
+  /treasury/parameters:
     get:
       summary: Get treasury module params
       tags:
@@ -2236,20 +2101,29 @@ definitions:
   Address:
     type: string
     description: bech32 encoded address
-    example: terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0
+    example: cosmos1depk54cuajgkzea6zpgkq36tnjwdzv4afc3d27
   ValidatorAddress:
     type: string
     description: bech32 encoded address
-    example: terravaloper1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe99ymu
+    example: cosmosvaloper16xyempempp92x9hyzz9wrgf94r6j9h5f2w4n2l
   Coin:
     type: object
     properties:
       denom:
         type: string
-        example: luna
+        example: stake
       amount:
         type: string
         example: "50"
+  DecCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: stake
+      amount:
+        type: string
+        example: "50.000"
   Hash:
     type: string
     example: EE5F3404034C524501629B56E0DDC38FAD651F04
@@ -2301,21 +2175,6 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/TxQuery"
-  StdSignature:
-    type: object
-    properties:
-      signature:
-        type: string
-        example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-      pub_key:
-        type: object
-        properties:
-          type:
-            type: string
-            example: "tendermint/PubKeySecp256k1"
-          value:
-            type: string
-            example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
   StdTx:
     type: object
     properties:
@@ -2334,10 +2193,27 @@ definitions:
               $ref: "#/definitions/Coin"
       memo:
         type: string
-      signatures:
-        type: array
-        items:
-          $ref: "#/definitions/StdSignature"
+      signature:
+        type: object
+        properties:
+          signature:
+            type: string
+            example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+          pub_key:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "tendermint/PubKeySecp256k1"
+              value:
+                type: string
+                example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+          account_number:
+            type: string
+            example: "0"
+          sequence:
+            type: string
+            example: "0"
   UnsignedStdTx:
     type: object
     properties:
@@ -2377,7 +2253,7 @@ definitions:
     properties:
       chain_id:
         type: string
-        example: ricewine-0001
+        example: cosmoshub-2
       height:
         type: number
         example: 1
@@ -2501,14 +2377,14 @@ definitions:
     properties:
       from:
         type: string
-        example: "terra1ca8etp65w8ewl4zh0gfjxtg3txknu6wqe2fet0"
+        example: "cosmos1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc"
         description: Sender address or Keybase name to generate a transaction
       memo:
         type: string
-        example: "Sent via Terra Voyager 🚀"
+        example: "Sent via Cosmos Voyager 🚀"
       chain_id:
         type: string
-        example: "ricewine-0001"
+        example: "Cosmos-Hub"
       account_number:
         type: string
         example: "0"
@@ -2529,130 +2405,6 @@ definitions:
         type: boolean
         example: false
         description: Estimate gas for a transaction (cannot be used in conjunction with generate_only)
-            
-  BaseAccount:
-    type: object
-    properties:
-      account_number:
-        type: string
-      address:
-        type: string
-      coins:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      public_key:
-        type: string
-      sequence:
-        type: string
-        
-  Account:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "auth/Account"
-      value:
-        $ref: "#/definitions/BaseAccount"
-  
-  BaseVestingAccount:
-    type: object
-    properties:
-      BaseAccount:
-        $ref: "#/definitions/BaseAccount"
-      original_vesting:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      delegated_free:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      delegated_vesting:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      end_time:
-        type: string
-        example: "0"
-
-  Schedule:
-    type: object
-    properties:
-      cliff:
-        type: string
-        example: "1556085600"
-      ratio:
-        type: string
-        example: "0.100000000000000000"
-  VestingSchedule:
-    type: object
-    properties:
-      denom:
-        type: string
-        example: "usdr"
-      schedules:
-        type: array
-        items:
-          $ref: "#/definitions/Schedule"
-  BaseGradedVestingAccount:
-    type: object
-    properties:
-      BaseVestingAccount:
-        $ref: "#/definitions/BaseVestingAccount"
-      vesting_schedules:
-        type: array
-        items:
-          $ref: "#/definitions/VestingSchedule" 
-  GradedVestingAccount:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "core/GradedVestingAccount"
-      value:
-        $ref: "#/definitions/BaseGradedVestingAccount"
-
-  LazySchedule:
-    type: object
-    properties:
-      start_time:
-        type: string
-        example: "1556085600"
-      end_time:
-        type: string
-        example: "1556085600"
-      ratio:
-        type: string
-        example: "0.100000000000000000"
-  LazyVestingSchedule:
-    type: object
-    properties:
-      denom:
-        type: string
-        example: "usdr"
-      lazy_schedules:
-        type: array
-        items:
-          $ref: "#/definitions/LazySchedule"
-  BaseLazyGradedVestingAccount:
-    type: object
-    properties:
-      BaseVestingAccount:
-        $ref: "#/definitions/BaseVestingAccount"
-      lazy_vesting_schedules:
-        type: array
-        items:
-          $ref: "#/definitions/LazyVestingSchedule"
-  LazyGradedVestingAccount:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "core/LazyGradedVestingAccount"
-      value:
-        $ref: "#/definitions/BaseLazyGradedVestingAccount"
-        
   TendermintValidator:
     type: object
     properties:
@@ -2660,13 +2412,78 @@ definitions:
         $ref: "#/definitions/ValidatorAddress"
       pub_key:
         type: string
-        example: terravalconspub1zcjduepq5zuq4cp0cpfyx6rca6ygz38t446wp3hlp5lepyle4e6e00twmetqsa0vg4
+        example: cosmosvalconspub1zcjduepq0vu2zgkgk49efa0nqwzndanq5m4c7pa3u4apz4g2r9gspqg6g9cs3k9cuf
       voting_power:
         type: string
         example: "1000"
       proposer_priority:
         type: string
         example: "1000"
+  TextProposal:
+    type: object
+    properties:
+      proposal_id:
+        type: integer
+      title:
+        type: string
+      description:
+        type: string
+      proposal_type:
+        type: string
+      proposal_status:
+        type: string
+      final_tally_result:
+        $ref: "#/definitions/TallyResult"
+      submit_time:
+        type: string
+      total_deposit:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      voting_start_time:
+        type: string
+  Proposer:
+    type: object
+    properties:
+      proposal_id:
+        type: string
+      proposer:
+        type: string
+  Deposit:
+    type: object
+    properties:
+      amount:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      proposal_id:
+        type: string
+      depositor:
+        $ref: "#/definitions/Address"
+  TallyResult:
+    type: object
+    properties:
+      yes:
+        type: string
+        example: "0.0000000000"
+      abstain:
+        type: string
+        example: "0.0000000000"
+      no:
+        type: string
+        example: "0.0000000000"
+      no_with_veto:
+        type: string
+        example: "0.0000000000"
+  Vote:
+    type: object
+    properties:
+      voter:
+        type: string
+      proposal_id:
+        type: string
+      option:
+        type: string
   Validator:
     type: object
     properties:
@@ -2674,7 +2491,7 @@ definitions:
         $ref: "#/definitions/ValidatorAddress"
       consensus_pubkey:
         type: string
-        example: terravalconspub1zcjduepq5zuq4cp0cpfyx6rca6ygz38t446wp3hlp5lepyle4e6e00twmetqsa0vg4
+        example: cosmosvalconspub1zcjduepq0vu2zgkgk49efa0nqwzndanq5m4c7pa3u4apz4g2r9gspqg6g9cs3k9cuf
       jailed:
         type: boolean
       status:
@@ -2699,7 +2516,7 @@ definitions:
         example: "0"
       bond_intra_tx_counter:
         type: integer
-        example: "0"
+        example: 0
       unbonding_height:
         type: string
         example: "0"
@@ -2732,6 +2549,28 @@ definitions:
         type: string
       height:
         type: integer
+  UnbondingDelegationPair:
+    type: object
+    properties:
+      delegator_address:
+        type: string
+      validator_address:
+        type: string
+      entries:
+        type: array
+        items:
+          $ref: "#/definitions/UnbondingEntries"
+  UnbondingEntries:
+    type: object
+    properties:
+      initial_balance:
+        type: string
+      balance:
+        type: string
+      creation_height:
+        type: string
+      min_time:
+        type: string
   UnbondingDelegation:
     type: object
     properties:
@@ -2756,15 +2595,20 @@ definitions:
         type: string
       validator_dst_address:
         type: string
+      entries:
+        type: array
+        items:
+          $ref: "#/definitions/Redelegation"
+  RedelegationEntry:
+    type: object
+    properties:
       creation_height:
         type: integer
-      min_time:
+      completion_time:
         type: integer
       initial_balance:
         type: string
       balance:
-        type: string
-      shares_src:
         type: string
       shares_dst:
         type: string
@@ -2781,6 +2625,13 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Coin"
+  PublicKey:
+    type: object
+    properties:
+      type:
+        type: string
+      value:
+        type: string
   SigningInfo:
     type: object
     properties:
@@ -2792,6 +2643,109 @@ definitions:
         type: string
       missed_blocks_counter:
         type: string
+  ParamChange:
+    type: object
+    properties:
+      subspace:
+        type: string
+        example: "staking"
+      key:
+        type: string
+        example: "MaxValidators"
+      subkey:
+        type: string
+        example: ""
+      value:
+        type: object
+  Supply:
+    type: object
+    properties:
+      total:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+  BaseAccount:
+    type: object
+    properties:
+      account_number:
+        type: string
+      address:
+        type: string
+      coins:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      public_key:
+        type: string
+      sequence:
+        type: string
+  Account:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "auth/Account"
+      value:
+        $ref: "#/definitions/BaseAccount"
+  BaseVestingAccount:
+    type: object
+    properties:
+      BaseAccount:
+        $ref: "#/definitions/BaseAccount"
+      original_vesting:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      delegated_free:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      delegated_vesting:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      end_time:
+        type: string
+        example: "0"
+  Schedule:
+    type: object
+    properties:
+      start_time:
+        type: string
+        example: "1556085600"
+      end_time:
+        type: string
+        example: "1556085600"
+      ratio:
+        type: string
+        example: "0.100000000000000000"
+  VestingSchedule:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: "usdr"
+      lazy_schedules:
+        type: array
+        items:
+          $ref: "#/definitions/Schedule"
+  BaseLazyGradedVestingAccount:
+    type: object
+    properties:
+      BaseVestingAccount:
+        $ref: "#/definitions/BaseVestingAccount"
+      vesting_schedules:
+        type: array
+        items:
+          $ref: "#/definitions/VestingSchedule"
+  LazyGradedVestingAccount:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "core/LazyGradedVestingAccount"
+      value:
+        $ref: "#/definitions/BaseLazyGradedVestingAccount"
   SwapReq:
     type: object
     properties:
@@ -2801,7 +2755,19 @@ definitions:
         $ref: "#/definitions/Coin"
       ask_denom:
         type: string
-        example: luna
+        example: uluna
+  MarketParams:
+    type: object
+    properties:
+      daily_luna_delta_limit:
+        type: number
+        example: "0.005"
+      min_swap_spread:
+        type: number
+        example: "0.02"
+      max_swap_spread:
+        type: number
+        example: "0.1"
   PrevoteReq:
     type: object
     properties:
@@ -2836,13 +2802,6 @@ definitions:
         description: "proof salt was used to make prevote hash; initial prevote does not require this field"
       validator:
         $ref: "#/definitions/ValidatorAddress"
-  budgetVoteReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      option:
-        type: boolean
   PriceVote:
     type: object
     properties:
@@ -2868,74 +2827,17 @@ definitions:
       submit_block:
         type: number
         example: "1"
-  submitProgramReq:
+  VotingInfo:
     type: object
     properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      title:
+      address:
+        $ref: "#/definitions/ValidatorAddress"
+      start_height:
         type: string
-        example: "title"
-      description:
+      index_offset:
         type: string
-        example: "description"
-      executor:
-        $ref: "#/definitions/Address"
-  withdrawReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-  Program:
-    type: object
-    properties:
-      program_id:
-        type: number
-      title:
+      missed_votes_counter:
         type: string
-      description:
-        type: string
-      submitter:
-        $ref: "#/definitions/Address"
-      executor:
-        $ref: "#/definitions/Address"
-      submit_time:
-        type: number
-  MsgVoteProgram:
-    type: object
-    properties:
-      program_id:
-        type: number
-      option:
-        type: boolean
-      voter:
-        $ref: "#/definitions/Address"
-  BudgetParams:
-    type: object
-    properties:
-      active_threshold:
-        type: number
-        example: "0.1"
-      legacy_threshold:
-        type: number
-        example: "0.00"
-      vote_period:
-        type: number
-        example: "1000000"
-      deposit:
-        $ref: "#/definitions/Coin"
-  MarketParams:
-    type: object
-    properties:
-      daily_luna_delta_limit:
-        type: number
-        example: "0.005"
-      min_swap_spread:
-        type: number
-        example: "0.02"
-      max_swap_spread:
-        type: number
-        example: "0.1"
   OracleParams:
     type: object
     properties:
@@ -2951,17 +2853,6 @@ definitions:
       oracle_reward_band:
         type: number
         example: "0.02"
-  Claim:
-    type: object
-    properties:
-      class:
-        type: string
-        example: ["oracle", "budget"]
-      weight:
-        type: integer
-        example: "100"
-      recipient:
-        $ref: "#/definitions/Address"
   PolicyConstraints:
     type: object
     properties:
@@ -3015,6 +2906,17 @@ definitions:
         type: number
         format: float
         example: "0.9"
+  MultiSignPubKey:
+    type: object
+    properties:
+      threshold:
+        type: number
+        example: 1
+      pubkeys:
+        type: array
+        items:
+          type: string
+          example: terrapub1addwnpepq2l6pwj8h9fwxdjuge7lazu0sszpkck0nlhjag6q9drffrd93atywdt8ksu
   MultiSignReq:
     type: object
     properties:
@@ -3029,3 +2931,31 @@ definitions:
           $ref: "#/definitions/StdSignature"
       signature_only:
         type: boolean
+      pubkey:
+        $ref: "#/definitions/MultiSignPubKey"
+  StdSignature:
+    type: object
+    properties:
+      signature:
+        type: string
+        example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+      pub_key:
+        type: object
+        properties:
+          type:
+            type: string
+            example: "tendermint/PubKeySecp256k1"
+          value:
+            type: string
+            example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  EstimateFeeResp:
+    type: object
+    properties:
+      fees:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      gas:
+        type: number
+        format: integer
+        example: 10000
