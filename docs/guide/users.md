@@ -41,7 +41,9 @@ The funds stored in an account are controlled by the private key. This private k
 
 {% hint style="danger" %}
 Do not lose or share your 24 words with anyone.
+
 To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access.
+
 If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.
 {% endhint %}
 
@@ -57,8 +59,11 @@ At the core of a ledger device, there is a mnemonic used to generate accounts on
 
 {% hint style="warning" %}
 To do this, **it is preferable to use a brand new ledger device** as there can be only one mnemonic per ledger device.
+
 If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in `Settings`&gt;`Device`&gt;`Reset All`.
+
 **Please note that this will wipe out the seed currently stored on the device.**
+
 **If you have not properly secured the associated mnemonic, you could lose your funds!!!**
 {% endhint %}
 
@@ -138,18 +143,20 @@ The command will generate a 24-words mnemonic and save the private and public ke
 
 {% hint style="danger" %}
 Do not lose or share your 24 words with anyone.
+
 To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access.
+
 If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.
 {% endhint %}
 
-{% hint style="warning" %}
+{% hint style="info" %}
  After you have secured your mnemonic \(triple check!\), you can delete bash history to ensure no one can retrieve it.
-{% endhint %}
 
 ```bash
 history -c
 rm ~/.bash_history
 ```
+{% endhint %}
 
 * `<yourKeyName>` is the name of the account. It is a reference to the account number used to derive the key pair from the mnemonic. You will use this name to identify your account when you want to send a transaction.
 * You can add the optional `--account` flag to specify the path \(`0`, `1`, `2`, ...\) you want to use to generate your account. By default, account `0` is generated. 
@@ -168,8 +175,11 @@ In order to query the state and send transactions, you need a way to access the 
 
 {% hint style="danger" %}
 Do not share your mnemonic (12 or 24 words) with anyone.
+
 The only person who should ever need to know it is you.
+
 This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support.
+
 No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic.
 {% endhint %}
 

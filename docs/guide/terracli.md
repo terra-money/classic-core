@@ -135,8 +135,12 @@ terracli query account <account_terra>
 ```
 
 {% hint style="warning" %}
-When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state`.
-This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.
+When you query an account balance with zero tokens, you will get this error:
+
+`No account with address <account_terra> was found in the state`.
+
+This can also happen if you fund the account before your node has fully synced with the chain.
+These are both normal.
 {% endhint %}
 
 ### Send Tokens
@@ -159,7 +163,11 @@ The `--amount` flag accepts the format `--amount=<value|coin_name>`.
 
 {% hint style="info" %}
 You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag.
-If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction. Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully.
+
+If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction.
+
+Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully.
+
 The adjustment can be controlled via the `--gas-adjustment` flag, whose default value is 1.0.
 {% endhint %}
 

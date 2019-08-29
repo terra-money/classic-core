@@ -2,7 +2,10 @@
 
 This section will guide the reader to install, deploy, and interact with the Terra Protocol and its toolkits.
 
-> NOTE: Though customized for Terra Core, these docs largely mirror the setup documentation for the Cosmos SDK, available at [https://github.com/cosmos/cosmos-sdk/docs/](https://github.com/cosmos/cosmos-sdk/docs/).
+
+{% hint style="info" %}
+Though customized for Terra Core, these docs largely mirror the setup documentation for the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/docs/).
+{% endhint %}
 
 ## Table of contents
 

@@ -10,9 +10,16 @@ A Ledger Nano S is a hardware wallet. Hardware wallets are considered very secur
 
 ## Installation
 
-:::WARNING
-NOTE: To do this, it is preferable to use a brand new ledger device. Indeed, there can be only one mnemonic per ledger device. If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in Settings>Device>Reset All. Please note that this will wipe out the seed currently stored on the device. If you have not properly secured the associated mnemonic, you could lose your funds!
-:::
+{% hint style="warning" %}
+To do this, it is preferable to use a brand new ledger device as there can be only one mnemonic per ledger device.
+
+If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in `Settings`>`Device`>`Reset All`.
+
+**Please note that this will wipe out the seed currently stored on the device.**
+
+**If you have not properly secured the associated mnemonic, you could lose your funds!**
+{% endhint %}
+
 
 - Open the **Manager** in Ledger Live.
 - Connect and unlock your Ledger Nano S.
@@ -36,7 +43,9 @@ Now, you are all set to start sending and receiving transactions on the network.
 
 ## Use the Ledger with the CLI
 
-> Note: Your ledger device must be on and the Terra ledger app must be in the foreground to perform the following actions. 
+{% hint style="info" %}
+Your ledger device must be on and the Terra ledger app must be in the foreground to perform the following actions. 
+{% endhint %}
 
 ### How to view account balance
 

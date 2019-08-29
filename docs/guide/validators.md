@@ -1,11 +1,11 @@
 # Notes on validators
 
-{% hint style="info" %}
 Information on how to join the current testnet (`genesis.json` file and seeds) is held in our "networks" [repo](https://github.com/terra-project/networks).
 Please check there if you are looking to join our latest testnet.
-{% endhint %}
 
-**Note**: This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**
+{% hint style="warning" %}
+This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**.
+{% endhint %}
 
 Before setting up your validator node, make sure you've already gone through the [Full Node Setup](join-network.md) guide.
 

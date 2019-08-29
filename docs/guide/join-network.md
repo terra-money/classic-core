@@ -10,7 +10,9 @@ You need to [install terra](installation.md) before going further.
 
 ## Setting Up a New Node
 
-> NOTE: If you ran a full node on a previous testnet, please skip to [Upgrading From Previous Testnet](join-network.md#upgrading-from-previous-testnet).
+{% hint style="info" %}
+If you ran a full node on a previous testnet, please skip to [Upgrading From Previous Testnet](join-network.md#upgrading-from-previous-testnet).
+{% endhint %}
 
 These instructions are for setting up a brand new full node from scratch.
 
@@ -21,7 +23,7 @@ terrad init <your_custom_moniker>
 ```
 
 {% hint style="warning" %}
-Monikers can contain only ASCII characters.
+Monikers can only contain  ASCII characters.
 Using Unicode characters will render your node unreachable.
 {% endhint %}
 
@@ -63,6 +65,7 @@ Your node is now in a pristine state while keeping the original `priv_validator.
 
 {% hint style="danger" %}
 Make sure that every node has a unique `priv_validator.json`.
+
 Do not copy the `priv_validator.json` from an old node to multiple new nodes.
 Running two nodes with the same `priv_validator.json` will cause you to double sign.
 {% endhint %}
