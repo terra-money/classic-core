@@ -4,38 +4,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GenesisState - all distribution state that must be provided at genesis
-type GenesisState struct {
-	Params Params `json:"params"` // market params
-}
-
-func NewGenesisState(params Params) GenesisState {
-	return GenesisState{
-		Params: params,
-	}
-}
-
-// get raw genesis raw message for testing
-func DefaultGenesisState() GenesisState {
-	return GenesisState{
-		Params: DefaultParams(),
-	}
-}
-
-// new oracle genesis
+// InitGenesis initialize default parameters
+// and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 }
 
-// ExportGenesis returns a GenesisState for a given context and keeper. The
-// GenesisState will contain the pool, and validator/delegator distribution info's
-func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
+// ExportGenesis writes the current store values
+// to a genesis file, which can be imported again
+// with InitGenesis
+func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
-	return NewGenesisState(params)
-}
 
-// ValidateGenesis validates the provided oracle genesis state to ensure the
-// expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
-func ValidateGenesis(data GenesisState) error {
-	return validateParams(data.Params)
+	return NewGenesisState(params)
 }

@@ -5,242 +5,293 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/x/treasury/internal/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec) {
-
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryTaxRate), queryTaxRateHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryTaxRate, RestEpoch), queryTaxRateHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryTaxCap, RestDenom), queryTaxCapHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryMiningRewardWeight), queryMiningWeightHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryMiningRewardWeight, RestDenom), queryMiningWeightHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryIssuance, RestDenom), queryIssuanceHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}/{%s}", treasury.QueryIssuance, RestDenom, RestDay), queryIssuanceHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryTaxProceeds), queryTaxProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QueryTaxProceeds, RestEpoch), queryTaxProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QuerySeigniorageProceeds), querySgProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s/{%s}", treasury.QuerySeigniorageProceeds, RestEpoch), querySgProceedsHandlerFunction(cdc, cliCtx)).Methods("GET")
-
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryCurrentEpoch), queryCurrentEpochHandlerFunction(cdc, cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/treasury/%s", treasury.QueryParams), queryParamsHandlerFn(cdc, cliCtx)).Methods("GET")
+func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
+	r.HandleFunc("/treasury/tax_rate", queryTaxRateHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/tax_rate/{%s}", RestEpoch), queryTaxRateHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/tax_cap/{%s}", RestDenom), queryTaxCapHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/reward_weight", queryRewardWeightHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/reward_weight/{%s}", RestEpoch), queryRewardWeightHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/historical_issuance", queryHistoricalIssuanceHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/historical_issuance/{%s}", RestEpoch), queryHistoricalIssuanceHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/tax_proceeds", queryTaxProceedsHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/tax_proceeds/{%s}", RestEpoch), queryTaxProceedsHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/seigniorage_proceeds", querySeigniorageProceedsHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/treasury/seigniorage_proceeds/{%s}", RestEpoch), querySeigniorageProceedsHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/current_epoch", queryCurrentEpochHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/parameters", queryParametersHandlerFn(cliCtx)).Methods("GET")
 }
 
-func queryTaxRateHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryTaxRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		epochStr := vars[RestEpoch]
 
-		var epoch sdk.Int
+		var epoch int64
 		if len(epochStr) == 0 {
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 
-			var epochResponse treasury.QueryCurrentEpochResponse
-			cdc.MustUnmarshalJSON(res, &epochResponse)
-
-			epoch = epochResponse.CurrentEpoch
+			cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
 		} else {
-			var ok bool
-			epoch, ok = sdk.NewIntFromString(epochStr)
-			if !ok {
-				err := fmt.Errorf("the given epoch {%s} is not a valid format; epoch should be formatted as an integer", epochStr)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			var err error
+			epoch, err = strconv.ParseInt(epochStr, 10, 64)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
 				return
 			}
 		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxRate, epoch), nil)
+		params := types.NewQueryTaxRateParams(epoch)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxRate), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func queryTaxCapHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryTaxCapHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		denom := vars[RestDenom]
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap, denom), nil)
+		params := types.NewQueryTaxCapParams(denom)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxCap), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func queryMiningWeightHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryRewardWeightHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		epochStr := vars[RestEpoch]
 
-		var epoch sdk.Int
+		var epoch int64
 		if len(epochStr) == 0 {
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 
-			var epochResponse treasury.QueryCurrentEpochResponse
-			cdc.MustUnmarshalJSON(res, &epochResponse)
-
-			epoch = epochResponse.CurrentEpoch
+			cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
 		} else {
-			var ok bool
-			epoch, ok = sdk.NewIntFromString(epochStr)
-			if !ok {
-				err := fmt.Errorf("the given epoch {%s} is not a valid format; epoch should be formatted as an integer", epochStr)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-		}
-
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryMiningRewardWeight, epoch), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
-	}
-}
-
-func queryIssuanceHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		denom := vars[RestDenom]
-		dayStr := vars[RestDay]
-
-		if len(dayStr) != 0 {
-			_, err := strconv.ParseInt(dayStr, 10, 64)
+			var err error
+			epoch, err = strconv.ParseInt(epochStr, 10, 64)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
 				return
 			}
 		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s/%s", treasury.QuerierRoute, treasury.QueryIssuance, denom, dayStr), nil)
+		params := types.NewQueryRewardWeightParams(epoch)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRewardWeight), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func queryTaxProceedsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryHistoricalIssuanceHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		epochStr := vars[RestEpoch]
 
-		var epoch sdk.Int
+		var epoch int64
 		if len(epochStr) == 0 {
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 
-			var epochResponse treasury.QueryCurrentEpochResponse
-			cdc.MustUnmarshalJSON(res, &epochResponse)
-
-			epoch = epochResponse.CurrentEpoch
+			cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
 		} else {
-			var ok bool
-			epoch, ok = sdk.NewIntFromString(epochStr)
-			if !ok {
-				err := fmt.Errorf("the given epoch {%s} is not a valid format; epoch should be formatted as an integer", epochStr)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			var err error
+			epoch, err = strconv.ParseInt(epochStr, 10, 64)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
 				return
 			}
 		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QueryTaxProceeds, epoch), nil)
+		params := types.NewQueryHistoricalIssuanceParams(epoch)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryHistoricalIssuance), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func querySgProceedsHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryTaxProceedsHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		vars := mux.Vars(r)
 		epochStr := vars[RestEpoch]
 
-		var epoch sdk.Int
+		var epoch int64
 		if len(epochStr) == 0 {
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 
-			var epochResponse treasury.QueryCurrentEpochResponse
-			cdc.MustUnmarshalJSON(res, &epochResponse)
+			cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
 
-			epoch = epochResponse.CurrentEpoch
 		} else {
-			var ok bool
-			epoch, ok = sdk.NewIntFromString(epochStr)
-			if !ok {
-				err := fmt.Errorf("the given epoch {%s} is not a valid format; epoch should be formatted as an integer", epochStr)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			var err error
+			epoch, err = strconv.ParseInt(epochStr, 10, 64)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
 				return
 			}
 		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", treasury.QuerierRoute, treasury.QuerySeigniorageProceeds, epoch), nil)
+		params := types.NewQueryTaxProceedsParams(epoch)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxProceeds), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func queryCurrentEpochHandlerFunction(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func querySeigniorageProceedsHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		epochStr := vars[RestEpoch]
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
+		var epoch int64
+		if len(epochStr) == 0 {
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
+
+		} else {
+			var err error
+			epoch, err = strconv.ParseInt(epochStr, 10, 64)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
+				return
+			}
+		}
+
+		params := types.NewQuerySeigniorageParams(epoch)
+		bz := cliCtx.Codec.MustMarshalJSON(params)
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySeigniorageProceeds), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func queryCurrentEpochHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryParams), nil)
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, res, cliCtx.Indent)
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryParametersHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
