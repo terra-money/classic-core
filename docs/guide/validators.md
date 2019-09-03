@@ -1,6 +1,8 @@
 # Notes on validators
 
-::: tip Information on how to join the current testnet \(`genesis.json` file and seeds\) is held [in our `networks` repo](https://github.com/terra-project/networks). Please check there if you are looking to join our latest testnet. :::
+{% hint style="info" %}
+    Information on how to join the current testnet \(`genesis.json` file and seeds\) is held [in our `networks` repo](https://github.com/terra-project/networks). Please check there if you are looking to join our latest testnet.
+{% endhint %}
 
 **Note**: This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**
 
@@ -22,7 +24,9 @@ terrad tendermint show-validator
 
 Next, craft your `terrad gentx` command:
 
-::: warning Note Don't use more Luna than you have! You can always get more by using the [Faucet](https://faucet.terra.money/)! :::
+{% hint style="warning" %}
+    Don't use more Luna than you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
+{% endhint %}
 
 ```bash
 terracli tx staking create-validator \
@@ -70,7 +74,9 @@ terrad gentx \
 
 **Note**: This command automatically store your `gentx` in `~/.terrad/config/gentx` for it to be processed at genesis.
 
-::: tip Consult `terrad gentx --help` for more information on the flags defaults. :::
+{% hint style="info" %}
+    Consult `terrad gentx --help` for more information on the flags defaults.
+{% endhint %}
 
 A `gentx` is a JSON file carrying a self-delegation. All genesis transactions are collected by a `genesis coordinator` and validated against an initial `genesis.json`. Such initial `genesis.json` contains only a list of accounts and their coins. Once the transactions are processed, they are merged in the `genesis.json`'s `gentxs` field.
 
@@ -197,7 +203,9 @@ terracli query tendermint-validator-set | grep "$(terrad tendermint show-validat
 
 You should also be able to see your validator on the Terra Station. You are looking for the `bech32` encoded `address` in the `~/.terrad/config/priv_validator.json` file.
 
-::: warning Note To be in the validator set, you need to have more total voting power than the 100th validator. :::
+{% hint style="warning" %}
+    To be in the validator set, you need to have more total voting power than the 100th validator.
+{% endhint %}
 
 ## Common Problems
 
@@ -217,7 +225,9 @@ Wait for your full node to catch up to the latest block. Next, run the following
 terracli tx slashing unjail <terra> --chain-id=<chain_id> --from=<from>
 ```
 
-::: danger Warning If you don't wait for `terrad` to sync before running `unjail`, you will receive an error message telling you your validator is still jailed. :::
+{% hint style="danger" %}
+  If you don't wait for `terrad` to sync before running `unjail`, you will receive an error message telling you your validator is still jailed.
+{% endhint %}
 
 Lastly, check your validator again to see if your voting power is back.
 

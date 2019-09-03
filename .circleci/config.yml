@@ -101,7 +101,7 @@ jobs:
 
   release:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.5
     steps:
       - checkout
       - run:
