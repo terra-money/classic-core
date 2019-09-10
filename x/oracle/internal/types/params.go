@@ -105,7 +105,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 	}
 }
 
-// implements fmt.Stringer
+// String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
   VotePeriod:               %d

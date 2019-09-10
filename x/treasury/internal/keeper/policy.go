@@ -18,8 +18,9 @@ func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
 			continue
 		}
 
-		newCap, _, err := k.marketKeeper.GetSwapCoin(ctx, cap, coin.Denom, true)
+		newDecCap, err := k.marketKeeper.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(cap), coin.Denom)
 		if err == nil {
+			newCap, _ := newDecCap.TruncateDecimal()
 			newCaps = append(newCaps, newCap)
 			k.SetTaxCap(ctx, newCap.Denom, newCap.Amount)
 		}

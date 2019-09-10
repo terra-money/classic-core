@@ -26,8 +26,11 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	marketQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQuerySwap(queryRoute, cdc),
+		GetCmdQueryLunaPool(queryRoute, cdc),
+		GetCmdQueryTerraPool(queryRoute, cdc),
+		GetCmdQueryBasePool(queryRoute, cdc),
+		GetCmdQueryLastUpdateHeight(queryRoute, cdc),
 		GetCmdQueryParams(queryRoute, cdc),
-		GetCmdQueryPrevDayIssuance(queryRoute, cdc),
 	)...)
 
 	return marketQueryCmd
@@ -64,7 +67,7 @@ $ terracli query query swap 5000000uluna usdr
 			}
 
 			var retCoin sdk.Coin
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &retCoin)
+			cdc.MustUnmarshalJSON(res, &retCoin)
 			return cliCtx.PrintOutput(retCoin)
 		},
 	}
@@ -72,23 +75,92 @@ $ terracli query query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryPrevDayIssuance implements the query params command.
-func GetCmdQueryPrevDayIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTerraPool implements the query params command.
+func GetCmdQueryTerraPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prev-day-issuance",
-		Args:  cobra.ExactArgs(1),
-		Short: "Query the prev day issuance",
+		Use:   "terra-pool",
+		Args:  cobra.NoArgs,
+		Short: "Query terra pool",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPrevDayIssuance), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPool), nil)
 			if err != nil {
 				return err
 			}
 
-			var prevDayIssuance sdk.Coins
-			cdc.MustUnmarshalJSON(res, &prevDayIssuance)
-			return cliCtx.PrintOutput(prevDayIssuance)
+			var pool sdk.Dec
+			cdc.MustUnmarshalJSON(res, &pool)
+			return cliCtx.PrintOutput(pool)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryLunaPool implements the query params command.
+func GetCmdQueryLunaPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "luna-pool",
+		Args:  cobra.NoArgs,
+		Short: "Query luna pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLunaPool), nil)
+			if err != nil {
+				return err
+			}
+
+			var pool sdk.Dec
+			cdc.MustUnmarshalJSON(res, &pool)
+			return cliCtx.PrintOutput(pool)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryBasePool implements the query params command.
+func GetCmdQueryBasePool(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "base-pool",
+		Args:  cobra.NoArgs,
+		Short: "Query equilibrium base pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBasePool), nil)
+			if err != nil {
+				return err
+			}
+
+			var BasePool sdk.Dec
+			cdc.MustUnmarshalJSON(res, &BasePool)
+			return cliCtx.PrintOutput(BasePool)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryLastUpdateHeight implements the query params command.
+func GetCmdQueryLastUpdateHeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "last-update-height",
+		Args:  cobra.NoArgs,
+		Short: "Query last height of pool update",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLastUpdateHeight), nil)
+			if err != nil {
+				return err
+			}
+
+			var lastUpdateHeight int64
+			cdc.MustUnmarshalJSON(res, &lastUpdateHeight)
+			return cliCtx.PrintOutput(sdk.NewInt(lastUpdateHeight))
 		},
 	}
 

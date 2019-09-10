@@ -24,6 +24,7 @@ func NewClaim(weight int64, recipient sdk.ValAddress) Claim {
 	}
 }
 
+// String implements fmt.Stringer interface
 func (c Claim) String() string {
 	return fmt.Sprintf(`Claim
 	Weight: %v

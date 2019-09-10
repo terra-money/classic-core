@@ -10,89 +10,72 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-func TestPrevDayLunaIssuanceUpdate(t *testing.T) {
+func TestLunaPoolUpdate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	issuance := input.MarketKeeper.GetPrevDayIssuance(input.Ctx).AmountOf(core.MicroLunaDenom)
-	require.True(t, issuance.IsZero())
+	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
+	lunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
+	require.Equal(t, basePool, lunaPool)
 
-	supply := input.SupplyKeeper.GetSupply(input.Ctx)
-	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt())))
-	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.MarketKeeper.UpdatePrevDayIssuance(input.Ctx)
-	issuance = input.MarketKeeper.GetPrevDayIssuance(input.Ctx).AmountOf(core.MicroLunaDenom)
-	require.Equal(t, sdk.OneInt(), issuance)
+	diff := sdk.NewDec(10)
+	input.MarketKeeper.SetLunaPool(input.Ctx, lunaPool.Sub(diff))
+
+	lunaPool = input.MarketKeeper.GetLunaPool(input.Ctx)
+	require.Equal(t, basePool.Sub(diff), lunaPool)
 }
 
-func TestComputeLunaDelta(t *testing.T) {
+func TestTerraPoolUpdate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	for i := 0; i < 100; i++ {
-		expectedDelta := sdk.NewDecWithPrec(rand.Int63n(1000), 3)
-		issuance := input.SupplyKeeper.GetSupply(input.Ctx).GetTotal().AmountOf(core.MicroLunaDenom)
-		change := expectedDelta.MulInt(issuance).TruncateInt()
-		input.MarketKeeper.UpdatePrevDayIssuance(input.Ctx)
-		delta := input.MarketKeeper.ComputeLunaDelta(input.Ctx.WithBlockHeight(core.BlocksPerDay), change)
+	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
+	terraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
+	require.Equal(t, basePool, terraPool)
 
-		require.Equal(t, expectedDelta, delta)
-	}
+	diff := sdk.NewDec(10)
+	input.MarketKeeper.SetTerraPool(input.Ctx, terraPool.Sub(diff))
+
+	terraPool = input.MarketKeeper.GetTerraPool(input.Ctx)
+	require.Equal(t, basePool.Sub(diff), terraPool)
 }
 
-func TestComputeLunaSwapSpread(t *testing.T) {
+func TestUpdatePools(t *testing.T) {
 	input := CreateTestInput(t)
+
+	// oracle price
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
 	for i := 0; i < 100; i++ {
 		delta := sdk.NewDecWithPrec(rand.Int63n(1000), 3)
-		spread := input.MarketKeeper.ComputeLunaSwapSpread(input.Ctx, delta)
-		require.True(t, spread.GTE(input.MarketKeeper.MinSwapSpread(input.Ctx)))
-		require.True(t, spread.LTE(input.MarketKeeper.MaxSwapSpread(input.Ctx)))
+
+		supply := input.SupplyKeeper.GetSupply(input.Ctx)
+		total := supply.GetTotal()
+		issuance := total.AmountOf(core.MicroLunaDenom)
+		issuance = sdk.OneDec().Add(delta).MulInt(issuance).TruncateInt() // (1+delta) * issuance
+
+		total = total.Add(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, issuance)))
+		supply = supply.SetTotal(total)
+		input.SupplyKeeper.SetSupply(input.Ctx, supply)
+
+		input.MarketKeeper.UpdatePools(input.Ctx)
+		expectedBasePool := input.MarketKeeper.DailyTerraLiquidityRatio(input.Ctx).MulInt(total.AmountOf(core.MicroLunaDenom))
+
+		require.Equal(t, expectedBasePool, input.MarketKeeper.GetBasePool(input.Ctx))
 	}
-
-	spread := input.MarketKeeper.ComputeLunaSwapSpread(input.Ctx, sdk.ZeroDec())
-	require.Equal(t, input.MarketKeeper.MinSwapSpread(input.Ctx), spread)
-
-	spread = input.MarketKeeper.ComputeLunaSwapSpread(input.Ctx, sdk.OneDec())
-	require.Equal(t, input.MarketKeeper.MaxSwapSpread(input.Ctx), spread)
 }
 
-func TestGetSwapCoin(t *testing.T) {
+// TestReplenishPools tests that
+// each pools move towards base pool
+func TestReplenishPools(t *testing.T) {
 	input := CreateTestInput(t)
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
-	// zero day (min spread)
-	for i := 0; i < 100; i++ {
-		offerCoin := sdk.NewCoin(core.MicroSDRDenom, lunaPriceInSDR.MulInt64(rand.Int63()+1).TruncateInt())
-		retCoin, spread, err := input.MarketKeeper.GetSwapCoin(input.Ctx, offerCoin, core.MicroLunaDenom, false)
-		require.NoError(t, err)
-		require.Equal(t, input.MarketKeeper.MinSwapSpread(input.Ctx), spread)
-		require.Equal(t, sdk.NewDecFromInt(offerCoin.Amount).Quo(lunaPriceInSDR).TruncateInt(), retCoin.Amount)
+	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
+	lunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
+	require.Equal(t, basePool, lunaPool)
 
-		retCoin, spread, err = input.MarketKeeper.GetSwapCoin(input.Ctx, offerCoin, core.MicroLunaDenom, true)
-		require.NoError(t, err)
-		require.Equal(t, sdk.ZeroDec(), spread)
-		require.Equal(t, sdk.NewDecFromInt(offerCoin.Amount).Quo(lunaPriceInSDR).TruncateInt(), retCoin.Amount)
-	}
+	diff := basePool.QuoInt64(core.BlocksPerDay)
+	input.MarketKeeper.SetLunaPool(input.Ctx, lunaPool.Add(diff))
 
-	offerCoin := sdk.NewCoin(core.MicroSDRDenom, lunaPriceInSDR.QuoInt64(2).TruncateInt())
-	_, _, err := input.MarketKeeper.GetSwapCoin(input.Ctx, offerCoin, core.MicroLunaDenom, false)
-	require.Error(t, err)
-}
-
-func TestGetDecSwapCoin(t *testing.T) {
-	input := CreateTestInput(t)
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
-
-	// zero day (min spread)
-	for i := 0; i < 100; i++ {
-		offerCoin := sdk.NewDecCoin(core.MicroSDRDenom, lunaPriceInSDR.MulInt64(rand.Int63()+1).TruncateInt())
-		retCoin, err := input.MarketKeeper.GetSwapDecCoin(input.Ctx, offerCoin, core.MicroLunaDenom)
-		require.NoError(t, err)
-		require.Equal(t, offerCoin.Amount.Quo(lunaPriceInSDR), retCoin.Amount)
-	}
-
-	offerCoin := sdk.NewDecCoin(core.MicroSDRDenom, lunaPriceInSDR.QuoInt64(2).TruncateInt())
-	_, err := input.MarketKeeper.GetSwapDecCoin(input.Ctx, offerCoin, core.MicroLunaDenom)
-	require.Error(t, err)
+	input.MarketKeeper.ReplenishPools(input.Ctx)
+	lunaPool = input.MarketKeeper.GetLunaPool(input.Ctx)
+	require.Equal(t, basePool, lunaPool)
 }

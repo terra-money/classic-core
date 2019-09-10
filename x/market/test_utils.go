@@ -22,6 +22,7 @@ func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	params := input.MarketKeeper.GetParams(input.Ctx)
 	input.MarketKeeper.SetParams(input.Ctx, params)
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, randomPrice)
+	input.MarketKeeper.UpdatePools(input.Ctx)
 	h := NewHandler(input.MarketKeeper)
 
 	return input, h

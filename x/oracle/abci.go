@@ -56,6 +56,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			// TODO - update tax-cap
 			// Set price to the store
 			k.SetLunaPrice(ctx, denom, mod)
+
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(types.EventTypePriceUpdate,
 					sdk.NewAttribute(types.AttributeKeyDenom, denom),

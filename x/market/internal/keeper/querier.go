@@ -14,8 +14,14 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QuerySwap:
 			return querySwap(ctx, req, keeper)
-		case types.QueryPrevDayIssuance:
-			return queryPrevDayIssuance(ctx, req, keeper)
+		case types.QueryTerraPool:
+			return queryTerraPool(ctx, keeper)
+		case types.QueryLunaPool:
+			return queryLunaPool(ctx, keeper)
+		case types.QueryBasePool:
+			return queryBasePool(ctx, keeper)
+		case types.QueryLastUpdateHeight:
+			return queryLastUpdateHeight(ctx, keeper)
 		case types.QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -35,30 +41,56 @@ func querySwap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, s
 		return nil, types.ErrRecursiveSwap(types.DefaultCodespace, params.AskDenom)
 	}
 
-	swapCoin, spread, err := keeper.GetSwapCoin(ctx, params.OfferCoin, params.AskDenom, false)
+	swapCoin, spread, err := keeper.ComputeSwap(ctx, params.OfferCoin, params.AskDenom)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Failed to get swapped coin amount", err.Error()))
 	}
 
 	if spread.IsPositive() {
-		swapFeeAmt := spread.MulInt(swapCoin.Amount).TruncateInt()
+		swapFeeAmt := spread.Mul(swapCoin.Amount)
 		if swapFeeAmt.IsPositive() {
-			swapFee := sdk.NewCoin(swapCoin.Denom, swapFeeAmt)
+			swapFee := sdk.NewDecCoinFromDec(swapCoin.Denom, swapFeeAmt)
 			swapCoin = swapCoin.Sub(swapFee)
 		}
 	}
 
-	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, swapCoin)
-	if err2 != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+	retCoin, _ := swapCoin.TruncateDecimal()
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, retCoin)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return bz, nil
 }
 
-func queryPrevDayIssuance(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryTerraPool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetTerraPool(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetPrevDayIssuance(ctx))
+	return bz, nil
+}
+
+func queryLunaPool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLunaPool(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryBasePool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetBasePool(ctx))
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryLastUpdateHeight(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLastUpdateHeight(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

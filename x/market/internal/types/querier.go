@@ -6,9 +6,12 @@ import (
 
 // query endpoints supported by the oracle Querier
 const (
-	QuerySwap            = "swap"
-	QueryPrevDayIssuance = "lastDayIssuance"
-	QueryParameters      = "parameters"
+	QuerySwap             = "swap"
+	QueryTerraPool        = "terra_pool"
+	QueryLunaPool         = "luna_pool"
+	QueryBasePool         = "base_pool"
+	QueryLastUpdateHeight = "last_update_height"
+	QueryParameters       = "parameters"
 )
 
 // QuerySwapParams for query

@@ -50,118 +50,167 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
-// GetPrevDayIssuance returns the prev day issuance
-func (k Keeper) GetPrevDayIssuance(ctx sdk.Context) (issuance sdk.Coins) {
+// GetBasePool returns BasePool
+func (k Keeper) GetBasePool(ctx sdk.Context) (pool sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.PrevDayIssuanceKey)
+	bz := store.Get(types.BasePoolKey)
 	if bz == nil {
-		return sdk.Coins{}
+		return sdk.ZeroDec()
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &issuance)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &pool)
 	return
 }
 
-// UpdatePrevDayIssuance stores the prev day issuance
-func (k Keeper) UpdatePrevDayIssuance(ctx sdk.Context) sdk.Coins {
+// SetBasePool updates BasePool
+func (k Keeper) SetBasePool(ctx sdk.Context, pool sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	totalCoins := k.SupplyKeeper.GetSupply(ctx).GetTotal()
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(totalCoins)
-	store.Set(types.PrevDayIssuanceKey, bz)
-
-	return totalCoins
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(types.BasePoolKey, bz)
 }
 
-// ComputeLunaDelta returns the issuance change rate of Luna for the day post-swap
-func (k Keeper) ComputeLunaDelta(ctx sdk.Context, change sdk.Int) sdk.Dec {
-	curDay := ctx.BlockHeight() / core.BlocksPerDay
-	if curDay == 0 {
+// GetLunaPool returns LunaPool
+func (k Keeper) GetLunaPool(ctx sdk.Context) (pool sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LunaPoolKey)
+	if bz == nil {
 		return sdk.ZeroDec()
 	}
 
-	lastDayLunaIssuance := k.GetPrevDayIssuance(ctx).AmountOf(core.MicroLunaDenom)
-	if lastDayLunaIssuance.IsZero() {
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &pool)
+	return
+}
+
+// SetLunaPool updates LunaPool
+func (k Keeper) SetLunaPool(ctx sdk.Context, pool sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(types.LunaPoolKey, bz)
+}
+
+// GetTerraPool returns TerraPool
+func (k Keeper) GetTerraPool(ctx sdk.Context) (pool sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.TerraPoolKey)
+	if bz == nil {
 		return sdk.ZeroDec()
 	}
 
-	supply := k.SupplyKeeper.GetSupply(ctx)
-	lunaIssuance := supply.GetTotal().AmountOf(core.MicroLunaDenom)
-
-	postSwapIssunace := lunaIssuance.Add(change)
-
-	return sdk.NewDecFromInt(postSwapIssunace.Sub(lastDayLunaIssuance)).QuoInt(lastDayLunaIssuance)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &pool)
+	return
 }
 
-// ComputeLunaSwapSpread returns a spread, which is initialiy MinSwapSpread and grows linearly to MaxSwapSpread with delta
-func (k Keeper) ComputeLunaSwapSpread(ctx sdk.Context, postLunaDelta sdk.Dec) sdk.Dec {
-	if postLunaDelta.GTE(k.DailyLunaDeltaCap(ctx)) {
-		return k.MaxSwapSpread(ctx)
-	}
+// SetTerraPool updates TerraPool
+func (k Keeper) SetTerraPool(ctx sdk.Context, pool sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
 
-	// min + (p / l) (max - min); l = dailyDeltaCap, p = postDailyDelta,
-	return k.MinSwapSpread(ctx).Add(postLunaDelta.Quo(k.DailyLunaDeltaCap(ctx)).Mul(k.MaxSwapSpread(ctx).Sub(k.MinSwapSpread(ctx))))
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
+	store.Set(types.TerraPoolKey, bz)
 }
 
-// GetSwapCoin returns the amount of asked coins should be returned for a given offerCoin at the effective
-// exchange rate registered with the oracle.
-// Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
-// to trade is too small.
-// Ignores caps and spreads if isInternal = true.
-func (k Keeper) GetSwapCoin(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (retCoin sdk.Coin, spread sdk.Dec, err sdk.Error) {
-	offerRate, err := k.oracleKeeper.GetLunaPrice(ctx, offerCoin.Denom)
-	if err != nil {
-		return sdk.Coin{}, sdk.ZeroDec(), types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+// GetLastUpdateHeight returns LastUpdateHeight
+func (k Keeper) GetLastUpdateHeight(ctx sdk.Context) (height int64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LastUpdateHeightKey)
+	if bz == nil {
+		return 0
 	}
 
-	askRate, err := k.oracleKeeper.GetLunaPrice(ctx, askDenom)
-	if err != nil {
-		return sdk.Coin{}, sdk.ZeroDec(), types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
-	}
-
-	retAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(askRate).Quo(offerRate).TruncateInt()
-	if retAmount.Equal(sdk.ZeroInt()) {
-		return sdk.Coin{}, sdk.ZeroDec(), types.ErrInsufficientSwapCoins(types.DefaultCodespace, offerCoin.Amount)
-	}
-
-	// We only charge spread for NON-INTERNAL swaps involving luna; if not, just pass.
-	if isInternal || (offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom) {
-		return sdk.NewCoin(askDenom, retAmount), sdk.ZeroDec(), nil
-	}
-
-	dailyDelta := sdk.ZeroDec()
-	if offerCoin.Denom == core.MicroLunaDenom {
-		dailyDelta = k.ComputeLunaDelta(ctx, offerCoin.Amount.Neg())
-	} else if askDenom == core.MicroLunaDenom {
-		dailyDelta = k.ComputeLunaDelta(ctx, retAmount)
-	}
-
-	// delta should be positive to apply spread
-	dailyDelta = dailyDelta.Abs()
-	spread = k.ComputeLunaSwapSpread(ctx, dailyDelta)
-
-	return sdk.NewCoin(askDenom, retAmount), spread, nil
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &height)
+	return
 }
 
-// GetSwapDecCoin returns the amount of asked DecCoins should be returned for a given offerCoin at the effective
-// exchange rate registered with the oracle.
-// Different from swapcoins, SwapDecCoins does not charge a spread as its use is system internal.
-// Similar to SwapCoins, but operates over sdk.DecCoins for convenience and accuracy.
-func (k Keeper) GetSwapDecCoin(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
-	offerRate, err := k.oracleKeeper.GetLunaPrice(ctx, offerCoin.Denom)
+// SetLastUpdateHeight updates LastUpdateHeight
+func (k Keeper) SetLastUpdateHeight(ctx sdk.Context, height int64) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(height)
+	store.Set(types.LastUpdateHeightKey, bz)
+}
+
+// ReplenishPools replenishes each swap pool to base pool
+func (k Keeper) ReplenishPools(ctx sdk.Context) {
+	basePool := k.GetBasePool(ctx)
+	terraPool := k.GetTerraPool(ctx)
+	lunaPool := k.GetLunaPool(ctx)
+
+	regressionAmt := basePool.QuoInt64(core.BlocksPerDay)
+
+	// Replenish terra pool towards base pool
+	if terraPool.GT(basePool) {
+		terraPool = terraPool.Sub(regressionAmt)
+		if terraPool.LT(basePool) {
+			terraPool = basePool
+		}
+	} else if terraPool.LT(basePool) {
+		terraPool = terraPool.Add(regressionAmt)
+		if terraPool.GT(basePool) {
+			terraPool = basePool
+		}
+	}
+
+	// Replenish luna pool towards base pool
+	if lunaPool.GT(basePool) {
+		lunaPool = lunaPool.Sub(regressionAmt)
+		if lunaPool.LT(basePool) {
+			lunaPool = basePool
+		}
+	} else if lunaPool.LT(basePool) {
+		lunaPool = lunaPool.Add(regressionAmt)
+		if lunaPool.GT(basePool) {
+			lunaPool = basePool
+		}
+	}
+
+	k.SetTerraPool(ctx, terraPool)
+	k.SetLunaPool(ctx, lunaPool)
+}
+
+// UpdatePools updates base & terra & luna pool along with sdr swap rate & luna supply
+func (k Keeper) UpdatePools(ctx sdk.Context) (sdk.Dec, sdk.Error) {
+	lunaSupplyAmt := k.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
+	oldBasePool := k.GetBasePool(ctx)
+
+	// swap luna supply to terra supply
+	baseSupply, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoin(core.MicroLunaDenom, lunaSupplyAmt), core.MicroSDRDenom)
 	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+		return sdk.ZeroDec(), err
 	}
 
-	askRate, err := k.oracleKeeper.GetLunaPrice(ctx, askDenom)
-	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
+	basePool := k.DailyTerraLiquidityRatio(ctx).Mul(baseSupply.Amount)
+	k.SetBasePool(ctx, basePool)
+	k.SetLastUpdateHeight(ctx, ctx.BlockHeight())
+
+	// Initial pool update
+	if oldBasePool.IsZero() {
+		k.SetLunaPool(ctx, basePool)
+		k.SetTerraPool(ctx, basePool)
+	} else {
+		// Keep pool delta when updating
+		oldLunaPool := k.GetLunaPool(ctx)
+		oldTerraPool := k.GetTerraPool(ctx)
+
+		// Reset each pools by multifying change ratio
+		changeRatio := basePool.Quo(oldBasePool)
+		lunaPool := oldLunaPool.Mul(changeRatio)
+		terraPool := oldTerraPool.Mul(changeRatio)
+
+		k.SetLunaPool(ctx, lunaPool)
+		k.SetTerraPool(ctx, terraPool)
 	}
 
-	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
-	if retAmount.LTE(sdk.ZeroDec()) {
-		return sdk.DecCoin{}, types.ErrInsufficientSwapCoins(types.DefaultCodespace, offerCoin.Amount.TruncateInt())
-	}
+	return basePool, nil
+}
 
-	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil
+// IsMarketActive return current market activeness (check pool update was conducted or not in this interval period)
+func (k Keeper) IsMarketActive(ctx sdk.Context) bool {
+	height := ctx.BlockHeight()
+	lastUpdateHeight := k.GetLastUpdateHeight(ctx)
+	interval := k.PoolUpdateInterval(ctx)
+
+	// Ative when base pool is positive and UpdateHeight is same or bigger than previous last block
+	previousLastBlock := (height/interval)*interval - 1
+	return k.GetBasePool(ctx).IsPositive() && lastUpdateHeight >= previousLastBlock
 }

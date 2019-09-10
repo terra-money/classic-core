@@ -20,19 +20,19 @@ func (k Keeper) AfterValidatorBonded(ctx sdk.Context, _ sdk.ConsAddress, address
 	}
 }
 
-// Hooks wrapper struct for slashing keeper
+// Hooks wrapper struct for oracle keeper
 type Hooks struct {
 	k Keeper
 }
 
-var _ types.StakingHooks = Hooks{}
+var _ types.StakingHooks = Keeper{}
 
 // Return the wrapper struct
-func (k Keeper) Hooks() Hooks {
+func (k Keeper) StakingHooks() Hooks {
 	return Hooks{k}
 }
 
-// Implements sdk.ValidatorHooks
+// Implements StakingHooks
 func (h Hooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
 	h.k.AfterValidatorBonded(ctx, consAddr, valAddr)
 }

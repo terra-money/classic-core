@@ -1,6 +1,8 @@
 package market
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
@@ -9,17 +11,27 @@ import (
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) {
-	if !core.IsPeriodLastBlock(ctx, core.BlocksPerDay) {
+
+	// Replenishes each pools towards equilibrium
+	k.ReplenishPools(ctx)
+
+	// Update pools at the last block of every interval
+	// Retry update when inactive state
+	if !core.IsPeriodLastBlock(ctx, k.PoolUpdateInterval(ctx)) && k.IsMarketActive(ctx) {
 		return
 	}
 
-	// update luna issuance at last block of a day
-	updatedIssuance := k.UpdatePrevDayIssuance(ctx)
+	basePool, err := k.UpdatePools(ctx)
+
+	if err != nil {
+		// TODO - check log level
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to update BasePool: %s", err))
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventDaliyIssuanceUpdate,
-			sdk.NewAttribute(types.AttributeKeyIssuance, updatedIssuance.String()),
+			types.EventPoolUpdate,
+			sdk.NewAttribute(types.AttributeKeyBasePool, basePool.String()),
 		),
 	)
 }

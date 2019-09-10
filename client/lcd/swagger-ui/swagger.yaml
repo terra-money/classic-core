@@ -1497,9 +1497,9 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/prev_day_issuance:
+  /market/terra_pool:
     get:
-      summary: Get prev day issuance
+      summary: Get TERRA pool amount
       tags:
         - Market
       produces:
@@ -1508,9 +1508,63 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            type: number
+            format: float
+            example: "10000000.00"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/luna_pool:
+    get:
+      summary: Get LUNA pool amount
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "10000000.00"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/base_pool:
+    get:
+      summary: Get Base(equilibrium) pool amount
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "10000000.00"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/last_update_height:
+    get:
+      summary: Get last pool update height
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: integer
+            example: "1123"
         400:
           description: Bad Request
         500:
@@ -2958,4 +3012,5 @@ definitions:
       gas:
         type: number
         format: integer
-        example: 10000
+        example: "10000"
+      

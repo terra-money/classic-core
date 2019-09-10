@@ -11,19 +11,22 @@ import (
 )
 
 const (
-	DefaultCodespace     = types.DefaultCodespace
-	CodeInsufficientSwap = types.CodeInsufficientSwap
-	CodeNoEffectivePrice = types.CodeNoEffectivePrice
-	CodeRecursiveSwap    = types.CodeRecursiveSwap
-	CodeExceedsSwapLimit = types.CodeExceedsSwapLimit
-	ModuleName           = types.ModuleName
-	StoreKey             = types.StoreKey
-	RouterKey            = types.RouterKey
-	QuerierRoute         = types.QuerierRoute
-	DefaultParamspace    = types.DefaultParamspace
-	QuerySwap            = types.QuerySwap
-	QueryPrevDayIssuance = types.QueryPrevDayIssuance
-	QueryParameters      = types.QueryParameters
+	DefaultCodespace      = types.DefaultCodespace
+	CodeInsufficientSwap  = types.CodeInsufficientSwap
+	CodeNoEffectivePrice  = types.CodeNoEffectivePrice
+	CodeRecursiveSwap     = types.CodeRecursiveSwap
+	CodeInactive          = types.CodeInactive
+	ModuleName            = types.ModuleName
+	StoreKey              = types.StoreKey
+	RouterKey             = types.RouterKey
+	QuerierRoute          = types.QuerierRoute
+	DefaultParamspace     = types.DefaultParamspace
+	QuerySwap             = types.QuerySwap
+	QueryTerraPool        = types.QueryTerraPool
+	QueryLunaPool         = types.QueryLunaPool
+	QueryBasePool         = types.QueryBasePool
+	QueryLastUpdateHeight = types.QueryLastUpdateHeight
+	QueryParameters       = types.QueryParameters
 )
 
 var (
@@ -32,7 +35,7 @@ var (
 	ErrNoEffectivePrice      = types.ErrNoEffectivePrice
 	ErrInsufficientSwapCoins = types.ErrInsufficientSwapCoins
 	ErrRecursiveSwap         = types.ErrRecursiveSwap
-	ErrExceedsDailySwapLimit = types.ErrExceedsDailySwapLimit
+	ErrInactive = types.ErrInactive
 	NewGenesisState          = types.NewGenesisState
 	DefaultGenesisState      = types.DefaultGenesisState
 	ValidateGenesis          = types.ValidateGenesis
@@ -44,14 +47,19 @@ var (
 	NewQuerier               = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                      = types.ModuleCdc
-	PrevDayIssuanceKey             = types.PrevDayIssuanceKey
-	ParamStoreKeyDailyLunaDeltaCap = types.ParamStoreKeyDailyLunaDeltaCap
-	ParamStoreKeyMaxSwapSpread     = types.ParamStoreKeyMaxSwapSpread
-	ParamStoreKeyMinSwapSpread     = types.ParamStoreKeyMinSwapSpread
-	DefaultDailyLunaDeltaCap       = types.DefaultDailyLunaDeltaCap
-	DefaultMaxSwapSpread           = types.DefaultMaxSwapSpread
-	DefaultMinSwapSpread           = types.DefaultMinSwapSpread
+	ModuleCdc                             = types.ModuleCdc
+	BasePoolKey                           = types.BasePoolKey
+	LunaPoolKey                           = types.LunaPoolKey
+	TerraPoolKey                          = types.TerraPoolKey
+	LastUpdateHeightKey                   = types.LastUpdateHeightKey
+	ParamStoreKeyPoolUpdateInterval       = types.ParamStoreKeyPoolUpdateInterval
+	ParamStoreKeyDailyTerraLiquidityRatio = types.ParamStoreKeyDailyTerraLiquidityRatio
+	ParamStoreKeyMinSpread                = types.ParamStoreKeyMinSpread
+	ParmamStoreKeyTobinTax                = types.ParmamStoreKeyTobinTax
+	DefaultPoolUpdateInterval             = types.DefaultPoolUpdateInterval
+	DefaultDailyTerraLiquidityRatio       = types.DefaultDailyTerraLiquidityRatio
+	DefaultMinSpread                      = types.DefaultMinSpread
+	DefaultTobinTax                       = types.DefaultTobinTax
 )
 
 type (

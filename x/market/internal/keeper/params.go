@@ -11,21 +11,27 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// DailyLunaDeltaCap
-func (k Keeper) DailyLunaDeltaCap(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyDailyLunaDeltaCap, &res)
+// DailyTerraLiquidityRatio is the ratio of Terra's market cap which will be made available per day
+func (k Keeper) DailyTerraLiquidityRatio(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyDailyTerraLiquidityRatio, &res)
 	return
 }
 
-// MinSwapSpread
-func (k Keeper) MinSwapSpread(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMinSwapSpread, &res)
+// MinSpread is the minimum swap fee(spread)
+func (k Keeper) MinSpread(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMinSpread, &res)
 	return
 }
 
-// MaxSwapSpread
-func (k Keeper) MaxSwapSpread(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxSwapSpread, &res)
+// PoolUpdateInterval is the swap rate of base denom
+func (k Keeper) PoolUpdateInterval(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyPoolUpdateInterval, &res)
+	return
+}
+
+// TobinTax is a tax on all spot conversions of one TERRA into another TERRA
+func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParmamStoreKeyTobinTax, &res)
 	return
 }
 

@@ -41,7 +41,7 @@ func (s LazySchedule) GetRatio() sdk.Dec {
 	return s.Ratio
 }
 
-// String implements the fmt.Stringer interface
+// String implements fmt.Stringer interface
 func (s LazySchedule) String() string {
 	return fmt.Sprintf(`LazySchedule:
 	StartTime: %v,
@@ -121,7 +121,7 @@ func (vs VestingSchedule) IsValid() bool {
 	return sumRatio.Equal(sdk.OneDec())
 }
 
-// String implements the fmt.Stringer interface
+// String implements fmt.Stringer interface
 func (vs VestingSchedule) String() string {
 	return fmt.Sprintf(`VestingSchedule:
 	Denom: %v,
@@ -233,6 +233,7 @@ func (lgva BaseLazyGradedVestingAccount) GetEndTime() int64 {
 	return 0
 }
 
+// String implements fmt.Stringer interface
 func (lgva BaseLazyGradedVestingAccount) String() string {
 	var pubkey string
 
