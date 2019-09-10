@@ -22,11 +22,11 @@ sim-terra-fast:
 
 sim-terra-import-export: runsim
 	@echo "Running Terra import/export simulation. This may take several minutes..."
-	$(GOPATH)/bin/runsim $(SIMAPP) 25 5 TestAppImportExport
+	$(GOPATH)/bin/runsim -SimAppPkg $(SIMAPP) 25 5 TestAppImportExport
 
 sim-terra-simulation-after-import: runsim
 	@echo "Running Terra simulation-after-import. This may take several minutes..."
-	$(GOPATH)/bin/runsim $(SIMAPP) 25 5 TestAppSimulationAfterImport
+	$(GOPATH)/bin/runsim -SimAppPkg $(SIMAPP) 25 5 TestAppSimulationAfterImport
 
 sim-terra-custom-genesis-multi-seed: runsim
 	@echo "Running multi-seed custom genesis simulation..."
@@ -35,7 +35,7 @@ sim-terra-custom-genesis-multi-seed: runsim
 
 sim-terra-multi-seed: runsim
 	@echo "Running multi-seed Terra simulation. This may take awhile!"
-	$(GOPATH)/bin/runsim $(SIMAPP) 400 5 TestFullAppSimulation
+	$(GOPATH)/bin/runsim -SimAppPkg $(SIMAPP) 400 5 TestFullAppSimulation
 
 sim-benchmark-invariants:
 	@echo "Running simulation invariant benchmarks..."
