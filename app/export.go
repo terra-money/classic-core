@@ -14,7 +14,7 @@ import (
 	"github.com/terra-project/core/x/staking"
 )
 
-// ExportAppStateAndValidators export the state of terra for a genesis file
+// ExportAppStateAndValidators exports the state of terra for a genesis file
 func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
 ) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
@@ -34,7 +34,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 	return appState, validators, nil
 }
 
-// prepForZeroHeightGenesis prepare for fresh start at zero height
+// prepForZeroHeightGenesis prepares for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //      in favour of export at a block height
 func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {

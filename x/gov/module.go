@@ -1,4 +1,4 @@
-package crisis
+package gov
 
 import (
 	"encoding/json"
@@ -12,8 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/gov/client"
 
 	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/gov/internal/types"
 )
 
 var (
@@ -22,62 +24,71 @@ var (
 )
 
 // app module basics object
-type AppModuleBasic struct{}
+type AppModuleBasic struct {
+	CosmosAppModuleBasic
+}
+
+// NewAppModuleBasic creates a new AppModuleBasic object
+func NewAppModuleBasic(proposalHandlers ...client.ProposalHandler) AppModuleBasic {
+	return AppModuleBasic{
+		CosmosAppModuleBasic: NewCosmosAppModuleBasic(proposalHandlers...),
+	}
+}
 
 var _ module.AppModuleBasic = AppModuleBasic{}
 
 // module name
-func (AppModuleBasic) Name() string {
-	return CosmosAppModuleBasic{}.Name()
+func (am AppModuleBasic) Name() string {
+	return am.CosmosAppModuleBasic.Name()
 }
 
 // register module codec
-func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
+func (am AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 	*CosmosModuleCdc = *ModuleCdc // nolint
 }
 
 // default genesis state
-func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	// customize to set default genesis state constant fee denom to uluna
+func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
+	// customize to set default genesis state deposit denom to uluna
 	defaultGenesisState := DefaultGenesisState()
-	defaultGenesisState.ConstantFee.Denom = core.MicroLunaDenom
+	defaultGenesisState.DepositParams.MinDeposit[0].Denom = core.MicroLunaDenom
 
 	return ModuleCdc.MustMarshalJSON(defaultGenesisState)
 }
 
 // module validate genesis
-func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
-	return CosmosAppModuleBasic{}.ValidateGenesis(bz)
+func (am AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
+	return am.CosmosAppModuleBasic.ValidateGenesis(bz)
 }
 
 // register rest routes
-func (AppModuleBasic) RegisterRESTRoutes(cliCtx context.CLIContext, route *mux.Router) {
-	CosmosAppModuleBasic{}.RegisterRESTRoutes(cliCtx, route)
+func (am AppModuleBasic) RegisterRESTRoutes(cliCtx context.CLIContext, route *mux.Router) {
+	am.CosmosAppModuleBasic.RegisterRESTRoutes(cliCtx, route)
 }
 
 // get the root tx command of this module
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return CosmosAppModuleBasic{}.GetTxCmd(cdc)
+func (am AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	return am.CosmosAppModuleBasic.GetTxCmd(cdc)
 }
 
 // get the root query command of this module
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return CosmosAppModuleBasic{}.GetQueryCmd(cdc)
+func (am AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+	return am.CosmosAppModuleBasic.GetQueryCmd(cdc)
 }
 
 //___________________________
-// app module for bank
+// app module for gov
 type AppModule struct {
 	AppModuleBasic
 	cosmosAppModule CosmosAppModule
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper *Keeper) AppModule {
+func NewAppModule(keeper Keeper, supplyKeeper types.SupplyKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic:  AppModuleBasic{},
-		cosmosAppModule: NewCosmosAppModule(keeper),
+		cosmosAppModule: NewCosmosAppModule(keeper, supplyKeeper),
 	}
 }
 

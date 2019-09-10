@@ -20,7 +20,7 @@ func GetTxFeesEstimateCommand(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "estimate-fee [file]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Estimate the required fee (stability + gas) and gas amount",
+		Short: "Estimate required fee (stability + gas) and gas amount",
 		Long: strings.TrimSpace(`
 Estimate fees for the given stdTx
 
@@ -59,6 +59,7 @@ $ terracli tx estimate-fee [file] --gas-adjustment 1.4 --gas-prices 0.015uluna
 
 	cmd.Flags().Float64(client.FlagGasAdjustment, client.DefaultGasAdjustment, "adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored ")
 	cmd.Flags().String(client.FlagGasPrices, "", "Gas prices to determine the transaction fee (e.g. 10uluna)")
+	// cmd.MarkFlagRequired(client.FlagGasAdjustment)
 
 	return cmd
 }

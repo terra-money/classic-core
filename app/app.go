@@ -15,6 +15,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
+	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+
+	treasuryclient "github.com/terra-project/core/x/treasury/client"
 
 	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/bank"
@@ -22,6 +26,7 @@ import (
 	distr "github.com/terra-project/core/x/distribution"
 	"github.com/terra-project/core/x/genaccounts"
 	"github.com/terra-project/core/x/genutil"
+	"github.com/terra-project/core/x/gov"
 	"github.com/terra-project/core/x/market"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/params"
@@ -50,6 +55,7 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		distr.AppModuleBasic{},
+		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distrclient.ProposalHandler, treasuryclient.TaxRateUpdateProposalHandler, treasuryclient.RewardWeightUpdateProposalHandler),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
@@ -68,6 +74,7 @@ var (
 		treasury.ModuleName:       {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		gov.ModuleName:            {supply.Burner},
 	}
 )
 
@@ -100,6 +107,7 @@ type TerraApp struct {
 	slashingKeeper slashing.Keeper
 	oracleKeeper   oracle.Keeper
 	distrKeeper    distr.Keeper
+	govKeeper      gov.Keeper
 	crisisKeeper   crisis.Keeper
 	paramsKeeper   params.Keeper
 	marketKeeper   market.Keeper
@@ -122,7 +130,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
-		params.StoreKey, oracle.StoreKey,
+		gov.StoreKey, params.StoreKey, oracle.StoreKey,
 		market.StoreKey, treasury.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
@@ -142,6 +150,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
 	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	oracleSubspace := app.paramsKeeper.Subspace(oracle.DefaultParamspace)
 	marketSubspace := app.paramsKeeper.Subspace(market.DefaultParamspace)
@@ -166,6 +175,15 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName, treasury.DefaultCodespace)
 
+	// register the proposal types
+	govRouter := gov.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
+		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
+		AddRoute(treasury.RouterKey, treasury.NewTreasuryPolicyUpdateHandler(app.treasuryKeeper))
+	app.govKeeper = gov.NewKeeper(app.cdc, keys[gov.StoreKey], app.paramsKeeper, govSubspace,
+		app.supplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter)
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
@@ -179,6 +197,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		crisis.NewAppModule(&app.crisisKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
+		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		market.NewAppModule(app.marketKeeper),
@@ -192,13 +211,13 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
 
 	// After slashing actions, update prev day issuance of market module
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(genaccounts.ModuleName, distr.ModuleName,
 		staking.ModuleName, auth.ModuleName, bank.ModuleName, slashing.ModuleName,
-		oracle.ModuleName, market.ModuleName, treasury.ModuleName,
+		oracle.ModuleName, market.ModuleName, treasury.ModuleName, gov.ModuleName,
 		supply.ModuleName, crisis.ModuleName, genutil.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
