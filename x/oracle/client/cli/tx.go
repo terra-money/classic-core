@@ -7,33 +7,42 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/oracle/internal/types"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-const (
-	flagSalt  = "salt"
-	flagPrice = "price"
-	flagHash  = "Hash"
+// GetTxCmd returns the transaction commands for this module
+func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	oracleTxCmd := &cobra.Command{
+		Use:                        "oracle",
+		Short:                      "Oracle transaction subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
 
-	flagDenom     = "denom"
-	flagValidator = "validator"
-	flagFeeder    = "feeder"
+	oracleTxCmd.AddCommand(client.PostCommands(
+		GetCmdPricePrevote(cdc),
+		GetCmdPriceVote(cdc),
+		GetCmdDelegateFeederPermission(cdc),
+	)...)
 
-	flagOffline = "offline"
-)
+	return oracleTxCmd
+}
 
 // GetCmdPricePrevote will create a pricePrevote tx and sign it with the given key.
 func GetCmdPricePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prevote",
+		Use:   "prevote [salt] [price] [validator]",
+		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle prevote for the price of Luna",
 		Long: strings.TrimSpace(`
 Submit an oracle prevote for the price of Luna denominated in the input denom.
@@ -41,85 +50,57 @@ The purpose of prevote is to hide vote price with hash which is formatted
 as hex string in SHA256("salt:price:denom:voter")
 
 # Prevote
-$ terracli tx oracle prevote --denom "ukrw" --hash "72f374291b0428453bf481ec9d4b0b2440299b62" --from mykey
-$ terracli tx oracle prevote --denom "ukrw" --price "8888" --salt "4321" --from mykey
+$ terracli tx oracle prevote 1234 8888.0ukrw
 
-where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
+where "ukrw" is the denominating currency, and "8888.0" is the price of micro Luna in micro KRW from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1...
+$ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().
-				WithCodec(cdc).
-				WithAccountDecoder(cdc)
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			offline := viper.GetBool(flagOffline)
-
-			if !offline {
-				if err := cliCtx.EnsureAccountExists(); err != nil {
-					return err
-				}
+			salt := args[0]
+			price, err := sdk.ParseDecCoin(args[1])
+			if err != nil {
+				return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as DecCoin", price)
 			}
 
 			// Get from address
 			voter := cliCtx.GetFromAddress()
-			denom := viper.GetString(flagDenom)
-			priceStr := viper.GetString(flagPrice)
-			hash := viper.GetString(flagHash)
-			salt := viper.GetString(flagSalt)
-
-			if len(hash) == 0 && !(len(priceStr) > 0 && len(salt) > 0) {
-				return fmt.Errorf("hash or (price, salt) should be given")
-			}
+			denom := price.Denom
+			amount := price.Amount
 
 			// By default the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
 
-			// Override validator if flag is set
-			valStr := viper.GetString(flagValidator)
-			if len(valStr) != 0 {
-				parsedVal, err := sdk.ValAddressFromBech32(valStr)
+			// Override validator if validator is given
+			if len(args) == 3 {
+				parsedVal, err := sdk.ValAddressFromBech32(args[2])
 				if err != nil {
 					return errors.Wrap(err, "validator address is invalid")
 				}
 				validator = parsedVal
 			}
 
-			if len(hash) == 0 {
-				price, err := sdk.NewDecFromStr(priceStr)
-				if err != nil {
-					return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", priceStr)
-				}
-
-				hashBytes, err2 := oracle.VoteHash(salt, price, denom, validator)
-				if err2 != nil {
-					return err2
-				}
-
-				hash = hex.EncodeToString(hashBytes)
-			}
-
-			msg := oracle.NewMsgPricePrevote(hash, denom, voter, validator)
-			err := msg.ValidateBasic()
+			hashBytes, err := types.VoteHash(salt, amount, denom, validator)
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
+			hash := hex.EncodeToString(hashBytes)
+
+			msg := types.NewMsgPricePrevote(hash, denom, voter, validator)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-
-	cmd.Flags().String(flagDenom, "", "denominating currency")
-	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
-	cmd.Flags().String(flagHash, "", "hex string; hash of next vote; empty == skip prevote")
-	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absence of hash")
-	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
-
-	cmd.MarkFlagRequired(flagDenom)
 
 	return cmd
 }
@@ -127,85 +108,58 @@ $ terracli tx oracle prevote --denom "ukrw" --price "8890" --from mykey --valida
 // GetCmdPriceVote will create a priceVote tx and sign it with the given key.
 func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote",
+		Use:   "vote [salt] [price] [validator]",
+		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle vote for the price of Luna",
 		Long: strings.TrimSpace(`
 Submit a vote for the price of Luna denominated in the input denom. Companion to a prevote submitted in the previous vote period. 
 
-$ terracli tx oracle vote --denom "ukrw" --price "8890" --salt "1234" --from mykey
+$ terracli tx oracle vote 1234 8890.0ukrw
 
-where "ukrw" is the denominating currency, and "8890" is the price of micro Luna in micro KRW from the voter's point of view.
+where "ukrw" is the denominating currency, and "8890.0" is the price of micro Luna in micro KRW from the voter's point of view.
 
 "salt" should match the salt used to generate the SHA256 hex in the associated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator terravaloper1....
+$ terracli tx oracle vote 1234 8890.0ukrw terravaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().
-				WithCodec(cdc).
-				WithAccountDecoder(cdc)
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			offline := viper.GetBool(flagOffline)
-
-			if !offline {
-				if err := cliCtx.EnsureAccountExists(); err != nil {
-					return err
-				}
+			salt := args[0]
+			price, err := sdk.ParseDecCoin(args[1])
+			if err != nil {
+				return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as DecCoin", price)
 			}
 
 			// Get from address
 			voter := cliCtx.GetFromAddress()
-			denom := viper.GetString(flagDenom)
-			priceStr := viper.GetString(flagPrice)
-			salt := viper.GetString(flagSalt)
+			denom := price.Denom
+			amount := price.Amount
 
 			// By default the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
 
-			// Override validator if flag is set
-			valStr := viper.GetString(flagValidator)
-			if len(valStr) != 0 {
-				parsedVal, err := sdk.ValAddressFromBech32(valStr)
+			// Override validator if validator is given
+			if len(args) == 3 {
+				parsedVal, err := sdk.ValAddressFromBech32(args[2])
 				if err != nil {
 					return errors.Wrap(err, "validator address is invalid")
 				}
 				validator = parsedVal
 			}
 
-			// Parse the price to Dec
-			var price sdk.Dec
-			if len(priceStr) == 0 {
-				price = sdk.ZeroDec()
-			} else {
-				var err sdk.Error
-				price, err = sdk.NewDecFromStr(priceStr)
-				if err != nil {
-					return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as float", priceStr)
-				}
-			}
-
-			msg := oracle.NewMsgPriceVote(price, salt, denom, voter, validator)
-			err := msg.ValidateBasic()
+			msg := types.NewMsgPriceVote(amount, salt, denom, voter, validator)
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-
-	cmd.Flags().String(flagDenom, "", "denominating currency")
-	cmd.Flags().String(flagValidator, "", "validator on behalf of which to vote (for delegated feeders)")
-	cmd.Flags().String(flagPrice, "", "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absence of hash")
-	cmd.Flags().String(flagSalt, "", "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash")
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection the node can still build and sign tx")
-
-	cmd.MarkFlagRequired(flagDenom)
-	cmd.MarkFlagRequired(flagPrice)
-	cmd.MarkFlagRequired(flagSalt)
 
 	return cmd
 }
@@ -213,31 +167,22 @@ $ terracli tx oracle vote --denom "ukrw" --price "8890" --from mykey --validator
 // GetCmdDelegateFeederPermission will create a feeder permission delegation tx and sign it with the given key.
 func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-feeder",
+		Use:   "set-feeder [feeder]",
+		Args:  cobra.ExactArgs(1),
 		Short: "Delegate the permission to vote for the oracle to an address",
 		Long: strings.TrimSpace(`
 Delegate the permission to vote for the oracle to an address.
 
 Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terracli tx oracle set-feeder --feeder terra1... --from mykey
+$ terracli tx oracle set-feeder terra1...
 
 where "terra1..." is the address you want to delegate your voting rights to.
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().
-				WithCodec(cdc).
-				WithAccountDecoder(cdc)
-
-			offline := viper.GetBool(flagOffline)
-
-			if !offline {
-				if err := cliCtx.EnsureAccountExists(); err != nil {
-					return err
-				}
-			}
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// Get from address
 			voter := cliCtx.GetFromAddress()
@@ -245,27 +190,21 @@ where "terra1..." is the address you want to delegate your voting rights to.
 			// The address the right is being delegated from
 			validator := sdk.ValAddress(voter)
 
-			feederStr := viper.GetString(flagFeeder)
-
+			feederStr := args[0]
 			feeder, err := sdk.AccAddressFromBech32(feederStr)
 			if err != nil {
 				return err
 			}
 
-			msg := oracle.NewMsgDelegateFeederPermission(validator, feeder)
+			msg := types.NewMsgDelegateFeederPermission(validator, feeder)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg}, offline)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-
-	cmd.Flags().Bool(flagOffline, false, " Offline mode; Without full node connection it can build and sign tx")
-	cmd.Flags().String(flagFeeder, "", "account the voting right will be delegated to")
-
-	cmd.MarkFlagRequired(flagFeeder)
 
 	return cmd
 }

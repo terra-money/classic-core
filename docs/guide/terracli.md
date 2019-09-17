@@ -543,7 +543,7 @@ terracli keys show p1p2p3 --show-multisig
 The first step to create a multisig transaction is to initiate it on behalf of the multisig address created above:
 
 ```bash
-terracli tx send terra1570v2fq3twt0f0x02vhxpuzc9jc4yl30q2qned 10stake \
+terracli tx send terra1570v2fq3twt0f0x02vhxpuzc9jc4yl30q2qned 10uluna \
   --from=<multisig_address> \
   --generate-only > unsignedTx.json
 ```
