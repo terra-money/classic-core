@@ -8,18 +8,18 @@ import (
 )
 
 // HandleWrongVotes handles a wrong votes, must be called once per validator per voting period.
-func (k Keeper) HandleBallotAttendees(ctx sdk.Context, ballotAttendees map[string]bool) {
+func (k Keeper) HandleBallotSlashing(ctx sdk.Context, ballotAttendees map[string]bool) {
 	for addr, valid := range ballotAttendees {
 		valAddr, err := sdk.ValAddressFromBech32(addr)
 		if err != nil {
 			panic(err) // NOTE never occurs
 		}
 
-		k.handleBallotAttendee(ctx, valAddr, valid)
+		k.handleBallotSlashing(ctx, valAddr, valid)
 	}
 }
 
-func (k Keeper) handleBallotAttendee(ctx sdk.Context, valAddr sdk.ValAddress, valid bool) {
+func (k Keeper) handleBallotSlashing(ctx sdk.Context, valAddr sdk.ValAddress, valid bool) {
 	logger := k.Logger(ctx)
 	height := ctx.BlockHeight()
 

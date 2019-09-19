@@ -13,7 +13,7 @@ import (
 )
 
 // Test a reward giving mechanism
-func TestRewardPrevBallotWinners(t *testing.T) {
+func TestRewardBallotWinners(t *testing.T) {
 	// initial setup
 	input := CreateTestInput(t)
 	addr, val := ValAddrs[0], PubKeys[0]
@@ -44,7 +44,6 @@ func TestRewardPrevBallotWinners(t *testing.T) {
 	claim := types.NewClaim(10, addr)
 	claim2 := types.NewClaim(20, addr1)
 	claimPool := types.ClaimPool{claim, claim2}
-	input.OracleKeeper.AddClaimPool(input.Ctx, claimPool)
 
 	// Prepare reward pool
 	givingAmt := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 3000))
@@ -53,7 +52,7 @@ func TestRewardPrevBallotWinners(t *testing.T) {
 	require.NoError(t, err)
 	input.SupplyKeeper.SetModuleAccount(ctx, acc)
 
-	input.OracleKeeper.RewardPrevBallotWinners(ctx)
+	input.OracleKeeper.RewardBallotWinners(ctx, claimPool)
 	outstandingRewards := input.DistrKeeper.GetValidatorOutstandingRewards(ctx, addr)
 	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).Mul(input.OracleKeeper.RewardFraction(ctx)).QuoInt64(3),
 		outstandingRewards.AmountOf(core.MicroLunaDenom))
