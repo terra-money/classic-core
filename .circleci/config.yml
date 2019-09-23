@@ -128,7 +128,7 @@ jobs:
       - run:
           name: Test Terra import/export simulation
           command: |
-            /tmp/workspace/bin/runsim -j 4 github.com/terra-project/core/app 50 5 TestTerraImportExport
+            /tmp/workspace/bin/runsim -Jobs 4 -SimAppPkg github.com/terra-project/core/app 50 5 TestTerraImportExport
 
   test_sim_terra_simulation_after_import:
     <<: *linux_defaults
@@ -143,7 +143,7 @@ jobs:
       - run:
           name: Test Terra import/export simulation
           command: |
-            /tmp/workspace/bin/runsim -j 4 github.com/terra-project/core/app 50 5 TestAppSimulationAfterImport
+            /tmp/workspace/bin/runsim -Jobs 4 -SimAppPkg github.com/terra-project/core/app 50 5 TestAppSimulationAfterImport
 
   test_sim_terra_multi_seed_long:
     <<: *linux_defaults
@@ -158,7 +158,7 @@ jobs:
       - run:
           name: Test multi-seed Terra simulation long
           command: |
-            /tmp/workspace/bin/runsim -j 4 github.com/terra-project/core/app 500 50 TestFullAppSimulation
+            /tmp/workspace/bin/runsim -Jobs 4 -SimAppPkg github.com/terra-project/core/app 500 50 TestFullAppSimulation
 
   test_sim_terra_multi_seed:
     <<: *linux_defaults
@@ -173,7 +173,7 @@ jobs:
       - run:
           name: Test multi-seed Terra simulation short
           command: |
-            /tmp/workspace/bin/runsim -j 4 github.com/terra-project/core/app 50 10 TestFullAppSimulation
+            /tmp/workspace/bin/runsim -Jobs 4 -SimAppPkg github.com/terra-project/core/app 50 10 TestFullAppSimulation
 
   test_cover:
     <<: *linux_defaults
