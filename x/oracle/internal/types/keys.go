@@ -40,7 +40,6 @@ var (
 	VoteKey               = []byte{0x02} // prefix for each key to a vote
 	PriceKey              = []byte{0x03} // prefix for each key to a price
 	FeederDelegationKey   = []byte{0x04} // prefix for each key to a feeder delegation
-	ClaimKey              = []byte{0x05} // prefix for each key to claim weight of oracle voter
 	MissedVoteBitArrayKey = []byte{0x06} // Prefix for missed vote bit array
 	VotingInfoKey         = []byte{0x07} // Prefix for voting info
 )
@@ -63,11 +62,6 @@ func GetPriceKey(denom string) []byte {
 // GetFeederDelegationKey - stored by *Validator* address
 func GetFeederDelegationKey(v sdk.ValAddress) []byte {
 	return append(FeederDelegationKey, v.Bytes()...)
-}
-
-// GetClaimKey - stored by *Validator* address
-func GetClaimKey(v sdk.ValAddress) []byte {
-	return append(ClaimKey, v.Bytes()...)
 }
 
 // GetMissedVoteBitArrayPrefixKey - stored by *Validator* address

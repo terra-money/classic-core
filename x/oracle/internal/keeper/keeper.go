@@ -252,58 +252,10 @@ func (k Keeper) SetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress, delega
 //-----------------------------------
 // Reward pool logic
 
-// getRewardPool retrieves the reward pool from the store
+// getRewardPool retrieves the balance of the oracle module account
 func (k Keeper) getRewardPool(ctx sdk.Context) sdk.Coins {
 	acc := k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 	return acc.GetCoins()
-}
-
-//-----------------------------------
-// Claim pool logic
-
-// Iterate over oracle reward claims in the store
-func (k Keeper) IterateClaimPool(ctx sdk.Context, handler func(recipient sdk.ValAddress, weight int64) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.ClaimKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		recipientAddress := iter.Key()[1:]
-		recipient := sdk.ValAddress(recipientAddress)
-
-		var weight int64
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &weight)
-		if handler(recipient, weight) {
-			break
-		}
-	}
-}
-
-// AddClaimPool adds a claim to the the claim pool in the store
-func (k Keeper) AddClaimPool(ctx sdk.Context, pool types.ClaimPool) {
-	store := ctx.KVStore(k.storeKey)
-
-	for _, claim := range pool {
-		storeKeyClaim := types.GetClaimKey(claim.Recipient)
-		b := store.Get(storeKeyClaim)
-		weight := claim.Weight
-		if b != nil {
-			var prevWeight int64
-			k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevWeight)
-
-			weight = weight + prevWeight
-		}
-		b = k.cdc.MustMarshalBinaryLengthPrefixed(weight)
-		store.Set(storeKeyClaim, b)
-	}
-}
-
-// clearClaimPool clears the claim pool from the store
-func (k Keeper) clearClaimPool(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	k.IterateClaimPool(ctx, func(recipient sdk.ValAddress, _ int64) (stop bool) {
-		store.Delete(types.GetClaimKey(recipient))
-		return false
-	})
 }
 
 //-----------------------------------

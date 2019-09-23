@@ -65,7 +65,6 @@ var (
 	GetVoteKey                     = types.GetVoteKey
 	GetPriceKey                    = types.GetPriceKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey
-	GetClaimKey                    = types.GetClaimKey
 	GetMissedVoteBitArrayPrefixKey = types.GetMissedVoteBitArrayPrefixKey
 	GetMissedVoteBitArrayKey       = types.GetMissedVoteBitArrayKey
 	GetVotingInfoKey               = types.GetVotingInfoKey
@@ -93,7 +92,6 @@ var (
 	VoteKey                             = types.VoteKey
 	PriceKey                            = types.PriceKey
 	FeederDelegationKey                 = types.FeederDelegationKey
-	ClaimKey                            = types.ClaimKey
 	MissedVoteBitArrayKey               = types.MissedVoteBitArrayKey
 	VotingInfoKey                       = types.VotingInfoKey
 	ParamStoreKeyVotePeriod             = types.ParamStoreKeyVotePeriod

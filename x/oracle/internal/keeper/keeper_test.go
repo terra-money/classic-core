@@ -194,33 +194,6 @@ func TestRewardPool(t *testing.T) {
 	require.Equal(t, fees, KFees)
 }
 
-func TestClaimPool(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Test addClaimPool
-	claim := types.NewClaim(10, ValAddrs[0])
-	claim2 := types.NewClaim(20, ValAddrs[1])
-	claimPool := types.ClaimPool{claim, claim2}
-	input.OracleKeeper.AddClaimPool(input.Ctx, claimPool)
-
-	claim = types.NewClaim(15, ValAddrs[0])
-	claim2 = types.NewClaim(30, ValAddrs[2])
-	claimPool = types.ClaimPool{claim, claim2}
-	input.OracleKeeper.AddClaimPool(input.Ctx, claimPool)
-
-	// Test IterateClaimPool
-	input.OracleKeeper.IterateClaimPool(input.Ctx, func(recipient sdk.ValAddress, weight int64) (stop bool) {
-		if recipient.Equals(ValAddrs[0]) {
-			require.Equal(t, int64(25), weight)
-		} else if recipient.Equals(ValAddrs[1]) {
-			require.Equal(t, int64(20), weight)
-		} else if recipient.Equals(ValAddrs[2]) {
-			require.Equal(t, int64(30), weight)
-		}
-		return false
-	})
-}
-
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)
 

@@ -624,11 +624,13 @@ func TestTerraCLISendGenerateSignAndBroadcast(t *testing.T) {
 	unsignedTxFile := WriteToNewTempFile(t, stdOut)
 	defer os.Remove(unsignedTxFile.Name())
 
-	// TODO - check estimate fee
-	// success, stdOut, stderr = f.TxEstimateFee(unsignedTxFile.Name(), "--gas-adjustment=1.4", "--gas-prices=0.015uluna")
-	// require.True(t, success)
-	// require.Empty(t, stderr)
-	// estimateResult := unmarshalEstimateFeeResult(t, stdOut)
+	// check estimate fee
+	success, stdOut, stderr = f.TxEstimateFee(unsignedTxFile.Name(), "--gas-adjustment=1.4", "--gas-prices=0.015uluna")
+	require.True(t, success)
+	require.Empty(t, stderr)
+	estimateResult := unmarshalEstimateFeeResult(t, stdOut)
+	require.Equal(t, msg.Fee.Gas, estimateResult.Gas)
+	require.True(t, len(estimateResult.Fees) == 1)
 
 	// Test sign --validate-signatures
 	success, stdOut, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--validate-signatures")

@@ -270,21 +270,14 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	require.Equal(t, 0, countClaimPool(input.Ctx, input.OracleKeeper))
+	_, err := input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroSDRDenom)
+	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(params.VotePeriod - 1)
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	require.Equal(t, len(keeper.Addrs), countClaimPool(input.Ctx, input.OracleKeeper))
-}
-
-func countClaimPool(ctx sdk.Context, OracleKeeper Keeper) (claimCount int) {
-	OracleKeeper.IterateClaimPool(ctx, func(recipient sdk.ValAddress, weight int64) (stop bool) {
-		claimCount++
-		return false
-	})
-
-	return claimCount
+	_, err = input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroSDRDenom)
+	require.NoError(t, err)
 }
 
 func TestOracleRewardDistribution(t *testing.T) {
@@ -313,11 +306,67 @@ func TestOracleRewardDistribution(t *testing.T) {
 	input.SupplyKeeper.SetModuleAccount(input.Ctx.WithBlockHeight(1), moduleAcc)
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
-	EndBlocker(input.Ctx.WithBlockHeight(2), input.OracleKeeper)
 
 	expectedRewardAmt := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(50)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
+}
+
+func TestOracleMultiRewardDistribution(t *testing.T) {
+	input, h := setup(t)
+
+	// Account 1, SDR
+	salt := "1"
+	bz, _ := VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg := NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	h(input.Ctx.WithBlockHeight(1), voteMsg)
+
+	// Account 1, KRW
+	salt = "2"
+	bz, _ = VoteHash(salt, randomPrice, core.MicroKRWDenom, keeper.ValAddrs[0])
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	h(input.Ctx.WithBlockHeight(1), voteMsg)
+
+	// Account 2, SDR
+	salt = "3"
+	bz, _ = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
+	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
+	h(input.Ctx.WithBlockHeight(1), voteMsg)
+
+	// Account 3, KRW
+	salt = "3"
+	bz, _ = VoteHash(salt, randomPrice, core.MicroKRWDenom, keeper.ValAddrs[2])
+	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroKRWDenom, keeper.Addrs[2], keeper.ValAddrs[2])
+	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroKRWDenom, keeper.Addrs[2], keeper.ValAddrs[2])
+	h(input.Ctx.WithBlockHeight(1), voteMsg)
+
+	moduleAcc := input.SupplyKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), ModuleName)
+	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, stakingAmt.MulRaw(100))))
+	require.NoError(t, err)
+
+	input.SupplyKeeper.SetModuleAccount(input.Ctx.WithBlockHeight(1), moduleAcc)
+
+	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
+
+	expectedRewardAmt := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(50)).TruncateInt()
+	expectedRewardAmt2 := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(25)).TruncateInt()
+	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
+	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
+	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
+	require.Equal(t, expectedRewardAmt2, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
+	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
+	require.Equal(t, expectedRewardAmt2, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 }

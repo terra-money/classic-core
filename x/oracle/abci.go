@@ -18,9 +18,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	// Reward previous ballot winners
-	k.RewardPrevBallotWinners(ctx)
-
 	actives := k.GetActiveDenoms(ctx)
 	votes := k.CollectVotes(ctx)
 
@@ -37,6 +34,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	})
 
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
+	claimMap := make(map[string]types.Claim)
 	for denom, ballot := range votes {
 		if ballotIsPassing(ctx, ballot, k) {
 
@@ -46,14 +44,22 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			for _, loser := range ballotLosers {
 				key := loser.String()
 				if _, exists := ballotAttendees[key]; exists {
-					ballotAttendees[key] = false // invalid vote
+					ballotAttendees[key] = false // inproper vote
 				}
 			}
 
-			// Add claim winners to the store
-			k.AddClaimPool(ctx, ballotWinners)
+			// Collect claims of ballot winners
+			for _, winner := range ballotWinners {
+				key := winner.Recipient.String()
+				claim, exists := claimMap[key]
+				if exists {
+					claim.Weight += winner.Weight
+					claimMap[key] = claim
+				} else {
+					claimMap[key] = winner
+				}
+			}
 
-			// TODO - update tax-cap
 			// Set price to the store
 			k.SetLunaPrice(ctx, denom, mod)
 			ctx.EventManager().EmitEvent(
@@ -65,8 +71,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		}
 	}
 
+	// Convert map to array
+	var claimPool types.ClaimPool
+	for _, claim := range claimMap {
+		claimPool = append(claimPool, claim)
+	}
+
+	// Distribute rewards to ballot winners
+	k.RewardBallotWinners(ctx, claimPool)
+
 	// Update & check slash condition for the ballot losers
-	k.HandleBallotAttendees(ctx, ballotAttendees)
+	k.HandleBallotSlashing(ctx, ballotAttendees)
 
 	// Clear all prevotes
 	k.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
