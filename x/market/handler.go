@@ -35,6 +35,12 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 		return swapErr.Result()
 	}
 
+	// Update pool delta
+	deltaUpdateErr := k.ApplySwapToPool(ctx, ms.OfferCoin, swapCoin)
+	if deltaUpdateErr != nil {
+		return deltaUpdateErr.Result()
+	}
+
 	// Send offer coins to module account
 	offerCoins := sdk.NewCoins(ms.OfferCoin)
 	err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ms.Trader, ModuleName, offerCoins)
@@ -70,12 +76,6 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	sendErr := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, ms.Trader, swapCoins)
 	if sendErr != nil {
 		return sendErr.Result()
-	}
-
-	// Update pool delta
-	deltaUpdateErr := k.ApplySwapToPool(ctx, ms.OfferCoin, retCoin)
-	if deltaUpdateErr != nil {
-		return deltaUpdateErr.Result()
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{

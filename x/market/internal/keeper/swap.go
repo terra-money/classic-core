@@ -10,7 +10,7 @@ import (
 // ApplySwapToPool updates each pool with offerCoin and askCoin taken from swap operation,
 // OfferPool = OfferPool + offerAmt (Fills the swap pool with offerAmt)
 // AskPool = AskPool - askAmt       (Uses askAmt from the swap pool)
-func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin, askCoin sdk.Coin) sdk.Error {
+func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk.DecCoin) sdk.Error {
 	// No delta update in case TERRA to TERRA swap
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
 		return nil
@@ -24,7 +24,7 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin, askCoin sdk.Coin) sd
 		return err
 	}
 
-	askBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(askCoin), core.MicroSDRDenom)
+	askBaseCoin, err := k.ComputeInternalSwap(ctx, askCoin, core.MicroSDRDenom)
 	if err != nil {
 		return err
 	}
@@ -115,14 +115,10 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	// contant_product_spread can be negative
 	askDecAmount := askDecCoin.Amount
 	retDecAmount := retDecCoin.Amount
-	spread = retDecAmount.Sub(askDecAmount).Quo(retDecAmount).Add(minSpread)
+	spread = retDecAmount.Sub(askDecAmount).Quo(retDecAmount)
 
 	if spread.LT(minSpread) {
 		spread = minSpread
-	}
-
-	if spread.GT(sdk.OneDec()) {
-		spread = sdk.OneDec()
 	}
 
 	return

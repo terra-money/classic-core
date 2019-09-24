@@ -17,7 +17,7 @@ func TestApplySwapToPool(t *testing.T) {
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000))
-	askCoin := sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
+	askCoin := sdk.NewDecCoin(core.MicroSDRDenom, sdk.NewInt(1700))
 
 	oldLunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
 	oldSDRPool := input.MarketKeeper.GetTerraPool(input.Ctx)
@@ -46,7 +46,7 @@ func TestComputeSwap(t *testing.T) {
 		retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 
 		require.NoError(t, err)
-		require.True(t, spread.GT(input.MarketKeeper.MinSpread(input.Ctx)))
+		require.True(t, spread.GTE(input.MarketKeeper.MinSpread(input.Ctx)))
 		require.Equal(t, sdk.NewDecFromInt(offerCoin.Amount).Quo(lunaPriceInSDR), retCoin.Amount)
 	}
 
@@ -73,18 +73,4 @@ func TestComputeInternalSwap(t *testing.T) {
 	offerCoin := sdk.NewDecCoin(core.MicroSDRDenom, lunaPriceInSDR.QuoInt64(2).TruncateInt())
 	_, err := input.MarketKeeper.ComputeInternalSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 	require.Error(t, err)
-}
-
-func TestComputeHugeSwap(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Set Oracle Price
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
-	input.MarketKeeper.UpdatePools(input.Ctx)
-
-	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(100000000000000))
-	_, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroSDRDenom)
-	require.NoError(t, err)
-	require.Equal(t, sdk.OneDec(), spread)
 }
