@@ -7,7 +7,7 @@ import (
 // query endpoints supported by the oracle Querier
 const (
 	QuerySwap            = "swap"
-	QueryPrevDayIssuance = "lastDayIssuance"
+	QueryPrevDayIssuance = "prevDayIssuance"
 	QueryParameters      = "parameters"
 )
 

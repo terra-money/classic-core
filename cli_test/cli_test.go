@@ -29,6 +29,7 @@ import (
 
 	distr "github.com/terra-project/core/x/distribution"
 	"github.com/terra-project/core/x/genaccounts"
+	"github.com/terra-project/core/x/gov"
 )
 
 func init() {
@@ -477,6 +478,360 @@ func TestTerraCLIQuerySupply(t *testing.T) {
 	require.Equal(t, totalCoins, totalSupply)
 	require.True(sdk.IntEq(t, totalCoins.AmountOf(fooDenom), totalSupplyOf))
 
+	f.Cleanup()
+}
+
+func TestTerraCLISubmitProposal(t *testing.T) {
+	t.Parallel()
+	f := InitFixtures(t)
+
+	// start terrad server
+	proc := f.TDStart()
+	defer proc.Stop(false)
+
+	f.QueryGovParamDeposit()
+	f.QueryGovParamVoting()
+	f.QueryGovParamTallying()
+
+	fooAddr := f.KeyAddress(keyFoo)
+
+	fooAcc := f.QueryAccount(fooAddr)
+	startTokens := sdk.TokensFromConsensusPower(50)
+	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(core.MicroLunaDenom))
+
+	proposalsQuery := f.QueryGovProposals()
+	require.Empty(t, proposalsQuery)
+
+	// Test submit generate only for submit proposal
+	proposalTokens := sdk.TokensFromConsensusPower(5)
+	success, stdOut, stderr := f.TxGovSubmitProposal(
+		fooAddr.String(), "Text", "Test", "test", sdk.NewCoin(denom, proposalTokens), "--generate-only", "-y")
+	require.True(t, success)
+	require.Empty(t, stderr)
+	msg := unmarshalStdTx(t, stdOut)
+	require.NotZero(t, msg.Fee.Gas)
+	require.Equal(t, len(msg.Msgs), 1)
+	require.Equal(t, 0, len(msg.GetSignatures()))
+
+	// Test --dry-run
+	success, _, _ = f.TxGovSubmitProposal(keyFoo, "Text", "Test", "test", sdk.NewCoin(denom, proposalTokens), "--dry-run")
+	require.True(t, success)
+
+	// Create the proposal
+	f.TxGovSubmitProposal(keyFoo, "Text", "Test", "test", sdk.NewCoin(denom, proposalTokens), "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// Ensure transaction tags can be queried
+	searchResult := f.QueryTxs(1, 50, "message.action:submit_proposal", fmt.Sprintf("message.sender:%s", fooAddr))
+	require.Len(t, searchResult.Txs, 1)
+
+	// Ensure deposit was deducted
+	fooAcc = f.QueryAccount(fooAddr)
+	require.Equal(t, startTokens.Sub(proposalTokens), fooAcc.GetCoins().AmountOf(denom))
+
+	// Ensure propsal is directly queryable
+	proposal1 := f.QueryGovProposal(1)
+	require.Equal(t, uint64(1), proposal1.ProposalID)
+	require.Equal(t, gov.StatusDepositPeriod, proposal1.Status)
+
+	// Ensure query proposals returns properly
+	proposalsQuery = f.QueryGovProposals()
+	require.Equal(t, uint64(1), proposalsQuery[0].ProposalID)
+
+	// Query the deposits on the proposal
+	deposit := f.QueryGovDeposit(1, fooAddr)
+	require.Equal(t, proposalTokens, deposit.Amount.AmountOf(denom))
+
+	// Test deposit generate only
+	depositTokens := sdk.TokensFromConsensusPower(10)
+	success, stdOut, stderr = f.TxGovDeposit(1, fooAddr.String(), sdk.NewCoin(denom, depositTokens), "--generate-only")
+	require.True(t, success)
+	require.Empty(t, stderr)
+	msg = unmarshalStdTx(t, stdOut)
+	require.NotZero(t, msg.Fee.Gas)
+	require.Equal(t, len(msg.Msgs), 1)
+	require.Equal(t, 0, len(msg.GetSignatures()))
+
+	// Run the deposit transaction
+	f.TxGovDeposit(1, keyFoo, sdk.NewCoin(denom, depositTokens), "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// test query deposit
+	deposits := f.QueryGovDeposits(1)
+	require.Len(t, deposits, 1)
+	require.Equal(t, proposalTokens.Add(depositTokens), deposits[0].Amount.AmountOf(denom))
+
+	// Ensure querying the deposit returns the proper amount
+	deposit = f.QueryGovDeposit(1, fooAddr)
+	require.Equal(t, proposalTokens.Add(depositTokens), deposit.Amount.AmountOf(denom))
+
+	// Ensure tags are set on the transaction
+	searchResult = f.QueryTxs(1, 50, "message.action:deposit", fmt.Sprintf("message.sender:%s", fooAddr))
+	require.Len(t, searchResult.Txs, 1)
+
+	// Ensure account has expected amount of funds
+	fooAcc = f.QueryAccount(fooAddr)
+	require.Equal(t, startTokens.Sub(proposalTokens.Add(depositTokens)), fooAcc.GetCoins().AmountOf(denom))
+
+	// Fetch the proposal and ensure it is now in the voting period
+	proposal1 = f.QueryGovProposal(1)
+	require.Equal(t, uint64(1), proposal1.ProposalID)
+	require.Equal(t, gov.StatusVotingPeriod, proposal1.Status)
+
+	// Test vote generate only
+	success, stdOut, stderr = f.TxGovVote(1, gov.OptionYes, fooAddr.String(), "--generate-only")
+	require.True(t, success)
+	require.Empty(t, stderr)
+	msg = unmarshalStdTx(t, stdOut)
+	require.NotZero(t, msg.Fee.Gas)
+	require.Equal(t, len(msg.Msgs), 1)
+	require.Equal(t, 0, len(msg.GetSignatures()))
+
+	// Vote on the proposal
+	f.TxGovVote(1, gov.OptionYes, keyFoo, "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// Query the vote
+	vote := f.QueryGovVote(1, fooAddr)
+	require.Equal(t, uint64(1), vote.ProposalID)
+	require.Equal(t, gov.OptionYes, vote.Option)
+
+	// Query the votes
+	votes := f.QueryGovVotes(1)
+	require.Len(t, votes, 1)
+	require.Equal(t, uint64(1), votes[0].ProposalID)
+	require.Equal(t, gov.OptionYes, votes[0].Option)
+
+	// Ensure tags are applied to voting transaction properly
+	searchResult = f.QueryTxs(1, 50, "message.action:vote", fmt.Sprintf("message.sender:%s", fooAddr))
+	require.Len(t, searchResult.Txs, 1)
+
+	// Ensure no proposals in deposit period
+	proposalsQuery = f.QueryGovProposals("--status=DepositPeriod")
+	require.Empty(t, proposalsQuery)
+
+	// Ensure the proposal returns as in the voting period
+	proposalsQuery = f.QueryGovProposals("--status=VotingPeriod")
+	require.Equal(t, uint64(1), proposalsQuery[0].ProposalID)
+
+	// submit a second test proposal
+	f.TxGovSubmitProposal(keyFoo, "Text", "Apples", "test", sdk.NewCoin(denom, proposalTokens), "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// Test limit on proposals query
+	proposalsQuery = f.QueryGovProposals("--limit=1")
+	require.Equal(t, uint64(2), proposalsQuery[0].ProposalID)
+
+	f.Cleanup()
+}
+
+func TestTerraCLISubmitParamChangeProposal(t *testing.T) {
+	t.Parallel()
+	f := InitFixtures(t)
+
+	proc := f.TDStart()
+	defer proc.Stop(false)
+
+	fooAddr := f.KeyAddress(keyFoo)
+	fooAcc := f.QueryAccount(fooAddr)
+	startTokens := sdk.TokensFromConsensusPower(50)
+	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(core.MicroLunaDenom))
+
+	// write proposal to file
+	proposalTokens := sdk.TokensFromConsensusPower(5)
+	proposal := fmt.Sprintf(`{
+  "title": "Param Change",
+  "description": "Update max validators",
+  "changes": [
+    {
+      "subspace": "staking",
+      "key": "MaxValidators",
+      "value": 105
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "uluna",
+      "amount": "%s"
+    }
+  ]
+}
+`, proposalTokens.String())
+
+	proposalFile := WriteToNewTempFile(t, proposal)
+
+	// create the param change proposal
+	f.TxGovSubmitParamChangeProposal(keyFoo, proposalFile.Name(), sdk.NewCoin(denom, proposalTokens), "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// ensure transaction tags can be queried
+	txsPage := f.QueryTxs(1, 50, "message.action:submit_proposal", fmt.Sprintf("message.sender:%s", fooAddr))
+	require.Len(t, txsPage.Txs, 1)
+
+	// ensure deposit was deducted
+	fooAcc = f.QueryAccount(fooAddr)
+	require.Equal(t, startTokens.Sub(proposalTokens).String(), fooAcc.GetCoins().AmountOf(core.MicroLunaDenom).String())
+
+	// ensure proposal is directly queryable
+	proposal1 := f.QueryGovProposal(1)
+	require.Equal(t, uint64(1), proposal1.ProposalID)
+	require.Equal(t, gov.StatusDepositPeriod, proposal1.Status)
+
+	// ensure correct query proposals result
+	proposalsQuery := f.QueryGovProposals()
+	require.Equal(t, uint64(1), proposalsQuery[0].ProposalID)
+
+	// ensure the correct deposit amount on the proposal
+	deposit := f.QueryGovDeposit(1, fooAddr)
+	require.Equal(t, proposalTokens, deposit.Amount.AmountOf(denom))
+
+	// Cleanup testing directories
+	f.Cleanup()
+}
+
+// func TestTerraCLISubmitBudgetGrantProposal(t *testing.T) {
+// 	t.Parallel()
+// 	f := InitFixtures(t)
+
+// 	proc := f.TDStart()
+// 	defer proc.Stop(false)
+
+// 	fooAddr := f.KeyAddress(keyFoo)
+// 	fooAcc := f.QueryAccount(fooAddr)
+// 	startTokens := sdk.TokensFromConsensusPower(50)
+// 	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(core.MicroLunaDenom))
+
+// 	tests.WaitForNextNBlocksTM(3, f.Port)
+
+// 	// write proposal to file
+// 	proposalTokens := sdk.TokensFromConsensusPower(5)
+// 	proposal := fmt.Sprintf(`{
+//   "title": "Budget Grant Proposal",
+//   "description": "Grant coins to contributor",
+//   "executor": "%s",
+//   "grant_amount": [
+//     {
+//       "denom": "%s",
+//       "amount": "1"
+//     }
+//   ],
+//   "deposit": [
+//     {
+//       "denom": "%s",
+//       "amount": "%s"
+//     }
+//   ]
+// }
+// `, fooAddr, core.MicroLunaDenom, core.MicroLunaDenom, proposalTokens.String())
+// 	proposalFile := WriteToNewTempFile(t, proposal)
+
+// 	// create the param change proposal
+// 	f.TxGovSubmitBudgetGrantProposal(keyFoo, proposalFile.Name(), sdk.NewCoin(denom, proposalTokens), "-y")
+// 	tests.WaitForNextNBlocksTM(1, f.Port)
+
+// 	// ensure transaction tags can be queried
+// 	txsPage := f.QueryTxs(1, 50, "message.action:submit_proposal", fmt.Sprintf("message.sender:%s", fooAddr))
+// 	require.Len(t, txsPage.Txs, 1)
+
+// 	// ensure deposit was deducted
+// 	fooAcc = f.QueryAccount(fooAddr)
+// 	require.Equal(t, startTokens.Sub(proposalTokens).String(), fooAcc.GetCoins().AmountOf(core.MicroLunaDenom).String())
+
+// 	// ensure proposal is directly queryable
+// 	proposal1 := f.QueryGovProposal(1)
+// 	require.Equal(t, uint64(1), proposal1.ProposalID)
+// 	require.Equal(t, gov.StatusDepositPeriod, proposal1.Status)
+
+// 	// ensure correct query proposals result
+// 	proposalsQuery := f.QueryGovProposals()
+// 	require.Equal(t, uint64(1), proposalsQuery[0].ProposalID)
+
+// 	// ensure the correct deposit amount on the proposal
+// 	deposit := f.QueryGovDeposit(1, fooAddr)
+// 	require.Equal(t, proposalTokens, deposit.Amount.AmountOf(denom))
+
+// 	// Cleanup testing directories
+// 	f.Cleanup()
+// }
+
+func TestTerraCLISubmitCommunityPoolSpendProposal(t *testing.T) {
+	t.Parallel()
+	f := InitFixtures(t)
+
+	// create some inflation
+	cdc := app.MakeCodec()
+	genesisState := f.GenesisState()
+	var distrData distr.GenesisState
+	cdc.UnmarshalJSON(genesisState[distr.ModuleName], &distrData)
+	distrData.FeePool.CommunityPool = sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroLunaDenom, sdk.NewDec(1))}
+	distrDataBz, err := cdc.MarshalJSON(distrData)
+	require.NoError(t, err)
+	genesisState[distr.ModuleName] = distrDataBz
+
+	genFile := filepath.Join(f.TerradHome, "config", "genesis.json")
+	genDoc, err := tmtypes.GenesisDocFromFile(genFile)
+	require.NoError(t, err)
+	genDoc.AppState, err = cdc.MarshalJSON(genesisState)
+	require.NoError(t, genDoc.SaveAs(genFile))
+
+	proc := f.TDStart()
+	defer proc.Stop(false)
+
+	fooAddr := f.KeyAddress(keyFoo)
+	fooAcc := f.QueryAccount(fooAddr)
+	startTokens := sdk.TokensFromConsensusPower(50)
+	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(core.MicroLunaDenom))
+
+	tests.WaitForNextNBlocksTM(3, f.Port)
+
+	// write proposal to file
+	proposalTokens := sdk.TokensFromConsensusPower(5)
+	proposal := fmt.Sprintf(`{
+  "title": "Community Pool Spend",
+  "description": "Spend from community pool",
+  "recipient": "%s",
+  "amount": [
+    {
+      "denom": "%s",
+      "amount": "1"
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "%s",
+      "amount": "%s"
+    }
+  ]
+}
+`, fooAddr, core.MicroLunaDenom, core.MicroLunaDenom, proposalTokens.String())
+	proposalFile := WriteToNewTempFile(t, proposal)
+
+	// create the param change proposal
+	f.TxGovSubmitCommunityPoolSpendProposal(keyFoo, proposalFile.Name(), sdk.NewCoin(denom, proposalTokens), "-y")
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	// ensure transaction tags can be queried
+	txsPage := f.QueryTxs(1, 50, "message.action:submit_proposal", fmt.Sprintf("message.sender:%s", fooAddr))
+	require.Len(t, txsPage.Txs, 1)
+
+	// ensure deposit was deducted
+	fooAcc = f.QueryAccount(fooAddr)
+	require.Equal(t, startTokens.Sub(proposalTokens).String(), fooAcc.GetCoins().AmountOf(core.MicroLunaDenom).String())
+
+	// ensure proposal is directly queryable
+	proposal1 := f.QueryGovProposal(1)
+	require.Equal(t, uint64(1), proposal1.ProposalID)
+	require.Equal(t, gov.StatusDepositPeriod, proposal1.Status)
+
+	// ensure correct query proposals result
+	proposalsQuery := f.QueryGovProposals()
+	require.Equal(t, uint64(1), proposalsQuery[0].ProposalID)
+
+	// ensure the correct deposit amount on the proposal
+	deposit := f.QueryGovDeposit(1, fooAddr)
+	require.Equal(t, proposalTokens, deposit.Amount.AmountOf(denom))
+
+	// Cleanup testing directories
 	f.Cleanup()
 }
 

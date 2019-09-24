@@ -80,8 +80,8 @@ func (k Keeper) ComputeLunaDelta(ctx sdk.Context, change sdk.Int) sdk.Dec {
 		return sdk.ZeroDec()
 	}
 
-	lastDayLunaIssuance := k.GetPrevDayIssuance(ctx).AmountOf(core.MicroLunaDenom)
-	if lastDayLunaIssuance.IsZero() {
+	prevDayLunaIssuance := k.GetPrevDayIssuance(ctx).AmountOf(core.MicroLunaDenom)
+	if prevDayLunaIssuance.IsZero() {
 		return sdk.ZeroDec()
 	}
 
@@ -90,7 +90,7 @@ func (k Keeper) ComputeLunaDelta(ctx sdk.Context, change sdk.Int) sdk.Dec {
 
 	postSwapIssunace := lunaIssuance.Add(change)
 
-	return sdk.NewDecFromInt(postSwapIssunace.Sub(lastDayLunaIssuance)).QuoInt(lastDayLunaIssuance)
+	return sdk.NewDecFromInt(postSwapIssunace.Sub(prevDayLunaIssuance)).QuoInt(prevDayLunaIssuance)
 }
 
 // ComputeLunaSwapSpread returns a spread, which is initialiy MinSwapSpread and grows linearly to MaxSwapSpread with delta

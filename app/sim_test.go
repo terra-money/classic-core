@@ -26,7 +26,9 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrsim "github.com/cosmos/cosmos-sdk/x/distribution/simulation"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	govsim "github.com/cosmos/cosmos-sdk/x/gov/simulation"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsim "github.com/cosmos/cosmos-sdk/x/params/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingsim "github.com/cosmos/cosmos-sdk/x/slashing/simulation"
@@ -41,6 +43,7 @@ import (
 	"github.com/terra-project/core/x/oracle"
 	oraclesim "github.com/terra-project/core/x/oracle/simulation"
 	"github.com/terra-project/core/x/treasury"
+	treasurysim "github.com/terra-project/core/x/treasury/simulation"
 )
 
 func init() {
@@ -251,6 +254,72 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 				return v
 			}(nil),
 			distrsim.SimulateMsgWithdrawValidatorCommission(app.accountKeeper, app.distrKeeper),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightSubmitVotingSlashingTextProposal, &v, nil,
+					func(_ *rand.Rand) {
+						v = 5
+					})
+				return v
+			}(nil),
+			govsim.SimulateSubmittingVotingAndSlashingForProposal(app.govKeeper, govsim.SimulateTextProposalContent),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightSubmitVotingSlashingCommunitySpendProposal, &v, nil,
+					func(_ *rand.Rand) {
+						v = 5
+					})
+				return v
+			}(nil),
+			govsim.SimulateSubmittingVotingAndSlashingForProposal(app.govKeeper, distrsim.SimulateCommunityPoolSpendProposalContent(app.distrKeeper)),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightSubmitVotingSlashingParamChangeProposal, &v, nil,
+					func(_ *rand.Rand) {
+						v = 5
+					})
+				return v
+			}(nil),
+			govsim.SimulateSubmittingVotingAndSlashingForProposal(app.govKeeper, paramsim.SimulateParamChangeProposalContent),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightSubmitVotingSlashingTaxRateUpdateProposal, &v, nil,
+					func(_ *rand.Rand) {
+						v = 5
+					})
+				return v
+			}(nil),
+			govsim.SimulateSubmittingVotingAndSlashingForProposal(app.govKeeper, treasurysim.SimulateTaxRateUpdateProposalContent(app.treasuryKeeper)),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightSubmitVotingSlashingRewardWeightUpdateProposal, &v, nil,
+					func(_ *rand.Rand) {
+						v = 5
+					})
+				return v
+			}(nil),
+			govsim.SimulateSubmittingVotingAndSlashingForProposal(app.govKeeper, treasurysim.SimulateRewardWeightUpdateProposalContent(app.treasuryKeeper)),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightMsgDeposit, &v, nil,
+					func(_ *rand.Rand) {
+						v = 100
+					})
+				return v
+			}(nil),
+			govsim.SimulateMsgDeposit(app.govKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {

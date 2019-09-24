@@ -11,21 +11,23 @@ import (
 )
 
 const (
-	DefaultCodespace         = types.DefaultCodespace
-	CodeInvalidEpoch         = types.CodeInvalidEpoch
-	ModuleName               = types.ModuleName
-	StoreKey                 = types.StoreKey
-	RouterKey                = types.RouterKey
-	QuerierRoute             = types.QuerierRoute
-	DefaultParamspace        = types.DefaultParamspace
-	QueryCurrentEpoch        = types.QueryCurrentEpoch
-	QueryTaxRate             = types.QueryTaxRate
-	QueryTaxCap              = types.QueryTaxCap
-	QueryRewardWeight        = types.QueryRewardWeight
-	QuerySeigniorageProceeds = types.QuerySeigniorageProceeds
-	QueryTaxProceeds         = types.QueryTaxProceeds
-	QueryParameters          = types.QueryParameters
-	QueryHistoricalIssuance  = types.QueryHistoricalIssuance
+	DefaultCodespace               = types.DefaultCodespace
+	CodeInvalidEpoch               = types.CodeInvalidEpoch
+	ModuleName                     = types.ModuleName
+	StoreKey                       = types.StoreKey
+	RouterKey                      = types.RouterKey
+	QuerierRoute                   = types.QuerierRoute
+	DefaultParamspace              = types.DefaultParamspace
+	ProposalTypeTaxRateUpdate      = types.ProposalTypeTaxRateUpdate
+	ProposalTypeRewardWeightUpdate = types.ProposalTypeRewardWeightUpdate
+	QueryCurrentEpoch              = types.QueryCurrentEpoch
+	QueryTaxRate                   = types.QueryTaxRate
+	QueryTaxCap                    = types.QueryTaxCap
+	QueryRewardWeight              = types.QueryRewardWeight
+	QuerySeigniorageProceeds       = types.QuerySeigniorageProceeds
+	QueryTaxProceeds               = types.QueryTaxProceeds
+	QueryParameters                = types.QueryParameters
+	QueryHistoricalIssuance        = types.QueryHistoricalIssuance
 )
 
 var (
@@ -41,6 +43,8 @@ var (
 	GetTaxProceedsKey                = types.GetTaxProceedsKey
 	GetHistoricalIssuanceKey         = types.GetHistoricalIssuanceKey
 	DefaultParams                    = types.DefaultParams
+	NewTaxRateUpdateProposal         = types.NewTaxRateUpdateProposal
+	NewRewardWeightUpdateProposal    = types.NewRewardWeightUpdateProposal
 	NewQueryTaxCapParams             = types.NewQueryTaxCapParams
 	NewQueryTaxRateParams            = types.NewQueryTaxRateParams
 	NewQueryRewardWeightParams       = types.NewQueryRewardWeightParams
@@ -93,6 +97,8 @@ type (
 	DistributionKeeper             = types.DistributionKeeper
 	GenesisState                   = types.GenesisState
 	Params                         = types.Params
+	TaxRateUpdateProposal          = types.TaxRateUpdateProposal
+	RewardWeightUpdateProposal     = types.RewardWeightUpdateProposal
 	QueryTaxCapParams              = types.QueryTaxCapParams
 	QueryTaxRateParams             = types.QueryTaxRateParams
 	QueryRewardWeightParams        = types.QueryRewardWeightParams
