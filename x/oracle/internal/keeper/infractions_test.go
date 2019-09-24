@@ -21,7 +21,7 @@ func TestHandleNewValidator(t *testing.T) {
 	// 1000 first blocks not a validator
 	ctx := input.Ctx.WithBlockHeight(input.OracleKeeper.VotesWindow(input.Ctx) + 1)
 
-	// Validator created
+	// Create a validator
 	got := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.True(t, got.IsOK())
 	staking.EndBlocker(ctx, input.StakingKeeper)
@@ -32,14 +32,14 @@ func TestHandleNewValidator(t *testing.T) {
 	)
 	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr).GetBondedTokens())
 
-	// Now a validator, for two blocks
+	// The validator miss one vote
 	ballotAttendees := make(map[string]bool)
 	ballotAttendees[addr.String()] = true
-	input.OracleKeeper.HandleBallotAttendees(ctx, ballotAttendees)
+	input.OracleKeeper.HandleBallotSlashing(ctx, ballotAttendees)
 
 	ctx = ctx.WithBlockHeight(input.OracleKeeper.VotesWindow(ctx) + 2)
 	ballotAttendees[addr.String()] = false
-	input.OracleKeeper.HandleBallotAttendees(ctx, ballotAttendees)
+	input.OracleKeeper.HandleBallotSlashing(ctx, ballotAttendees)
 
 	info, found := input.OracleKeeper.getVotingInfo(ctx, addr)
 	require.True(t, found)
@@ -47,7 +47,7 @@ func TestHandleNewValidator(t *testing.T) {
 	require.Equal(t, int64(2), info.IndexOffset)
 	require.Equal(t, int64(1), info.MissedVotesCounter)
 
-	// validator should be bonded still, should not have been slashed
+	// The validator should be bonded still, should not have been slashed
 	validator := input.StakingKeeper.Validator(ctx, addr)
 	require.Equal(t, sdk.Bonded, validator.GetStatus())
 	bondPool := input.StakingKeeper.GetBondedPool(ctx)
@@ -75,7 +75,7 @@ func TestSlash(t *testing.T) {
 
 		ballotAttendees := make(map[string]bool)
 		ballotAttendees[addr.String()] = true
-		input.OracleKeeper.HandleBallotAttendees(ctx, ballotAttendees)
+		input.OracleKeeper.HandleBallotSlashing(ctx, ballotAttendees)
 	}
 
 	// shouldn't be slashed
@@ -89,7 +89,7 @@ func TestSlash(t *testing.T) {
 
 		ballotAttendees := make(map[string]bool)
 		ballotAttendees[addr.String()] = false
-		input.OracleKeeper.HandleBallotAttendees(ctx, ballotAttendees)
+		input.OracleKeeper.HandleBallotSlashing(ctx, ballotAttendees)
 	}
 
 	// shouldn't be slashed
@@ -101,9 +101,10 @@ func TestSlash(t *testing.T) {
 
 		ballotAttendees := make(map[string]bool)
 		ballotAttendees[addr.String()] = false
-		input.OracleKeeper.HandleBallotAttendees(ctx, ballotAttendees)
+		input.OracleKeeper.HandleBallotSlashing(ctx, ballotAttendees)
 	}
 
+	// must be slashed
 	validator = sk.Validator(ctx, addr)
 	slashFraction := input.OracleKeeper.SlashFraction(ctx)
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(expTokens).TruncateInt(), validator.GetBondedTokens())

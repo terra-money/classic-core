@@ -44,7 +44,7 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 
 // default genesis state
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	// customize to set default genesis state bond denom to luna
+	// customize to set default genesis state bond denom to uluna
 	defaultGenesisState := DefaultGenesisState()
 	defaultGenesisState.Params.BondDenom = core.MicroLunaDenom
 

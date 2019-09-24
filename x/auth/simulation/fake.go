@@ -27,7 +27,7 @@ func SimulateDeductFee(ak auth.AccountKeeper, supplyKeeper types.SupplyKeeper) s
 		// NOTE - terra does not have Mint module, so feeCollector account will not exist here
 		// feeCollector := ak.GetAccount(ctx, supplyKeeper.GetModuleAddress(types.FeeCollectorName))
 		// if feeCollector == nil {
-		// 	panic(fmt.Errorf("fee collector account hasn't been set"))
+		//      panic(fmt.Errorf("fee collector account hasn't been set"))
 		// }
 
 		if len(initCoins) == 0 {

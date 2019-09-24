@@ -15,6 +15,8 @@ tags:
     description: Create and broadcast transactions
   - name: Staking
     description: Stake module APIs
+  - name: Governance
+    description: Governance module APIs
   - name: Slashing
     description: Slashing module APIs
   - name: Distribution
@@ -1116,6 +1118,611 @@ paths:
                 type: string
         500:
           description: Internal Server Error
+  /gov/proposals:
+    post:
+      summary: Submit a proposal
+      description: Send transaction to submit a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - description: valid value of `"proposal_type"` can be `"text"`, `"parameter_change"`, `"software_upgrade"`
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+              description:
+                type: string
+              proposal_type:
+                type: string
+                example: "text"
+              proposer:
+                $ref: "#/definitions/Address"
+              initial_deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+      responses:
+        200:
+          description: Tx was succesfully generated
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Invalid proposal body
+        500:
+          description: Internal Server Error
+    get:
+      summary: Query proposals
+      description: Query proposals information with parameters
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - in: query
+          name: voter
+          description: voter address
+          required: false
+          type: string
+        - in: query
+          name: depositor
+          description: depositor address
+          required: false
+          type: string
+        - in: query
+          name: status
+          description: proposal status, valid values can be `"deposit_period"`, `"voting_period"`, `"passed"`, `"rejected"`
+          required: false
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/TextProposal"
+        400:
+          description: Invalid query parameters
+        500:
+          description: Internal Server Error
+  /gov/proposals/param_change:
+    post:
+      summary: Generate a parameter change proposal transaction
+      description: Generate a parameter change proposal transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - description: The parameter change proposal body that contains all parameter changes
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+                x-example: "Param Change"
+              description:
+                type: string
+                x-example: "Update max validators"
+              proposer:
+                $ref: "#/definitions/Address"
+              deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              changes:
+                type: array
+                items:
+                  $ref: "#/definitions/ParamChange"
+      responses:
+        200:
+          description: The transaction was succesfully generated
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Invalid proposal body
+        500:
+          description: Internal Server Error
+  /gov/proposals/community_pool_spend:
+    post:
+      summary: Grant community pool coins to contributor
+      description: Generate a community pool spend transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - description: The community pool spend proposal body that contains receipient and reward info
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+                x-example: "Param Change"
+              description:
+                type: string
+                x-example: "Update max validators"
+              proposer:
+                $ref: "#/definitions/Address"
+              deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              recipient:
+                type: array
+                items:
+                  $ref: "#/definitions/Address"
+              amount:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+      responses:
+        200:
+          description: The transaction was succesfully generated
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Invalid proposal body
+        500:
+          description: Internal Server Error
+  /gov/proposals/tax_rate_update:
+    post:
+      summary: Tax Rate update proposal
+      description: Generate a tax rate update transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - description: The tax rate update body that contains new tax rate info
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+                x-example: "Param Change"
+              description:
+                type: string
+                x-example: "Update max validators"
+              proposer:
+                $ref: "#/definitions/Address"
+              deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              tax_rate:
+                type: number
+                format: float
+                example: "0.12"
+      responses:
+        200:
+          description: The transaction was succesfully generated
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Invalid proposal body
+        500:
+          description: Internal Server Error
+  /gov/proposals/reward_weight_update:
+    post:
+      summary: Reward Weight update proposal
+      description: Generate a reward weight update transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - description: The reward weight update body that contains new reward weight info
+          name: post_proposal_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              title:
+                type: string
+                x-example: "Param Change"
+              description:
+                type: string
+                x-example: "Update max validators"
+              proposer:
+                $ref: "#/definitions/Address"
+              deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              reward_weight:
+                type: number
+                format: float
+                example: "0.12"
+      responses:
+        200:
+          description: The transaction was succesfully generated
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Invalid proposal body
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}:
+    get:
+      summary: Query a proposal
+      description: Query a proposal by id
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/TextProposal"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/proposer:
+    get:
+      summary: Query proposer
+      description: Query for the proposer for a proposal
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Proposer"
+        400:
+          description: Invalid proposal ID
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/deposits:
+    get:
+      summary: Query deposits
+      description: Query deposits by proposalId
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Deposit"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+    post:
+      summary: Deposit tokens to a proposal
+      description: Send transaction to deposit tokens to a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+        - description: ""
+          name: post_deposit_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              depositor:
+                $ref: "#/definitions/Address"
+              amount:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Invalid proposal id or deposit body
+        401:
+          description: Key password is wrong
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/deposits/{depositor}:
+    get:
+      summary: Query deposit
+      description: Query deposit by proposalId and depositor address
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+        - type: string
+          description: Bech32 depositor address
+          name: depositor
+          required: true
+          in: path
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Deposit"
+        400:
+          description: Invalid proposal id or depositor address
+        404:
+          description: Found no deposit
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/votes:
+    get:
+      summary: Query voters
+      description: Query voters information by proposalId
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Vote"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+    post:
+      summary: Vote a proposal
+      description: Send transaction to vote a proposal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+        - description: valid value of `"option"` field can be `"yes"`, `"no"`, `"no_with_veto"` and `"abstain"`
+          name: post_vote_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              voter:
+                $ref: "#/definitions/Address"
+              option:
+                type: string
+                example: "yes"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/BroadcastTxCommitResult"
+        400:
+          description: Invalid proposal id or vote body
+        401:
+          description: Key password is wrong
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/votes/{voter}:
+    get:
+      summary: Query vote
+      description: Query vote information by proposal Id and voter address
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+        - type: string
+          description: Bech32 voter address
+          name: voter
+          required: true
+          in: path
+          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Vote"
+        400:
+          description: Invalid proposal id or voter address
+        404:
+          description: Found no vote
+        500:
+          description: Internal Server Error
+  /gov/proposals/{proposalId}/tally:
+    get:
+      summary: Get a proposal's tally result at the current time
+      description: Gets a proposal's tally result at the current time. If the proposal is pending deposits (i.e status 'DepositPeriod') it returns an empty tally result.
+      produces:
+        - application/json
+      tags:
+        - Governance
+      parameters:
+        - type: string
+          description: proposal id
+          name: proposalId
+          required: true
+          in: path
+          x-example: "2"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/TallyResult"
+        400:
+          description: Invalid proposal id
+        500:
+          description: Internal Server Error
+  /gov/parameters/deposit:
+    get:
+      summary: Query governance deposit parameters
+      description: Query governance deposit parameters. The max_deposit_period units are in nanoseconds.
+      produces:
+        - application/json
+      tags:
+        - Governance
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              min_deposit:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+              max_deposit_period:
+                type: string
+                example: "86400000000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no deposit parameters
+        500:
+          description: Internal Server Error
+  /gov/parameters/tallying:
+    get:
+      summary: Query governance tally parameters
+      description: Query governance tally parameters
+      produces:
+        - application/json
+      tags:
+        - Governance
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              threshold:
+                type: string
+                example: "0.5000000000"
+              veto:
+                type: string
+                example: "0.3340000000"
+              governance_penalty:
+                type: string
+                example: "0.0100000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no tally parameters
+        500:
+          description: Internal Server Error
+  /gov/parameters/voting:
+    get:
+      summary: Query governance voting parameters
+      description: Query governance voting parameters. The voting_period units are in nanoseconds.
+      produces:
+        - application/json
+      tags:
+        - Governance
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              voting_period:
+                type: string
+                example: "86400000000000"
+        400:
+          description: <other_path> is not a valid query request path
+        404:
+          description: Found no voting parameters
+        500:
+          description: Internal Server Error
   /distribution/delegators/{delegatorAddr}/rewards:
     parameters:
       - in: path
@@ -2174,7 +2781,7 @@ definitions:
     properties:
       denom:
         type: string
-        example: uluna
+        example: stake
       amount:
         type: string
         example: "50.000"

@@ -52,7 +52,7 @@ The current state of the Terra Alliance (businesses gearing to adopt TerraX for 
 
 Community channels actively being managed are here:
 - [Website](https://terra.money/)
-- [Discord](https://discord.gg/vutpqa)
+- [Discord](https://discord.gg/Gutqybc)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
