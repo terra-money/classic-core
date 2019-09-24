@@ -134,7 +134,6 @@ func (k Keeper) SetLastUpdateHeight(ctx sdk.Context, height int64) {
 func (k Keeper) ReplenishPools(ctx sdk.Context) {
 	basePool := k.GetBasePool(ctx)
 	terraPool := k.GetTerraPool(ctx)
-	lunaPool := k.GetLunaPool(ctx)
 
 	regressionAmt := basePool.QuoInt64(core.BlocksPerDay)
 
@@ -151,18 +150,8 @@ func (k Keeper) ReplenishPools(ctx sdk.Context) {
 		}
 	}
 
-	// Replenish luna pool towards base pool
-	if lunaPool.GT(basePool) {
-		lunaPool = lunaPool.Sub(regressionAmt)
-		if lunaPool.LT(basePool) {
-			lunaPool = basePool
-		}
-	} else if lunaPool.LT(basePool) {
-		lunaPool = lunaPool.Add(regressionAmt)
-		if lunaPool.GT(basePool) {
-			lunaPool = basePool
-		}
-	}
+	cp := basePool.Mul(basePool)
+	lunaPool := cp.Quo(terraPool)
 
 	k.SetTerraPool(ctx, terraPool)
 	k.SetLunaPool(ctx, lunaPool)
@@ -184,22 +173,24 @@ func (k Keeper) UpdatePools(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	k.SetLastUpdateHeight(ctx, ctx.BlockHeight())
 
 	// Initial pool update
+	var terraPool sdk.Dec
 	if oldBasePool.IsZero() {
-		k.SetLunaPool(ctx, basePool)
-		k.SetTerraPool(ctx, basePool)
+		terraPool = basePool
 	} else {
 		// Keep pool delta when updating
-		oldLunaPool := k.GetLunaPool(ctx)
 		oldTerraPool := k.GetTerraPool(ctx)
 
-		// Reset each pools by multifying change ratio
+		// Reset terra pool by multifying change ratio
 		changeRatio := basePool.Quo(oldBasePool)
-		lunaPool := oldLunaPool.Mul(changeRatio)
-		terraPool := oldTerraPool.Mul(changeRatio)
-
-		k.SetLunaPool(ctx, lunaPool)
-		k.SetTerraPool(ctx, terraPool)
+		terraPool = oldTerraPool.Mul(changeRatio)
 	}
+
+	// Compute luna pool with constant product
+	cp := basePool.Mul(basePool)
+	lunaPool := cp.Quo(terraPool)
+
+	k.SetLunaPool(ctx, lunaPool)
+	k.SetTerraPool(ctx, terraPool)
 
 	return basePool, nil
 }

@@ -45,7 +45,7 @@ func TestUpdatePools(t *testing.T) {
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
 	for i := 0; i < 100; i++ {
-		delta := sdk.NewDecWithPrec(rand.Int63n(1000), 3)
+		delta := sdk.NewDecWithPrec(rand.Int63n(1000), 4)
 
 		supply := input.SupplyKeeper.GetSupply(input.Ctx)
 		total := supply.GetTotal()
@@ -67,15 +67,18 @@ func TestUpdatePools(t *testing.T) {
 // each pools move towards base pool
 func TestReplenishPools(t *testing.T) {
 	input := CreateTestInput(t)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	_, err := input.MarketKeeper.UpdatePools(input.Ctx)
+	require.NoError(t, err)
 
 	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
-	lunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
-	require.Equal(t, basePool, lunaPool)
+	terraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
+	require.Equal(t, basePool, terraPool)
 
 	diff := basePool.QuoInt64(core.BlocksPerDay)
-	input.MarketKeeper.SetLunaPool(input.Ctx, lunaPool.Add(diff))
+	input.MarketKeeper.SetTerraPool(input.Ctx, terraPool.Add(diff))
 
 	input.MarketKeeper.ReplenishPools(input.Ctx)
-	lunaPool = input.MarketKeeper.GetLunaPool(input.Ctx)
-	require.Equal(t, basePool, lunaPool)
+	terraPool = input.MarketKeeper.GetTerraPool(input.Ctx)
+	require.Equal(t, basePool, terraPool)
 }

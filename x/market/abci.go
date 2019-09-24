@@ -12,12 +12,15 @@ import (
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k Keeper) {
 
+	isMarketActive := k.IsMarketActive(ctx)
 	// Replenishes each pools towards equilibrium
-	k.ReplenishPools(ctx)
+	if isMarketActive {
+		k.ReplenishPools(ctx)
+	}
 
 	// Update pools at the last block of every interval
 	// Retry update when inactive state
-	if !core.IsPeriodLastBlock(ctx, k.PoolUpdateInterval(ctx)) && k.IsMarketActive(ctx) {
+	if !core.IsPeriodLastBlock(ctx, k.PoolUpdateInterval(ctx)) && isMarketActive {
 		return
 	}
 
