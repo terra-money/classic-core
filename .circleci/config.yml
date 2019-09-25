@@ -425,12 +425,12 @@ workflows:
                 - /.*/
           requires:
             - setup_dependencies
-      - macos_ci:
-          filters:
-            branches:
-              only:
-                - master
-                - develop
+      # - macos_ci:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
+      #           - develop
       # - deploy_docs:
       #     filters:
       #       branches:
