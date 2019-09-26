@@ -95,7 +95,7 @@ terracli keys add --multisig=baz,foo,bar --multisig-threshold=2 multisig_address
 Multisig addresses can also be generated on-the-fly and printed through the which command:
 
 ```bash
-terracli keys show --multisig-threshold K name1 name2 name3 [...]
+terracli keys show --multisig-threshold=K name1 name2 name3 [...]
 ```
 
 For more information regarding how to generate, sign and broadcast transactions with a multi signature account see [Multisig Transactions](terracli.md#multisig-transactions).
@@ -123,18 +123,18 @@ terracli tx send ... --gas-prices=0.000001usdr
 #### Fees & Taxes (From Columbus-3)
 The tax has been changed to be included in the fees rather than automatically charged from the sender account. Users can make transaction with existing method without fees flag but with gas prices flag. It will automatically calculate tax and return fees in addition to the existing gas fees.
 
-Wallet providers can estimate fees and gas with new end point `/txs/esitmate_fee` with `gas = auto`.
+Wallet providers can estimate fees and gas to be incurred by a transaction by querying the endpoint `/txs/esitimate_fee` with `gas = auto`.
 
 e.g.
 
 ```bash
-terracli tx send ... --gas-prices=0.000001usdr --gas auto --gas-adjustment 1.4
+terracli tx send ... --gas-prices=0.000001usdr --gas=auto --gas-adjustment=1.4
 ```
 
 or
 
 ```bash
-terracli tx estimate-fee ... --gas-prices=0.000001usdr --gas-adjustment 1.4
+terracli tx estimate-fee ... --gas-prices=0.000001usdr --gas=auto --gas-adjustment=1.4
 ```
 
 ### Account
@@ -157,7 +157,7 @@ When you query an account balance with zero tokens, you will get this error:
 `No account with address <account_terra> was found in the state`.
 
 This can also happen if you fund the account before your node has fully synced with the chain.
-These are both normal.
+Both cases are to be expected.
 {% endhint %}
 
 ### Send Tokens
@@ -166,24 +166,24 @@ The following command could be used to send coins from one account to another:
 
 ```bash
 terracli tx send \
-  [from_key_or_address] \
-  [to_address] \
-  [coins] \
+  <from_key_or_address> \
+  <to_address> \
+  <coins> \
   --chain-id=<chain_id> \
 ```
 
 where `to_address` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
 
 {% hint style="warning" %}
-The `[coins]` accepts the format `<value|coin_name>`.
+The `<coins>` paramter is of the format `<value|coin_name>`.
 
-The `[from_key_or_address]` accepts key name in usual case, but only address when the `--generate-only` flag is used.
+The `<from_key_or_address>` accepts both the key name and the address as the value, but only accepts addresses when the `--generate-only` flag is used.
 {% endhint %}
 
 {% hint style="info" %}
 You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag.
 
-If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction.
+If you pass `--gas=auto`, the gas will be automatically estimated before executing the transaction.
 
 Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully.
 
@@ -289,7 +289,7 @@ terracli query tx [hash]
 To unjail your jailed validator
 
 ```bash
-terracli tx slashing unjail --from <validator-operator-addr>
+terracli tx slashing unjail --from=<validator-operator-addr>
 ```
 
 #### Signing Info
@@ -347,10 +347,10 @@ terracli tx staking delegate \
 `<validator>` is the operator address of the validator to which you intend to delegate. If you are running a local testnet, you can find this with:
 
 ```bash
-terracli keys show [name] --bech val
+terracli keys show <name> --bech val
 ```
 
-where `[name]` is the name of the key you specified when you initialized `terrad`.
+where `<name>` is the name of the key you specified when you initialized `terrad`.
 
 While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
 
@@ -363,13 +363,13 @@ Don't use more `luna` than you have! You can always get more by using the [Fauce
 Once submitted a delegation to a validator, you can see it's information by using the following command:
 
 ```bash
-terracli query staking delegation <delegator_addr> <validator_addr>
+terracli query staking delegation <delegator_address> <validator_address>
 ```
 
 Or if you want to check all your current delegations with disctinct validators:
 
 ```bash
-terracli query staking delegations <delegator_addr>
+terracli query staking delegations <delegator_address>
 ```
 
 You can also get previous delegation\(s\) status by adding the `--height` flag.
@@ -381,7 +381,7 @@ amount of tokens, use this following command.
 
 ```bash
 terracli tx staking unbond \
-  <validator_addr> \
+  <validator_address> \
   100uluna \
   --from=<key_name> \
   --chain-id=<chain_id>
@@ -394,7 +394,7 @@ The unbonding will be automatically completed when the unbonding period has pass
 Once you begin an unbonding-delegation, you can see it's information by using the following command:
 
 ```bash
-terracli query staking unbonding-delegation <delegator_addr> <validator_addr>
+terracli query staking unbonding-delegation <delegator_address> <validator_address>
 ```
 
 Or if you want to check all your current unbonding-delegations with disctinct validators:
@@ -406,7 +406,7 @@ terracli query staking unbonding-delegations <account_terra>
 Additionally, as you can get all the unbonding-delegations from a particular validator:
 
 ```bash
-terracli query staking unbonding-delegations-from <account_terra>
+terracli query staking unbonding-delegations-from <account_terraval>
 ```
 
 To get previous unbonding-delegation\(s\) status on past blocks, try adding the `--height` flag.
@@ -431,7 +431,7 @@ The redelegation will be automatically completed when the unbonding period has p
 Once you begin an redelegation, you can see it's information by using the following command:
 
 ```bash
-terracli query staking redelegation <delegator_addr> <src_val_addr> <dst_val_addr>
+terracli query staking redelegation <delegator_address> <src_val_addr> <dst_val_addr>
 ```
 
 Or if you want to check all your current unbonding-delegations with disctinct validators:
@@ -942,7 +942,7 @@ To submit a prevote, run:
 terracli tx oracle prevote \
   <salt> \ 
   <price> \
-  <validator_addr> \
+  <validator_address> \
   --from mykey
 ```
 
@@ -952,7 +952,7 @@ After VotePeriod has expired from the submission of the prevote, the voter must 
 terracli tx oracle vote \
   <salt> \
   <price>  \
-  <validator_addr> \
+  <validator_address> \
   --from mykey \
   --validator <validator-address>
 ```
@@ -965,10 +965,10 @@ Given that oracle votes have to be submitted in a feed over short time intervals
 A voter may also elect to delegate price voting to another signing key.
 
 ```bash
-terracli tx oracle set-feeder <feeder-address> --from mykey
+terracli tx oracle set-feeder <feeder_address> --from=mykey
 ```
 
-where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
+where `feeder_address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
 
 ### Market
 
@@ -977,10 +977,10 @@ where `feeder-address` is the address you want to delegate your voting rights to
 All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run:
 
 ```bash
-terracli tx market swap <offer-coin> <ask-denom>
+terracli tx market swap <offer_coin> <ask_denom>
 ```
 
-Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into.
+Where `offer_coin` is the coin looking to be traded and `ask_denom` the denomination of the coin to be swapped into.
 
 For Terra &lt;&gt; Luna swaps, constant product (uni-swap) model is enforced to limit consensus related attack vectors. Terra &lt;&gt; Terra swaps have constant tobin tax(0.3%).
 
@@ -989,10 +989,10 @@ For Terra &lt;&gt; Luna swaps, constant product (uni-swap) model is enforced to 
 The Market module provides swap simulation, allowing anyone to predict swap results. To simulate swap operation, run:
 
 ```bash
-terracli query market swap <offer-coin> <ask-denom>
+terracli query market swap <offer_coin> <ask_denom>
 ```
 
-Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into.
+Where `offer_coin` is the coin looking to be traded and `ask_denom` the denomination of the coin to be swapped into.
 
 ### Treasury
 
@@ -1009,7 +1009,7 @@ terracli query treasury current-epoch
 Terra transactions charge a % fee on each outbound transaction from the sender's wallet. To get the effective stability fee rate for a given epoch, run:
 
 ```bash
-terracli query treasury tax-rate <epoch-number>
+terracli query treasury tax-rate <epoch_number>
 ```
 
 #### Query Tax Cap
@@ -1025,7 +1025,7 @@ terracli query treasury tax-cap <denom>
 To query the cumulative tax proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury tax-proceeds <epoch-number>
+terracli query treasury tax-proceeds <epoch_number>
 ```
 
 #### Query Mining Reward Weight
@@ -1033,7 +1033,7 @@ terracli query treasury tax-proceeds <epoch-number>
 The mining reward weight is the portion of seigniorage that is burned to reward miners. To query the weight of a given epoch, run:
 
 ```bash
-terracli query treasury reward-weight <epoch-number>
+terracli query treasury reward-weight <epoch_number>
 ```
 
 #### Query Seigniorage Proceeds
@@ -1041,7 +1041,7 @@ terracli query treasury reward-weight <epoch-number>
 The treasury measures the amount of Terra seigniorage accumulated over epochs, denominated in units of `uluna`. To query the seigniorage proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury seigniorage-proceeds <epoch-number>
+terracli query treasury seigniorage-proceeds <epoch_number>
 ```
 
 #### Query Parameters
