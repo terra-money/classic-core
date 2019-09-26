@@ -121,12 +121,11 @@ func TestQueryTerraPool(t *testing.T) {
 	require.Equal(t, pool, retPool)
 }
 
-func TestQueryLunaPool(t *testing.T) {
+func TestQueryLastUpdateHeight(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 
-	pool := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetLunaPool(input.Ctx, pool)
+	input.MarketKeeper.SetLastUpdateHeight(input.Ctx, 1)
 
 	querier := NewQuerier(input.MarketKeeper)
 	query := abci.RequestQuery{
@@ -134,13 +133,13 @@ func TestQueryLunaPool(t *testing.T) {
 		Data: nil,
 	}
 
-	res, errRes := querier(input.Ctx, []string{types.QueryLunaPool}, query)
+	res, errRes := querier(input.Ctx, []string{types.QueryLastUpdateHeight}, query)
 	require.NoError(t, errRes)
 
-	var retPool sdk.Dec
+	var retPool int64
 	err := cdc.UnmarshalJSON(res, &retPool)
 	require.NoError(t, err)
-	require.Equal(t, pool, retPool)
+	require.Equal(t, int64(1), retPool)
 }
 
 func TestQueryBasePool(t *testing.T) {

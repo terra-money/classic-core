@@ -23,7 +23,6 @@ const (
 	DefaultParamspace     = types.DefaultParamspace
 	QuerySwap             = types.QuerySwap
 	QueryTerraPool        = types.QueryTerraPool
-	QueryLunaPool         = types.QueryLunaPool
 	QueryBasePool         = types.QueryBasePool
 	QueryLastUpdateHeight = types.QueryLastUpdateHeight
 	QueryParameters       = types.QueryParameters
@@ -49,7 +48,6 @@ var (
 	// variable aliases
 	ModuleCdc                             = types.ModuleCdc
 	BasePoolKey                           = types.BasePoolKey
-	LunaPoolKey                           = types.LunaPoolKey
 	TerraPoolKey                          = types.TerraPoolKey
 	LastUpdateHeightKey                   = types.LastUpdateHeightKey
 	ParamStoreKeyPoolUpdateInterval       = types.ParamStoreKeyPoolUpdateInterval

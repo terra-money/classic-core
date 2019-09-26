@@ -16,8 +16,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return querySwap(ctx, req, keeper)
 		case types.QueryTerraPool:
 			return queryTerraPool(ctx, keeper)
-		case types.QueryLunaPool:
-			return queryLunaPool(ctx, keeper)
 		case types.QueryBasePool:
 			return queryBasePool(ctx, keeper)
 		case types.QueryLastUpdateHeight:
@@ -65,15 +63,6 @@ func querySwap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, s
 
 func queryTerraPool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetTerraPool(ctx))
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-
-	return bz, nil
-}
-
-func queryLunaPool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLunaPool(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

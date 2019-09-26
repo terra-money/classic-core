@@ -2122,24 +2122,6 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /market/luna_pool:
-    get:
-      summary: Get LUNA pool amount
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "10000000.00"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
   /market/base_pool:
     get:
       summary: Get Base(equilibrium) pool amount

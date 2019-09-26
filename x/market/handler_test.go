@@ -30,7 +30,7 @@ func TestMarketFilters(t *testing.T) {
 func TestSwapMsg(t *testing.T) {
 	input, h := setup(t)
 
-	beforeLunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
+	beforeTerraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
@@ -38,8 +38,8 @@ func TestSwapMsg(t *testing.T) {
 	res := h(input.Ctx, swapMsg)
 	require.True(t, res.IsOK())
 
-	afterLunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
-	diff := beforeLunaPool.Sub(afterLunaPool)
+	afterTerraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
+	diff := beforeTerraPool.Sub(afterTerraPool)
 	price, _ := input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroSDRDenom)
 	require.Equal(t, price.MulInt(amt), diff.Abs())
 }

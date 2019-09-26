@@ -70,26 +70,6 @@ func (k Keeper) SetBasePool(ctx sdk.Context, pool sdk.Dec) {
 	store.Set(types.BasePoolKey, bz)
 }
 
-// GetLunaPool returns LunaPool
-func (k Keeper) GetLunaPool(ctx sdk.Context) (pool sdk.Dec) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.LunaPoolKey)
-	if bz == nil {
-		return sdk.ZeroDec()
-	}
-
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &pool)
-	return
-}
-
-// SetLunaPool updates LunaPool
-func (k Keeper) SetLunaPool(ctx sdk.Context, pool sdk.Dec) {
-	store := ctx.KVStore(k.storeKey)
-
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pool)
-	store.Set(types.LunaPoolKey, bz)
-}
-
 // GetTerraPool returns TerraPool
 func (k Keeper) GetTerraPool(ctx sdk.Context) (pool sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
@@ -150,14 +130,10 @@ func (k Keeper) ReplenishPools(ctx sdk.Context) {
 		}
 	}
 
-	cp := basePool.Mul(basePool)
-	lunaPool := cp.Quo(terraPool)
-
 	k.SetTerraPool(ctx, terraPool)
-	k.SetLunaPool(ctx, lunaPool)
 }
 
-// UpdatePools updates base & terra & luna pool along with sdr swap rate & luna supply
+// UpdatePools updates base & terra along with sdr swap rate & luna supply
 func (k Keeper) UpdatePools(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 	lunaSupplyAmt := k.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
 	oldBasePool := k.GetBasePool(ctx)
@@ -185,11 +161,6 @@ func (k Keeper) UpdatePools(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 		terraPool = oldTerraPool.Mul(changeRatio)
 	}
 
-	// Compute luna pool with constant product
-	cp := basePool.Mul(basePool)
-	lunaPool := cp.Quo(terraPool)
-
-	k.SetLunaPool(ctx, lunaPool)
 	k.SetTerraPool(ctx, terraPool)
 
 	return basePool, nil

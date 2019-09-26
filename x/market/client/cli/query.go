@@ -26,7 +26,6 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	marketQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQuerySwap(queryRoute, cdc),
-		GetCmdQueryLunaPool(queryRoute, cdc),
 		GetCmdQueryTerraPool(queryRoute, cdc),
 		GetCmdQueryBasePool(queryRoute, cdc),
 		GetCmdQueryLastUpdateHeight(queryRoute, cdc),
@@ -85,29 +84,6 @@ func GetCmdQueryTerraPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPool), nil)
-			if err != nil {
-				return err
-			}
-
-			var pool sdk.Dec
-			cdc.MustUnmarshalJSON(res, &pool)
-			return cliCtx.PrintOutput(pool)
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdQueryLunaPool implements the query params command.
-func GetCmdQueryLunaPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "luna-pool",
-		Args:  cobra.NoArgs,
-		Short: "Query luna pool",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLunaPool), nil)
 			if err != nil {
 				return err
 			}

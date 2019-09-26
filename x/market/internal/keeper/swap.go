@@ -17,7 +17,6 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 	}
 
 	terraPool := k.GetTerraPool(ctx)
-	lunaPool := k.GetLunaPool(ctx)
 
 	offerBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(offerCoin), core.MicroSDRDenom)
 	if err != nil {
@@ -32,17 +31,14 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 	// In case swapping TERRA to LUNA, the terra swap pool(offer) is increased and the luna swap pool(ask) is decreased
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom == core.MicroLunaDenom {
 		terraPool = terraPool.Add(offerBaseCoin.Amount)
-		lunaPool = lunaPool.Sub(askBaseCoin.Amount)
 	}
 
 	// In case swapping LUNA to TERRA, the luna swap pool(offer) is increased and the terra swap pool(ask) is decreased
 	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
 		terraPool = terraPool.Sub(askBaseCoin.Amount)
-		lunaPool = lunaPool.Add(offerBaseCoin.Amount)
 	}
 
 	k.SetTerraPool(ctx, terraPool)
-	k.SetLunaPool(ctx, lunaPool)
 
 	return nil
 }
@@ -85,20 +81,22 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	basePool := k.GetBasePool(ctx)
 	minSpread := k.MinSpread(ctx)
 
+	// constant-product, which by construction is square of base(equilibrium) Terra pool
+	cp := basePool.Mul(basePool)
+	terraPool := k.GetTerraPool(ctx)
+	lunaPool := cp.Quo(terraPool)
+
 	var offerPool sdk.Dec // base denom(usdr) unit
 	var askPool sdk.Dec   // base denom(usdr) unit
 	if offerCoin.Denom != core.MicroLunaDenom {
 		// TERRA->LUNA swap
-		offerPool = k.GetTerraPool(ctx)
-		askPool = k.GetLunaPool(ctx)
+		offerPool = terraPool
+		askPool = lunaPool
 	} else {
 		// LUNA->TERRA swap
-		offerPool = k.GetLunaPool(ctx)
-		askPool = k.GetTerraPool(ctx)
+		offerPool = lunaPool
+		askPool = terraPool
 	}
-
-	// constant-product, which by construction is square of base(equilibrium) Terra pool
-	cp := basePool.Mul(basePool)
 
 	// Get cp(constant-product) based swap amount
 	// askBaseAmount = askPool - cp / (offerPool + offerBaseAmount)

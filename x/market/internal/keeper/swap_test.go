@@ -19,16 +19,12 @@ func TestApplySwapToPool(t *testing.T) {
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000))
 	askCoin := sdk.NewDecCoin(core.MicroSDRDenom, sdk.NewInt(1700))
 
-	oldLunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
 	oldSDRPool := input.MarketKeeper.GetTerraPool(input.Ctx)
 	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
-	newLunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
 	newSDRPool := input.MarketKeeper.GetTerraPool(input.Ctx)
 
-	lunaDiff := newLunaPool.Sub(oldLunaPool)
 	sdrDiff := newSDRPool.Sub(oldSDRPool)
 
-	require.Equal(t, sdk.NewDec(1700), lunaDiff)
 	require.Equal(t, sdk.NewDec(-1700), sdrDiff)
 }
 

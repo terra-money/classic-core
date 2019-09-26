@@ -10,20 +10,6 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-func TestLunaPoolUpdate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
-	lunaPool := input.MarketKeeper.GetLunaPool(input.Ctx)
-	require.Equal(t, basePool, lunaPool)
-
-	diff := sdk.NewDec(10)
-	input.MarketKeeper.SetLunaPool(input.Ctx, lunaPool.Sub(diff))
-
-	lunaPool = input.MarketKeeper.GetLunaPool(input.Ctx)
-	require.Equal(t, basePool.Sub(diff), lunaPool)
-}
-
 func TestTerraPoolUpdate(t *testing.T) {
 	input := CreateTestInput(t)
 
