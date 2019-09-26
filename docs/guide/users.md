@@ -40,10 +40,14 @@ At the core of every Terra account, there is a seed, which takes the form of a 1
 The funds stored in an account are controlled by the private key. This private key is generated using a one-way function from the mnemonic. If you lose the private key, you can retrieve it using the mnemonic. However, if you lose the mnemonic, you will lose access to all the derived private keys. Likewise, if someone gains access to your mnemonic, they gain access to all the associated accounts.
 
 {% hint style="danger" %}
-    Do not lose or share your 24 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.
+Do not lose or share your 24 words with anyone.
+
+To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access.
+
+If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.
 {% endhint %}
 
-The address is a public string with a human-readable prefix \(e.g. `terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg`\) that identifies your account. When someone wants to send you funds, they send it to your address. It is computationally infeasible to find the private key associated with a given address.
+The address is a public string with a human-readable prefix \(e.g. `terra10snjt8dmpr5my0h76xj48ty80uzwhraqmmx4mg`\) that identifies your account. When someone wants to send you funds, they send it to your address. It is computationally infeasible to find the private key associated with a given address.
 
 ### Redeem Luna from the sale
 
@@ -54,7 +58,13 @@ If you participated in the fundraiser, you should be in possession of a 24-word 
 At the core of a ledger device, there is a mnemonic used to generate accounts on multiple blockchains \(including Terra\). Usually, you will create a new mnemonic when you initialize your ledger device. However, it is possible to tell the ledger device to use a mnemonic provided by the user instead. Let us go ahead and see how you can input the mnemonic you obtained during the fundraiser as the seed of your ledger device.
 
 {% hint style="warning" %}
-    To do this, **it is preferable to use a brand new ledger device.**. Indeed, there can be only one mnemonic per ledger device. If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in `Settings`&gt;`Device`&gt;`Reset All`. **Please note that this will wipe out the seed currently stored on the device. If you have not properly secured the associated mnemonic, you could lose your funds!!!**
+To do this, **it is preferable to use a brand new ledger device** as there can be only one mnemonic per ledger device.
+
+If, however, you want to use a ledger that is already initialized with a seed, you can reset it by going in `Settings`&gt;`Device`&gt;`Reset All`.
+
+**Please note that this will wipe out the seed currently stored on the device.**
+
+**If you have not properly secured the associated mnemonic, you could lose your funds!!!**
 {% endhint %}
 
 The following steps need to be performed on an un-initialized ledger device:
@@ -73,7 +83,7 @@ Next, click [here](users.md#using-a-ledger-device) to learn how to generate an a
 #### On a computer
 
 {% hint style="warning" %}
-    It is more secure to perform this action on an offline computer.
+It is more secure to perform this action on an offline computer.
 {% endhint %}
 
 To restore an account using a fundraiser mnemonic and store the associated encrypted private key on a computer, use the following command:
@@ -94,7 +104,7 @@ To create an account, you just need to have `terracli` installed. Before creatin
 #### Using a ledger device
 
 {% hint style="warning" %}
-    Only use Ledger devices that you bought factory new or trust fully.
+Only use Ledger devices that you bought factory new or trust fully.
 {% endhint %}
 
 When you initialize your ledger, a 24-word mnemonic is generated and stored in the device. This mnemonic is compatible with Terra and Terra accounts can be derived from it. Therefore, all you have to do is make your ledger compatible with `terracli`. To do so, you need to go through the following steps:
@@ -111,7 +121,7 @@ terracli keys add <yourAccountName> --ledger
 ```
 
 {% hint style="warning" %}
-    This command will only work while the Ledger is plugged in and unlocked.
+This command will only work while the Ledger is plugged in and unlocked.
 {% endhint %}
 
 * `<yourKeyName>` is the name of the account. It is a reference to the account number used to derive the key pair from the mnemonic. You will use this name to identify your account when you want to send a transaction.
@@ -120,7 +130,7 @@ terracli keys add <yourAccountName> --ledger
 #### Using a computer
 
 {% hint style="warning" %}
-    It is more secure to perform this action on an offline computer.
+It is more secure to perform this action on an offline computer.
 {% endhint %}
 
 To generate an account, just use the following command:
@@ -132,17 +142,21 @@ terracli keys add <yourKeyName>
 The command will generate a 24-words mnemonic and save the private and public keys for account `0` at the same time. You will be prompted to input a passphrase that is used to encrypt the private key of account `0` on disk. Each time you want to send a transaction, this password will be required. If you lose the password, you can always recover the private key with the mnemonic.
 
 {% hint style="danger" %}
-    **Do not lose or share your 24 words with anyone. To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access. If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.**
+Do not lose or share your 24 words with anyone.
+
+To prevent theft or loss of funds, it is best to ensure that you keep multiple copies of your mnemonic, and store it in a safe, secure place and that only you know how to access.
+
+If someone is able to gain access to your mnemonic, they will be able to gain access to your private keys and control the accounts associated with them.
 {% endhint %}
 
-{% hint style="warning" %}
-     After you have secured your mnemonic \(triple check!\), you can delete bash history to ensure no one can retrieve it.
-{% endhint %}
+{% hint style="info" %}
+ After you have secured your mnemonic \(triple check!\), you can delete bash history to ensure no one can retrieve it.
 
 ```bash
 history -c
 rm ~/.bash_history
 ```
+{% endhint %}
 
 * `<yourKeyName>` is the name of the account. It is a reference to the account number used to derive the key pair from the mnemonic. You will use this name to identify your account when you want to send a transaction.
 * You can add the optional `--account` flag to specify the path \(`0`, `1`, `2`, ...\) you want to use to generate your account. By default, account `0` is generated. 
@@ -160,7 +174,13 @@ This command will prompt you to input a passphrase as well as your mnemonic. Cha
 In order to query the state and send transactions, you need a way to access the network. To do so, you can either run your own full-node, or connect to someone else's.
 
 {% hint style="danger" %}
-    **Do not share your mnemonic \(12 or 24 words\) with anyone. The only person who should ever need to know it is you. This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support. No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic.**
+Do not share your mnemonic (12 or 24 words) with anyone.
+
+The only person who should ever need to know it is you.
+
+This is especially important if you are ever approached via email or direct message by someone requesting that you share your mnemonic for any kind of blockchain services or support.
+
+No one from Terra will ever send an email that asks for you to share any kind of account credentials or your mnemonic.
 {% endhint %}
 
 ### Running your own full-node
@@ -178,7 +198,7 @@ In order to connect to the full-node, you will need an address of the following 
 ## Setting up `terracli`
 
 {% hint style="warning" %}
-    Please check that you are always using the latest stable release of `terracli`.
+Please check that you are always using the latest stable release of `terracli`.
 {% endhint %}
 
 `terracli` is the tool that enables you to interact with the node that runs on the Terra Protocol network, whether you run it yourself or not. Let us set it up properly.
@@ -218,7 +238,7 @@ terracli config chain-id gos-6
 ## Querying the state
 
 {% hint style="warning" %}
-     Before you can bond luna and withdraw rewards, you need to [set up `terracli`](users.md#setting-up-terracli).
+Before you can bond luna and withdraw rewards, you need to [set up](users.md#setting-up-terracli) `terracli`.
 {% endhint %}
 
 `terracli` lets you query all relevant information from the blockchain, like account balances, amount of bonded tokens, outstanding rewards, and more. Next is a list of the most useful commands for delegator.
@@ -241,6 +261,15 @@ terracli query staking delegation <delegatorAddress> <validatorAddress>
 
 // query the rewards of a delegator given a delegator address (e.g. terra10snjt8dmpr5my0h76xj48ty80uzwhraqalu4eg)
 terracli query distr rewards <delegatorAddress>
+
+// query all proposals currently open for depositing
+terracli query gov proposals --status deposit_period
+
+// query all proposals currently open for voting
+terracli query gov proposals --status voting_period
+
+// query a proposal given its proposalID
+terracli query gov proposal <proposalID>
 ```
 
 For more commands, just type:
@@ -253,13 +282,19 @@ For each command, you can use the `-h` or `--help` flag to get more information.
 
 ## Sending Transactions
 
-### A note on gas and fees
+{% hint style="warning" %}
+On Terra mainnet, the accepted denom is `uluna`, where `1luna = 1,000,000uluna`
+{% endhint %}
 
-Transactions on the Terra Protocol network need to include a transaction fee in order to be processed. This fee pays for the gas required to run the transaction. The formula is the following:
+### A note on gas, fees and taxes
+
+Transactions on the Terra Protocol network need to include a transaction fee in order to be processed. This fee pays for the gas and taxes required to run the transaction. The formula is the following:
 
 ```text
-fees = gas * gasPrices
+fees = ceil(gas * gasPrices + min(stableAmt * taxRate, taxCap))
 ```
+
+Where `stableAmt` is the quantity of stable coins excpet luna.
 
 The `gas` is dependent on the transaction. Different transaction require different amount of `gas`. The `gas` amount for a transaction is calculated as it is being processed, but there is a way to estimate it beforehand by using the `auto` value for the `gas` flag. Of course, this only gives an estimate. You can adjust this estimate with the flag `--gas-adjustment` \(default `1.0`\) if you want to be sure you provide enough `gas` for the transaction.
 
@@ -267,3 +302,8 @@ The `gasPrice` is the price of each unit of `gas`. Each validator sets a `min-ga
 
 The transaction `fees` are the product of `gas` and `gasPrice`. As a user, you have to input 2 out of 3. The higher the `gasPrice`/`fees`, the higher the chance that your transaction will get included in a block.
 
+The `tax` is a fee used for the stability mechanism and is only charged for `bank/MsgSend` transactions that contain a stable coin. The `tax` is capped at some fixed amount of SDT to avoid penalizing large transactions.
+
+{% hint style="info" %}
+For mainnet, the recommended `gas-prices` is `0.015uluna`. 
+{% endhint %}

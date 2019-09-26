@@ -75,7 +75,7 @@ The `MsgPriceVote` contains the actual price vote. The `Salt` parameter must mat
 Validators may also elect to delegate voting rights to another key to prevent the block signing key from being kept online. To do so, they must submit a `MsgDelegateFeederPermission`, delegating their oracle voting rights to a `FeedDelegate`, which in turn sign `MsgPricePrevote` and `MsgPriceVote` on behalf of the validator. 
 
 {% hint style="info" %}
-    Make sure to populate the delegate address with some coins by which to pay fees.
+Make sure to populate the delegate address with some coins by which to pay fees.
 {% endhint %}
 
 ```go
@@ -99,4 +99,3 @@ type Params struct {
     OracleRewardBand sdk.Dec `json:"oracle_reward_band"` // band around the oracle weighted median to reward
 }
 ```
-
