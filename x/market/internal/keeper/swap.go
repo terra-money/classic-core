@@ -81,7 +81,7 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	basePool := k.GetBasePool(ctx)
 	minSpread := k.MinSpread(ctx)
 
-	// constant-product, which by construction is square of base(equilibrium) Terra pool
+	// constant-product, which by construction is square of base(equilibrium) pool
 	cp := basePool.Mul(basePool)
 	terraPool := k.GetTerraPool(ctx)
 	lunaPool := cp.Quo(terraPool)
@@ -101,19 +101,12 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	// Get cp(constant-product) based swap amount
 	// askBaseAmount = askPool - cp / (offerPool + offerBaseAmount)
 	// askBaseAmount is base denom(usdr) unit
-	askBaseAmount := askPool.Sub(cp.Quo(baseOfferDecCoin.Amount.Add(offerPool)))
+	askBaseAmount := askPool.Sub(cp.Quo(offerPool.Add(baseOfferDecCoin.Amount)))
 
-	// Swap base coin to ask denom
-	askDecCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromDec(core.MicroSDRDenom, askBaseAmount), askDenom)
-	if err != nil {
-		return sdk.DecCoin{}, sdk.ZeroDec(), err
-	}
-
-	// spread = max(contant_product_spread + tobin_tax, tobin_tax)
-	// contant_product_spread can be negative
-	askDecAmount := askDecCoin.Amount
-	retDecAmount := retDecCoin.Amount
-	spread = retDecAmount.Sub(askDecAmount).Quo(retDecAmount)
+	// Both baseOffer and baseAsk are usdr units, so spread can be calculated by
+	// spread = (baseOfferAmt - baseAskAmt) / baseOfferAmt
+	baseOfferAmount := baseOfferDecCoin.Amount
+	spread = baseOfferAmount.Sub(askBaseAmount).Quo(baseOfferAmount)
 
 	if spread.LT(minSpread) {
 		spread = minSpread
