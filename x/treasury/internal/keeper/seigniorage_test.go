@@ -21,7 +21,7 @@ func TestSettle(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, issuance)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt())))

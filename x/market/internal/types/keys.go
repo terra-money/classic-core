@@ -19,11 +19,10 @@ const (
 //
 // - 0x01: sdk.Dec
 // - 0x02: sdk.Dec
-// - 0x03: sdk.Dec
-// - 0x04: int64
+// - 0x03: int64
 var (
 	//Keys for store prefixed
 	BasePoolKey         = []byte{0x01} // key for a Base Pool
-	TerraPoolKey        = []byte{0x03} // key for Terra Pool
-	LastUpdateHeightKey = []byte{0x04} // key for Last Update Height
+	TerraPoolKey        = []byte{0x02} // key for Terra Pool
+	LastUpdateHeightKey = []byte{0x03} // key for Last Update Height
 )
