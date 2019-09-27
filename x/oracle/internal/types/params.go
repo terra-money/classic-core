@@ -107,7 +107,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 
 // implements fmt.Stringer
 func (params Params) String() string {
-	return fmt.Sprintf(`Treasury Params:
+	return fmt.Sprintf(`Oracle Params:
   VotePeriod:               %d
   VoteThreshold:            %s
 	RewardBand:               %s
