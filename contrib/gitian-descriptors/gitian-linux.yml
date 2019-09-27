@@ -23,11 +23,11 @@ remotes:
 - "url": "https://github.com/cosmos/terra.git"
   "dir": "terra"
 files:
-- "golang-debian-1.12.7-1.tar.gz"
+- "golang-debian-1.13.1-1.tar.gz"
 script: |
   set -e -o pipefail
 
-  GO_SRC_RELEASE=golang-debian-1.12.7-1
+  GO_SRC_RELEASE=golang-debian-1.13.1-1
   GO_SRC_TARBALL="${GO_SRC_RELEASE}.tar.gz"
   # Compile go and configure the environment
   export TAR_OPTIONS="--mtime="$REFERENCE_DATE\\\ $REFERENCE_TIME""
