@@ -178,6 +178,36 @@ func TestPrice(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestIterateLunaPrices(t *testing.T) {
+	input := CreateTestInput(t)
+
+	cnyPrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	gbpPrice := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	krwPrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	lunaPrice := sdk.NewDecWithPrec(3282384, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+
+	// Set & get prices
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroCNYDenom, cnyPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroGBPDenom, gbpPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, krwPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroLunaDenom, lunaPrice)
+
+	input.OracleKeeper.IterateLunaPrices(input.Ctx, func(denom string, price sdk.Dec) (stop bool) {
+		switch denom {
+		case core.MicroCNYDenom:
+			require.Equal(t, cnyPrice, price)
+		case core.MicroGBPDenom:
+			require.Equal(t, gbpPrice, price)
+		case core.MicroKRWDenom:
+			require.Equal(t, krwPrice, price)
+		case core.MicroLunaDenom:
+			require.Equal(t, lunaPrice, price)
+		}
+		return false
+	})
+
+}
+
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
 
@@ -232,4 +262,27 @@ func TestFeederDelegation(t *testing.T) {
 	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 	delegate = input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
 	require.Equal(t, delegate, Addrs[1])
+}
+
+func TestIterateFeederDelegations(t *testing.T) {
+	input := CreateTestInput(t)
+
+	// Test default getters and setters
+	delegate := input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
+	require.Equal(t, delegate, Addrs[0])
+
+	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
+
+	var delegators []sdk.ValAddress
+	var delegatees []sdk.AccAddress
+	input.OracleKeeper.IterateFeederDelegations(input.Ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+		delegators = append(delegators, delegator)
+		delegatees = append(delegatees, delegatee)
+		return false
+	})
+
+	require.Equal(t, len(delegators), 1)
+	require.Equal(t, len(delegatees), 1)
+	require.Equal(t, delegators[0], ValAddrs[0])
+	require.Equal(t, delegatees[0], Addrs[1])
 }

@@ -70,7 +70,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 
 // implements fmt.Stringer
 func (params Params) String() string {
-	return fmt.Sprintf(`Treasury Params:
+	return fmt.Sprintf(`Market Params:
   DailyLunaDeltaCap:        %s
   MaxSwapSpread:            %s
 	MinSwapSpread:            %s
