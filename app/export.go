@@ -29,6 +29,11 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 	ctx := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 
 	if forZeroHeight {
+		notBondedTokens := app.getNotBondedTokens(ctx)
+		pool := app.stakingKeeper.GetPool(ctx)
+		pool.NotBondedTokens = notBondedTokens.TruncateInt()
+		app.stakingKeeper.SetPool(ctx, pool)
+
 		app.prepForZeroHeightGenesis(ctx, jailWhiteList)
 	}
 
@@ -60,6 +65,36 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 	}
 	validators = staking.WriteValidators(ctx, app.stakingKeeper)
 	return appState, validators, nil
+}
+
+func (app *TerraApp) getNotBondedTokens(ctx sdk.Context) sdk.Dec {
+	loose := sdk.ZeroDec()
+	app.accountKeeper.IterateAccounts(ctx, func(acc auth.Account) bool {
+		loose = loose.Add(acc.GetCoins().AmountOf(app.stakingKeeper.BondDenom(ctx)).ToDec())
+		return false
+	})
+	app.stakingKeeper.IterateUnbondingDelegations(ctx, func(_ int64, ubd staking.UnbondingDelegation) bool {
+		for _, entry := range ubd.Entries {
+			loose = loose.Add(entry.Balance.ToDec())
+		}
+		return false
+	})
+	app.stakingKeeper.IterateValidators(ctx, func(_ int64, validator sdk.Validator) bool {
+		switch validator.GetStatus() {
+		case sdk.Unbonding, sdk.Unbonded:
+			loose = loose.Add(validator.GetTokens().ToDec())
+		}
+		// add yet-to-be-withdrawn
+		loose = loose.Add(app.distrKeeper.GetValidatorOutstandingRewardsCoins(ctx, validator.GetOperator()).AmountOf(app.stakingKeeper.BondDenom(ctx)))
+		return false
+	})
+
+	// add outstanding fees
+	loose = loose.Add(app.feeCollectionKeeper.GetCollectedFees(ctx).AmountOf(app.stakingKeeper.BondDenom(ctx)).ToDec())
+
+	// add community pool
+	loose = loose.Add(app.distrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf(app.stakingKeeper.BondDenom(ctx)))
+	return loose
 }
 
 // prepare for fresh start at zero height
