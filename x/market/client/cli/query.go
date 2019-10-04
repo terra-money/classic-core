@@ -80,6 +80,10 @@ func GetCmdQueryTerraPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Use:   "terra-pool",
 		Args:  cobra.NoArgs,
 		Short: "Query terra pool",
+		Long: `Query terra pool, which is the amount of remaining Terra liquidity for the swap.
+
+	$ terracli query market terra-pool
+	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -103,6 +107,11 @@ func GetCmdQueryBasePool(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Use:   "base-pool",
 		Args:  cobra.NoArgs,
 		Short: "Query equilibrium base pool",
+		Long: `Query equilibrium base pool, which is the target Terra liquidity amount. 
+	It means the maximum amount of Terra that can be issued or burned in any 24 period.
+
+	$ terracli query market base-pool
+	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

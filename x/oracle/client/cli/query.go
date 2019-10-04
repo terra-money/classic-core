@@ -45,7 +45,7 @@ func GetCmdQueryPrice(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
 
-$ terracli query oracle price --denom ukrw
+$ terracli query oracle price ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
