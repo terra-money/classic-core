@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+* Bump Tendermint version to v0.31.10 to address the p2p panic errors.
+
 ## 0.2.4
 
 ### Bug Fixes
