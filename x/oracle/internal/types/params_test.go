@@ -32,7 +32,7 @@ func TestParamsEqual(t *testing.T) {
 
 	// negative reward fraction
 	p4 := DefaultParams()
-	p4.RewardFraction = sdk.NewDecWithPrec(-1, 2)
+	p4.RewardDistributionPeriod = p4.VotePeriod - 1
 	err = p4.Validate()
 	require.Error(t, err)
 

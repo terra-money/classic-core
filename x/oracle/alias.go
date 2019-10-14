@@ -87,25 +87,27 @@ var (
 	NewQuerier                     = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                           = types.ModuleCdc
-	PrevoteKey                          = types.PrevoteKey
-	VoteKey                             = types.VoteKey
-	PriceKey                            = types.PriceKey
-	FeederDelegationKey                 = types.FeederDelegationKey
-	MissedVoteBitArrayKey               = types.MissedVoteBitArrayKey
-	VotingInfoKey                       = types.VotingInfoKey
-	ParamStoreKeyVotePeriod             = types.ParamStoreKeyVotePeriod
-	ParamStoreKeyVoteThreshold          = types.ParamStoreKeyVoteThreshold
-	ParamStoreKeyRewardBand             = types.ParamStoreKeyRewardBand
-	ParamStoreKeyRewardFraction         = types.ParamStoreKeyRewardFraction
-	ParamStoreKeyVotesWindow            = types.ParamStoreKeyVotesWindow
-	ParamStoreKeyMinValidVotesPerWindow = types.ParamStoreKeyMinValidVotesPerWindow
-	ParamStoreKeySlashFraction          = types.ParamStoreKeySlashFraction
-	DefaultVoteThreshold                = types.DefaultVoteThreshold
-	DefaultRewardBand                   = types.DefaultRewardBand
-	DefaultRewardFraction               = types.DefaultRewardFraction
-	DefaultMinValidVotesPerWindow       = types.DefaultMinValidVotesPerWindow
-	DefaultSlashFraction                = types.DefaultSlashFraction
+	ModuleCdc                             = types.ModuleCdc
+	PrevoteKey                            = types.PrevoteKey
+	VoteKey                               = types.VoteKey
+	PriceKey                              = types.PriceKey
+	FeederDelegationKey                   = types.FeederDelegationKey
+	MissedVoteBitArrayKey                 = types.MissedVoteBitArrayKey
+	VotingInfoKey                         = types.VotingInfoKey
+	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
+	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
+	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
+	ParamStoreKeyRewardDistributionPeriod = types.ParamStoreKeyRewardDistributionPeriod
+	ParamStoreKeyVotesWindow              = types.ParamStoreKeyVotesWindow
+	ParamStoreKeyMinValidVotesPerWindow   = types.ParamStoreKeyMinValidVotesPerWindow
+	ParamStoreKeySlashFraction            = types.ParamStoreKeySlashFraction
+	ParamStoreKeyWhitelist                = types.ParamStoreKeyWhitelist
+	DefaultVoteThreshold                  = types.DefaultVoteThreshold
+	DefaultRewardBand                     = types.DefaultRewardBand
+	DefaultRewardDistributionPeriod       = types.DefaultRewardDistributionPeriod
+	DefaultMinValidVotesPerWindow         = types.DefaultMinValidVotesPerWindow
+	DefaultSlashFraction                  = types.DefaultSlashFraction
+	DefaultWhitelist                      = types.DefaultWhitelist
 )
 
 type (
