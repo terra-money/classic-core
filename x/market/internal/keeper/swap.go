@@ -11,7 +11,7 @@ import (
 // OfferPool = OfferPool + offerAmt (Fills the swap pool with offerAmt)
 // AskPool = AskPool - askAmt       (Uses askAmt from the swap pool)
 func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk.DecCoin) sdk.Error {
-	// No delta update in case TERRA to TERRA swap
+	// No delta update in case Terra to Terra swap
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
 		return nil
 	}
@@ -28,12 +28,12 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 		return err
 	}
 
-	// In case swapping TERRA to LUNA, the terra swap pool(offer) is increased and the luna swap pool(ask) is decreased
+	// In case swapping Terra to Luna, the terra swap pool(offer) is increased and the luna swap pool(ask) is decreased
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom == core.MicroLunaDenom {
 		terraPool = terraPool.Add(offerBaseCoin.Amount)
 	}
 
-	// In case swapping LUNA to TERRA, the luna swap pool(offer) is increased and the terra swap pool(ask) is decreased
+	// In case swapping Luna to Terra, the luna swap pool(offer) is increased and the terra swap pool(ask) is decreased
 	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
 		terraPool = terraPool.Sub(askBaseCoin.Amount)
 	}
@@ -71,7 +71,7 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 		return sdk.DecCoin{}, sdk.Dec{}, err
 	}
 
-	// TERRA->TERRA swap
+	// Terra->Terra swap
 	// Apply only tobin tax without constant product spread
 	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
 		spread = k.TobinTax(ctx)
@@ -89,11 +89,11 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	var offerPool sdk.Dec // base denom(usdr) unit
 	var askPool sdk.Dec   // base denom(usdr) unit
 	if offerCoin.Denom != core.MicroLunaDenom {
-		// TERRA->LUNA swap
+		// Terra->Luna swap
 		offerPool = terraPool
 		askPool = lunaPool
 	} else {
-		// LUNA->TERRA swap
+		// Luna->Terra swap
 		offerPool = lunaPool
 		askPool = terraPool
 	}

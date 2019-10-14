@@ -115,7 +115,8 @@ func (k Keeper) ReplenishPools(ctx sdk.Context) {
 	basePool := k.GetBasePool(ctx)
 	terraPool := k.GetTerraPool(ctx)
 
-	regressionAmt := basePool.QuoInt64(core.BlocksPerDay)
+	delta := terraPool.Sub(basePool).Abs()
+	regressionAmt := delta.QuoInt64(k.PoolRecoveryPeriod(ctx))
 
 	// Replenish terra pool towards base pool
 	if terraPool.GT(basePool) {
@@ -144,7 +145,7 @@ func (k Keeper) UpdatePools(ctx sdk.Context) (sdk.Dec, sdk.Error) {
 		return sdk.ZeroDec(), err
 	}
 
-	basePool := k.DailyTerraLiquidityRatio(ctx).Mul(baseSupply.Amount)
+	basePool := k.TerraLiquidityRatio(ctx).Mul(baseSupply.Amount)
 	k.SetBasePool(ctx, basePool)
 	k.SetLastUpdateHeight(ctx, ctx.BlockHeight())
 

@@ -43,7 +43,7 @@ func TestUpdatePools(t *testing.T) {
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
 
 		input.MarketKeeper.UpdatePools(input.Ctx)
-		expectedBasePool := input.MarketKeeper.DailyTerraLiquidityRatio(input.Ctx).MulInt(total.AmountOf(core.MicroLunaDenom))
+		expectedBasePool := input.MarketKeeper.TerraLiquidityRatio(input.Ctx).MulInt(total.AmountOf(core.MicroLunaDenom))
 
 		require.Equal(t, expectedBasePool, input.MarketKeeper.GetBasePool(input.Ctx))
 	}
@@ -65,6 +65,9 @@ func TestReplenishPools(t *testing.T) {
 	input.MarketKeeper.SetTerraPool(input.Ctx, terraPool.Add(diff))
 
 	input.MarketKeeper.ReplenishPools(input.Ctx)
+
 	terraPool = input.MarketKeeper.GetTerraPool(input.Ctx)
-	require.Equal(t, basePool, terraPool)
+	replenishAmt := diff.QuoInt64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
+	expectedDelta := diff.Sub(replenishAmt)
+	require.Equal(t, basePool.Add(expectedDelta), terraPool)
 }

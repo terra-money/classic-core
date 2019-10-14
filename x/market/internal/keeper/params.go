@@ -11,9 +11,9 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// DailyTerraLiquidityRatio is the ratio of Terra's market cap which will be made available per day
-func (k Keeper) DailyTerraLiquidityRatio(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyDailyTerraLiquidityRatio, &res)
+// TerraLiquidityRatio is the ratio of Terra's market cap which will be made available per PoolRecoveryPeriod
+func (k Keeper) TerraLiquidityRatio(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyTerraLiquidityRatio, &res)
 	return
 }
 
@@ -29,7 +29,13 @@ func (k Keeper) PoolUpdateInterval(ctx sdk.Context) (res int64) {
 	return
 }
 
-// TobinTax is a tax on all spot conversions of one TERRA into another TERRA
+// PoolRecoveryPeriod is the period required to recover Terra&Luna Pool to BasePool
+func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyPoolRecoveryPeriod, &res)
+	return
+}
+
+// TobinTax is a tax on all spot conversions of one Terra into another Terra
 func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParmamStoreKeyTobinTax, &res)
 	return

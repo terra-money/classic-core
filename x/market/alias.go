@@ -51,11 +51,11 @@ var (
 	TerraPoolKey                          = types.TerraPoolKey
 	LastUpdateHeightKey                   = types.LastUpdateHeightKey
 	ParamStoreKeyPoolUpdateInterval       = types.ParamStoreKeyPoolUpdateInterval
-	ParamStoreKeyDailyTerraLiquidityRatio = types.ParamStoreKeyDailyTerraLiquidityRatio
+	ParamStoreKeyTerraLiquidityRatio = types.ParamStoreKeyTerraLiquidityRatio
 	ParamStoreKeyMinSpread                = types.ParamStoreKeyMinSpread
 	ParmamStoreKeyTobinTax                = types.ParmamStoreKeyTobinTax
 	DefaultPoolUpdateInterval             = types.DefaultPoolUpdateInterval
-	DefaultDailyTerraLiquidityRatio       = types.DefaultDailyTerraLiquidityRatio
+	DefaultTerraLiquidityRatio       = types.DefaultTerraLiquidityRatio
 	DefaultMinSpread                      = types.DefaultMinSpread
 	DefaultTobinTax                       = types.DefaultTobinTax
 )
