@@ -33,7 +33,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
-	// Transit whitelist array to map for fast lookup
+	// Changes whitelist array to map for fast lookup
 	whitelistMap := make(map[string]bool)
 	for _, denom := range k.Whitelist(ctx) {
 		whitelistMap[denom] = true
