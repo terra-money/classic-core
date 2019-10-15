@@ -2329,7 +2329,7 @@ paths:
             type: array
             items:
               type: string
-            example: ["uluna", "usdr"]
+            example: ["ukrw", "usdr"]
         400:
           description: Bad Request
         500:
@@ -3566,4 +3566,3 @@ definitions:
         type: number
         format: integer
         example: "10000"
-      
