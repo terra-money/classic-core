@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -251,69 +250,4 @@ func TestQueryFeederDelegation(t *testing.T) {
 	var delegatee sdk.AccAddress
 	cdc.UnmarshalJSON(res, &delegatee)
 	require.Equal(t, Addrs[1], delegatee)
-}
-
-func TestQueryVotingInfo(t *testing.T) {
-	cdc := codec.New()
-	input := CreateTestInput(t)
-	querier := NewQuerier(input.OracleKeeper)
-
-	votingInfo := types.NewVotingInfo(ValAddrs[0], 7, 1, 32)
-	input.OracleKeeper.SetVotingInfo(input.Ctx, ValAddrs[0], votingInfo)
-
-	queryParams := types.NewQueryVotingInfoParams(ValAddrs[0])
-	bz, err := cdc.MarshalJSON(queryParams)
-	require.NoError(t, err)
-
-	req := abci.RequestQuery{
-		Path: "",
-		Data: bz,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryVotingInfo}, req)
-	require.NoError(t, err)
-
-	var resVotingInfo types.VotingInfo
-	cdc.UnmarshalJSON(res, &resVotingInfo)
-	require.Equal(t, votingInfo, resVotingInfo)
-}
-
-func TestQueryVotingInfos(t *testing.T) {
-	cdc := codec.New()
-	input := CreateTestInput(t)
-	querier := NewQuerier(input.OracleKeeper)
-
-	votingInfo1 := types.NewVotingInfo(ValAddrs[0], 7, 1, 32)
-	input.OracleKeeper.SetVotingInfo(input.Ctx, ValAddrs[0], votingInfo1)
-	votingInfo2 := types.NewVotingInfo(ValAddrs[1], 7, 1, 32)
-	input.OracleKeeper.SetVotingInfo(input.Ctx, ValAddrs[1], votingInfo2)
-
-	queryParams := types.NewQueryVotingInfosParams(1, 2)
-	bz, err := cdc.MarshalJSON(queryParams)
-	require.NoError(t, err)
-
-	req := abci.RequestQuery{
-		Path: "",
-		Data: bz,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryVotingInfos}, req)
-	require.NoError(t, err)
-
-	var resVotingInfos []types.VotingInfo
-	cdc.UnmarshalJSON(res, &resVotingInfos)
-
-	bigger := bytes.Compare(Addrs[0].Bytes(), Addrs[1].Bytes())
-	var votingInfos []types.VotingInfo
-	if bigger == 1 {
-		votingInfos = []types.VotingInfo{
-			votingInfo2, votingInfo1,
-		}
-	} else {
-		votingInfos = []types.VotingInfo{
-			votingInfo1, votingInfo2,
-		}
-	}
-
-	require.Equal(t, votingInfos, resVotingInfos)
 }

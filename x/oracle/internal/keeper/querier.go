@@ -3,7 +3,6 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -26,10 +25,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryParameters(ctx, keeper)
 		case types.QueryFeederDelegation:
 			return queryFeederDelegation(ctx, req, keeper)
-		case types.QueryVotingInfo:
-			return queryVotingInfo(ctx, req, keeper)
-		case types.QueryVotingInfos:
-			return queryVotingInfos(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -170,55 +165,4 @@ func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 	return bz, nil
-}
-
-func queryVotingInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.QueryVotingInfoParams
-
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to parse params", err.Error()))
-	}
-
-	signingInfo, found := k.getVotingInfo(ctx, params.ValAddress)
-	if !found {
-		return nil, types.ErrNoVotingInfoFound(types.DefaultCodespace, params.ValAddress)
-	}
-
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, signingInfo)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to JSON marshal result: %s", err.Error()))
-	}
-
-	return res, nil
-}
-
-func queryVotingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.QueryVotingInfosParams
-
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to parse params", err.Error()))
-	}
-
-	var votingInfos []types.VotingInfo
-
-	k.IterateVotingInfos(ctx, func(info types.VotingInfo) (stop bool) {
-		votingInfos = append(votingInfos, info)
-		return false
-	})
-
-	start, end := client.Paginate(len(votingInfos), params.Page, params.Limit, int(k.StakingKeeper.MaxValidators(ctx)))
-	if start < 0 || end < 0 {
-		votingInfos = []types.VotingInfo{}
-	} else {
-		votingInfos = votingInfos[start:end]
-	}
-
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, votingInfos)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to JSON marshal result: %s", err.Error()))
-	}
-
-	return res, nil
 }

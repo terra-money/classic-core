@@ -35,28 +35,6 @@ func (k Keeper) RewardDistributionPeriod(ctx sdk.Context) (res int64) {
 	return
 }
 
-// VotesWindow returns the number of block units on which the penalty is based
-func (k Keeper) VotesWindow(ctx sdk.Context) (res int64) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyVotesWindow, &res)
-	return
-}
-
-// MinValidVotesPerWindow returns the minimum number of blocks to avoid slashing in a window
-func (k Keeper) MinValidVotesPerWindow(ctx sdk.Context) (res int64) {
-	var minValidVotesPerWindow sdk.Dec
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMinValidVotesPerWindow, &minValidVotesPerWindow)
-	signedBlocksWindow := k.VotesWindow(ctx)
-
-	// NOTE: RoundInt64 will never panic as minValidVotesPerWindow is less than 1.
-	return minValidVotesPerWindow.MulInt64(signedBlocksWindow).RoundInt64()
-}
-
-// SlashFraction returns the slashing ratio on the delegated token
-func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeySlashFraction, &res)
-	return
-}
-
 // Whitelist returns the denom list that can be acitivated
 func (k Keeper) Whitelist(ctx sdk.Context) (res types.DenomList) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyWhitelist, &res)

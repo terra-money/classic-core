@@ -6,43 +6,21 @@ import (
 
 // GenesisState - all oracle state that must be provided at genesis
 type GenesisState struct {
-	Params      Params                  `json:"params" yaml:"params"`
-	VotingInfos map[string]VotingInfo   `json:"voting_infos" yaml:"voting_infos"`
-	MissedVotes map[string][]MissedVote `json:"missed_votes" yaml:"missed_votes"`
+	Params Params `json:"params" yaml:"params"`
 }
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(
-	params Params, votingInfo map[string]VotingInfo, MissedVotes map[string][]MissedVote,
-) GenesisState {
+func NewGenesisState(params Params) GenesisState {
 
 	return GenesisState{
-		Params:      params,
-		VotingInfos: votingInfo,
-		MissedVotes: MissedVotes,
-	}
-}
-
-// MissedVote
-type MissedVote struct {
-	Index  int64 `json:"index" yaml:"index"`
-	Missed bool  `json:"missed" yaml:"missed"`
-}
-
-// NewMissedVote creates a new MissedVote instance
-func NewMissedVote(index int64, missed bool) MissedVote {
-	return MissedVote{
-		Index:  index,
-		Missed: missed,
+		Params: params,
 	}
 }
 
 // DefaultGenesisState - default GenesisState used by columbus-2
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:      DefaultParams(),
-		VotingInfos: make(map[string]VotingInfo),
-		MissedVotes: make(map[string][]MissedVote),
+		Params: DefaultParams(),
 	}
 }
 

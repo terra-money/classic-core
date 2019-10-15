@@ -58,16 +58,12 @@ var (
 	ErrInvalidMsgFormat            = types.ErrInvalidMsgFormat
 	ErrNoVotingInfoFound           = types.ErrNoVotingInfoFound
 	NewGenesisState                = types.NewGenesisState
-	NewMissedVote                  = types.NewMissedVote
 	DefaultGenesisState            = types.DefaultGenesisState
 	ValidateGenesis                = types.ValidateGenesis
 	GetPrevoteKey                  = types.GetPrevoteKey
 	GetVoteKey                     = types.GetVoteKey
 	GetPriceKey                    = types.GetPriceKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey
-	GetMissedVoteBitArrayPrefixKey = types.GetMissedVoteBitArrayPrefixKey
-	GetMissedVoteBitArrayKey       = types.GetMissedVoteBitArrayKey
-	GetVotingInfoKey               = types.GetVotingInfoKey
 	NewMsgPricePrevote             = types.NewMsgPricePrevote
 	NewMsgPriceVote                = types.NewMsgPriceVote
 	NewMsgDelegateFeederPermission = types.NewMsgDelegateFeederPermission
@@ -92,15 +88,10 @@ var (
 	VoteKey                               = types.VoteKey
 	PriceKey                              = types.PriceKey
 	FeederDelegationKey                   = types.FeederDelegationKey
-	MissedVoteBitArrayKey                 = types.MissedVoteBitArrayKey
-	VotingInfoKey                         = types.VotingInfoKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
 	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
 	ParamStoreKeyRewardDistributionPeriod = types.ParamStoreKeyRewardDistributionPeriod
-	ParamStoreKeyVotesWindow              = types.ParamStoreKeyVotesWindow
-	ParamStoreKeyMinValidVotesPerWindow   = types.ParamStoreKeyMinValidVotesPerWindow
-	ParamStoreKeySlashFraction            = types.ParamStoreKeySlashFraction
 	ParamStoreKeyWhitelist                = types.ParamStoreKeyWhitelist
 	DefaultVoteThreshold                  = types.DefaultVoteThreshold
 	DefaultRewardBand                     = types.DefaultRewardBand
@@ -119,7 +110,6 @@ type (
 	DistributionKeeper          = types.DistributionKeeper
 	SupplyKeeper                = types.SupplyKeeper
 	GenesisState                = types.GenesisState
-	MissedVote                  = types.MissedVote
 	MsgPricePrevote             = types.MsgPricePrevote
 	MsgPriceVote                = types.MsgPriceVote
 	MsgDelegateFeederPermission = types.MsgDelegateFeederPermission
@@ -135,6 +125,5 @@ type (
 	PriceVote                   = types.PriceVote
 	PriceVotes                  = types.PriceVotes
 	VotingInfo                  = types.VotingInfo
-	Hooks                       = keeper.Hooks
 	Keeper                      = keeper.Keeper
 )

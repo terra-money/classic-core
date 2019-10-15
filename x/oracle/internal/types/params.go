@@ -18,9 +18,6 @@ var (
 	ParamStoreKeyVoteThreshold            = []byte("votethreshold")
 	ParamStoreKeyRewardBand               = []byte("rewardband")
 	ParamStoreKeyRewardDistributionPeriod = []byte("rewarddistributionperiod")
-	ParamStoreKeyVotesWindow              = []byte("voteswindow")
-	ParamStoreKeyMinValidVotesPerWindow   = []byte("minvalidvotesperwindow")
-	ParamStoreKeySlashFraction            = []byte("slashfraction")
 	ParamStoreKeyWhitelist                = []byte("whitelist")
 )
 
@@ -48,9 +45,6 @@ type Params struct {
 	VoteThreshold            sdk.Dec   `json:"vote_threshold" yaml:"vote_threshold"`                         // the minimum percentage of votes that must be received for a ballot to pass.
 	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable price error that can be rewared.
 	RewardDistributionPeriod int64     `json:"reward_distribution_period" yaml:"reward_distribution_period"` // the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
-	VotesWindow              int64     `json:"votes_window" yaml:"votes_window"`                             // the number of blocks units on which the penalty is based.
-	MinValidVotesPerWindow   sdk.Dec   `json:"min_valid_votes_per_window" yaml:"min_valid_votes_per_window"` // the minimum number of blocks to avoid slashing in a window.
-	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`                         // the slashing ratio on the delegated token.
 	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
 }
 
@@ -61,9 +55,6 @@ func DefaultParams() Params {
 		VoteThreshold:            DefaultVoteThreshold,
 		RewardBand:               DefaultRewardBand,
 		RewardDistributionPeriod: DefaultRewardDistributionPeriod,
-		VotesWindow:              DefaultVotesWindow,
-		MinValidVotesPerWindow:   DefaultMinValidVotesPerWindow,
-		SlashFraction:            DefaultSlashFraction,
 		Whitelist:                DefaultWhitelist,
 	}
 }
@@ -82,15 +73,6 @@ func (params Params) Validate() error {
 	if params.RewardDistributionPeriod < params.VotePeriod {
 		return fmt.Errorf("oracle parameter RewardBand must be bigger or equal than Voteperiod")
 	}
-	if params.VotesWindow <= 10 {
-		return fmt.Errorf("oracle parameter VotesWindow must be > 0, is %d", params.VotesWindow)
-	}
-	if params.SlashFraction.GT(sdk.NewDecWithPrec(1, 2)) || params.SlashFraction.IsNegative() {
-		return fmt.Errorf("oracle parameter SlashFraction must be smaller or equal than 1 percent and positive")
-	}
-	if params.MinValidVotesPerWindow.IsNegative() || params.MinValidVotesPerWindow.GT(sdk.OneDec()) {
-		return fmt.Errorf("Min valid votes per window should be less than or equal to one and greater than zero, is %s", params.MinValidVotesPerWindow.String())
-	}
 	return nil
 }
 
@@ -103,9 +85,6 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{Key: ParamStoreKeyVoteThreshold, Value: &params.VoteThreshold},
 		{Key: ParamStoreKeyRewardBand, Value: &params.RewardBand},
 		{Key: ParamStoreKeyRewardDistributionPeriod, Value: &params.RewardDistributionPeriod},
-		{Key: ParamStoreKeyVotesWindow, Value: &params.VotesWindow},
-		{Key: ParamStoreKeyMinValidVotesPerWindow, Value: &params.MinValidVotesPerWindow},
-		{Key: ParamStoreKeySlashFraction, Value: &params.SlashFraction},
 		{Key: ParamStoreKeyWhitelist, Value: &params.Whitelist},
 	}
 }
@@ -117,10 +96,7 @@ func (params Params) String() string {
   VoteThreshold:               %s
 	RewardBand:                  %s
 	RewardDistributionPeriod:    %d
-	VotesWindow:                 %d
-	MinValidVotesPerWindow:      %s
-	SlashFraction:               %s
 	Whitelist                    %s
-	`, params.VotePeriod, params.VoteThreshold, params.RewardBand, params.RewardDistributionPeriod,
-		params.VotesWindow, params.MinValidVotesPerWindow, params.SlashFraction, params.Whitelist)
+	`, params.VotePeriod, params.VoteThreshold, params.RewardBand,
+		params.RewardDistributionPeriod, params.Whitelist)
 }

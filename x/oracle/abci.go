@@ -4,7 +4,6 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 
 	core "github.com/terra-project/core/types"
 )
@@ -26,13 +25,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		k.DeletePrice(ctx, activeDenom)
 	}
 
-	ballotAttendees := make(map[string]bool)
-	k.StakingKeeper.IterateBondedValidatorsByPower(ctx, func(_ int64, validator exported.ValidatorI) (stop bool) {
-		key := validator.GetOperator().String()
-		ballotAttendees[key] = true
-		return false
-	})
-
 	// Changes whitelist array to map for fast lookup
 	whitelistMap := make(map[string]bool)
 	for _, denom := range k.Whitelist(ctx) {
@@ -49,14 +41,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		}
 
 		// Get weighted median prices, and faithful respondants
-		mod, ballotWinners, ballotLosers := tally(ctx, ballot, k)
-
-		for _, loser := range ballotLosers {
-			key := loser.String()
-			if _, exists := ballotAttendees[key]; exists {
-				ballotAttendees[key] = false // inproper vote
-			}
-		}
+		mod, ballotWinners := tally(ctx, ballot, k)
 
 		// Collect claims of ballot winners
 		for _, winner := range ballotWinners {
@@ -88,9 +73,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	// Distribute rewards to ballot winners
 	k.RewardBallotWinners(ctx, claimPool)
-
-	// Update & check slash condition for the ballot losers
-	k.HandleBallotSlashing(ctx, ballotAttendees)
 
 	// Clear all prevotes
 	k.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
