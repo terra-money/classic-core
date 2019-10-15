@@ -1,16 +1,17 @@
 # Notes on validators
 
-{% hint style="info" %}
-    Information on how to join the current testnet \(`genesis.json` file and seeds\) is held [in our `networks` repo](https://github.com/terra-project/networks). Please check there if you are looking to join our latest testnet.
-{% endhint %}
+Information on how to join the current testnet (`genesis.json` file and seeds) is held in our "networks" [repo](https://github.com/terra-project/networks).
+Please check there if you are looking to join our latest testnet.
 
-**Note**: This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**
+{% hint style="warning" %}
+This documentation is only intended for validators of the **Soju public testnet** and the **Columbus public mainnet**.
+{% endhint %}
 
 Before setting up your validator node, make sure you've already gone through the [Full Node Setup](join-network.md) guide.
 
 ## What is a Validator?
 
-[Validators](../features/overview/) are responsible for committing new blocks to the blockchain through voting. To make sure validators remain loyal to the network, the Terra Protocol requires a "security deposit" of Luna tokens to be staked while the validators are active. A validator's stake is slashed if they become unavailable or sign multiple blocks at the same height.
+[Validators](../features/overview/) are responsible for committing new blocks to the blockchain through voting. To make sure validators remain loyal to the network, the Terra Protocol requires a "security deposit" of Luna tokens to be staked while the validators are active. A validator's stake is slashed if they become unavailable or sign blocks at the same height.
 
 Users looking to operate a Terra validator, or are simply looking to learn more should study up on the correct [security model](../features/overview/security.md), study [robust network topologies](../features/overview/validator-faq.md#how-can-validators-protect-themselves-from-denial-of-service-attacks), and familiarize themselves with Tendermint and [general information](../features/overview/).
 
@@ -25,7 +26,8 @@ terrad tendermint show-validator
 Next, craft your `terrad gentx` command:
 
 {% hint style="warning" %}
-    Don't use more Luna than you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
+Don't use more Luna than you have!
+You can always get more by using the [Faucet](https://faucet.terra.money/)!
 {% endhint %}
 
 ```bash
@@ -75,7 +77,7 @@ terrad gentx \
 **Note**: This command automatically store your `gentx` in `~/.terrad/config/gentx` for it to be processed at genesis.
 
 {% hint style="info" %}
-    Consult `terrad gentx --help` for more information on the flags defaults.
+Consult `terrad gentx --help` for more information on the flags defaults.
 {% endhint %}
 
 A `gentx` is a JSON file carrying a self-delegation. All genesis transactions are collected by a `genesis coordinator` and validated against an initial `genesis.json`. Such initial `genesis.json` contains only a list of accounts and their coins. Once the transactions are processed, they are merged in the `genesis.json`'s `gentxs` field.
@@ -204,14 +206,23 @@ terracli query tendermint-validator-set | grep "$(terrad tendermint show-validat
 You should also be able to see your validator on the Terra Station. You are looking for the `bech32` encoded `address` in the `~/.terrad/config/priv_validator.json` file.
 
 {% hint style="warning" %}
-    To be in the validator set, you need to have more total voting power than the 100th validator.
+To be in the validator set, you need to have more total voting power than the 100th validator.
 {% endhint %}
+
+## Halting Your Validator
+
+When attempting to perform routine maintenance or planning for an upcoming coordinated
+upgrade, it can be useful to have your validator systematically and gracefully halt.
+You can achieve this by either setting the `halt-height` to the height at which
+you want your node to shutdown or by passing the `--halt-height` flag to `terrad`.
+The node will shutdown with a zero exit code at that given height after committing
+the block.
 
 ## Common Problems
 
 ### Problem \#1: My validator has `voting_power: 0`
 
-Your validator has become auto-unbonded. In Soju and Columbus networks, we unbond validators if they do not vote on `50` of the last `100` blocks. Since blocks are proposed every ~2 seconds, a validator unresponsive for ~100 seconds will become unbonded. This usually happens when your `terrad` process crashes.
+Your validator has become auto-unbonded. In Soju and Columbus networks, we unbond validators if they do not vote on `9500` of the last `10000` blocks. Since blocks are proposed every ~5 seconds, a validator unresponsive for ~13 hours will become unbonded. This usually happens when your `terrad` process crashes.
 
 Here's how you can return the voting power back to your validator. First, if `terrad` is not running, start it up again:
 
@@ -219,14 +230,11 @@ Here's how you can return the voting power back to your validator. First, if `te
 terrad start
 ```
 
-Wait for your full node to catch up to the latest block. Next, run the following command. Note that `<terra>` is the address of your validator account, and `<name>` is the name of the validator account. You can find this info by running `terracli keys list`.
-
-```bash
-terracli tx slashing unjail <terra> --chain-id=<chain_id> --from=<from>
+Wait for your full node to catch up to the latest block. Then, you can [unjail your validator](#unjail-validator)
 ```
 
 {% hint style="danger" %}
-  If you don't wait for `terrad` to sync before running `unjail`, you will receive an error message telling you your validator is still jailed.
+If you don't wait for `terrad` to sync before running `unjail`, you will receive an error message telling you your validator is still jailed.
 {% endhint %}
 
 Lastly, check your validator again to see if your voting power is back.
@@ -259,4 +267,3 @@ LimitNOFILE=4096
 [Install]
 WantedBy=multi-user.target
 ```
-

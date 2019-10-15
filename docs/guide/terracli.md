@@ -71,7 +71,8 @@ terrad tendermint show-validator
 Note that this is the Tendermint signing key, _not_ the operator key you will use in delegation transactions.
 
 {% hint style="danger" %}
-    We strongly recommend _NOT_ using the same passphrase for multiple keys. The Terra team will not be responsible for the loss of funds.
+We strongly recommend **NOT** using the same passphrase for multiple keys.
+The Terra team will not be responsible for the loss of funds.
 {% endhint %}
 
 #### Generate multisig public keys
@@ -94,16 +95,17 @@ terracli keys add --multisig=baz,foo,bar --multisig-threshold=2 multisig_address
 Multisig addresses can also be generated on-the-fly and printed through the which command:
 
 ```bash
-terracli keys show --multisig-threshold K name1 name2 name3 [...]
+terracli keys show --multisig-threshold=K name1 name2 name3 [...]
 ```
 
 For more information regarding how to generate, sign and broadcast transactions with a multi signature account see [Multisig Transactions](terracli.md#multisig-transactions).
 
-### Fees & Gas
+### Fees
 
+#####  Fees & Gas
 Each transaction may either supply fees or gas prices, but not both. Most users will typically provide fees as this is the cost you will end up incurring for the transaction being included in the ledger.
 
-Validator's have a minimum gas price \(multi-denom\) configuration and they use this value when when determining if they should include the transaction in a block during `CheckTx`, where `gasPrices >= minGasPrices`. Note, your transaction must supply fees that are greater than or equal to **any** of the denominations the validator requires.
+Validator's have a minimum gas price \(multi-denom\) configuration and they use this value when determining if they should include the transaction in a block during `CheckTx`, where `gasPrices >= minGasPrices`. Note, your transaction must supply fees that are greater than or equal to **any** of the denominations the validator requires.
 
 **Note**: With such a mechanism in place, validators may start to prioritize txs by `gasPrice` in the mempool, so providing higher fees or gas prices may yield higher tx priority.
 
@@ -117,6 +119,22 @@ or
 
 ```bash
 terracli tx send ... --gas-prices=0.000001usdr
+```
+#### Fees & Taxes (From Columbus-3)
+The tax has been changed to be included in the fees rather than automatically charged from the sender account. Users can make transaction with existing method without fees flag but with gas prices flag. It will automatically calculate tax and return fees in addition to the existing gas fees.
+
+Wallet providers can estimate fees and gas to be incurred by a transaction by querying the endpoint `/txs/esitimate_fee` with `gas = auto`.
+
+e.g.
+
+```bash
+terracli tx send ... --gas-prices=0.000001usdr --gas=auto --gas-adjustment=1.4
+```
+
+or
+
+```bash
+terracli tx estimate-fee ... --gas-prices=0.000001usdr --gas=auto --gas-adjustment=1.4
 ```
 
 ### Account
@@ -134,7 +152,12 @@ terracli query account <account_terra>
 ```
 
 {% hint style="warning" %}
-    When you query an account balance with zero tokens, you will get this error: `No account with address <account_terra> was found in the state.` This can also happen if you fund the account before your node has fully synced with the chain. These are both normal.
+When you query an account balance with zero tokens, you will get this error:
+
+`No account with address <account_terra> was found in the state`.
+
+This can also happen if you fund the account before your node has fully synced with the chain.
+Both cases are to be expected.
 {% endhint %}
 
 ### Send Tokens
@@ -143,20 +166,28 @@ The following command could be used to send coins from one account to another:
 
 ```bash
 terracli tx send \
-  --to <destination_terra> \
-  --coins 10000000uluna \
+  <from_key_or_address> \
+  <to_address> \
+  <coins> \
   --chain-id=<chain_id> \
-  --from=<key_name> \
 ```
 
-where `destination_terra` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
+where `to_address` is a key matching the format: `terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6`
 
 {% hint style="warning" %}
-    The `--amount` flag accepts the format `--amount=<value|coin_name>`.
+The `<coins>` paramter is of the format `<value|coin_name>`.
+
+The `<from_key_or_address>` accepts both the key name and the address as the value, but only accepts addresses when the `--generate-only` flag is used.
 {% endhint %}
 
 {% hint style="info" %}
-    You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag. If you pass `--gas=auto`, the gas supply will be automatically estimated before executing the transaction. Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully. The adjustment can be controlled via the `--gas-adjustment` flag, whose default value is 1.0.
+You may want to cap the maximum gas that can be consumed by the transaction via the `--gas` flag.
+
+If you pass `--gas=auto`, the gas will be automatically estimated before executing the transaction.
+
+Gas estimate might be inaccurate as state changes could occur in between the end of the simulation and the actual execution of a transaction, thus an adjustment is applied on top of the original estimate in order to ensure the transaction is broadcasted successfully.
+
+The adjustment can be controlled via the `--gas-adjustment` flag, whose default value is 1.0.
 {% endhint %}
 
 Now, view the updated balances of the origin and destination accounts:
@@ -166,20 +197,20 @@ terracli query account <account_terra>
 terracli query account <destination_terra>
 ```
 
-You can also check your balance at a given block by using the `--block` flag:
+You can also check your balance at a given block by using the `--height` flag:
 
 ```bash
-terracli query account <account_terra> --block=<block_height>
+terracli query account <account_terra> --height=<block_height>
 ```
 
 You can simulate a transaction without actually broadcasting it by appending the `--dry-run` flag to the command line:
 
 ```bash
 terracli tx send \
-  --to <destination_terra> \
-  --coins 10000000uluna \
+  <from_key_or_address> \
+  <to_address> \
+  <coins> \
   --chain-id=<chain_id> \
-  --from=<key_name> \
   --dry-run
 ```
 
@@ -187,10 +218,10 @@ Furthermore, you can build a transaction and print its JSON format to STDOUT by 
 
 ```bash
 terracli tx send \
-  --to <destination_terraaccaddr> \ 
-  --coins 10000000uluna \
+  <from_key_or_address> \
+  <to_address> \
+  <coins> \
   --chain-id=<chain_id> \
-  --from=<key_name> \
   --generate-only > unsignedSendTx.json
 ```
 
@@ -239,8 +270,8 @@ The pagination is supported as well via `page` and `limit`:
 terracli query txs --tags='<tag>:<value>' --page=1 --limit=20
 ```
 {% hint style="info" %}
-    The action tag always equals the message type returned by the `Type()` function of the relevant message.
-    You can find a list of available `tags` on each module by looking at the /tags directory of each module.
+The action tag always equals the message type returned by the `Type()` function of the relevant message.
+You can find a list of available `tags` on each module by looking at the /tags directory of each module.
 {% endhint %}
 
 #### Matching a transaction's hash
@@ -258,7 +289,7 @@ terracli query tx [hash]
 To unjail your jailed validator
 
 ```bash
-terracli tx slashing unjail --from <validator-operator-addr>
+terracli tx slashing unjail --from=<validator-operator-addr>
 ```
 
 #### Signing Info
@@ -316,15 +347,15 @@ terracli tx staking delegate \
 `<validator>` is the operator address of the validator to which you intend to delegate. If you are running a local testnet, you can find this with:
 
 ```bash
-terracli keys show [name] --bech val
+terracli keys show <name> --bech val
 ```
 
-where `[name]` is the name of the key you specified when you initialized `terrad`.
+where `<name>` is the name of the key you specified when you initialized `terrad`.
 
 While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
 
 {% hint style="info" %}
-    Don't use more `luna` thank you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
+Don't use more `luna` than you have! You can always get more by using the [Faucet](https://faucet.terra.money/)!
 {% endhint %}
 
 **Query Delegations**
@@ -332,25 +363,26 @@ While tokens are bonded, they are pooled with all the other bonded tokens in the
 Once submitted a delegation to a validator, you can see it's information by using the following command:
 
 ```bash
-terracli query staking delegation <delegator_addr> <validator_addr>
+terracli query staking delegation <delegator_address> <validator_address>
 ```
 
 Or if you want to check all your current delegations with disctinct validators:
 
 ```bash
-terracli query staking delegations <delegator_addr>
+terracli query staking delegations <delegator_address>
 ```
 
 You can also get previous delegation\(s\) status by adding the `--height` flag.
 
 #### Unbond Tokens
 
-If for any reason the validator misbehaves, or you just want to unbond a certain amount of tokens, use this following command. You can unbond a specific `shares-amount` \(eg:`12.1`\) or a `shares-fraction` \(eg:`0.25`\) with the corresponding flags.
+If for any reason the validator misbehaves, or you just want to unbond a certain
+amount of tokens, use this following command.
 
 ```bash
 terracli tx staking unbond \
-  --validator=<account_terraval> \
-  --shares-fraction=0.5 \
+  <validator_address> \
+  100uluna \
   --from=<key_name> \
   --chain-id=<chain_id>
 ```
@@ -362,7 +394,7 @@ The unbonding will be automatically completed when the unbonding period has pass
 Once you begin an unbonding-delegation, you can see it's information by using the following command:
 
 ```bash
-terracli query staking unbonding-delegation <delegator_addr> <validator_addr>
+terracli query staking unbonding-delegation <delegator_address> <validator_address>
 ```
 
 Or if you want to check all your current unbonding-delegations with disctinct validators:
@@ -392,8 +424,6 @@ terracli tx staking redelegate \
   --chain-id=<chain_id>
 ```
 
-Here you can also redelegate a specific `shares-amount` or a `shares-fraction` with the corresponding flags.
-
 The redelegation will be automatically completed when the unbonding period has passed.
 
 **Query Redelegations**
@@ -401,7 +431,7 @@ The redelegation will be automatically completed when the unbonding period has p
 Once you begin an redelegation, you can see it's information by using the following command:
 
 ```bash
-terracli query staking redelegation <delegator_addr> <src_val_addr> <dst_val_addr>
+terracli query staking redelegation <delegator_address> <src_val_addr> <dst_val_addr>
 ```
 
 Or if you want to check all your current unbonding-delegations with disctinct validators:
@@ -432,6 +462,8 @@ With the above command you will get the values for:
 * Maximum numbers of validators
 * Coin denomination for staking
 
+All these values will be subject to updates though a `governance` process by `ParameterChange` proposals.
+
 #### Query Pool
 
 A staking `Pool` defines the dynamic parameters of the current state. You can query them with the following command:
@@ -455,6 +487,279 @@ You can also query all of the delegations to a particular validator:
   terracli query delegations-to <account_terraval>
 ```
 
+### Governance
+
+Governance is the process from which users in the Columbus can come to consensus
+on software upgrades, parameters of the mainnet or signaling mechanisms through
+text proposals. This is done through voting on proposals, which will be submitted
+by `LUNA` holders on the mainnet.
+
+Some considerations about the voting process:
+
+- Voting is done by bonded `LUNA` holders on a 1 bonded `LUNA` 1 vote basis
+- Delegators inherit the vote of their validator if they don't vote
+- Votes are tallied at the end of the voting period (2 weeks on mainnet) where
+each address can vote multiple times to update its `Option` value (paying the transaction fee each time),
+only the most recently cast vote will count as valid
+- Voters can choose between options `Yes`, `No`, `NoWithVeto` and `Abstain`
+- At the end of the voting period, a proposal is accepted iff:
+  - `(YesVotes / (YesVotes+NoVotes+NoWithVetoVotes)) > threshold(1/2)`
+  - `(NoWithVetoVotes / (YesVotes+NoVotes+NoWithVetoVotes)) < veto(1/3)`
+  - `((YesVotes+NoVotes+NoWithVetoVotes) / totalBondedStake) >= quorum(1/3)`
+
+For more information about the governance process and how it works, please check
+out the Governance module [specification](./../spec/governance).
+
+#### Create a Governance Proposal
+
+In order to create a governance proposal, you must submit an initial deposit
+along with a title and description. Various modules outside of governance may
+implement their own proposal types and handlers (eg. parameter changes), where
+the governance module itself supports `Text` proposals. Any module
+outside of governance has it's command mounted on top of `submit-proposal`.
+
+To submit a `Text` proposal:
+
+```bash
+terracli tx gov submit-proposal \
+  --title=<title> \
+  --description=<description> \
+  --type="Text" \
+  --deposit="1000000uluna" \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+You may also provide the proposal directly through the `--proposal` flag which
+points to a JSON file containing the proposal.
+
+To submit a parameter change proposal, you must provide a proposal file as its
+contents are less friendly to CLI input:
+
+```bash
+terracli tx gov submit-proposal param-change <path/to/proposal.json> \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+Where `proposal.json` contains the following:
+
+```json
+{
+  "title": "Param Change",
+  "description": "Update max validators",
+  "changes": [
+    {
+      "subspace": "staking",
+      "key": "MaxValidators",
+      "value": 105
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "stake",
+      "amount": "10000000"
+    }
+  ]
+}
+```
+
+{% hint style="danger" %}
+
+Currently parameter changes are _evaluated_ but not _validated_, so it is very important
+that any `value` change is valid (ie. correct type and within bounds) for its
+respective parameter, eg. `MaxValidators` should be an integer and not a decimal.
+
+Proper vetting of a parameter change proposal should prevent this from happening
+(no deposits should occur during the governance process), but it should be noted
+regardless. 
+
+{% endhint %}
+
+To submit a community pool spend proposal, you must provide a proposal file as its
+contents are less friendly to CLI input:
+
+```bash
+terracli tx gov submit-proposal community-pool-spend <path/to/proposal.json> \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+Where `proposal.json` contains the following:
+
+```json
+{
+  "title": "Community Pool Spend",
+  "description": "Pay me some Lunas!",
+  "recipient": "terra1s5afhd6gxevu37mkqcvvsj8qeylhn0rzn7cdaq",
+  "amount": [
+    {
+      "denom": "uluna",
+      "amount": "10000"
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "uluna",
+      "amount": "10000"
+    }
+  ]
+}
+```
+
+To submit a tax rate update proposal, you must provide a proposal file as its
+contents are less friendly to CLI input:
+
+```bash
+terracli tx gov submit-proposal tax-rate-update <path/to/proposal.json> \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+Where `proposal.json` contains the following:
+
+```json
+{
+  "title": "Update Tax Rate",
+  "description": "Lets update tax rate to 1.5%",
+  "tax_rate": "0.015",
+  "deposit": [
+    {
+      "denom": "uluna",
+      "amount": "10000"
+    }
+  ]
+}
+```
+
+To submit a reward weight update proposal, you must provide a proposal file as its
+contents are less friendly to CLI input:
+
+```bash
+terracli tx gov submit-proposal reward-weight-update <path/to/proposal.json> \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+Where `proposal.json` contains the following:
+
+```json
+{
+  "title": "Update Reward Weight",
+  "description": "Lets update reward weight to 1.5%",
+  "reward_weight": "0.015",
+  "deposit": [
+    {
+      "denom": "uluna",
+      "amount": "10000"
+    }
+  ]
+}
+```
+
+{% hint style="info" %}
+
+The `SoftwareUpgrade` is currently not supported as it's not implemented and
+currently does not differ from the semantics of a `Text` proposal.
+
+{% endhint %}
+
+##### Query Proposals
+
+Once created, you can now query information of the proposal:
+
+```bash
+terracli query gov proposal <proposal_id>
+```
+
+Or query all available proposals:
+
+```bash
+terracli query gov proposals
+```
+
+You can also query proposals filtered by `voter` or `depositor` by using the corresponding flags.
+
+To query for the proposer of a given governance proposal:
+
+```bash
+terracli query gov proposer <proposal_id>
+```
+
+#### Increase Deposit
+
+In order for a proposal to be broadcasted to the network, the amount deposited must be above a `minDeposit` value (initial value: `512000000uluna`). If the proposal you previously created didn't meet this requirement, you can still increase the total amount deposited to activate it. Once the minimum deposit is reached, the proposal enters voting period:
+
+```bash
+terracli tx gov deposit <proposal_id> "10000000luluna" \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+> _NOTE_: Proposals that don't meet this requirement will be deleted after `MaxDepositPeriod` is reached.
+
+##### Query Deposits
+
+Once a new proposal is created, you can query all the deposits submitted to it:
+
+```bash
+terracli query gov deposits <proposal_id>
+```
+
+You can also query a deposit submitted by a specific address:
+
+```bash
+terracli query gov deposit <proposal_id> <depositor_address>
+```
+
+#### Vote on a Proposal
+
+After a proposal's deposit reaches the `MinDeposit` value, the voting period opens. Bonded `Luna` holders can then cast vote on it:
+
+```bash
+terracli tx gov vote <proposal_id> <Yes/No/NoWithVeto/Abstain> \
+  --from=<name> \
+  --chain-id=<chain_id>
+```
+
+##### Query Votes
+
+Check the vote with the option you just submitted:
+
+```bash
+terracli query gov vote <proposal_id> <voter_address>
+```
+
+You can also get all the previous votes submitted to the proposal with:
+
+```bash
+terracli query gov votes <proposal_id>
+```
+
+#### Query proposal tally results
+
+To check the current tally of a given proposal you can use the `tally` command:
+
+```bash
+terracli query gov tally <proposal_id>
+```
+
+#### Query Governance Parameters
+
+To check the current governance parameters run:
+
+```bash
+terracli query gov params
+```
+
+To query subsets of the governance parameters run:
+
+```bash
+terracli query gov param voting
+terracli query gov param tallying
+terracli query gov param deposit
+```
+
 ### Fee Distribution
 
 #### Query distribution parameters
@@ -462,7 +767,15 @@ You can also query all of the delegations to a particular validator:
 To check the current distribution parameters, run:
 
 ```bash
-terracli query distr params
+terracli query distribution params
+```
+
+#### Query distribution community pool
+
+To query all coins in the community pool which is under Governance control:
+
+```bash
+terracli query distribution community-pool
 ```
 
 #### Query outstanding rewards
@@ -470,7 +783,7 @@ terracli query distr params
 To check the current outstanding \(un-withdrawn\) rewards, run:
 
 ```bash
-terracli query distr outstanding-rewards
+terracli query distribution outstanding-rewards
 ```
 
 #### Query validator commission
@@ -478,7 +791,7 @@ terracli query distr outstanding-rewards
 To check the current outstanding commission for a validator, run:
 
 ```bash
-terracli query distr commission <validator_address>
+terracli query distribution commission <validator_address>
 ```
 
 #### Query validator slashes
@@ -486,7 +799,7 @@ terracli query distr commission <validator_address>
 To check historical slashes for a validator, run:
 
 ```bash
-terracli query distr slashes <validator_address> <start_height> <end_height>
+terracli query distribution slashes <validator_address> <start_height> <end_height>
 ```
 
 #### Query delegator rewards
@@ -494,7 +807,7 @@ terracli query distr slashes <validator_address> <start_height> <end_height>
 To check current rewards for a delegation \(were they to be withdrawn\), run:
 
 ```bash
-terracli query distr rewards <delegator_address> <validator_address>
+terracli query distribution rewards <delegator_address> <validator_address>
 ```
 
 #### Query all delegator rewards
@@ -502,7 +815,7 @@ terracli query distr rewards <delegator_address> <validator_address>
 To check all current rewards for a delegation \(were they to be withdrawn\), run:
 
 ```bash
-terracli query distr rewards <delegator_address>
+terracli query distribution rewards <delegator_address>
 ```
 
 ### Multisig transactions
@@ -607,40 +920,29 @@ terracli completion --zsh > terracli_completion
 ```
 
 {% hint style="info" %}
-    On most UNIX systems, such scripts may be loaded in `.bashrc` or `.bash_profile` to enable Bash autocompletion.
+On most UNIX systems, such scripts may be loaded in `.bashrc` or `.bash_profile` to enable Bash autocompletion.
 
     ```bash
     echo '. terrad_completion' >> ~/.bashrc
     echo '. terracli_completion' >> ~/.bashrc
     ```
 
-    Refer to the user's manual of your interpreter provided by your operating system for information on how to enable shell autocompletion.
+Refer to the user's manual of your interpreter provided by your operating system for information on how to enable shell autocompletion.
 {% endhint %}
 
 ### Oracle
 
 #### Submit a price vote
 
-Validators must submit two price vote transactions to participate in the oracle; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly.
+Validators must submit two price vote transactions to participate in the oracle; a `prevote` containing the hash of the actual vote in the first vote period, and a `vote` containing the salt of the hash submitted in the prevote phase to prove honestly. The hash is the leading 20 bytes of the SHA256 hexa string run over the string of the format `salt:price:denom:validator-address`.
 
 To submit a prevote, run:
 
 ```bash
 terracli tx oracle prevote \
-  --denom <denom> \ 
-  --hash <hash> \
-  --from mykey
-```
-
-Where hash is the leading 20 bytes of the SHA256 hexa string run over the string of the format `salt:price:denom:validator-address`.
-
-Or to avoid having to create the hash yourself, run:
-
-```bash
-terracli tx oracle prevote \
-  --denom <denom> \
-  --price "8888" \ 
-  --salt <salt string> \
+  <salt> \ 
+  <price> \
+  <validator_address> \
   --from mykey
 ```
 
@@ -648,11 +950,13 @@ After VotePeriod has expired from the submission of the prevote, the voter must 
 
 ```bash
 terracli tx oracle vote \
-  --denom <denom> \
-  --price "8890"  \
+  <salt> \
+  <price>  \
+  <validator_address> \
   --from mykey \
   --validator <validator-address>
 ```
+Where price is the form of Coin `8890.32ukrw`
 
 Given that oracle votes have to be submitted in a feed over short time intervals, prevotes / votes will need to be submitted via some persistent server daemon, and not manually. For more information on how to do this, read [the oracle specs](../specifications/oracle.md).
 
@@ -661,10 +965,10 @@ Given that oracle votes have to be submitted in a feed over short time intervals
 A voter may also elect to delegate price voting to another signing key.
 
 ```bash
-terracli tx oracle set-feeder --feeder <feeder-address> --from mykey
+terracli tx oracle set-feeder <feeder_address> --from=mykey
 ```
 
-where `feeder-address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
+where `feeder_address` is the address you want to delegate your voting rights to. Note that the feeder will still need to submit votes on behalf of your validator in order for you to get credit.
 
 ### Market
 
@@ -673,109 +977,22 @@ where `feeder-address` is the address you want to delegate your voting rights to
 All currencies in the terra ecosystem can be swapped for each other atomically at the effective oracle exchange rate. To swap a currency for another, run:
 
 ```bash
-terracli tx market swap --offer-coin="1000ukrw" --ask-denom=<denom>
+terracli tx market swap <offer_coin> <ask_denom>
 ```
 
-Where `offercoin` is the coin looking to be traded and `ask-denom` the denomination of the coin to be swapped into.
+Where `offer_coin` is the coin looking to be traded and `ask_denom` the denomination of the coin to be swapped into.
 
-For Terra &lt;&gt; Luna swaps, a daily cap and a spread is enforced to limit consensus related attack vectors. Terra &lt;&gt; Terra swaps have no limits and no spread.
+For Terra &lt;&gt; Luna swaps, constant product (uni-swap) model is enforced to limit consensus related attack vectors. Terra &lt;&gt; Terra swaps have constant tobin tax(0.3%).
 
-### Budget
+#### Query Swap currencies
 
-#### Submit a budget program application
-
-To submit a budget program application, run:
+The Market module provides swap simulation, allowing anyone to predict swap results. To simulate swap operation, run:
 
 ```bash
-terracli tx budget submit-program --program="path/to/program.json" --from mykey
+terracli query market swap <offer_coin> <ask_denom>
 ```
 
-where program.json contains:
-
-```bash
-{
-  "title": "Test program",
-  "description": "My awesome program (include a website link for impact)",
-  "executor": terra1nk5lsuvy0rcfjcdr8au8za0wq25rat0qa07p6t,
-}
-```
-
-Alternatively, you can decided to specify all the parameters by running:
-
-```bash
-terracli tx budget submit-program --title="Test program" --description="My awesome program" ... --from mykey
-```
-
-Upon successful completion, a small deposit will be withdrawn from the sender's wallet to prevent spamming. The deposit is returned on application withdrawal.
-
-#### Withdraw a budget program application
-
-A budget program that has not been accepted yet \(is still in the candidate set\) can be withdrawn for the deposit to be reclaimed. To do so, run:
-
-```bash
-terracli tx budget withdraw --program-id <program-id>
-```
-
-Where `program-id` is the id of the program that had been generated when the application had been submitted. Only the original submitter of the program can withdraw the application.
-
-#### Vote on a budget program \(application and active\)
-
-The same command can be used to vote for both active and candidate programs. To do so, run:
-
-```bash
-terracli tx budget vote --program-id <program-id>  --option yes --from mykey
-```
-
-Where `program-id` is the id of the program that had been generated when the application had been submitted. `option` is one of `yes` or `no`.
-
-#### Query a program
-
-To query the details of a program by its id, run:
-
-```bash
-terracli query budget program --program-id <program-id>
-```
-
-Where `program-id` is the id of the program that had been generated when the application had been submitted.
-
-#### Query the active program list
-
-To query the list of active programs:
-
-```bash
-terracli query budget candidate-list
-```
-
-#### Query the candidate program list
-
-To query the list of candidate programs:
-
-```bash
-terracli query budget candidate-list
-```
-
-#### Query outstanding votes
-
-To query the list of outstanding program votes, both candidate and active:
-
-```bash
-terracli query budget votes
-```
-
-#### Query parameters
-
-Parameters define high level settings for the budget module. You can get the current values by using:
-
-```bash
-terracli query budget params
-```
-
-With the above command you will get the values for:
-
-* Threshold in voting power for candidate programs to become active
-* Threshold in voting power for active programs to become legacied
-* Budget vote period
-* Deposit required to submit program applications
+Where `offer_coin` is the coin looking to be traded and `ask_denom` the denomination of the coin to be swapped into.
 
 ### Treasury
 
@@ -792,7 +1009,7 @@ terracli query treasury current-epoch
 Terra transactions charge a % fee on each outbound transaction from the sender's wallet. To get the effective stability fee rate for a given epoch, run:
 
 ```bash
-terracli query treasury tax-rate <epoch-number>
+terracli query treasury tax-rate <epoch_number>
 ```
 
 #### Query Tax Cap
@@ -808,7 +1025,7 @@ terracli query treasury tax-cap <denom>
 To query the cumulative tax proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury tax-proceeds <epoch-number>
+terracli query treasury tax-proceeds <epoch_number>
 ```
 
 #### Query Mining Reward Weight
@@ -816,7 +1033,7 @@ terracli query treasury tax-proceeds <epoch-number>
 The mining reward weight is the portion of seigniorage that is burned to reward miners. To query the weight of a given epoch, run:
 
 ```bash
-terracli query treasury reward-weight <epoch-number>
+terracli query treasury reward-weight <epoch_number>
 ```
 
 #### Query Seigniorage Proceeds
@@ -824,7 +1041,7 @@ terracli query treasury reward-weight <epoch-number>
 The treasury measures the amount of Terra seigniorage accumulated over epochs, denominated in units of `uluna`. To query the seigniorage proceeds of a given epoch, run:
 
 ```bash
-terracli query treasury seigniorage-proceeds <epoch-number>
+terracli query treasury seigniorage-proceeds <epoch_number>
 ```
 
 #### Query Parameters
@@ -844,4 +1061,3 @@ With the above command you will get the values for:
 * Window short \(update parameter\)
 * Window long \(update parameter\)
 * Window probabtion \(update parameter\)
-
