@@ -126,5 +126,4 @@ type (
 	PriceVotes                  = types.PriceVotes
 	VotingInfo                  = types.VotingInfo
 	Keeper                      = keeper.Keeper
-	Hooks                       = keeper.Hooks
 )
