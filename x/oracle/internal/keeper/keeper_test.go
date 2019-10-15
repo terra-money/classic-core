@@ -209,17 +209,17 @@ func TestParams(t *testing.T) {
 	votesWindow := int64(2000)
 	minValidVotesPerWindow := sdk.NewDecWithPrec(1, 2)
 	slashFraction := sdk.NewDecWithPrec(5, 2)
-	rewardFraction := sdk.NewDecWithPrec(1, 2)
+	rewardDistributionPeriod := int64(10000000000000)
 
 	// Should really test validateParams, but skipping because obvious
 	newParams := types.Params{
-		VotePeriod:             votePeriod,
-		VoteThreshold:          voteThreshold,
-		RewardBand:             oracleRewardBand,
-		VotesWindow:            votesWindow,
-		MinValidVotesPerWindow: minValidVotesPerWindow,
-		SlashFraction:          slashFraction,
-		RewardFraction:         rewardFraction,
+		VotePeriod:               votePeriod,
+		VoteThreshold:            voteThreshold,
+		RewardBand:               oracleRewardBand,
+		VotesWindow:              votesWindow,
+		MinValidVotesPerWindow:   minValidVotesPerWindow,
+		SlashFraction:            slashFraction,
+		RewardDistributionPeriod: rewardDistributionPeriod,
 	}
 	input.OracleKeeper.SetParams(input.Ctx, newParams)
 
