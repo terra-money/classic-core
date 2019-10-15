@@ -11,21 +11,19 @@ import (
 )
 
 const (
-	DefaultCodespace      = types.DefaultCodespace
-	CodeInsufficientSwap  = types.CodeInsufficientSwap
-	CodeNoEffectivePrice  = types.CodeNoEffectivePrice
-	CodeRecursiveSwap     = types.CodeRecursiveSwap
-	CodeInactive          = types.CodeInactive
-	ModuleName            = types.ModuleName
-	StoreKey              = types.StoreKey
-	RouterKey             = types.RouterKey
-	QuerierRoute          = types.QuerierRoute
-	DefaultParamspace     = types.DefaultParamspace
-	QuerySwap             = types.QuerySwap
-	QueryTerraPool        = types.QueryTerraPool
-	QueryBasePool         = types.QueryBasePool
-	QueryLastUpdateHeight = types.QueryLastUpdateHeight
-	QueryParameters       = types.QueryParameters
+	DefaultCodespace     = types.DefaultCodespace
+	CodeInsufficientSwap = types.CodeInsufficientSwap
+	CodeNoEffectivePrice = types.CodeNoEffectivePrice
+	CodeRecursiveSwap    = types.CodeRecursiveSwap
+	CodeInactive         = types.CodeInactive
+	ModuleName           = types.ModuleName
+	StoreKey             = types.StoreKey
+	RouterKey            = types.RouterKey
+	QuerierRoute         = types.QuerierRoute
+	DefaultParamspace    = types.DefaultParamspace
+	QuerySwap            = types.QuerySwap
+	QueryTerraPoolDelta  = types.QueryTerraPoolDelta
+	QueryParameters      = types.QueryParameters
 )
 
 var (
@@ -46,18 +44,17 @@ var (
 	NewQuerier               = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                             = types.ModuleCdc
-	BasePoolKey                           = types.BasePoolKey
-	TerraPoolKey                          = types.TerraPoolKey
-	LastUpdateHeightKey                   = types.LastUpdateHeightKey
-	ParamStoreKeyPoolUpdateInterval       = types.ParamStoreKeyPoolUpdateInterval
-	ParamStoreKeyTerraLiquidityRatio = types.ParamStoreKeyTerraLiquidityRatio
-	ParamStoreKeyMinSpread                = types.ParamStoreKeyMinSpread
-	ParmamStoreKeyTobinTax                = types.ParmamStoreKeyTobinTax
-	DefaultPoolUpdateInterval             = types.DefaultPoolUpdateInterval
-	DefaultTerraLiquidityRatio       = types.DefaultTerraLiquidityRatio
-	DefaultMinSpread                      = types.DefaultMinSpread
-	DefaultTobinTax                       = types.DefaultTobinTax
+	ModuleCdc                       = types.ModuleCdc
+	TerraPoolDeltaKey               = types.TerraPoolDeltaKey
+	ParamStoreKeyBasePool           = types.ParamStoreKeyBasePool
+	ParamStoreKeyPoolRecoveryPeriod = types.ParamStoreKeyPoolRecoveryPeriod
+	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinSpread
+	ParmamStoreKeyTobinTax          = types.ParmamStoreKeyTobinTax
+	DefaultBasePool                 = types.DefaultBasePool
+	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
+	DefaultTerraLiquidityRatio      = types.DefaultTerraLiquidityRatio
+	DefaultMinSpread                = types.DefaultMinSpread
+	DefaultTobinTax                 = types.DefaultTobinTax
 )
 
 type (

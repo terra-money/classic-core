@@ -26,9 +26,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	marketQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQuerySwap(queryRoute, cdc),
-		GetCmdQueryTerraPool(queryRoute, cdc),
-		GetCmdQueryBasePool(queryRoute, cdc),
-		GetCmdQueryLastUpdateHeight(queryRoute, cdc),
+		GetCmdQueryTerraPoolDelta(queryRoute, cdc),
 		GetCmdQueryParams(queryRoute, cdc),
 	)...)
 
@@ -74,78 +72,27 @@ $ terracli query query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryTerraPool implements the query params command.
-func GetCmdQueryTerraPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTerraPoolDelta implements the query params command.
+func GetCmdQueryTerraPoolDelta(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "terra-pool",
+		Use:   "terra-pool-delta",
 		Args:  cobra.NoArgs,
-		Short: "Query terra pool",
-		Long: `Query terra pool, which is the amount of remaining Terra liquidity for the swap.
+		Short: "Query terra pool delta",
+		Long: `Query terra pool delta, which is the gap between TerraPool and BasePool.
 
-	$ terracli query market terra-pool
+	$ terracli query market terra-pool-delta
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPool), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPoolDelta), nil)
 			if err != nil {
 				return err
 			}
 
-			var pool sdk.Dec
-			cdc.MustUnmarshalJSON(res, &pool)
-			return cliCtx.PrintOutput(pool)
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdQueryBasePool implements the query params command.
-func GetCmdQueryBasePool(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "base-pool",
-		Args:  cobra.NoArgs,
-		Short: "Query equilibrium base pool",
-		Long: `Query equilibrium base pool, which is the target Terra liquidity amount. 
-	It means the maximum amount of Terra that can be issued or burned in any 24 period.
-
-	$ terracli query market base-pool
-	`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBasePool), nil)
-			if err != nil {
-				return err
-			}
-
-			var BasePool sdk.Dec
-			cdc.MustUnmarshalJSON(res, &BasePool)
-			return cliCtx.PrintOutput(BasePool)
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdQueryLastUpdateHeight implements the query params command.
-func GetCmdQueryLastUpdateHeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "last-update-height",
-		Args:  cobra.NoArgs,
-		Short: "Query last height of pool update",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLastUpdateHeight), nil)
-			if err != nil {
-				return err
-			}
-
-			var lastUpdateHeight int64
-			cdc.MustUnmarshalJSON(res, &lastUpdateHeight)
-			return cliCtx.PrintOutput(sdk.NewInt(lastUpdateHeight))
+			var poolDelta sdk.Dec
+			cdc.MustUnmarshalJSON(res, &poolDelta)
+			return cliCtx.PrintOutput(poolDelta)
 		},
 	}
 

@@ -2104,9 +2104,9 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/terra_pool:
+  /market/terra_pool_delta:
     get:
-      summary: Get TERRA pool amount
+      summary: Get Terra pool delta, which is the gap between TerraPool and BasePool
       tags:
         - Market
       produces:
@@ -2118,42 +2118,6 @@ paths:
             type: number
             format: float
             example: "10000000.00"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /market/base_pool:
-    get:
-      summary: Get Base(equilibrium) pool amount
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "10000000.00"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /market/last_update_height:
-    get:
-      summary: Get last pool update height
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: integer
-            example: "1123"
         400:
           description: Bad Request
         500:

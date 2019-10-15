@@ -166,12 +166,8 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	/* Handle market state. */
 
-	// reset last update height
-	app.marketKeeper.SetLastUpdateHeight(ctx, 0)
-
 	// clear all market pools
-	app.marketKeeper.SetBasePool(ctx, sdk.ZeroDec())
-	app.marketKeeper.SetTerraPool(ctx, sdk.ZeroDec())
+	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
 
 	/* Handle treasury state. */
 

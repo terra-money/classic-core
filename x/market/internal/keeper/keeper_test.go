@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,43 +9,17 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-func TestTerraPoolUpdate(t *testing.T) {
+func TestTerraPoolDeltaUpdate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
-	terraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
-	require.Equal(t, basePool, terraPool)
+	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	require.Equal(t, sdk.ZeroDec(), terraPoolDelta)
 
 	diff := sdk.NewDec(10)
-	input.MarketKeeper.SetTerraPool(input.Ctx, terraPool.Sub(diff))
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, diff)
 
-	terraPool = input.MarketKeeper.GetTerraPool(input.Ctx)
-	require.Equal(t, basePool.Sub(diff), terraPool)
-}
-
-func TestUpdatePools(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// oracle price
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
-
-	for i := 0; i < 100; i++ {
-		delta := sdk.NewDecWithPrec(rand.Int63n(1000), 4)
-
-		supply := input.SupplyKeeper.GetSupply(input.Ctx)
-		total := supply.GetTotal()
-		issuance := total.AmountOf(core.MicroLunaDenom)
-		issuance = sdk.OneDec().Add(delta).MulInt(issuance).TruncateInt() // (1+delta) * issuance
-
-		total = total.Add(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, issuance)))
-		supply = supply.SetTotal(total)
-		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-
-		input.MarketKeeper.UpdatePools(input.Ctx)
-		expectedBasePool := input.MarketKeeper.TerraLiquidityRatio(input.Ctx).MulInt(total.AmountOf(core.MicroLunaDenom))
-
-		require.Equal(t, expectedBasePool, input.MarketKeeper.GetBasePool(input.Ctx))
-	}
+	terraPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	require.Equal(t, diff, terraPoolDelta)
 }
 
 // TestReplenishPools tests that
@@ -54,20 +27,18 @@ func TestUpdatePools(t *testing.T) {
 func TestReplenishPools(t *testing.T) {
 	input := CreateTestInput(t)
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
-	_, err := input.MarketKeeper.UpdatePools(input.Ctx)
-	require.NoError(t, err)
 
-	basePool := input.MarketKeeper.GetBasePool(input.Ctx)
-	terraPool := input.MarketKeeper.GetTerraPool(input.Ctx)
-	require.Equal(t, basePool, terraPool)
+	basePool := input.MarketKeeper.BasePool(input.Ctx)
+	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	require.True(t, terraPoolDelta.IsZero())
 
 	diff := basePool.QuoInt64(core.BlocksPerDay)
-	input.MarketKeeper.SetTerraPool(input.Ctx, terraPool.Add(diff))
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, diff)
 
 	input.MarketKeeper.ReplenishPools(input.Ctx)
 
-	terraPool = input.MarketKeeper.GetTerraPool(input.Ctx)
+	terraPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	replenishAmt := diff.QuoInt64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
 	expectedDelta := diff.Sub(replenishAmt)
-	require.Equal(t, basePool.Add(expectedDelta), terraPool)
+	require.Equal(t, expectedDelta, terraPoolDelta)
 }

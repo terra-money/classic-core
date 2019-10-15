@@ -50,7 +50,6 @@ func TestQuerySwap(t *testing.T) {
 
 	price := sdk.NewDecWithPrec(17, 1)
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, price)
-	input.MarketKeeper.UpdatePools(input.Ctx)
 
 	querier := NewQuerier(input.MarketKeeper)
 	var err error
@@ -103,8 +102,8 @@ func TestQueryTerraPool(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 
-	pool := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetTerraPool(input.Ctx, pool)
+	poolDelta := sdk.NewDecWithPrec(17, 1)
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, poolDelta)
 
 	querier := NewQuerier(input.MarketKeeper)
 	query := abci.RequestQuery{
@@ -112,52 +111,11 @@ func TestQueryTerraPool(t *testing.T) {
 		Data: nil,
 	}
 
-	res, errRes := querier(input.Ctx, []string{types.QueryTerraPool}, query)
+	res, errRes := querier(input.Ctx, []string{types.QueryTerraPoolDelta}, query)
 	require.NoError(t, errRes)
 
 	var retPool sdk.Dec
 	err := cdc.UnmarshalJSON(res, &retPool)
 	require.NoError(t, err)
-	require.Equal(t, pool, retPool)
-}
-
-func TestQueryLastUpdateHeight(t *testing.T) {
-	cdc := codec.New()
-	input := CreateTestInput(t)
-
-	input.MarketKeeper.SetLastUpdateHeight(input.Ctx, 1)
-
-	querier := NewQuerier(input.MarketKeeper)
-	query := abci.RequestQuery{
-		Path: "",
-		Data: nil,
-	}
-
-	res, errRes := querier(input.Ctx, []string{types.QueryLastUpdateHeight}, query)
-	require.NoError(t, errRes)
-
-	var retPool int64
-	err := cdc.UnmarshalJSON(res, &retPool)
-	require.NoError(t, err)
-	require.Equal(t, int64(1), retPool)
-}
-
-func TestQueryBasePool(t *testing.T) {
-	cdc := codec.New()
-	input := CreateTestInput(t)
-
-	querier := NewQuerier(input.MarketKeeper)
-	query := abci.RequestQuery{
-		Path: "",
-		Data: []byte{},
-	}
-
-	res, errRes := querier(input.Ctx, []string{types.QueryBasePool}, query)
-
-	require.NoError(t, errRes)
-	var retBasePool sdk.Dec
-	err := cdc.UnmarshalJSON(res, &retBasePool)
-	require.NoError(t, err)
-
-	require.Equal(t, input.MarketKeeper.GetBasePool(input.Ctx), retBasePool)
+	require.Equal(t, poolDelta, retPool)
 }

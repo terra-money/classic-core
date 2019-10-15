@@ -14,12 +14,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QuerySwap:
 			return querySwap(ctx, req, keeper)
-		case types.QueryTerraPool:
-			return queryTerraPool(ctx, keeper)
-		case types.QueryBasePool:
-			return queryBasePool(ctx, keeper)
-		case types.QueryLastUpdateHeight:
-			return queryLastUpdateHeight(ctx, keeper)
+		case types.QueryTerraPoolDelta:
+			return queryTerraPoolDelta(ctx, keeper)
 		case types.QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -61,28 +57,12 @@ func querySwap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, s
 	return bz, nil
 }
 
-func queryTerraPool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetTerraPool(ctx))
+func queryTerraPoolDelta(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetTerraPoolDelta(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
-	return bz, nil
-}
-
-func queryBasePool(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetBasePool(ctx))
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-	return bz, nil
-}
-
-func queryLastUpdateHeight(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetLastUpdateHeight(ctx))
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
 	return bz, nil
 }
 

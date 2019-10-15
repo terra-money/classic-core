@@ -12,10 +12,10 @@ func TestGenesisValidation(t *testing.T) {
 	genState := DefaultGenesisState()
 	require.NoError(t, ValidateGenesis(genState))
 
-	genState.Params.PoolUpdateInterval = -1
+	genState.Params.BasePool = sdk.NewDec(-1)
 	require.Error(t, ValidateGenesis(genState))
 
-	genState.Params.TerraLiquidityRatio = sdk.NewDec(-1)
+	genState.Params.PoolRecoveryPeriod = -1
 	require.Error(t, ValidateGenesis(genState))
 
 	genState.Params.MinSpread = sdk.NewDec(-1)

@@ -8,29 +8,23 @@ import (
 
 // GenesisState - all market state that must be provided at genesis
 type GenesisState struct {
-	BasePool         sdk.Dec `json:"base_pool" yaml:"base_pool"`
-	TerraPool        sdk.Dec `json:"terra_pool" yaml:"terra_pool"`
-	LastUpdateHeight int64   `json:"last_update_height" yaml:"last_update_height"`
-	Params           Params  `json:"params" yaml:"params"` // market params
+	TerraPoolDelta sdk.Dec `json:"terra_pool_delta" yaml:"terra_pool_delta"`
+	Params         Params  `json:"params" yaml:"params"` // market params
 }
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(basePool, terraPool sdk.Dec, lastUpdateHeight int64, params Params) GenesisState {
+func NewGenesisState(terraPoolDelta sdk.Dec, params Params) GenesisState {
 	return GenesisState{
-		BasePool:         basePool,
-		TerraPool:        terraPool,
-		LastUpdateHeight: lastUpdateHeight,
-		Params:           params,
+		TerraPoolDelta: terraPoolDelta,
+		Params:         params,
 	}
 }
 
 // DefaultGenesisState returns raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		BasePool:         sdk.ZeroDec(),
-		TerraPool:        sdk.ZeroDec(),
-		LastUpdateHeight: 0,
-		Params:           DefaultParams(),
+		TerraPoolDelta: sdk.ZeroDec(),
+		Params:         DefaultParams(),
 	}
 }
 

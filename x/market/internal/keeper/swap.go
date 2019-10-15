@@ -16,7 +16,7 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 		return nil
 	}
 
-	terraPool := k.GetTerraPool(ctx)
+	terraPoolDelta := k.GetTerraPoolDelta(ctx)
 
 	offerBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(offerCoin), core.MicroSDRDenom)
 	if err != nil {
@@ -30,15 +30,15 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 
 	// In case swapping Terra to Luna, the terra swap pool(offer) is increased and the luna swap pool(ask) is decreased
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom == core.MicroLunaDenom {
-		terraPool = terraPool.Add(offerBaseCoin.Amount)
+		terraPoolDelta = terraPoolDelta.Add(offerBaseCoin.Amount)
 	}
 
 	// In case swapping Luna to Terra, the luna swap pool(offer) is increased and the terra swap pool(ask) is decreased
 	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
-		terraPool = terraPool.Sub(askBaseCoin.Amount)
+		terraPoolDelta = terraPoolDelta.Sub(askBaseCoin.Amount)
 	}
 
-	k.SetTerraPool(ctx, terraPool)
+	k.SetTerraPoolDelta(ctx, terraPoolDelta)
 
 	return nil
 }
@@ -48,11 +48,6 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
 func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (retDecCoin sdk.DecCoin, spread sdk.Dec, err sdk.Error) {
-
-	// BasePool update is delayed, so block swap
-	if !k.IsMarketActive(ctx) {
-		return sdk.DecCoin{}, sdk.ZeroDec(), types.ErrInactive(k.codespace)
-	}
 
 	// Return invalid recursive swap err
 	if offerCoin.Denom == askDenom {
@@ -78,12 +73,13 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 		return
 	}
 
-	basePool := k.GetBasePool(ctx)
+	basePool := k.BasePool(ctx)
 	minSpread := k.MinSpread(ctx)
 
 	// constant-product, which by construction is square of base(equilibrium) pool
 	cp := basePool.Mul(basePool)
-	terraPool := k.GetTerraPool(ctx)
+	terraPoolDelta := k.GetTerraPoolDelta(ctx)
+	terraPool := basePool.Add(terraPoolDelta)
 	lunaPool := cp.Quo(terraPool)
 
 	var offerPool sdk.Dec // base denom(usdr) unit

@@ -18,11 +18,7 @@ const (
 // Items are stored with the following key: values
 //
 // - 0x01: sdk.Dec
-// - 0x02: sdk.Dec
-// - 0x03: int64
 var (
 	//Keys for store prefixed
-	BasePoolKey         = []byte{0x01} // key for a Base Pool
-	TerraPoolKey        = []byte{0x02} // key for Terra Pool
-	LastUpdateHeightKey = []byte{0x03} // key for Last Update Height
+	TerraPoolDeltaKey = []byte{0x02} // key for Terra pool delta which gap between TerraPool from BasePool
 )
