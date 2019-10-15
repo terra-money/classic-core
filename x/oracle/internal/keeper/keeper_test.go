@@ -178,6 +178,36 @@ func TestPrice(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestIterateLunaPrices(t *testing.T) {
+	input := CreateTestInput(t)
+
+	cnyPrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	gbpPrice := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	krwPrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	lunaPrice := sdk.NewDecWithPrec(3282384, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+
+	// Set & get prices
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroCNYDenom, cnyPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroGBPDenom, gbpPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, krwPrice)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroLunaDenom, lunaPrice)
+
+	input.OracleKeeper.IterateLunaPrices(input.Ctx, func(denom string, price sdk.Dec) (stop bool) {
+		switch denom {
+		case core.MicroCNYDenom:
+			require.Equal(t, cnyPrice, price)
+		case core.MicroGBPDenom:
+			require.Equal(t, gbpPrice, price)
+		case core.MicroKRWDenom:
+			require.Equal(t, krwPrice, price)
+		case core.MicroLunaDenom:
+			require.Equal(t, lunaPrice, price)
+		}
+		return false
+	})
+
+}
+
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
 
@@ -206,9 +236,6 @@ func TestParams(t *testing.T) {
 	votePeriod := int64(10)
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	votesWindow := int64(2000)
-	minValidVotesPerWindow := sdk.NewDecWithPrec(1, 2)
-	slashFraction := sdk.NewDecWithPrec(5, 2)
 	rewardDistributionPeriod := int64(10000000000000)
 
 	// Should really test validateParams, but skipping because obvious
@@ -216,9 +243,6 @@ func TestParams(t *testing.T) {
 		VotePeriod:               votePeriod,
 		VoteThreshold:            voteThreshold,
 		RewardBand:               oracleRewardBand,
-		VotesWindow:              votesWindow,
-		MinValidVotesPerWindow:   minValidVotesPerWindow,
-		SlashFraction:            slashFraction,
 		RewardDistributionPeriod: rewardDistributionPeriod,
 	}
 	input.OracleKeeper.SetParams(input.Ctx, newParams)
@@ -240,55 +264,25 @@ func TestFeederDelegation(t *testing.T) {
 	require.Equal(t, delegate, Addrs[1])
 }
 
-func TestVotingInfo(t *testing.T) {
+func TestIterateFeederDelegations(t *testing.T) {
 	input := CreateTestInput(t)
 
-	// voting info not found
-	_, found := input.OracleKeeper.getVotingInfo(input.Ctx, ValAddrs[0])
-	require.False(t, found)
+	// Test default getters and setters
+	delegate := input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
+	require.Equal(t, delegate, Addrs[0])
 
-	// register voting info
-	votingInfo := types.NewVotingInfo(ValAddrs[0], 7, 1, 32)
-	input.OracleKeeper.SetVotingInfo(input.Ctx, ValAddrs[0], votingInfo)
+	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
-	KVotingInfo, found := input.OracleKeeper.getVotingInfo(input.Ctx, ValAddrs[0])
-	require.True(t, found)
-	require.Equal(t, votingInfo, KVotingInfo)
-
-	votingInfo2 := types.NewVotingInfo(ValAddrs[1], 1, 2, 3)
-	input.OracleKeeper.SetVotingInfo(input.Ctx, ValAddrs[1], votingInfo2)
-
-	i := 0
-	bigger := bytes.Compare(Addrs[0].Bytes(), Addrs[1].Bytes())
-	input.OracleKeeper.IterateVotingInfos(input.Ctx, func(info types.VotingInfo) (stop bool) {
-		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
-			require.Equal(t, votingInfo, info)
-		} else {
-			require.Equal(t, votingInfo2, info)
-		}
-		i++
+	var delegators []sdk.ValAddress
+	var delegatees []sdk.AccAddress
+	input.OracleKeeper.IterateFeederDelegations(input.Ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+		delegators = append(delegators, delegator)
+		delegatees = append(delegatees, delegatee)
 		return false
 	})
 
-}
-
-func TestGetSetValidatorMissedBlockBitArray(t *testing.T) {
-	input := CreateTestInput(t)
-	missed := input.OracleKeeper.GetMissedVoteBitArray(input.Ctx, ValAddrs[0], 0)
-	require.False(t, missed) // treat empty key as not missed
-	input.OracleKeeper.SetMissedVoteBitArray(input.Ctx, ValAddrs[0], 0, true)
-	missed = input.OracleKeeper.GetMissedVoteBitArray(input.Ctx, ValAddrs[0], 0)
-	require.True(t, missed) // now should be missed
-
-	// iterate 1 bit array
-	input.OracleKeeper.IterateMissedVoteBitArray(input.Ctx, ValAddrs[0], func(index int64, missed bool) (stop bool) {
-		require.Equal(t, int64(0), index)
-		require.True(t, missed)
-		return false
-	})
-
-	// clear vote bit array
-	input.OracleKeeper.clearMissedVoteBitArray(input.Ctx, ValAddrs[0])
-	missed = input.OracleKeeper.GetMissedVoteBitArray(input.Ctx, ValAddrs[0], 0)
-	require.False(t, missed) // treat empty key as not missed
+	require.Equal(t, len(delegators), 1)
+	require.Equal(t, len(delegatees), 1)
+	require.Equal(t, delegators[0], ValAddrs[0])
+	require.Equal(t, delegatees[0], Addrs[1])
 }

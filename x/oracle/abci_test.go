@@ -227,7 +227,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner, _ := tally(input.Ctx, ballot, input.OracleKeeper)
+	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper)
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

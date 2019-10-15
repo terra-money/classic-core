@@ -7,23 +7,24 @@ import (
 // InitGenesis initialize default parameters
 // and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-
-	for addr, info := range data.VotingInfos {
-		address, err := sdk.ValAddressFromBech32(addr)
+	for delegatorBechAddr, delegatee := range data.FeederDelegations {
+		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
 		if err != nil {
 			panic(err)
 		}
-		keeper.SetVotingInfo(ctx, address, info)
+		keeper.SetFeedDelegate(ctx, delegator, delegatee)
 	}
 
-	for addr, array := range data.MissedVotes {
-		address, err := sdk.ValAddressFromBech32(addr)
-		if err != nil {
-			panic(err)
-		}
-		for _, missed := range array {
-			keeper.SetMissedVoteBitArray(ctx, address, missed.Index, missed.Missed)
-		}
+	for _, prevote := range data.PricePrevotes {
+		keeper.AddPrevote(ctx, prevote)
+	}
+
+	for _, vote := range data.PriceVotes {
+		keeper.AddVote(ctx, vote)
+	}
+
+	for denom, price := range data.Prices {
+		keeper.SetLunaPrice(ctx, denom, price)
 	}
 
 	keeper.SetParams(ctx, data.Params)
@@ -34,22 +35,30 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
-	votingInfos := make(map[string]VotingInfo)
-	missedVotes := make(map[string][]MissedVote)
-	keeper.IterateVotingInfos(ctx, func(info VotingInfo) (stop bool) {
-		bechAddr := info.Address.String()
-
-		votingInfos[bechAddr] = info
-		localMissedBlocks := []MissedVote{}
-
-		keeper.IterateMissedVoteBitArray(ctx, info.Address, func(index int64, missed bool) (stop bool) {
-			localMissedBlocks = append(localMissedBlocks, NewMissedVote(index, missed))
-			return false
-		})
-		missedVotes[bechAddr] = localMissedBlocks
-
+	feederDelegations := make(map[string]sdk.AccAddress)
+	keeper.IterateFeederDelegations(ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+		bechAddr := delegator.String()
+		feederDelegations[bechAddr] = delegatee
 		return false
 	})
 
-	return NewGenesisState(params, votingInfos, missedVotes)
+	var pricePrevotes []PricePrevote
+	keeper.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
+		pricePrevotes = append(pricePrevotes, prevote)
+		return false
+	})
+
+	var priceVotes []PriceVote
+	keeper.IterateVotes(ctx, func(vote PriceVote) (stop bool) {
+		priceVotes = append(priceVotes, vote)
+		return false
+	})
+
+	prices := make(map[string]sdk.Dec)
+	keeper.IterateLunaPrices(ctx, func(denom string, price sdk.Dec) bool {
+		prices[denom] = price
+		return false
+	})
+
+	return NewGenesisState(params, pricePrevotes, priceVotes, prices, feederDelegations)
 }

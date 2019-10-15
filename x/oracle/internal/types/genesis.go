@@ -2,28 +2,36 @@ package types
 
 import (
 	"bytes"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GenesisState - all oracle state that must be provided at genesis
 type GenesisState struct {
-	Params      Params                  `json:"params" yaml:"params"`
-	VotingInfos map[string]VotingInfo   `json:"voting_infos" yaml:"voting_infos"`
-	MissedVotes map[string][]MissedVote `json:"missed_votes" yaml:"missed_votes"`
+	Params            Params                    `json:"params" yaml:"params"`
+	FeederDelegations map[string]sdk.AccAddress `json:"feeder_delegations" yaml:"feeder_delegations"`
+	Prices            map[string]sdk.Dec        `json:"prices" yaml:"prices"`
+	PricePrevotes     []PricePrevote            `json:"price_prevotes" yaml:"price_prevotes"`
+	PriceVotes        []PriceVote               `json:"price_votes" yaml:"price_votes"`
 }
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(
-	params Params, votingInfo map[string]VotingInfo, MissedVotes map[string][]MissedVote,
+	params Params, pricePrevotes []PricePrevote,
+	priceVotes []PriceVote, prices map[string]sdk.Dec,
+	feederDelegations map[string]sdk.AccAddress,
 ) GenesisState {
 
 	return GenesisState{
-		Params:      params,
-		VotingInfos: votingInfo,
-		MissedVotes: MissedVotes,
+		Params:            params,
+		PricePrevotes:     pricePrevotes,
+		PriceVotes:        priceVotes,
+		Prices:            prices,
+		FeederDelegations: feederDelegations,
 	}
 }
 
-// MissedVote
+// MissedVote validators missed voting map
 type MissedVote struct {
 	Index  int64 `json:"index" yaml:"index"`
 	Missed bool  `json:"missed" yaml:"missed"`
@@ -40,9 +48,11 @@ func NewMissedVote(index int64, missed bool) MissedVote {
 // DefaultGenesisState - default GenesisState used by columbus-2
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:      DefaultParams(),
-		VotingInfos: make(map[string]VotingInfo),
-		MissedVotes: make(map[string][]MissedVote),
+		Params:            DefaultParams(),
+		PricePrevotes:     []PricePrevote{},
+		PriceVotes:        []PriceVote{},
+		Prices:            make(map[string]sdk.Dec),
+		FeederDelegations: make(map[string]sdk.AccAddress),
 	}
 }
 
