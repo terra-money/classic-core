@@ -46,7 +46,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sAmt)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	// Set random prices
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lnasdrRate)
@@ -69,7 +69,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, amt)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	// Set random prices
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, sdk.NewDec(1))
@@ -211,7 +211,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(100000000*core.MicroUnit))))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	for i := int64(201); i <= 500; i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * i)
@@ -220,7 +220,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 
 		supply = supply.SetTotal(supply.GetTotal().Sub(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(i).MulRaw(core.MicroUnit)))))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-		input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+		input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 	}
 
 	totalBondedTokens := sdk.NewDecFromInt(input.StakingKeeper.TotalBondedTokens(input.Ctx))

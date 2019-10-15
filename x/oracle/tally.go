@@ -9,7 +9,7 @@ import (
 
 // Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func tally(ctx sdk.Context, pb types.PriceBallot, k Keeper) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool, ballotLosers []sdk.ValAddress) {
+func tally(ctx sdk.Context, pb types.PriceBallot, k Keeper) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}
@@ -23,16 +23,15 @@ func tally(ctx sdk.Context, pb types.PriceBallot, k Keeper) (weightedMedian sdk.
 	}
 
 	for _, vote := range pb {
-		if vote.Price.GTE(weightedMedian.Sub(rewardSpread)) && vote.Price.LTE(weightedMedian.Add(rewardSpread)) {
-			if validator := k.StakingKeeper.Validator(ctx, vote.Voter); validator != nil {
+		// If a validator is not found, then just ignore the vote
+		if validator := k.StakingKeeper.Validator(ctx, vote.Voter); validator != nil {
+			if vote.Price.GTE(weightedMedian.Sub(rewardSpread)) && vote.Price.LTE(weightedMedian.Add(rewardSpread)) {
 				power := validator.GetConsensusPower()
 
 				ballotWinners = append(ballotWinners, types.Claim{
 					Recipient: vote.Voter,
 					Weight:    power,
 				})
-			} else {
-				ballotLosers = append(ballotLosers, vote.Voter)
 			}
 		}
 	}

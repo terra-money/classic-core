@@ -29,7 +29,6 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryActive(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryFeederDelegation(cdc),
-		GetCmdQueryVotingInfo(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -45,7 +44,7 @@ func GetCmdQueryPrice(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
 
-$ terracli query oracle price --denom ukrw
+$ terracli query oracle price ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -264,39 +263,4 @@ $ terracli query oracle feeder terravaloper...
 	}
 
 	return cmd
-}
-
-// GetCmdQueryVotingInfo implements the command to query voting info.
-func GetCmdQueryVotingInfo(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "voting-info [validator-addr]",
-		Short: "Query a validator's voting information",
-		Long: strings.TrimSpace(`Use a validators' address to find the voting-info for that validator:
-
-$ <appcli> query oracle voting-info terravaloper...
-`),
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			valAddr, err := sdk.ValAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			key := types.GetVotingInfoKey(valAddr)
-			res, _, err := cliCtx.QueryStore(key, types.QuerierRoute)
-			if err != nil {
-				return err
-			}
-
-			if len(res) == 0 {
-				return fmt.Errorf("Validator %s not found in oracle store", valAddr)
-			}
-
-			var votingInfo types.VotingInfo
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &votingInfo)
-			return cliCtx.PrintOutput(votingInfo)
-		},
-	}
 }

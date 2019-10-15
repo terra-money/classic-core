@@ -175,5 +175,9 @@ func CreateTestInput(t *testing.T) TestInput {
 		require.NoError(t, err)
 	}
 
+	supply := supplyKeeper.GetSupply(ctx)
+	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs))))))
+	supplyKeeper.SetSupply(ctx, supply)
+
 	return TestInput{ctx, cdc, oracleKeeper, supplyKeeper, keeper}
 }

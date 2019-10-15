@@ -14,7 +14,7 @@ type PolicyConstraints struct {
 	ChangeRateMax sdk.Dec  `json:"change_max"`
 }
 
-// String implements fmt.Stringer
+// String implements fmt.Stringer interface
 func (pc PolicyConstraints) String() string {
 	return fmt.Sprintf(`PolicyConstraints :
  RateMin: %s

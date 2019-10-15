@@ -227,7 +227,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner, _ := tally(input.Ctx, ballot, input.OracleKeeper)
+	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper)
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
@@ -307,7 +307,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	expectedRewardAmt := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(50)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(stakingAmt.MulRaw(50)).MulInt64(input.OracleKeeper.VotePeriod(input.Ctx)).QuoInt64(input.OracleKeeper.RewardDistributionPeriod(input.Ctx)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -361,8 +361,10 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	expectedRewardAmt := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(50)).TruncateInt()
-	expectedRewardAmt2 := input.OracleKeeper.RewardFraction(input.Ctx).MulInt(stakingAmt.MulRaw(25)).TruncateInt()
+	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
+	rewardDistributedPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
+	expectedRewardAmt := sdk.NewDecFromInt(stakingAmt.MulRaw(50)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(stakingAmt.MulRaw(25)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])

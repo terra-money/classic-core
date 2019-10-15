@@ -2104,9 +2104,9 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/prev_day_issuance:
+  /market/terra_pool_delta:
     get:
-      summary: Get prev day issuance
+      summary: Get Terra pool delta, which is the gap between TerraPool and BasePool
       tags:
         - Market
       produces:
@@ -2115,9 +2115,9 @@ paths:
         200:
           description: OK
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
+            type: number
+            format: float
+            example: "10000000.00"
         400:
           description: Bad Request
         500:
@@ -2329,59 +2329,7 @@ paths:
             type: array
             items:
               type: string
-            example: ["uluna", "usdr"]
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voters/{voter}/voting_info:
-    get:
-      summary: Get voting info of a voter
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: voter
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/VotingInfo"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voting_infos:
-    get:
-      summary: Get voting infos
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: query
-          name: page
-          description: Page number
-          type: integer
-          required: true
-          x-example: 1
-        - in: query
-          name: limit
-          description: Maximum number of items per page
-          type: integer
-          required: true
-          x-example: 5
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/VotingInfo"
+            example: ["ukrw", "usdr"]
         400:
           description: Bad Request
         500:
@@ -3565,4 +3513,4 @@ definitions:
       gas:
         type: number
         format: integer
-        example: 10000
+        example: "10000"

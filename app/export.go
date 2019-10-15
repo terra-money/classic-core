@@ -186,12 +186,15 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
-	// reset start height on voting infos
-	app.oracleKeeper.IterateVotingInfos(
-		ctx, func(info oracle.VotingInfo) (stop bool) {
-			info.StartHeight = 0
-			app.oracleKeeper.SetVotingInfo(ctx, info.Address, info)
-			return false
-		},
-	)
+	/* Handle market state. */
+
+	// clear all market pools
+	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
+
+	/* Handle treasury state. */
+
+	// clear all historical issuance info
+	app.treasuryKeeper.ClearHistoricalIssuance(ctx)
+	// clear all tax proceeds
+	app.treasuryKeeper.ClearTaxProceeds(ctx)
 }

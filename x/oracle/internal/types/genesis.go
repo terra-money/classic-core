@@ -9,8 +9,6 @@ import (
 // GenesisState - all oracle state that must be provided at genesis
 type GenesisState struct {
 	Params            Params                    `json:"params" yaml:"params"`
-	VotingInfos       map[string]VotingInfo     `json:"voting_infos" yaml:"voting_infos"`
-	MissedVotes       map[string][]MissedVote   `json:"missed_votes" yaml:"missed_votes"`
 	FeederDelegations map[string]sdk.AccAddress `json:"feeder_delegations" yaml:"feeder_delegations"`
 	Prices            map[string]sdk.Dec        `json:"prices" yaml:"prices"`
 	PricePrevotes     []PricePrevote            `json:"price_prevotes" yaml:"price_prevotes"`
@@ -21,7 +19,6 @@ type GenesisState struct {
 func NewGenesisState(
 	params Params, pricePrevotes []PricePrevote,
 	priceVotes []PriceVote, prices map[string]sdk.Dec,
-	votingInfo map[string]VotingInfo, missedVotes map[string][]MissedVote,
 	feederDelegations map[string]sdk.AccAddress,
 ) GenesisState {
 
@@ -30,8 +27,6 @@ func NewGenesisState(
 		PricePrevotes:     pricePrevotes,
 		PriceVotes:        priceVotes,
 		Prices:            prices,
-		VotingInfos:       votingInfo,
-		MissedVotes:       missedVotes,
 		FeederDelegations: feederDelegations,
 	}
 }
@@ -57,8 +52,6 @@ func DefaultGenesisState() GenesisState {
 		PricePrevotes:     []PricePrevote{},
 		PriceVotes:        []PriceVote{},
 		Prices:            make(map[string]sdk.Dec),
-		VotingInfos:       make(map[string]VotingInfo),
-		MissedVotes:       make(map[string][]MissedVote),
 		FeederDelegations: make(map[string]sdk.AccAddress),
 	}
 }

@@ -17,7 +17,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Update luna issuance after finish all works
-	defer k.UpdateIssuance(ctx)
+	defer k.RecordHistoricalIssuance(ctx)
 
 	// Check probation period
 	if ctx.BlockHeight() < (core.BlocksPerEpoch * k.WindowProbation(ctx)) {

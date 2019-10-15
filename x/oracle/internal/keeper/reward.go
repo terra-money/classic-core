@@ -20,17 +20,22 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners types.ClaimPo
 	if prevBallotWeightSum != 0 {
 		rewardPool := k.getRewardPool(ctx)
 		if !rewardPool.Empty() {
-			// In case rewardFraction = 1%; 1/100 module balance will be distributed
-			rewardFraction := k.RewardFraction(ctx)
+			// rewardCoin  = (oraclePool / rewardDistributionPeriod) * votePeriod
+			rewardDistributionPeriod := k.RewardDistributionPeriod(ctx)
+			votePeriod := k.VotePeriod(ctx)
 
 			// Dole out rewards
 			var distributedReward sdk.Coins
 			for _, winner := range ballotWinners {
 				rewardCoins := sdk.NewCoins()
 				rewardeeVal := k.StakingKeeper.Validator(ctx, winner.Recipient)
-				for _, feeCoin := range rewardPool {
-					rewardAmt := sdk.NewDecFromInt(feeCoin.Amount).Mul(rewardFraction).QuoInt64(prevBallotWeightSum).MulInt64(winner.Weight).TruncateInt()
-					rewardCoins = append(rewardCoins, sdk.NewCoin(feeCoin.Denom, rewardAmt))
+
+				for _, poolCoin := range rewardPool {
+					// The amount of the coin will be distributed in this vote period
+					totalRewardAmt := sdk.NewDecFromInt(poolCoin.Amount).MulInt64(votePeriod).QuoInt64(rewardDistributionPeriod)
+					// Reflects contribution
+					rewardAmt := totalRewardAmt.QuoInt64(prevBallotWeightSum).MulInt64(winner.Weight).TruncateInt()
+					rewardCoins = append(rewardCoins, sdk.NewCoin(poolCoin.Denom, rewardAmt))
 				}
 
 				// In case absence of the validator, we just skip distribution

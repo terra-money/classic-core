@@ -6,54 +6,38 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
-// ParamTable for staking module
+// ParamKeyTable for staking module
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// VotePeriod
+// VotePeriod returns the number of blocks during which voting takes place.
 func (k Keeper) VotePeriod(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyVotePeriod, &res)
 	return
 }
 
-// VoteThreshold
+// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
 func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyVoteThreshold, &res)
 	return
 }
 
-// RewardBand
+// RewardBand returns the ratio of allowable price error that can be rewared
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardBand, &res)
 	return
 }
 
-// RewardFraction
-func (k Keeper) RewardFraction(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardFraction, &res)
+// RewardDistributionPeriod returns the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
+func (k Keeper) RewardDistributionPeriod(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardDistributionPeriod, &res)
 	return
 }
 
-// VotesWindow
-func (k Keeper) VotesWindow(ctx sdk.Context) (res int64) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyVotesWindow, &res)
-	return
-}
-
-// MinValidVotesPerWindow
-func (k Keeper) MinValidVotesPerWindow(ctx sdk.Context) (res int64) {
-	var minValidVotesPerWindow sdk.Dec
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMinValidVotesPerWindow, &minValidVotesPerWindow)
-	signedBlocksWindow := k.VotesWindow(ctx)
-
-	// NOTE: RoundInt64 will never panic as minValidVotesPerWindow is less than 1.
-	return minValidVotesPerWindow.MulInt64(signedBlocksWindow).RoundInt64()
-}
-
-// SlashFraction
-func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeySlashFraction, &res)
+// Whitelist returns the denom list that can be acitivated
+func (k Keeper) Whitelist(ctx sdk.Context) (res types.DenomList) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyWhitelist, &res)
 	return
 }
 

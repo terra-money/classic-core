@@ -76,7 +76,7 @@ func (msg MsgPricePrevote) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// String Implements Msg
+// String implements fmt.Stringer interface
 func (msg MsgPricePrevote) String() string {
 	return fmt.Sprintf(`MsgPriceVote
 	hash:     %s,
@@ -150,7 +150,7 @@ func (msg MsgPriceVote) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// String Implements Msg
+// String implements fmt.Stringer interface
 func (msg MsgPriceVote) String() string {
 	return fmt.Sprintf(`MsgPriceVote
 	price:     %s,
@@ -204,7 +204,7 @@ func (msg MsgDelegateFeederPermission) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// String Implements Msg
+// String implements fmt.Stringer interface
 func (msg MsgDelegateFeederPermission) String() string {
 	return fmt.Sprintf(`MsgDelegateFeederPermission
 	operator:    %s, 

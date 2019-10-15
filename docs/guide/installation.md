@@ -1,20 +1,31 @@
 # Installation
 
-This guide will explain how to install the `terrad` and `terracli` entrypoints onto your system. With these installed on a server, you can participate in the latest testnet as either a [Full Node](join-network.md#run-a-full-node) or a [Validator](https://github.com/terra-project/core/tree/f8be66ca87e5a7d50a28875f1bea04dbfe69b9c6/docs/guide/setup-validator.md).
+This guide will explain how to install the `terrad` and `terracli` entrypoints onto your system. With these installed on a server, you can participate in the latest testnet as either a [Full Node](join-network.md#run-a-full-node) or a [Validator](validators.md).
+
+## Minimum Hardware Requirements
+Hardware requirements for running a node:
+
+* CPU cores: 2 or more
+* Storage: 128G or more
+* Network Bandwidth: 2.5 ~ 5Mbps (more traffic can be used while syncing up)
 
 ## Install Go
 
 Install `go` by following the [official docs](https://golang.org/doc/install).
 
 {% hint style="info" %}
+<<<<<<< HEAD
     **Go 1.13+ +** is required for Terra Core.
+=======
+**Go 1.12+** is required for Terra Core.
+>>>>>>> origin/develop
 {% endhint %}
 
 > _NOTE_: Before installing `terrad` and `terracli` binaries, let's add the golang binaries to your `PATH` variable. Open your `.bash_profile` or `.zshrc` and append `$HOME/go/bin` to your PATH variable \(i.e. `export PATH=$HOME/bin:$HOME/go/bin`\).
 
 ### Install the binaries
 
-Next, let's install the latest version of Terra Core. Here we'll use the `master` branch, which contains the latest stable release. If necessary, make sure you `git checkout` the correct [released version](https://github.com/terra-project/core//releases).
+Next, let's install the latest version of Terra Core. Here we'll use the `master` branch, which contains the latest stable release. If necessary, make sure you `git checkout` the correct [released version](https://github.com/terra-project/core/releases).
 
 ```bash
 git clone https://github.com/terra-project/core/
@@ -53,4 +64,3 @@ Build tags indicate special features that have been enabled in the binary.
 ## Next
 
 Now you can [join the public testnet](join-network.md) or [create you own testnet](deploy-testnet.md)
-

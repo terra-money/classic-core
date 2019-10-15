@@ -31,6 +31,7 @@ func (cp ClaimPool) Sort() ClaimPool {
 	return cp
 }
 
+// String implements fmt.Stringer interface
 func (cp ClaimPool) String() (out string) {
 	out = "ClaimPool "
 	for _, claim := range cp {

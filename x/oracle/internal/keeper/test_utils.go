@@ -176,7 +176,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	defaults := types.DefaultParams()
 	keeper.SetParams(ctx, defaults)
 
-	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), keeper.Hooks()))
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 
 	return TestInput{ctx, cdc, accountKeeper, bankKeeper, keeper, supplyKeeper, stakingKeeper, distrKeeper}
 }
