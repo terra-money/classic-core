@@ -57,6 +57,31 @@ func TestTaxCap(t *testing.T) {
 	}
 }
 
+func TestIterateTaxCap(t *testing.T) {
+	input := CreateTestInput(t)
+
+	cnyCap := sdk.NewInt(123)
+	usdCap := sdk.NewInt(13)
+	krwCap := sdk.NewInt(1300)
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, core.MicroCNYDenom, cnyCap)
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, core.MicroUSDDenom, usdCap)
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, core.MicroKRWDenom, krwCap)
+
+	input.TreasuryKeeper.IterateTaxCap(input.Ctx, func(denom string, taxCap sdk.Int) bool {
+		switch denom {
+		case core.MicroCNYDenom:
+			require.Equal(t, cnyCap, taxCap)
+		case core.MicroUSDDenom:
+			require.Equal(t, usdCap, taxCap)
+		case core.MicroKRWDenom:
+			require.Equal(t, krwCap, taxCap)
+		}
+
+		return false
+	})
+
+}
+
 func TestTaxProceeds(t *testing.T) {
 	input := CreateTestInput(t)
 
@@ -75,6 +100,9 @@ func TestTaxProceeds(t *testing.T) {
 
 		require.Equal(t, proceeds, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx, i))
 	}
+
+	input.TreasuryKeeper.ClearTaxProceeds(input.Ctx)
+	require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx, 0))
 }
 
 func TestMicroLunaIssuance(t *testing.T) {
@@ -91,7 +119,7 @@ func TestMicroLunaIssuance(t *testing.T) {
 
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(i))))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-		input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+		input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 	}
 
 	for i := int64(0); i < 10; i++ {
@@ -99,6 +127,9 @@ func TestMicroLunaIssuance(t *testing.T) {
 
 		require.Equal(t, sdk.NewInt(i), input.TreasuryKeeper.GetHistoricalIssuance(input.Ctx, i).AmountOf(core.MicroLunaDenom))
 	}
+
+	input.TreasuryKeeper.ClearHistoricalIssuance(input.Ctx)
+	require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.GetHistoricalIssuance(input.Ctx, 0))
 }
 
 func TestPeekEpochSeigniorage(t *testing.T) {
@@ -111,7 +142,7 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 		preIssuance := sdk.NewInt(rand.Int63() + 1)
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, preIssuance)))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-		input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+		input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 		nowIssuance := sdk.NewInt(rand.Int63() + 1)
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, nowIssuance)))

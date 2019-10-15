@@ -26,8 +26,8 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	marketQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQuerySwap(queryRoute, cdc),
+		GetCmdQueryTerraPoolDelta(queryRoute, cdc),
 		GetCmdQueryParams(queryRoute, cdc),
-		GetCmdQueryPrevDayIssuance(queryRoute, cdc),
 	)...)
 
 	return marketQueryCmd
@@ -64,7 +64,7 @@ $ terracli query query swap 5000000uluna usdr
 			}
 
 			var retCoin sdk.Coin
-			cdc.MustUnmarshalBinaryLengthPrefixed(res, &retCoin)
+			cdc.MustUnmarshalJSON(res, &retCoin)
 			return cliCtx.PrintOutput(retCoin)
 		},
 	}
@@ -72,23 +72,27 @@ $ terracli query query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryPrevDayIssuance implements the query params command.
-func GetCmdQueryPrevDayIssuance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTerraPoolDelta implements the query params command.
+func GetCmdQueryTerraPoolDelta(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prev-day-issuance",
-		Args:  cobra.ExactArgs(1),
-		Short: "Query the prev day issuance",
+		Use:   "terra-pool-delta",
+		Args:  cobra.NoArgs,
+		Short: "Query terra pool delta",
+		Long: `Query terra pool delta, which is the gap between TerraPool and BasePool.
+
+	$ terracli query market terra-pool-delta
+	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPrevDayIssuance), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPoolDelta), nil)
 			if err != nil {
 				return err
 			}
 
-			var prevDayIssuance sdk.Coins
-			cdc.MustUnmarshalJSON(res, &prevDayIssuance)
-			return cliCtx.PrintOutput(prevDayIssuance)
+			var poolDelta sdk.Dec
+			cdc.MustUnmarshalJSON(res, &poolDelta)
+			return cliCtx.PrintOutput(poolDelta)
 		},
 	}
 

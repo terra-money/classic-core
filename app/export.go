@@ -185,4 +185,16 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		app.oracleKeeper.DeletePrice(ctx, denom)
 		return false
 	})
+
+  /* Handle market state. */
+
+	// clear all market pools
+	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
+
+	/* Handle treasury state. */
+
+	// clear all historical issuance info
+	app.treasuryKeeper.ClearHistoricalIssuance(ctx)
+	// clear all tax proceeds
+	app.treasuryKeeper.ClearTaxProceeds(ctx)
 }

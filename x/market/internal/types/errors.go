@@ -13,7 +13,7 @@ const (
 	CodeInsufficientSwap codeType = 1
 	CodeNoEffectivePrice codeType = 2
 	CodeRecursiveSwap    codeType = 3
-	CodeExceedsSwapLimit codeType = 4
+	CodeInactive         codeType = 4
 )
 
 // ----------------------------------------
@@ -34,7 +34,7 @@ func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
 }
 
-// ErrExceedsDailySwapLimit called when the coin swap exceeds the daily swap limit for Luna
-func ErrExceedsDailySwapLimit(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeExceedsSwapLimit, "Exceeded the daily swap limit for Luna")
+// ErrInactive called when the coin swap exceeds the daily swap limit for Luna
+func ErrInactive(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInactive, "Can't swap because the market is inactive.")
 }

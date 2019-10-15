@@ -15,8 +15,7 @@ type SupplyKeeper interface {
 
 // expected market keeper
 type MarketKeeper interface {
-	GetSwapDecCoin(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error)
-	GetSwapCoin(ctx sdk.Context, offerCoin sdk.Coin, askDenom string, isInternal bool) (retCoin sdk.Coin, spread sdk.Dec, err sdk.Error)
+	ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error)
 }
 
 // expected keeper for staking module

@@ -219,8 +219,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(genaccounts.ModuleName, distr.ModuleName,
 		staking.ModuleName, auth.ModuleName, bank.ModuleName, slashing.ModuleName,
-		oracle.ModuleName, market.ModuleName, treasury.ModuleName, gov.ModuleName,
-		supply.ModuleName, crisis.ModuleName, genutil.ModuleName)
+		supply.ModuleName, oracle.ModuleName, treasury.ModuleName, gov.ModuleName,
+		market.ModuleName, crisis.ModuleName, genutil.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())

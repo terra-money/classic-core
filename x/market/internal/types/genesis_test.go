@@ -12,15 +12,13 @@ func TestGenesisValidation(t *testing.T) {
 	genState := DefaultGenesisState()
 	require.NoError(t, ValidateGenesis(genState))
 
-	genState.Params.DailyLunaDeltaCap = sdk.NewDec(-1)
+	genState.Params.BasePool = sdk.NewDec(-1)
 	require.Error(t, ValidateGenesis(genState))
 
-	genState.Params.DailyLunaDeltaCap = sdk.OneDec()
-	genState.Params.MaxSwapSpread = sdk.NewDec(-1)
+	genState.Params.PoolRecoveryPeriod = -1
 	require.Error(t, ValidateGenesis(genState))
 
-	genState.Params.MaxSwapSpread = sdk.ZeroDec()
-	genState.Params.MinSwapSpread = sdk.NewDec(-1)
+	genState.Params.MinSpread = sdk.NewDec(-1)
 	require.Error(t, ValidateGenesis(genState))
 }
 

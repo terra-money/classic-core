@@ -15,14 +15,14 @@ const (
 	CodeInsufficientSwap = types.CodeInsufficientSwap
 	CodeNoEffectivePrice = types.CodeNoEffectivePrice
 	CodeRecursiveSwap    = types.CodeRecursiveSwap
-	CodeExceedsSwapLimit = types.CodeExceedsSwapLimit
+	CodeInactive         = types.CodeInactive
 	ModuleName           = types.ModuleName
 	StoreKey             = types.StoreKey
 	RouterKey            = types.RouterKey
 	QuerierRoute         = types.QuerierRoute
 	DefaultParamspace    = types.DefaultParamspace
 	QuerySwap            = types.QuerySwap
-	QueryPrevDayIssuance = types.QueryPrevDayIssuance
+	QueryTerraPoolDelta  = types.QueryTerraPoolDelta
 	QueryParameters      = types.QueryParameters
 )
 
@@ -32,7 +32,7 @@ var (
 	ErrNoEffectivePrice      = types.ErrNoEffectivePrice
 	ErrInsufficientSwapCoins = types.ErrInsufficientSwapCoins
 	ErrRecursiveSwap         = types.ErrRecursiveSwap
-	ErrExceedsDailySwapLimit = types.ErrExceedsDailySwapLimit
+	ErrInactive              = types.ErrInactive
 	NewGenesisState          = types.NewGenesisState
 	DefaultGenesisState      = types.DefaultGenesisState
 	ValidateGenesis          = types.ValidateGenesis
@@ -44,14 +44,17 @@ var (
 	NewQuerier               = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                      = types.ModuleCdc
-	PrevDayIssuanceKey             = types.PrevDayIssuanceKey
-	ParamStoreKeyDailyLunaDeltaCap = types.ParamStoreKeyDailyLunaDeltaCap
-	ParamStoreKeyMaxSwapSpread     = types.ParamStoreKeyMaxSwapSpread
-	ParamStoreKeyMinSwapSpread     = types.ParamStoreKeyMinSwapSpread
-	DefaultDailyLunaDeltaCap       = types.DefaultDailyLunaDeltaCap
-	DefaultMaxSwapSpread           = types.DefaultMaxSwapSpread
-	DefaultMinSwapSpread           = types.DefaultMinSwapSpread
+	ModuleCdc                       = types.ModuleCdc
+	TerraPoolDeltaKey               = types.TerraPoolDeltaKey
+	ParamStoreKeyBasePool           = types.ParamStoreKeyBasePool
+	ParamStoreKeyPoolRecoveryPeriod = types.ParamStoreKeyPoolRecoveryPeriod
+	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinSpread
+	ParmamStoreKeyTobinTax          = types.ParmamStoreKeyTobinTax
+	DefaultBasePool                 = types.DefaultBasePool
+	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
+	DefaultTerraLiquidityRatio      = types.DefaultTerraLiquidityRatio
+	DefaultMinSpread                = types.DefaultMinSpread
+	DefaultTobinTax                 = types.DefaultTobinTax
 )
 
 type (

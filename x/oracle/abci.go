@@ -31,6 +31,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		whitelistMap[denom] = true
 	}
 
+	// Changes whitelist array to map for fast lookup
+	whitelistMap := make(map[string]bool)
+	for _, denom := range k.Whitelist(ctx) {
+		whitelistMap[denom] = true
+	}
+
 	// Iterate through votes and update prices; drop if not enough votes have been achieved.
 	claimMap := make(map[string]types.Claim)
 	for denom, ballot := range votes {
