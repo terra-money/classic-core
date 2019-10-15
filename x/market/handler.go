@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/terra-project/core/x/market/internal/types"
 )
 
@@ -29,9 +30,15 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, spread, swapErr := k.GetSwapCoin(ctx, ms.OfferCoin, ms.AskDenom, false)
+	swapCoin, spread, swapErr := k.ComputeSwap(ctx, ms.OfferCoin, ms.AskDenom)
 	if swapErr != nil {
 		return swapErr.Result()
+	}
+
+	// Update pool delta
+	deltaUpdateErr := k.ApplySwapToPool(ctx, ms.OfferCoin, swapCoin)
+	if deltaUpdateErr != nil {
+		return deltaUpdateErr.Result()
 	}
 
 	// Send offer coins to module account
@@ -42,11 +49,11 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	}
 
 	// Charge a spread if applicable; distributed to vote winners in the oracle module
-	var swapFee sdk.Coin
+	var swapFee sdk.DecCoin
 	if spread.IsPositive() {
-		swapFeeAmt := spread.MulInt(swapCoin.Amount).TruncateInt()
+		swapFeeAmt := spread.Mul(swapCoin.Amount)
 		if swapFeeAmt.IsPositive() {
-			swapFee = sdk.NewCoin(swapCoin.Denom, swapFeeAmt)
+			swapFee = sdk.NewDecCoinFromDec(swapCoin.Denom, swapFeeAmt)
 			swapCoin = swapCoin.Sub(swapFee)
 		}
 	}
@@ -58,7 +65,9 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	}
 
 	// Mint asked coins and credit Trader's account
-	swapCoins := sdk.NewCoins(swapCoin)
+	retCoin, decimalCoin := swapCoin.TruncateDecimal()
+	swapFee = swapFee.Add(decimalCoin) // add truncated decimalCoin to swapFee
+	swapCoins := sdk.NewCoins(retCoin)
 	mintErr := k.SupplyKeeper.MintCoins(ctx, ModuleName, swapCoins)
 	if mintErr != nil {
 		return mintErr.Result()
@@ -74,7 +83,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 			types.EventSwap,
 			sdk.NewAttribute(types.AttributeKeyOffer, ms.OfferCoin.String()),
 			sdk.NewAttribute(types.AttributeKeyTrader, ms.Trader.String()),
-			sdk.NewAttribute(types.AttributeKeySwapCoin, swapCoin.String()),
+			sdk.NewAttribute(types.AttributeKeySwapCoin, retCoin.String()),
 			sdk.NewAttribute(types.AttributeKeySwapFee, swapFee.String()),
 		),
 		sdk.NewEvent(

@@ -8,6 +8,7 @@ import (
 // and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
+	keeper.SetTerraPoolDelta(ctx, data.TerraPoolDelta)
 }
 
 // ExportGenesis writes the current store values
@@ -15,6 +16,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
+	terraPoolDelta := keeper.GetTerraPoolDelta(ctx)
 
-	return NewGenesisState(params)
+	return NewGenesisState(terraPoolDelta, params)
 }

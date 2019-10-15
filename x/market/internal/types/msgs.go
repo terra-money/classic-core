@@ -63,7 +63,7 @@ func (msg MsgSwap) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// String Implements Msg
+// String implements fmt.Stringer interface
 func (msg MsgSwap) String() string {
 	return fmt.Sprintf(`MsgSwap
 	trader:    %s, 

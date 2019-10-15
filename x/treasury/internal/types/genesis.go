@@ -9,26 +9,36 @@ import (
 
 // GenesisState - all market state that must be provided at genesis
 type GenesisState struct {
-	Params       Params  `json:"params" yaml:"params"` // market params
-	TaxRate      sdk.Dec `json:"tax_rate" yaml:"tax_rate"`
-	RewardWeight sdk.Dec `json:"reward_weight" yaml:"reward_weight"`
+	Params              Params             `json:"params" yaml:"params"` // market params
+	TaxRate             sdk.Dec            `json:"tax_rate" yaml:"tax_rate"`
+	RewardWeight        sdk.Dec            `json:"reward_weight" yaml:"reward_weight"`
+	TaxCaps             map[string]sdk.Int `json:"tax_cap" yaml:"tax_cap"`
+	TaxProceeds         []sdk.Coins        `json:"tax_proceeds" yaml:"tax_proceeds"`
+	HistoricalIssuances []sdk.Coins        `json:"historical_issuance" yaml:"historical_issuance"`
 }
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec) GenesisState {
+func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
+	taxCaps map[string]sdk.Int, taxProceeds []sdk.Coins, historicalIssuances []sdk.Coins) GenesisState {
 	return GenesisState{
-		Params:       params,
-		TaxRate:      taxRate,
-		RewardWeight: rewardWeight,
+		Params:              params,
+		TaxRate:             taxRate,
+		RewardWeight:        rewardWeight,
+		TaxCaps:             taxCaps,
+		TaxProceeds:         taxProceeds,
+		HistoricalIssuances: historicalIssuances,
 	}
 }
 
-// get raw genesis raw message for testing
+// DefaultGenesisState gets raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:       DefaultParams(),
-		TaxRate:      DefaultTaxRate,
-		RewardWeight: DefaultRewardWeight,
+		Params:              DefaultParams(),
+		TaxRate:             DefaultTaxRate,
+		RewardWeight:        DefaultRewardWeight,
+		TaxCaps:             make(map[string]sdk.Int),
+		TaxProceeds:         []sdk.Coins{},
+		HistoricalIssuances: []sdk.Coins{},
 	}
 }
 
@@ -46,14 +56,14 @@ func ValidateGenesis(data GenesisState) error {
 	return data.Params.Validate()
 }
 
-// Checks whether 2 GenesisState structs are equivalent.
+// Equal checks whether 2 GenesisState structs are equivalent.
 func (data GenesisState) Equal(data2 GenesisState) bool {
 	b1 := ModuleCdc.MustMarshalBinaryBare(data)
 	b2 := ModuleCdc.MustMarshalBinaryBare(data2)
 	return bytes.Equal(b1, b2)
 }
 
-// Returns if a GenesisState is empty or has data in it
+// IsEmpty returns if a GenesisState is empty or has data in it
 func (data GenesisState) IsEmpty() bool {
 	emptyGenState := GenesisState{}
 	return data.Equal(emptyGenState)

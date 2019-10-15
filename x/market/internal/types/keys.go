@@ -17,8 +17,8 @@ const (
 // Keys for market store
 // Items are stored with the following key: values
 //
-// - 0x01: sdk.Int
+// - 0x01: sdk.Dec
 var (
 	//Keys for store prefixed
-	PrevDayIssuanceKey = []byte{0x01} // key for prev day issuance
+	TerraPoolDeltaKey = []byte{0x02} // key for Terra pool delta which gap between TerraPool from BasePool
 )

@@ -6,9 +6,9 @@ import (
 
 // query endpoints supported by the oracle Querier
 const (
-	QuerySwap            = "swap"
-	QueryPrevDayIssuance = "prevDayIssuance"
-	QueryParameters      = "parameters"
+	QuerySwap           = "swap"
+	QueryTerraPoolDelta = "terra_pool_delta"
+	QueryParameters     = "parameters"
 )
 
 // QuerySwapParams for query
@@ -18,6 +18,7 @@ type QuerySwapParams struct {
 	AskDenom  string
 }
 
+// NewQuerySwapParams returns param object for swap query
 func NewQuerySwapParams(offerCoin sdk.Coin, askDenom string) QuerySwapParams {
 	return QuerySwapParams{
 		OfferCoin: offerCoin,

@@ -24,7 +24,7 @@ func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 
 	// Align seigniorage to usdr
 	seigniorageLunaDecCoin := sdk.NewDecCoin(core.MicroLunaDenom, seigniorageLunaAmt)
-	seigniorageDecCoin, err := k.marketKeeper.GetSwapDecCoin(ctx, seigniorageLunaDecCoin, core.MicroSDRDenom)
+	seigniorageDecCoin, err := k.marketKeeper.ComputeInternalSwap(ctx, seigniorageLunaDecCoin, core.MicroSDRDenom)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("[Treasury] Failed to swap seigniorage to usdr, %s", err.Error()))
 		return

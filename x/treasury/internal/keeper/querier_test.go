@@ -276,7 +276,7 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance.Sub(targetSeigniorage))))
@@ -295,7 +295,7 @@ func TestQueryHistoricalIssuance(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.UpdateIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	queriedHistoricalIssuance := getQueriedHistoricalIssuance(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx)).AmountOf(core.MicroLunaDenom)
 
