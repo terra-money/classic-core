@@ -87,7 +87,7 @@ $ %s tx treasury submit-proposal reward-weight-update <path/to/proposal.json> --
 Where proposal.json contains:
 
 {
-  "title": "Update Tax Rate",
+  "title": "Update Reward Weight",
   "description": "Lets update reward weight to 1.5%%",
   "reward_weight": "0.015",
   "deposit": [
