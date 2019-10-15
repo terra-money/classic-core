@@ -208,7 +208,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		require.NoError(t, err)
 	}
 
-	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), oracleKeeper.Hooks()))
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks(), oracleKeeper.StakingHooks()))
 
 	return TestInput{ctx, cdc, treasuryKeeper, stakingKeeper, oracleKeeper, supplyKeeper, marketKeeper, distrKeeper}
 }

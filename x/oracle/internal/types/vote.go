@@ -26,7 +26,7 @@ func NewPricePrevote(hash string, denom string, voter sdk.ValAddress, submitBloc
 	}
 }
 
-// String implements fmt.Stringer
+// String implements fmt.Stringer interface
 func (pp PricePrevote) String() string {
 	return fmt.Sprintf(`PricePrevote
 	Hash:    %s, 
@@ -39,6 +39,7 @@ func (pp PricePrevote) String() string {
 // PricePrevotes is a collection of PreicePrevote
 type PricePrevotes []PricePrevote
 
+// String implements fmt.Stringer interface
 func (v PricePrevotes) String() (out string) {
 	for _, val := range v {
 		out += val.String() + "\n"
@@ -79,7 +80,7 @@ func (pv PriceVote) getPower(ctx sdk.Context, sk StakingKeeper) int64 {
 	return validator.GetConsensusPower()
 }
 
-// String implements fmt.Stringer
+// String implements fmt.Stringer interface
 func (pv PriceVote) String() string {
 	return fmt.Sprintf(`PriceVote
 	Denom:    %s, 
@@ -91,6 +92,7 @@ func (pv PriceVote) String() string {
 // PriceVotes is a collection of PriceVote
 type PriceVotes []PriceVote
 
+// String implements fmt.Stringer interface
 func (v PriceVotes) String() (out string) {
 	for _, val := range v {
 		out += val.String() + "\n"

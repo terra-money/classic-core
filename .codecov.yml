@@ -17,3 +17,5 @@ ignore:
   - "docs"
   - "*.md"
   - "*.rst"
+  - "**/cli"
+  - "**/rest"

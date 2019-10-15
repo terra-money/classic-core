@@ -28,7 +28,7 @@ func NewVotingInfo(
 	}
 }
 
-// String implements the stringer interface for NewVotingInfo
+// String implements fmt.Stringer interface
 func (i VotingInfo) String() string {
 	return fmt.Sprintf(`Validator Signing Info:
   Address:               %s

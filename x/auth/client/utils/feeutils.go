@@ -32,6 +32,7 @@ type (
 	}
 )
 
+// String implements fmt.Stringer interface
 func (r EstimateFeeResp) String() string {
 	return fmt.Sprintf(`EstimateFeeResp
 	fees: %s,

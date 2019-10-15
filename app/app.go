@@ -189,7 +189,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
-		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks(), app.oracleKeeper.Hooks()))
+		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks(), app.oracleKeeper.StakingHooks()))
 
 	app.mm = module.NewManager(
 		genaccounts.NewAppModule(app.accountKeeper),
@@ -219,8 +219,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(genaccounts.ModuleName, distr.ModuleName,
 		staking.ModuleName, auth.ModuleName, bank.ModuleName, slashing.ModuleName,
-		oracle.ModuleName, market.ModuleName, treasury.ModuleName, gov.ModuleName,
-		supply.ModuleName, crisis.ModuleName, genutil.ModuleName)
+		supply.ModuleName, oracle.ModuleName, treasury.ModuleName, gov.ModuleName,
+		market.ModuleName, crisis.ModuleName, genutil.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
