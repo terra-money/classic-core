@@ -1,8 +1,22 @@
 package types
 
 import (
-	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// Claim is an interface that directs its rewards to an attached bank account.
+type Claim struct {
+	Weight    int64          `json:"weight"`
+	Recipient sdk.ValAddress `json:"recipient"`
+}
+
+// NewClaim generates a Claim instance.
+func NewClaim(weight int64, recipient sdk.ValAddress) Claim {
+	return Claim{
+		Weight:    weight,
+		Recipient: recipient,
+	}
+}
 
 // ClaimPool is a list of Claims
 type ClaimPool []Claim
@@ -29,13 +43,4 @@ func (cp ClaimPool) Sort() ClaimPool {
 	}
 
 	return cp
-}
-
-// String implements fmt.Stringer interface
-func (cp ClaimPool) String() (out string) {
-	out = "ClaimPool "
-	for _, claim := range cp {
-		out += fmt.Sprintf("\n  %s", claim.String())
-	}
-	return out
 }

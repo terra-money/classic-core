@@ -66,3 +66,27 @@ func TestMsgPriceVote(t *testing.T) {
 		}
 	}
 }
+
+func TestMsgFeederDelegation(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(2, sdk.Coins{})
+
+	tests := []struct {
+		delegator  sdk.ValAddress
+		delegatee  sdk.AccAddress
+		expectPass bool
+	}{
+		{sdk.ValAddress(addrs[0]), addrs[1], true},
+		{sdk.ValAddress{}, addrs[1], false},
+		{sdk.ValAddress(addrs[0]), sdk.AccAddress{}, false},
+		{nil, nil, false},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgDelegateFeederPermission(tc.delegator, tc.delegatee)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}

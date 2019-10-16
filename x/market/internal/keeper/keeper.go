@@ -75,17 +75,8 @@ func (k Keeper) ReplenishPools(ctx sdk.Context) {
 	regressionAmt := delta.QuoInt64(k.PoolRecoveryPeriod(ctx))
 
 	// Replenish terra pool towards base pool
-	if delta.IsPositive() {
-		delta = delta.Sub(regressionAmt)
-		if delta.IsNegative() {
-			delta = sdk.ZeroDec()
-		}
-	} else if delta.IsNegative() {
-		delta = delta.Add(regressionAmt)
-		if delta.IsPositive() {
-			delta = sdk.ZeroDec()
-		}
-	}
+	// regressionAmt cannot make delta zero
+	delta = delta.Sub(regressionAmt)
 
 	k.SetTerraPoolDelta(ctx, delta)
 }
