@@ -8,7 +8,8 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
-// At the end of every VotePeriod, we give out portion of seigniorage reward(reward-weight) to the
+// RewardBallotWinners implements
+// at the end of every VotePeriod, we give out portion of seigniorage reward(reward-weight) to the
 // oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners types.ClaimPool) {
 	// Sum weight of the claimpool

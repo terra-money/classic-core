@@ -29,7 +29,7 @@ const (
 // ----------------------------------------
 // Error constructors
 
-// ErrInvalidHashLength called when the denom is not known
+// ErrInvalidHashLength called when the given hash has invalid length
 func ErrInvalidHashLength(codespace sdk.CodespaceType, hashLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidHashLength, fmt.Sprintf("The hash length should equal %d but given %d", tmhash.TruncatedSize, hashLength))
 }
@@ -44,12 +44,7 @@ func ErrInvalidPrice(codespace sdk.CodespaceType, price sdk.Dec) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidPrice, fmt.Sprintf("Price is invalid: %s", price.String()))
 }
 
-// ErrVoterNotValidator called when the voter is not a validator
-func ErrVoterNotValidator(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.Error {
-	return sdk.NewError(codespace, CodeVoterNotValidator, fmt.Sprintf("Voter is not a validator: %s", voter.String()))
-}
-
-// ErrInvalidSignature called when no prevote exists
+// ErrVerificationFailed called when the given prevote has different hash from the retrieved one
 func ErrVerificationFailed(codespace sdk.CodespaceType, hash []byte, retrivedHash []byte) sdk.Error {
 	return sdk.NewError(codespace, CodeVerificationFailed, fmt.Sprintf("Retrieved hash [%s] differs from prevote hash [%s]", retrivedHash, hash))
 }
@@ -77,9 +72,4 @@ func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
 // ErrInvalidSaltLength called when the salt length is not equal 1
 func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidSaltLength, fmt.Sprintf("Salt legnth should be 1~4, but given %d", saltLength))
-}
-
-// ErrInvalidMsgFormat called when the msg has invalid format
-func ErrInvalidMsgFormat(codespace sdk.CodespaceType, msg string) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidMsgFormat, fmt.Sprintf("Invalid Msg Format: %s", msg))
 }

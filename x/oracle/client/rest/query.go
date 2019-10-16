@@ -199,9 +199,6 @@ func queryFeederDelegationHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		var feeder sdk.AccAddress
-		cliCtx.Codec.MustUnmarshalJSON(res, &feeder)
-
 		cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}

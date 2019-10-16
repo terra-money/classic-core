@@ -2334,16 +2334,47 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/voters/{validator}/feeder
+  /oracle/voters/{validator}/feeder:
+    post:
+      summary: Generate oracle feeder right delegation message
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: Feeder right delegator
+          required: true
+          type: string
+        - in: body
+          name: feeder right delegation request body
+          schema:
+            $ref: "#/definitions/DelegateReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
     get:
       summary: Get delegated oracle feeder of a validator
       tags:
         - Oracle
       produces:
         - application/json
-      response:
+      parameters:
+        - in: path
+          name: validator
+          description: Feeder right delegator
+          required: true
+          type: string
+      responses:
         200:
-          decription: OK
+          description: OK
           schema:
             $ref: "#/definitions/Address"
         400:
@@ -3373,6 +3404,13 @@ definitions:
         description: "proof salt was used to make prevote hash; initial prevote does not require this field"
       validator:
         $ref: "#/definitions/ValidatorAddress"
+  DelegateReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      feeder:
+        $ref: "#/definitions/Address"
   PriceVote:
     type: object
     properties:

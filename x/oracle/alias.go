@@ -45,14 +45,12 @@ var (
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
 	ErrUnknownDenomination         = types.ErrUnknownDenomination
 	ErrInvalidPrice                = types.ErrInvalidPrice
-	ErrVoterNotValidator           = types.ErrVoterNotValidator
 	ErrVerificationFailed          = types.ErrVerificationFailed
 	ErrNoPrevote                   = types.ErrNoPrevote
 	ErrNoVote                      = types.ErrNoVote
 	ErrNoVotingPermission          = types.ErrNoVotingPermission
 	ErrNotRevealPeriod             = types.ErrNotRevealPeriod
 	ErrInvalidSaltLength           = types.ErrInvalidSaltLength
-	ErrInvalidMsgFormat            = types.ErrInvalidMsgFormat
 	NewGenesisState                = types.NewGenesisState
 	DefaultGenesisState            = types.DefaultGenesisState
 	ValidateGenesis                = types.ValidateGenesis
@@ -90,7 +88,6 @@ var (
 	DefaultRewardBand                     = types.DefaultRewardBand
 	DefaultRewardDistributionPeriod       = types.DefaultRewardDistributionPeriod
 	DefaultMinValidVotesPerWindow         = types.DefaultMinValidVotesPerWindow
-	DefaultSlashFraction                  = types.DefaultSlashFraction
 	DefaultWhitelist                      = types.DefaultWhitelist
 )
 

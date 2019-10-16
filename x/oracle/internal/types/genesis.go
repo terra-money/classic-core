@@ -31,20 +31,6 @@ func NewGenesisState(
 	}
 }
 
-// MissedVote validators missed voting map
-type MissedVote struct {
-	Index  int64 `json:"index" yaml:"index"`
-	Missed bool  `json:"missed" yaml:"missed"`
-}
-
-// NewMissedVote creates a new MissedVote instance
-func NewMissedVote(index int64, missed bool) MissedVote {
-	return MissedVote{
-		Index:  index,
-		Missed: missed,
-	}
-}
-
 // DefaultGenesisState - default GenesisState used by columbus-2
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
@@ -61,14 +47,14 @@ func ValidateGenesis(data GenesisState) error {
 	return data.Params.Validate()
 }
 
-// Checks whether 2 GenesisState structs are equivalent.
+// Equal checks whether 2 GenesisState structs are equivalent.
 func (data GenesisState) Equal(data2 GenesisState) bool {
 	b1 := ModuleCdc.MustMarshalBinaryBare(data)
 	b2 := ModuleCdc.MustMarshalBinaryBare(data2)
 	return bytes.Equal(b1, b2)
 }
 
-// Returns if a GenesisState is empty or has data in it
+// IsEmpty returns if a GenesisState is empty or has data in it
 func (data GenesisState) IsEmpty() bool {
 	emptyGenState := GenesisState{}
 	return data.Equal(emptyGenState)

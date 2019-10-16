@@ -28,10 +28,6 @@ const (
 // - 0x03<denom_Bytes>: sdk.Dec
 //
 // - 0x04<valAddress_Bytes>: accAddress
-//
-// - 0x05<valAddress_Bytes>: Claim
-//
-// - 0x06<valAddress_Bytes><period_Bytes>: bool
 var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote

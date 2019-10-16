@@ -48,15 +48,11 @@ type DummyStakingKeeper struct {
 	validators []MockValidator
 }
 
+// NewDummyStakingKeeper returns new DummyStakingKeeper instance
 func NewDummyStakingKeeper(validators []MockValidator) DummyStakingKeeper {
 	return DummyStakingKeeper{
 		validators: validators,
 	}
-}
-
-// MaxValidators nolint
-func (sk DummyStakingKeeper) MaxValidators(_ sdk.Context) uint16 {
-	return 100
 }
 
 // Validators nolint
@@ -79,13 +75,6 @@ func (sk DummyStakingKeeper) Validator(ctx sdk.Context, address sdk.ValAddress) 
 func (DummyStakingKeeper) TotalBondedTokens(_ sdk.Context) sdk.Int {
 	return sdk.ZeroInt()
 }
-
-// IterateBondedValidatorsByPower nolint
-func (DummyStakingKeeper) IterateBondedValidatorsByPower(_ sdk.Context, _ func(_ int64, _ exported.ValidatorI) (stop bool)) {
-}
-
-// Slash nolint
-func (DummyStakingKeeper) Slash(_ sdk.Context, _ sdk.ConsAddress, _, _ int64, _ sdk.Dec) {}
 
 type MockValidator struct {
 	power    int64

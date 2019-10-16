@@ -29,15 +29,6 @@ func TestSqrt(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(12, 2), num)
 }
 
-func checkFloatEquality(a sdk.Dec, b float64, precision int) bool {
-	base := math.Pow10(precision)
-
-	a2 := a.MulInt64(int64(base)).TruncateInt64()
-	b2 := int64(b * base)
-
-	return a2 == b2
-}
-
 func TestPBPower(t *testing.T) {
 
 	ctx := sdk.NewContext(nil, abci.Header{}, false, nil)

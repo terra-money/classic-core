@@ -17,6 +17,7 @@ type PricePrevote struct {
 	SubmitBlock int64          `json:"submit_block"`
 }
 
+// NewPricePrevote returns PricePrevote object
 func NewPricePrevote(hash string, denom string, voter sdk.ValAddress, submitBlock int64) PricePrevote {
 	return PricePrevote{
 		Hash:        hash,

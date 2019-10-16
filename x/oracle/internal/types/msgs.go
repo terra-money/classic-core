@@ -38,7 +38,7 @@ func NewMsgPricePrevote(VoteHash string, denom string, feederAddress sdk.AccAddr
 	}
 }
 
-// Route Implements Msg
+// Route implements sdk.Msg
 func (msg MsgPricePrevote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
@@ -79,10 +79,10 @@ func (msg MsgPricePrevote) ValidateBasic() sdk.Error {
 // String implements fmt.Stringer interface
 func (msg MsgPricePrevote) String() string {
 	return fmt.Sprintf(`MsgPriceVote
-	hash:     %s,
-	feeder:    %s, 
+	hash:         %s,
+	feeder:       %s, 
 	validator:    %s, 
-	denom:     %s`,
+	denom:        %s`,
 		msg.Hash, msg.Feeder, msg.Validator, msg.Denom)
 }
 
@@ -108,7 +108,7 @@ func NewMsgPriceVote(price sdk.Dec, salt string, denom string, feederAddress sdk
 	}
 }
 
-// Route Implements Msg
+// Route implements sdk.Msg
 func (msg MsgPriceVote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
@@ -124,7 +124,7 @@ func (msg MsgPriceVote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
-// ValidateBasic Implements sdk.Msg
+// ValidateBasic implements sdk.Msg
 func (msg MsgPriceVote) ValidateBasic() sdk.Error {
 
 	if len(msg.Denom) == 0 {
@@ -153,11 +153,11 @@ func (msg MsgPriceVote) ValidateBasic() sdk.Error {
 // String implements fmt.Stringer interface
 func (msg MsgPriceVote) String() string {
 	return fmt.Sprintf(`MsgPriceVote
-	price:     %s,
-	salt:     %s,
-	feeder:    %s, 
-	validator:    %s, 
-	denom:     %s`,
+	price:      %s,
+	salt:       %s,
+	feeder:     %s, 
+	validator:  %s, 
+	denom:      %s`,
 		msg.Price, msg.Salt, msg.Feeder, msg.Validator, msg.Denom)
 }
 
@@ -175,7 +175,7 @@ func NewMsgDelegateFeederPermission(operatorAddress sdk.ValAddress, feederAddres
 	}
 }
 
-// Route Implements Msg
+// Route implements sdk.Msg
 func (msg MsgDelegateFeederPermission) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
@@ -191,7 +191,7 @@ func (msg MsgDelegateFeederPermission) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Operator)}
 }
 
-// ValidateBasic Implements sdk.Msg
+// ValidateBasic implements sdk.Msg
 func (msg MsgDelegateFeederPermission) ValidateBasic() sdk.Error {
 	if msg.Operator.Empty() {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
