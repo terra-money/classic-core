@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// GetTxCmd returns the transaction commands for market module
+// GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	marketTxCmd := &cobra.Command{
 		Use:                        "market",

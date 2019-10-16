@@ -14,7 +14,7 @@ import (
 	"github.com/terra-project/core/x/market/internal/types"
 )
 
-// GetQueryCmd returns the cli query commands for market module
+// GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	marketQueryCmd := &cobra.Command{
 		Use:                        "market",

@@ -24,7 +24,6 @@ const (
 	CodeNotRevealPeriod    codeType = 9
 	CodeInvalidSaltLength  codeType = 10
 	CodeInvalidMsgFormat   codeType = 11
-	CodeMissingVotingInfo  codeType = 12
 )
 
 // ----------------------------------------
@@ -83,9 +82,4 @@ func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error
 // ErrInvalidMsgFormat called when the msg has invalid format
 func ErrInvalidMsgFormat(codespace sdk.CodespaceType, msg string) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidMsgFormat, fmt.Sprintf("Invalid Msg Format: %s", msg))
-}
-
-// ErrNoVotingInfoFound called when no voting info found
-func ErrNoVotingInfoFound(codespace sdk.CodespaceType, valAddr sdk.ValAddress) sdk.Error {
-	return sdk.NewError(codespace, CodeMissingVotingInfo, fmt.Sprintf("no signing info found for address: %s", valAddr))
 }

@@ -70,7 +70,7 @@ $ terracli query oracle price ukrw
 	return cmd
 }
 
-// GetCmdQueryActive implements the query active command.
+// GetCmdQueryActive implements the query actives command.
 func GetCmdQueryActive(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "actives",
