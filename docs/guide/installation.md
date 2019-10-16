@@ -14,7 +14,11 @@ Hardware requirements for running a node:
 Install `go` by following the [official docs](https://golang.org/doc/install).
 
 {% hint style="info" %}
+<<<<<<< HEAD
+    **Go 1.13+ +** is required for Terra Core.
+=======
 **Go 1.12+** is required for Terra Core.
+>>>>>>> origin/develop
 {% endhint %}
 
 > _NOTE_: Before installing `terrad` and `terracli` binaries, let's add the golang binaries to your `PATH` variable. Open your `.bash_profile` or `.zshrc` and append `$HOME/go/bin` to your PATH variable \(i.e. `export PATH=$HOME/bin:$HOME/go/bin`\).
@@ -45,7 +49,7 @@ terra-money: 0.2.1
 git commit: 1fba7308fa226e971964cd6baad9527d4b51d9fc
 vendor hash: 1aec7edfad9888a967b3e9063e42f66b28f447e6
 build tags: netgo ledger
-go version go1.12.1 linux/amd64
+go version go1.13.1 linux/amd64
 ```
 
 ### Build Tags

@@ -20,7 +20,7 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 **WARNING**: Terra Core has mostly stabilized, but breaking changes may come regularly.
 
-**Note**: Requires [Go 1.12+](https://golang.org/dl/)
+**Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
 ## Status
 

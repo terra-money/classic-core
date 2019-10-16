@@ -186,7 +186,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
-  /* Handle market state. */
+	/* Handle market state. */
 
 	// clear all market pools
 	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())

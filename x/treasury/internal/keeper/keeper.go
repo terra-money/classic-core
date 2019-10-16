@@ -143,7 +143,7 @@ func (k Keeper) IterateTaxCap(ctx sdk.Context, handler func(denom string, taxCap
 
 // RecordTaxProceeds adds tax proceeds that have been added this epoch
 func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
-	if delta.Empty() {
+	if delta.Empty() || delta.IsZero() {
 		return
 	}
 
@@ -156,6 +156,10 @@ func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 
 // SetTaxProceeds stores tax proceeds for the given epoch
 func (k Keeper) SetTaxProceeds(ctx sdk.Context, epoch int64, taxProceeds sdk.Coins) {
+	if taxProceeds.Empty() || taxProceeds.IsZero() {
+		return
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(taxProceeds)
 	store.Set(types.GetTaxProceedsKey(epoch), bz)
@@ -188,11 +192,14 @@ func (k Keeper) RecordHistoricalIssuance(ctx sdk.Context) {
 	epoch := core.GetEpoch(ctx)
 	totalCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
 	k.SetHistoricalIssuance(ctx, epoch, totalCoins)
-
 }
 
 // SetHistoricalIssuance stores epoch issuance
 func (k Keeper) SetHistoricalIssuance(ctx sdk.Context, epoch int64, issuance sdk.Coins) {
+	if issuance.Empty() || issuance.IsZero() {
+		return
+	}
+
 	store := ctx.KVStore(k.storeKey)
 
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)

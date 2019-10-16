@@ -27,6 +27,26 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetLunaPrice(ctx, denom, price)
 	}
 
+	for delegatorBechAddr, delegatee := range data.FeederDelegations {
+		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
+		if err != nil {
+			panic(err)
+		}
+		keeper.SetFeedDelegate(ctx, delegator, delegatee)
+	}
+
+	for _, prevote := range data.PricePrevotes {
+		keeper.AddPrevote(ctx, prevote)
+	}
+
+	for _, vote := range data.PriceVotes {
+		keeper.AddVote(ctx, vote)
+	}
+
+	for denom, price := range data.Prices {
+		keeper.SetLunaPrice(ctx, denom, price)
+	}
+
 	keeper.SetParams(ctx, data.Params)
 }
 
