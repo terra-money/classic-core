@@ -2106,7 +2106,7 @@ paths:
           description: Internal Server Error
   /market/terra_pool_delta:
     get:
-      summary: Get Terra pool delta, which is the gap between TerraPool and BasePool
+      summary: Get Terra pool delta, is usdr amount used for swap operation from the TerraPool.
       tags:
         - Market
       produces:

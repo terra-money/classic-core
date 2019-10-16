@@ -49,7 +49,7 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
-// GetTerraPoolDelta returns the gap between TerraPool and BasePool
+// GetTerraPoolDelta returns the gap between the TerraPool and the BasePool
 func (k Keeper) GetTerraPoolDelta(ctx sdk.Context) (delta sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.TerraPoolDeltaKey)
@@ -61,7 +61,7 @@ func (k Keeper) GetTerraPoolDelta(ctx sdk.Context) (delta sdk.Dec) {
 	return
 }
 
-// SetTerraPoolDelta updates TerraPoolDelta which is gap between TerraPool and BasePool
+// SetTerraPoolDelta updates TerraPoolDelta which is gap between the TerraPool and the BasePool
 func (k Keeper) SetTerraPoolDelta(ctx sdk.Context, delta sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 

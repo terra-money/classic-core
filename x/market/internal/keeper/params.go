@@ -23,7 +23,7 @@ func (k Keeper) MinSpread(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// PoolRecoveryPeriod is the period required to recover Terra&Luna Pool to BasePool
+// PoolRecoveryPeriod is the period required to recover Terra&Luna Pools to the BasePool
 func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyPoolRecoveryPeriod, &res)
 	return

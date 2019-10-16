@@ -18,23 +18,23 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 
 	terraPoolDelta := k.GetTerraPoolDelta(ctx)
 
-	offerBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(offerCoin), core.MicroSDRDenom)
-	if err != nil {
-		return err
-	}
-
-	askBaseCoin, err := k.ComputeInternalSwap(ctx, askCoin, core.MicroSDRDenom)
-	if err != nil {
-		return err
-	}
-
-	// In case swapping Terra to Luna, the terra swap pool(offer) is increased and the luna swap pool(ask) is decreased
+	// In case swapping Terra to Luna, the terra swap pool(offer) must be increased and the luna swap pool(ask) must be decreased
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom == core.MicroLunaDenom {
+		offerBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(offerCoin), core.MicroSDRDenom)
+		if err != nil {
+			return err
+		}
+
 		terraPoolDelta = terraPoolDelta.Add(offerBaseCoin.Amount)
 	}
 
-	// In case swapping Luna to Terra, the luna swap pool(offer) is increased and the terra swap pool(ask) is decreased
+	// In case swapping Luna to Terra, the luna swap pool(offer) must be increased and the terra swap pool(ask) must be decreased
 	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
+		askBaseCoin, err := k.ComputeInternalSwap(ctx, askCoin, core.MicroSDRDenom)
+		if err != nil {
+			return err
+		}
+
 		terraPoolDelta = terraPoolDelta.Sub(askBaseCoin.Amount)
 	}
 
