@@ -216,7 +216,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	for i := int64(201); i <= 500; i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * i)
 		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, sdk.Coins{sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(i).MulRaw(core.MicroUnit))})
-		input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.OneDec())
+		input.TreasuryKeeper.SetRewardWeight(input.Ctx, i, sdk.OneDec())
 
 		supply = supply.SetTotal(supply.GetTotal().Sub(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(i).MulRaw(core.MicroUnit)))))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)

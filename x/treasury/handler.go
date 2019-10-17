@@ -9,6 +9,7 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
+// NewTreasuryPolicyUpdateHandler custom gov proposal handler
 func NewTreasuryPolicyUpdateHandler(k Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) sdk.Error {
 		switch c := content.(type) {
@@ -31,7 +32,7 @@ func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdatePropo
 	newTaxRate := taxPolicy.Clamp(taxRate, p.TaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx, newTaxRate)
+	k.SetTaxRate(ctx, core.GetEpoch(ctx), newTaxRate)
 
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated tax-rate to %s", newTaxRate))
@@ -45,7 +46,7 @@ func handleRewardWeightUpdateProposal(ctx sdk.Context, k Keeper, p RewardWeightU
 	newRewardWeight := rewardPolicy.Clamp(rewardWeight, p.RewardWeight)
 
 	// Set the new reward rate to the store
-	k.SetRewardWeight(ctx, newRewardWeight)
+	k.SetRewardWeight(ctx, core.GetEpoch(ctx), newRewardWeight)
 
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated reward-weight to %s", newRewardWeight))

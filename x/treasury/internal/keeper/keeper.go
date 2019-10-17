@@ -74,8 +74,7 @@ func (k Keeper) GetTaxRate(ctx sdk.Context, epoch int64) (taxRate sdk.Dec) {
 }
 
 // SetTaxRate sets the tax-rate
-func (k Keeper) SetTaxRate(ctx sdk.Context, taxRate sdk.Dec) {
-	epoch := core.GetEpoch(ctx)
+func (k Keeper) SetTaxRate(ctx sdk.Context, epoch int64, taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(taxRate)
 	store.Set(types.GetTaxRateKey(epoch), b)
@@ -94,8 +93,7 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch int64) (rewardWeight sdk.
 }
 
 // SetRewardWeight sets the reward weight
-func (k Keeper) SetRewardWeight(ctx sdk.Context, rewardWeight sdk.Dec) {
-	epoch := core.GetEpoch(ctx)
+func (k Keeper) SetRewardWeight(ctx sdk.Context, epoch int64, rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(rewardWeight)
 	store.Set(types.GetRewardWeightKey(epoch), b)
@@ -177,7 +175,7 @@ func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch int64) (res sdk.Coins) {
 	return
 }
 
-// ClearTaxProceeds clear all taxProceeds
+// ClearTaxProceeds clears all taxProceeds
 func (k Keeper) ClearTaxProceeds(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TaxProceedsKey)
@@ -187,7 +185,7 @@ func (k Keeper) ClearTaxProceeds(ctx sdk.Context) {
 	}
 }
 
-// RecordHistoricalIssuance update epoch issuance from supply keeper (historical)
+// RecordHistoricalIssuance updates epoch issuance from supply keeper (historical)
 func (k Keeper) RecordHistoricalIssuance(ctx sdk.Context) {
 	epoch := core.GetEpoch(ctx)
 	totalCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
@@ -220,7 +218,7 @@ func (k Keeper) GetHistoricalIssuance(ctx sdk.Context, epoch int64) (res sdk.Coi
 	return
 }
 
-// ClearHistoricalIssuance clear all taxProceeds
+// ClearHistoricalIssuance clears all taxProceeds
 func (k Keeper) ClearHistoricalIssuance(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.HistoricalIssuanceKey)
@@ -230,7 +228,7 @@ func (k Keeper) ClearHistoricalIssuance(ctx sdk.Context) {
 	}
 }
 
-// PeekEpochSeigniorage retursn epoch seigniorage
+// PeekEpochSeigniorage returns epoch seigniorage
 func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch int64) sdk.Int {
 	if epoch == 0 {
 		return sdk.ZeroInt()

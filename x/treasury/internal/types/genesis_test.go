@@ -12,11 +12,24 @@ func TestGenesisValidation(t *testing.T) {
 	genState := DefaultGenesisState()
 	require.NoError(t, ValidateGenesis(genState))
 
-	genState.TaxRate = sdk.NewDec(-1)
+	// Error - at least one tax-rate should be given
+	genState.TaxRates = []sdk.Dec{}
 	require.Error(t, ValidateGenesis(genState))
 
-	genState.TaxRate = sdk.NewDecWithPrec(5, 2)
-	genState.RewardWeight = sdk.NewDec(-1)
+	// Error - tax-rate range error
+	genState.TaxRates = []sdk.Dec{sdk.NewDec(-1)}
+	require.Error(t, ValidateGenesis(genState))
+
+	// Valid
+	genState.TaxRates = []sdk.Dec{sdk.NewDecWithPrec(1, 2)}
+	require.NoError(t, ValidateGenesis(genState))
+
+	// Error - at least one reward-weight should be given
+	genState.RewardWeights = []sdk.Dec{}
+	require.Error(t, ValidateGenesis(genState))
+
+	// Error - reward-weight range error
+	genState.RewardWeights = []sdk.Dec{sdk.NewDec(-1)}
 	require.Error(t, ValidateGenesis(genState))
 }
 

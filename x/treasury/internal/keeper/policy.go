@@ -29,7 +29,7 @@ func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
 	return newCaps
 }
 
-// t(t+1) = t(t) * (TL_year(t) + INC) / TL_month(t)
+// UpdateTaxPolicy updates tax-rate with t(t+1) = t(t) * (TL_year(t) + INC) / TL_month(t)
 func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 	params := k.GetParams(ctx)
 
@@ -48,11 +48,11 @@ func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx.WithBlockHeight(ctx.BlockHeight()+1), newTaxRate)
+	k.SetTaxRate(ctx, core.GetEpoch(ctx)+1, newTaxRate)
 	return
 }
 
-// w(t+1) = w(t)*SB_target/SB_rolling(t)
+// UpdateRewardPolicy updates reward-weight with w(t+1) = w(t)*SB_target/SB_rolling(t)
 func (k Keeper) UpdateRewardPolicy(ctx sdk.Context) (newRewardWeight sdk.Dec) {
 	params := k.GetParams(ctx)
 
@@ -75,6 +75,6 @@ func (k Keeper) UpdateRewardPolicy(ctx sdk.Context) (newRewardWeight sdk.Dec) {
 	newRewardWeight = params.RewardPolicy.Clamp(oldWeight, newRewardWeight)
 
 	// Set the new reward weight
-	k.SetRewardWeight(ctx.WithBlockHeight(ctx.BlockHeight()+1), newRewardWeight)
+	k.SetRewardWeight(ctx, core.GetEpoch(ctx)+1, newRewardWeight)
 	return
 }

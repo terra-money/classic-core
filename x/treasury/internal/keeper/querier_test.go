@@ -211,7 +211,7 @@ func TestQueryRewardWeight(t *testing.T) {
 	querier := NewQuerier(input.TreasuryKeeper)
 
 	rewardWeight := sdk.NewDecWithPrec(77, 2)
-	input.TreasuryKeeper.SetRewardWeight(input.Ctx, rewardWeight)
+	input.TreasuryKeeper.SetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx), rewardWeight)
 
 	queriedRewardWeight := getQueriedRewardWeight(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
@@ -223,7 +223,7 @@ func TestQueryTaxRate(t *testing.T) {
 	querier := NewQuerier(input.TreasuryKeeper)
 
 	taxRate := sdk.NewDecWithPrec(1, 3)
-	input.TreasuryKeeper.SetTaxRate(input.Ctx, taxRate)
+	input.TreasuryKeeper.SetTaxRate(input.Ctx, core.GetEpoch(input.Ctx), taxRate)
 
 	queriedTaxRate := getQueriedTaxRate(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
