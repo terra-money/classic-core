@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 )
 
-// DefaultParamspace
+// DefaultParamspace defines default space for oracle params
 const DefaultParamspace = ModuleName
 
 // Parameter keys

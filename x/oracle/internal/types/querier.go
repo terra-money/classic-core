@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Defines the prefix of each query path
 const (
 	QueryParameters       = "parameters"
 	QueryPrice            = "price"

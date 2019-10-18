@@ -451,6 +451,7 @@ func TestTerraCLIQueryRewards(t *testing.T) {
 	genDoc, err := tmtypes.GenesisDocFromFile(genFile)
 	require.NoError(t, err)
 	genDoc.AppState, err = cdc.MarshalJSON(genesisState)
+	require.NoError(t, err)
 	require.NoError(t, genDoc.SaveAs(genFile))
 
 	// start terrad server
@@ -772,6 +773,7 @@ func TestTerraCLISubmitCommunityPoolSpendProposal(t *testing.T) {
 	genDoc, err := tmtypes.GenesisDocFromFile(genFile)
 	require.NoError(t, err)
 	genDoc.AppState, err = cdc.MarshalJSON(genesisState)
+	require.NoError(t, err)
 	require.NoError(t, genDoc.SaveAs(genFile))
 
 	proc := f.TDStart()
@@ -1016,7 +1018,7 @@ func TestTerraCLISendGenerateSignAndBroadcast(t *testing.T) {
 	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
 
 	// Test broadcast
-	success, stdOut, _ = f.TxBroadcast(signedTxFile.Name())
+	success, _, _ = f.TxBroadcast(signedTxFile.Name())
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 

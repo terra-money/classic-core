@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// Internal Module Codec
+// ModuleCdc defines internal Module Codec
 var ModuleCdc = codec.New()
 
 // RegisterCodec concretes types on codec codec

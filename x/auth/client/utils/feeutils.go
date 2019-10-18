@@ -18,14 +18,14 @@ import (
 )
 
 type (
-	// EstimateReq defines a tx encoding request.
+	// EstimateFeeReq defines a tx encoding request.
 	EstimateFeeReq struct {
 		Tx            auth.StdTx   `json:"tx"`
 		GasAdjustment string       `json:"gas_adjustment"`
 		GasPrices     sdk.DecCoins `json:"gas_prices"`
 	}
 
-	// EstimateResp defines a tx encoding response.
+	// EstimateFeeResp defines a tx encoding response.
 	EstimateFeeResp struct {
 		Fees sdk.Coins `json:"fees"`
 		Gas  uint64    `json:"gas"`
@@ -104,7 +104,7 @@ type ComputeReqParams struct {
 	Msgs []sdk.Msg
 }
 
-// ComputeFee returns fee amount with given transfer, gas, gas prices, and fees amount.
+// ComputeFees returns fee amount with given transfer, gas, gas prices, and fees amount.
 func ComputeFees(
 	cliCtx context.CLIContext,
 	req ComputeReqParams) (fees sdk.Coins, gas uint64, err error) {
@@ -265,7 +265,7 @@ func queryTaxCap(cliCtx context.CLIContext, denom string) (sdk.Int, error) {
 	return taxCap, nil
 }
 
-// parse string to float64
+// ParseFloat64 parses string to float64
 func ParseFloat64(s string, defaultIfEmpty float64) (n float64, err error) {
 	if len(s) == 0 {
 		return defaultIfEmpty, nil

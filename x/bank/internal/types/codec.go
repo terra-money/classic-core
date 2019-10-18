@@ -5,13 +5,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
-// Register concrete types on codec codec
+// RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(bank.MsgSend{}, "bank/MsgSend", nil)
 	cdc.RegisterConcrete(bank.MsgMultiSend{}, "bank/MsgMultiSend", nil)
 }
 
-// module codec
+// ModuleCdc defines module codec
 var ModuleCdc *codec.Codec
 
 func init() {

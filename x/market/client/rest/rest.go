@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// RestDenom
+// RestDenom is the whildcard part of the request path
 const RestDenom = "denom"
 
 // RegisterRoutes - Central function to define routes that get registered by the main application

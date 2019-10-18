@@ -20,26 +20,27 @@ var (
 	_ module.AppModuleBasic   = AppModuleBasic{}
 )
 
-// module name
+// ModuleName accounts module name
 const ModuleName = "accounts"
 
-// app module basics object
+// AppModuleBasic defines the basic application module used by the genaccounts module.
 type AppModuleBasic struct{}
 
-// module name
+// Name returns the genaccounts module's name
 func (AppModuleBasic) Name() string {
 	return ModuleName
 }
 
-// register module codec
+// RegisterCodec registers the genaccounts module's types for the given codec.
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {}
 
-// default genesis state
+// DefaultGenesis returns default genesis state as raw bytes for the genaccounts
+// module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return moduleCdc.MustMarshalJSON(GenesisState{})
 }
 
-// module validate genesis
+// ValidateGenesis performs genesis state validation for the genaccounts module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data GenesisState
 	err := moduleCdc.UnmarshalJSON(bz, &data)
@@ -49,16 +50,16 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return ValidateGenesis(data)
 }
 
-// register rest routes
+// RegisterRESTRoutes registers the REST routes for the genaccounts module.
 func (AppModuleBasic) RegisterRESTRoutes(_ context.CLIContext, _ *mux.Router) {}
 
-// get the root tx command of this module
+// GetTxCmd returns the root tx command for the genaccounts module.
 func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }
 
-// get the root query command of this module
+// GetQueryCmd returns the root query command for the genaccounts module.
 func (AppModuleBasic) GetQueryCmd(_ *codec.Codec) *cobra.Command { return nil }
 
-// extra function from sdk.AppModuleBasic
+// IterateGenesisAccounts is extra function from sdk.AppModuleBasic
 // iterate the genesis accounts and perform an operation at each of them
 // - to used by other modules
 func (AppModuleBasic) IterateGenesisAccounts(cdc *codec.Codec, appGenesis map[string]json.RawMessage,
@@ -74,7 +75,8 @@ func (AppModuleBasic) IterateGenesisAccounts(cdc *codec.Codec, appGenesis map[st
 }
 
 //___________________________
-// app module
+
+// AppModule implements an application module for the genaccounts module.
 type AppModule struct {
 	AppModuleBasic
 	accountKeeper AccountKeeper
@@ -89,7 +91,7 @@ func NewAppModule(accountKeeper AccountKeeper) module.AppModule {
 	})
 }
 
-// module init-genesis
+// InitGenesis performs genesis initialization for the genaccounts module.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	moduleCdc.MustUnmarshalJSON(data, &genesisState)
@@ -97,7 +99,8 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	return []abci.ValidatorUpdate{}
 }
 
-// module export genesis
+// ExportGenesis returns the exported genesis state as raw bytes for the genaccounts
+// module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.accountKeeper)
 	return moduleCdc.MustMarshalJSON(gs)

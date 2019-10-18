@@ -60,7 +60,7 @@ func TestQuerySwap(t *testing.T) {
 		Data: []byte{},
 	}
 
-	res, err := querier(input.Ctx, []string{types.QuerySwap}, query)
+	_, err = querier(input.Ctx, []string{types.QuerySwap}, query)
 	require.Error(t, err)
 
 	// recursive query
@@ -74,7 +74,7 @@ func TestQuerySwap(t *testing.T) {
 		Data: bz,
 	}
 
-	res, err = querier(input.Ctx, []string{types.QuerySwap}, query)
+	res, err := querier(input.Ctx, []string{types.QuerySwap}, query)
 	require.Error(t, err)
 
 	// valid query

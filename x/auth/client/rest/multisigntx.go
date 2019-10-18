@@ -26,7 +26,7 @@ type MultiSignReq struct {
 	Pubkey        MultiSignPubKey     `json:"pubkey"` // (optional) In case the multisig account never reveals its pubkey, it is required.
 }
 
-// MultiSignPubkey defines the properties of a multisig account's public key
+// MultiSignPubKey defines the properties of a multisig account's public key
 type MultiSignPubKey struct {
 	Threshold int      `json:"threshold"`
 	PubKeys   []string `json:"pubkeys"`

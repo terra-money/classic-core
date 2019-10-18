@@ -8,7 +8,7 @@ import (
 	"github.com/terra-project/core/x/staking"
 )
 
-// generic sealed codec to be used throughout this module
+// ModuleCdc defines generic sealed codec to be used throughout this module
 var ModuleCdc *codec.Codec
 
 // TODO abstract genesis transactions registration back to staking

@@ -22,25 +22,26 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// AppModuleBasic app module basics object
+// AppModuleBasic defines the basic application module used by the treasury module.
 type AppModuleBasic struct{}
 
-// Name returns module name
+// Name returns the treasury module's name
 func (AppModuleBasic) Name() string {
 	return ModuleName
 }
 
-// RegisterCodec registers module codec
+// RegisterCodec registers the treasury module's types for the given codec.
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 }
 
-// DefaultGenesis returns default genesis state
+// DefaultGenesis returns default genesis state as raw bytes for the treasury
+// module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
 }
 
-// ValidateGenesis validates genesis
+// ValidateGenesis performs genesis state validation for the treasury module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data GenesisState
 	err := ModuleCdc.UnmarshalJSON(bz, &data)
@@ -50,20 +51,20 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return ValidateGenesis(data)
 }
 
-// RegisterRESTRoutes registers rest routes
+// RegisterRESTRoutes registers the REST routes for the treasury module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr)
 }
 
-// GetTxCmd gets the root tx command of this module
+// GetTxCmd returns the root tx command for the treasury module.
 func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }
 
-// GetQueryCmd gets the root query command of this module
+// GetQueryCmd returns the root query command for the treasury module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return cli.GetQueryCmd(cdc)
 }
 
-// AppModule app module
+// AppModule implements an application module for the treasury module.
 type AppModule struct {
 	AppModuleBasic
 
@@ -78,29 +79,29 @@ func NewAppModule(keeper Keeper) AppModule {
 	}
 }
 
-// Name returns module name
+// Name returns the treasury module's name.
 func (AppModule) Name() string { return ModuleName }
 
-// RegisterInvariants registers invariants
+// RegisterInvariants registers the treasury module invariants.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route module message route name
+// Route returns the message routing key for the treasury module.
 func (AppModule) Route() string { return RouterKey }
 
-// NewHandler module handler
+// NewHandler returns an sdk.Handler for the treasury module.
 func (am AppModule) NewHandler() sdk.Handler {
 	return nil
 }
 
-// QuerierRoute module querier route name
+// QuerierRoute returns the treasury module's querier route name.
 func (AppModule) QuerierRoute() string { return RouterKey }
 
-// NewQuerierHandler module querier
+// NewQuerierHandler returns the treasury module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
 	return NewQuerier(am.keeper)
 }
 
-// InitGenesis module init-genesis
+// InitGenesis performs genesis initialization for the treasury module.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
@@ -108,17 +109,18 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis module export genesis
+// ExportGenesis returns the exported genesis state as raw bytes for the treasury
+// module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	genesisState := ExportGenesis(ctx, am.keeper)
 	data := ModuleCdc.MustMarshalJSON(genesisState)
 	return data
 }
 
-// BeginBlock module begin-block
+// BeginBlock returns the begin blocker for the treasury module.
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
 
-// EndBlock module end-block
+// EndBlock returns the end blocker for the treasury module.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}

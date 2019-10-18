@@ -12,7 +12,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(params.ParameterChangeProposal{}, "params/ParameterChangeProposal", nil)
 }
 
-// module codec
+// ModuleCdc is the module codec
 var ModuleCdc *codec.Codec
 
 func init() {
