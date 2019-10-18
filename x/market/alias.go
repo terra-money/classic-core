@@ -32,7 +32,6 @@ var (
 	ErrNoEffectivePrice      = types.ErrNoEffectivePrice
 	ErrInsufficientSwapCoins = types.ErrInsufficientSwapCoins
 	ErrRecursiveSwap         = types.ErrRecursiveSwap
-	ErrInactive              = types.ErrInactive
 	NewGenesisState          = types.NewGenesisState
 	DefaultGenesisState      = types.DefaultGenesisState
 	ValidateGenesis          = types.ValidateGenesis

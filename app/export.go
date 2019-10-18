@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/slashing"
 	"github.com/terra-project/core/x/staking"
@@ -197,4 +198,14 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	app.treasuryKeeper.ClearHistoricalIssuance(ctx)
 	// clear all tax proceeds
 	app.treasuryKeeper.ClearTaxProceeds(ctx)
+
+	// left last tax rate
+	lastTaxRate := app.treasuryKeeper.GetTaxRate(ctx, core.GetEpoch(ctx))
+	app.treasuryKeeper.ClearTaxRates(ctx)
+	app.treasuryKeeper.SetTaxRate(ctx, 0, lastTaxRate)
+
+	// left last reward weight
+	lastRewardWeight := app.treasuryKeeper.GetRewardWeight(ctx, core.GetEpoch(ctx))
+	app.treasuryKeeper.ClearRewardWeights(ctx)
+	app.treasuryKeeper.SetRewardWeight(ctx, 0, lastRewardWeight)
 }

@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury/internal/keeper"
 )
 
@@ -14,9 +15,9 @@ func TestExportInitGenesis(t *testing.T) {
 	input.TreasuryKeeper.SetHistoricalIssuance(input.Ctx, 0, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(33))))
 	input.TreasuryKeeper.SetHistoricalIssuance(input.Ctx, 1, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(123))))
 	input.TreasuryKeeper.SetHistoricalIssuance(input.Ctx, 2, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(131))))
-	input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.NewDec(1123))
+	input.TreasuryKeeper.SetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx), sdk.NewDec(1123))
 	input.TreasuryKeeper.SetTaxCap(input.Ctx, "foo", sdk.NewInt(1234))
-	input.TreasuryKeeper.SetTaxRate(input.Ctx, sdk.NewDec(5435))
+	input.TreasuryKeeper.SetTaxRate(input.Ctx, core.GetEpoch(input.Ctx), sdk.NewDec(5435))
 	input.TreasuryKeeper.SetTaxProceeds(input.Ctx, 0, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(923))))
 	input.TreasuryKeeper.SetTaxProceeds(input.Ctx, 1, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(123))))
 	input.TreasuryKeeper.SetTaxProceeds(input.Ctx, 2, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(623))))

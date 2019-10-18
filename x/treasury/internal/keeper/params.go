@@ -6,48 +6,48 @@ import (
 	"github.com/terra-project/core/x/treasury/internal/types"
 )
 
-// ParamTable for treasury module
+// ParamKeyTable returns ParamTable for treasury module
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// TaxPolicy
+// TaxPolicy defines constraints for TaxRate
 func (k Keeper) TaxPolicy(ctx sdk.Context) (res types.PolicyConstraints) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyTaxPolicy, &res)
 	return
 }
 
-// RewardPolicy
+// RewardPolicy defines constraints for RewardWeight
 func (k Keeper) RewardPolicy(ctx sdk.Context) (res types.PolicyConstraints) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardPolicy, &res)
 	return
 }
 
-// SeigniorageBurdenTarget
+// SeigniorageBurdenTarget nolint
 func (k Keeper) SeigniorageBurdenTarget(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeySeigniorageBurdenTarget, &res)
 	return
 }
 
-// MiningIncrement
+// MiningIncrement nolint
 func (k Keeper) MiningIncrement(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyMiningIncrement, &res)
 	return
 }
 
-// WindowShort
+// WindowShort is a short period window for moving average
 func (k Keeper) WindowShort(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyWindowShort, &res)
 	return
 }
 
-// WindowLong
+// WindowLong is a long period window for moving average
 func (k Keeper) WindowLong(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyWindowLong, &res)
 	return
 }
 
-// WindowProbation
+// WindowProbation is a period of time to prevent updates
 func (k Keeper) WindowProbation(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyWindowProbation, &res)
 	return

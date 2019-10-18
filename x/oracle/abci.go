@@ -25,7 +25,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		k.DeletePrice(ctx, activeDenom)
 	}
 
-	// Changes whitelist array to map for fast lookup
+	// Changes whitelist array to map for the fast lookup
 	whitelistMap := make(map[string]bool)
 	for _, denom := range k.Whitelist(ctx) {
 		whitelistMap[denom] = true

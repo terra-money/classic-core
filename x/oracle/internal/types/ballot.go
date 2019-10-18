@@ -9,10 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// PriceBallot is a convinience wrapper arounda a PriceVote slice
+// PriceBallot is a convinience wrapper around a PriceVote slice
 type PriceBallot []PriceVote
 
-// Returns the total amount of voting power in the ballot
+// Power returns the total amount of voting power in the ballot
 func (pb PriceBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
 	totalPower := int64(0)
 	for _, vote := range pb {
@@ -22,7 +22,7 @@ func (pb PriceBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
 	return totalPower
 }
 
-// Returns the median weighted by the power of the PriceVote.
+// WeightedMedian returns the median weighted by the power of the PriceVote.
 func (pb PriceBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec {
 	totalPower := pb.Power(ctx, sk)
 	if pb.Len() > 0 {
@@ -43,7 +43,7 @@ func (pb PriceBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec 
 	return sdk.ZeroDec()
 }
 
-// Returns the standard deviation by the power of the PriceVote.
+// StandardDeviation returns the standard deviation by the power of the PriceVote.
 func (pb PriceBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
@@ -57,7 +57,7 @@ func (pb PriceBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (stan
 		sum = sum.Add(deviation.Mul(deviation))
 	}
 
-	variance := sum.Quo(sdk.NewDec(int64(len(pb))))
+	variance := sum.QuoInt64(int64(len(pb)))
 
 	floatNum, _ := strconv.ParseFloat(variance.String(), 64)
 	floatNum = math.Sqrt(floatNum)

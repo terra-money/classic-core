@@ -97,18 +97,37 @@ func TestFeederDelegation(t *testing.T) {
 	res = h(input.Ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
+	// Case 2.2: Normal Vote - without delegation
+	voteMsg := NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
+	require.True(t, res.IsOK())
+
+	// Case 2.3: Normal Vote - with delegation fails
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
+	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
+	require.False(t, res.IsOK())
+
 	// Case 3: Normal MsgDelegateFeederPermission succeeds
 	msg := NewMsgDelegateFeederPermission(keeper.ValAddrs[0], keeper.Addrs[1])
 	res = h(input.Ctx, msg)
 	require.True(t, res.IsOK())
 
-	// Case 4: Normal Prevote - without delegation fails
+	// Case 4.1: Normal Prevote - without delegation fails
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
-	// Case 5: Normal Prevote - with delegation succeeds
+	// Case 4.2: Normal Prevote - with delegation succeeds
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
+	require.True(t, res.IsOK())
+	// Case 4.3: Normal Vote - without delegation fails
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[0])
+	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
+	require.False(t, res.IsOK())
+
+	// Case 4.4: Normal Vote - with delegation succeeds
+	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
+	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
 	require.True(t, res.IsOK())
 }

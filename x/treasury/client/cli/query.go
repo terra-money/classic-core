@@ -46,7 +46,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 }
 
-// GetCmdQueryTaxRate implements the query taxrate command.
+// GetCmdQueryTaxRate implements the query tax-rate command.
 func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-rate [epoch]",
@@ -127,7 +127,7 @@ $ terracli query treasury tax-cap ukrw
 	return cmd
 }
 
-// GetCmdQueryHistoricalIssuance implements the query issuance command.
+// GetCmdQueryHistoricalIssuance implements the query historical issuance command.
 func GetCmdQueryHistoricalIssuance(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "historical-issuance [epoch]",

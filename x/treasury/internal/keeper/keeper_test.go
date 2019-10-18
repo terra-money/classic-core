@@ -16,36 +16,32 @@ func TestRewardWeight(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// See that we can get and set reward weights
-	blocksPerEpoch := core.BlocksPerEpoch
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
-
-		input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.NewDecWithPrec(i, 2))
+		input.TreasuryKeeper.SetRewardWeight(input.Ctx, i, sdk.NewDecWithPrec(i, 2))
 	}
 
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
-
 		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetRewardWeight(input.Ctx, i))
 	}
+
+	input.TreasuryKeeper.ClearRewardWeights(input.Ctx)
+	require.Equal(t, types.DefaultRewardWeight, input.TreasuryKeeper.GetRewardWeight(input.Ctx, int64(0)))
 }
 
 func TestTaxRate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// See that we can get and set tax rate
-	blocksPerEpoch := core.BlocksPerEpoch
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
-
-		input.TreasuryKeeper.SetTaxRate(input.Ctx, sdk.NewDecWithPrec(i, 2))
+		input.TreasuryKeeper.SetTaxRate(input.Ctx, i, sdk.NewDecWithPrec(i, 2))
 	}
 
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
-
 		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetTaxRate(input.Ctx, i))
 	}
+
+	input.TreasuryKeeper.ClearTaxRates(input.Ctx)
+	require.Equal(t, types.DefaultTaxRate, input.TreasuryKeeper.GetTaxRate(input.Ctx, int64(0)))
 }
 
 func TestTaxCap(t *testing.T) {

@@ -18,16 +18,30 @@ func TestApplySwapToPool(t *testing.T) {
 
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000))
 	askCoin := sdk.NewDecCoin(core.MicroSDRDenom, sdk.NewInt(1700))
-
 	oldSDRPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
 	newSDRPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
-
 	sdrDiff := newSDRPoolDelta.Sub(oldSDRPoolDelta)
-
 	require.Equal(t, sdk.NewDec(-1700), sdrDiff)
-}
 
+	// reverse swap
+	offerCoin = sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
+	askCoin = sdk.NewDecCoin(core.MicroLunaDenom, sdk.NewInt(1000))
+	oldSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
+	newSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	sdrDiff = newSDRPoolDelta.Sub(oldSDRPoolDelta)
+	require.Equal(t, sdk.NewDec(1700), sdrDiff)
+
+	// TERRA <> TERRA, no pool changes are expected
+	offerCoin = sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
+	askCoin = sdk.NewDecCoin(core.MicroKRWDenom, sdk.NewInt(3400))
+	oldSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
+	newSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	sdrDiff = newSDRPoolDelta.Sub(oldSDRPoolDelta)
+	require.Equal(t, sdk.NewDec(0), sdrDiff)
+}
 func TestComputeSwap(t *testing.T) {
 	input := CreateTestInput(t)
 

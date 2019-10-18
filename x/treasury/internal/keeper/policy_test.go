@@ -38,7 +38,7 @@ func TestUpdateTaxRate(t *testing.T) {
 	}
 
 	input.TreasuryKeeper.UpdateTaxPolicy(input.Ctx)
-	taxRate := input.TreasuryKeeper.GetTaxRate(input.Ctx, core.GetEpoch(input.Ctx))
+	taxRate := input.TreasuryKeeper.GetTaxRate(input.Ctx, core.GetEpoch(input.Ctx)+1)
 	require.Equal(t, types.DefaultTaxRate.Add(taxPolicy.ChangeRateMax), taxRate)
 }
 
@@ -58,7 +58,7 @@ func TestUpdateRewardWeight(t *testing.T) {
 
 	rewardPolicy := input.TreasuryKeeper.RewardPolicy(input.Ctx)
 	input.TreasuryKeeper.UpdateRewardPolicy(input.Ctx)
-	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx))
+	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx)+1)
 	require.Equal(t, types.DefaultRewardWeight.Add(rewardPolicy.ChangeRateMax), rewardWeight)
 }
 

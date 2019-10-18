@@ -10,7 +10,7 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-// SettleSeigniorage
+// SettleSeigniorage computes seigniorage and distributes it to oracle and community-pool account
 func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 	// Mint seigniorage for oracle and community pool
 	epoch := core.GetEpoch(ctx)
@@ -55,7 +55,7 @@ func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 		panic(err)
 	}
 
-	// Update distribution community p9ol
+	// Update distribution community pool
 	feePool := k.distrKeeper.GetFeePool(ctx)
 	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoins(leftCoins))
 	k.distrKeeper.SetFeePool(ctx, feePool)

@@ -21,8 +21,6 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/voting_info", RestVoter), votingInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/voting_infos", votingInfoHandlerListFn(cliCtx)).Methods("GET")
 }
 
 func queryVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
@@ -201,76 +199,7 @@ func queryFeederDelegationHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		var feeder sdk.AccAddress
-		cliCtx.Codec.MustUnmarshalJSON(res, &feeder)
-
 		cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-// http request handler to query voting info
-func votingInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		vars := mux.Vars(r)
-		valAddr, err := sdk.ValAddressFromBech32(vars["voter"])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		params := types.NewQueryVotingInfoParams(valAddr)
-
-		bz, err := cliCtx.Codec.MarshalJSON(params)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVotingInfo), bz)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-// http request handler to query voting info
-func votingInfoHandlerListFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		_, page, limit, err := rest.ParseHTTPArgsWithLimit(r, 0)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		params := types.NewQueryVotingInfosParams(page, limit)
-		bz, err := cliCtx.Codec.MarshalJSON(params)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVotingInfos), bz)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

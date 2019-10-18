@@ -23,7 +23,6 @@ const (
 	CodeNotRevealPeriod    = types.CodeNotRevealPeriod
 	CodeInvalidSaltLength  = types.CodeInvalidSaltLength
 	CodeInvalidMsgFormat   = types.CodeInvalidMsgFormat
-	CodeMissingVotingInfo  = types.CodeMissingVotingInfo
 	ModuleName             = types.ModuleName
 	StoreKey               = types.StoreKey
 	RouterKey              = types.RouterKey
@@ -37,8 +36,6 @@ const (
 	QueryPrevotes          = types.QueryPrevotes
 	QueryVotes             = types.QueryVotes
 	QueryFeederDelegation  = types.QueryFeederDelegation
-	QueryVotingInfo        = types.QueryVotingInfo
-	QueryVotingInfos       = types.QueryVotingInfos
 )
 
 var (
@@ -48,15 +45,12 @@ var (
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
 	ErrUnknownDenomination         = types.ErrUnknownDenomination
 	ErrInvalidPrice                = types.ErrInvalidPrice
-	ErrVoterNotValidator           = types.ErrVoterNotValidator
 	ErrVerificationFailed          = types.ErrVerificationFailed
 	ErrNoPrevote                   = types.ErrNoPrevote
 	ErrNoVote                      = types.ErrNoVote
 	ErrNoVotingPermission          = types.ErrNoVotingPermission
 	ErrNotRevealPeriod             = types.ErrNotRevealPeriod
 	ErrInvalidSaltLength           = types.ErrInvalidSaltLength
-	ErrInvalidMsgFormat            = types.ErrInvalidMsgFormat
-	ErrNoVotingInfoFound           = types.ErrNoVotingInfoFound
 	NewGenesisState                = types.NewGenesisState
 	DefaultGenesisState            = types.DefaultGenesisState
 	ValidateGenesis                = types.ValidateGenesis
@@ -72,12 +66,9 @@ var (
 	NewQueryPrevotesParams         = types.NewQueryPrevotesParams
 	NewQueryVotesParams            = types.NewQueryVotesParams
 	NewQueryFeederDelegationParams = types.NewQueryFeederDelegationParams
-	NewQueryVotingInfoParams       = types.NewQueryVotingInfoParams
-	NewQueryVotingInfosParams      = types.NewQueryVotingInfosParams
 	NewPricePrevote                = types.NewPricePrevote
 	VoteHash                       = types.VoteHash
 	NewPriceVote                   = types.NewPriceVote
-	NewVotingInfo                  = types.NewVotingInfo
 	NewKeeper                      = keeper.NewKeeper
 	ParamKeyTable                  = keeper.ParamKeyTable
 	NewQuerier                     = keeper.NewQuerier
@@ -97,7 +88,6 @@ var (
 	DefaultRewardBand                     = types.DefaultRewardBand
 	DefaultRewardDistributionPeriod       = types.DefaultRewardDistributionPeriod
 	DefaultMinValidVotesPerWindow         = types.DefaultMinValidVotesPerWindow
-	DefaultSlashFraction                  = types.DefaultSlashFraction
 	DefaultWhitelist                      = types.DefaultWhitelist
 )
 
@@ -118,12 +108,9 @@ type (
 	QueryPrevotesParams         = types.QueryPrevotesParams
 	QueryVotesParams            = types.QueryVotesParams
 	QueryFeederDelegationParams = types.QueryFeederDelegationParams
-	QueryVotingInfoParams       = types.QueryVotingInfoParams
-	QueryVotingInfosParams      = types.QueryVotingInfosParams
 	PricePrevote                = types.PricePrevote
 	PricePrevotes               = types.PricePrevotes
 	PriceVote                   = types.PriceVote
 	PriceVotes                  = types.PriceVotes
-	VotingInfo                  = types.VotingInfo
 	Keeper                      = keeper.Keeper
 )

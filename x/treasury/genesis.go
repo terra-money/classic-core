@@ -5,12 +5,18 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-// InitGenesis initialize default parameters
+// InitGenesis initializes default parameters
 // and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetTaxRate(ctx, data.TaxRate)
-	keeper.SetRewardWeight(ctx, data.RewardWeight)
+
+	for epoch, taxRate := range data.TaxRates {
+		keeper.SetTaxRate(ctx, int64(epoch), taxRate)
+	}
+
+	for epoch, rewardWeight := range data.RewardWeights {
+		keeper.SetRewardWeight(ctx, int64(epoch), rewardWeight)
+	}
 
 	// store tax cap for SDT & LUNA(no tax)
 	for denom, taxCap := range data.TaxCaps {
@@ -31,8 +37,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
-	taxRate := keeper.GetTaxRate(ctx, core.GetEpoch(ctx))
-	rewardWeight := keeper.GetRewardWeight(ctx, core.GetEpoch(ctx))
 
 	taxCaps := make(map[string]sdk.Int)
 	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
@@ -40,12 +44,16 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
+	var taxRates []sdk.Dec
+	var rewardWeights []sdk.Dec
 	var taxProceeds []sdk.Coins
 	var historicalIssuancees []sdk.Coins
 	for e := int64(0); e <= core.GetEpoch(ctx); e++ {
+		taxRates = append(taxRates, keeper.GetTaxRate(ctx, e))
+		rewardWeights = append(rewardWeights, keeper.GetRewardWeight(ctx, e))
 		taxProceeds = append(taxProceeds, keeper.PeekTaxProceeds(ctx, e))
 		historicalIssuancees = append(historicalIssuancees, keeper.GetHistoricalIssuance(ctx, e))
 	}
 
-	return NewGenesisState(params, taxRate, rewardWeight, taxCaps, taxProceeds, historicalIssuancees)
+	return NewGenesisState(params, taxRates, rewardWeights, taxCaps, taxProceeds, historicalIssuancees)
 }

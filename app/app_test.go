@@ -22,6 +22,9 @@ func TestTerraExport(t *testing.T) {
 	newTapp := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
 	_, _, err := newTapp.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
+
+	_, _, err = newTapp.ExportAppStateAndValidators(true, []string{})
+	require.NoError(t, err, "ExportAppStateAndValidators for zero height should not have an error")
 }
 
 func setGenesis(tapp *TerraApp) error {

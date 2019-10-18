@@ -33,7 +33,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return marketQueryCmd
 }
 
-// GetCmdQuerySwap implements the query swap amount command.
+// GetCmdQuerySwap implements the query swap simulation result command.
 func GetCmdQuerySwap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "swap [offer-coin] [ask-denom]",
@@ -72,15 +72,16 @@ $ terracli query query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryTerraPoolDelta implements the query params command.
+// GetCmdQueryTerraPoolDelta implements the query terra pool delta command.
 func GetCmdQueryTerraPoolDelta(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terra-pool-delta",
 		Args:  cobra.NoArgs,
 		Short: "Query terra pool delta",
-		Long: `Query terra pool delta, which is the gap between TerraPool and BasePool.
+		Long: `Query terra pool delta, which is usdr amount used for swap operation from the TerraPool.
+It can be negative if the market wants more Terra than Luna, and vice versa if the market wants more Luna.
 
-	$ terracli query market terra-pool-delta
+$ terracli query market terra-pool-delta
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

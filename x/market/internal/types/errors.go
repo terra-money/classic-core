@@ -33,8 +33,3 @@ func ErrInsufficientSwapCoins(codespace sdk.CodespaceType, rval sdk.Int) sdk.Err
 func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
 }
-
-// ErrInactive called when the coin swap exceeds the daily swap limit for Luna
-func ErrInactive(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInactive, "Can't swap because the market is inactive.")
-}

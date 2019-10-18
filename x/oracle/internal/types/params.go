@@ -33,7 +33,6 @@ var (
 	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                              // 1%
 	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                   // 432,000
 	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                              // 5%
-	DefaultSlashFraction            = sdk.NewDecWithPrec(1, 4)                                              // 0.01%
 	DefaultWhitelist                = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
 )
 
@@ -71,14 +70,13 @@ func (params Params) Validate() error {
 		return fmt.Errorf("oracle parameter RewardBand must be positive")
 	}
 	if params.RewardDistributionPeriod < params.VotePeriod {
-		return fmt.Errorf("oracle parameter RewardBand must be bigger or equal than Voteperiod")
+		return fmt.Errorf("oracle parameter RewardDistributionPeriod must be bigger or equal than Voteperiod")
 	}
 	return nil
 }
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // pairs of oracle module's parameters.
-// nolint
 func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
 		{Key: ParamStoreKeyVotePeriod, Value: &params.VotePeriod},

@@ -151,19 +151,13 @@ func TestOracleDrop(t *testing.T) {
 
 	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, randomPrice)
 
-	salt := "1"
-	bz, err := VoteHash(salt, randomPrice, core.MicroKRWDenom, keeper.ValAddrs[0])
-	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx, prevoteMsg)
-
-	input.Ctx = input.Ctx.WithBlockHeight(1)
-	voteMsg := NewMsgPriceVote(randomPrice, salt, core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx, voteMsg)
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomPrice, 0)
 
 	// Immediately swap halt after an illiquid oracle vote
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroKRWDenom)
+	_, err := input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroKRWDenom)
 	require.NotNil(t, err)
 }
 
@@ -237,31 +231,8 @@ func TestOracleTallyTiming(t *testing.T) {
 	input, h := setup(t)
 
 	// all the keeper.Addrs vote for the block ... not last period block yet, so tally fails
-	for _, addr := range keeper.Addrs {
-		salt := "1"
-		bz, err := VoteHash(salt, sdk.OneDec(), core.MicroSDRDenom, sdk.ValAddress(addr))
-		require.Nil(t, err)
-
-		prevoteMsg := NewMsgPricePrevote(
-			hex.EncodeToString(bz),
-			core.MicroSDRDenom,
-			addr,
-			sdk.ValAddress(addr),
-		)
-
-		res := h(input.Ctx, prevoteMsg)
-		require.True(t, res.IsOK())
-
-		voteMsg := NewMsgPriceVote(
-			sdk.OneDec(),
-			salt,
-			core.MicroSDRDenom,
-			addr,
-			sdk.ValAddress(addr),
-		)
-
-		res = h(input.Ctx.WithBlockHeight(1), voteMsg)
-		require.True(t, res.IsOK())
+	for i := range keeper.Addrs {
+		makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomPrice, i)
 	}
 
 	params := input.OracleKeeper.GetParams(input.Ctx)
@@ -283,31 +254,24 @@ func TestOracleTallyTiming(t *testing.T) {
 func TestOracleRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
-	salt := "1"
-	bz, _ := VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
-	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+	// Account 1, SDR
+	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomPrice, 0)
 
-	voteMsg := NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
+	// Account 2, SDR
+	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomPrice, 1)
 
-	salt = "2"
-	bz, _ = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
-	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-
-	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
-
+	rewardsAmt := sdk.NewInt(100000000)
 	moduleAcc := input.SupplyKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), ModuleName)
-	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, stakingAmt.MulRaw(100))))
+	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, rewardsAmt)))
 	require.NoError(t, err)
 
 	input.SupplyKeeper.SetModuleAccount(input.Ctx.WithBlockHeight(1), moduleAcc)
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	expectedRewardAmt := sdk.NewDecFromInt(stakingAmt.MulRaw(50)).MulInt64(input.OracleKeeper.VotePeriod(input.Ctx)).QuoInt64(input.OracleKeeper.RewardDistributionPeriod(input.Ctx)).TruncateInt()
+	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
+	rewardDistributionPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
+	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).MulInt64(votePeriod).QuoInt64(rewardDistributionPeriod).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -318,43 +282,20 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
 	// Account 1, SDR
-	salt := "1"
-	bz, _ := VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
-	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-
-	voteMsg := NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
+	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomPrice, 0)
 
 	// Account 1, KRW
-	salt = "2"
-	bz, _ = VoteHash(salt, randomPrice, core.MicroKRWDenom, keeper.ValAddrs[0])
-	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-
-	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroKRWDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomPrice, 0)
 
 	// Account 2, SDR
-	salt = "3"
-	bz, _ = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
-	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-
-	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
+	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomPrice, 1)
 
 	// Account 3, KRW
-	salt = "3"
-	bz, _ = VoteHash(salt, randomPrice, core.MicroKRWDenom, keeper.ValAddrs[2])
-	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroKRWDenom, keeper.Addrs[2], keeper.ValAddrs[2])
-	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomPrice, 2)
 
-	voteMsg = NewMsgPriceVote(randomPrice, salt, core.MicroKRWDenom, keeper.Addrs[2], keeper.ValAddrs[2])
-	h(input.Ctx.WithBlockHeight(1), voteMsg)
-
+	rewardAmt := sdk.NewInt(100000000)
 	moduleAcc := input.SupplyKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), ModuleName)
-	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, stakingAmt.MulRaw(100))))
+	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, rewardAmt)))
 	require.NoError(t, err)
 
 	input.SupplyKeeper.SetModuleAccount(input.Ctx.WithBlockHeight(1), moduleAcc)
@@ -363,12 +304,25 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
 	rewardDistributedPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(stakingAmt.MulRaw(50)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(stakingAmt.MulRaw(25)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(2)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(4)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
 	require.Equal(t, expectedRewardAmt2, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
 	require.Equal(t, expectedRewardAmt2, rewards.AmountOf(core.MicroSDRDenom).TruncateInt())
+}
+
+func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, height int64, denom string, price sdk.Dec, idx int) {
+	// Account 1, SDR
+	salt := "1"
+	bz, _ := VoteHash(salt, price, denom, keeper.ValAddrs[idx])
+	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), denom, keeper.Addrs[idx], keeper.ValAddrs[idx])
+	res := h(input.Ctx.WithBlockHeight(height), prevoteMsg)
+	require.True(t, res.IsOK())
+
+	voteMsg := NewMsgPriceVote(price, salt, denom, keeper.Addrs[idx], keeper.ValAddrs[idx])
+	res = h(input.Ctx.WithBlockHeight(height+1), voteMsg)
+	require.True(t, res.IsOK())
 }

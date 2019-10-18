@@ -22,25 +22,25 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// app module basics object
+// AppModuleBasic app module basics object
 type AppModuleBasic struct{}
 
-// module name
+// Name returns module name
 func (AppModuleBasic) Name() string {
 	return ModuleName
 }
 
-// register module codec
+// RegisterCodec registers module codec
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 }
 
-// default genesis state
+// DefaultGenesis returns default genesis state
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
 }
 
-// module validate genesis
+// ValidateGenesis validates genesis
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data GenesisState
 	err := ModuleCdc.UnmarshalJSON(bz, &data)
@@ -50,21 +50,20 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return ValidateGenesis(data)
 }
 
-// register rest routes
+// RegisterRESTRoutes registers rest routes
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr)
 }
 
-// get the root tx command of this module
+// GetTxCmd gets the root tx command of this module
 func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }
 
-// get the root query command of this module
+// GetQueryCmd gets the root query command of this module
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return cli.GetQueryCmd(cdc)
 }
 
-//___________________________
-// app module
+// AppModule app module
 type AppModule struct {
 	AppModuleBasic
 
@@ -79,29 +78,29 @@ func NewAppModule(keeper Keeper) AppModule {
 	}
 }
 
-// module name
+// Name returns module name
 func (AppModule) Name() string { return ModuleName }
 
-// register invariants
+// RegisterInvariants registers invariants
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// module message route name
+// Route module message route name
 func (AppModule) Route() string { return RouterKey }
 
-// module handler
+// NewHandler module handler
 func (am AppModule) NewHandler() sdk.Handler {
 	return nil
 }
 
-// module querier route name
+// QuerierRoute module querier route name
 func (AppModule) QuerierRoute() string { return RouterKey }
 
-// module querier
+// NewQuerierHandler module querier
 func (am AppModule) NewQuerierHandler() sdk.Querier {
 	return NewQuerier(am.keeper)
 }
 
-// module init-genesis
+// InitGenesis module init-genesis
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
@@ -109,17 +108,17 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	return []abci.ValidatorUpdate{}
 }
 
-// module export genesis
+// ExportGenesis module export genesis
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	genesisState := ExportGenesis(ctx, am.keeper)
 	data := ModuleCdc.MustMarshalJSON(genesisState)
 	return data
 }
 
-// module begin-block
+// BeginBlock module begin-block
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
 
-// module end-block
+// EndBlock module end-block
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}

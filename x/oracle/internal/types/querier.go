@@ -11,8 +11,6 @@ const (
 	QueryPrevotes         = "prevotes"
 	QueryVotes            = "votes"
 	QueryFeederDelegation = "feederDelegation"
-	QueryVotingInfo       = "signingInfo"
-	QueryVotingInfos      = "signingInfos"
 )
 
 // QueryPriceParams defines the params for the following queries:
@@ -21,6 +19,7 @@ type QueryPriceParams struct {
 	Denom string
 }
 
+// NewQueryPriceParams returns params for price query
 func NewQueryPriceParams(denom string) QueryPriceParams {
 	return QueryPriceParams{denom}
 }
@@ -32,6 +31,7 @@ type QueryPrevotesParams struct {
 	Denom string
 }
 
+// NewQueryPrevotesParams returns params for price prevotes query
 func NewQueryPrevotesParams(voter sdk.ValAddress, denom string) QueryPrevotesParams {
 	return QueryPrevotesParams{voter, denom}
 }
@@ -43,6 +43,7 @@ type QueryVotesParams struct {
 	Denom string
 }
 
+// NewQueryVotesParams returns params for price votes query
 func NewQueryVotesParams(voter sdk.ValAddress, denom string) QueryVotesParams {
 	return QueryVotesParams{voter, denom}
 }
@@ -53,26 +54,7 @@ type QueryFeederDelegationParams struct {
 	Validator sdk.ValAddress
 }
 
+// NewQueryFeederDelegationParams returns params for feeder delegation query
 func NewQueryFeederDelegationParams(validator sdk.ValAddress) QueryFeederDelegationParams {
 	return QueryFeederDelegationParams{validator}
-}
-
-// QueryVotingInfoParams defines the params for the following queries:
-// - 'custom/oracle/votingInfo'
-type QueryVotingInfoParams struct {
-	ValAddress sdk.ValAddress
-}
-
-func NewQueryVotingInfoParams(valAddr sdk.ValAddress) QueryVotingInfoParams {
-	return QueryVotingInfoParams{valAddr}
-}
-
-// QueryVotingInfosParams defines the params for the following queries:
-// - 'custom/oracle/votingInfos'
-type QueryVotingInfosParams struct {
-	Page, Limit int
-}
-
-func NewQueryVotingInfosParams(page, limit int) QueryVotingInfosParams {
-	return QueryVotingInfosParams{page, limit}
 }
