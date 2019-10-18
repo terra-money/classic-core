@@ -15,6 +15,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryPrice:
 			return queryPrice(ctx, req, keeper)
+		case types.QueryPrices:
+			return queryPrices(ctx, keeper)
 		case types.QueryActives:
 			return queryActives(ctx, keeper)
 		case types.QueryVotes:
@@ -46,6 +48,17 @@ func queryPrice(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, price)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryPrices(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	prices := keeper.GetLunaPrices(ctx)
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, prices)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return bz, nil

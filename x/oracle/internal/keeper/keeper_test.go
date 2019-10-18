@@ -176,6 +176,9 @@ func TestPrice(t *testing.T) {
 	input.OracleKeeper.DeletePrice(input.Ctx, core.MicroKRWDenom)
 	_, err = input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroKRWDenom)
 	require.Error(t, err)
+
+	lunaPrices := input.OracleKeeper.GetLunaPrices(input.Ctx)
+	require.True(t, len(lunaPrices) == 3)
 }
 
 func TestIterateLunaPrices(t *testing.T) {

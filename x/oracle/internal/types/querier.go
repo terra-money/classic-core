@@ -8,6 +8,7 @@ import (
 const (
 	QueryParameters       = "parameters"
 	QueryPrice            = "price"
+	QueryPrices           = "prices"
 	QueryActives          = "actives"
 	QueryPrevotes         = "prevotes"
 	QueryVotes            = "votes"
