@@ -7,7 +7,7 @@ import (
 	"github.com/terra-project/core/x/gov"
 )
 
-// Register concrete types on codec codec
+// RegisterCodec registers concrete types on codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(distribution.MsgWithdrawDelegatorReward{}, "distribution/MsgWithdrawDelegationReward", nil)
 	cdc.RegisterConcrete(distribution.MsgWithdrawValidatorCommission{}, "distribution/MsgWithdrawValidatorCommission", nil)
@@ -15,7 +15,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(distribution.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal", nil)
 }
 
-// generic sealed codec to be used throughout module
+// ModuleCdc is generic sealed codec to be used throughout module
 var ModuleCdc *codec.Codec
 
 func init() {

@@ -10,19 +10,19 @@ import (
 	"github.com/terra-project/core/x/auth"
 )
 
-// expected staking keeper
+// StakingKeeper defeins expected staking keeper
 type StakingKeeper interface {
 	ApplyAndReturnValidatorSetUpdates(sdk.Context) (updates []abci.ValidatorUpdate)
 }
 
-// expected account keeper
+// AccountKeeper defines expected account keeper
 type AccountKeeper interface {
 	NewAccount(sdk.Context, auth.Account) auth.Account
 	SetAccount(sdk.Context, auth.Account)
 	IterateAccounts(ctx sdk.Context, process func(auth.Account) (stop bool))
 }
 
-// The expected interface for iterating genesis accounts object
+// GenesisAccountsIterator defines the expected interface for iterating genesis accounts object
 type GenesisAccountsIterator interface {
 	IterateGenesisAccounts(
 		cdc *codec.Codec,

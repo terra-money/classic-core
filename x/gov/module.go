@@ -23,7 +23,7 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// app module basics object
+// AppModuleBasic defines the basic application module used by the gov module.
 type AppModuleBasic struct {
 	CosmosAppModuleBasic
 }
@@ -35,20 +35,19 @@ func NewAppModuleBasic(proposalHandlers ...client.ProposalHandler) AppModuleBasi
 	}
 }
 
-var _ module.AppModuleBasic = AppModuleBasic{}
-
-// module name
+// Name returns the gov module's name
 func (am AppModuleBasic) Name() string {
 	return am.CosmosAppModuleBasic.Name()
 }
 
-// register module codec
+// RegisterCodec registers the gov module's types for the given codec.
 func (am AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 	*CosmosModuleCdc = *ModuleCdc // nolint
 }
 
-// default genesis state
+// DefaultGenesis returns default genesis state as raw bytes for the gov
+// module.
 func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
 	// customize to set default genesis state deposit denom to uluna
 	defaultGenesisState := DefaultGenesisState()
@@ -57,28 +56,29 @@ func (am AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(defaultGenesisState)
 }
 
-// module validate genesis
+// ValidateGenesis performs genesis state validation for the gov module.
 func (am AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return am.CosmosAppModuleBasic.ValidateGenesis(bz)
 }
 
-// register rest routes
+// RegisterRESTRoutes registers the REST routes for the gov module.
 func (am AppModuleBasic) RegisterRESTRoutes(cliCtx context.CLIContext, route *mux.Router) {
 	am.CosmosAppModuleBasic.RegisterRESTRoutes(cliCtx, route)
 }
 
-// get the root tx command of this module
+// GetTxCmd returns the root tx command for the gov module.
 func (am AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return am.CosmosAppModuleBasic.GetTxCmd(cdc)
 }
 
-// get the root query command of this module
+// GetQueryCmd returns the root query command for the gov module.
 func (am AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return am.CosmosAppModuleBasic.GetQueryCmd(cdc)
 }
 
 //___________________________
-// app module for gov
+
+// AppModule implements an application module for the gov module.
 type AppModule struct {
 	AppModuleBasic
 	cosmosAppModule CosmosAppModule
@@ -92,48 +92,49 @@ func NewAppModule(keeper Keeper, supplyKeeper types.SupplyKeeper) AppModule {
 	}
 }
 
-// module name
+// Name returns the gov module's name.
 func (am AppModule) Name() string {
 	return am.cosmosAppModule.Name()
 }
 
-// register invariants
+// RegisterInvariants performs a no-op.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	am.cosmosAppModule.RegisterInvariants(ir)
 }
 
-// module querier route name
+// Route returns the message routing key for the gov module.
 func (am AppModule) Route() string {
 	return am.cosmosAppModule.Route()
 }
 
-// module handler
+// NewHandler returns an sdk.Handler for the gov module.
 func (am AppModule) NewHandler() sdk.Handler {
 	return am.cosmosAppModule.NewHandler()
 }
 
-// module querier route name
+// QuerierRoute returns the gov module's querier route name.
 func (am AppModule) QuerierRoute() string { return am.cosmosAppModule.QuerierRoute() }
 
-// module querier
+// NewQuerierHandler returns the gov module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier { return am.cosmosAppModule.NewQuerierHandler() }
 
-// module init-genesis
+// InitGenesis performs genesis initialization for the gov module.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	return am.cosmosAppModule.InitGenesis(ctx, data)
 }
 
-// module export genesis
+// ExportGenesis returns the exported genesis state as raw bytes for the gov
+// module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	return am.cosmosAppModule.ExportGenesis(ctx)
 }
 
-// module begin-block
+// BeginBlock returns the begin blocker for the gov module.
 func (am AppModule) BeginBlock(ctx sdk.Context, rbb abci.RequestBeginBlock) {
 	am.cosmosAppModule.BeginBlock(ctx, rbb)
 }
 
-// module end-block
+// EndBlock returns the end blocker for the gov module.
 func (am AppModule) EndBlock(ctx sdk.Context, rbb abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return am.cosmosAppModule.EndBlock(ctx, rbb)
 }

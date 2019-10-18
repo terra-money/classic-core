@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
-// export genesis for all accounts
+// ExportGenesis exports genesis for all accounts
 func ExportGenesis(ctx sdk.Context, accountKeeper AccountKeeper) GenesisState {
 
 	// iterate to get the accounts

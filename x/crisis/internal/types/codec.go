@@ -5,12 +5,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 )
 
-// Register concrete types on codec codec
+// RegisterCodec registers concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(crisis.MsgVerifyInvariant{}, "crisis/MsgVerifyInvariant", nil)
 }
 
-// generic sealed codec to be used throughout module
+// ModuleCdc is generic sealed codec to be used throughout module
 var ModuleCdc *codec.Codec
 
 func init() {

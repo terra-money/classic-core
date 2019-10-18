@@ -20,6 +20,8 @@ func TestOracleThreshold(t *testing.T) {
 	// Prevote without price
 	salt := "1"
 	bz, err := VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	require.NoError(t, err)
+
 	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 	require.True(t, res.IsOK())
@@ -37,6 +39,8 @@ func TestOracleThreshold(t *testing.T) {
 	// More than the threshold signs, msg succeeds
 	salt = "1"
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 
@@ -45,6 +49,8 @@ func TestOracleThreshold(t *testing.T) {
 
 	salt = "2"
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
 	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 
@@ -53,6 +59,8 @@ func TestOracleThreshold(t *testing.T) {
 
 	salt = "3"
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[2])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
 	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 
@@ -70,6 +78,8 @@ func TestOracleThreshold(t *testing.T) {
 
 	salt = "1"
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 
@@ -78,6 +88,8 @@ func TestOracleThreshold(t *testing.T) {
 
 	salt = "2"
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
 	h(input.Ctx.WithBlockHeight(0), prevoteMsg)
 
@@ -96,31 +108,43 @@ func TestOracleMultiVote(t *testing.T) {
 	// Less than the threshold signs, msg fails
 	salt := "1"
 	bz, err := VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	require.NoError(t, err)
+
 	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	bz, err = VoteHash(salt, randomPrice, core.MicroSDRDenom, keeper.ValAddrs[2])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	bz, err = VoteHash(salt, anotherRandomPrice, core.MicroSDRDenom, keeper.ValAddrs[0])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	bz, err = VoteHash(salt, anotherRandomPrice, core.MicroSDRDenom, keeper.ValAddrs[1])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	bz, err = VoteHash(salt, anotherRandomPrice, core.MicroSDRDenom, keeper.ValAddrs[2])
+	require.NoError(t, err)
+
 	prevoteMsg = NewMsgPricePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
@@ -174,7 +198,7 @@ func TestOracleTally(t *testing.T) {
 
 		salt := string(i)
 		bz, err := VoteHash(salt, decPrice, core.MicroSDRDenom, valAddrs[i])
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		prevoteMsg := NewMsgPricePrevote(
 			hex.EncodeToString(bz),
@@ -317,7 +341,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, height int64, denom string, price sdk.Dec, idx int) {
 	// Account 1, SDR
 	salt := "1"
-	bz, _ := VoteHash(salt, price, denom, keeper.ValAddrs[idx])
+	bz, err := VoteHash(salt, price, denom, keeper.ValAddrs[idx])
+	require.NoError(t, err)
+
 	prevoteMsg := NewMsgPricePrevote(hex.EncodeToString(bz), denom, keeper.Addrs[idx], keeper.ValAddrs[idx])
 	res := h(input.Ctx.WithBlockHeight(height), prevoteMsg)
 	require.True(t, res.IsOK())

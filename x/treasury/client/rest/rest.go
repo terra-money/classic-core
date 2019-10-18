@@ -7,6 +7,7 @@ import (
 	govrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 )
 
+// Defines whildcard part of the request paths
 const (
 	RestDenom = "denom"
 	RestEpoch = "epoch"

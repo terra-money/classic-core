@@ -18,6 +18,7 @@ type QueryTaxCapParams struct {
 	Denom string
 }
 
+// NewQueryTaxCapParams returns new QueryTaxCapParams instance
 func NewQueryTaxCapParams(denom string) QueryTaxCapParams {
 	return QueryTaxCapParams{
 		Denom: denom,
@@ -30,6 +31,7 @@ type QueryTaxRateParams struct {
 	Epoch int64
 }
 
+// NewQueryTaxRateParams returns new QueryTaxRateParams instance
 func NewQueryTaxRateParams(epoch int64) QueryTaxRateParams {
 	return QueryTaxRateParams{
 		Epoch: epoch,
@@ -42,6 +44,7 @@ type QueryRewardWeightParams struct {
 	Epoch int64
 }
 
+// NewQueryRewardWeightParams returns new QueryRewardWeightParams instance
 func NewQueryRewardWeightParams(epoch int64) QueryRewardWeightParams {
 	return QueryRewardWeightParams{
 		Epoch: epoch,
@@ -54,6 +57,7 @@ type QuerySeigniorageProceedsParams struct {
 	Epoch int64
 }
 
+// NewQuerySeigniorageParams returns new QuerySeigniorageProceedsParams instance
 func NewQuerySeigniorageParams(epoch int64) QuerySeigniorageProceedsParams {
 	return QuerySeigniorageProceedsParams{
 		Epoch: epoch,
@@ -66,6 +70,7 @@ type QueryTaxProceedsParams struct {
 	Epoch int64
 }
 
+// NewQueryTaxProceedsParams returns new QueryTaxProceedsParams instance
 func NewQueryTaxProceedsParams(epoch int64) QueryTaxProceedsParams {
 	return QueryTaxProceedsParams{
 		Epoch: epoch,
@@ -78,6 +83,7 @@ type QueryHistoricalIssuanceParams struct {
 	Epoch int64
 }
 
+// NewQueryHistoricalIssuanceParams returns new QueryHistoricalIssuanceParams instance
 func NewQueryHistoricalIssuanceParams(epoch int64) QueryHistoricalIssuanceParams {
 	return QueryHistoricalIssuanceParams{
 		Epoch: epoch,

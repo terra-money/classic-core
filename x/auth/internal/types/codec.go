@@ -19,7 +19,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&BaseLazyGradedVestingAccount{}, "core/LazyGradedVestingAccount", nil)
 }
 
-// module wide codec
+// ModuleCdc defines module wide codec
 var ModuleCdc *codec.Codec
 
 func init() {

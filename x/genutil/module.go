@@ -20,25 +20,26 @@ var (
 	_ module.AppModuleBasic   = AppModuleBasic{}
 )
 
-// app module basics object
+// AppModuleBasic defines the basic application module used by the genutil module.
 type AppModuleBasic struct{}
 
-// module name
+// Name returns the genutil module's name
 func (AppModuleBasic) Name() string {
 	return CosmosAppModuleBasic{}.Name()
 }
 
-// register module codec
+// RegisterCodec registers the genutil module's types for the given codec.
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	*CosmosModuleCdc = *ModuleCdc // nolint
 }
 
-// default genesis state
+// DefaultGenesis returns default genesis state as raw bytes for the genutil
+// module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return ModuleCdc.MustMarshalJSON(GenesisState{})
 }
 
-// module validate genesis
+// ValidateGenesis performs genesis state validation for the genutil module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data GenesisState
 	err := ModuleCdc.UnmarshalJSON(bz, &data)
@@ -48,23 +49,24 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return ValidateGenesis(data)
 }
 
-// register rest routes
+// RegisterRESTRoutes registers the REST routes for the genutil module.
 func (AppModuleBasic) RegisterRESTRoutes(cliCtx context.CLIContext, route *mux.Router) {
 	CosmosAppModuleBasic{}.RegisterRESTRoutes(cliCtx, route)
 }
 
-// get the root tx command of this module
+// GetTxCmd returns the root tx command for the genutil module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return CosmosAppModuleBasic{}.GetTxCmd(cdc)
 }
 
-// get the root query command of this module
+// GetQueryCmd returns the root query command for the genutil module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return CosmosAppModuleBasic{}.GetQueryCmd(cdc)
 }
 
 //___________________________
-// app module
+
+// AppModule implements an application module for the genutil module.
 type AppModule struct {
 	AppModuleBasic
 	accountKeeper   AccountKeeper
@@ -86,50 +88,51 @@ func NewAppModule(accountKeeper AccountKeeper,
 	})
 }
 
-// module name
+// Name returns the genutil module's name.
 func (am AppModule) Name() string {
 	return am.cosmosAppModule.Name()
 }
 
-// register invariants
+// RegisterInvariants performs a no-op.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	am.cosmosAppModule.RegisterInvariants(ir)
 }
 
-// module querier route name
+// Route returns the message routing key for the genutil module.
 func (am AppModule) Route() string {
 	return am.cosmosAppModule.Route()
 }
 
-// module handler
+// NewHandler returns an sdk.Handler for the genutil module.
 func (am AppModule) NewHandler() sdk.Handler {
 	return am.cosmosAppModule.NewHandler()
 }
 
-// module querier route name
+// QuerierRoute returns the genutil module's querier route name.
 func (am AppModule) QuerierRoute() string { return am.cosmosAppModule.QuerierRoute() }
 
-// module querier
+// NewQuerierHandler returns the genutil module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier { return am.cosmosAppModule.NewQuerierHandler() }
 
-// module init-genesis
+// InitGenesis performs genesis initialization for the genutil module.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	return InitGenesis(ctx, ModuleCdc, am.stakingKeeper, am.deliverTx, genesisState)
 }
 
-// module export genesis
+// ExportGenesis returns the exported genesis state as raw bytes for the genutil
+// module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	return am.cosmosAppModule.ExportGenesis(ctx)
 }
 
-// module begin-block
+// BeginBlock returns the begin blocker for the genutil module.
 func (am AppModule) BeginBlock(ctx sdk.Context, rbb abci.RequestBeginBlock) {
 	am.cosmosAppModule.BeginBlock(ctx, rbb)
 }
 
-// module end-block
+// EndBlock returns the end blocker for the genutil module.
 func (am AppModule) EndBlock(ctx sdk.Context, rbb abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return am.cosmosAppModule.EndBlock(ctx, rbb)
 }

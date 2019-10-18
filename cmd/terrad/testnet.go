@@ -101,7 +101,7 @@ Example:
 
 const nodeDirPerm = 0755
 
-// Initialize the testnet
+// InitTestnet initializes the testnet
 func InitTestnet(cmd *cobra.Command, config *tmconfig.Config, cdc *codec.Codec,
 	mbm module.BasicManager, genAccIterator genutiltypes.GenesisAccountsIterator,
 	outputDir, chainID, minGasPrices, nodeDirPrefix, nodeDaemonHome,

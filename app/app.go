@@ -39,13 +39,13 @@ import (
 const appName = "TerraApp"
 
 var (
-	// default home directories for terracli
+	// DefaultCLIHome defines default home directories for terracli
 	DefaultCLIHome = os.ExpandEnv("$HOME/.terracli")
 
-	// default home directories for terrad
+	// DefaultNodeHome defines default home directories for terrad
 	DefaultNodeHome = os.ExpandEnv("$HOME/.terrad")
 
-	// The ModuleBasicManager is in charge of setting up basic,
+	// ModuleBasics = The ModuleBasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
@@ -78,7 +78,7 @@ var (
 	}
 )
 
-// custom tx codec
+// MakeCodec builds application codec
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	ModuleBasics.RegisterCodec(cdc)
@@ -88,7 +88,7 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-// Extended ABCI application
+// TerraApp is Extended ABCI application
 type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
@@ -244,24 +244,24 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	return app
 }
 
-// application updates every begin block
+// BeginBlocker defines application updates at every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-// application updates every end block
+// EndBlocker defines application updates at every end block
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
-// application update at chain initialization
+// InitChainer defines application update at chain initialization
 func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
-// load a particular height
+// LoadHeight loads a particular height
 func (app *TerraApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
 }

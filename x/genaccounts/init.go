@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// initialize accounts and deliver genesis transactions
+// InitGenesis initializes accounts and deliver genesis transactions
 func InitGenesis(ctx sdk.Context, _ *codec.Codec, accountKeeper AccountKeeper, genesisState GenesisState) {
 	genesisState.Sanitize()
 

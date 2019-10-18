@@ -11,43 +11,44 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-// app module basics object
+// AppModuleBasic defines the basic application module used by the slashing module.
 type AppModuleBasic struct{}
 
 var _ module.AppModuleBasic = AppModuleBasic{}
 
-// module name
+// Name returns the slashing module's name
 func (AppModuleBasic) Name() string {
 	return CosmosAppModuleBasic{}.Name()
 }
 
-// register module codec
+// RegisterCodec registers the slashing module's types for the given codec.
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 	*CosmosModuleCdc = *ModuleCdc // nolint
 }
 
-// default genesis state
+// DefaultGenesis returns default genesis state as raw bytes for the slashing
+// module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 	return CosmosAppModuleBasic{}.DefaultGenesis()
 }
 
-// module validate genesis
+// ValidateGenesis performs genesis state validation for the slashing module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	return CosmosAppModuleBasic{}.ValidateGenesis(bz)
 }
 
-// register rest routes
+// RegisterRESTRoutes registers the REST routes for the slashing module.
 func (AppModuleBasic) RegisterRESTRoutes(cliCtx context.CLIContext, route *mux.Router) {
 	CosmosAppModuleBasic{}.RegisterRESTRoutes(cliCtx, route)
 }
 
-// get the root tx command of this module
+// GetTxCmd returns the root tx command for the slashing module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return CosmosAppModuleBasic{}.GetTxCmd(cdc)
 }
 
-// get the root query command of this module
+// GetQueryCmd returns the root query command for the slashing module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return CosmosAppModuleBasic{}.GetQueryCmd(cdc)
 }

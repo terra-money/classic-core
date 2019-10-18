@@ -17,7 +17,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/market/swap", submitSwapHandlerFn(cliCtx)).Methods("POST")
 }
 
-//nolint
+// SwapReq defines request body for swap operation
 type SwapReq struct {
 	BaseReq   rest.BaseReq `json:"base_req"`
 	OfferCoin sdk.Coin     `json:"offer_coin"`

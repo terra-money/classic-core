@@ -5,7 +5,7 @@ import (
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
 )
 
-// expected supply keeper
+// SupplyKeeper defines expected supply keeper
 type SupplyKeeper interface {
 	GetModuleAccount(ctx sdk.Context, moduleName string) supplyexported.ModuleAccountI
 	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
@@ -17,7 +17,7 @@ type SupplyKeeper interface {
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) sdk.Error
 }
 
-// expected oracle keeper
+// OracleKeeper defines expected oracle keeper
 type OracleKeeper interface {
 	GetLunaPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error)
 }

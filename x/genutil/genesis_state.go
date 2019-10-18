@@ -8,7 +8,7 @@ import (
 	"github.com/terra-project/core/x/auth"
 )
 
-// validate GenTx transactions
+// ValidateGenesis validates GenTx transactions
 func ValidateGenesis(genesisState GenesisState) error {
 	for i, genTx := range genesisState.GenTxs {
 		var tx auth.StdTx

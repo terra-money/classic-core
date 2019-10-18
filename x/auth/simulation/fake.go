@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
-// This simulation is forked because of the absence of the Mint Module
 // SimulateDeductFee generates simulation cases that accounts send token to FeeCollector module account
+// This simulation is forked to cover the absence of the Mint Module
 func SimulateDeductFee(ak auth.AccountKeeper, supplyKeeper types.SupplyKeeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simulation.Account) (

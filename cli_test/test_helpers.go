@@ -121,7 +121,7 @@ func (f Fixtures) GenesisFile() string {
 	return filepath.Join(f.TerradHome, "config", "genesis.json")
 }
 
-// GenesisFile returns the application's genesis state
+// GenesisState returns the application's genesis state
 func (f Fixtures) GenesisState() simapp.GenesisState {
 	cdc := codec.New()
 	genDoc, err := tmtypes.GenesisDocFromFile(f.GenesisFile())
@@ -352,7 +352,7 @@ func (f *Fixtures) TxMultisign(fileName, name string, signaturesFiles []string,
 	return executeWriteRetStdStreams(f.T, cmd)
 }
 
-// TxEstimateFee
+// TxEstimateFee is terracli tx estimate-fee
 func (f *Fixtures) TxEstimateFee(fileName string, flags ...string) (bool, string, string) {
 	cmd := fmt.Sprintf("%s tx estimate-fee %v %v", f.TerracliBinary, f.Flags(), fileName)
 	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags))
@@ -757,7 +757,7 @@ func queryTags(tags []string) (out string) {
 	return strings.TrimSuffix(out, "&")
 }
 
-// Write the given string to a new temporary file
+// WriteToNewTempFile writes the given string to a new temporary file
 func WriteToNewTempFile(t *testing.T, s string) *os.File {
 	fp, err := ioutil.TempFile(os.TempDir(), "cosmos_cli_test_")
 	require.Nil(t, err)

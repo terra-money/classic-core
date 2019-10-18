@@ -11,13 +11,14 @@ import (
 //-----------------------------------------------------------------------------
 // Schedule
 
-// Schedule no-lint
+// LazySchedule defines a vesting schedule which is used for LazyGradedVestingAccount
 type LazySchedule struct {
 	StartTime int64   `json:"start_time"`
 	EndTime   int64   `json:"end_time"`
 	Ratio     sdk.Dec `json:"ratio"`
 }
 
+// NewLazySchedule returns new LazySchedule instance
 func NewLazySchedule(startTime, endTime int64, ratio sdk.Dec) LazySchedule {
 	return LazySchedule{
 		StartTime: startTime,
@@ -152,7 +153,7 @@ type BaseLazyGradedVestingAccount struct {
 	VestingSchedules []VestingSchedule `json:"vesting_schedules"`
 }
 
-// NewBaseLazyGradedVestingAccount creates a new BaseLazyGradedVestingAccount object from BaseVestingAccount
+// NewBaseLazyGradedVestingAccountRaw creates a new BaseLazyGradedVestingAccount object from BaseVestingAccount
 func NewBaseLazyGradedVestingAccountRaw(baseVestingAcc *auth.BaseVestingAccount, lazyVestingSchedules []VestingSchedule) *BaseLazyGradedVestingAccount {
 	return &BaseLazyGradedVestingAccount{baseVestingAcc, lazyVestingSchedules}
 }

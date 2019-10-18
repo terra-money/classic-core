@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 )
 
-// module codec
+// ModuleCdc defines module codec
 var ModuleCdc = codec.New()
 
 // RegisterCodec registers all the necessary types and interfaces for
