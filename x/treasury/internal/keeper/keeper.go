@@ -80,6 +80,16 @@ func (k Keeper) SetTaxRate(ctx sdk.Context, epoch int64, taxRate sdk.Dec) {
 	store.Set(types.GetTaxRateKey(epoch), b)
 }
 
+// ClearRewardWeights clear all rewardWeight
+func (k Keeper) ClearRewardWeights(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.RewardWeightKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
+}
+
 // GetRewardWeight loads the reward weight
 func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch int64) (rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
@@ -97,6 +107,16 @@ func (k Keeper) SetRewardWeight(ctx sdk.Context, epoch int64, rewardWeight sdk.D
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(rewardWeight)
 	store.Set(types.GetRewardWeightKey(epoch), b)
+}
+
+// ClearTaxRates clear all taxRate
+func (k Keeper) ClearTaxRates(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TaxRateKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
 }
 
 // SetTaxCap sets the Tax Cap. Denominated in integer units of the reference {denom}
