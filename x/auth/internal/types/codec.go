@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
 // RegisterCodec registers concrete types on the codec
@@ -26,5 +27,6 @@ func init() {
 	ModuleCdc = codec.New()
 	RegisterCodec(ModuleCdc)
 	codec.RegisterCrypto(ModuleCdc)
+	ModuleCdc.RegisterConcrete(&supply.ModuleAccount{}, "supply/ModuleAccount", nil)
 	ModuleCdc.Seal()
 }
