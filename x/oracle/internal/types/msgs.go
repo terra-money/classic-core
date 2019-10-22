@@ -58,7 +58,7 @@ func (msg MsgPricePrevote) GetSigners() []sdk.AccAddress {
 func (msg MsgPricePrevote) ValidateBasic() sdk.Error {
 
 	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
-		return ErrInvalidHashLength(DefaultCodespace, len([]byte(msg.Hash)))
+		return ErrInvalidHashLength(DefaultCodespace, len(bz))
 	}
 
 	if len(msg.Denom) == 0 {
