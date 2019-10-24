@@ -66,7 +66,7 @@ func queryTaxRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -90,7 +90,7 @@ func queryTaxCapHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -132,7 +132,7 @@ func queryRewardWeightHandlerFunction(cliCtx context.CLIContext) http.HandlerFun
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -174,7 +174,7 @@ func queryHistoricalIssuanceHandlerFunction(cliCtx context.CLIContext) http.Hand
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -217,7 +217,7 @@ func queryTaxProceedsHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -255,7 +255,7 @@ func querySeigniorageProceedsHandlerFunction(cliCtx context.CLIContext) http.Han
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -273,7 +273,7 @@ func queryCurrentEpochHandlerFunction(cliCtx context.CLIContext) http.HandlerFun
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -291,7 +291,7 @@ func queryParametersHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

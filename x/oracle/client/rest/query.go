@@ -59,7 +59,7 @@ func queryVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -101,7 +101,7 @@ func queryPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -129,7 +129,7 @@ func queryPriceHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -147,7 +147,7 @@ func queryActivesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -165,7 +165,7 @@ func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -199,7 +199,7 @@ func queryFeederDelegationHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
