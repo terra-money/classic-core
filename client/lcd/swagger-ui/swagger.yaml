@@ -2187,7 +2187,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/denoms/{denom}/votes/{voter}:
+  /oracle/denoms/{denom}/votes/{validator}:
     get:
       summary: Request to get the currently unelected outstanding price oracle vote
       tags:
@@ -2201,7 +2201,30 @@ paths:
           required: true
           type: string
         - in: path
-          name: voter
+          name: validator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PriceVote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/voters/{validator}/votes:
+    get:
+      summary: Request to get the currently outstanding price oracle votes of a validator
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
           required: true
           type: string
       responses:
@@ -2264,7 +2287,7 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/denoms/{denom}/prevotes/{voter}:
+  /oracle/denoms/{denom}/prevotes/{validator}:
     get:
       summary: Request to get the currently outstanding price oracle prevote
       tags:
@@ -2278,7 +2301,30 @@ paths:
           required: true
           type: string
         - in: path
-          name: voter
+          name: validator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PricePrevote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/voters/{validator}/prevotes:
+    get:
+      summary: Request to get the currently outstanding price oracle prevotes of a validator
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
           required: true
           type: string
       responses:
@@ -2315,9 +2361,27 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/denoms/prices:
+    get:
+      summary: Get all activated denom coins
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/DecCoin"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/denoms/actives:
     get:
-      summary: Get all activated Coins
+      summary: Get all activated denoms
       tags:
         - Oracle
       produces:
@@ -2722,7 +2786,7 @@ definitions:
     properties:
       denom:
         type: string
-        example: stake
+        example: ukrw
       amount:
         type: string
         example: "50.000"
@@ -3419,7 +3483,7 @@ definitions:
         example: "0.01241"
       denom:
         type: string
-        example: "ukrt"
+        example: "ukrw"
       voter:
         $ref: "#/definitions/ValidatorAddress"
   PricePrevote:

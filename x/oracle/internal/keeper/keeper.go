@@ -230,14 +230,22 @@ func (k Keeper) DeletePrice(ctx sdk.Context, denom string) {
 func (k Keeper) GetActiveDenoms(ctx sdk.Context) (denoms types.DenomList) {
 	denoms = types.DenomList{}
 
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PriceKey)
-	for ; iter.Valid(); iter.Next() {
-		n := len(types.PriceKey)
-		denom := string(iter.Key()[n:])
+	k.IterateLunaPrices(ctx, func(denom string, _ sdk.Dec) bool {
 		denoms = append(denoms, denom)
-	}
-	iter.Close()
+		return false
+	})
+
+	return
+}
+
+// GetLunaPrices returns all active oracle asset prices in sdk.DecCoins format from the store
+func (k Keeper) GetLunaPrices(ctx sdk.Context) (prices sdk.DecCoins) {
+	prices = sdk.DecCoins{}
+
+	k.IterateLunaPrices(ctx, func(denom string, price sdk.Dec) bool {
+		prices = append(prices, sdk.NewDecCoinFromDec(denom, price))
+		return false
+	})
 
 	return
 }

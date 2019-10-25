@@ -204,6 +204,27 @@ func TestQueryPrice(t *testing.T) {
 	require.Equal(t, price, rprice)
 }
 
+func TestQueryPrices(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	price := sdk.NewDec(1700)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, price)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroUSDDenom, price)
+
+	res, err := querier(input.Ctx, []string{types.QueryPrices}, abci.RequestQuery{})
+	require.NoError(t, err)
+
+	var rprice sdk.DecCoins
+	err2 := cdc.UnmarshalJSON(res, &rprice)
+	require.NoError(t, err2)
+	require.Equal(t, sdk.DecCoins{
+		sdk.NewDecCoinFromDec(core.MicroSDRDenom, price),
+		sdk.NewDecCoinFromDec(core.MicroUSDDenom, price),
+	}, rprice)
+}
+
 func TestQueryActives(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)

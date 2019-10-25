@@ -15,10 +15,13 @@ import (
 func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), queryPrevotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes/{%s}", RestDenom, RestVoter), queryPrevotesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/voter/{%s}/prevotes", queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), queryVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes/{%s}", RestDenom, RestVoter), queryVotesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/voter/{%s}/votes", queryVoterVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/price", RestDenom), queryPriceHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/denoms/prices", queryPricesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cliCtx)).Methods("GET")
 }
@@ -134,6 +137,24 @@ func queryPriceHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+func queryPricesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryPrices), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
 func queryActivesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -148,6 +169,68 @@ func queryActivesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		voterAddress, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := types.NewQueryPrevotesParams(voterAddress, "")
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryPrevotes), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryVoterVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		voterAddress, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := types.NewQueryVotesParams(voterAddress, "")
+
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVotes), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
