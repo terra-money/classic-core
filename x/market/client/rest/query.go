@@ -58,7 +58,7 @@ func querySwapHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -76,7 +76,7 @@ func queryTerraPoolDeltaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -94,7 +94,7 @@ func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
