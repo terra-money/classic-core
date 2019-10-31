@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,14 +17,14 @@ func TestPrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
 	prevote := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote)
 
-	KPrevote, err := input.OracleKeeper.GetPrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
+	KPrevote, err := input.OracleKeeper.GetExchangeRatePrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.NoError(t, err)
 	require.Equal(t, prevote, KPrevote)
 
-	input.OracleKeeper.DeletePrevote(input.Ctx, prevote)
-	_, err = input.OracleKeeper.GetPrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.DeleteLunaExchangeRatePrevote(input.Ctx, prevote)
+	_, err = input.OracleKeeper.GetExchangeRatePrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.Error(t, err)
 }
 
@@ -31,14 +32,14 @@ func TestPrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote1)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
 
 	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[1]), 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote2)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
 
 	i := 0
 	bigger := bytes.Compare(Addrs[0], Addrs[1])
-	input.OracleKeeper.IteratePrevotes(input.Ctx, func(p types.ExchangeRatePrevote) (stop bool) {
+	input.OracleKeeper.IterateExchangeRatePrevotes(input.Ctx, func(p types.ExchangeRatePrevote) (stop bool) {
 		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
 			require.Equal(t, prevote1, p)
 		} else {
@@ -50,9 +51,9 @@ func TestPrevoteIterate(t *testing.T) {
 	})
 
 	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, sdk.ValAddress(Addrs[2]), 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote3)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
-	input.OracleKeeper.iteratePrevotesWithPrefix(input.Ctx, types.GetPrevoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRatePrevote) (stop bool) {
+	input.OracleKeeper.iterateExchangeRatePrevotesWithPrefix(input.Ctx, types.GetExchangeRatePrevoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRatePrevote) (stop bool) {
 		require.Equal(t, prevote3, p)
 		return false
 	})
@@ -63,14 +64,14 @@ func TestVoteAddDelete(t *testing.T) {
 
 	rate := sdk.NewDec(1700)
 	vote := types.NewExchangeRateVote(rate, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.AddVote(input.Ctx, vote)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote)
 
-	KVote, err := input.OracleKeeper.getVote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
+	KVote, err := input.OracleKeeper.getExchangeRateVote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.NoError(t, err)
 	require.Equal(t, vote, KVote)
 
-	input.OracleKeeper.DeleteVote(input.Ctx, vote)
-	_, err = input.OracleKeeper.getVote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.DeleteLunaExchangeRateVote(input.Ctx, vote)
+	_, err = input.OracleKeeper.getExchangeRateVote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.Error(t, err)
 }
 
@@ -79,14 +80,14 @@ func TestVoteIterate(t *testing.T) {
 
 	rate := sdk.NewDec(1700)
 	vote1 := types.NewExchangeRateVote(rate, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.AddVote(input.Ctx, vote1)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote1)
 
 	vote2 := types.NewExchangeRateVote(rate, core.MicroSDRDenom, sdk.ValAddress(Addrs[1]))
-	input.OracleKeeper.AddVote(input.Ctx, vote2)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote2)
 
 	i := 0
 	bigger := bytes.Compare(Addrs[0], Addrs[1])
-	input.OracleKeeper.IterateVotes(input.Ctx, func(p types.ExchangeRateVote) (stop bool) {
+	input.OracleKeeper.IterateExchangeRateVotes(input.Ctx, func(p types.ExchangeRateVote) (stop bool) {
 		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
 			require.Equal(t, vote1, p)
 		} else {
@@ -98,9 +99,9 @@ func TestVoteIterate(t *testing.T) {
 	})
 
 	vote3 := types.NewExchangeRateVote(rate, core.MicroLunaDenom, sdk.ValAddress(Addrs[2]))
-	input.OracleKeeper.AddVote(input.Ctx, vote3)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote3)
 
-	input.OracleKeeper.iterateVotesWithPrefix(input.Ctx, types.GetVoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRateVote) (stop bool) {
+	input.OracleKeeper.iterateExchangeRateVotesWithPrefix(input.Ctx, types.GetVoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRateVote) (stop bool) {
 		require.Equal(t, vote3, p)
 		return false
 	})
@@ -111,18 +112,18 @@ func TestVoteCollect(t *testing.T) {
 
 	rate := sdk.NewDec(1700)
 	vote1 := types.NewExchangeRateVote(rate, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.AddVote(input.Ctx, vote1)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote1)
 
 	vote2 := types.NewExchangeRateVote(rate, core.MicroSDRDenom, sdk.ValAddress(Addrs[1]))
-	input.OracleKeeper.AddVote(input.Ctx, vote2)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote2)
 
 	vote3 := types.NewExchangeRateVote(rate, core.MicroLunaDenom, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.AddVote(input.Ctx, vote3)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote3)
 
 	vote4 := types.NewExchangeRateVote(rate, core.MicroLunaDenom, sdk.ValAddress(Addrs[1]))
-	input.OracleKeeper.AddVote(input.Ctx, vote4)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote4)
 
-	collectedVotes := input.OracleKeeper.CollectVotes(input.Ctx)
+	collectedVotes := oracle.OrganizeBallotByDenom(input.OracleKeeper, input.Ctx)
 
 	pb1 := collectedVotes[core.MicroSDRDenom]
 	pb2 := collectedVotes[core.MicroLunaDenom]
@@ -173,12 +174,18 @@ func TestExchangeRate(t *testing.T) {
 	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroLunaDenom)
 	require.Equal(t, sdk.OneDec(), rate)
 
-	input.OracleKeeper.DeleteExchangeRate(input.Ctx, core.MicroKRWDenom)
+	input.OracleKeeper.DeleteLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
 	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
 	require.Error(t, err)
 
-	lunaExchangeRates := input.OracleKeeper.GetLunaExchangeRates(input.Ctx)
-	require.True(t, len(lunaExchangeRates) == 3)
+	numExchangeRates := 0
+	handler := func(denom string, exchangeRate sdk.Dec) (stop bool) {
+		numExchangeRates = numExchangeRates + 1
+		return false
+	}
+	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, handler)
+
+	require.True(t, numExchangeRates == 3)
 }
 
 func TestIterateLunaExchangeRates(t *testing.T) {
@@ -259,11 +266,11 @@ func TestFeederDelegation(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// Test default getters and setters
-	delegate := input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
+	delegate := input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
 	require.Equal(t, delegate, Addrs[0])
 
-	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
-	delegate = input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
+	delegate = input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
 	require.Equal(t, delegate, Addrs[1])
 }
 
@@ -271,14 +278,14 @@ func TestIterateFeederDelegations(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// Test default getters and setters
-	delegate := input.OracleKeeper.GetFeedDelegate(input.Ctx, ValAddrs[0])
+	delegate := input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
 	require.Equal(t, delegate, Addrs[0])
 
-	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
 	var delegators []sdk.ValAddress
 	var delegatees []sdk.AccAddress
-	input.OracleKeeper.IterateFeederDelegations(input.Ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+	input.OracleKeeper.IterateOracleDelegates(input.Ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
 		delegators = append(delegators, delegator)
 		delegatees = append(delegatees, delegatee)
 		return false

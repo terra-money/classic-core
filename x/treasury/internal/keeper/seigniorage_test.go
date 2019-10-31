@@ -15,7 +15,7 @@ import (
 func TestSettle(t *testing.T) {
 	input := CreateTestInput(t)
 
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
 	issuance := sdk.NewInt(rand.Int63() + 1)
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)

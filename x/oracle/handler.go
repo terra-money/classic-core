@@ -31,7 +31,7 @@ func NewHandler(k Keeper) sdk.Handler {
 // handleMsgExchangeRatePrevote handles a MsgExchangeRatePrevote
 func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchangeRatePrevote) sdk.Result {
 	if !ppm.Feeder.Equals(ppm.Validator) {
-		delegate := keeper.GetFeedDelegate(ctx, ppm.Validator)
+		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
 			return ErrNoVotingPermission(keeper.Codespace(), ppm.Feeder, ppm.Validator).Result()
 		}
@@ -44,7 +44,7 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchang
 	}
 
 	prevote := NewExchangeRatePrevote(ppm.Hash, ppm.Denom, ppm.Validator, ctx.BlockHeight())
-	keeper.AddPrevote(ctx, prevote)
+	keeper.AddExchangeRatePrevote(ctx, prevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -65,7 +65,7 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchang
 // handleMsgExchangeRateVote handles a MsgExchangeRateVote
 func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRateVote) sdk.Result {
 	if !pvm.Feeder.Equals(pvm.Validator) {
-		delegate := keeper.GetFeedDelegate(ctx, pvm.Validator)
+		delegate := keeper.GetOracleDelegate(ctx, pvm.Validator)
 		if !delegate.Equals(pvm.Feeder) {
 			return ErrNoVotingPermission(keeper.Codespace(), pvm.Feeder, pvm.Validator).Result()
 		}
@@ -80,7 +80,7 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 	params := keeper.GetParams(ctx)
 
 	// Get prevote
-	prevote, err := keeper.GetPrevote(ctx, pvm.Denom, pvm.Validator)
+	prevote, err := keeper.GetExchangeRatePrevote(ctx, pvm.Denom, pvm.Validator)
 	if err != nil {
 		return ErrNoPrevote(keeper.Codespace(), pvm.Validator, pvm.Denom).Result()
 	}
@@ -103,8 +103,8 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 
 	// Add the vote to the store
 	vote := NewExchangeRateVote(pvm.ExchangeRate, prevote.Denom, prevote.Voter)
-	keeper.DeletePrevote(ctx, prevote)
-	keeper.AddVote(ctx, vote)
+	keeper.DeleteLunaExchangeRatePrevote(ctx, prevote)
+	keeper.AddExchangeRateVote(ctx, vote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -133,7 +133,7 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelega
 	}
 
 	// Set the delegation
-	keeper.SetFeedDelegate(ctx, signer, dfpm.Delegatee)
+	keeper.SetOracleDelegate(ctx, signer, dfpm.Delegatee)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

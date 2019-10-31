@@ -40,7 +40,7 @@ func TestSwapMsg(t *testing.T) {
 
 	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	diff := beforeTerraPoolDelta.Sub(afterTerraPoolDelta)
-	price, _ := input.OracleKeeper.GetLunaPrice(input.Ctx, core.MicroSDRDenom)
+	price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
 	require.Equal(t, price.MulInt(amt), diff.Abs())
 
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)

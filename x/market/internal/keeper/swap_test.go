@@ -14,7 +14,7 @@ func TestApplySwapToPool(t *testing.T) {
 	input := CreateTestInput(t)
 
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000))
 	askCoin := sdk.NewDecCoin(core.MicroSDRDenom, sdk.NewInt(1700))
@@ -47,7 +47,7 @@ func TestComputeSwap(t *testing.T) {
 
 	// Set Oracle Price
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
 	for i := 0; i < 100; i++ {
 		swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
@@ -69,7 +69,7 @@ func TestComputeInternalSwap(t *testing.T) {
 
 	// Set Oracle Price
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
 	for i := 0; i < 100; i++ {
 		offerCoin := sdk.NewDecCoin(core.MicroSDRDenom, lunaPriceInSDR.MulInt64(rand.Int63()+1).TruncateInt())

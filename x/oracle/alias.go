@@ -54,7 +54,7 @@ var (
 	NewGenesisState                = types.NewGenesisState
 	DefaultGenesisState            = types.DefaultGenesisState
 	ValidateGenesis                = types.ValidateGenesis
-	GetPrevoteKey                  = types.GetPrevoteKey
+	GetExchangeRatePrevoteKey                  = types.GetExchangeRatePrevoteKey
 	GetVoteKey                     = types.GetVoteKey
 	GetExchangeRateKey             = types.GetExchangeRateKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey

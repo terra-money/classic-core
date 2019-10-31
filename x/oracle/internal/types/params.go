@@ -29,11 +29,11 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                             // 50%
-	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                              // 1%
-	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                   // 432,000
-	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                              // 5%
-	DefaultWhitelist                = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
+	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                                               // 50%
+	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                                                // 1%
+	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                                     // 432,000
+	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                                                // 5%
+	DefaultWhitelist                = DenomList{core.MicroKRWDenom: true, core.MicroSDRDenom: true, core.MicroUSDDenom: true} // ukrw, usdr, uusd
 )
 
 var _ subspace.ParamSet = &Params{}

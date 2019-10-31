@@ -36,8 +36,8 @@ var (
 	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
 )
 
-// GetPrevoteKey - stored by *Validator* address and denom
-func GetPrevoteKey(denom string, v sdk.ValAddress) []byte {
+// GetExchangeRatePrevoteKey - stored by *Validator* address and denom
+func GetExchangeRatePrevoteKey(denom string, v sdk.ValAddress) []byte {
 	return append(append(PrevoteKey, []byte(denom)...), v.Bytes()...)
 }
 

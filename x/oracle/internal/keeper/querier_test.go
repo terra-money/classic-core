@@ -47,11 +47,11 @@ func TestQueryPrevotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[0], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote1)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
 	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[1], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote2)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
 	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, ValAddrs[2], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote3)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	// voter denom both query params
 	queryParams := types.NewQueryPrevotesParams(ValAddrs[0], core.MicroSDRDenom)
@@ -115,11 +115,11 @@ func TestQueryVotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[0])
-	input.OracleKeeper.AddVote(input.Ctx, vote1)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote1)
 	vote2 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[1])
-	input.OracleKeeper.AddVote(input.Ctx, vote2)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote2)
 	vote3 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroLunaDenom, ValAddrs[2])
-	input.OracleKeeper.AddVote(input.Ctx, vote3)
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote3)
 
 	// voter denom both query params
 	queryParams := types.NewQueryVotesParams(ValAddrs[0], core.MicroSDRDenom)
@@ -239,9 +239,9 @@ func TestQueryActives(t *testing.T) {
 	require.NoError(t, err)
 
 	targetDenoms := types.DenomList{
-		core.MicroKRWDenom,
-		core.MicroSDRDenom,
-		core.MicroUSDDenom,
+		core.MicroKRWDenom: true,
+		core.MicroSDRDenom: true,
+		core.MicroUSDDenom: true,
 	}
 	var denoms types.DenomList
 	err2 := cdc.UnmarshalJSON(res, &denoms)
@@ -254,7 +254,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
 	queryParams := types.NewQueryFeederDelegationParams(ValAddrs[0])
 	bz, err := cdc.MarshalJSON(queryParams)

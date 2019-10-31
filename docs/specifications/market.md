@@ -6,7 +6,7 @@ The Market module facilitates the atomic swaps among terra currencies and luna.
 
 The market module adopts uni-swap modle to facilitate swaps between all terra currencies that have an active exchange rate with Luna registered with the Oracle module and Luna.
 
-* A user can swap SDT \(TerraSDR\) and UST \(TerraUSD\) at the exchange rate registered with the oracle. For example, if Luna&lt;&gt;SDT exchange rate returned by `GetLunaPrice` by the oracle is 10, and Luna&lt;&gt;KRT exchange rate is 10,000, a swapping 1 SDT will return 1000 KRT.
+* A user can swap SDT \(TerraSDR\) and UST \(TerraUSD\) at the exchange rate registered with the oracle. For example, if Luna&lt;&gt;SDT exchange rate returned by `GetLunaExchangeRate` by the oracle is 10, and Luna&lt;&gt;KRT exchange rate is 10,000, a swapping 1 SDT will return 1000 KRT.
 * A user cap swap any of the Terra currencies for Luna at the oracle exchange rate. Using the same exchange rates in the above example, a user can swap 1 SDT for 0.1 Luna, or 0.1 Luna for 1 SDT.
 
 ## Safety mechanisms for Luna swaps

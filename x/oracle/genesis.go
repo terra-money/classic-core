@@ -12,15 +12,15 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		keeper.SetFeedDelegate(ctx, delegator, delegatee)
+		keeper.SetOracleDelegate(ctx, delegator, delegatee)
 	}
 
 	for _, prevote := range data.ExchangeRatePrevotes {
-		keeper.AddPrevote(ctx, prevote)
+		keeper.AddExchangeRatePrevote(ctx, prevote)
 	}
 
 	for _, vote := range data.ExchangeRateVotes {
-		keeper.AddVote(ctx, vote)
+		keeper.AddExchangeRateVote(ctx, vote)
 	}
 
 	for denom, rate := range data.ExchangeRates {
@@ -32,15 +32,15 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		keeper.SetFeedDelegate(ctx, delegator, delegatee)
+		keeper.SetOracleDelegate(ctx, delegator, delegatee)
 	}
 
 	for _, prevote := range data.ExchangeRatePrevotes {
-		keeper.AddPrevote(ctx, prevote)
+		keeper.AddExchangeRatePrevote(ctx, prevote)
 	}
 
 	for _, vote := range data.ExchangeRateVotes {
-		keeper.AddVote(ctx, vote)
+		keeper.AddExchangeRateVote(ctx, vote)
 	}
 
 	for denom, rate := range data.ExchangeRates {
@@ -56,20 +56,20 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
 	feederDelegations := make(map[string]sdk.AccAddress)
-	keeper.IterateFeederDelegations(ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+	keeper.IterateOracleDelegates(ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
 		bechAddr := delegator.String()
 		feederDelegations[bechAddr] = delegatee
 		return false
 	})
 
 	var exchangeRatePrevotes []ExchangeRatePrevote
-	keeper.IteratePrevotes(ctx, func(prevote ExchangeRatePrevote) (stop bool) {
+	keeper.IterateExchangeRatePrevotes(ctx, func(prevote ExchangeRatePrevote) (stop bool) {
 		exchangeRatePrevotes = append(exchangeRatePrevotes, prevote)
 		return false
 	})
 
 	var exchangeRateVotes []ExchangeRateVote
-	keeper.IterateVotes(ctx, func(vote ExchangeRateVote) (stop bool) {
+	keeper.IterateExchangeRateVotes(ctx, func(vote ExchangeRateVote) (stop bool) {
 		exchangeRateVotes = append(exchangeRateVotes, vote)
 		return false
 	})

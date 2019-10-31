@@ -54,7 +54,12 @@ func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 }
 
 func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	rates := keeper.GetLunaExchangeRates(ctx)
+	rates := map[string]sdk.Dec{}
+
+	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+		rates[denom] = rate
+		return false
+	})
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
 	if err != nil {
@@ -65,7 +70,12 @@ func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 }
 
 func queryActives(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	denoms := keeper.GetActiveDenoms(ctx)
+	denoms := []string{}
+
+	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+		denoms = append(denoms, denom)
+		return false
+	})
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
@@ -107,7 +117,7 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 		}
 	}
 
-	keeper.iterateVotesWithPrefix(ctx, prefix, handler)
+	keeper.iterateExchangeRateVotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
@@ -134,9 +144,9 @@ func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 
 	// applies filter
 	if len(params.Denom) != 0 && !params.Voter.Empty() {
-		prefix = types.GetPrevoteKey(params.Denom, params.Voter)
+		prefix = types.GetExchangeRatePrevoteKey(params.Denom, params.Voter)
 	} else if len(params.Denom) != 0 {
-		prefix = types.GetPrevoteKey(params.Denom, sdk.ValAddress{})
+		prefix = types.GetExchangeRatePrevoteKey(params.Denom, sdk.ValAddress{})
 	} else if !params.Voter.Empty() {
 		handler = func(prevote types.ExchangeRatePrevote) (stop bool) {
 
@@ -148,7 +158,7 @@ func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 		}
 	}
 
-	keeper.iteratePrevotesWithPrefix(ctx, prefix, handler)
+	keeper.iterateExchangeRatePrevotesWithPrefix(ctx, prefix, handler)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredPrevotes)
 	if err != nil {
@@ -172,7 +182,7 @@ func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	delegatee := keeper.GetFeedDelegate(ctx, params.Validator)
+	delegatee := keeper.GetOracleDelegate(ctx, params.Validator)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, delegatee)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
