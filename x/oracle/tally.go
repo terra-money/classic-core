@@ -9,7 +9,7 @@ import (
 
 // Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func tally(ctx sdk.Context, pb types.ExchangeRateBallot, k Keeper) (weightedMedian sdk.Dec, ballotWinners types.ClaimPool) {
+func tally(ctx sdk.Context, pb types.ExchangeRateBallot, k Keeper) (weightedMedian sdk.Dec, ballotWinners []types.Claim) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}

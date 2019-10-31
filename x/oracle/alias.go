@@ -54,7 +54,7 @@ var (
 	NewGenesisState                = types.NewGenesisState
 	DefaultGenesisState            = types.DefaultGenesisState
 	ValidateGenesis                = types.ValidateGenesis
-	GetExchangeRatePrevoteKey                  = types.GetExchangeRatePrevoteKey
+	GetExchangeRatePrevoteKey      = types.GetExchangeRatePrevoteKey
 	GetVoteKey                     = types.GetVoteKey
 	GetExchangeRateKey             = types.GetExchangeRateKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey
@@ -94,7 +94,6 @@ var (
 type (
 	ExchangeRateBallot          = types.ExchangeRateBallot
 	Claim                       = types.Claim
-	ClaimPool                   = types.ClaimPool
 	DenomList                   = types.DenomList
 	StakingKeeper               = types.StakingKeeper
 	DistributionKeeper          = types.DistributionKeeper

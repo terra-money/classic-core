@@ -62,14 +62,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		)
 	}
 
-	// Convert map to array
-	var claimPool types.ClaimPool
-	for _, claim := range winnerMap {
-		claimPool = append(claimPool, claim)
-	}
-
 	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, claimPool)
+	k.RewardBallotWinners(ctx, winnerMap)
 
 	// Clear the ballot
 	clearBallots(k, ctx, params)
