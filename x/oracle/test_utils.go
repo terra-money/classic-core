@@ -17,8 +17,8 @@ var (
 	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
 	stakingAmt = sdk.TokensFromConsensusPower(10)
 
-	randomPrice        = sdk.NewDec(1700)
-	anotherRandomPrice = sdk.NewDecWithPrec(4882, 2) // swap rate
+	randomExchangeRate        = sdk.NewDec(1700)
+	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
 )
 
 func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {

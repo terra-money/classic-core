@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgPricePrevote(t *testing.T) {
+func TestMsgExchangeRatePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	bz, err := VoteHash("1", sdk.OneDec(), core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
@@ -31,7 +31,7 @@ func TestMsgPricePrevote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgPricePrevote(tc.hash, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgExchangeRatePrevote(tc.hash, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -40,14 +40,14 @@ func TestMsgPricePrevote(t *testing.T) {
 	}
 }
 
-func TestMsgPriceVote(t *testing.T) {
+func TestMsgExchangeRateVote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	tests := []struct {
 		denom      string
 		voter      sdk.AccAddress
 		salt       string
-		price      sdk.Dec
+		rate       sdk.Dec
 		expectPass bool
 	}{
 		{"", addrs[0], "123", sdk.OneDec(), false},
@@ -58,7 +58,7 @@ func TestMsgPriceVote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgPriceVote(tc.price, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgExchangeRateVote(tc.rate, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -82,7 +82,7 @@ func TestMsgFeederDelegation(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgDelegateFeederPermission(tc.delegator, tc.delegatee)
+		msg := NewMsgDelegateFeedConsent(tc.delegator, tc.delegatee)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

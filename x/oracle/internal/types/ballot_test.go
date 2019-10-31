@@ -33,11 +33,11 @@ func TestPBPower(t *testing.T) {
 
 	ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
 	_, valAccAddrs, sk := GenerateRandomTestCase()
-	pb := PriceBallot{}
+	pb := ExchangeRateBallot{}
 	ballotPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
-		vote := NewPriceVote(sdk.ZeroDec(), core.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
+		vote := NewExchangeRateVote(sdk.ZeroDec(), core.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
 		pb = append(pb, vote)
 
 		valPower := vote.getPower(ctx, sk)
@@ -51,7 +51,7 @@ func TestPBPower(t *testing.T) {
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
-	fakeVote := NewPriceVote(sdk.OneDec(), core.MicroSDRDenom, faceValAddr)
+	fakeVote := NewExchangeRateVote(sdk.OneDec(), core.MicroSDRDenom, faceValAddr)
 	pb = append(pb, fakeVote)
 	require.Equal(t, ballotPower, pb.Power(ctx, sk))
 }
@@ -96,7 +96,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	var mockValset []MockValidator
 	base := math.Pow10(oracleDecPrecision)
 	for _, tc := range tests {
-		pb := PriceBallot{}
+		pb := ExchangeRateBallot{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -106,7 +106,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			if tc.isValidator[i] {
 				mockValset = append(mockValset, mockVal)
 			}
-			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
+			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
 			pb = append(pb, vote)
 		}
 
@@ -157,7 +157,7 @@ func TestPBStandardDeviation(t *testing.T) {
 	var mockValset []MockValidator
 	base := math.Pow10(oracleDecPrecision)
 	for _, tc := range tests {
-		pb := PriceBallot{}
+		pb := ExchangeRateBallot{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -167,7 +167,7 @@ func TestPBStandardDeviation(t *testing.T) {
 			if tc.isValidator[i] {
 				mockValset = append(mockValset, mockVal)
 			}
-			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
+			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
 			pb = append(pb, vote)
 		}
 
@@ -179,12 +179,12 @@ func TestPBStandardDeviation(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	pb := PriceBallot{}
-	require.Equal(t, "PriceBallot of 0 votes\n", pb.String())
+	pb := ExchangeRateBallot{}
+	require.Equal(t, "ExchangeRateBallot of 0 votes\n", pb.String())
 
-	vote := NewPriceVote(sdk.NewDecWithPrec(int64(1123400), int64(oracleDecPrecision)), core.MicroSDRDenom, sdk.ValAddress{})
+	vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(1123400), int64(oracleDecPrecision)), core.MicroSDRDenom, sdk.ValAddress{})
 	pb = append(pb, vote)
-	require.Equal(t, "PriceBallot of 1 votes\n\n  PriceVote\n\tDenom:    usdr, \n\tVoter:    , \n\tPrice:    1.123400000000000000", pb.String())
+	require.Equal(t, "ExchangeRateBallot of 1 votes\n\n  ExchangeRateVote\n\tDenom:    usdr, \n\tVoter:    , \n\tExchangeRate:    1.123400000000000000", pb.String())
 }
 
 // func TestPBTally(t *testing.T) {
@@ -222,9 +222,9 @@ func TestString(t *testing.T) {
 // 	}
 
 // 	for _, tc := range tests {
-// 		pb := PriceBallot{}
+// 		pb := ExchangeRateBallot{}
 // 		for i, input := range tc.inputs {
-// 			vote := NewPriceVote(sdk.NewDecWithPrec(int64(input*100), 2), "",
+// 			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*100), 2), "",
 // 				sdk.NewInt(tc.weights[i]), addrs[i])
 // 			pb = append(pb, vote)
 // 		}

@@ -15,16 +15,16 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetFeedDelegate(ctx, delegator, delegatee)
 	}
 
-	for _, prevote := range data.PricePrevotes {
+	for _, prevote := range data.ExchangeRatePrevotes {
 		keeper.AddPrevote(ctx, prevote)
 	}
 
-	for _, vote := range data.PriceVotes {
+	for _, vote := range data.ExchangeRateVotes {
 		keeper.AddVote(ctx, vote)
 	}
 
-	for denom, price := range data.Prices {
-		keeper.SetLunaPrice(ctx, denom, price)
+	for denom, rate := range data.ExchangeRates {
+		keeper.SetLunaExchangeRate(ctx, denom, rate)
 	}
 
 	for delegatorBechAddr, delegatee := range data.FeederDelegations {
@@ -35,16 +35,16 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetFeedDelegate(ctx, delegator, delegatee)
 	}
 
-	for _, prevote := range data.PricePrevotes {
+	for _, prevote := range data.ExchangeRatePrevotes {
 		keeper.AddPrevote(ctx, prevote)
 	}
 
-	for _, vote := range data.PriceVotes {
+	for _, vote := range data.ExchangeRateVotes {
 		keeper.AddVote(ctx, vote)
 	}
 
-	for denom, price := range data.Prices {
-		keeper.SetLunaPrice(ctx, denom, price)
+	for denom, rate := range data.ExchangeRates {
+		keeper.SetLunaExchangeRate(ctx, denom, rate)
 	}
 
 	keeper.SetParams(ctx, data.Params)
@@ -62,23 +62,23 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	var pricePrevotes []PricePrevote
-	keeper.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
-		pricePrevotes = append(pricePrevotes, prevote)
+	var exchangeRatePrevotes []ExchangeRatePrevote
+	keeper.IteratePrevotes(ctx, func(prevote ExchangeRatePrevote) (stop bool) {
+		exchangeRatePrevotes = append(exchangeRatePrevotes, prevote)
 		return false
 	})
 
-	var priceVotes []PriceVote
-	keeper.IterateVotes(ctx, func(vote PriceVote) (stop bool) {
-		priceVotes = append(priceVotes, vote)
+	var exchangeRateVotes []ExchangeRateVote
+	keeper.IterateVotes(ctx, func(vote ExchangeRateVote) (stop bool) {
+		exchangeRateVotes = append(exchangeRateVotes, vote)
 		return false
 	})
 
-	prices := make(map[string]sdk.Dec)
-	keeper.IterateLunaPrices(ctx, func(denom string, price sdk.Dec) bool {
-		prices[denom] = price
+	rates := make(map[string]sdk.Dec)
+	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) bool {
+		rates[denom] = rate
 		return false
 	})
 
-	return NewGenesisState(params, pricePrevotes, priceVotes, prices, feederDelegations)
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations)
 }

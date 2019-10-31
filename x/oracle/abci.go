@@ -1,93 +1,97 @@
-package oracle
+package oracle
 
-import (
-	"github.com/terra-project/core/x/oracle/internal/types"
+import (
+    "github.com/terra-project/core/x/oracle/internal/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+    sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
+    core "github.com/terra-project/core/types"
 )
 
-// EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) {
-	params := k.GetParams(ctx)
+// EndBlocker is called at the end of every block
+func EndBlocker(ctx sdk.Context, k Keeper) {
+    params := k.GetParams(ctx)
 
-	// Not yet time for a tally
-	if !core.IsPeriodLastBlock(ctx, params.VotePeriod) {
-		return
-	}
+    // Not yet time for a tally
+    if !core.IsPeriodLastBlock(ctx, params.VotePeriod) {
+        return
+    }
 
-	actives := k.GetActiveDenoms(ctx)
-	votes := k.CollectVotes(ctx)
+    whitelist := k.Whitelist(ctx)
 
-	// Clear prices
-	for _, activeDenom := range actives {
-		k.DeletePrice(ctx, activeDenom)
-	}
+    // Clear exchange rates
+    for denom := range whitelist {
+        k.DeleteLunaExchangeRate(ctx, denom)
+    }
 
-	// Changes whitelist array to map for the fast lookup
-	whitelistMap := make(map[string]bool)
-	for _, denom := range k.Whitelist(ctx) {
-		whitelistMap[denom] = true
-	}
+    winnerMap := make(map[string]types.Claim)
 
-	// Iterate through votes and update prices; drop if not enough votes have been achieved.
-	claimMap := make(map[string]types.Claim)
-	for denom, ballot := range votes {
+    // Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+    voteMap := OrganizeBallotByDenom(k, ctx)
+    for denom, ballot := range voteMap {
 
-		// Check whitelist; if denom is not exists or exists but the ballot is not passed, then skip
-		if _, exists := whitelistMap[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
-			continue
-		}
+        // If denom is not in the whitelist, or the ballot for it has failed, then skip
+        if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
+            continue
+        }
 
-		// Get weighted median prices, and faithful respondants
-		mod, ballotWinners := tally(ctx, ballot, k)
+        // Get weighted median exchange rates, and faithful respondants
+        ballotMedian, ballotWinningClaims := tally(ctx, ballot, k)
 
-		// Collect claims of ballot winners
-		for _, winner := range ballotWinners {
-			key := winner.Recipient.String()
-			claim, exists := claimMap[key]
-			if exists {
-				claim.Weight += winner.Weight
-				claimMap[key] = claim
-			} else {
-				claimMap[key] = winner
-			}
-		}
+        // Set the exchange rate
+        k.SetLunaExchangeRate(ctx, denom, ballotMedian)
 
-		// Set price to the store
-		k.SetLunaPrice(ctx, denom, mod)
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypePriceUpdate,
-				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyPrice, mod.String()),
-			),
-		)
-	}
+        // Collect claims of ballot winners
+        for _, ballotWinningClaim := range ballotWinningClaims {
+            key := ballotWinningClaim.Recipient.String()
+            prevClaim, exists := winnerMap[key]
+            if !exists {
+                winnerMap[key] = ballotWinningClaim
+            } else {
+                prevClaim.Weight += ballotWinningClaim.Weight
+                winnerMap[key] = prevClaim
+            }
+        }
 
-	// Convert map to array
-	var claimPool types.ClaimPool
-	for _, claim := range claimMap {
-		claimPool = append(claimPool, claim)
-	}
+        // Emit abci events
+        ctx.EventManager().EmitEvent(
+            sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+        a       sdk.NewAttribute(types.AttributeKeyDenom, denom),
+                sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
+            ),
+        )
+    }
 
-	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, claimPool)
+    // Convert map to array
+    var claimPool types.ClaimPool
+    for _, claim := range winnerMap {
+        claimPool = append(claimPool, claim)
+    }
 
-	// Clear all prevotes
-	k.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
-			k.DeletePrevote(ctx, prevote)
-		}
+    // Distribute rewards to ballot winners
+    k.RewardBallotWinners(ctx, claimPool)
 
-		return false
-	})
+    // Clear the ballot
+    clearBallots(k, ctx, params)
 
-	// Clear all votes
-	k.IterateVotes(ctx, func(vote PriceVote) (stop bool) {
-		k.DeleteVote(ctx, vote)
-		return false
-	})
-
-	return
+    return
 }
+
+// clearBallots clears all tallied prevotes and votes from the store
+func clearBallots(k Keeper, ctx sdk.Context, params Params) {
+    // Clear all prevotes
+    k.IteratePrevotes(ctx, func(prevote Prevote) (stop bool) {
+        if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
+            k.DeletePrevote(ctx, prevote)
+        }
+
+        return false
+    })
+
+    // Clear all votes
+    k.IterateVotes(ctx, func(vote Vote) (stop bool) {
+        k.DeleteVote(ctx, vote)
+        return false
+    })
+}
+

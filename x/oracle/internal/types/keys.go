@@ -32,7 +32,7 @@ var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
 	VoteKey             = []byte{0x02} // prefix for each key to a vote
-	PriceKey            = []byte{0x03} // prefix for each key to a price
+	ExchangeRateKey     = []byte{0x03} // prefix for each key to a rate
 	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
 )
 
@@ -46,9 +46,9 @@ func GetVoteKey(denom string, v sdk.ValAddress) []byte {
 	return append(append(VoteKey, []byte(denom)...), v.Bytes()...)
 }
 
-// GetPriceKey - stored by *denom*
-func GetPriceKey(denom string) []byte {
-	return append(PriceKey, []byte(denom)...)
+// GetExchangeRateKey - stored by *denom*
+func GetExchangeRateKey(denom string) []byte {
+	return append(ExchangeRateKey, []byte(denom)...)
 }
 
 // GetFeederDelegationKey - stored by *Validator* address

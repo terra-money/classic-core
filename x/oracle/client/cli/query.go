@@ -23,7 +23,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	oracleQueryCmd.AddCommand(client.GetCommands(
-		GetCmdQueryPrice(cdc),
+		GetCmdQueryExchangeRate(cdc),
 		GetCmdQueryVotes(cdc),
 		GetCmdQueryPrevotes(cdc),
 		GetCmdQueryActive(cdc),
@@ -35,36 +35,36 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 }
 
-// GetCmdQueryPrice implements the query price command.
-func GetCmdQueryPrice(cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryExchangeRate implements the query rate command.
+func GetCmdQueryExchangeRate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "price [denom]",
+		Use:   "exchange-rate [denom]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query the current Luna exchange rate w.r.t an asset",
 		Long: strings.TrimSpace(`
 Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
 
-$ terracli query oracle price ukrw
+$ terracli query oracle exchange-rate ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			denom := args[0]
 
-			params := types.NewQueryPriceParams(denom)
+			params := types.NewQueryExchangeRateParams(denom)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryPrice), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryExchangeRate), bz)
 			if err != nil {
 				return err
 			}
 
-			var price sdk.Dec
-			cdc.MustUnmarshalJSON(res, &price)
-			return cliCtx.PrintOutput(price)
+			var rate sdk.Dec
+			cdc.MustUnmarshalJSON(res, &rate)
+			return cliCtx.PrintOutput(rate)
 		},
 	}
 	return cmd
@@ -140,7 +140,7 @@ returns oracle votes submitted by the validator for the denom uusd
 				return err
 			}
 
-			var matchingVotes types.PriceVotes
+			var matchingVotes types.ExchangeRateVotes
 			cdc.MustUnmarshalJSON(res, &matchingVotes)
 
 			return cliCtx.PrintOutput(matchingVotes)
@@ -192,7 +192,7 @@ returns oracle prevotes submitted by the validator for denom uusd
 				return err
 			}
 
-			var matchingPrevotes types.PricePrevotes
+			var matchingPrevotes types.ExchangeRatePrevotes
 			cdc.MustUnmarshalJSON(res, &matchingPrevotes)
 
 			return cliCtx.PrintOutput(matchingPrevotes)

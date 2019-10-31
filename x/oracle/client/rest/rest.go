@@ -7,9 +7,9 @@ import (
 
 //nolint
 const (
-	RestDenom = "denom"
-	RestVoter = "voter"
-	RestPrice = "price"
+	RestDenom        = "denom"
+	RestVoter        = "voter"
+	RestExchangeRate = "exchange-rate"
 )
 
 // RegisterRoutes registers oracle-related REST handlers to a router

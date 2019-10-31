@@ -11,31 +11,31 @@ import (
 )
 
 const (
-	DefaultCodespace       = types.DefaultCodespace
-	CodeUnknownDenom       = types.CodeUnknownDenom
-	CodeInvalidPrice       = types.CodeInvalidPrice
-	CodeVoterNotValidator  = types.CodeVoterNotValidator
-	CodeInvalidVote        = types.CodeInvalidVote
-	CodeNoVotingPermission = types.CodeNoVotingPermission
-	CodeInvalidHashLength  = types.CodeInvalidHashLength
-	CodeInvalidPrevote     = types.CodeInvalidPrevote
-	CodeVerificationFailed = types.CodeVerificationFailed
-	CodeNotRevealPeriod    = types.CodeNotRevealPeriod
-	CodeInvalidSaltLength  = types.CodeInvalidSaltLength
-	CodeInvalidMsgFormat   = types.CodeInvalidMsgFormat
-	ModuleName             = types.ModuleName
-	StoreKey               = types.StoreKey
-	RouterKey              = types.RouterKey
-	QuerierRoute           = types.QuerierRoute
-	DefaultParamspace      = types.DefaultParamspace
-	DefaultVotePeriod      = types.DefaultVotePeriod
-	DefaultVotesWindow     = types.DefaultVotesWindow
-	QueryParameters        = types.QueryParameters
-	QueryPrice             = types.QueryPrice
-	QueryActives           = types.QueryActives
-	QueryPrevotes          = types.QueryPrevotes
-	QueryVotes             = types.QueryVotes
-	QueryFeederDelegation  = types.QueryFeederDelegation
+	DefaultCodespace        = types.DefaultCodespace
+	CodeUnknownDenom        = types.CodeUnknownDenom
+	CodeInvalidExchangeRate = types.CodeInvalidExchangeRate
+	CodeVoterNotValidator   = types.CodeVoterNotValidator
+	CodeInvalidVote         = types.CodeInvalidVote
+	CodeNoVotingPermission  = types.CodeNoVotingPermission
+	CodeInvalidHashLength   = types.CodeInvalidHashLength
+	CodeInvalidPrevote      = types.CodeInvalidPrevote
+	CodeVerificationFailed  = types.CodeVerificationFailed
+	CodeNotRevealPeriod     = types.CodeNotRevealPeriod
+	CodeInvalidSaltLength   = types.CodeInvalidSaltLength
+	CodeInvalidMsgFormat    = types.CodeInvalidMsgFormat
+	ModuleName              = types.ModuleName
+	StoreKey                = types.StoreKey
+	RouterKey               = types.RouterKey
+	QuerierRoute            = types.QuerierRoute
+	DefaultParamspace       = types.DefaultParamspace
+	DefaultVotePeriod       = types.DefaultVotePeriod
+	DefaultVotesWindow      = types.DefaultVotesWindow
+	QueryParameters         = types.QueryParameters
+	QueryExchangeRate       = types.QueryExchangeRate
+	QueryActives            = types.QueryActives
+	QueryPrevotes           = types.QueryPrevotes
+	QueryVotes              = types.QueryVotes
+	QueryFeederDelegation   = types.QueryFeederDelegation
 )
 
 var (
@@ -44,7 +44,7 @@ var (
 	RegisterCodec                  = types.RegisterCodec
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
 	ErrUnknownDenomination         = types.ErrUnknownDenomination
-	ErrInvalidPrice                = types.ErrInvalidPrice
+	ErrInvalidExchangeRate         = types.ErrInvalidExchangeRate
 	ErrVerificationFailed          = types.ErrVerificationFailed
 	ErrNoPrevote                   = types.ErrNoPrevote
 	ErrNoVote                      = types.ErrNoVote
@@ -56,19 +56,19 @@ var (
 	ValidateGenesis                = types.ValidateGenesis
 	GetPrevoteKey                  = types.GetPrevoteKey
 	GetVoteKey                     = types.GetVoteKey
-	GetPriceKey                    = types.GetPriceKey
+	GetExchangeRateKey             = types.GetExchangeRateKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey
-	NewMsgPricePrevote             = types.NewMsgPricePrevote
-	NewMsgPriceVote                = types.NewMsgPriceVote
-	NewMsgDelegateFeederPermission = types.NewMsgDelegateFeederPermission
+	NewMsgExchangeRatePrevote      = types.NewMsgExchangeRatePrevote
+	NewMsgExchangeRateVote         = types.NewMsgExchangeRateVote
+	NewMsgDelegateFeedConsent      = types.NewMsgDelegateFeedConsent
 	DefaultParams                  = types.DefaultParams
-	NewQueryPriceParams            = types.NewQueryPriceParams
+	NewQueryExchangeRateParams     = types.NewQueryExchangeRateParams
 	NewQueryPrevotesParams         = types.NewQueryPrevotesParams
 	NewQueryVotesParams            = types.NewQueryVotesParams
 	NewQueryFeederDelegationParams = types.NewQueryFeederDelegationParams
-	NewPricePrevote                = types.NewPricePrevote
+	NewExchangeRatePrevote         = types.NewExchangeRatePrevote
 	VoteHash                       = types.VoteHash
-	NewPriceVote                   = types.NewPriceVote
+	NewExchangeRateVote            = types.NewExchangeRateVote
 	NewKeeper                      = keeper.NewKeeper
 	ParamKeyTable                  = keeper.ParamKeyTable
 	NewQuerier                     = keeper.NewQuerier
@@ -77,7 +77,7 @@ var (
 	ModuleCdc                             = types.ModuleCdc
 	PrevoteKey                            = types.PrevoteKey
 	VoteKey                               = types.VoteKey
-	PriceKey                              = types.PriceKey
+	ExchangeRateKey                       = types.ExchangeRateKey
 	FeederDelegationKey                   = types.FeederDelegationKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
@@ -92,7 +92,7 @@ var (
 )
 
 type (
-	PriceBallot                 = types.PriceBallot
+	ExchangeRateBallot          = types.ExchangeRateBallot
 	Claim                       = types.Claim
 	ClaimPool                   = types.ClaimPool
 	DenomList                   = types.DenomList
@@ -100,17 +100,17 @@ type (
 	DistributionKeeper          = types.DistributionKeeper
 	SupplyKeeper                = types.SupplyKeeper
 	GenesisState                = types.GenesisState
-	MsgPricePrevote             = types.MsgPricePrevote
-	MsgPriceVote                = types.MsgPriceVote
-	MsgDelegateFeederPermission = types.MsgDelegateFeederPermission
+	MsgExchangeRatePrevote      = types.MsgExchangeRatePrevote
+	MsgExchangeRateVote         = types.MsgExchangeRateVote
+	MsgDelegateFeedConsent      = types.MsgDelegateFeedConsent
 	Params                      = types.Params
-	QueryPriceParams            = types.QueryPriceParams
+	QueryExchangeRateParams     = types.QueryExchangeRateParams
 	QueryPrevotesParams         = types.QueryPrevotesParams
 	QueryVotesParams            = types.QueryVotesParams
 	QueryFeederDelegationParams = types.QueryFeederDelegationParams
-	PricePrevote                = types.PricePrevote
-	PricePrevotes               = types.PricePrevotes
-	PriceVote                   = types.PriceVote
-	PriceVotes                  = types.PriceVotes
+	ExchangeRatePrevote         = types.ExchangeRatePrevote
+	ExchangeRatePrevotes        = types.ExchangeRatePrevotes
+	ExchangeRateVote            = types.ExchangeRateVote
+	ExchangeRateVotes           = types.ExchangeRateVotes
 	Keeper                      = keeper.Keeper
 )

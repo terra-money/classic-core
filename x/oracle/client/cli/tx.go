@@ -30,29 +30,29 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	oracleTxCmd.AddCommand(client.PostCommands(
-		GetCmdPricePrevote(cdc),
-		GetCmdPriceVote(cdc),
+		GetCmdExchangeRatePrevote(cdc),
+		GetCmdExchangeRateVote(cdc),
 		GetCmdDelegateFeederPermission(cdc),
 	)...)
 
 	return oracleTxCmd
 }
 
-// GetCmdPricePrevote will create a pricePrevote tx and sign it with the given key.
-func GetCmdPricePrevote(cdc *codec.Codec) *cobra.Command {
+// GetCmdExchangeRatePrevote will create a exchangeRatePrevote tx and sign it with the given key.
+func GetCmdExchangeRatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prevote [salt] [price] [validator]",
+		Use:   "prevote [salt] [exchange_rate] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle prevote for the price of Luna",
+		Short: "Submit an oracle prevote for the exchange rate of Luna",
 		Long: strings.TrimSpace(`
-Submit an oracle prevote for the price of Luna denominated in the input denom.
-The purpose of prevote is to hide vote price with hash which is formatted 
-as hex string in SHA256("salt:price:denom:voter")
+Submit an oracle prevote for the exchange rate of Luna denominated in the input denom.
+The purpose of prevote is to hide vote exchnage rate with hash which is formatted 
+as hex string in SHA256("salt:exchange_rate:denom:voter")
 
 # Prevote
 $ terracli tx oracle prevote 1234 8888.0ukrw
 
-where "ukrw" is the denominating currency, and "8888.0" is the price of micro Luna in micro KRW from the voter's point of view.
+where "ukrw" is the denominating currency, and "8888.0" is the exchange rate of micro Luna in micro KRW from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
 $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
@@ -63,15 +63,15 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			salt := args[0]
-			price, err := sdk.ParseDecCoin(args[1])
+			rate, err := sdk.ParseDecCoin(args[1])
 			if err != nil {
-				return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as DecCoin", price)
+				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange_rate should be formatted as DecCoin", rate)
 			}
 
 			// Get from address
 			voter := cliCtx.GetFromAddress()
-			denom := price.Denom
-			amount := price.Amount
+			denom := rate.Denom
+			amount := rate.Amount
 
 			// By default the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
@@ -92,7 +92,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 
 			hash := hex.EncodeToString(hashBytes)
 
-			msg := types.NewMsgPricePrevote(hash, denom, voter, validator)
+			msg := types.NewMsgExchangeRatePrevote(hash, denom, voter, validator)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -105,18 +105,18 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 	return cmd
 }
 
-// GetCmdPriceVote will create a priceVote tx and sign it with the given key.
-func GetCmdPriceVote(cdc *codec.Codec) *cobra.Command {
+// GetCmdExchangeRateVote will create a exchangeRateVote tx and sign it with the given key.
+func GetCmdExchangeRateVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote [salt] [price] [validator]",
+		Use:   "vote [salt] [exchange_rate] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle vote for the price of Luna",
+		Short: "Submit an oracle vote for the exchange_rate of Luna",
 		Long: strings.TrimSpace(`
-Submit a vote for the price of Luna denominated in the input denom. Companion to a prevote submitted in the previous vote period. 
+Submit a vote for the exchange_rate of Luna w.r.t the input denom. Companion to a prevote submitted in the previous vote period. 
 
 $ terracli tx oracle vote 1234 8890.0ukrw
 
-where "ukrw" is the denominating currency, and "8890.0" is the price of micro Luna in micro KRW from the voter's point of view.
+where "ukrw" is the denominating currency, and "8890.0" is the exchange rate of micro Luna in micro KRW from the voter's point of view.
 
 "salt" should match the salt used to generate the SHA256 hex in the associated pre-vote. 
 
@@ -129,15 +129,15 @@ $ terracli tx oracle vote 1234 8890.0ukrw terravaloper1....
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			salt := args[0]
-			price, err := sdk.ParseDecCoin(args[1])
+			rate, err := sdk.ParseDecCoin(args[1])
 			if err != nil {
-				return fmt.Errorf("given price {%s} is not a valid format; price should be formatted as DecCoin", price)
+				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange rate should be formatted as DecCoin", rate)
 			}
 
 			// Get from address
 			voter := cliCtx.GetFromAddress()
-			denom := price.Denom
-			amount := price.Amount
+			denom := rate.Denom
+			amount := rate.Amount
 
 			// By default the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
@@ -151,7 +151,7 @@ $ terracli tx oracle vote 1234 8890.0ukrw terravaloper1....
 				validator = parsedVal
 			}
 
-			msg := types.NewMsgPriceVote(amount, salt, denom, voter, validator)
+			msg := types.NewMsgExchangeRateVote(amount, salt, denom, voter, validator)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -171,7 +171,7 @@ func GetCmdDelegateFeederPermission(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Delegate the permission to vote for the oracle to an address",
 		Long: strings.TrimSpace(`
-Delegate the permission to vote for the oracle to an address.
+Delegate the permission to submit exchange rate votes for the oracle to an address.
 
 Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
@@ -196,7 +196,7 @@ where "terra1..." is the address you want to delegate your voting rights to.
 				return err
 			}
 
-			msg := types.NewMsgDelegateFeederPermission(validator, feeder)
+			msg := types.NewMsgDelegateFeedConsent(validator, feeder)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
