@@ -15,7 +15,7 @@ import (
 const oracleDecPrecision = 6
 
 // GenerateRandomTestCase nolint
-func GenerateRandomTestCase() (prices []float64, valValAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
+func GenerateRandomTestCase() (exchangeRates []float64, valValAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
 	valValAddrs = []sdk.ValAddress{}
 	mockValidators := []MockValidator{}
 
@@ -24,8 +24,8 @@ func GenerateRandomTestCase() (prices []float64, valValAddrs []sdk.ValAddress, s
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numInputs := 10 + (rand.Int() % 100)
 	for i := 0; i < numInputs; i++ {
-		price := float64(int64(rand.Float64()*base)) / base
-		prices = append(prices, price)
+		exchangeRate := float64(int64(rand.Float64()*base)) / base
+		exchangeRates = append(exchangeRates, exchangeRate)
 
 		pubKey := secp256k1.GenPrivKey().PubKey()
 		valValAddr := sdk.ValAddress(pubKey.Address())

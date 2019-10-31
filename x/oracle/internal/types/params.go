@@ -29,11 +29,11 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                             // 50%
-	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                              // 1%
-	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                   // 432,000
-	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                              // 5%
-	DefaultWhitelist                = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
+	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                                               // 50%
+	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                                                // 1%
+	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                                     // 432,000
+	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                                                // 5%
+	DefaultWhitelist                = DenomList{core.MicroKRWDenom: true, core.MicroSDRDenom: true, core.MicroUSDDenom: true} // ukrw, usdr, uusd
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -42,7 +42,7 @@ var _ subspace.ParamSet = &Params{}
 type Params struct {
 	VotePeriod               int64     `json:"vote_period" yaml:"vote_period"`                               // the number of blocks during which voting takes place.
 	VoteThreshold            sdk.Dec   `json:"vote_threshold" yaml:"vote_threshold"`                         // the minimum percentage of votes that must be received for a ballot to pass.
-	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable price error that can be rewared.
+	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable exchangeRate error that can be rewared.
 	RewardDistributionPeriod int64     `json:"reward_distribution_period" yaml:"reward_distribution_period"` // the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
 	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
 }

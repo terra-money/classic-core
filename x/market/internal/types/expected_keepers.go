@@ -19,5 +19,5 @@ type SupplyKeeper interface {
 
 // OracleKeeper defines expected oracle keeper
 type OracleKeeper interface {
-	GetLunaPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error)
+	GetLunaExchangeRate(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error)
 }

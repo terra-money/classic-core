@@ -15,12 +15,12 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgPricePrevote:
-			return handleMsgPricePrevote(ctx, k, msg)
-		case MsgPriceVote:
-			return handleMsgPriceVote(ctx, k, msg)
-		case MsgDelegateFeederPermission:
-			return handleMsgDelegateFeederPermission(ctx, k, msg)
+		case MsgPrevote:
+			return handleMsgPrevote(ctx, k, msg)
+		case MsgVote:
+			return handleMsgVote(ctx, k, msg)
+		case MsgDelegateConsent:
+			return handleMsgDelegateConsent(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized oracle message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -28,10 +28,10 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// handleMsgPricePrevote handles a MsgPricePrevote
-func handleMsgPricePrevote(ctx sdk.Context, keeper Keeper, ppm MsgPricePrevote) sdk.Result {
+// handleMsgPrevote handles a MsgPrevote
+func handleMsgPrevote(ctx sdk.Context, keeper Keeper, ppm MsgPrevote) sdk.Result {
 	if !ppm.Feeder.Equals(ppm.Validator) {
-		delegate := keeper.GetFeedDelegate(ctx, ppm.Validator)
+		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
 			return ErrNoVotingPermission(keeper.Codespace(), ppm.Feeder, ppm.Validator).Result()
 		}
@@ -43,7 +43,7 @@ func handleMsgPricePrevote(ctx sdk.Context, keeper Keeper, ppm MsgPricePrevote) 
 		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
 	}
 
-	prevote := NewPricePrevote(ppm.Hash, ppm.Denom, ppm.Validator, ctx.BlockHeight())
+	prevote := NewPrevote(ppm.Hash, ppm.Denom, ppm.Validator, ctx.BlockHeight())
 	keeper.AddPrevote(ctx, prevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -62,10 +62,10 @@ func handleMsgPricePrevote(ctx sdk.Context, keeper Keeper, ppm MsgPricePrevote) 
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// handleMsgPriceVote handles a MsgPriceVote
-func handleMsgPriceVote(ctx sdk.Context, keeper Keeper, pvm MsgPriceVote) sdk.Result {
+// handleMsgVote handles a MsgVote
+func handleMsgVote(ctx sdk.Context, keeper Keeper, pvm MsgVote) sdk.Result {
 	if !pvm.Feeder.Equals(pvm.Validator) {
-		delegate := keeper.GetFeedDelegate(ctx, pvm.Validator)
+		delegate := keeper.GetOracleDelegate(ctx, pvm.Validator)
 		if !delegate.Equals(pvm.Feeder) {
 			return ErrNoVotingPermission(keeper.Codespace(), pvm.Feeder, pvm.Validator).Result()
 		}
@@ -90,9 +90,9 @@ func handleMsgPriceVote(ctx sdk.Context, keeper Keeper, pvm MsgPriceVote) sdk.Re
 		return ErrNotRevealPeriod(keeper.Codespace()).Result()
 	}
 
-	// If there is an prevote, we verify a price with prevote hash and move prevote to vote with given price
+	// If there is an prevote, we verify a exchangeRate with prevote hash and move prevote to vote with given exchangeRate
 	bz, _ := hex.DecodeString(prevote.Hash) // prevote hash
-	bz2, err2 := VoteHash(pvm.Salt, pvm.Price, prevote.Denom, prevote.Voter)
+	bz2, err2 := VoteHash(pvm.Salt, pvm.ExchangeRate, prevote.Denom, prevote.Voter)
 	if err2 != nil {
 		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
 	}
@@ -102,7 +102,7 @@ func handleMsgPriceVote(ctx sdk.Context, keeper Keeper, pvm MsgPriceVote) sdk.Re
 	}
 
 	// Add the vote to the store
-	vote := NewPriceVote(pvm.Price, prevote.Denom, prevote.Voter)
+	vote := NewVote(pvm.ExchangeRate, prevote.Denom, prevote.Voter)
 	keeper.DeletePrevote(ctx, prevote)
 	keeper.AddVote(ctx, vote)
 
@@ -122,8 +122,8 @@ func handleMsgPriceVote(ctx sdk.Context, keeper Keeper, pvm MsgPriceVote) sdk.Re
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// handleMsgDelegateFeederPermission handles a MsgDelegateFeederPermission
-func handleMsgDelegateFeederPermission(ctx sdk.Context, keeper Keeper, dfpm MsgDelegateFeederPermission) sdk.Result {
+// handleMsgDelegateConsent handles a MsgDelegateConsent
+func handleMsgDelegateConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelegateConsent) sdk.Result {
 	signer := dfpm.Operator
 
 	// Check the delegator is a validator
@@ -133,7 +133,7 @@ func handleMsgDelegateFeederPermission(ctx sdk.Context, keeper Keeper, dfpm MsgD
 	}
 
 	// Set the delegation
-	keeper.SetFeedDelegate(ctx, signer, dfpm.Delegatee)
+	keeper.SetOracleDelegate(ctx, signer, dfpm.Delegatee)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

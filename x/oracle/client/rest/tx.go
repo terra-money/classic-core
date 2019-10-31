@@ -26,7 +26,7 @@ type PrevoteReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
 	Hash  string  `json:"hash"`
-	Price sdk.Dec `json:"price"`
+	Price sdk.Dec `json:"exchangeRate"`
 	Salt  string  `json:"salt"`
 
 	Validator string `json:"validator"`
@@ -66,9 +66,9 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 		}
 
-		// If hash is not given, then retrieve hash from price and salt
-		if len(req.Hash) == 0 && (!req.Price.Equal(sdk.ZeroDec()) && len(req.Salt) > 0) {
-			hashBytes, err := types.VoteHash(req.Salt, req.Price, denom, valAddress)
+		// If hash is not given, then retrieve hash from exchangeRate and salt
+		if len(req.Hash) == 0 && (!req.ExchangeRate.Equal(sdk.ZeroDec()) && len(req.Salt) > 0) {
+			hashBytes, err := types.VoteHash(req.Salt, req.ExchangeRate, denom, valAddress)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
@@ -78,7 +78,7 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgPricePrevote(req.Hash, denom, fromAddress, valAddress)
+		msg := types.NewMsgPrevote(req.Hash, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -93,7 +93,7 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 type VoteReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
-	Price sdk.Dec `json:"price"`
+	Price sdk.Dec `json:"exchangeRate"`
 	Salt  string  `json:"salt"`
 
 	Validator string `json:"validator"`
@@ -134,7 +134,7 @@ func submitVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgPriceVote(req.Price, req.Salt, denom, fromAddress, valAddress)
+		msg := types.NewMsgVote(req.ExchangeRate, req.Salt, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -194,7 +194,7 @@ func submitDelegateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgDelegateFeederPermission(valAddress, feeder)
+		msg := types.NewMsgDelegateConsent(valAddress, feeder)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -59,79 +59,8 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 //-----------------------------------
 // Prevote logic
 
-// IteratePrevotes iterates rate over prevotes in the store
-func (k Keeper) IteratePrevotes(ctx sdk.Context, handler func(prevote types.PricePrevote) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PrevoteKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var prevote types.PricePrevote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
-		if handler(prevote) {
-			break
-		}
-	}
-}
-
-// iteratePrevotesWithPrefix iterates over prevotes in the store with given prefix
-func (k Keeper) iteratePrevotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote types.PricePrevote) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, prefix)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var prevote types.PricePrevote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
-		if handler(prevote) {
-			break
-		}
-	}
-}
-
-//-----------------------------------
-// Votes logic
-
-// CollectVotes collects all oracle votes for the period, categorized by the votes' denom parameter
-func (k Keeper) CollectVotes(ctx sdk.Context) (votes map[string]types.PriceBallot) {
-	votes = map[string]types.PriceBallot{}
-	handler := func(vote types.PriceVote) (stop bool) {
-		votes[vote.Denom] = append(votes[vote.Denom], vote)
-		return false
-	}
-	k.IterateVotes(ctx, handler)
-
-	return
-}
-
-// IterateVotes iterates over votes in the store
-func (k Keeper) IterateVotes(ctx sdk.Context, handler func(vote types.PriceVote) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.VoteKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var vote types.PriceVote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
-		if handler(vote) {
-			break
-		}
-	}
-}
-
-// Iterate over votes in the store
-func (k Keeper) iterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote types.PriceVote) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, prefix)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var vote types.PriceVote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
-		if handler(vote) {
-			break
-		}
-	}
-}
-
-// GetPrevote retrieves a prevote from the store
-func (k Keeper) GetPrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) (prevote types.PricePrevote, err sdk.Error) {
+// GetPrevote retrieves an oracle prevote from the store
+func (k Keeper) GetPrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) (prevote types.Prevote, err sdk.Error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetPrevoteKey(denom, voter))
 	if b == nil {
@@ -142,21 +71,80 @@ func (k Keeper) GetPrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) 
 	return
 }
 
-// AddPrevote adds a prevote to the store
-func (k Keeper) AddPrevote(ctx sdk.Context, prevote types.PricePrevote) {
+// AddPrevote adds an oracle prevote to the store
+func (k Keeper) AddPrevote(ctx sdk.Context, prevote types.Prevote) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(prevote)
 	store.Set(types.GetPrevoteKey(prevote.Denom, prevote.Voter), bz)
 }
 
-// DeletePrevote deletes a prevote from the store
-func (k Keeper) DeletePrevote(ctx sdk.Context, prevote types.PricePrevote) {
+// DeletePrevote deletes an oracle prevote from the store
+func (k Keeper) DeletePrevote(ctx sdk.Context, prevote types.Prevote) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetPrevoteKey(prevote.Denom, prevote.Voter))
 }
 
-// Retrieves a vote from the store
-func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.ValAddress) (vote types.PriceVote, err sdk.Error) {
+// IteratePrevotes iterates rate over prevotes in the store
+func (k Keeper) IteratePrevotes(ctx sdk.Context, handler func(prevote types.Prevote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.PrevoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var prevote types.Prevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
+		if handler(prevote) {
+			break
+		}
+	}
+}
+
+// iteratePrevotesWithPrefix iterates over prevotes in the store with given prefix
+func (k Keeper) iteratePrevotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote types.Prevote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var prevote types.Prevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &prevote)
+		if handler(prevote) {
+			break
+		}
+	}
+}
+
+//-----------------------------------
+// Votes logic
+
+// IterateVotes iterates over votes in the store
+func (k Keeper) IterateVotes(ctx sdk.Context, handler func(vote types.Vote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.VoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote types.Vote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
+}
+
+// Iterate over oracle votes in the store
+func (k Keeper) iterateVotesWithPrefix(ctx sdk.Context, prefix []byte, handler func(vote types.Vote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var vote types.Vote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &vote)
+		if handler(vote) {
+			break
+		}
+	}
+}
+
+// Retrieves an oracle vote from the store
+func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.ValAddress) (vote types.Vote, err sdk.Error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetVoteKey(denom, voter))
 	if b == nil {
@@ -167,15 +155,15 @@ func (k Keeper) getVote(ctx sdk.Context, denom string, voter sdk.ValAddress) (vo
 	return
 }
 
-// AddVote adds a vote to the store
-func (k Keeper) AddVote(ctx sdk.Context, vote types.PriceVote) {
+// AddVote adds an oracle vote to the store
+func (k Keeper) AddVote(ctx sdk.Context, vote types.Vote) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(vote)
 	store.Set(types.GetVoteKey(vote.Denom, vote.Voter), bz)
 }
 
-// DeleteVote deletes a vote from the store
-func (k Keeper) DeleteVote(ctx sdk.Context, vote types.PriceVote) {
+// DeleteVote deletes an oracle vote from the store
+func (k Keeper) DeleteVote(ctx sdk.Context, vote types.Vote) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetVoteKey(vote.Denom, vote.Voter))
 }
@@ -183,8 +171,8 @@ func (k Keeper) DeleteVote(ctx sdk.Context, vote types.PriceVote) {
 //-----------------------------------
 // Price logic
 
-// GetLunaPrice gets the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) GetLunaPrice(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error) {
+// GetLunaExchangeRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
+func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate sdk.Dec, err sdk.Error) {
 	if denom == core.MicroLunaDenom {
 		return sdk.OneDec(), nil
 	}
@@ -194,67 +182,43 @@ func (k Keeper) GetLunaPrice(ctx sdk.Context, denom string) (price sdk.Dec, err 
 	if b == nil {
 		return sdk.ZeroDec(), types.ErrUnknownDenomination(k.codespace, denom)
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &price)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &exchangeRate)
 	return
 }
 
-// SetLunaPrice sets the consensus exchange rate of Luna denominated in the denom asset to the store.
-func (k Keeper) SetLunaPrice(ctx sdk.Context, denom string, price sdk.Dec) {
+// SetLunaExchangeRate sets the consensus exchange rate of Luna denominated in the denom asset to the store.
+func (k Keeper) SetLunaExchangeRate(ctx sdk.Context, denom string, exchangeRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(price)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(exchangeRate)
 	store.Set(types.GetPriceKey(denom), bz)
 }
 
-// IterateLunaPrices iterates over luna prices in the store
-func (k Keeper) IterateLunaPrices(ctx sdk.Context, handler func(denom string, price sdk.Dec) (stop bool)) {
+// DeleteLunaExchangeRate deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
+func (k Keeper) DeleteLunaExchangeRate(ctx sdk.Context, denom string) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PriceKey)
+	store.Delete(types.GetPriceKey(denom))
+}
+
+// IterateLunaExchangeRates iterates over luna rates in the store
+func (k Keeper) IterateLunaExchangeRates(ctx sdk.Context, handler func(denom string, exchangeRate sdk.Dec) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.ExchangeRateKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := string(iter.Key()[len(types.PriceKey):])
-		var price sdk.Dec
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &price)
-		if handler(denom, price) {
+		denom := string(iter.Key()[len(types.ExchangeRateKey):])
+		var exchangeRate sdk.Dec
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &exchangeRate)
+		if handler(denom, exchangeRate) {
 			break
 		}
 	}
 }
 
-// DeletePrice deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) DeletePrice(ctx sdk.Context, denom string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetPriceKey(denom))
-}
-
-// GetActiveDenoms returns all active oracle asset denoms from the store
-func (k Keeper) GetActiveDenoms(ctx sdk.Context) (denoms types.DenomList) {
-	denoms = types.DenomList{}
-
-	k.IterateLunaPrices(ctx, func(denom string, _ sdk.Dec) bool {
-		denoms = append(denoms, denom)
-		return false
-	})
-
-	return
-}
-
-// GetLunaPrices returns all active oracle asset prices in sdk.DecCoins format from the store
-func (k Keeper) GetLunaPrices(ctx sdk.Context) (prices sdk.DecCoins) {
-	prices = sdk.DecCoins{}
-
-	k.IterateLunaPrices(ctx, func(denom string, price sdk.Dec) bool {
-		prices = append(prices, sdk.NewDecCoinFromDec(denom, price))
-		return false
-	})
-
-	return
-}
-
 //-----------------------------------
-// Feeder delegation logic
+// Oracle delegation logic
 
-// GetFeedDelegate gets the account address that the feeder right was delegated to by the validator operator.
-func (k Keeper) GetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress) (delegate sdk.AccAddress) {
+// GetOracleDelegate gets the account address that the validator operator delegated oracle vote rights to
+func (k Keeper) GetOracleDelegate(ctx sdk.Context, operator sdk.ValAddress) (delegate sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetFeederDelegationKey(operator))
 	if b == nil {
@@ -265,16 +229,15 @@ func (k Keeper) GetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress) (deleg
 	return
 }
 
-// SetFeedDelegate sets the account address that the feeder right was delegated to by the validator operator.
-func (k Keeper) SetFeedDelegate(ctx sdk.Context, operator sdk.ValAddress, delegatedFeeder sdk.AccAddress) {
+// SetOracleDelegate sets the account address that the validator operator delegated oracle vote rights to
+func (k Keeper) SetOracleDelegate(ctx sdk.Context, operator sdk.ValAddress, delegatedFeeder sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(delegatedFeeder)
 	store.Set(types.GetFeederDelegationKey(operator), bz)
 }
 
-// IterateFeederDelegations iterates over the feeder delegations
-// and performs a callback function
-func (k Keeper) IterateFeederDelegations(ctx sdk.Context,
+// IterateOracleDelegates iterates over the feed delegates and performs a callback function.
+func (k Keeper) IterateOracleDelegates(ctx sdk.Context,
 	handler func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)

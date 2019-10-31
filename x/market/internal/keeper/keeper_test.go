@@ -26,7 +26,7 @@ func TestTerraPoolDeltaUpdate(t *testing.T) {
 // each pools move towards base pool
 func TestReplenishPools(t *testing.T) {
 	input := CreateTestInput(t)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
 	basePool := input.MarketKeeper.BasePool(input.Ctx)
 	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
