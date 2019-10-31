@@ -10,27 +10,27 @@ import (
 
 // ensure Msg interface compliance at compile time
 var (
-	_ sdk.Msg = &MsgDelegateConsent{}
-	_ sdk.Msg = &MsgPrevote{}
-	_ sdk.Msg = &MsgVote{}
+	_ sdk.Msg = &MsgDelegateFeederPermission{}
+	_ sdk.Msg = &MsgPricePrevote{}
+	_ sdk.Msg = &MsgPriceVote{}
 )
 
 //-------------------------------------------------
 //-------------------------------------------------
 
-// MsgPrevote - struct for prevoting on the Vote.
-// The purpose of prevote is to hide vote exchangeRate with hash
-// which is formatted as hex string in SHA256("salt:exchangeRate:denom:voter")
-type MsgPrevote struct {
+// MsgPricePrevote - struct for prevoting on the PriceVote.
+// The purpose of prevote is to hide vote price with hash
+// which is formatted as hex string in SHA256("salt:price:denom:voter")
+type MsgPricePrevote struct {
 	Hash      string         `json:"hash" yaml:"hash"` // hex string
 	Denom     string         `json:"denom" yaml:"denom"`
 	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
 	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
 }
 
-// NewMsgPrevote creates a MsgPrevote instance
-func NewMsgPrevote(VoteHash string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPrevote {
-	return MsgPrevote{
+// NewMsgPricePrevote creates a MsgPricePrevote instance
+func NewMsgPricePrevote(VoteHash string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPricePrevote {
+	return MsgPricePrevote{
 		Hash:      VoteHash,
 		Denom:     denom,
 		Feeder:    feederAddress,
@@ -39,23 +39,23 @@ func NewMsgPrevote(VoteHash string, denom string, feederAddress sdk.AccAddress, 
 }
 
 // Route implements sdk.Msg
-func (msg MsgPrevote) Route() string { return RouterKey }
+func (msg MsgPricePrevote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgPrevote) Type() string { return "Prevote" }
+func (msg MsgPricePrevote) Type() string { return "priceprevote" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgPrevote) GetSignBytes() []byte {
+func (msg MsgPricePrevote) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgPrevote) GetSigners() []sdk.AccAddress {
+func (msg MsgPricePrevote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgPrevote) ValidateBasic() sdk.Error {
+func (msg MsgPricePrevote) ValidateBasic() sdk.Error {
 
 	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
 		return ErrInvalidHashLength(DefaultCodespace, len(bz))
@@ -77,8 +77,8 @@ func (msg MsgPrevote) ValidateBasic() sdk.Error {
 }
 
 // String implements fmt.Stringer interface
-func (msg MsgPrevote) String() string {
-	return fmt.Sprintf(`MsgVote
+func (msg MsgPricePrevote) String() string {
+	return fmt.Sprintf(`MsgPriceVote
 	hash:         %s,
 	feeder:       %s, 
 	validator:    %s, 
@@ -86,21 +86,21 @@ func (msg MsgPrevote) String() string {
 		msg.Hash, msg.Feeder, msg.Validator, msg.Denom)
 }
 
-// MsgVote - struct for voting on the exchangeRate of Luna denominated in various Terra assets.
-// For example, if the validator believes that the effective exchangeRate of Luna in USD is 10.39, that's
-// what the exchangeRate field would be, and if 1213.34 for KRW, same.
-type MsgVote struct {
-	Price     sdk.Dec        `json:"exchangeRate" yaml:"exchangeRate"` // the effective exchangeRate of Luna in {Denom}
+// MsgPriceVote - struct for voting on the price of Luna denominated in various Terra assets.
+// For example, if the validator believes that the effective price of Luna in USD is 10.39, that's
+// what the price field would be, and if 1213.34 for KRW, same.
+type MsgPriceVote struct {
+	Price     sdk.Dec        `json:"price" yaml:"price"` // the effective price of Luna in {Denom}
 	Salt      string         `json:"salt" yaml:"salt"`
 	Denom     string         `json:"denom" yaml:"denom"`
 	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
 	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
 }
 
-// NewMsgVote creates a MsgVote instance
-func NewMsgVote(exchangeRate sdk.Dec, salt string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgVote {
-	return MsgVote{
-		Price:     exchangeRate,
+// NewMsgPriceVote creates a MsgPriceVote instance
+func NewMsgPriceVote(price sdk.Dec, salt string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgPriceVote {
+	return MsgPriceVote{
+		Price:     price,
 		Salt:      salt,
 		Denom:     denom,
 		Feeder:    feederAddress,
@@ -109,23 +109,23 @@ func NewMsgVote(exchangeRate sdk.Dec, salt string, denom string, feederAddress s
 }
 
 // Route implements sdk.Msg
-func (msg MsgVote) Route() string { return RouterKey }
+func (msg MsgPriceVote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgVote) Type() string { return "Vote" }
+func (msg MsgPriceVote) Type() string { return "pricevote" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgVote) GetSignBytes() []byte {
+func (msg MsgPriceVote) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgVote) GetSigners() []sdk.AccAddress {
+func (msg MsgPriceVote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgVote) ValidateBasic() sdk.Error {
+func (msg MsgPriceVote) ValidateBasic() sdk.Error {
 
 	if len(msg.Denom) == 0 {
 		return ErrUnknownDenomination(DefaultCodespace, "")
@@ -139,8 +139,8 @@ func (msg MsgVote) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	if msg.ExchangeRate.LTE(sdk.ZeroDec()) {
-		return ErrInvalidPrice(DefaultCodespace, msg.ExchangeRate)
+	if msg.Price.LTE(sdk.ZeroDec()) {
+		return ErrInvalidPrice(DefaultCodespace, msg.Price)
 	}
 
 	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
@@ -151,48 +151,48 @@ func (msg MsgVote) ValidateBasic() sdk.Error {
 }
 
 // String implements fmt.Stringer interface
-func (msg MsgVote) String() string {
-	return fmt.Sprintf(`MsgVote
-	exchangeRate:      %s,
+func (msg MsgPriceVote) String() string {
+	return fmt.Sprintf(`MsgPriceVote
+	price:      %s,
 	salt:       %s,
 	feeder:     %s, 
 	validator:  %s, 
 	denom:      %s`,
-		msg.ExchangeRate, msg.Salt, msg.Feeder, msg.Validator, msg.Denom)
+		msg.Price, msg.Salt, msg.Feeder, msg.Validator, msg.Denom)
 }
 
-// MsgDelegateConsent - struct for delegating oracle voting rights to another address.
-type MsgDelegateConsent struct {
+// MsgDelegateFeederPermission - struct for delegating oracle voting rights to another address.
+type MsgDelegateFeederPermission struct {
 	Operator  sdk.ValAddress `json:"operator" yaml:"operator"`
 	Delegatee sdk.AccAddress `json:"delegatee" yaml:"delegatee"`
 }
 
-// NewMsgDelegateConsent creates a MsgDelegateConsent instance
-func NewMsgDelegateConsent(operatorAddress sdk.ValAddress, feederAddress sdk.AccAddress) MsgDelegateConsent {
-	return MsgDelegateConsent{
+// NewMsgDelegateFeederPermission creates a MsgDelegateFeederPermission instance
+func NewMsgDelegateFeederPermission(operatorAddress sdk.ValAddress, feederAddress sdk.AccAddress) MsgDelegateFeederPermission {
+	return MsgDelegateFeederPermission{
 		Operator:  operatorAddress,
 		Delegatee: feederAddress,
 	}
 }
 
 // Route implements sdk.Msg
-func (msg MsgDelegateConsent) Route() string { return RouterKey }
+func (msg MsgDelegateFeederPermission) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgDelegateConsent) Type() string { return "delegatefeeder" }
+func (msg MsgDelegateFeederPermission) Type() string { return "delegatefeeder" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgDelegateConsent) GetSignBytes() []byte {
+func (msg MsgDelegateFeederPermission) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgDelegateConsent) GetSigners() []sdk.AccAddress {
+func (msg MsgDelegateFeederPermission) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Operator)}
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgDelegateConsent) ValidateBasic() sdk.Error {
+func (msg MsgDelegateFeederPermission) ValidateBasic() sdk.Error {
 	if msg.Operator.Empty() {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
 	}
@@ -205,8 +205,8 @@ func (msg MsgDelegateConsent) ValidateBasic() sdk.Error {
 }
 
 // String implements fmt.Stringer interface
-func (msg MsgDelegateConsent) String() string {
-	return fmt.Sprintf(`MsgDelegateConsent
+func (msg MsgDelegateFeederPermission) String() string {
+	return fmt.Sprintf(`MsgDelegateFeederPermission
 	operator:    %s, 
 	delegatee:   %s`,
 		msg.Operator, msg.Delegatee)

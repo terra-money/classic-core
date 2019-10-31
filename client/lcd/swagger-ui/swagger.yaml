@@ -2182,7 +2182,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OracleVote"
+              $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -2210,7 +2210,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OracleVote"
+              $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -2233,7 +2233,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OracleVote"
+              $ref: "#/definitions/PriceVote"
         400:
           description: Bad Request
         500:
@@ -2282,7 +2282,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OraclePrevote"
+              $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -2310,7 +2310,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OraclePrevote"
+              $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -2333,7 +2333,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/OraclePrevote"
+              $ref: "#/definitions/PricePrevote"
         400:
           description: Bad Request
         500:
@@ -3475,7 +3475,7 @@ definitions:
         $ref: "#/definitions/BaseReq"
       feeder:
         $ref: "#/definitions/Address"
-  OracleVote:
+  PriceVote:
     type: object
     properties:
       price:
@@ -3486,7 +3486,7 @@ definitions:
         example: "ukrw"
       voter:
         $ref: "#/definitions/ValidatorAddress"
-  OraclePrevote:
+  PricePrevote:
     type: object
     properties:
       hash:

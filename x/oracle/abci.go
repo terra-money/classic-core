@@ -17,70 +17,65 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	whitelist := k.Whitelist(ctx)
+	actives := k.GetActiveDenoms(ctx)
+	votes := k.CollectVotes(ctx)
 
-	// Clear exchange rates
-	for denom := range whitelist {
-		k.DeleteLunaExchangeRate(ctx, denom)
+	// Clear prices
+	for _, activeDenom := range actives {
+		k.DeletePrice(ctx, activeDenom)
 	}
 
-	winnerMap := make(map[string]types.Claim)
+	// Changes whitelist array to map for the fast lookup
+	whitelistMap := make(map[string]bool)
+	for _, denom := range k.Whitelist(ctx) {
+		whitelistMap[denom] = true
+	}
 
-	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	voteMap := OrganizeBallotByDenom(k, ctx)
-	for denom, ballot := range voteMap {
+	// Iterate through votes and update prices; drop if not enough votes have been achieved.
+	claimMap := make(map[string]types.Claim)
+	for denom, ballot := range votes {
 
-		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
+		// Check whitelist; if denom is not exists or exists but the ballot is not passed, then skip
+		if _, exists := whitelistMap[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
 			continue
 		}
 
-		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := tally(ctx, ballot, k)
-
-		// Set the exchange rate
-		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
+		// Get weighted median prices, and faithful respondants
+		mod, ballotWinners := tally(ctx, ballot, k)
 
 		// Collect claims of ballot winners
-		for _, ballotWinningClaim := range ballotWinningClaims {
-			key := ballotWinningClaim.Recipient.String()
-			prevClaim, exists := winnerMap[key]
-			if !exists {
-				winnerMap[key] = ballotWinningClaim
+		for _, winner := range ballotWinners {
+			key := winner.Recipient.String()
+			claim, exists := claimMap[key]
+			if exists {
+				claim.Weight += winner.Weight
+				claimMap[key] = claim
 			} else {
-				prevClaim.Weight += ballotWinningClaim.Weight
-				winnerMap[key] = prevClaim
+				claimMap[key] = winner
 			}
 		}
 
-		// Emit abci events
+		// Set price to the store
+		k.SetLunaPrice(ctx, denom, mod)
 		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+			sdk.NewEvent(types.EventTypePriceUpdate,
 				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
+				sdk.NewAttribute(types.AttributeKeyPrice, mod.String()),
 			),
 		)
 	}
 
 	// Convert map to array
 	var claimPool types.ClaimPool
-	for _, claim := range winnerMap {
+	for _, claim := range claimMap {
 		claimPool = append(claimPool, claim)
 	}
 
 	// Distribute rewards to ballot winners
 	k.RewardBallotWinners(ctx, claimPool)
 
-	// Clear the ballot
-	clearBallots(k, ctx, params)
-
-	return
-}
-
-// clearBallots clears all tallied prevotes and votes from the store
-func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 	// Clear all prevotes
-	k.IteratePrevotes(ctx, func(prevote Prevote) (stop bool) {
+	k.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
 		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
 			k.DeletePrevote(ctx, prevote)
 		}
@@ -89,8 +84,10 @@ func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 	})
 
 	// Clear all votes
-	k.IterateVotes(ctx, func(vote Vote) (stop bool) {
+	k.IterateVotes(ctx, func(vote PriceVote) (stop bool) {
 		k.DeleteVote(ctx, vote)
 		return false
 	})
+
+	return
 }

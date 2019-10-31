@@ -7,23 +7,23 @@ import (
 // Defines the prefix of each query path
 const (
 	QueryParameters       = "parameters"
-	QueryExchangeRate     = "exchangeRate"
-	QueryExchangeRates    = "exchangeRates"
+	QueryPrice            = "price"
+	QueryPrices           = "prices"
 	QueryActives          = "actives"
 	QueryPrevotes         = "prevotes"
 	QueryVotes            = "votes"
 	QueryFeederDelegation = "feederDelegation"
 )
 
-// QueryExchangeRateParams defines the params for the following queries:
-// - 'custom/oracle/exchangeRate'
-type QueryExchangeRateParams struct {
+// QueryPriceParams defines the params for the following queries:
+// - 'custom/oracle/price'
+type QueryPriceParams struct {
 	Denom string
 }
 
-// NewQueryExchangeRateParams returns params for exchangeRate query
-func NewQueryExchangeRateParams(denom string) QueryExchangeRateParams {
-	return QueryExchangeRateParams{denom}
+// NewQueryPriceParams returns params for price query
+func NewQueryPriceParams(denom string) QueryPriceParams {
+	return QueryPriceParams{denom}
 }
 
 // QueryPrevotesParams defines the params for the following queries:
@@ -33,7 +33,7 @@ type QueryPrevotesParams struct {
 	Denom string
 }
 
-// NewQueryPrevotesParams returns params for exchangeRate prevotes query
+// NewQueryPrevotesParams returns params for price prevotes query
 func NewQueryPrevotesParams(voter sdk.ValAddress, denom string) QueryPrevotesParams {
 	return QueryPrevotesParams{voter, denom}
 }
@@ -45,7 +45,7 @@ type QueryVotesParams struct {
 	Denom string
 }
 
-// NewQueryVotesParams returns params for exchangeRate votes query
+// NewQueryVotesParams returns params for price votes query
 func NewQueryVotesParams(voter sdk.ValAddress, denom string) QueryVotesParams {
 	return QueryVotesParams{voter, denom}
 }

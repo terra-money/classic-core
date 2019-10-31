@@ -10,23 +10,23 @@ import (
 type GenesisState struct {
 	Params            Params                    `json:"params" yaml:"params"`
 	FeederDelegations map[string]sdk.AccAddress `json:"feeder_delegations" yaml:"feeder_delegations"`
-	Prices            map[string]sdk.Dec        `json:"exchangeRates" yaml:"exchangeRates"`
-	Prevotes          []Prevote                 `json:"exchangeRate_prevotes" yaml:"exchangeRate_prevotes"`
-	Votes             []Vote                    `json:"exchangeRate_votes" yaml:"exchangeRate_votes"`
+	Prices            map[string]sdk.Dec        `json:"prices" yaml:"prices"`
+	PricePrevotes     []PricePrevote            `json:"price_prevotes" yaml:"price_prevotes"`
+	PriceVotes        []PriceVote               `json:"price_votes" yaml:"price_votes"`
 }
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(
-	params Params, Prevotes []Prevote,
-	Votes []Vote, exchangeRates map[string]sdk.Dec,
+	params Params, pricePrevotes []PricePrevote,
+	priceVotes []PriceVote, prices map[string]sdk.Dec,
 	feederDelegations map[string]sdk.AccAddress,
 ) GenesisState {
 
 	return GenesisState{
 		Params:            params,
-		Prevotes:          Prevotes,
-		Votes:             Votes,
-		Prices:            exchangeRates,
+		PricePrevotes:     pricePrevotes,
+		PriceVotes:        priceVotes,
+		Prices:            prices,
 		FeederDelegations: feederDelegations,
 	}
 }
@@ -35,8 +35,8 @@ func NewGenesisState(
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
 		Params:            DefaultParams(),
-		Prevotes:          []Prevote{},
-		Votes:             []Vote{},
+		PricePrevotes:     []PricePrevote{},
+		PriceVotes:        []PriceVote{},
 		Prices:            make(map[string]sdk.Dec),
 		FeederDelegations: make(map[string]sdk.AccAddress),
 	}

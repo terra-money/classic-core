@@ -39,9 +39,9 @@ func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error
 	return sdk.NewError(codespace, CodeUnknownDenom, fmt.Sprintf("The denom is not known: %s", denom))
 }
 
-// ErrInvalidPrice called when the exchangeRate submitted is not valid
-func ErrInvalidPrice(codespace sdk.CodespaceType, exchangeRate sdk.Dec) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidPrice, fmt.Sprintf("Price is invalid: %s", exchangeRate.String()))
+// ErrInvalidPrice called when the price submitted is not valid
+func ErrInvalidPrice(codespace sdk.CodespaceType, price sdk.Dec) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidPrice, fmt.Sprintf("Price is invalid: %s", price.String()))
 }
 
 // ErrVerificationFailed called when the given prevote has different hash from the retrieved one
@@ -64,7 +64,7 @@ func ErrNoVotingPermission(codespace sdk.CodespaceType, feeder sdk.AccAddress, o
 	return sdk.NewError(codespace, CodeNoVotingPermission, fmt.Sprintf("Feeder %s not permitted to vote on behalf of: %s", feeder.String(), operator.String()))
 }
 
-// ErrNotRevealPeriod called when the feeder submit exchangeRate reveal vote in wrong period.
+// ErrNotRevealPeriod called when the feeder submit price reveal vote in wrong period.
 func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("Now is not proper reveal period."))
 }

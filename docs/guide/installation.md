@@ -14,7 +14,11 @@ Hardware requirements for running a node:
 Install `go` by following the [official docs](https://golang.org/doc/install).
 
 {% hint style="info" %}
-**Go 1.13+** is required for Terra Core.
+<<<<<<< HEAD
+    **Go 1.13+ +** is required for Terra Core.
+=======
+**Go 1.12+** is required for Terra Core.
+>>>>>>> origin/develop
 {% endhint %}
 
 > _NOTE_: Before installing `terrad` and `terracli` binaries, let's add the golang binaries to your `PATH` variable. Open your `.bash_profile` or `.zshrc` and append `$HOME/go/bin` to your PATH variable \(i.e. `export PATH=$HOME/bin:$HOME/go/bin`\).

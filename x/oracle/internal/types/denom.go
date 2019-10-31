@@ -1,10 +1,14 @@
 package types
 
+import (
+	"strings"
+)
+
 // DenomList is array of denom
-type DenomList map[string]bool
+type DenomList []string
 
 // String implements fmt.Stringer interface
 func (dl DenomList) String() (out string) {
-	out = dl.String()
+	out = strings.Join(dl, "\n")
 	return
 }

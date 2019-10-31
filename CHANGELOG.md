@@ -113,14 +113,14 @@ cosmos-sdk/MsgUnjail => slashing/MsgUnjail
 ```
   
 #### [\#140](https://github.com/terra-project/core/pull/140) Oracle updates prevoting/voting
-MsgPriceFeed is split into ```MsgOraclePrevote``` and ```MsgOracleVote```
+MsgPriceFeed is split into ```MsgPricePrevote``` and ```MsgPriceVote```
 ```
 Period  |  P1 |  P2 |  P3 |  ...    |
 Prevote |  O  |  O  |  O  |  ...    |
         |-----\-----\-----\-----    |
 Vote    |     |  O  |  O  |  ...    |
 ```
-In prevote stage, a validator should submit the hash of the part of real vote msg to prove the validator is not just copying other validators price vote. In vote phrase, the validator should reveal the real price by submitting MsgOracleVote with ```salt```.
+In prevote stage, a validator should submit the hash of the part of real vote msg to prove the validator is not just copying other validators price vote. In vote phrase, the validator should reveal the real price by submitting MsgPriceVote with ```salt```.
 
 The submission order has to be kept in (vote -> prevote) order. If an prevote comes early, it will replace previous prevote so next vote, which reveals the proof for previous prevote, will be failed.
 

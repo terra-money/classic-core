@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgPrevote(t *testing.T) {
+func TestMsgPricePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	bz, err := VoteHash("1", sdk.OneDec(), core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
@@ -31,7 +31,7 @@ func TestMsgPrevote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgPrevote(tc.hash, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgPricePrevote(tc.hash, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -40,15 +40,15 @@ func TestMsgPrevote(t *testing.T) {
 	}
 }
 
-func TestMsgVote(t *testing.T) {
+func TestMsgPriceVote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	tests := []struct {
-		denom        string
-		voter        sdk.AccAddress
-		salt         string
-		exchangeRate sdk.Dec
-		expectPass   bool
+		denom      string
+		voter      sdk.AccAddress
+		salt       string
+		price      sdk.Dec
+		expectPass bool
 	}{
 		{"", addrs[0], "123", sdk.OneDec(), false},
 		{core.MicroCNYDenom, addrs[0], "123", sdk.OneDec().MulInt64(core.MicroUnit), true},
@@ -58,7 +58,7 @@ func TestMsgVote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgVote(tc.exchangeRate, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgPriceVote(tc.price, tc.salt, tc.denom, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -82,7 +82,7 @@ func TestMsgFeederDelegation(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgDelegateConsent(tc.delegator, tc.delegatee)
+		msg := NewMsgDelegateFeederPermission(tc.delegator, tc.delegatee)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

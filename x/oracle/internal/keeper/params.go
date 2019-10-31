@@ -23,7 +23,7 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// RewardBand returns the ratio of allowable exchangeRate error that a validator can be rewared
+// RewardBand returns the ratio of allowable price error that a validator can be rewared
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardBand, &res)
 	return

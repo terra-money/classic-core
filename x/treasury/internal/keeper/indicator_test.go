@@ -18,10 +18,10 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 	taxAmount := sdk.NewInt(1000).MulRaw(core.MicroUnit)
 
 	// Set random prices
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.NewDec(1))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, sdk.NewDec(10))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.NewDec(1))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, sdk.NewDec(10))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
 
 	// Record tax proceeds
 	input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, sdk.Coins{
@@ -49,7 +49,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	// Set random prices
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lnasdrRate)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, lnasdrRate)
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
 
 	// Add seigniorage
@@ -72,10 +72,10 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
 
 	// Set random prices
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, sdk.NewDec(1))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.NewDec(10))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, sdk.NewDec(1))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.NewDec(10))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
 
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
 
@@ -204,7 +204,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(3505, 1), rval)
 
 	// Test all of our reporting functions
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
 	// set initial supply
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * 200)

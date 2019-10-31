@@ -9,17 +9,17 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
-// Prevote - struct to store a validator's prevote on the exchangeRate of Luna in the denom asset
-type Prevote struct {
+// PricePrevote - struct to store a validator's prevote on the price of Luna in the denom asset
+type PricePrevote struct {
 	Hash        string         `json:"hash"`  // Vote hex hash to protect centralize data source problem
 	Denom       string         `json:"denom"` // Ticker name of target fiat currency
 	Voter       sdk.ValAddress `json:"voter"` // Voter val address
 	SubmitBlock int64          `json:"submit_block"`
 }
 
-// NewPrevote returns Prevote object
-func NewPrevote(hash string, denom string, voter sdk.ValAddress, submitBlock int64) Prevote {
-	return Prevote{
+// NewPricePrevote returns PricePrevote object
+func NewPricePrevote(hash string, denom string, voter sdk.ValAddress, submitBlock int64) PricePrevote {
+	return PricePrevote{
 		Hash:        hash,
 		Denom:       denom,
 		Voter:       voter,
@@ -28,52 +28,52 @@ func NewPrevote(hash string, denom string, voter sdk.ValAddress, submitBlock int
 }
 
 // String implements fmt.Stringer interface
-func (pv Prevote) String() string {
-	return fmt.Sprintf(`Prevote
+func (pp PricePrevote) String() string {
+	return fmt.Sprintf(`PricePrevote
 	Hash:    %s, 
 	Denom:    %s, 
 	Voter:    %s, 
 	SubmitBlock:    %d`,
-		pv.Hash, pv.Denom, pv.Voter, pv.SubmitBlock)
+		pp.Hash, pp.Denom, pp.Voter, pp.SubmitBlock)
 }
 
-// Prevotes is a collection of PreicePrevote
-type Prevotes []Prevote
+// PricePrevotes is a collection of PreicePrevote
+type PricePrevotes []PricePrevote
 
 // String implements fmt.Stringer interface
-func (v Prevotes) String() (out string) {
+func (v PricePrevotes) String() (out string) {
 	for _, val := range v {
 		out += val.String() + "\n"
 	}
 	return strings.TrimSpace(out)
 }
 
-// VoteHash computes hash value of Vote
-func VoteHash(salt string, exchangeRate sdk.Dec, denom string, voter sdk.ValAddress) ([]byte, error) {
+// VoteHash computes hash value of PriceVote
+func VoteHash(salt string, price sdk.Dec, denom string, voter sdk.ValAddress) ([]byte, error) {
 	hash := tmhash.NewTruncated()
-	_, err := hash.Write([]byte(fmt.Sprintf("%s:%s:%s:%s", salt, exchangeRate, denom, voter)))
+	_, err := hash.Write([]byte(fmt.Sprintf("%s:%s:%s:%s", salt, price, denom, voter)))
 	bz := hash.Sum(nil)
 	return bz, err
 }
 
-// Vote - struct to store a validator's vote on the exchangeRate of Luna in the denom asset
-type Vote struct {
-	ExchangeRate sdk.Dec        `json:"exchange_rate"` // Price of Luna in target fiat currency
-	Denom        string         `json:"denom"`         // Ticker name of target fiat currency
-	Voter        sdk.ValAddress `json:"voter"`         // voter val address of validator
+// PriceVote - struct to store a validator's vote on the price of Luna in the denom asset
+type PriceVote struct {
+	Price sdk.Dec        `json:"price"` // Price of Luna in target fiat currency
+	Denom string         `json:"denom"` // Ticker name of target fiat currency
+	Voter sdk.ValAddress `json:"voter"` // voter val address of validator
 }
 
-// NewVote creates a Vote instance
-func NewVote(exchangeRate sdk.Dec, denom string, voter sdk.ValAddress) Vote {
-	return Vote{
-		ExchangeRate: exchangeRate,
-		Denom:        denom,
-		Voter:        voter,
+// NewPriceVote creates a PriceVote instance
+func NewPriceVote(price sdk.Dec, denom string, voter sdk.ValAddress) PriceVote {
+	return PriceVote{
+		Price: price,
+		Denom: denom,
+		Voter: voter,
 	}
 }
 
-func (v Vote) getPower(ctx sdk.Context, sk StakingKeeper) int64 {
-	validator := sk.Validator(ctx, v.Voter)
+func (pv PriceVote) getPower(ctx sdk.Context, sk StakingKeeper) int64 {
+	validator := sk.Validator(ctx, pv.Voter)
 	if validator == nil {
 		return 0
 	}
@@ -82,19 +82,19 @@ func (v Vote) getPower(ctx sdk.Context, sk StakingKeeper) int64 {
 }
 
 // String implements fmt.Stringer interface
-func (v Vote) String() string {
-	return fmt.Sprintf(`Vote
+func (pv PriceVote) String() string {
+	return fmt.Sprintf(`PriceVote
 	Denom:    %s, 
 	Voter:    %s, 
-	ExchangeRate:    %s`,
-		v.Denom, v.Voter, v.ExchangeRate)
+	Price:    %s`,
+		pv.Denom, pv.Voter, pv.Price)
 }
 
-// Votes is a collection of Vote
-type Votes []Vote
+// PriceVotes is a collection of PriceVote
+type PriceVotes []PriceVote
 
 // String implements fmt.Stringer interface
-func (v Votes) String() (out string) {
+func (v PriceVotes) String() (out string) {
 	for _, val := range v {
 		out += val.String() + "\n"
 	}

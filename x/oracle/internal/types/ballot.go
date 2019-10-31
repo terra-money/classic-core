@@ -9,11 +9,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ExchangeRateBallot is a convinience wrapper around a Vote slice
-type ExchangeRateBallot []Vote
+// PriceBallot is a convinience wrapper around a PriceVote slice
+type PriceBallot []PriceVote
 
 // Power returns the total amount of voting power in the ballot
-func (pb ExchangeRateBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
+func (pb PriceBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
 	totalPower := int64(0)
 	for _, vote := range pb {
 		totalPower += vote.getPower(ctx, sk)
@@ -22,8 +22,8 @@ func (pb ExchangeRateBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
 	return totalPower
 }
 
-// WeightedMedian returns the median weighted by the power of the Vote.
-func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec {
+// WeightedMedian returns the median weighted by the power of the PriceVote.
+func (pb PriceBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec {
 	totalPower := pb.Power(ctx, sk)
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
@@ -36,15 +36,15 @@ func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) s
 
 			pivot += votePower
 			if pivot >= (totalPower / 2) {
-				return v.ExchangeRate
+				return v.Price
 			}
 		}
 	}
 	return sdk.ZeroDec()
 }
 
-// StandardDeviation returns the standard deviation by the power of the Vote.
-func (pb ExchangeRateBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (standardDeviation sdk.Dec) {
+// StandardDeviation returns the standard deviation by the power of the PriceVote.
+func (pb PriceBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
@@ -53,7 +53,7 @@ func (pb ExchangeRateBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper
 
 	sum := sdk.ZeroDec()
 	for _, v := range pb {
-		deviation := v.ExchangeRate.Sub(median)
+		deviation := v.Price.Sub(median)
 		sum = sum.Add(deviation.Mul(deviation))
 	}
 
@@ -67,24 +67,24 @@ func (pb ExchangeRateBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper
 }
 
 // Len implements sort.Interface
-func (pb ExchangeRateBallot) Len() int {
+func (pb PriceBallot) Len() int {
 	return len(pb)
 }
 
 // Less reports whether the element with
 // index i should sort before the element with index j.
-func (pb ExchangeRateBallot) Less(i, j int) bool {
-	return pb[i].ExchangeRate.LTE(pb[j].ExchangeRate)
+func (pb PriceBallot) Less(i, j int) bool {
+	return pb[i].Price.LTE(pb[j].Price)
 }
 
 // Swap implements sort.Interface.
-func (pb ExchangeRateBallot) Swap(i, j int) {
+func (pb PriceBallot) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 
 // String implements fmt.Stringer interface
-func (pb ExchangeRateBallot) String() (out string) {
-	out = fmt.Sprintf("ExchangeRateBallot of %d votes\n", pb.Len())
+func (pb PriceBallot) String() (out string) {
+	out = fmt.Sprintf("PriceBallot of %d votes\n", pb.Len())
 	for _, pv := range pb {
 		out += fmt.Sprintf("\n  %s", pv.String())
 	}

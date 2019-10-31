@@ -19,10 +19,10 @@ func TestExportInitGenesis(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	input.OracleKeeper.SetOracleDelegate(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
-	input.OracleKeeper.AddPrevote(input.Ctx, NewPrevote("1234", "denom", sdk.ValAddress{}, int64(2)))
-	input.OracleKeeper.AddVote(input.Ctx, NewVote(sdk.NewDec(1), "denom", sdk.ValAddress{}))
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, "denom", sdk.NewDec(123))
+	input.OracleKeeper.SetFeedDelegate(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
+	input.OracleKeeper.AddPrevote(input.Ctx, NewPricePrevote("1234", "denom", sdk.ValAddress{}, int64(2)))
+	input.OracleKeeper.AddVote(input.Ctx, NewPriceVote(sdk.NewDec(1), "denom", sdk.ValAddress{}))
+	input.OracleKeeper.SetLunaPrice(input.Ctx, "denom", sdk.NewDec(123))
 	genesis := ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestInput(t)

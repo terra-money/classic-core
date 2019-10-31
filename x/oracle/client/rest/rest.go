@@ -9,7 +9,7 @@ import (
 const (
 	RestDenom = "denom"
 	RestVoter = "voter"
-	RestPrice = "exchangeRate"
+	RestPrice = "price"
 )
 
 // RegisterRoutes registers oracle-related REST handlers to a router
