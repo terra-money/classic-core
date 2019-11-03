@@ -23,8 +23,8 @@ var (
 
 // Default parameter values
 const (
-	DefaultVotePeriod  = core.BlocksPerMinute // 1 minute
-	DefaultVotesWindow = int64(1000)          // 1000 oracle period
+	DefaultVotePeriod  = core.BlocksPerMinute / 2 // 30 seconds
+	DefaultVotesWindow = int64(1000)              // 1000 oracle period
 )
 
 // Default parameter values
