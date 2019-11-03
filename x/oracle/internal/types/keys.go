@@ -28,12 +28,15 @@ const (
 // - 0x03<denom_Bytes>: sdk.Dec
 //
 // - 0x04<valAddress_Bytes>: accAddress
+//
+// - 0x05<valAddress_Bytes>: int64
 var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
 	VoteKey             = []byte{0x02} // prefix for each key to a vote
 	ExchangeRateKey     = []byte{0x03} // prefix for each key to a rate
 	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
+	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -54,4 +57,9 @@ func GetExchangeRateKey(denom string) []byte {
 // GetFeederDelegationKey - stored by *Validator* address
 func GetFeederDelegationKey(v sdk.ValAddress) []byte {
 	return append(FeederDelegationKey, v.Bytes()...)
+}
+
+// GetMissCounterKey - stored by *Validator* address
+func GetMissCounterKey(v sdk.ValAddress) []byte {
+	return append(MissCounterKey, v.Bytes()...)
 }

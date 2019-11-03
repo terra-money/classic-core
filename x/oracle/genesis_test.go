@@ -19,7 +19,7 @@ func TestExportInitGenesis(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	input.OracleKeeper.SetFeedDelegate(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, NewExchangeRatePrevote("1234", "denom", sdk.ValAddress{}, int64(2)))
 	input.OracleKeeper.AddExchangeRateVote(input.Ctx, NewExchangeRateVote(sdk.NewDec(1), "denom", sdk.ValAddress{}))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, "denom", sdk.NewDec(123))

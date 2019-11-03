@@ -4,6 +4,7 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 
 	core "github.com/terra-project/core/types"
 )
@@ -17,7 +18,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	whitelist := k.Whitelist(ctx)
+	// Build valid votes counter map over all active validators
+	validVotesCounterMap := make(map[string]int64)
+	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
+		validVotesCounterMap[validator.GetOperator().String()] = int64(0)
+		return false
+	})
+
+	whitelist := make(map[string]bool)
+	for _, denom := range k.Whitelist(ctx) {
+		whitelist[denom] = true
+	}
 
 	// Clear exchange rates
 	for denom := range whitelist {
@@ -26,8 +37,20 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	winnerMap := make(map[string]types.Claim)
 
+	// Organize votes to ballot by denom
+	voteMap := k.OrganizeBallotByDenom(ctx)
+
+	// Build abstain validator map
+	abstainOperatorMap := make(map[string]bool)
+	abstainBallot := voteMap[core.MicroLunaDenom]
+	for _, vote := range abstainBallot {
+		abstainOperatorMap[vote.Voter.String()] = true
+	}
+
+	// Remove abstain key
+	delete(voteMap, core.MicroLunaDenom)
+
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	voteMap := OrganizeBallotByDenom(k, ctx)
 	for denom, ballot := range voteMap {
 
 		// If denom is not in the whitelist, or the ballot for it has failed, then skip
@@ -51,6 +74,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 				prevClaim.Weight += ballotWinningClaim.Weight
 				winnerMap[key] = prevClaim
 			}
+
+			// Increase valid votes counter
+			validVotesCounterMap[key]++
 		}
 
 		// Emit abci events
@@ -60,6 +86,26 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
 			),
 		)
+	}
+
+	//---------------------------
+	// Do miss counting & slashing
+
+	whitelistLen := int64(len(whitelist))
+	for operatorBechAddr, count := range validVotesCounterMap {
+		// Skip abstain operators & valid voters
+		if (count == whitelistLen) || (count == 0 && abstainOperatorMap[operatorBechAddr]) {
+			continue
+		}
+
+		// Increase miss counter
+		operator, _ := sdk.ValAddressFromBech32(operatorBechAddr) // error never occur
+		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
+	}
+
+	// Reset miss counters of all validators at the last block of slash window
+	if core.IsPeriodLastBlock(ctx, params.VotePeriod*params.SlashWindow) {
+		k.SlashAndResetMissCounters(ctx)
 	}
 
 	// Distribute rewards to ballot winners

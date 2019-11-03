@@ -239,10 +239,11 @@ func TestQueryActives(t *testing.T) {
 	require.NoError(t, err)
 
 	targetDenoms := types.DenomList{
-		core.MicroKRWDenom: true,
-		core.MicroSDRDenom: true,
-		core.MicroUSDDenom: true,
+		core.MicroKRWDenom,
+		core.MicroSDRDenom,
+		core.MicroUSDDenom,
 	}
+
 	var denoms types.DenomList
 	err2 := cdc.UnmarshalJSON(res, &denoms)
 	require.NoError(t, err2)

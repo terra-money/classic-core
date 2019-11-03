@@ -76,6 +76,13 @@ func (DummyStakingKeeper) TotalBondedTokens(_ sdk.Context) sdk.Int {
 	return sdk.ZeroInt()
 }
 
+// Slash nolint
+func (DummyStakingKeeper) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) {}
+
+// IterateValidators nolint
+func (DummyStakingKeeper) IterateValidators(sdk.Context, func(index int64, validator exported.ValidatorI) (stop bool)) {
+}
+
 type MockValidator struct {
 	power    int64
 	operator sdk.ValAddress

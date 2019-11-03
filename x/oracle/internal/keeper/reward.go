@@ -13,7 +13,7 @@ import (
 // at the end of every VotePeriod, we give out portion of seigniorage reward(reward-weight) to the
 // oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]types.Claim) {
-	// Sum weight of the claimpool
+	// Sum weight of the claims
 	ballotPowerSum := int64(0)
 	for _, winner := range ballotWinners {
 		ballotPowerSum += winner.Weight

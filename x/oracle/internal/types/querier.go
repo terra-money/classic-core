@@ -7,8 +7,8 @@ import (
 // Defines the prefix of each query path
 const (
 	QueryParameters       = "parameters"
-	QueryExchangeRate     = "exchange_rate"
-	QueryExchangeRates    = "exchange_rates"
+	QueryExchangeRate     = "exchangeRate"
+	QueryExchangeRates    = "exchangeRates"
 	QueryActives          = "actives"
 	QueryPrevotes         = "prevotes"
 	QueryVotes            = "votes"

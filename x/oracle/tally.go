@@ -39,17 +39,6 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, k Keeper) (weightedMedi
 	return
 }
 
-// OrganizeBallotByDenom collects all oracle votes for the period, categorized by the votes' denom parameter
-func OrganizeBallotByDenom(k Keeper, ctx sdk.Context) (votes map[string]types.ExchangeRateBallot) {
-	votes = map[string]types.ExchangeRateBallot{}
-	handler := func(vote types.ExchangeRateVote) (stop bool) {
-		votes[vote.Denom] = append(votes[vote.Denom], vote)
-		return false
-	}
-	k.IterateExchangeRateVotes(ctx, handler)
-	return
-}
-
 // ballot for the asset is passing the threshold amount of voting power
 func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k Keeper) bool {
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx))

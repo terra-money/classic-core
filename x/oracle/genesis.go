@@ -47,6 +47,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetLunaExchangeRate(ctx, denom, rate)
 	}
 
+	for operatorBechAddr, missCounter := range data.MissCounters {
+		operator, err := sdk.ValAddressFromBech32(operatorBechAddr)
+		if err != nil {
+			panic(err)
+		}
+		keeper.SetMissCounter(ctx, operator, missCounter)
+	}
+
 	keeper.SetParams(ctx, data.Params)
 }
 
@@ -75,10 +83,16 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	})
 
 	rates := make(map[string]sdk.Dec)
-	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) bool {
+	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		rates[denom] = rate
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations)
+	missCounters := make(map[string]int64)
+	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter int64) (stop bool) {
+		missCounters[operator.String()] = missCounter
+		return false
+	})
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters)
 }

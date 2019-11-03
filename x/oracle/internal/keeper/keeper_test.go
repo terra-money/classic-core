@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -123,7 +122,7 @@ func TestVoteCollect(t *testing.T) {
 	vote4 := types.NewExchangeRateVote(rate, core.MicroLunaDenom, sdk.ValAddress(Addrs[1]))
 	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote4)
 
-	collectedVotes := oracle.OrganizeBallotByDenom(input.OracleKeeper, input.Ctx)
+	collectedVotes := input.OracleKeeper.OrganizeBallotByDenom(input.Ctx)
 
 	pb1 := collectedVotes[core.MicroSDRDenom]
 	pb2 := collectedVotes[core.MicroLunaDenom]
@@ -247,6 +246,13 @@ func TestParams(t *testing.T) {
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
 	rewardDistributionPeriod := int64(10000000000000)
+	slashFraction := sdk.NewDecWithPrec(1, 2)
+	slashWindow := int64(1000)
+	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
+	whilelist := types.DenomList{
+		core.MicroSDRDenom,
+		core.MicroKRWDenom,
+	}
 
 	// Should really test validateParams, but skipping because obvious
 	newParams := types.Params{
@@ -254,6 +260,10 @@ func TestParams(t *testing.T) {
 		VoteThreshold:            voteThreshold,
 		RewardBand:               oracleRewardBand,
 		RewardDistributionPeriod: rewardDistributionPeriod,
+		Whitelist:                whilelist,
+		SlashFraction:            slashFraction,
+		SlashWindow:              slashWindow,
+		MinValidPerWindow:        minValidPerWindow,
 	}
 	input.OracleKeeper.SetParams(input.Ctx, newParams)
 

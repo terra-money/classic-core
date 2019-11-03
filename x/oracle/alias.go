@@ -29,7 +29,6 @@ const (
 	QuerierRoute            = types.QuerierRoute
 	DefaultParamspace       = types.DefaultParamspace
 	DefaultVotePeriod       = types.DefaultVotePeriod
-	DefaultVotesWindow      = types.DefaultVotesWindow
 	QueryParameters         = types.QueryParameters
 	QueryExchangeRate       = types.QueryExchangeRate
 	QueryActives            = types.QueryActives
@@ -87,7 +86,7 @@ var (
 	DefaultVoteThreshold                  = types.DefaultVoteThreshold
 	DefaultRewardBand                     = types.DefaultRewardBand
 	DefaultRewardDistributionPeriod       = types.DefaultRewardDistributionPeriod
-	DefaultMinValidVotesPerWindow         = types.DefaultMinValidVotesPerWindow
+	DefaultMinValidPerWindow              = types.DefaultMinValidPerWindow
 	DefaultWhitelist                      = types.DefaultWhitelist
 )
 

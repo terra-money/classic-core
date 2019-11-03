@@ -19,21 +19,25 @@ var (
 	ParamStoreKeyRewardBand               = []byte("rewardband")
 	ParamStoreKeyRewardDistributionPeriod = []byte("rewarddistributionperiod")
 	ParamStoreKeyWhitelist                = []byte("whitelist")
+	ParamStoreKeySlashFraction            = []byte("slashfraction")
+	ParamStoreKeySlashWindow              = []byte("slashwindow")
+	ParamStoreKeyMinValidPerWindow        = []byte("minvalidperwindow")
 )
 
 // Default parameter values
 const (
 	DefaultVotePeriod  = core.BlocksPerMinute // 1 minute
-	DefaultVotesWindow = int64(1000)          // 1000 oracle period
+	DefaultSlashWindow = int64(1000)          // 1000 oracle period
 )
 
 // Default parameter values
 var (
-	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                                               // 50%
-	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                                                // 1%
-	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                                     // 432,000
-	DefaultMinValidVotesPerWindow   = sdk.NewDecWithPrec(5, 2)                                                                // 5%
-	DefaultWhitelist                = DenomList{core.MicroKRWDenom: true, core.MicroSDRDenom: true, core.MicroUSDDenom: true} // ukrw, usdr, uusd
+	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                             // 50%
+	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                              // 1%
+	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                   // 432,000
+	DefaultWhitelist                = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
+	DefaultSlashFraction            = sdk.NewDecWithPrec(1, 4)                                              // 0.01%
+	DefaultMinValidPerWindow        = sdk.NewDecWithPrec(5, 2)                                              // 5%
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -45,6 +49,9 @@ type Params struct {
 	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable rate error that can be rewared.
 	RewardDistributionPeriod int64     `json:"reward_distribution_period" yaml:"reward_distribution_period"` // the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
 	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
+	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`
+	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`
+	MinValidPerWindow        sdk.Dec   `json:"min_valid_per_window" yaml:"min_valid_per_window"`
 }
 
 // DefaultParams creates default oracle module parameters
@@ -55,6 +62,9 @@ func DefaultParams() Params {
 		RewardBand:               DefaultRewardBand,
 		RewardDistributionPeriod: DefaultRewardDistributionPeriod,
 		Whitelist:                DefaultWhitelist,
+		SlashFraction:            DefaultSlashFraction,
+		SlashWindow:              DefaultSlashWindow,
+		MinValidPerWindow:        DefaultMinValidPerWindow,
 	}
 }
 
@@ -72,6 +82,15 @@ func (params Params) Validate() error {
 	if params.RewardDistributionPeriod < params.VotePeriod {
 		return fmt.Errorf("oracle parameter RewardDistributionPeriod must be bigger or equal than Voteperiod")
 	}
+	if params.SlashFraction.GT(sdk.OneDec()) {
+		return fmt.Errorf("oracle parameter SlashRraction must be smaller than or equal 1%%")
+	}
+	if params.SlashWindow < 100 {
+		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal 100 votes period")
+	}
+	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) {
+		return fmt.Errorf("oracle parameter MinValidPerWindow must be smaller than or equal 50%%")
+	}
 	return nil
 }
 
@@ -84,6 +103,9 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{Key: ParamStoreKeyRewardBand, Value: &params.RewardBand},
 		{Key: ParamStoreKeyRewardDistributionPeriod, Value: &params.RewardDistributionPeriod},
 		{Key: ParamStoreKeyWhitelist, Value: &params.Whitelist},
+		{Key: ParamStoreKeySlashFraction, Value: &params.SlashFraction},
+		{Key: ParamStoreKeySlashWindow, Value: &params.SlashWindow},
+		{Key: ParamStoreKeyMinValidPerWindow, Value: &params.MinValidPerWindow},
 	}
 }
 
@@ -95,6 +117,10 @@ func (params Params) String() string {
 	RewardBand:                  %s
 	RewardDistributionPeriod:    %d
 	Whitelist                    %s
+	SlashFraction                %s
+	SlashWindow                  %d
+	MinValidPerWindow       %s
 	`, params.VotePeriod, params.VoteThreshold, params.RewardBand,
-		params.RewardDistributionPeriod, params.Whitelist)
+		params.RewardDistributionPeriod, params.Whitelist,
+		params.SlashFraction, params.SlashWindow, params.MinValidPerWindow)
 }

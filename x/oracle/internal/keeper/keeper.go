@@ -263,3 +263,44 @@ func (k Keeper) getRewardPool(ctx sdk.Context) sdk.Coins {
 	acc := k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 	return acc.GetCoins()
 }
+
+//-----------------------------------
+// Miss counter logic
+
+// GetMissCounter retrives # of the miss vote of the validator
+func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) (missCounter int64) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetMissCounterKey(operator))
+	if b == nil {
+		// By default the counter is zero
+		return 0
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &missCounter)
+	return
+}
+
+// SetMissCounter retrives # of the miss vote of the validator
+func (k Keeper) SetMissCounter(ctx sdk.Context, operator sdk.ValAddress, missCounter int64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(missCounter)
+	store.Set(types.GetMissCounterKey(operator), bz)
+}
+
+// IterateMissCounters iterates over the miss counters and performs a callback function.
+func (k Keeper) IterateMissCounters(ctx sdk.Context,
+	handler func(operator sdk.ValAddress, missCounter int64) (stop bool)) {
+
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.MissCounterKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		operator := sdk.ValAddress(iter.Key()[len(types.MissCounterKey):])
+
+		var missCounter int64
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &missCounter)
+
+		if handler(operator, missCounter) {
+			break
+		}
+	}
+}

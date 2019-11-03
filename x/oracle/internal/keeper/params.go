@@ -41,6 +41,24 @@ func (k Keeper) Whitelist(ctx sdk.Context) (res types.DenomList) {
 	return
 }
 
+// SlashFraction returns oracle voting penalty rate
+func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeySlashFraction, &res)
+	return
+}
+
+// SlashWindow returns # of vote period for oracle slashing
+func (k Keeper) SlashWindow(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeySlashWindow, &res)
+	return
+}
+
+// MinValidPerWindow returns oracle slashing threshold
+func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMinValidPerWindow, &res)
+	return
+}
+
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)

@@ -43,7 +43,10 @@ func TestRewardBallotWinners(t *testing.T) {
 	// Add claim pools
 	claim := types.NewClaim(10, addr)
 	claim2 := types.NewClaim(20, addr1)
-	claimPool := types.ClaimPool{claim, claim2}
+	claims := map[string]types.Claim{
+		addr.String():  claim,
+		addr1.String(): claim2,
+	}
 
 	// Prepare reward pool
 	givingAmt := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 3000000))
@@ -54,7 +57,7 @@ func TestRewardBallotWinners(t *testing.T) {
 
 	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
 	rewardDistributionPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
-	input.OracleKeeper.RewardBallotWinners(ctx, claimPool)
+	input.OracleKeeper.RewardBallotWinners(ctx, claims)
 	outstandingRewardsDec := input.DistrKeeper.GetValidatorOutstandingRewards(ctx, addr)
 	outstandingRewards, _ := outstandingRewardsDec.TruncateDecimal()
 	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).QuoInt64(rewardDistributionPeriod).MulInt64(votePeriod).QuoInt64(3).TruncateInt(),

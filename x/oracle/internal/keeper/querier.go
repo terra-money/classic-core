@@ -54,10 +54,10 @@ func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 }
 
 func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	rates := map[string]sdk.Dec{}
+	var rates sdk.DecCoins
 
 	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		rates[denom] = rate
+		rates = append(rates, sdk.NewDecCoinFromDec(denom, rate))
 		return false
 	})
 
