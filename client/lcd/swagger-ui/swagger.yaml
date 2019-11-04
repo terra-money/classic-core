@@ -2445,6 +2445,30 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/voters/{validator}/miss:
+    get:
+      summary: Get The number of vote periods missed in this oracle slash window.
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: integer
+            example: "100"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/parameters:
     get:
       summary: Get oracle params

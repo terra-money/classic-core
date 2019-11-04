@@ -27,6 +27,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryParameters(ctx, keeper)
 		case types.QueryFeederDelegation:
 			return queryFeederDelegation(ctx, req, keeper)
+		case types.QueryMissCounter:
+			return queryMissCounter(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -184,6 +186,21 @@ func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	delegatee := keeper.GetOracleDelegate(ctx, params.Validator)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, delegatee)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryMissCounter(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryMissCounterParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	missCounter := keeper.GetMissCounter(ctx, params.Validator)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, missCounter)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

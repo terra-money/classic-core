@@ -13,6 +13,7 @@ const (
 	QueryPrevotes         = "prevotes"
 	QueryVotes            = "votes"
 	QueryFeederDelegation = "feederDelegation"
+	QueryMissCounter      = "missCounter"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -59,4 +60,15 @@ type QueryFeederDelegationParams struct {
 // NewQueryFeederDelegationParams returns params for feeder delegation query
 func NewQueryFeederDelegationParams(validator sdk.ValAddress) QueryFeederDelegationParams {
 	return QueryFeederDelegationParams{validator}
+}
+
+// QueryMissCounterParams defeins the params for the following queries:
+// - 'custom/oracle/missCounter'
+type QueryMissCounterParams struct {
+	Validator sdk.ValAddress
+}
+
+// NewQueryMissCounterParams returns params for feeder delegation query
+func NewQueryMissCounterParams(validator sdk.ValAddress) QueryMissCounterParams {
+	return QueryMissCounterParams{validator}
 }

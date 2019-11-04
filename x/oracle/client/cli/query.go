@@ -29,6 +29,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryActive(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryFeederDelegation(cdc),
+		GetCmdQueryMissCounter(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -228,7 +229,7 @@ func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 // GetCmdQueryFeederDelegation implements the query feeder delegation command
 func GetCmdQueryFeederDelegation(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "feeder-delegation [validator]",
+		Use:   "feeder [validator]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query the oracle feeder delegate account",
 		Long: strings.TrimSpace(`
@@ -259,6 +260,46 @@ $ terracli query oracle feeder terravaloper...
 			var delegatee sdk.AccAddress
 			cdc.MustUnmarshalJSON(res, &delegatee)
 			return cliCtx.PrintOutput(delegatee)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryMissCounter implements the query miss counter of the validator command
+func GetCmdQueryMissCounter(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "miss [validator]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query the # of the miss count",
+		Long: strings.TrimSpace(`
+Query The # of vote periods missed in this oracle slash window.
+
+$ terracli query oracle miss terravaloper...
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := args[0]
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryMissCounterParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMissCounter), bz)
+			if err != nil {
+				return err
+			}
+
+			var missCounter int64
+			cdc.MustUnmarshalJSON(res, &missCounter)
+			return cliCtx.PrintOutput(sdk.NewInt(missCounter))
 		},
 	}
 
