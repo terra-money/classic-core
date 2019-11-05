@@ -72,7 +72,7 @@ The `MsgExchangeRateVote` contains the actual price vote. The `Salt` parameter m
 
 ### Delegate voting rights to another key
 
-Validators may also elect to delegate voting rights to another key to prevent the block signing key from being kept online. To do so, they must submit a `MsgDelegateFeederPermission`, delegating their oracle voting rights to a `FeedDelegate`, which in turn sign `MsgExchangeRatePrevote` and `MsgExchangeRateVote` on behalf of the validator. 
+Validators may also elect to delegate voting rights to another key to prevent the block signing key from being kept online. To do so, they must submit a `NewMsgDelegateFeedConsent`, delegating their oracle voting rights to a `Delegatee`, which in turn sign `MsgExchangeRatePrevote` and `MsgExchangeRateVote` on behalf of the validator. 
 
 {% hint style="info" %}
 Make sure to populate the delegate address with some coins by which to pay fees.
@@ -82,11 +82,11 @@ Make sure to populate the delegate address with some coins by which to pay fees.
 // MsgDelegateFeederPermission - struct for delegating oracle voting rights to another address.
 type MsgDelegateFeederPermission struct {
 	Operator     sdk.ValAddress `json:"operator"`
-	FeedDelegate sdk.AccAddress `json:"feed_delegate"`
+	Delegatee    sdk.AccAddress `json:"delegatee"`
 }
 ```
 
-The `Operator` field contains the operator address of the validator. The `FeedDelegate` field is the address of the delegate account that will be submitting price related votes and prevotes on behalf of the `Operator`. 
+The `Operator` field contains the operator address of the validator. The `Delegatee` field is the address of the delegate account that will be submitting price related votes and prevotes on behalf of the `Operator`. 
 
 
 ## Parameters

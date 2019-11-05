@@ -17,7 +17,7 @@ var (
 	ParamStoreKeyVotePeriod               = []byte("voteperiod")
 	ParamStoreKeyVoteThreshold            = []byte("votethreshold")
 	ParamStoreKeyRewardBand               = []byte("rewardband")
-	ParamStoreKeyRewardDistributionPeriod = []byte("rewarddistributionperiod")
+	ParamStoreKeyRewardDistributionWindow = []byte("rewarddistributionwindow")
 	ParamStoreKeyWhitelist                = []byte("whitelist")
 	ParamStoreKeySlashFraction            = []byte("slashfraction")
 	ParamStoreKeySlashWindow              = []byte("slashwindow")
@@ -26,18 +26,18 @@ var (
 
 // Default parameter values
 const (
-	DefaultVotePeriod  = core.BlocksPerMinute // 1 minute
-	DefaultSlashWindow = int64(1000)          // 1000 oracle period
+	DefaultVotePeriod               = core.BlocksPerMinute                    // 1 minute
+	DefaultSlashWindow              = core.BlocksPerHour / DefaultVotePeriod  // window for a hour
+	DefaultRewardDistributionWindow = core.BlocksPerMonth / DefaultVotePeriod // window for a month
 )
 
 // Default parameter values
 var (
-	DefaultVoteThreshold            = sdk.NewDecWithPrec(50, 2)                                             // 50%
-	DefaultRewardBand               = sdk.NewDecWithPrec(1, 2)                                              // 1%
-	DefaultRewardDistributionPeriod = core.BlocksPerMonth                                                   // 432,000
-	DefaultWhitelist                = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
-	DefaultSlashFraction            = sdk.NewDecWithPrec(1, 4)                                              // 0.01%
-	DefaultMinValidPerWindow        = sdk.NewDecWithPrec(5, 2)                                              // 5%
+	DefaultVoteThreshold     = sdk.NewDecWithPrec(50, 2)                                             // 50%
+	DefaultRewardBand        = sdk.NewDecWithPrec(1, 2)                                              // 1%
+	DefaultWhitelist         = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
+	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4)                                              // 0.01%
+	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2)                                              // 5%
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -46,12 +46,12 @@ var _ subspace.ParamSet = &Params{}
 type Params struct {
 	VotePeriod               int64     `json:"vote_period" yaml:"vote_period"`                               // the number of blocks during which voting takes place.
 	VoteThreshold            sdk.Dec   `json:"vote_threshold" yaml:"vote_threshold"`                         // the minimum percentage of votes that must be received for a ballot to pass.
-	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable rate error that can be rewared.
-	RewardDistributionPeriod int64     `json:"reward_distribution_period" yaml:"reward_distribution_period"` // the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
+	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable exchange rate error that can be rewared.
+	RewardDistributionWindow int64     `json:"reward_distribution_window" yaml:"reward_distribution_window"` // the number of vote periods during which seigiornage reward comes in and then is distributed.
 	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
-	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`
-	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`
-	MinValidPerWindow        sdk.Dec   `json:"min_valid_per_window" yaml:"min_valid_per_window"`
+	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`                         // the ratio of penalty on bonded tokens
+	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`                             // the number of vote periods for slashing tallying
+	MinValidPerWindow        sdk.Dec   `json:"min_valid_per_window" yaml:"min_valid_per_window"`             // the ratio of minimum valid oracle votes per slash window to avoid slashing
 }
 
 // DefaultParams creates default oracle module parameters
@@ -60,7 +60,7 @@ func DefaultParams() Params {
 		VotePeriod:               DefaultVotePeriod,
 		VoteThreshold:            DefaultVoteThreshold,
 		RewardBand:               DefaultRewardBand,
-		RewardDistributionPeriod: DefaultRewardDistributionPeriod,
+		RewardDistributionWindow: DefaultRewardDistributionWindow,
 		Whitelist:                DefaultWhitelist,
 		SlashFraction:            DefaultSlashFraction,
 		SlashWindow:              DefaultSlashWindow,
@@ -76,20 +76,20 @@ func (params Params) Validate() error {
 	if params.VoteThreshold.LTE(sdk.NewDecWithPrec(33, 2)) {
 		return fmt.Errorf("oracle parameter VoteTheshold must be greater than 33 percent")
 	}
-	if params.RewardBand.IsNegative() {
-		return fmt.Errorf("oracle parameter RewardBand must be positive")
+	if params.RewardBand.IsNegative() || params.RewardBand.GT(sdk.OneDec()) {
+		return fmt.Errorf("oracle parameter RewardBand must be between [0, 1]")
 	}
-	if params.RewardDistributionPeriod < params.VotePeriod {
-		return fmt.Errorf("oracle parameter RewardDistributionPeriod must be bigger or equal than Voteperiod")
+	if params.RewardDistributionWindow < 100 {
+		return fmt.Errorf("oracle parameter RewardDistributionWindow must be bigger or equal than 100 votes period")
 	}
-	if params.SlashFraction.GT(sdk.OneDec()) {
-		return fmt.Errorf("oracle parameter SlashRraction must be smaller than or equal 1%%")
+	if params.SlashFraction.GT(sdk.OneDec()) || params.SlashFraction.IsNegative() {
+		return fmt.Errorf("oracle parameter SlashRraction must be between [0, 1]")
 	}
-	if params.SlashWindow < 100 {
-		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal 100 votes period")
+	if params.SlashWindow < 50 {
+		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal 50 votes period")
 	}
-	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) {
-		return fmt.Errorf("oracle parameter MinValidPerWindow must be smaller than or equal 50%%")
+	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) || params.MinValidPerWindow.IsNegative() {
+		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 0.5]")
 	}
 	return nil
 }
@@ -101,7 +101,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{Key: ParamStoreKeyVotePeriod, Value: &params.VotePeriod},
 		{Key: ParamStoreKeyVoteThreshold, Value: &params.VoteThreshold},
 		{Key: ParamStoreKeyRewardBand, Value: &params.RewardBand},
-		{Key: ParamStoreKeyRewardDistributionPeriod, Value: &params.RewardDistributionPeriod},
+		{Key: ParamStoreKeyRewardDistributionWindow, Value: &params.RewardDistributionWindow},
 		{Key: ParamStoreKeyWhitelist, Value: &params.Whitelist},
 		{Key: ParamStoreKeySlashFraction, Value: &params.SlashFraction},
 		{Key: ParamStoreKeySlashWindow, Value: &params.SlashWindow},
@@ -115,12 +115,12 @@ func (params Params) String() string {
   VotePeriod:                  %d
   VoteThreshold:               %s
 	RewardBand:                  %s
-	RewardDistributionPeriod:    %d
+	RewardDistributionWindow:    %d
 	Whitelist                    %s
 	SlashFraction                %s
 	SlashWindow                  %d
 	MinValidPerWindow       %s
 	`, params.VotePeriod, params.VoteThreshold, params.RewardBand,
-		params.RewardDistributionPeriod, params.Whitelist,
+		params.RewardDistributionWindow, params.Whitelist,
 		params.SlashFraction, params.SlashWindow, params.MinValidPerWindow)
 }

@@ -18,10 +18,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	// Build valid votes counter map over all active validators
+	// Build valid votes counter and winner map over all validators in active set
 	validVotesCounterMap := make(map[string]int64)
+	winnerMap := make(map[string]types.Claim)
 	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
-		validVotesCounterMap[validator.GetOperator().String()] = int64(0)
+		valAddr := validator.GetOperator()
+		validVotesCounterMap[valAddr.String()] = int64(0)
+		winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
 		return false
 	})
 
@@ -34,8 +37,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	for denom := range whitelist {
 		k.DeleteLunaExchangeRate(ctx, denom)
 	}
-
-	winnerMap := make(map[string]types.Claim)
 
 	// Organize votes to ballot by denom
 	voteMap := k.OrganizeBallotByDenom(ctx)
@@ -67,10 +68,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
 			key := ballotWinningClaim.Recipient.String()
-			prevClaim, exists := winnerMap[key]
-			if !exists {
-				winnerMap[key] = ballotWinningClaim
-			} else {
+
+			// If the validator is not exist in active set, the one will be excluded from the rewardee list
+			if prevClaim, exists := winnerMap[key]; exists {
 				prevClaim.Weight += ballotWinningClaim.Weight
 				winnerMap[key] = prevClaim
 			}
@@ -103,7 +103,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
 	}
 
-	// Reset miss counters of all validators at the last block of slash window
+	// Do slash who did miss voting over threshold and
+	// reset miss counters of all validators at the last block of slash window
 	if core.IsPeriodLastBlock(ctx, params.VotePeriod*params.SlashWindow) {
 		k.SlashAndResetMissCounters(ctx)
 	}
@@ -122,7 +123,7 @@ func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 	// Clear all prevotes
 	k.IterateExchangeRatePrevotes(ctx, func(prevote types.ExchangeRatePrevote) (stop bool) {
 		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
-			k.DeleteLunaExchangeRatePrevote(ctx, prevote)
+			k.DeleteExchangeRatePrevote(ctx, prevote)
 		}
 
 		return false
@@ -130,7 +131,7 @@ func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 
 	// Clear all votes
 	k.IterateExchangeRateVotes(ctx, func(vote types.ExchangeRateVote) (stop bool) {
-		k.DeleteLunaExchangeRateVote(ctx, vote)
+		k.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
 }

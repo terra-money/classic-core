@@ -78,8 +78,8 @@ func (k Keeper) AddExchangeRatePrevote(ctx sdk.Context, prevote types.ExchangeRa
 	store.Set(types.GetExchangeRatePrevoteKey(prevote.Denom, prevote.Voter), bz)
 }
 
-// DeleteLunaExchangeRatePrevote deletes an oracle prevote from the store
-func (k Keeper) DeleteLunaExchangeRatePrevote(ctx sdk.Context, prevote types.ExchangeRatePrevote) {
+// DeleteExchangeRatePrevote deletes an oracle prevote from the store
+func (k Keeper) DeleteExchangeRatePrevote(ctx sdk.Context, prevote types.ExchangeRatePrevote) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetExchangeRatePrevoteKey(prevote.Denom, prevote.Voter))
 }
@@ -162,8 +162,8 @@ func (k Keeper) AddExchangeRateVote(ctx sdk.Context, vote types.ExchangeRateVote
 	store.Set(types.GetVoteKey(vote.Denom, vote.Voter), bz)
 }
 
-// DeleteLunaExchangeRateVote deletes an oracle vote from the store
-func (k Keeper) DeleteLunaExchangeRateVote(ctx sdk.Context, vote types.ExchangeRateVote) {
+// DeleteExchangeRateVote deletes an oracle vote from the store
+func (k Keeper) DeleteExchangeRateVote(ctx sdk.Context, vote types.ExchangeRateVote) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetVoteKey(vote.Denom, vote.Voter))
 }
@@ -267,7 +267,7 @@ func (k Keeper) getRewardPool(ctx sdk.Context) sdk.Coins {
 //-----------------------------------
 // Miss counter logic
 
-// GetMissCounter retrives # of the miss vote of the validator
+// GetMissCounter retrives the # of vote periods missed in this oracle slash window
 func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) (missCounter int64) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetMissCounterKey(operator))
@@ -279,7 +279,7 @@ func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) (missCo
 	return
 }
 
-// SetMissCounter retrives # of the miss vote of the validator
+// SetMissCounter updates the # of vote periods missed in this oracle slash window
 func (k Keeper) SetMissCounter(ctx sdk.Context, operator sdk.ValAddress, missCounter int64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(missCounter)

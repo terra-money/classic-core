@@ -29,12 +29,15 @@ const (
 	QuerierRoute            = types.QuerierRoute
 	DefaultParamspace       = types.DefaultParamspace
 	DefaultVotePeriod       = types.DefaultVotePeriod
+	DefaultSlashWindow      = types.DefaultSlashWindow
 	QueryParameters         = types.QueryParameters
 	QueryExchangeRate       = types.QueryExchangeRate
+	QueryExchangeRates      = types.QueryExchangeRates
 	QueryActives            = types.QueryActives
 	QueryPrevotes           = types.QueryPrevotes
 	QueryVotes              = types.QueryVotes
 	QueryFeederDelegation   = types.QueryFeederDelegation
+	QueryMissCounter        = types.QueryMissCounter
 )
 
 var (
@@ -57,6 +60,7 @@ var (
 	GetVoteKey                     = types.GetVoteKey
 	GetExchangeRateKey             = types.GetExchangeRateKey
 	GetFeederDelegationKey         = types.GetFeederDelegationKey
+	GetMissCounterKey              = types.GetMissCounterKey
 	NewMsgExchangeRatePrevote      = types.NewMsgExchangeRatePrevote
 	NewMsgExchangeRateVote         = types.NewMsgExchangeRateVote
 	NewMsgDelegateFeedConsent      = types.NewMsgDelegateFeedConsent
@@ -65,6 +69,7 @@ var (
 	NewQueryPrevotesParams         = types.NewQueryPrevotesParams
 	NewQueryVotesParams            = types.NewQueryVotesParams
 	NewQueryFeederDelegationParams = types.NewQueryFeederDelegationParams
+	NewQueryMissCounterParams      = types.NewQueryMissCounterParams
 	NewExchangeRatePrevote         = types.NewExchangeRatePrevote
 	VoteHash                       = types.VoteHash
 	NewExchangeRateVote            = types.NewExchangeRateVote
@@ -78,16 +83,21 @@ var (
 	VoteKey                               = types.VoteKey
 	ExchangeRateKey                       = types.ExchangeRateKey
 	FeederDelegationKey                   = types.FeederDelegationKey
+	MissCounterKey                        = types.MissCounterKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
 	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
-	ParamStoreKeyRewardDistributionPeriod = types.ParamStoreKeyRewardDistributionPeriod
+	ParamStoreKeyRewardDistributionWindow = types.ParamStoreKeyRewardDistributionWindow
 	ParamStoreKeyWhitelist                = types.ParamStoreKeyWhitelist
+	ParamStoreKeySlashFraction            = types.ParamStoreKeySlashFraction
+	ParamStoreKeySlashWindow              = types.ParamStoreKeySlashWindow
+	ParamStoreKeyMinValidPerWindow        = types.ParamStoreKeyMinValidPerWindow
 	DefaultVoteThreshold                  = types.DefaultVoteThreshold
 	DefaultRewardBand                     = types.DefaultRewardBand
-	DefaultRewardDistributionPeriod       = types.DefaultRewardDistributionPeriod
-	DefaultMinValidPerWindow              = types.DefaultMinValidPerWindow
+	DefaultRewardDistributionWindow       = types.DefaultRewardDistributionWindow
 	DefaultWhitelist                      = types.DefaultWhitelist
+	DefaultSlashFraction                  = types.DefaultSlashFraction
+	DefaultMinValidPerWindow              = types.DefaultMinValidPerWindow
 )
 
 type (
@@ -106,6 +116,7 @@ type (
 	QueryPrevotesParams         = types.QueryPrevotesParams
 	QueryVotesParams            = types.QueryVotesParams
 	QueryFeederDelegationParams = types.QueryFeederDelegationParams
+	QueryMissCounterParams      = types.QueryMissCounterParams
 	ExchangeRatePrevote         = types.ExchangeRatePrevote
 	ExchangeRatePrevotes        = types.ExchangeRatePrevotes
 	ExchangeRateVote            = types.ExchangeRateVote

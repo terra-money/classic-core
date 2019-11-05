@@ -23,15 +23,15 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// RewardBand returns the ratio of allowable rate error that a validator can be rewared
+// RewardBand returns the ratio of allowable exchange rate error that a validator can be rewared
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardBand, &res)
 	return
 }
 
-// RewardDistributionPeriod returns the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
-func (k Keeper) RewardDistributionPeriod(ctx sdk.Context) (res int64) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardDistributionPeriod, &res)
+// RewardDistributionWindow returns the number of vote periods during which seigiornage reward comes in and then is distributed.
+func (k Keeper) RewardDistributionWindow(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardDistributionWindow, &res)
 	return
 }
 

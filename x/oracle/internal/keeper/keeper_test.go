@@ -22,7 +22,7 @@ func TestPrevoteAddDelete(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, prevote, KPrevote)
 
-	input.OracleKeeper.DeleteLunaExchangeRatePrevote(input.Ctx, prevote)
+	input.OracleKeeper.DeleteExchangeRatePrevote(input.Ctx, prevote)
 	_, err = input.OracleKeeper.GetExchangeRatePrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.Error(t, err)
 }
@@ -69,7 +69,7 @@ func TestVoteAddDelete(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, vote, KVote)
 
-	input.OracleKeeper.DeleteLunaExchangeRateVote(input.Ctx, vote)
+	input.OracleKeeper.DeleteExchangeRateVote(input.Ctx, vote)
 	_, err = input.OracleKeeper.getExchangeRateVote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
 	require.Error(t, err)
 }
@@ -245,7 +245,7 @@ func TestParams(t *testing.T) {
 	votePeriod := int64(10)
 	voteThreshold := sdk.NewDecWithPrec(1, 10)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	rewardDistributionPeriod := int64(10000000000000)
+	rewardDistributionWindow := int64(10000000000000)
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := int64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
@@ -259,7 +259,7 @@ func TestParams(t *testing.T) {
 		VotePeriod:               votePeriod,
 		VoteThreshold:            voteThreshold,
 		RewardBand:               oracleRewardBand,
-		RewardDistributionPeriod: rewardDistributionPeriod,
+		RewardDistributionWindow: rewardDistributionWindow,
 		Whitelist:                whilelist,
 		SlashFraction:            slashFraction,
 		SlashWindow:              slashWindow,
@@ -269,7 +269,7 @@ func TestParams(t *testing.T) {
 
 	storedParams := input.OracleKeeper.GetParams(input.Ctx)
 	require.NotNil(t, storedParams)
-	require.Equal(t, newParams, storedParams)
+	require.Equal(t, storedParams, newParams)
 }
 
 func TestFeederDelegation(t *testing.T) {
@@ -277,11 +277,11 @@ func TestFeederDelegation(t *testing.T) {
 
 	// Test default getters and setters
 	delegate := input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
-	require.Equal(t, delegate, Addrs[0])
+	require.Equal(t, Addrs[0], delegate)
 
 	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 	delegate = input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
-	require.Equal(t, delegate, Addrs[1])
+	require.Equal(t, Addrs[1], delegate)
 }
 
 func TestIterateFeederDelegations(t *testing.T) {
@@ -289,7 +289,7 @@ func TestIterateFeederDelegations(t *testing.T) {
 
 	// Test default getters and setters
 	delegate := input.OracleKeeper.GetOracleDelegate(input.Ctx, ValAddrs[0])
-	require.Equal(t, delegate, Addrs[0])
+	require.Equal(t, Addrs[0], delegate)
 
 	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
@@ -301,8 +301,45 @@ func TestIterateFeederDelegations(t *testing.T) {
 		return false
 	})
 
-	require.Equal(t, len(delegators), 1)
-	require.Equal(t, len(delegatees), 1)
-	require.Equal(t, delegators[0], ValAddrs[0])
-	require.Equal(t, delegatees[0], Addrs[1])
+	require.Equal(t, 1, len(delegators))
+	require.Equal(t, 1, len(delegatees))
+	require.Equal(t, ValAddrs[0], delegators[0])
+	require.Equal(t, Addrs[1], delegatees[0])
+}
+
+func TestMissCounter(t *testing.T) {
+	input := CreateTestInput(t)
+
+	// Test default getters and setters
+	counter := input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
+	require.Equal(t, int64(0), counter)
+
+	missCounter := int64(10)
+	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
+	counter = input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
+	require.Equal(t, missCounter, counter)
+}
+
+func TestIterateMissCounters(t *testing.T) {
+	input := CreateTestInput(t)
+
+	// Test default getters and setters
+	counter := input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
+	require.Equal(t, int64(0), counter)
+
+	missCounter := int64(10)
+	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[1], missCounter)
+
+	var operators []sdk.ValAddress
+	var missCounters []int64
+	input.OracleKeeper.IterateMissCounters(input.Ctx, func(delegator sdk.ValAddress, missCounter int64) (stop bool) {
+		operators = append(operators, delegator)
+		missCounters = append(missCounters, missCounter)
+		return false
+	})
+
+	require.Equal(t, 1, len(operators))
+	require.Equal(t, 1, len(missCounters))
+	require.Equal(t, ValAddrs[1], operators[0])
+	require.Equal(t, missCounter, missCounters[0])
 }

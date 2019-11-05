@@ -137,7 +137,7 @@ func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 
 	filteredPrevotes := types.ExchangeRatePrevotes{}
 
-	// collects all votes without filter
+	// collects all prevotes without filter
 	prefix := types.PrevoteKey
 	handler := func(prevote types.ExchangeRatePrevote) (stop bool) {
 		filteredPrevotes = append(filteredPrevotes, prevote)

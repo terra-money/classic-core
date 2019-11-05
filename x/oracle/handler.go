@@ -103,7 +103,7 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 
 	// Add the vote to the store
 	vote := NewExchangeRateVote(pvm.ExchangeRate, prevote.Denom, prevote.Voter)
-	keeper.DeleteLunaExchangeRatePrevote(ctx, prevote)
+	keeper.DeleteExchangeRatePrevote(ctx, prevote)
 	keeper.AddExchangeRateVote(ctx, vote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{

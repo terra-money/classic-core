@@ -30,9 +30,27 @@ func TestParamsEqual(t *testing.T) {
 	err = p3.Validate()
 	require.Error(t, err)
 
-	// negative reward fraction
+	// negative slash fraction
 	p4 := DefaultParams()
-	p4.RewardDistributionPeriod = p4.VotePeriod - 1
+	p4.SlashFraction = sdk.NewDec(-1)
 	err = p4.Validate()
+	require.Error(t, err)
+
+	// negative min valid per window
+	p5 := DefaultParams()
+	p5.MinValidPerWindow = sdk.NewDec(-1)
+	err = p5.Validate()
+	require.Error(t, err)
+
+	// small slash window
+	p6 := DefaultParams()
+	p6.SlashWindow = int64(49)
+	err = p6.Validate()
+	require.Error(t, err)
+
+	// small distribution window
+	p7 := DefaultParams()
+	p7.RewardDistributionWindow = int64(99)
+	err = p7.Validate()
 	require.Error(t, err)
 }

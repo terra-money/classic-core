@@ -273,7 +273,7 @@ func GetCmdQueryMissCounter(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Query the # of the miss count",
 		Long: strings.TrimSpace(`
-Query The # of vote periods missed in this oracle slash window.
+Query the # of vote periods missed in this oracle slash window.
 
 $ terracli query oracle miss terravaloper...
 `),

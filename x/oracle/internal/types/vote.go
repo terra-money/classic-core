@@ -58,9 +58,9 @@ func VoteHash(salt string, rate sdk.Dec, denom string, voter sdk.ValAddress) ([]
 
 // ExchangeRateVote - struct to store a validator's vote on the rate of Luna in the denom asset
 type ExchangeRateVote struct {
-	ExchangeRate sdk.Dec        `json:"rate"`  // ExchangeRate of Luna in target fiat currency
-	Denom        string         `json:"denom"` // Ticker name of target fiat currency
-	Voter        sdk.ValAddress `json:"voter"` // voter val address of validator
+	ExchangeRate sdk.Dec        `json:"exchange_rate"` // ExchangeRate of Luna in target fiat currency
+	Denom        string         `json:"denom"`         // Ticker name of target fiat currency
+	Voter        sdk.ValAddress `json:"voter"`         // voter val address of validator
 }
 
 // NewExchangeRateVote creates a ExchangeRateVote instance

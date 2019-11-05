@@ -293,9 +293,8 @@ func TestOracleRewardDistribution(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
-	rewardDistributionPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).MulInt64(votePeriod).QuoInt64(rewardDistributionPeriod).TruncateInt()
+	rewardDistributionWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
+	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(rewardDistributionWindow).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -326,10 +325,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
-	rewardDistributedPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(2)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(4)).MulInt64(votePeriod).QuoInt64(rewardDistributedPeriod).TruncateInt()
+	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(2)).QuoInt64(rewardDistributedWindow).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(4)).QuoInt64(rewardDistributedWindow).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
