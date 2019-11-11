@@ -61,7 +61,7 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
-// GetTaxRate loads the tax-rate
+// GetTaxRate loads the tax rate
 func (k Keeper) GetTaxRate(ctx sdk.Context, epoch int64) (taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetTaxRateKey(epoch))
@@ -73,17 +73,17 @@ func (k Keeper) GetTaxRate(ctx sdk.Context, epoch int64) (taxRate sdk.Dec) {
 	return
 }
 
-// SetTaxRate sets the tax-rate
+// SetTaxRate sets the tax rate
 func (k Keeper) SetTaxRate(ctx sdk.Context, epoch int64, taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(taxRate)
 	store.Set(types.GetTaxRateKey(epoch), b)
 }
 
-// ClearRewardWeights clear all rewardWeight
-func (k Keeper) ClearRewardWeights(ctx sdk.Context) {
+// ClearTaxRates clears all tax rate
+func (k Keeper) ClearTaxRates(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.RewardWeightKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TaxRateKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
@@ -109,24 +109,24 @@ func (k Keeper) SetRewardWeight(ctx sdk.Context, epoch int64, rewardWeight sdk.D
 	store.Set(types.GetRewardWeightKey(epoch), b)
 }
 
-// ClearTaxRates clear all taxRate
-func (k Keeper) ClearTaxRates(ctx sdk.Context) {
+// ClearRewardWeights clears all reward weight
+func (k Keeper) ClearRewardWeights(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.TaxRateKey)
+	iter := sdk.KVStorePrefixIterator(store, types.RewardWeightKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
 }
 
-// SetTaxCap sets the Tax Cap. Denominated in integer units of the reference {denom}
+// SetTaxCap sets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cap)
 	store.Set(types.GetTaxCapKey(denom), bz)
 }
 
-// GetTaxCap gets the Tax Cap. Denominated in integer units of the reference {denom}
+// GetTaxCap gets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -140,7 +140,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int) {
 	return
 }
 
-// IterateTaxCap iterates tax caps
+// IterateTaxCap iterates all tax cap
 func (k Keeper) IterateTaxCap(ctx sdk.Context, handler func(denom string, taxCap sdk.Int) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TaxCapKey)
@@ -195,7 +195,7 @@ func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch int64) (res sdk.Coins) {
 	return
 }
 
-// ClearTaxProceeds clears all taxProceeds
+// ClearTaxProceeds clears all tax proceeds
 func (k Keeper) ClearTaxProceeds(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TaxProceedsKey)
@@ -238,7 +238,7 @@ func (k Keeper) GetHistoricalIssuance(ctx sdk.Context, epoch int64) (res sdk.Coi
 	return
 }
 
-// ClearHistoricalIssuance clears all taxProceeds
+// ClearHistoricalIssuance clears all historical issuance
 func (k Keeper) ClearHistoricalIssuance(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.HistoricalIssuanceKey)

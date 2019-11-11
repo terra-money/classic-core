@@ -25,7 +25,7 @@ func NewTreasuryPolicyUpdateHandler(k Keeper) govtypes.Handler {
 	}
 }
 
-// handleTaxRateUpdateProposal is a handler for updating tax-rate
+// handleTaxRateUpdateProposal is a handler for updating tax rate
 func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdateProposal) sdk.Error {
 	taxPolicy := k.TaxPolicy(ctx)
 	taxRate := k.GetTaxRate(ctx, core.GetEpoch(ctx))
@@ -39,7 +39,7 @@ func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdatePropo
 	return nil
 }
 
-// handleRewardWeightUpdateProposal is a handler for updating reward-weight
+// handleRewardWeightUpdateProposal is a handler for updating reward weight
 func handleRewardWeightUpdateProposal(ctx sdk.Context, k Keeper, p RewardWeightUpdateProposal) sdk.Error {
 	rewardPolicy := k.RewardPolicy(ctx)
 	rewardWeight := k.GetRewardWeight(ctx, core.GetEpoch(ctx))

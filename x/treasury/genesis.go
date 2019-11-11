@@ -18,7 +18,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetRewardWeight(ctx, int64(epoch), rewardWeight)
 	}
 
-	// store tax cap for SDT & LUNA(no tax)
+	// store tax caps
 	for denom, taxCap := range data.TaxCaps {
 		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
