@@ -21,10 +21,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Build valid votes counter and winner map over all validators in active set
 	validVotesCounterMap := make(map[string]int64)
 	winnerMap := make(map[string]types.Claim)
+	powerMap := make(map[string]int64)
 	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
-		valAddr := validator.GetOperator()
-		validVotesCounterMap[valAddr.String()] = int64(0)
-		winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
+
+		// Exclude not bonded vaildator or jailed validators from tallying
+		if validator.IsBonded() && !validator.IsJailed() {
+			valAddr := validator.GetOperator()
+			validVotesCounterMap[valAddr.String()] = int64(0)
+			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
+			powerMap[valAddr.String()] = validator.GetConsensusPower()
+		}
+
 		return false
 	})
 
@@ -55,12 +62,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	for denom, ballot := range voteMap {
 
 		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
+		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k, powerMap) {
 			continue
 		}
 
 		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := tally(ctx, ballot, k)
+		ballotMedian, ballotWinningClaims := tally(ctx, ballot, powerMap, params.RewardBand)
 
 		// Set the exchange rate
 		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
@@ -68,12 +75,16 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
 			key := ballotWinningClaim.Recipient.String()
+			prevClaim, exists := winnerMap[key]
 
 			// If the validator is not exist in active set, the one will be excluded from the rewardee list
-			if prevClaim, exists := winnerMap[key]; exists {
-				prevClaim.Weight += ballotWinningClaim.Weight
-				winnerMap[key] = prevClaim
+			if !exists {
+				continue
 			}
+
+			// Update claim
+			prevClaim.Weight += ballotWinningClaim.Weight
+			winnerMap[key] = prevClaim
 
 			// Increase valid votes counter
 			validVotesCounterMap[key]++

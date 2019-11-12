@@ -13,6 +13,18 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
+func buildPowerMap(sk types.DummyStakingKeeper) map[string]int64 {
+	powerMap := make(map[string]int64)
+	for _, validator := range sk.Validators() {
+		if validator.IsBonded() && !validator.IsJailed() {
+			valAddr := validator.GetOperator()
+			powerMap[valAddr.String()] = validator.GetConsensusPower()
+		}
+	}
+
+	return powerMap
+}
+
 func TestOracleThreshold(t *testing.T) {
 	input, h := setup(t)
 
@@ -230,9 +242,11 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
+	powerMap := buildPowerMap(stakingKeeper)
+
 	rewardees := []sdk.AccAddress{}
-	weightedMedian := ballot.WeightedMedian(input.Ctx, stakingKeeper)
-	standardDeviation := ballot.StandardDeviation(input.Ctx, stakingKeeper)
+	weightedMedian := ballot.WeightedMedian(input.Ctx, powerMap)
+	standardDeviation := ballot.StandardDeviation(input.Ctx, powerMap)
 	maxSpread := input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2)
 
 	if standardDeviation.GT(maxSpread) {
@@ -245,7 +259,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper)
+	tallyMedian, ballotWinner := tally(input.Ctx, ballot, powerMap, input.OracleKeeper.RewardBand(input.Ctx))
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

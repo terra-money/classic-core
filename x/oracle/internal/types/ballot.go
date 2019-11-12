@@ -13,18 +13,18 @@ import (
 type ExchangeRateBallot []ExchangeRateVote
 
 // Power returns the total amount of voting power in the ballot
-func (pb ExchangeRateBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
+func (pb ExchangeRateBallot) Power(ctx sdk.Context, powerMap map[string]int64) int64 {
 	totalPower := int64(0)
 	for _, vote := range pb {
-		totalPower += vote.getPower(ctx, sk)
+		totalPower += vote.getPower(ctx, powerMap)
 	}
 
 	return totalPower
 }
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec {
-	totalPower := pb.Power(ctx, sk)
+func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, powerMap map[string]int64) sdk.Dec {
+	totalPower := pb.Power(ctx, powerMap)
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
 			sort.Sort(pb)
@@ -32,7 +32,7 @@ func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) s
 
 		pivot := int64(0)
 		for _, v := range pb {
-			votePower := v.getPower(ctx, sk)
+			votePower := v.getPower(ctx, powerMap)
 
 			pivot += votePower
 			if pivot >= (totalPower / 2) {
@@ -44,12 +44,12 @@ func (pb ExchangeRateBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) s
 }
 
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (standardDeviation sdk.Dec) {
+func (pb ExchangeRateBallot) StandardDeviation(ctx sdk.Context, powerMap map[string]int64) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
 
-	median := pb.WeightedMedian(ctx, sk)
+	median := pb.WeightedMedian(ctx, powerMap)
 
 	sum := sdk.ZeroDec()
 	for _, v := range pb {

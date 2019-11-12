@@ -29,6 +29,18 @@ func TestSqrt(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(12, 2), num)
 }
 
+func buildPowerMap(sk DummyStakingKeeper) map[string]int64 {
+	powerMap := make(map[string]int64)
+	for _, validator := range sk.Validators() {
+		if validator.IsBonded() && !validator.IsJailed() {
+			valAddr := validator.GetOperator()
+			powerMap[valAddr.String()] = validator.GetConsensusPower()
+		}
+	}
+
+	return powerMap
+}
+
 func TestPBPower(t *testing.T) {
 
 	ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
@@ -36,24 +48,26 @@ func TestPBPower(t *testing.T) {
 	pb := ExchangeRateBallot{}
 	ballotPower := int64(0)
 
+	powerMap := buildPowerMap(sk)
+
 	for i := 0; i < len(sk.Validators()); i++ {
 		vote := NewExchangeRateVote(sdk.ZeroDec(), core.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
 		pb = append(pb, vote)
 
-		valPower := vote.getPower(ctx, sk)
+		valPower := vote.getPower(ctx, powerMap)
 		require.NotEqual(t, int64(0), valPower)
 
 		ballotPower += valPower
 	}
 
-	require.Equal(t, ballotPower, pb.Power(ctx, sk))
+	require.Equal(t, ballotPower, pb.Power(ctx, powerMap))
 
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
 	fakeVote := NewExchangeRateVote(sdk.OneDec(), core.MicroSDRDenom, faceValAddr)
 	pb = append(pb, fakeVote)
-	require.Equal(t, ballotPower, pb.Power(ctx, sk))
+	require.Equal(t, ballotPower, pb.Power(ctx, powerMap))
 }
 
 func TestPBWeightedMedian(t *testing.T) {
@@ -111,9 +125,10 @@ func TestPBWeightedMedian(t *testing.T) {
 		}
 
 		sk := NewDummyStakingKeeper(mockValset)
+		powerMap := buildPowerMap(sk)
 
 		ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
-		require.Equal(t, tc.median, pb.WeightedMedian(ctx, sk))
+		require.Equal(t, tc.median, pb.WeightedMedian(ctx, powerMap))
 	}
 }
 
@@ -172,9 +187,10 @@ func TestPBStandardDeviation(t *testing.T) {
 		}
 
 		sk := NewDummyStakingKeeper(mockValset)
+		powerMap := buildPowerMap(sk)
 
 		ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
-		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(ctx, sk))
+		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(ctx, powerMap))
 	}
 }
 

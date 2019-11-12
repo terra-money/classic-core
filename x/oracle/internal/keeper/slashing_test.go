@@ -36,4 +36,5 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator = input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
 	require.Equal(t, amt.Sub(slashFraction.MulInt(amt).TruncateInt()), validator.GetBondedTokens())
+	require.True(t, validator.IsJailed())
 }

@@ -72,13 +72,12 @@ func NewExchangeRateVote(rate sdk.Dec, denom string, voter sdk.ValAddress) Excha
 	}
 }
 
-func (pv ExchangeRateVote) getPower(ctx sdk.Context, sk StakingKeeper) int64 {
-	validator := sk.Validator(ctx, pv.Voter)
-	if validator == nil {
-		return 0
+func (pv ExchangeRateVote) getPower(ctx sdk.Context, powerMap map[string]int64) int64 {
+	if power, ok := powerMap[pv.Voter.String()]; ok {
+		return power
 	}
 
-	return validator.GetConsensusPower()
+	return 0
 }
 
 // String implements fmt.Stringer interface

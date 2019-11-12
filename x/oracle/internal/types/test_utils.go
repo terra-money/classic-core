@@ -83,6 +83,10 @@ func (DummyStakingKeeper) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.
 func (DummyStakingKeeper) IterateValidators(sdk.Context, func(index int64, validator exported.ValidatorI) (stop bool)) {
 }
 
+// Jail nolint
+func (DummyStakingKeeper) Jail(sdk.Context, sdk.ConsAddress) {
+}
+
 type MockValidator struct {
 	power    int64
 	operator sdk.ValAddress
