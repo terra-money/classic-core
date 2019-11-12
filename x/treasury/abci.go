@@ -33,8 +33,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(types.EventTypePolichUpdate,
-			sdk.NewAttribute(types.AttributeKeyTax, taxRate.String()),
-			sdk.NewAttribute(types.AttributeKeyReward, rewardWeight.String()),
+			sdk.NewAttribute(types.AttributeKeyTaxRate, taxRate.String()),
+			sdk.NewAttribute(types.AttributeKeyRewardWeight, rewardWeight.String()),
 			sdk.NewAttribute(types.AttributeKeyTaxCap, taxCap.String()),
 		),
 	)

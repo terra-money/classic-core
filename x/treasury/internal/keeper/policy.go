@@ -8,7 +8,7 @@ import (
 
 // UpdateTaxCap updates all denom's tax cap
 func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
-	cap := k.GetParams(ctx).TaxPolicy.Cap
+	cap := sdk.NewDecCoinFromCoin(k.GetParams(ctx).TaxPolicy.Cap)
 	total := k.supplyKeeper.GetSupply(ctx).GetTotal()
 
 	var newCaps sdk.Coins
@@ -18,7 +18,7 @@ func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
 			continue
 		}
 
-		newDecCap, err := k.marketKeeper.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(cap), coin.Denom)
+		newDecCap, err := k.marketKeeper.ComputeInternalSwap(ctx, cap, coin.Denom)
 		if err == nil {
 			newCap, _ := newDecCap.TruncateDecimal()
 			newCaps = append(newCaps, newCap)

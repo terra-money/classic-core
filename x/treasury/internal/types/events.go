@@ -5,7 +5,7 @@ package types
 const (
 	EventTypePolichUpdate = "policy_update"
 
-	AttributeKeyTax    = "tax"
-	AttributeKeyReward = "reward"
-	AttributeKeyTaxCap = "tax_cap"
+	AttributeKeyTaxRate      = "tax_rate"
+	AttributeKeyRewardWeight = "reward_weight"
+	AttributeKeyTaxCap       = "tax_cap"
 )

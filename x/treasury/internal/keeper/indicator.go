@@ -59,17 +59,17 @@ func MiningRewardForEpoch(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
 	return taxRewards.Add(seigniorageRewards)
 }
 
-// TRL returns tax rewards / luna / epoch
+// TRL returns tax rewards per luna at the epoch
 func TRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
 	return UnitLunaIndicator(ctx, k, epoch, TaxRewardsForEpoch)
 }
 
-// SRL returns Seigniorage rewards / luna / epoch
+// SRL returns Seigniorage rewards per luna at the epoch
 func SRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
 	return UnitLunaIndicator(ctx, k, epoch, SeigniorageRewardsForEpoch)
 }
 
-// MRL returns mining rewards / luna / epoch
+// MRL returns mining rewards per luna at the epoch
 func MRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
 	return UnitLunaIndicator(ctx, k, epoch, MiningRewardForEpoch)
 }

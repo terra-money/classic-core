@@ -30,7 +30,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown market query endpoint")
+			return nil, sdk.ErrUnknownRequest("unknown treasury query endpoint")
 		}
 	}
 }
