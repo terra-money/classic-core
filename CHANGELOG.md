@@ -1,3 +1,175 @@
+## 1.0.0
+### Breaking Changes
+#### [\#265](https://github.com/terra-project/core/pull/265) Oracle refactor & Oracle slashing
+##### Slashing
+A validator get slashed `SlashFraction`% if the one perform any of the following violations in `SlashWindow - minValidPerWindow` voteperiods over a window of `SlashWindow` voteperiods:
+
+1. A vote is missing for any of the denom in the whitelist. Oracle voters looking to abstain must still submit a "vote of no confidence", which has 0 for the luna ExchangeRate field of the prevote.
+2. A submitted vote is more than max(`RewardBand`, standard deviation) from the elected median
+3. Oracle voters who submit abstain vote with other invalid votes will also get slashed.
+
+##### Codec Changes
+* `oracle/MsgDelegateFeederPermission` => `oracle/MsgDelegateFeedConsent`
+
+##### New End Points
+* `/oracle/voters/{%s}/miss` return the # of vote periods missed in this oracle slash window.
+
+##### Path Changes
+* `/oracle/denoms/{denom}/price` => `/oracle/denoms/{denom}/exchange_rate`
+
+##### Request Body Changes
+
+* POST /oracle/denoms/{denom}/prevotes
+* POST /oracle/denoms/{denom}/votes
+```
+Price sdk.Dec `json:"price"`
+```
+has been changed to 
+```
+ExchangeRate sdk.Dec `json:"exchange_rate"`
+```
+
+#### [\#256](https://github.com/terra-project/core/pull/256) Oracle endpoints improvement
+##### New EndPoints
+```
+/oracle/voters/{validator}/votes
+/oracle/voters/{validator}/prevotes
+/oracle/denoms/prices
+```
+
+#### [\#250](https://github.com/terra-project/core/pull/250) Oracle whitelist & Reward distribution update
+* Create a whitelist param that stores an array of denoms that are whitelisted by the protocol. 
+* Edit the oracle `Reward Pool of a VotePeriod = oracle module account / (n vote periods)`. 
+* Oracle module account is whitelisted in the bank module such that users can donate funds to the oracle module account
+
+#### [\#234](https://github.com/terra-project/core/pull/234) Adopt gov module
+`distribution` module already contains `community-pool-spend` proposal suitable for `budget` so budget module is removed. There are two custom governance proposals from `treasury` module; `tax-rate-update` & `reward-weight-update` proposals. 
+
+##### New EndPoints
+```
+(GET)/gov/proposals
+(GET)/gov/proposals/{proposalId}
+(GET)/gov/proposals/{proposalId}/proposer
+(GET)/gov/proposals/{proposalId}/deposits
+(GET)/gov/proposals/{proposalId}/deposits/{depositor}
+(GET/POST)/gov/proposals/{proposalId}/votes
+(GET)/gov/proposals/{proposalId}/votes/{voter}
+(GET)/gov/proposals/{proposalId}/tally
+(GET)/gov/parameters/deposit
+(GET)/gov/parameters/tallying
+(GET)/gov/parameters/voting
+(POST)/gov/proposals/tax_rate_update
+(POST)/gov/proposals/reward_weight_update
+(POST)/gov/proposals/param_change
+(POST)/gov/proposals/community_pool_spend
+```
+
+#### [\#233](https://github.com/terra-project/core/pull/233) Swap constant product
+As proposed [here](https://agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature. 
+
+##### Compute Pools
+```
+// Both LUNA and TERRA pools are using SDR units.
+cp = basePool*basePool
+terraPool = (basePool + terraDelta)
+lunaPool = cp/terraPool
+```
+
+##### LUNA to TERRA swap
+```
+// offerAmt must be SDR units
+newLunaPool = lunaPool + offerAmt
+newTerraPool = cp / newLunaPool
+returnAmt = newTerraPool - terraPool
+
+// Swap return SDR Amt to TERRA
+returnLunaAmt = market.swap(returnAmt, "LUNA")
+```
+
+##### TERRA to LUNA swap
+```
+// offerAmt must be SDR units
+newTerraPool = terraPool + offerAmt
+newLunaPool = cp / newTerraPool
+returnAmt = newLunaPool - lunaPool
+
+// Swap return SDR Amt to proper TERRA
+returnTerraAmt = market.swap(returnAmt, "TERRA")
+```
+
+##### TERRA to TERRA swap
+
+Apply only fixed tobin-tax without computing and changing pools
+
+
+##### New EndPoints
+```
+/market/terra_pool_delta
+```
+
+#### [\#231](https://github.com/terra-project/core/pull/231) Bump SDK to v0.37.x
+##### REST end points, which are changed
+All REST responses now wrap the original resource/result. The response
+will contain two fields: height and result.
+```
+/market/params => /market/parameters
+/oracle/params => /oracle/parameters
+/treasury/tax-rate => /treasury/tax_rate
+/treasury/tax-rate/{epoch} => /treasury/tax_rate/{epoch}
+/treasury/tax-cap => /treasury/tax_cap
+/treasury/tax-cap/{denom} => /treasury/tax_cap/{denom}
+/treasury/reward-weight => /treasury/reward_weight
+/treasury/reward-weight/{epoch} => /treasury/reward_weight/{epoch}
+/treasury/tax-proceeds => /treasury/tax_proceeds
+/treasury/tax-proceeds/{epoch} => /treasury/tax_proceeds/{epoch}
+/treasury/seigniorage-proceeds => /treasury/seigniorage_proceeds
+/treasury/seigniorage-proceeds/{epoch} => /treasury/seigniorage_proceeds/{epoch}
+/treasury/current-epoch => /treasury/current_epoch
+/treasury/params => /treasury/parameters
+```
+##### REST end points, which response object key is removed
+```
+/treasury/current_epoch
+/treasury/seigniorage_proceeds/{epoch}
+/treasury/seigniorage_proceeds
+/treasury/tax_proceeds/{epoch}
+/treasury/tax_proceeds
+/treasury/reward_weight/{epoch}
+/treasury/reward_weight
+/treasury/tax_cap/{denom}
+/treasury/tax_rate/{epoch}
+/treasury/tax_rate
+/oracle/denoms/actives
+/oracle/denoms/{denom}/price
+/oracle/denoms/{denom}/prevotes/{voter}
+/oracle/denoms/{denom}/prevotes
+/oracle/denoms/{denom}/votes/{voter}
+/oracle/denoms/{denom}/votes
+```
+##### New REST endpoints
+```
+/supply/total
+/supply/total/{denomination}
+/market/last_day_issuance
+/oracle/voters/{%s}/voting_info
+/oracle/voting_infos
+/treasury/historical_issuance/{epoch}
+```
+##### Codec changes
+```
+auth/Account => core/Account
+auth/StdTx => core/StdTx
+pay/MsgSend => bank/MsgSend
+pay/MsgMultiSend => bank/MsgMultiSend
+```
+##### Other Changes
+* GradedVestingAccount is fully removed
+* LazyGradedVestingAccount's vesting_lazy_schedules is changed to vesting_schedules
+* Improve the UX of fee and tax. The sender have to specify fees containing tax amount with following methods.
+  1. Use `/bank/accounts/{address}/transfers` without fees. `terracli` will compute tax amount and fill fees field containing both gas & tax fee.
+  2. Use `/txs/estimate_fee` to estimate fees of StdTX, and replace StdTx.Fee.Amount to estimated fee
+  3. Compute tax with `/treasury/tax_rate` & `/treasury/tax_cap` add computed tax with original gas fee
+
 ## 0.2.4
 ### Bug fixes
 #### [\#196](https://github.com/terra-project/core/pull/196) peek epoch seigniorage
@@ -6,8 +178,6 @@ Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuan
 #### [\#198](https://github.com/terra-project/core/pull/198) Use next block for treasury tax and reward update
 updateTaxPolicy and updateRewardPolicy are updating new tax-rate and reward-weight with current ctx. The ctx height is the last block of current epoch, but treasury should update next epoch's tax-rate and reward-weight at the last block of current epoch.
 In updateTaxPolicy and updateRewardPolicy, change ctx input of keeper setter to ctx with next epoch height.
-
-Related issue: #197
 
 ### Features
 #### [\#193](https://github.com/terra-project/core/pull/193) Recover old hd path
