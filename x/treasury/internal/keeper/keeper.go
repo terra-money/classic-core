@@ -62,9 +62,9 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 }
 
 // GetTaxRate loads the tax rate
-func (k Keeper) GetTaxRate(ctx sdk.Context, epoch int64) (taxRate sdk.Dec) {
+func (k Keeper) GetTaxRate(ctx sdk.Context) (taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetTaxRateKey(epoch))
+	b := store.Get(types.TaxRateKey)
 	if b == nil {
 		return types.DefaultTaxRate
 	}
@@ -74,26 +74,16 @@ func (k Keeper) GetTaxRate(ctx sdk.Context, epoch int64) (taxRate sdk.Dec) {
 }
 
 // SetTaxRate sets the tax rate
-func (k Keeper) SetTaxRate(ctx sdk.Context, epoch int64, taxRate sdk.Dec) {
+func (k Keeper) SetTaxRate(ctx sdk.Context, taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(taxRate)
-	store.Set(types.GetTaxRateKey(epoch), b)
-}
-
-// ClearTaxRates clears all tax rate
-func (k Keeper) ClearTaxRates(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.TaxRateKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
+	store.Set(types.TaxRateKey, b)
 }
 
 // GetRewardWeight loads the reward weight
-func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch int64) (rewardWeight sdk.Dec) {
+func (k Keeper) GetRewardWeight(ctx sdk.Context) (rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetRewardWeightKey(epoch))
+	b := store.Get(types.RewardWeightKey)
 	if b == nil {
 		return types.DefaultRewardWeight
 	}
@@ -103,20 +93,10 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context, epoch int64) (rewardWeight sdk.
 }
 
 // SetRewardWeight sets the reward weight
-func (k Keeper) SetRewardWeight(ctx sdk.Context, epoch int64, rewardWeight sdk.Dec) {
+func (k Keeper) SetRewardWeight(ctx sdk.Context, rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(rewardWeight)
-	store.Set(types.GetRewardWeightKey(epoch), b)
-}
-
-// ClearRewardWeights clears all reward weight
-func (k Keeper) ClearRewardWeights(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.RewardWeightKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
+	store.Set(types.RewardWeightKey, b)
 }
 
 // SetTaxCap sets the tax cap denominated in integer units of the reference {denom}
@@ -165,28 +145,28 @@ func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 		return
 	}
 
-	epoch := core.GetEpoch(ctx)
-	proceeds := k.PeekTaxProceeds(ctx, epoch)
+	proceeds := k.PeekTaxProceeds(ctx)
 	proceeds = proceeds.Add(delta)
 
-	k.SetTaxProceeds(ctx, epoch, proceeds)
+	k.SetTaxProceeds(ctx, proceeds)
 }
 
 // SetTaxProceeds stores tax proceeds for the given epoch
-func (k Keeper) SetTaxProceeds(ctx sdk.Context, epoch int64, taxProceeds sdk.Coins) {
-	if taxProceeds.Empty() || taxProceeds.IsZero() {
-		return
-	}
-
+func (k Keeper) SetTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(taxProceeds)
-	store.Set(types.GetTaxProceedsKey(epoch), bz)
+
+	if taxProceeds.Empty() || taxProceeds.IsZero() {
+		store.Delete(types.TaxProceedsKey)
+	} else {
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(taxProceeds)
+		store.Set(types.TaxProceedsKey, bz)
+	}
 }
 
 // PeekTaxProceeds peeks the total amount of taxes that have been collected in the given epoch.
-func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch int64) (res sdk.Coins) {
+func (k Keeper) PeekTaxProceeds(ctx sdk.Context) (res sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetTaxProceedsKey(epoch))
+	bz := store.Get(types.TaxProceedsKey)
 	if bz == nil {
 		res = sdk.Coins{}
 	} else {
@@ -195,40 +175,28 @@ func (k Keeper) PeekTaxProceeds(ctx sdk.Context, epoch int64) (res sdk.Coins) {
 	return
 }
 
-// ClearTaxProceeds clears all tax proceeds
-func (k Keeper) ClearTaxProceeds(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.TaxProceedsKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
-}
-
-// RecordHistoricalIssuance updates epoch issuance from supply keeper (historical)
-func (k Keeper) RecordHistoricalIssuance(ctx sdk.Context) {
-	epoch := core.GetEpoch(ctx)
+// RecordEpochInitialIssuance updates epoch initial issuance from supply keeper
+func (k Keeper) RecordEpochInitialIssuance(ctx sdk.Context) {
 	totalCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
-	k.SetHistoricalIssuance(ctx, epoch, totalCoins)
+	k.SetEpochInitialIssuance(ctx, totalCoins)
 }
 
-// SetHistoricalIssuance stores epoch issuance
-func (k Keeper) SetHistoricalIssuance(ctx sdk.Context, epoch int64, issuance sdk.Coins) {
+// SetEpochInitialIssuance stores epoch initial issuance
+func (k Keeper) SetEpochInitialIssuance(ctx sdk.Context, issuance sdk.Coins) {
+	store := ctx.KVStore(k.storeKey)
+
 	if issuance.Empty() || issuance.IsZero() {
-		return
+		store.Delete(types.EpochInitialIssuanceKey)
+	} else {
+		bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
+		store.Set(types.EpochInitialIssuanceKey, bz)
 	}
-
-	store := ctx.KVStore(k.storeKey)
-
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(issuance)
-	store.Set(types.GetHistoricalIssuanceKey(epoch), bz)
-	return
 }
 
-// GetHistoricalIssuance returns epoch issuance
-func (k Keeper) GetHistoricalIssuance(ctx sdk.Context, epoch int64) (res sdk.Coins) {
+// GetEpochInitialIssuance returns epoch initial issuance
+func (k Keeper) GetEpochInitialIssuance(ctx sdk.Context) (res sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetHistoricalIssuanceKey(epoch))
+	bz := store.Get(types.EpochInitialIssuanceKey)
 
 	if bz == nil {
 		res = sdk.Coins{}
@@ -236,30 +204,16 @@ func (k Keeper) GetHistoricalIssuance(ctx sdk.Context, epoch int64) (res sdk.Coi
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	}
 	return
-}
-
-// ClearHistoricalIssuance clears all historical issuance
-func (k Keeper) ClearHistoricalIssuance(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.HistoricalIssuanceKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
 }
 
 // PeekEpochSeigniorage returns epoch seigniorage
-func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch int64) sdk.Int {
-	if epoch == 0 {
-		return sdk.ZeroInt()
-	}
-
-	epochIssuance := k.GetHistoricalIssuance(ctx, epoch).AmountOf(core.MicroLunaDenom)
+func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
+	epochIssuance := k.supplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
 	if epochIssuance.IsZero() {
 		epochIssuance = k.supplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
 	}
 
-	preEpochIssuance := k.GetHistoricalIssuance(ctx, epoch-1).AmountOf(core.MicroLunaDenom)
+	preEpochIssuance := k.GetEpochInitialIssuance(ctx).AmountOf(core.MicroLunaDenom)
 	epochSeigniorage := preEpochIssuance.Sub(epochIssuance)
 
 	if epochSeigniorage.LT(sdk.ZeroInt()) {
@@ -267,4 +221,103 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context, epoch int64) sdk.Int {
 	}
 
 	return epochSeigniorage
+}
+
+// GetMR returns MR of the epoch
+func (k Keeper) GetMR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetMRKey(epoch))
+
+	if bz == nil {
+		res = sdk.ZeroDec()
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+
+	return
+}
+
+// SetMR stores MR of the epoch
+func (k Keeper) SetMR(ctx sdk.Context, epoch int64, MR sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(MR)
+	store.Set(types.GetMRKey(epoch), bz)
+}
+
+// ClearMRs delete all MRs from the store
+func (k Keeper) ClearMRs(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	iter := sdk.KVStorePrefixIterator(store, types.MRKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
+}
+
+// GetSR returns SR of the epoch
+func (k Keeper) GetSR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetSRKey(epoch))
+
+	if bz == nil {
+		res = sdk.ZeroDec()
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+
+	return
+}
+
+// SetSR stores SR of the epoch
+func (k Keeper) SetSR(ctx sdk.Context, epoch int64, SR sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(SR)
+	store.Set(types.GetSRKey(epoch), bz)
+}
+
+// ClearSRs delete all SRs from the store
+func (k Keeper) ClearSRs(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	iter := sdk.KVStorePrefixIterator(store, types.SRKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
+}
+
+// GetTRL returns TRL of the epoch
+func (k Keeper) GetTRL(ctx sdk.Context, epoch int64) (res sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetTRLKey(epoch))
+
+	if bz == nil {
+		res = sdk.ZeroDec()
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+
+	return
+}
+
+// SetTRL stores TRL of the epoch
+func (k Keeper) SetTRL(ctx sdk.Context, epoch int64, TRL sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(TRL)
+	store.Set(types.GetTRLKey(epoch), bz)
+}
+
+// ClearTRLs delete all TRLs from the store
+func (k Keeper) ClearTRLs(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	iter := sdk.KVStorePrefixIterator(store, types.TRLKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
 }

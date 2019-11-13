@@ -17,15 +17,9 @@ func TestRewardWeight(t *testing.T) {
 
 	// See that we can get and set reward weights
 	for i := int64(0); i < 10; i++ {
-		input.TreasuryKeeper.SetRewardWeight(input.Ctx, i, sdk.NewDecWithPrec(i, 2))
+		input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.NewDecWithPrec(i, 2))
+		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetRewardWeight(input.Ctx))
 	}
-
-	for i := int64(0); i < 10; i++ {
-		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetRewardWeight(input.Ctx, i))
-	}
-
-	input.TreasuryKeeper.ClearRewardWeights(input.Ctx)
-	require.Equal(t, types.DefaultRewardWeight, input.TreasuryKeeper.GetRewardWeight(input.Ctx, int64(0)))
 }
 
 func TestTaxRate(t *testing.T) {
@@ -33,15 +27,9 @@ func TestTaxRate(t *testing.T) {
 
 	// See that we can get and set tax rate
 	for i := int64(0); i < 10; i++ {
-		input.TreasuryKeeper.SetTaxRate(input.Ctx, i, sdk.NewDecWithPrec(i, 2))
+		input.TreasuryKeeper.SetTaxRate(input.Ctx, sdk.NewDecWithPrec(i, 2))
+		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetTaxRate(input.Ctx))
 	}
-
-	for i := int64(0); i < 10; i++ {
-		require.Equal(t, sdk.NewDecWithPrec(i, 2), input.TreasuryKeeper.GetTaxRate(input.Ctx, i))
-	}
-
-	input.TreasuryKeeper.ClearTaxRates(input.Ctx)
-	require.Equal(t, types.DefaultTaxRate, input.TreasuryKeeper.GetTaxRate(input.Ctx, int64(0)))
 }
 
 func TestTaxCap(t *testing.T) {
@@ -82,23 +70,16 @@ func TestTaxProceeds(t *testing.T) {
 	input := CreateTestInput(t)
 
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
+		proceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(100+i)))
+		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
+		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
+		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
 
-		proceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(i)))
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
+		require.Equal(t, proceeds.Add(proceeds).Add(proceeds), input.TreasuryKeeper.PeekTaxProceeds(input.Ctx))
+
+		input.TreasuryKeeper.SetTaxProceeds(input.Ctx, sdk.Coins{})
+		require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx))
 	}
-
-	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
-		proceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(i*3)))
-
-		require.Equal(t, proceeds, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx, i))
-	}
-
-	input.TreasuryKeeper.ClearTaxProceeds(input.Ctx)
-	require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx, 0))
 }
 
 func TestMicroLunaIssuance(t *testing.T) {
@@ -115,17 +96,10 @@ func TestMicroLunaIssuance(t *testing.T) {
 
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(i))))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-		input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
+		input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
+
+		require.Equal(t, sdk.NewInt(i), input.TreasuryKeeper.GetEpochInitialIssuance(input.Ctx).AmountOf(core.MicroLunaDenom))
 	}
-
-	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
-
-		require.Equal(t, sdk.NewInt(i), input.TreasuryKeeper.GetHistoricalIssuance(input.Ctx, i).AmountOf(core.MicroLunaDenom))
-	}
-
-	input.TreasuryKeeper.ClearHistoricalIssuance(input.Ctx)
-	require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.GetHistoricalIssuance(input.Ctx, 0))
 }
 
 func TestPeekEpochSeigniorage(t *testing.T) {
@@ -138,7 +112,7 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 		preIssuance := sdk.NewInt(rand.Int63() + 1)
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, preIssuance)))
 		input.SupplyKeeper.SetSupply(input.Ctx, supply)
-		input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
+		input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
 		nowIssuance := sdk.NewInt(rand.Int63() + 1)
 		supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, nowIssuance)))
@@ -149,9 +123,19 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 			targetSeigniorage = sdk.ZeroInt()
 		}
 
-		require.Equal(t, targetSeigniorage, input.TreasuryKeeper.PeekEpochSeigniorage(input.Ctx, i+1))
+		require.Equal(t, targetSeigniorage, input.TreasuryKeeper.PeekEpochSeigniorage(input.Ctx))
 	}
 }
+
+// func TestMR(t *testing.T) {
+// 	input := CreateTestInput(t)
+
+// 	for e := 0; e < 10; e++ {
+// 		input.TreasuryKeeper.SetMR(input.Ctx, 0, sdk.NewDec(100*e))
+// 		require.Equal(input)
+// 	}
+
+// }
 
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)

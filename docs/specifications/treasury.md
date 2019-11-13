@@ -24,8 +24,8 @@ func updateTaxPolicy(ctx sdk.Context, k Keeper) (newTaxRate sdk.Dec) {
 
     oldTaxRate := k.GetTaxRate(ctx, util.GetEpoch(ctx))
     inc := params.MiningIncrement
-    tlYear := RollingAverageIndicator(ctx, k, params.WindowLong, TRL)
-    tlMonth := RollingAverageIndicator(ctx, k, params.WindowShort, TRL)
+    tlYear := rollingAverageIndicator(ctx, k, params.WindowLong, TRL)
+    tlMonth := rollingAverageIndicator(ctx, k, params.WindowShort, TRL)
 
     // No revenues, hike as much as possible.
     if tlMonth.Equal(sdk.ZeroDec()) {
@@ -55,8 +55,8 @@ func updateRewardPolicy(ctx sdk.Context, k Keeper) (newRewardWeight sdk.Dec) {
     oldWeight := k.GetRewardWeight(ctx, curEpoch)
     sbTarget := params.SeigniorageBurdenTarget
 
-    seigniorageSum := SumIndicator(ctx, k, params.WindowShort, SeigniorageRewardsForEpoch)
-    totalSum := SumIndicator(ctx, k, params.WindowShort, MiningRewardForEpoch)
+    seigniorageSum := sumIndicator(ctx, k, params.WindowShort, SeigniorageRewardsForEpoch)
+    totalSum := sumIndicator(ctx, k, params.WindowShort, MiningRewardForEpoch)
 
     // No revenues; hike as much as possible
     if totalSum.Equal(sdk.ZeroDec()) || seigniorageSum.Equal(sdk.ZeroDec()) {

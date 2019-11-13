@@ -17,13 +17,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Update luna issuance after finish all works
-	defer k.RecordHistoricalIssuance(ctx)
+	defer k.RecordEpochInitialIssuance(ctx)
+
+	// Compute & Update internal indicators for the current epoch
+	k.UpdateIndicators(ctx)
 
 	// Check probation period
 	if ctx.BlockHeight() < (core.BlocksPerEpoch * k.WindowProbation(ctx)) {
 		return
 	}
 
+	// Settle seiniorage to oracle & distribution(community-pool) module-account
 	k.SettleSeigniorage(ctx)
 
 	// Update tax-rate and reward-weight of next epoch

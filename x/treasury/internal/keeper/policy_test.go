@@ -35,10 +35,11 @@ func TestUpdateTaxRate(t *testing.T) {
 
 		taxProceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.ZeroInt()))
 		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, taxProceeds)
+		input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 	}
 
 	input.TreasuryKeeper.UpdateTaxPolicy(input.Ctx)
-	taxRate := input.TreasuryKeeper.GetTaxRate(input.Ctx, core.GetEpoch(input.Ctx)+1)
+	taxRate := input.TreasuryKeeper.GetTaxRate(input.Ctx)
 	require.Equal(t, types.DefaultTaxRate.Add(taxPolicy.ChangeRateMax), taxRate)
 }
 
@@ -55,10 +56,11 @@ func TestUpdateRewardWeight(t *testing.T) {
 	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.True(t, res.IsOK())
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 
 	rewardPolicy := input.TreasuryKeeper.RewardPolicy(input.Ctx)
 	input.TreasuryKeeper.UpdateRewardPolicy(input.Ctx)
-	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx)+1)
+	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx)
 	require.Equal(t, types.DefaultRewardWeight.Add(rewardPolicy.ChangeRateMax), rewardWeight)
 }
 
