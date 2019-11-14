@@ -127,15 +127,29 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 	}
 }
 
-// func TestMR(t *testing.T) {
-// 	input := CreateTestInput(t)
+func TestIndicatorGetterSetter(t *testing.T) {
+	input := CreateTestInput(t)
 
-// 	for e := 0; e < 10; e++ {
-// 		input.TreasuryKeeper.SetMR(input.Ctx, 0, sdk.NewDec(100*e))
-// 		require.Equal(input)
-// 	}
+	for e := int64(0); e < 10; e++ {
+		randomVal := sdk.NewDec(rand.Int63() + 1)
+		input.TreasuryKeeper.SetMR(input.Ctx, e, randomVal)
+		require.Equal(t, randomVal, input.TreasuryKeeper.GetMR(input.Ctx, e))
+		input.TreasuryKeeper.SetSR(input.Ctx, e, randomVal)
+		require.Equal(t, randomVal, input.TreasuryKeeper.GetSR(input.Ctx, e))
+		input.TreasuryKeeper.SetTRL(input.Ctx, e, randomVal)
+		require.Equal(t, randomVal, input.TreasuryKeeper.GetTRL(input.Ctx, e))
+	}
 
-// }
+	input.TreasuryKeeper.ClearMRs(input.Ctx)
+	input.TreasuryKeeper.ClearSRs(input.Ctx)
+	input.TreasuryKeeper.ClearTRLs(input.Ctx)
+
+	for e := int64(0); e < 10; e++ {
+		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetMR(input.Ctx, e))
+		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetSR(input.Ctx, e))
+		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetTRL(input.Ctx, e))
+	}
+}
 
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)
