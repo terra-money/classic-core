@@ -13,18 +13,6 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
-func buildPowerMap(sk types.DummyStakingKeeper) map[string]int64 {
-	powerMap := make(map[string]int64)
-	for _, validator := range sk.Validators() {
-		if validator.IsBonded() && !validator.IsJailed() {
-			valAddr := validator.GetOperator()
-			powerMap[valAddr.String()] = validator.GetConsensusPower()
-		}
-	}
-
-	return powerMap
-}
-
 func TestOracleThreshold(t *testing.T) {
 	input, h := setup(t)
 
@@ -233,7 +221,7 @@ func TestOracleTally(t *testing.T) {
 		res = h(input.Ctx.WithBlockHeight(1), voteMsg)
 		require.True(t, res.IsOK())
 
-		vote := NewExchangeRateVote(decExchangeRate, core.MicroSDRDenom, valAddrs[i])
+		vote := NewVoteForTally(NewExchangeRateVote(decExchangeRate, core.MicroSDRDenom, valAddrs[i]), stakingAmt.QuoRaw(core.MicroUnit).Int64())
 		ballot = append(ballot, vote)
 
 		// change power of every three validator
@@ -242,11 +230,9 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	powerMap := buildPowerMap(stakingKeeper)
-
 	rewardees := []sdk.AccAddress{}
-	weightedMedian := ballot.WeightedMedian(input.Ctx, powerMap)
-	standardDeviation := ballot.StandardDeviation(input.Ctx, powerMap)
+	weightedMedian := ballot.WeightedMedian()
+	standardDeviation := ballot.StandardDeviation()
 	maxSpread := input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2)
 
 	if standardDeviation.GT(maxSpread) {
@@ -259,7 +245,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner := tally(input.Ctx, ballot, powerMap, input.OracleKeeper.RewardBand(input.Ctx))
+	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx))
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
@@ -441,7 +427,7 @@ func TestAbstainSlashing(t *testing.T) {
 		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
 
 		// Account 2, KRW, miss vote
-		makePrevoteAndVote(t, input, h, 0, core.MicroLunaDenom, sdk.ZeroDec(), 1)
+		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, sdk.ZeroDec(), 1)
 
 		// Account 3, KRW
 		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)

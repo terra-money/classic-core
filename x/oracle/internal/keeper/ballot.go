@@ -9,7 +9,24 @@ import (
 func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.ExchangeRateBallot) {
 	votes = map[string]types.ExchangeRateBallot{}
 	handler := func(vote types.ExchangeRateVote) (stop bool) {
-		votes[vote.Denom] = append(votes[vote.Denom], vote)
+		validator := k.StakingKeeper.Validator(ctx, vote.Voter)
+
+		// organize ballot only for the active validators
+		if validator != nil && validator.IsBonded() && !validator.IsJailed() {
+			power := validator.GetConsensusPower()
+			if !vote.ExchangeRate.IsPositive() {
+				// Make the power of abstain vote zero
+				power = 0
+			}
+
+			votes[vote.Denom] = append(votes[vote.Denom],
+				types.NewVoteForTally(
+					vote,
+					power,
+				),
+			)
+		}
+
 		return false
 	}
 	k.IterateExchangeRateVotes(ctx, handler)

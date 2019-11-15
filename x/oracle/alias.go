@@ -11,37 +11,39 @@ import (
 )
 
 const (
-	DefaultCodespace        = types.DefaultCodespace
-	CodeUnknownDenom        = types.CodeUnknownDenom
-	CodeInvalidExchangeRate = types.CodeInvalidExchangeRate
-	CodeVoterNotValidator   = types.CodeVoterNotValidator
-	CodeInvalidVote         = types.CodeInvalidVote
-	CodeNoVotingPermission  = types.CodeNoVotingPermission
-	CodeInvalidHashLength   = types.CodeInvalidHashLength
-	CodeInvalidPrevote      = types.CodeInvalidPrevote
-	CodeVerificationFailed  = types.CodeVerificationFailed
-	CodeNotRevealPeriod     = types.CodeNotRevealPeriod
-	CodeInvalidSaltLength   = types.CodeInvalidSaltLength
-	CodeInvalidMsgFormat    = types.CodeInvalidMsgFormat
-	ModuleName              = types.ModuleName
-	StoreKey                = types.StoreKey
-	RouterKey               = types.RouterKey
-	QuerierRoute            = types.QuerierRoute
-	DefaultParamspace       = types.DefaultParamspace
-	DefaultVotePeriod       = types.DefaultVotePeriod
-	DefaultSlashWindow      = types.DefaultSlashWindow
-	QueryParameters         = types.QueryParameters
-	QueryExchangeRate       = types.QueryExchangeRate
-	QueryExchangeRates      = types.QueryExchangeRates
-	QueryActives            = types.QueryActives
-	QueryPrevotes           = types.QueryPrevotes
-	QueryVotes              = types.QueryVotes
-	QueryFeederDelegation   = types.QueryFeederDelegation
-	QueryMissCounter        = types.QueryMissCounter
+	DefaultCodespace                = types.DefaultCodespace
+	CodeUnknownDenom                = types.CodeUnknownDenom
+	CodeInvalidExchangeRate         = types.CodeInvalidExchangeRate
+	CodeVoterNotValidator           = types.CodeVoterNotValidator
+	CodeInvalidVote                 = types.CodeInvalidVote
+	CodeNoVotingPermission          = types.CodeNoVotingPermission
+	CodeInvalidHashLength           = types.CodeInvalidHashLength
+	CodeInvalidPrevote              = types.CodeInvalidPrevote
+	CodeVerificationFailed          = types.CodeVerificationFailed
+	CodeNotRevealPeriod             = types.CodeNotRevealPeriod
+	CodeInvalidSaltLength           = types.CodeInvalidSaltLength
+	CodeInvalidMsgFormat            = types.CodeInvalidMsgFormat
+	ModuleName                      = types.ModuleName
+	StoreKey                        = types.StoreKey
+	RouterKey                       = types.RouterKey
+	QuerierRoute                    = types.QuerierRoute
+	DefaultParamspace               = types.DefaultParamspace
+	DefaultVotePeriod               = types.DefaultVotePeriod
+	DefaultSlashWindow              = types.DefaultSlashWindow
+	DefaultRewardDistributionWindow = types.DefaultRewardDistributionWindow
+	QueryParameters                 = types.QueryParameters
+	QueryExchangeRate               = types.QueryExchangeRate
+	QueryExchangeRates              = types.QueryExchangeRates
+	QueryActives                    = types.QueryActives
+	QueryPrevotes                   = types.QueryPrevotes
+	QueryVotes                      = types.QueryVotes
+	QueryFeederDelegation           = types.QueryFeederDelegation
+	QueryMissCounter                = types.QueryMissCounter
 )
 
 var (
 	// functions aliases
+	NewVoteForTally                = types.NewVoteForTally
 	NewClaim                       = types.NewClaim
 	RegisterCodec                  = types.RegisterCodec
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
@@ -94,13 +96,13 @@ var (
 	ParamStoreKeyMinValidPerWindow        = types.ParamStoreKeyMinValidPerWindow
 	DefaultVoteThreshold                  = types.DefaultVoteThreshold
 	DefaultRewardBand                     = types.DefaultRewardBand
-	DefaultRewardDistributionWindow       = types.DefaultRewardDistributionWindow
 	DefaultWhitelist                      = types.DefaultWhitelist
 	DefaultSlashFraction                  = types.DefaultSlashFraction
 	DefaultMinValidPerWindow              = types.DefaultMinValidPerWindow
 )
 
 type (
+	VoteForTally                = types.VoteForTally
 	ExchangeRateBallot          = types.ExchangeRateBallot
 	Claim                       = types.Claim
 	DenomList                   = types.DenomList

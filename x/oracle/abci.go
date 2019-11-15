@@ -21,7 +21,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Build valid votes counter and winner map over all validators in active set
 	validVotesCounterMap := make(map[string]int64)
 	winnerMap := make(map[string]types.Claim)
-	powerMap := make(map[string]int64)
 	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
 
 		// Exclude not bonded vaildator or jailed validators from tallying
@@ -29,7 +28,6 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			valAddr := validator.GetOperator()
 			validVotesCounterMap[valAddr.String()] = int64(0)
 			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
-			powerMap[valAddr.String()] = validator.GetConsensusPower()
 		}
 
 		return false
@@ -46,28 +44,20 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Organize votes to ballot by denom
+	// NOTE: **Filter out inative or jailed validators**
+	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
-
-	// Build abstain validator map
-	abstainOperatorMap := make(map[string]bool)
-	abstainBallot := voteMap[core.MicroLunaDenom]
-	for _, vote := range abstainBallot {
-		abstainOperatorMap[vote.Voter.String()] = true
-	}
-
-	// Remove abstain key
-	delete(voteMap, core.MicroLunaDenom)
 
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	for denom, ballot := range voteMap {
 
 		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k, powerMap) {
+		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
 			continue
 		}
 
 		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := tally(ctx, ballot, powerMap, params.RewardBand)
+		ballotMedian, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
 
 		// Set the exchange rate
 		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
@@ -75,14 +65,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
 			key := ballotWinningClaim.Recipient.String()
-			prevClaim, exists := winnerMap[key]
-
-			// If the validator is not exist in active set, the one will be excluded from the rewardee list
-			if !exists {
-				continue
-			}
 
 			// Update claim
+			prevClaim := winnerMap[key]
 			prevClaim.Weight += ballotWinningClaim.Weight
 			winnerMap[key] = prevClaim
 
@@ -104,8 +89,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	whitelistLen := int64(len(whitelist))
 	for operatorBechAddr, count := range validVotesCounterMap {
-		// Skip abstain operators & valid voters
-		if (count == whitelistLen) || (count == 0 && abstainOperatorMap[operatorBechAddr]) {
+		// Skip abstain & valid voters
+		if count == whitelistLen {
 			continue
 		}
 
@@ -117,7 +102,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Do slash who did miss voting over threshold and
 	// reset miss counters of all validators at the last block of slash window
 	if core.IsPeriodLastBlock(ctx, params.VotePeriod*params.SlashWindow) {
-		k.SlashAndResetMissCounters(ctx)
+		SlashAndResetMissCounters(ctx, k)
 	}
 
 	// Distribute rewards to ballot winners

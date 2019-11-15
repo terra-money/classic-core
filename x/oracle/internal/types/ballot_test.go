@@ -29,18 +29,6 @@ func TestSqrt(t *testing.T) {
 	require.Equal(t, sdk.NewDecWithPrec(12, 2), num)
 }
 
-func buildPowerMap(sk DummyStakingKeeper) map[string]int64 {
-	powerMap := make(map[string]int64)
-	for _, validator := range sk.Validators() {
-		if validator.IsBonded() && !validator.IsJailed() {
-			valAddr := validator.GetOperator()
-			powerMap[valAddr.String()] = validator.GetConsensusPower()
-		}
-	}
-
-	return powerMap
-}
-
 func TestPBPower(t *testing.T) {
 
 	ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
@@ -48,87 +36,102 @@ func TestPBPower(t *testing.T) {
 	pb := ExchangeRateBallot{}
 	ballotPower := int64(0)
 
-	powerMap := buildPowerMap(sk)
-
 	for i := 0; i < len(sk.Validators()); i++ {
-		vote := NewExchangeRateVote(sdk.ZeroDec(), core.MicroSDRDenom, sdk.ValAddress(valAccAddrs[i]))
+		power := sk.Validator(ctx, sdk.ValAddress(valAccAddrs[i])).GetConsensusPower()
+		vote := NewVoteForTally(
+			NewExchangeRateVote(
+				sdk.ZeroDec(),
+				core.MicroSDRDenom,
+				sdk.ValAddress(valAccAddrs[i]),
+			),
+			power,
+		)
+
 		pb = append(pb, vote)
 
-		valPower := vote.getPower(ctx, powerMap)
-		require.NotEqual(t, int64(0), valPower)
+		require.NotEqual(t, int64(0), vote.Power)
 
-		ballotPower += valPower
+		ballotPower += vote.Power
 	}
 
-	require.Equal(t, ballotPower, pb.Power(ctx, powerMap))
+	require.Equal(t, ballotPower, pb.Power())
 
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
-	fakeVote := NewExchangeRateVote(sdk.OneDec(), core.MicroSDRDenom, faceValAddr)
+	fakeVote := NewVoteForTally(
+		NewExchangeRateVote(
+			sdk.OneDec(),
+			core.MicroSDRDenom,
+			faceValAddr,
+		),
+		0,
+	)
+
 	pb = append(pb, fakeVote)
-	require.Equal(t, ballotPower, pb.Power(ctx, powerMap))
+	require.Equal(t, ballotPower, pb.Power())
 }
 
 func TestPBWeightedMedian(t *testing.T) {
 	tests := []struct {
-		inputs      []float64
+		inputs      []int64
 		weights     []int64
 		isValidator []bool
 		median      sdk.Dec
 	}{
 		{
 			// Supermajority one number
-			[]float64{1.0, 2.0, 10.0, 100000.0},
+			[]int64{1, 2, 10, 100000},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.NewDecWithPrec(10, 0),
+			sdk.NewDec(10),
 		},
 		{
 			// Adding fake validator doesn't change outcome
-			[]float64{1.0, 2.0, 10.0, 100000.0, 10000000000},
+			[]int64{1, 2, 10, 100000, 10000000000},
 			[]int64{1, 1, 100, 1, 10000},
 			[]bool{true, true, true, true, false},
-			sdk.NewDecWithPrec(10, 0),
+			sdk.NewDec(10),
 		},
 		{
 			// Tie votes
-			[]float64{1.0, 2.0, 3.0, 4.0},
+			[]int64{1, 2, 3, 4},
 			[]int64{1, 100, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.NewDecWithPrec(2, 0),
+			sdk.NewDec(2),
 		},
 		{
 			// No votes
-			[]float64{},
+			[]int64{},
 			[]int64{},
 			[]bool{true, true, true, true},
-			sdk.NewDecWithPrec(0, 0),
+			sdk.NewDec(0),
 		},
 	}
 
-	var mockValset []MockValidator
-	base := math.Pow10(oracleDecPrecision)
 	for _, tc := range tests {
 		pb := ExchangeRateBallot{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 			power := tc.weights[i]
-			mockVal := NewMockValidator(valAddr, power)
-
-			if tc.isValidator[i] {
-				mockValset = append(mockValset, mockVal)
+			if !tc.isValidator[i] {
+				power = 0
 			}
-			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
+
+			vote := NewVoteForTally(
+				NewExchangeRateVote(
+					sdk.NewDec(int64(input)),
+					core.MicroSDRDenom,
+					valAddr,
+				),
+				power,
+			)
+
 			pb = append(pb, vote)
 		}
 
-		sk := NewDummyStakingKeeper(mockValset)
-		powerMap := buildPowerMap(sk)
-
-		ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
-		require.Equal(t, tc.median, pb.WeightedMedian(ctx, powerMap))
+		require.Equal(t, tc.median, pb.WeightedMedian())
 	}
 }
 
@@ -169,7 +172,6 @@ func TestPBStandardDeviation(t *testing.T) {
 		},
 	}
 
-	var mockValset []MockValidator
 	base := math.Pow10(oracleDecPrecision)
 	for _, tc := range tests {
 		pb := ExchangeRateBallot{}
@@ -177,75 +179,22 @@ func TestPBStandardDeviation(t *testing.T) {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 			power := tc.weights[i]
-			mockVal := NewMockValidator(valAddr, power)
-
-			if tc.isValidator[i] {
-				mockValset = append(mockValset, mockVal)
+			if !tc.isValidator[i] {
+				power = 0
 			}
-			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)), core.MicroSDRDenom, valAddr)
+
+			vote := NewVoteForTally(
+				NewExchangeRateVote(
+					sdk.NewDecWithPrec(int64(input*base), int64(oracleDecPrecision)),
+					core.MicroSDRDenom,
+					valAddr,
+				),
+				power,
+			)
+
 			pb = append(pb, vote)
 		}
 
-		sk := NewDummyStakingKeeper(mockValset)
-		powerMap := buildPowerMap(sk)
-
-		ctx := sdk.NewContext(nil, abci.Header{}, false, nil)
-		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(ctx, powerMap))
+		require.Equal(t, tc.standardDeviation, pb.StandardDeviation())
 	}
 }
-
-func TestString(t *testing.T) {
-	pb := ExchangeRateBallot{}
-	require.Equal(t, "ExchangeRateBallot of 0 votes\n", pb.String())
-
-	vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(1123400), int64(oracleDecPrecision)), core.MicroSDRDenom, sdk.ValAddress{})
-	pb = append(pb, vote)
-	require.Equal(t, "ExchangeRateBallot of 1 votes\n\n  ExchangeRateVote\n\tDenom:    usdr, \n\tVoter:    , \n\tExchangeRate:    1.123400000000000000", pb.String())
-}
-
-// func TestPBTally(t *testing.T) {
-// 	_, addrs :=mock.GeneratePrivKeyAddressPairs(3)
-// 	tests := []struct {
-// 		inputs    []float64
-// 		weights   []int64
-// 		rewardees []sdk.AccAddress
-// 	}{
-// 		{
-// 			// Supermajority one number
-// 			[]float64{1.0, 2.0, 10.0, 100000.0},
-// 			[]int64{1, 1, 100, 1},
-// 			[]sdk.AccAddress{addrs[2]},
-// 		},
-// 		{
-// 			// Tie votes
-// 			[]float64{1.0, 2.0, 3.0, 4.0},
-// 			[]int64{1, 100, 100, 1},
-// 			[]sdk.AccAddress{addrs[1]},
-// 		},
-// 		{
-// 			// No votes
-// 			[]float64{},
-// 			[]int64{},
-// 			[]sdk.AccAddress{},
-// 		},
-
-// 		{
-// 			// Lots of random votes
-// 			[]float64{1.0, 78.48, 78.11, 79.0},
-// 			[]int64{1, 51, 79, 33},
-// 			[]sdk.AccAddress{addrs[1], addrs[2], addrs[3]},
-// 		},
-// 	}
-
-// 	for _, tc := range tests {
-// 		pb := ExchangeRateBallot{}
-// 		for i, input := range tc.inputs {
-// 			vote := NewExchangeRateVote(sdk.NewDecWithPrec(int64(input*100), 2), "",
-// 				sdk.NewInt(tc.weights[i]), addrs[i])
-// 			pb = append(pb, vote)
-// 		}
-
-// 		_, rewardees := pb.Tally()
-// 		require.Equal(t, len(tc.rewardees), len(rewardees))
-// 	}
-// }

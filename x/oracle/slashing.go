@@ -1,11 +1,11 @@
-package keeper
+package oracle
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SlashAndResetMissCounters do salsh any operator who over criteria & clear all operators miss counter to zero
-func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
+func SlashAndResetMissCounters(ctx sdk.Context, k Keeper) {
 	height := ctx.BlockHeight()
 	distributionHeight := height - sdk.ValidatorUpdateDelay - 1
 

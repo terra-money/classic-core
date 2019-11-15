@@ -10,27 +10,42 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 func TestOrganize(t *testing.T) {
 	input := CreateTestInput(t)
 
+	power := int64(100)
+	amt := sdk.TokensFromConsensusPower(power)
+	sh := staking.NewHandler(input.StakingKeeper)
+	ctx := input.Ctx
+
+	// Validator created
+	got := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
+	require.True(t, got.IsOK())
+	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
+	require.True(t, got.IsOK())
+	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
+	require.True(t, got.IsOK())
+	staking.EndBlocker(ctx, input.StakingKeeper)
+
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewExchangeRateVote(sdk.NewDec(17), core.MicroSDRDenom, ValAddrs[0]),
-		types.NewExchangeRateVote(sdk.NewDec(10), core.MicroSDRDenom, ValAddrs[1]),
-		types.NewExchangeRateVote(sdk.NewDec(6), core.MicroSDRDenom, ValAddrs[2]),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(17), core.MicroSDRDenom, ValAddrs[0]), power),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(10), core.MicroSDRDenom, ValAddrs[1]), power),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(6), core.MicroSDRDenom, ValAddrs[2]), power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewExchangeRateVote(sdk.NewDec(1000), core.MicroKRWDenom, ValAddrs[0]),
-		types.NewExchangeRateVote(sdk.NewDec(1300), core.MicroKRWDenom, ValAddrs[1]),
-		types.NewExchangeRateVote(sdk.NewDec(2000), core.MicroKRWDenom, ValAddrs[2]),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(1000), core.MicroKRWDenom, ValAddrs[0]), power),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(1300), core.MicroKRWDenom, ValAddrs[1]), power),
+		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(2000), core.MicroKRWDenom, ValAddrs[2]), power),
 	}
 
 	for _, vote := range sdrBallot {
-		input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote)
+		input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote.ExchangeRateVote)
 	}
 	for _, vote := range krwBallot {
-		input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote)
+		input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote.ExchangeRateVote)
 	}
 
 	// oranize votes by denom
