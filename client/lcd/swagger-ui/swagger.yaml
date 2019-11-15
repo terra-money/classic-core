@@ -2477,28 +2477,6 @@ paths:
             example: "0.05"
         500:
           description: Internal Server Error
-  /treasury/tax_rate/{epoch}:
-    get:
-      summary: Get tax rate at epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: epoch
-          description: Epoch number
-          required: true
-          type: number
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "0.05"
-        500:
-          description: Internal Server Error
   /treasury/tax_cap/{denom}:
     get:
       summary: Get tax cap of the denom
@@ -2537,51 +2515,6 @@ paths:
             description: 5%
         500:
           description: Internal Server Error
-  /treasury/reward_weight/{epoch}:
-    get:
-      summary: Get reward weight at epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: epoch
-          description: Epoch number
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "0.05"
-            description: 5%
-        500:
-          description: Internal Server Error
-  /treasury/historical_issuance/{epoch}:
-    get:
-      summary: Get total issuance at the epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: epoch
-          description: Epoch number
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
   /treasury/tax_proceeds:
     get:
       summary: Get current tax proceeds
@@ -2589,28 +2522,6 @@ paths:
         - Treasury
       produces:
         - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
-  /treasury/tax_proceeds/{epoch}:
-    get:
-      summary: Get tax proceeds at epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: epoch
-          description: Epoch number
-          required: true
-          type: integer
       responses:
         200:
           description: OK
@@ -2635,42 +2546,6 @@ paths:
             example: "0"
         500:
           description: Internal Server
-  /treasury/seigniorage_proceeds/{epoch}:
-    get:
-      summary: retrieves the size of the seigniorage pool at epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: epoch
-          description: Epoch number
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-          schema:
-            type: integer
-            example: "0"
-        500:
-          description: Internal Server Error
-  /treasury/current_epoch:
-    get:
-      summary: Get current epoch
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            example: "724"
-        404:
-          description: Not Found
   /treasury/parameters:
     get:
       summary: Get treasury module params
