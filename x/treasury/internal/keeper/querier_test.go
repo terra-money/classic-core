@@ -180,7 +180,7 @@ func TestQueryTaxProceeds(t *testing.T) {
 	taxProceeds := sdk.Coins{
 		sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1000).MulRaw(core.MicroUnit)),
 	}
-	input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, taxProceeds)
+	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
 
 	queriedTaxProceeds := getQueriedTaxProceeds(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 

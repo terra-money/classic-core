@@ -9,7 +9,7 @@ import (
 type TreasuryKeeper interface {
 	GetTaxRate(ctx sdk.Context) (rate sdk.Dec)
 	GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int)
-	RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins)
+	RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins)
 }
 
 // SupplyKeeper defines the expected supply Keeper (noalias)

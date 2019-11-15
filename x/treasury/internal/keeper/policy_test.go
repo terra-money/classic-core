@@ -34,7 +34,7 @@ func TestUpdateTaxRate(t *testing.T) {
 		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
 
 		taxProceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.ZeroInt()))
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, taxProceeds)
+		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
 		input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 	}
 
@@ -45,6 +45,7 @@ func TestUpdateTaxRate(t *testing.T) {
 
 func TestUpdateRewardWeight(t *testing.T) {
 	input := CreateTestInput(t)
+	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Create Validators
@@ -56,12 +57,21 @@ func TestUpdateRewardWeight(t *testing.T) {
 	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.True(t, res.IsOK())
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 
+	// Case 1: zero seigniorage will increase reward weight as much as possible
 	rewardPolicy := input.TreasuryKeeper.RewardPolicy(input.Ctx)
 	input.TreasuryKeeper.UpdateRewardPolicy(input.Ctx)
 	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx)
 	require.Equal(t, types.DefaultRewardWeight.Add(rewardPolicy.ChangeRateMax), rewardWeight)
+
+	// Case 2: huge seigniorage rewards will decrease reward weight by %types.DefaultSeigniorageBurdenTarget
+	input.TreasuryKeeper.SetEpochInitialIssuance(input.Ctx, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000000000000))))
+	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
+	input.TreasuryKeeper.UpdateRewardPolicy(input.Ctx)
+	rewardWeight = input.TreasuryKeeper.GetRewardWeight(input.Ctx)
+	require.Equal(t, types.DefaultRewardWeight.Add(rewardPolicy.ChangeRateMax).Mul(types.DefaultSeigniorageBurdenTarget), rewardWeight)
 }
 
 func TestUpdateTaxCap(t *testing.T) {

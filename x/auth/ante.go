@@ -138,7 +138,7 @@ func NewAnteHandler(ak AccountKeeper, supplyKeeper types.SupplyKeeper,
 			}
 
 			// record tax proceeds
-			treasuryKeeper.RecordTaxProceeds(newCtx, taxes)
+			treasuryKeeper.RecordEpochTaxProceeds(newCtx, taxes)
 
 			// reload the account as fees have been deducted
 			signerAccs[0] = ak.GetAccount(newCtx, signerAccs[0].GetAddress())

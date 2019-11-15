@@ -36,9 +36,9 @@ var (
 	DefaultGenesisState           = types.DefaultGenesisState
 	ValidateGenesis               = types.ValidateGenesis
 	GetTaxCapKey                  = types.GetTaxCapKey
-	GetMRKey                      = types.GetMRKey
+	GetTRKey                      = types.GetTRKey
 	GetSRKey                      = types.GetSRKey
-	GetTRLKey                     = types.GetTRLKey
+	GetTSLKey                     = types.GetTSLKey
 	GetSubkeyByEpoch              = types.GetSubkeyByEpoch
 	DefaultParams                 = types.DefaultParams
 	NewTaxRateUpdateProposal      = types.NewTaxRateUpdateProposal
@@ -55,9 +55,9 @@ var (
 	TaxCapKey                            = types.TaxCapKey
 	TaxProceedsKey                       = types.TaxProceedsKey
 	EpochInitialIssuanceKey              = types.EpochInitialIssuanceKey
-	MRKey                                = types.MRKey
+	TRKey                                = types.TRKey
 	SRKey                                = types.SRKey
-	TRLKey                               = types.TRLKey
+	TSLKey                               = types.TSLKey
 	ParamStoreKeyTaxPolicy               = types.ParamStoreKeyTaxPolicy
 	ParamStoreKeyRewardPolicy            = types.ParamStoreKeyRewardPolicy
 	ParamStoreKeySeigniorageBurdenTarget = types.ParamStoreKeySeigniorageBurdenTarget

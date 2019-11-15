@@ -71,14 +71,14 @@ func TestTaxProceeds(t *testing.T) {
 
 	for i := int64(0); i < 10; i++ {
 		proceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(100+i)))
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
-		input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, proceeds)
+		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, proceeds)
+		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, proceeds)
+		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, proceeds)
 
-		require.Equal(t, proceeds.Add(proceeds).Add(proceeds), input.TreasuryKeeper.PeekTaxProceeds(input.Ctx))
+		require.Equal(t, proceeds.Add(proceeds).Add(proceeds), input.TreasuryKeeper.PeekEpochTaxProceeds(input.Ctx))
 
-		input.TreasuryKeeper.SetTaxProceeds(input.Ctx, sdk.Coins{})
-		require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekTaxProceeds(input.Ctx))
+		input.TreasuryKeeper.SetEpochTaxProceeds(input.Ctx, sdk.Coins{})
+		require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekEpochTaxProceeds(input.Ctx))
 	}
 }
 
@@ -132,22 +132,22 @@ func TestIndicatorGetterSetter(t *testing.T) {
 
 	for e := int64(0); e < 10; e++ {
 		randomVal := sdk.NewDec(rand.Int63() + 1)
-		input.TreasuryKeeper.SetMR(input.Ctx, e, randomVal)
-		require.Equal(t, randomVal, input.TreasuryKeeper.GetMR(input.Ctx, e))
+		input.TreasuryKeeper.SetTR(input.Ctx, e, randomVal)
+		require.Equal(t, randomVal, input.TreasuryKeeper.GetTR(input.Ctx, e))
 		input.TreasuryKeeper.SetSR(input.Ctx, e, randomVal)
 		require.Equal(t, randomVal, input.TreasuryKeeper.GetSR(input.Ctx, e))
-		input.TreasuryKeeper.SetTRL(input.Ctx, e, randomVal)
-		require.Equal(t, randomVal, input.TreasuryKeeper.GetTRL(input.Ctx, e))
+		input.TreasuryKeeper.SetTSL(input.Ctx, e, randomVal.TruncateInt())
+		require.Equal(t, randomVal.TruncateInt(), input.TreasuryKeeper.GetTSL(input.Ctx, e))
 	}
 
-	input.TreasuryKeeper.ClearMRs(input.Ctx)
+	input.TreasuryKeeper.ClearTRs(input.Ctx)
 	input.TreasuryKeeper.ClearSRs(input.Ctx)
-	input.TreasuryKeeper.ClearTRLs(input.Ctx)
+	input.TreasuryKeeper.ClearTSLs(input.Ctx)
 
 	for e := int64(0); e < 10; e++ {
-		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetMR(input.Ctx, e))
+		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetTR(input.Ctx, e))
 		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetSR(input.Ctx, e))
-		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetTRL(input.Ctx, e))
+		require.Equal(t, sdk.ZeroInt(), input.TreasuryKeeper.GetTSL(input.Ctx, e))
 	}
 }
 

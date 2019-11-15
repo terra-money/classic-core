@@ -35,7 +35,7 @@ const (
 //
 // - 0x07<epoch_Bytes>: sdk.Dec
 //
-// - 0x08<epoch_Bytes>: sdk.Dec
+// - 0x08<epoch_Bytes>: sdk.Int
 var (
 	// Keys for store prefixes
 	TaxRateKey              = []byte{0x01} // a key for a tax-rate
@@ -45,9 +45,9 @@ var (
 	EpochInitialIssuanceKey = []byte{0x05} // a key for a initial epoch issuance
 
 	// Keys for store prefixes of internal purpose variables
-	MRKey  = []byte{0x06} // prefix for each key to a MR
+	TRKey  = []byte{0x06} // prefix for each key to a TR
 	SRKey  = []byte{0x07} // prefix for each key to a SR
-	TRLKey = []byte{0x08} // prefix for each key to a TRL
+	TSLKey = []byte{0x08} // prefix for each key to a TSL
 )
 
 // GetTaxCapKey - stored by *denom*
@@ -55,9 +55,9 @@ func GetTaxCapKey(denom string) []byte {
 	return append(TaxCapKey, []byte(denom)...)
 }
 
-// GetMRKey - stored by *epoch*
-func GetMRKey(epoch int64) []byte {
-	return GetSubkeyByEpoch(MRKey, epoch)
+// GetTRKey - stored by *epoch*
+func GetTRKey(epoch int64) []byte {
+	return GetSubkeyByEpoch(TRKey, epoch)
 }
 
 // GetSRKey - stored by *epoch*
@@ -65,9 +65,9 @@ func GetSRKey(epoch int64) []byte {
 	return GetSubkeyByEpoch(SRKey, epoch)
 }
 
-// GetTRLKey - stored by *epoch*
-func GetTRLKey(epoch int64) []byte {
-	return GetSubkeyByEpoch(TRLKey, epoch)
+// GetTSLKey - stored by *epoch*
+func GetTSLKey(epoch int64) []byte {
+	return GetSubkeyByEpoch(TSLKey, epoch)
 }
 
 // GetSubkeyByEpoch - stored by *epoch*

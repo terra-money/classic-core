@@ -2,7 +2,6 @@ package keeper
 
 import (
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -36,8 +35,8 @@ func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 
 	oldTaxRate := k.GetTaxRate(ctx)
 	inc := params.MiningIncrement
-	tlYear := k.rollingAverageIndicator(ctx, params.WindowLong, types.TRLKey)
-	tlMonth := k.rollingAverageIndicator(ctx, params.WindowShort, types.TRLKey)
+	tlYear := k.rollingAverageIndicator(ctx, params.WindowLong, TRL)
+	tlMonth := k.rollingAverageIndicator(ctx, params.WindowShort, TRL)
 
 	// No revenues, hike as much as possible.
 	if tlMonth.Equal(sdk.ZeroDec()) {
@@ -60,8 +59,8 @@ func (k Keeper) UpdateRewardPolicy(ctx sdk.Context) (newRewardWeight sdk.Dec) {
 	oldWeight := k.GetRewardWeight(ctx)
 	sbTarget := params.SeigniorageBurdenTarget
 
-	seigniorageSum := k.sumIndicator(ctx, params.WindowShort, types.SRKey)
-	totalSum := k.sumIndicator(ctx, params.WindowShort, types.MRKey)
+	seigniorageSum := k.sumIndicator(ctx, params.WindowShort, SR)
+	totalSum := k.sumIndicator(ctx, params.WindowShort, MR)
 
 	// No revenues; hike as much as possible
 	if totalSum.Equal(sdk.ZeroDec()) || seigniorageSum.Equal(sdk.ZeroDec()) {

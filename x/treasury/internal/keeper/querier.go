@@ -86,7 +86,7 @@ func querySeigniorageProceeds(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error
 }
 
 func queryTaxProceeds(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	proceeds := keeper.PeekTaxProceeds(ctx)
+	proceeds := keeper.PeekEpochTaxProceeds(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, proceeds)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

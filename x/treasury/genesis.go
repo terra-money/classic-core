@@ -1,8 +1,6 @@
 package treasury
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	core "github.com/terra-project/core/types"
 )
@@ -15,23 +13,21 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetTaxRate(ctx, data.TaxRate)
 	keeper.SetRewardWeight(ctx, data.RewardWeight)
 	keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
-	keeper.SetTaxProceeds(ctx, data.TaxProceed)
+	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
 
 	// store tax caps
 	for denom, taxCap := range data.TaxCaps {
 		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
 
-	fmt.Println(data.MRs)
-
-	for epoch, MR := range data.MRs {
-		keeper.SetMR(ctx, int64(epoch), MR)
+	for epoch, TR := range data.TRs {
+		keeper.SetTR(ctx, int64(epoch), TR)
 	}
 	for epoch, SR := range data.SRs {
 		keeper.SetSR(ctx, int64(epoch), SR)
 	}
-	for epoch, TRL := range data.TRLs {
-		keeper.SetTRL(ctx, int64(epoch), TRL)
+	for epoch, TSL := range data.TSLs {
+		keeper.SetTSL(ctx, int64(epoch), TSL)
 	}
 }
 
@@ -43,7 +39,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 
 	taxRate := keeper.GetTaxRate(ctx)
 	rewardWeight := keeper.GetRewardWeight(ctx)
-	taxProceeds := keeper.PeekTaxProceeds(ctx)
+	taxProceeds := keeper.PeekEpochTaxProceeds(ctx)
 	epochInitialIssuance := keeper.GetEpochInitialIssuance(ctx)
 
 	taxCaps := make(map[string]sdk.Int)
@@ -52,19 +48,19 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	var MRs []sdk.Dec
+	var TRs []sdk.Dec
 	var SRs []sdk.Dec
-	var TRLs []sdk.Dec
+	var TSLs []sdk.Int
 
 	curEpoch := core.GetEpoch(ctx)
 	for e := int64(0); e < curEpoch ||
 		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch)); e++ {
 
-		MRs = append(MRs, keeper.GetMR(ctx, e))
+		TRs = append(TRs, keeper.GetTR(ctx, e))
 		SRs = append(SRs, keeper.GetSR(ctx, e))
-		TRLs = append(TRLs, keeper.GetTRL(ctx, e))
+		TSLs = append(TSLs, keeper.GetTSL(ctx, e))
 	}
 
 	return NewGenesisState(params, taxRate, rewardWeight,
-		taxCaps, taxProceeds, epochInitialIssuance, MRs, SRs, TRLs)
+		taxCaps, taxProceeds, epochInitialIssuance, TRs, SRs, TSLs)
 }

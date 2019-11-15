@@ -15,15 +15,15 @@ type GenesisState struct {
 	TaxCaps              map[string]sdk.Int `json:"tax_caps" yaml:"tax_caps"`
 	TaxProceed           sdk.Coins          `json:"tax_proceed" yaml:"tax_proceed"`
 	EpochInitialIssuance sdk.Coins          `json:"epoch_initial_issuance" yaml:"epoch_initial_issuance"`
-	MRs                  []sdk.Dec          `json:"MRs" yaml:"MRs"`
+	TRs                  []sdk.Dec          `json:"TRs" yaml:"TRs"`
 	SRs                  []sdk.Dec          `json:"SRs" yaml:"SRs"`
-	TRLs                 []sdk.Dec          `json:"TRLs" yaml:"TRLs"`
+	TSLs                 []sdk.Int          `json:"TSLs" yaml:"TSLs"`
 }
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
 	taxCaps map[string]sdk.Int, taxProceed sdk.Coins,
-	epochInitialIssuance sdk.Coins, MRs []sdk.Dec, SRs []sdk.Dec, TRLs []sdk.Dec) GenesisState {
+	epochInitialIssuance sdk.Coins, TRs []sdk.Dec, SRs []sdk.Dec, TSLs []sdk.Int) GenesisState {
 	return GenesisState{
 		Params:               params,
 		TaxRate:              taxRate,
@@ -31,9 +31,9 @@ func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
 		TaxCaps:              taxCaps,
 		TaxProceed:           taxProceed,
 		EpochInitialIssuance: epochInitialIssuance,
-		MRs:                  MRs,
+		TRs:                  TRs,
 		SRs:                  SRs,
-		TRLs:                 TRLs,
+		TSLs:                 TSLs,
 	}
 }
 
@@ -46,9 +46,9 @@ func DefaultGenesisState() GenesisState {
 		TaxCaps:              make(map[string]sdk.Int),
 		TaxProceed:           sdk.Coins{},
 		EpochInitialIssuance: sdk.Coins{},
-		MRs:                  []sdk.Dec{},
+		TRs:                  []sdk.Dec{},
 		SRs:                  []sdk.Dec{},
-		TRLs:                 []sdk.Dec{},
+		TSLs:                 []sdk.Int{},
 	}
 }
 

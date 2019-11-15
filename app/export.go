@@ -194,9 +194,9 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	/* Handle treasury state. */
 
 	// clear all indicators
-	app.treasuryKeeper.ClearMRs(ctx)
+	app.treasuryKeeper.ClearTRs(ctx)
 	app.treasuryKeeper.ClearSRs(ctx)
-	app.treasuryKeeper.ClearTRLs(ctx)
+	app.treasuryKeeper.ClearTSLs(ctx)
 
 	app.treasuryKeeper.RecordEpochInitialIssuance(ctx)
 }

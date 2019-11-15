@@ -139,20 +139,20 @@ func (k Keeper) IterateTaxCap(ctx sdk.Context, handler func(denom string, taxCap
 	return
 }
 
-// RecordTaxProceeds adds tax proceeds that have been added this epoch
-func (k Keeper) RecordTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
+// RecordEpochTaxProceeds adds tax proceeds that have been added this epoch
+func (k Keeper) RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 	if delta.Empty() || delta.IsZero() {
 		return
 	}
 
-	proceeds := k.PeekTaxProceeds(ctx)
+	proceeds := k.PeekEpochTaxProceeds(ctx)
 	proceeds = proceeds.Add(delta)
 
-	k.SetTaxProceeds(ctx, proceeds)
+	k.SetEpochTaxProceeds(ctx, proceeds)
 }
 
-// SetTaxProceeds stores tax proceeds for the given epoch
-func (k Keeper) SetTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
+// SetEpochTaxProceeds stores tax proceeds for the given epoch
+func (k Keeper) SetEpochTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 
 	if taxProceeds.Empty() || taxProceeds.IsZero() {
@@ -163,8 +163,8 @@ func (k Keeper) SetTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	}
 }
 
-// PeekTaxProceeds peeks the total amount of taxes that have been collected in the given epoch.
-func (k Keeper) PeekTaxProceeds(ctx sdk.Context) (res sdk.Coins) {
+// PeekEpochTaxProceeds peeks the total amount of taxes that have been collected in the given epoch.
+func (k Keeper) PeekEpochTaxProceeds(ctx sdk.Context) (res sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.TaxProceedsKey)
 	if bz == nil {
@@ -209,10 +209,6 @@ func (k Keeper) GetEpochInitialIssuance(ctx sdk.Context) (res sdk.Coins) {
 // PeekEpochSeigniorage returns epoch seigniorage
 func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
 	epochIssuance := k.supplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
-	if epochIssuance.IsZero() {
-		epochIssuance = k.supplyKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
-	}
-
 	preEpochIssuance := k.GetEpochInitialIssuance(ctx).AmountOf(core.MicroLunaDenom)
 	epochSeigniorage := preEpochIssuance.Sub(epochIssuance)
 
@@ -223,10 +219,10 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
 	return epochSeigniorage
 }
 
-// GetMR returns MR of the epoch
-func (k Keeper) GetMR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
+// GetTR returns the tax rewards for the epoch
+func (k Keeper) GetTR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetMRKey(epoch))
+	bz := store.Get(types.GetTRKey(epoch))
 
 	if bz == nil {
 		res = sdk.ZeroDec()
@@ -237,26 +233,26 @@ func (k Keeper) GetMR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	return
 }
 
-// SetMR stores MR of the epoch
-func (k Keeper) SetMR(ctx sdk.Context, epoch int64, MR sdk.Dec) {
+// SetTR stores the tax rewards for the epoch
+func (k Keeper) SetTR(ctx sdk.Context, epoch int64, TR sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(MR)
-	store.Set(types.GetMRKey(epoch), bz)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(TR)
+	store.Set(types.GetTRKey(epoch), bz)
 }
 
-// ClearMRs delete all MRs from the store
-func (k Keeper) ClearMRs(ctx sdk.Context) {
+// ClearTRs delete all tax rewards from the store
+func (k Keeper) ClearTRs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
-	iter := sdk.KVStorePrefixIterator(store, types.MRKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TRKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
 }
 
-// GetSR returns SR of the epoch
+// GetSR returns the seigniorage rewards for the epoch
 func (k Keeper) GetSR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetSRKey(epoch))
@@ -270,7 +266,7 @@ func (k Keeper) GetSR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	return
 }
 
-// SetSR stores SR of the epoch
+// SetSR stores the seigniorage rewards for the epoch
 func (k Keeper) SetSR(ctx sdk.Context, epoch int64, SR sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -278,7 +274,7 @@ func (k Keeper) SetSR(ctx sdk.Context, epoch int64, SR sdk.Dec) {
 	store.Set(types.GetSRKey(epoch), bz)
 }
 
-// ClearSRs delete all SRs from the store
+// ClearSRs delete all seigniorage rewards from the store
 func (k Keeper) ClearSRs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -289,13 +285,13 @@ func (k Keeper) ClearSRs(ctx sdk.Context) {
 	}
 }
 
-// GetTRL returns TRL of the epoch
-func (k Keeper) GetTRL(ctx sdk.Context, epoch int64) (res sdk.Dec) {
+// GetTSL returns the total saked luna for the epoch
+func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) (res sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetTRLKey(epoch))
+	bz := store.Get(types.GetTSLKey(epoch))
 
 	if bz == nil {
-		res = sdk.ZeroDec()
+		res = sdk.ZeroInt()
 	} else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	}
@@ -303,19 +299,19 @@ func (k Keeper) GetTRL(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	return
 }
 
-// SetTRL stores TRL of the epoch
-func (k Keeper) SetTRL(ctx sdk.Context, epoch int64, TRL sdk.Dec) {
+// SetTSL stores the total saked luna for the epoch
+func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, TSL sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(TRL)
-	store.Set(types.GetTRLKey(epoch), bz)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(TSL)
+	store.Set(types.GetTSLKey(epoch), bz)
 }
 
-// ClearTRLs delete all TRLs from the store
-func (k Keeper) ClearTRLs(ctx sdk.Context) {
+// ClearTSLs delete all the total saked luna from the store
+func (k Keeper) ClearTSLs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
-	iter := sdk.KVStorePrefixIterator(store, types.TRLKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TSLKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
