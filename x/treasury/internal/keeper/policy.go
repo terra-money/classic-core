@@ -33,10 +33,10 @@ func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
 func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 	params := k.GetParams(ctx)
 
-	oldTaxRate := k.GetTaxRate(ctx, core.GetEpoch(ctx))
+	oldTaxRate := k.GetTaxRate(ctx)
 	inc := params.MiningIncrement
-	tlYear := RollingAverageIndicator(ctx, k, params.WindowLong, TRL)
-	tlMonth := RollingAverageIndicator(ctx, k, params.WindowShort, TRL)
+	tlYear := k.rollingAverageIndicator(ctx, params.WindowLong, TRL)
+	tlMonth := k.rollingAverageIndicator(ctx, params.WindowShort, TRL)
 
 	// No revenues, hike as much as possible.
 	if tlMonth.Equal(sdk.ZeroDec()) {
@@ -48,7 +48,7 @@ func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx, core.GetEpoch(ctx)+1, newTaxRate)
+	k.SetTaxRate(ctx, newTaxRate)
 	return
 }
 
@@ -56,12 +56,11 @@ func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 func (k Keeper) UpdateRewardPolicy(ctx sdk.Context) (newRewardWeight sdk.Dec) {
 	params := k.GetParams(ctx)
 
-	curEpoch := core.GetEpoch(ctx)
-	oldWeight := k.GetRewardWeight(ctx, curEpoch)
+	oldWeight := k.GetRewardWeight(ctx)
 	sbTarget := params.SeigniorageBurdenTarget
 
-	seigniorageSum := SumIndicator(ctx, k, params.WindowShort, SeigniorageRewardsForEpoch)
-	totalSum := SumIndicator(ctx, k, params.WindowShort, MiningRewardForEpoch)
+	seigniorageSum := k.sumIndicator(ctx, params.WindowShort, SR)
+	totalSum := k.sumIndicator(ctx, params.WindowShort, MR)
 
 	// No revenues; hike as much as possible
 	if totalSum.Equal(sdk.ZeroDec()) || seigniorageSum.Equal(sdk.ZeroDec()) {
@@ -75,6 +74,6 @@ func (k Keeper) UpdateRewardPolicy(ctx sdk.Context) (newRewardWeight sdk.Dec) {
 	newRewardWeight = params.RewardPolicy.Clamp(oldWeight, newRewardWeight)
 
 	// Set the new reward weight
-	k.SetRewardWeight(ctx, core.GetEpoch(ctx)+1, newRewardWeight)
+	k.SetRewardWeight(ctx, newRewardWeight)
 	return
 }

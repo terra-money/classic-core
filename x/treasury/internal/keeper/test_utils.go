@@ -220,3 +220,21 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey crypto.PubKey, amt
 		staking.Description{}, commission, sdk.OneInt(),
 	)
 }
+
+func setupValidators(t *testing.T) (TestInput, sdk.Handler) {
+	input := CreateTestInput(t)
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	// Create Validators
+	amt := sdk.TokensFromConsensusPower(100)
+	addr, val := ValAddrs[0], PubKeys[0]
+	addr1, val1 := ValAddrs[1], PubKeys[1]
+	res := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+
+	require.True(t, res.IsOK())
+	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.True(t, res.IsOK())
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, sh
+}

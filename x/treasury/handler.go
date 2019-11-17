@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	core "github.com/terra-project/core/types"
 )
 
 // NewTreasuryPolicyUpdateHandler custom gov proposal handler
@@ -28,11 +26,11 @@ func NewTreasuryPolicyUpdateHandler(k Keeper) govtypes.Handler {
 // handleTaxRateUpdateProposal is a handler for updating tax rate
 func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdateProposal) sdk.Error {
 	taxPolicy := k.TaxPolicy(ctx)
-	taxRate := k.GetTaxRate(ctx, core.GetEpoch(ctx))
+	taxRate := k.GetTaxRate(ctx)
 	newTaxRate := taxPolicy.Clamp(taxRate, p.TaxRate)
 
 	// Set the new tax rate to the store
-	k.SetTaxRate(ctx, core.GetEpoch(ctx), newTaxRate)
+	k.SetTaxRate(ctx, newTaxRate)
 
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated tax-rate to %s", newTaxRate))
@@ -42,11 +40,11 @@ func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdatePropo
 // handleRewardWeightUpdateProposal is a handler for updating reward weight
 func handleRewardWeightUpdateProposal(ctx sdk.Context, k Keeper, p RewardWeightUpdateProposal) sdk.Error {
 	rewardPolicy := k.RewardPolicy(ctx)
-	rewardWeight := k.GetRewardWeight(ctx, core.GetEpoch(ctx))
+	rewardWeight := k.GetRewardWeight(ctx)
 	newRewardWeight := rewardPolicy.Clamp(rewardWeight, p.RewardWeight)
 
 	// Set the new reward rate to the store
-	k.SetRewardWeight(ctx, core.GetEpoch(ctx), newRewardWeight)
+	k.SetRewardWeight(ctx, newRewardWeight)
 
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated reward-weight to %s", newRewardWeight))

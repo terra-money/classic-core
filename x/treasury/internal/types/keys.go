@@ -21,53 +21,58 @@ const (
 // Keys for treasury store
 // Items are stored with the following key: values
 //
-// - 0x01<epoch_Bytes>: sdk.Dec
+// - 0x01: sdk.Dec
 //
-// - 0x02<epoch_Bytes>: sdk.Dec
+// - 0x02: sdk.Dec
 //
 // - 0x03<denom_Bytes>: sdk.Int
 //
-// - 0x04<epoch_Bytes>: sdk.Coins
+// - 0x04: sdk.Coins
 //
-// - 0x05<epoch_Bytes>: sdk.Coins
+// - 0x05: sdk.Coins
+//
+// - 0x06<epoch_Bytes>: sdk.Dec
+//
+// - 0x07<epoch_Bytes>: sdk.Dec
+//
+// - 0x08<epoch_Bytes>: sdk.Int
 var (
 	// Keys for store prefixes
-	TaxRateKey            = []byte{0x01} // prefix for each key to a tax-rate
-	RewardWeightKey       = []byte{0x02} // prefix for each key to a reward-weight
-	TaxCapKey             = []byte{0x03} // prefix for each key to a tax-cap
-	TaxProceedsKey        = []byte{0x04} // prefix for each key to a tax-proceeds
-	HistoricalIssuanceKey = []byte{0x05} // prefix for each key to a historical issuance
+	TaxRateKey              = []byte{0x01} // a key for a tax-rate
+	RewardWeightKey         = []byte{0x02} // a key for a reward-weight
+	TaxCapKey               = []byte{0x03} // prefix for each key to a tax-cap
+	TaxProceedsKey          = []byte{0x04} // a key for a tax-proceeds
+	EpochInitialIssuanceKey = []byte{0x05} // a key for a initial epoch issuance
+
+	// Keys for store prefixes of internal purpose variables
+	TRKey  = []byte{0x06} // prefix for each key to a TR
+	SRKey  = []byte{0x07} // prefix for each key to a SR
+	TSLKey = []byte{0x08} // prefix for each key to a TSL
 )
-
-// GetTaxRateKey - stored by *epoch*
-func GetTaxRateKey(epoch int64) []byte {
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(epoch))
-	return append(TaxRateKey, b...)
-}
-
-// GetRewardWeightKey - stored by *epoch*
-func GetRewardWeightKey(epoch int64) []byte {
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(epoch))
-	return append(RewardWeightKey, b...)
-}
 
 // GetTaxCapKey - stored by *denom*
 func GetTaxCapKey(denom string) []byte {
 	return append(TaxCapKey, []byte(denom)...)
 }
 
-// GetTaxProceedsKey - stored by *epoch*
-func GetTaxProceedsKey(epoch int64) []byte {
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(epoch))
-	return append(TaxProceedsKey, b...)
+// GetTRKey - stored by *epoch*
+func GetTRKey(epoch int64) []byte {
+	return GetSubkeyByEpoch(TRKey, epoch)
 }
 
-// GetHistoricalIssuanceKey - stored by *epoch*
-func GetHistoricalIssuanceKey(epoch int64) []byte {
+// GetSRKey - stored by *epoch*
+func GetSRKey(epoch int64) []byte {
+	return GetSubkeyByEpoch(SRKey, epoch)
+}
+
+// GetTSLKey - stored by *epoch*
+func GetTSLKey(epoch int64) []byte {
+	return GetSubkeyByEpoch(TSLKey, epoch)
+}
+
+// GetSubkeyByEpoch - stored by *epoch*
+func GetSubkeyByEpoch(prefix []byte, epoch int64) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(epoch))
-	return append(HistoricalIssuanceKey, b...)
+	return append(prefix, b...)
 }

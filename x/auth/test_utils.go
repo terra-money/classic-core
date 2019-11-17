@@ -87,10 +87,11 @@ func setupTestInput() testInput {
 // DummyTreasuryKeeper no-lint
 type DummyTreasuryKeeper struct{}
 
+// NewDummyTreasuryKeeper no-lint
 func NewDummyTreasuryKeeper() DummyTreasuryKeeper { return DummyTreasuryKeeper{} }
 
 // GetTaxRate for the dummy treasury keeper
-func (tk DummyTreasuryKeeper) GetTaxRate(_ sdk.Context, _ int64) (rate sdk.Dec) {
+func (tk DummyTreasuryKeeper) GetTaxRate(_ sdk.Context) (rate sdk.Dec) {
 	return sdk.NewDecWithPrec(1, 3) // 0.1%
 }
 
@@ -99,8 +100,8 @@ func (tk DummyTreasuryKeeper) GetTaxCap(_ sdk.Context, _ string) (taxCap sdk.Int
 	return sdk.OneInt()
 }
 
-// RecordTaxProceeds for the dummy treasury keeper
-func (tk DummyTreasuryKeeper) RecordTaxProceeds(_ sdk.Context, _ sdk.Coins) {
+// RecordEpochTaxProceeds for the dummy treasury keeper
+func (tk DummyTreasuryKeeper) RecordEpochTaxProceeds(_ sdk.Context, _ sdk.Coins) {
 	return
 }
 

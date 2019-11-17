@@ -11,103 +11,96 @@ import (
 //
 // Three important concepts:
 // - MR: Fees + Seigniorage for a given epoch sums to Mining Rewards
-// - MRL: Computes the Mining Reward per unit Luna
-// - SMR: Computes the ratio of seigniorage rewards to overall mining rewards
-//
-// Rolling averages are also computed for MRL and SMR respectively.
-//
+// - SR: Computes the Seigniorage Reward
+// - TR: Computes the Tax Reward
+// - TSL: Total Staked Luna
+// - TRL: Computes the Tax Reward per unit Luna (TR/TSL)
 
-// TaxRewardsForEpoch returns tax rewards that have been collected in the epoch
-func TaxRewardsForEpoch(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	taxRewards := sdk.NewDecCoins(k.PeekTaxProceeds(ctx, epoch))
-
-	taxRewardInMicroSDR := sdk.ZeroDec()
-	for _, coinReward := range taxRewards {
-		if coinReward.Denom != core.MicroSDRDenom {
-			swappedReward, err := k.marketKeeper.ComputeInternalSwap(ctx, coinReward, core.MicroSDRDenom)
+// alignCoins align the coins to the given denom through the market swap
+func (k Keeper) alignCoins(ctx sdk.Context, coins sdk.DecCoins, denom string) (alignedAmt sdk.Dec) {
+	alignedAmt = sdk.ZeroDec()
+	for _, coinReward := range coins {
+		if coinReward.Denom != denom {
+			swappedReward, err := k.marketKeeper.ComputeInternalSwap(ctx, coinReward, denom)
 			if err != nil {
 				continue
 			}
-			taxRewardInMicroSDR = taxRewardInMicroSDR.Add(swappedReward.Amount)
+			alignedAmt = alignedAmt.Add(swappedReward.Amount)
 		} else {
-			taxRewardInMicroSDR = taxRewardInMicroSDR.Add(coinReward.Amount)
+			alignedAmt = alignedAmt.Add(coinReward.Amount)
 		}
 	}
 
-	return taxRewardInMicroSDR
+	return alignedAmt
 }
 
-// SeigniorageRewardsForEpoch returns seigniorage rewards for the epoch
-func SeigniorageRewardsForEpoch(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	seignioragePool := k.PeekEpochSeigniorage(ctx, epoch)
-	rewardAmt := k.GetRewardWeight(ctx, epoch).MulInt(seignioragePool)
-	seigniorageReward := sdk.NewDecCoinFromDec(core.MicroLunaDenom, rewardAmt)
+// UpdateIndicators updates interal indicators
+func (k Keeper) UpdateIndicators(ctx sdk.Context) {
+	epoch := core.GetEpoch(ctx)
 
-	microSDRReward, err := k.marketKeeper.ComputeInternalSwap(ctx, seigniorageReward, core.MicroSDRDenom)
-	if err != nil {
-		return sdk.ZeroDec()
-	}
+	// Compute Total Staked Luna (TSL)
+	totalStakedLuna := k.stakingKeeper.TotalBondedTokens(ctx)
 
-	return microSDRReward.Amount
+	k.SetTSL(ctx, epoch, totalStakedLuna)
+
+	// Compute Tax Rewards (TR)
+	taxRewards := sdk.NewDecCoins(k.PeekEpochTaxProceeds(ctx))
+	TR := k.alignCoins(ctx, taxRewards, core.MicroSDRDenom)
+
+	k.SetTR(ctx, epoch, TR)
+
+	// Reset tax proceeds after computing TRL for the next epoch
+	k.SetEpochTaxProceeds(ctx, sdk.Coins{})
+
+	// Compute Seigniorage Rewards (SR)
+	seigniorage := k.PeekEpochSeigniorage(ctx)
+	seigniorageRewardsAmt := k.GetRewardWeight(ctx).MulInt(seigniorage)
+	seigniorageRewards := sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroLunaDenom, seigniorageRewardsAmt)}
+	SR := k.alignCoins(ctx, seigniorageRewards, core.MicroSDRDenom)
+
+	k.SetSR(ctx, epoch, SR)
 }
 
-// MiningRewardForEpoch returns the sum of tax and seigniorage rewards for the epoch
-func MiningRewardForEpoch(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	taxRewards := TaxRewardsForEpoch(ctx, k, epoch)
-	seigniorageRewards := SeigniorageRewardsForEpoch(ctx, k, epoch)
-
-	return taxRewards.Add(seigniorageRewards)
+// TRL returns Tax Rewards per Luna for the epoch
+func TRL(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
+	return k.GetTR(ctx, epoch).QuoInt(k.GetTSL(ctx, epoch))
 }
 
-// TRL returns tax rewards per luna at the epoch
-func TRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	return UnitLunaIndicator(ctx, k, epoch, TaxRewardsForEpoch)
+// SR returns Seigniorage Rewards for the epoch
+func SR(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
+	return k.GetSR(ctx, epoch)
 }
 
-// SRL returns Seigniorage rewards per luna at the epoch
-func SRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	return UnitLunaIndicator(ctx, k, epoch, SeigniorageRewardsForEpoch)
+// MR returns Mining Rewards = Seigniorage Rewards + Tax Rates for the epoch
+func MR(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
+	return k.GetTR(ctx, epoch).Add(k.GetSR(ctx, epoch))
 }
 
-// MRL returns mining rewards per luna at the epoch
-func MRL(ctx sdk.Context, k Keeper, epoch int64) sdk.Dec {
-	return UnitLunaIndicator(ctx, k, epoch, MiningRewardForEpoch)
-}
-
-// UnitLunaIndicator evaluates the indicator function and divides it by the luna supply for the epoch
-func UnitLunaIndicator(ctx sdk.Context, k Keeper, epoch int64,
-	indicatorFunction func(sdk.Context, Keeper, int64) sdk.Dec) sdk.Dec {
-	indicator := indicatorFunction(ctx, k, epoch)
-	lunaTotalBondedAmount := k.stakingKeeper.TotalBondedTokens(ctx)
-
-	return indicator.QuoInt(lunaTotalBondedAmount)
-}
-
-// SumIndicator returns the sum of the indicator over several epochs.
-// If current epoch < epochs, we return the best we can and return SumIndicator(currentEpoch)
-func SumIndicator(ctx sdk.Context, k Keeper, epochs int64,
-	indicatorFunction func(sdk.Context, Keeper, int64) sdk.Dec) sdk.Dec {
+// sumIndicator returns the sum of the indicator over several epochs.
+// If current epoch < epochs, we return the best we can and return sumIndicator(currentEpoch)
+func (k Keeper) sumIndicator(ctx sdk.Context, epochs int64,
+	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
 	sum := sdk.ZeroDec()
 	curEpoch := core.GetEpoch(ctx)
 
 	for i := curEpoch; i >= 0 && i > (curEpoch-epochs); i-- {
-		val := indicatorFunction(ctx, k, i)
+		val := indicator(ctx, i, k)
 		sum = sum.Add(val)
 	}
 
 	return sum
 }
 
-// RollingAverageIndicator returns the rolling average of the indicator over several epochs.
-// If current epoch < epochs, we return the best we can and return RollingAverageIndicator(currentEpoch)
-func RollingAverageIndicator(ctx sdk.Context, k Keeper, epochs int64,
-	indicatorFunction func(sdk.Context, Keeper, int64) sdk.Dec) sdk.Dec {
+// rollingAverageIndicator returns the rolling average of the indicator over several epochs.
+// If current epoch < epochs, we return the best we can and return rollingAverageIndicator(currentEpoch)
+func (k Keeper) rollingAverageIndicator(ctx sdk.Context, epochs int64,
+	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
 	sum := sdk.ZeroDec()
 	curEpoch := core.GetEpoch(ctx)
 
 	var i int64
 	for i = curEpoch; i >= 0 && i > (curEpoch-epochs); i-- {
-		val := indicatorFunction(ctx, k, i)
+		val := indicator(ctx, i, k)
 		sum = sum.Add(val)
 	}
 
