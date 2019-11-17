@@ -45,7 +45,7 @@ func TestUpdateTaxRate(t *testing.T) {
 
 func TestUpdateRewardWeight(t *testing.T) {
 	input := CreateTestInput(t)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Create Validators
