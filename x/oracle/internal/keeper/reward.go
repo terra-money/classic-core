@@ -5,52 +5,57 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
 // RewardBallotWinners implements
 // at the end of every VotePeriod, we give out portion of seigniorage reward(reward-weight) to the
 // oracle voters that voted faithfully.
-func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners types.ClaimPool) {
-	// Sum weight of the claimpool
-	prevBallotWeightSum := int64(0)
+func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]types.Claim) {
+	// Sum weight of the claims
+	ballotPowerSum := int64(0)
 	for _, winner := range ballotWinners {
-		prevBallotWeightSum += winner.Weight
+		ballotPowerSum += winner.Weight
 	}
 
-	if prevBallotWeightSum != 0 {
-		rewardPool := k.getRewardPool(ctx)
-		if !rewardPool.Empty() {
-			// rewardCoin  = (oraclePool / rewardDistributionPeriod) * votePeriod
-			rewardDistributionPeriod := k.RewardDistributionPeriod(ctx)
-			votePeriod := k.VotePeriod(ctx)
+	// Exit if the ballot is empty
+	if ballotPowerSum == 0 {
+		return
+	}
 
-			// Dole out rewards
-			var distributedReward sdk.Coins
-			for _, winner := range ballotWinners {
-				rewardCoins := sdk.NewCoins()
-				rewardeeVal := k.StakingKeeper.Validator(ctx, winner.Recipient)
+	rewardPool := k.getRewardPool(ctx)
 
-				for _, poolCoin := range rewardPool {
-					// The amount of the coin will be distributed in this vote period
-					totalRewardAmt := sdk.NewDecFromInt(poolCoin.Amount).MulInt64(votePeriod).QuoInt64(rewardDistributionPeriod)
-					// Reflects contribution
-					rewardAmt := totalRewardAmt.QuoInt64(prevBallotWeightSum).MulInt64(winner.Weight).TruncateInt()
-					rewardCoins = append(rewardCoins, sdk.NewCoin(poolCoin.Denom, rewardAmt))
-				}
+	// return if there's no rewards to give out
+	if rewardPool.Empty() {
+		return
+	}
 
-				// In case absence of the validator, we just skip distribution
-				if rewardeeVal != nil {
-					k.distrKeeper.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
-					distributedReward = distributedReward.Add(rewardCoins)
-				}
-			}
+	// rewardCoin  = oraclePool / rewardDistributionWindow
+	periodRewards := sdk.NewDecFromInt(rewardPool.AmountOf(core.MicroLunaDenom)).
+		QuoInt64(k.RewardDistributionWindow(ctx))
 
-			// Move distributed reward to distribution module
-			err := k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrName, distributedReward)
-			if err != nil {
-				panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
-			}
+	// Dole out rewards
+	var distributedReward sdk.Coins
+	for _, winner := range ballotWinners {
+		rewardCoins := sdk.NewCoins()
+		rewardeeVal := k.StakingKeeper.Validator(ctx, winner.Recipient)
+
+		// Reflects contribution
+		rewardAmt := periodRewards.QuoInt64(ballotPowerSum).MulInt64(winner.Weight).TruncateInt()
+		rewardCoins = append(rewardCoins, sdk.NewCoin(core.MicroLunaDenom, rewardAmt))
+
+		// In case absence of the validator, we just skip distribution
+		if rewardeeVal != nil {
+			k.distrKeeper.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
+			distributedReward = distributedReward.Add(rewardCoins)
 		}
 	}
+
+	// Move distributed reward to distribution module
+	err := k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrName, distributedReward)
+	if err != nil {
+		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
+	}
+
 }

@@ -14,8 +14,6 @@ import (
 func TestSettle(t *testing.T) {
 	input := CreateTestInput(t)
 
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
-
 	issuance := sdk.NewInt(rand.Int63() + 1)
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, issuance)))
@@ -37,6 +35,6 @@ func TestSettle(t *testing.T) {
 	oracleRewardAmt := rewardWeight.MulInt(issuance).TruncateInt()
 	leftAmt := issuance.Sub(oracleRewardAmt)
 
-	require.Equal(t, oracleRewardAmt, oracleAcc.GetCoins().AmountOf(core.MicroSDRDenom))
-	require.Equal(t, leftAmt, feePool.CommunityPool.AmountOf(core.MicroSDRDenom).TruncateInt())
+	require.Equal(t, oracleRewardAmt, oracleAcc.GetCoins().AmountOf(core.MicroLunaDenom))
+	require.Equal(t, leftAmt, feePool.CommunityPool.AmountOf(core.MicroLunaDenom).TruncateInt())
 }

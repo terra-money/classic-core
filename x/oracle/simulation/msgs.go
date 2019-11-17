@@ -23,7 +23,7 @@ func SimulateMsgPrevote(k oracle.Keeper) simulation.Operation {
 		bz, _ := oracle.VoteHash("1234", sdk.NewDec(1700), core.MicroSDRDenom, valAddr)
 		voteHash := hex.EncodeToString(bz)
 
-		msg := oracle.NewMsgPricePrevote(voteHash, core.MicroSDRDenom, acc.Address, valAddr)
+		msg := oracle.NewMsgExchangeRatePrevote(voteHash, core.MicroSDRDenom, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}
@@ -45,7 +45,7 @@ func SimulateMsgVote(k oracle.Keeper) simulation.Operation {
 		acc := simulation.RandomAcc(r, accs)
 		valAddr := sdk.ValAddress(acc.Address)
 
-		msg := oracle.NewMsgPriceVote(sdk.NewDec(1700), "1234", core.MicroSDRDenom, acc.Address, valAddr)
+		msg := oracle.NewMsgExchangeRateVote(sdk.NewDec(1700), "1234", core.MicroSDRDenom, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}
@@ -59,15 +59,15 @@ func SimulateMsgVote(k oracle.Keeper) simulation.Operation {
 	}
 }
 
-// SimulateMsgDelegateFeederPermission generates a MsgDelegateFeederPermission with random values
-func SimulateMsgDelegateFeederPermission(k oracle.Keeper) simulation.Operation {
+// SimulateMsgDelegateFeedConsent generates a MsgDelegateFeedConsent with random values
+func SimulateMsgDelegateFeedConsent(k oracle.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
 
 		acc := simulation.RandomAcc(r, accs)
 		acc2 := simulation.RandomAcc(r, accs)
 		valAddr := sdk.ValAddress(acc.Address)
-		msg := oracle.NewMsgDelegateFeederPermission(valAddr, acc2.Address)
+		msg := oracle.NewMsgDelegateFeedConsent(valAddr, acc2.Address)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}

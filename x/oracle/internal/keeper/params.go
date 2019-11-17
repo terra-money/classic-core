@@ -23,21 +23,39 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// RewardBand returns the ratio of allowable price error that a validator can be rewared
+// RewardBand returns the ratio of allowable exchange rate error that a validator can be rewared
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardBand, &res)
 	return
 }
 
-// RewardDistributionPeriod returns the number of blocks of the the period during which seigiornage reward comes in and then is distributed.
-func (k Keeper) RewardDistributionPeriod(ctx sdk.Context) (res int64) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardDistributionPeriod, &res)
+// RewardDistributionWindow returns the number of vote periods during which seigiornage reward comes in and then is distributed.
+func (k Keeper) RewardDistributionWindow(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyRewardDistributionWindow, &res)
 	return
 }
 
 // Whitelist returns the denom list that can be acitivated
 func (k Keeper) Whitelist(ctx sdk.Context) (res types.DenomList) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyWhitelist, &res)
+	return
+}
+
+// SlashFraction returns oracle voting penalty rate
+func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeySlashFraction, &res)
+	return
+}
+
+// SlashWindow returns # of vote period for oracle slashing
+func (k Keeper) SlashWindow(ctx sdk.Context) (res int64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeySlashWindow, &res)
+	return
+}
+
+// MinValidPerWindow returns oracle slashing threshold
+func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMinValidPerWindow, &res)
 	return
 }
 

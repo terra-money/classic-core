@@ -427,7 +427,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 					})
 				return v
 			}(nil),
-			oraclesim.SimulateMsgDelegateFeederPermission(app.oracleKeeper),
+			oraclesim.SimulateMsgDelegateFeedConsent(app.oracleKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {

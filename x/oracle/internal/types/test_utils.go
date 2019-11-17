@@ -15,7 +15,7 @@ import (
 const oracleDecPrecision = 6
 
 // GenerateRandomTestCase nolint
-func GenerateRandomTestCase() (prices []float64, valValAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
+func GenerateRandomTestCase() (rates []float64, valValAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
 	valValAddrs = []sdk.ValAddress{}
 	mockValidators := []MockValidator{}
 
@@ -24,8 +24,8 @@ func GenerateRandomTestCase() (prices []float64, valValAddrs []sdk.ValAddress, s
 	rand.Seed(int64(time.Now().Nanosecond()))
 	numInputs := 10 + (rand.Int() % 100)
 	for i := 0; i < numInputs; i++ {
-		price := float64(int64(rand.Float64()*base)) / base
-		prices = append(prices, price)
+		rate := float64(int64(rand.Float64()*base)) / base
+		rates = append(rates, rate)
 
 		pubKey := secp256k1.GenPrivKey().PubKey()
 		valValAddr := sdk.ValAddress(pubKey.Address())
@@ -74,6 +74,17 @@ func (sk DummyStakingKeeper) Validator(ctx sdk.Context, address sdk.ValAddress) 
 // TotalBondedTokens nolint
 func (DummyStakingKeeper) TotalBondedTokens(_ sdk.Context) sdk.Int {
 	return sdk.ZeroInt()
+}
+
+// Slash nolint
+func (DummyStakingKeeper) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) {}
+
+// IterateValidators nolint
+func (DummyStakingKeeper) IterateValidators(sdk.Context, func(index int64, validator exported.ValidatorI) (stop bool)) {
+}
+
+// Jail nolint
+func (DummyStakingKeeper) Jail(sdk.Context, sdk.ConsAddress) {
 }
 
 type MockValidator struct {

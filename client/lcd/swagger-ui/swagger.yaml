@@ -2140,7 +2140,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/{denom}/votes:
     post:
-      summary: Generate oracle price vote message containing price and salt for an prevote
+      summary: Generate oracle exchange rate vote message containing exchange rate and salt for an prevote
       tags:
         - Oracle
       produces:
@@ -2165,7 +2165,7 @@ paths:
         500:
           description: Internal Server Error
     get:
-      summary: Request to get the currently unelected outstanding price oracle vote
+      summary: Request to get the currently unelected outstanding exchange rate oracle vote
       tags:
         - Oracle
       produces:
@@ -2182,14 +2182,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PriceVote"
+              $ref: "#/definitions/ExchangeRateVote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
   /oracle/denoms/{denom}/votes/{validator}:
     get:
-      summary: Request to get the currently unelected outstanding price oracle vote
+      summary: Request to get the currently unelected outstanding exchange rate oracle vote
       tags:
         - Oracle
       produces:
@@ -2210,14 +2210,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PriceVote"
+              $ref: "#/definitions/ExchangeRateVote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
   /oracle/voters/{validator}/votes:
     get:
-      summary: Request to get the currently outstanding price oracle votes of a validator
+      summary: Request to get the currently outstanding exchange rate oracle votes of a validator
       tags:
         - Oracle
       produces:
@@ -2233,14 +2233,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PriceVote"
+              $ref: "#/definitions/ExchangeRateVote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
   /oracle/denoms/{denom}/prevotes:
     post:
-      summary: Generate oracle price prevote message containing hash of an vote
+      summary: Generate oracle exchange rate prevote message containing hash of an vote
       tags:
         - Oracle
       produces:
@@ -2265,7 +2265,7 @@ paths:
         500:
           description: Internal Server Error
     get:
-      summary: Request to get the currently outstanding price oracle prevote
+      summary: Request to get the currently outstanding exchange rate oracle prevote
       tags:
         - Oracle
       produces:
@@ -2282,14 +2282,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PricePrevote"
+              $ref: "#/definitions/ExchangeRatePrevote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
   /oracle/denoms/{denom}/prevotes/{validator}:
     get:
-      summary: Request to get the currently outstanding price oracle prevote
+      summary: Request to get the currently outstanding exchange rate oracle prevote
       tags:
         - Oracle
       produces:
@@ -2310,14 +2310,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PricePrevote"
+              $ref: "#/definitions/ExchangeRatePrevote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
   /oracle/voters/{validator}/prevotes:
     get:
-      summary: Request to get the currently outstanding price oracle prevotes of a validator
+      summary: Request to get the currently outstanding exchange rate oracle prevotes of a validator
       tags:
         - Oracle
       produces:
@@ -2333,14 +2333,14 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/PricePrevote"
+              $ref: "#/definitions/ExchangeRatePrevote"
         400:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/denoms/{denom}/price:
+  /oracle/denoms/{denom}/exchange_rate:
     get:
-      summary: Get the current effective price in Luna for the asset
+      summary: Get the current effective exchange rate in Luna for the asset
       tags:
         - Oracle
       produces:
@@ -2353,7 +2353,7 @@ paths:
           type: string
       responses:
         200:
-          description: current price of denom i.e. "1000.0"
+          description: current exchange rate of denom i.e. "1000.0"
           schema:
             type: number
             example: "1872.000000000000000000"
@@ -2361,9 +2361,9 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
-  /oracle/denoms/prices:
+  /oracle/denoms/exchange_rates:
     get:
-      summary: Get all activated denom coins
+      summary: Get all activated exchange rates
       tags:
         - Oracle
       produces:
@@ -2441,6 +2441,30 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/Address"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/voters/{validator}/miss:
+    get:
+      summary: Get the number of vote periods missed in this oracle slash window.
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: integer
+            example: "100"
         400:
           description: Bad Request
         500:
@@ -3314,10 +3338,10 @@ definitions:
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
-      price:
+      exchange_rate:
         type: number
         example: "1000.0"
-        description: "price of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash"
+        description: "exchange rate of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash"
       salt:
         type: string
         example: "abcd"
@@ -3333,10 +3357,10 @@ definitions:
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
-      price:
+      exchange_rate:
         type: number
         example: "1000.0"
-        description: "proof price of Luna in denom currency was used to make prevote hash; initial prevote does not require this field"
+        description: "proof exchange rate of Luna in denom currency was used to make prevote hash; initial prevote does not require this field"
       salt:
         type: string
         example: "abcd"
@@ -3350,10 +3374,10 @@ definitions:
         $ref: "#/definitions/BaseReq"
       feeder:
         $ref: "#/definitions/Address"
-  PriceVote:
+  ExchangeRateVote:
     type: object
     properties:
-      price:
+      exchange_rate:
         type: number
         example: "0.01241"
       denom:
@@ -3361,7 +3385,7 @@ definitions:
         example: "ukrw"
       voter:
         $ref: "#/definitions/ValidatorAddress"
-  PricePrevote:
+  ExchangeRatePrevote:
     type: object
     properties:
       hash:

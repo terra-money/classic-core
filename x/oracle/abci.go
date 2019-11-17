@@ -4,6 +4,7 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 
 	core "github.com/terra-project/core/types"
 )
@@ -17,77 +18,116 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	actives := k.GetActiveDenoms(ctx)
-	votes := k.CollectVotes(ctx)
+	// Build valid votes counter and winner map over all validators in active set
+	validVotesCounterMap := make(map[string]int64)
+	winnerMap := make(map[string]types.Claim)
+	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
 
-	// Clear prices
-	for _, activeDenom := range actives {
-		k.DeletePrice(ctx, activeDenom)
-	}
+		// Exclude not bonded vaildator or jailed validators from tallying
+		if validator.IsBonded() && !validator.IsJailed() {
+			valAddr := validator.GetOperator()
+			validVotesCounterMap[valAddr.String()] = int64(0)
+			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
+		}
 
-	// Changes whitelist array to map for the fast lookup
-	whitelistMap := make(map[string]bool)
+		return false
+	})
+
+	whitelist := make(map[string]bool)
 	for _, denom := range k.Whitelist(ctx) {
-		whitelistMap[denom] = true
+		whitelist[denom] = true
 	}
 
-	// Iterate through votes and update prices; drop if not enough votes have been achieved.
-	claimMap := make(map[string]types.Claim)
-	for denom, ballot := range votes {
+	// Clear exchange rates
+	for denom := range whitelist {
+		k.DeleteLunaExchangeRate(ctx, denom)
+	}
 
-		// Check whitelist; if denom is not exists or exists but the ballot is not passed, then skip
-		if _, exists := whitelistMap[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
+	// Organize votes to ballot by denom
+	// NOTE: **Filter out inative or jailed validators**
+	// NOTE: **Make abstain votes to have zero vote power**
+	voteMap := k.OrganizeBallotByDenom(ctx)
+
+	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+	for denom, ballot := range voteMap {
+
+		// If denom is not in the whitelist, or the ballot for it has failed, then skip
+		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
 			continue
 		}
 
-		// Get weighted median prices, and faithful respondants
-		mod, ballotWinners := tally(ctx, ballot, k)
+		// Get weighted median exchange rates, and faithful respondants
+		ballotMedian, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
+
+		// Set the exchange rate
+		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
 
 		// Collect claims of ballot winners
-		for _, winner := range ballotWinners {
-			key := winner.Recipient.String()
-			claim, exists := claimMap[key]
-			if exists {
-				claim.Weight += winner.Weight
-				claimMap[key] = claim
-			} else {
-				claimMap[key] = winner
-			}
+		for _, ballotWinningClaim := range ballotWinningClaims {
+			key := ballotWinningClaim.Recipient.String()
+
+			// Update claim
+			prevClaim := winnerMap[key]
+			prevClaim.Weight += ballotWinningClaim.Weight
+			winnerMap[key] = prevClaim
+
+			// Increase valid votes counter
+			validVotesCounterMap[key]++
 		}
 
-		// Set price to the store
-		k.SetLunaPrice(ctx, denom, mod)
+		// Emit abci events
 		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypePriceUpdate,
+			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
 				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyPrice, mod.String()),
+				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
 			),
 		)
 	}
 
-	// Convert map to array
-	var claimPool types.ClaimPool
-	for _, claim := range claimMap {
-		claimPool = append(claimPool, claim)
+	//---------------------------
+	// Do miss counting & slashing
+
+	whitelistLen := int64(len(whitelist))
+	for operatorBechAddr, count := range validVotesCounterMap {
+		// Skip abstain & valid voters
+		if count == whitelistLen {
+			continue
+		}
+
+		// Increase miss counter
+		operator, _ := sdk.ValAddressFromBech32(operatorBechAddr) // error never occur
+		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
+	}
+
+	// Do slash who did miss voting over threshold and
+	// reset miss counters of all validators at the last block of slash window
+	if core.IsPeriodLastBlock(ctx, params.VotePeriod*params.SlashWindow) {
+		SlashAndResetMissCounters(ctx, k)
 	}
 
 	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, claimPool)
+	k.RewardBallotWinners(ctx, winnerMap)
 
+	// Clear the ballot
+	clearBallots(k, ctx, params)
+
+	return
+}
+
+// clearBallots clears all tallied prevotes and votes from the store
+func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 	// Clear all prevotes
-	k.IteratePrevotes(ctx, func(prevote PricePrevote) (stop bool) {
+	k.IterateExchangeRatePrevotes(ctx, func(prevote types.ExchangeRatePrevote) (stop bool) {
 		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
-			k.DeletePrevote(ctx, prevote)
+			k.DeleteExchangeRatePrevote(ctx, prevote)
 		}
 
 		return false
 	})
 
 	// Clear all votes
-	k.IterateVotes(ctx, func(vote PriceVote) (stop bool) {
-		k.DeleteVote(ctx, vote)
+	k.IterateExchangeRateVotes(ctx, func(vote types.ExchangeRateVote) (stop bool) {
+		k.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
-
-	return
 }

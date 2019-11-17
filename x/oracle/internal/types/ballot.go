@@ -9,22 +9,36 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// PriceBallot is a convinience wrapper around a PriceVote slice
-type PriceBallot []PriceVote
+// VoteForTally is a convinience wrapper to reduct redundant lookup cost
+type VoteForTally struct {
+	ExchangeRateVote
+	Power int64
+}
+
+// NewVoteForTally returns a new VoteForTally instance
+func NewVoteForTally(vote ExchangeRateVote, power int64) VoteForTally {
+	return VoteForTally{
+		vote,
+		power,
+	}
+}
+
+// ExchangeRateBallot is a convinience wrapper around a ExchangeRateVote slice
+type ExchangeRateBallot []VoteForTally
 
 // Power returns the total amount of voting power in the ballot
-func (pb PriceBallot) Power(ctx sdk.Context, sk StakingKeeper) int64 {
+func (pb ExchangeRateBallot) Power() int64 {
 	totalPower := int64(0)
 	for _, vote := range pb {
-		totalPower += vote.getPower(ctx, sk)
+		totalPower += vote.Power
 	}
 
 	return totalPower
 }
 
-// WeightedMedian returns the median weighted by the power of the PriceVote.
-func (pb PriceBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec {
-	totalPower := pb.Power(ctx, sk)
+// WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
+func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
+	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
 			sort.Sort(pb)
@@ -32,28 +46,28 @@ func (pb PriceBallot) WeightedMedian(ctx sdk.Context, sk StakingKeeper) sdk.Dec 
 
 		pivot := int64(0)
 		for _, v := range pb {
-			votePower := v.getPower(ctx, sk)
+			votePower := v.Power
 
 			pivot += votePower
 			if pivot >= (totalPower / 2) {
-				return v.Price
+				return v.ExchangeRate
 			}
 		}
 	}
 	return sdk.ZeroDec()
 }
 
-// StandardDeviation returns the standard deviation by the power of the PriceVote.
-func (pb PriceBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (standardDeviation sdk.Dec) {
+// StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
+func (pb ExchangeRateBallot) StandardDeviation() (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
 
-	median := pb.WeightedMedian(ctx, sk)
+	median := pb.WeightedMedian()
 
 	sum := sdk.ZeroDec()
 	for _, v := range pb {
-		deviation := v.Price.Sub(median)
+		deviation := v.ExchangeRate.Sub(median)
 		sum = sum.Add(deviation.Mul(deviation))
 	}
 
@@ -67,26 +81,17 @@ func (pb PriceBallot) StandardDeviation(ctx sdk.Context, sk StakingKeeper) (stan
 }
 
 // Len implements sort.Interface
-func (pb PriceBallot) Len() int {
+func (pb ExchangeRateBallot) Len() int {
 	return len(pb)
 }
 
 // Less reports whether the element with
 // index i should sort before the element with index j.
-func (pb PriceBallot) Less(i, j int) bool {
-	return pb[i].Price.LTE(pb[j].Price)
+func (pb ExchangeRateBallot) Less(i, j int) bool {
+	return pb[i].ExchangeRate.LTE(pb[j].ExchangeRate)
 }
 
 // Swap implements sort.Interface.
-func (pb PriceBallot) Swap(i, j int) {
+func (pb ExchangeRateBallot) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
-}
-
-// String implements fmt.Stringer interface
-func (pb PriceBallot) String() (out string) {
-	out = fmt.Sprintf("PriceBallot of %d votes\n", pb.Len())
-	for _, pv := range pb {
-		out += fmt.Sprintf("\n  %s", pv.String())
-	}
-	return
 }

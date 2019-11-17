@@ -168,21 +168,26 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	/* Handle oracle state. */
 
 	// Clear all prevotes
-	app.oracleKeeper.IteratePrevotes(ctx, func(prevote oracle.PricePrevote) (stop bool) {
-		app.oracleKeeper.DeletePrevote(ctx, prevote)
+	app.oracleKeeper.IterateExchangeRatePrevotes(ctx, func(prevote oracle.ExchangeRatePrevote) (stop bool) {
+		app.oracleKeeper.DeleteExchangeRatePrevote(ctx, prevote)
 
 		return false
 	})
 
 	// Clear all votes
-	app.oracleKeeper.IterateVotes(ctx, func(vote oracle.PriceVote) (stop bool) {
-		app.oracleKeeper.DeleteVote(ctx, vote)
+	app.oracleKeeper.IterateExchangeRateVotes(ctx, func(vote oracle.ExchangeRateVote) (stop bool) {
+		app.oracleKeeper.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
 
 	// Clear all prices
-	app.oracleKeeper.IterateLunaPrices(ctx, func(denom string, price sdk.Dec) bool {
-		app.oracleKeeper.DeletePrice(ctx, denom)
+	app.oracleKeeper.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) bool {
+		app.oracleKeeper.DeleteLunaExchangeRate(ctx, denom)
+		return false
+	})
+
+	app.oracleKeeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, _ int64) bool {
+		app.oracleKeeper.SetMissCounter(ctx, operator, 0)
 		return false
 	})
 

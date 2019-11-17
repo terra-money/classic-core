@@ -43,7 +43,10 @@ func TestRewardBallotWinners(t *testing.T) {
 	// Add claim pools
 	claim := types.NewClaim(10, addr)
 	claim2 := types.NewClaim(20, addr1)
-	claimPool := types.ClaimPool{claim, claim2}
+	claims := map[string]types.Claim{
+		addr.String():  claim,
+		addr1.String(): claim2,
+	}
 
 	// Prepare reward pool
 	givingAmt := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 3000000))
@@ -52,16 +55,15 @@ func TestRewardBallotWinners(t *testing.T) {
 	require.NoError(t, err)
 	input.SupplyKeeper.SetModuleAccount(ctx, acc)
 
-	votePeriod := input.OracleKeeper.VotePeriod(input.Ctx)
-	rewardDistributionPeriod := input.OracleKeeper.RewardDistributionPeriod(input.Ctx)
-	input.OracleKeeper.RewardBallotWinners(ctx, claimPool)
+	rewardDistributionWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
+	input.OracleKeeper.RewardBallotWinners(ctx, claims)
 	outstandingRewardsDec := input.DistrKeeper.GetValidatorOutstandingRewards(ctx, addr)
 	outstandingRewards, _ := outstandingRewardsDec.TruncateDecimal()
-	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).QuoInt64(rewardDistributionPeriod).MulInt64(votePeriod).QuoInt64(3).TruncateInt(),
+	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).QuoInt64(rewardDistributionWindow).QuoInt64(3).TruncateInt(),
 		outstandingRewards.AmountOf(core.MicroLunaDenom))
 
 	outstandingRewardsDec1 := input.DistrKeeper.GetValidatorOutstandingRewards(ctx, addr1)
 	outstandingRewards1, _ := outstandingRewardsDec1.TruncateDecimal()
-	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).QuoInt64(rewardDistributionPeriod).MulInt64(votePeriod).QuoInt64(3).MulInt64(2).TruncateInt(),
+	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroLunaDenom)).QuoInt64(rewardDistributionWindow).QuoInt64(3).MulInt64(2).TruncateInt(),
 		outstandingRewards1.AmountOf(core.MicroLunaDenom))
 }

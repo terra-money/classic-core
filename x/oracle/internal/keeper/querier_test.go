@@ -46,12 +46,12 @@ func TestQueryPrevotes(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	prevote1 := types.NewPricePrevote("", core.MicroSDRDenom, ValAddrs[0], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote1)
-	prevote2 := types.NewPricePrevote("", core.MicroSDRDenom, ValAddrs[1], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote2)
-	prevote3 := types.NewPricePrevote("", core.MicroLunaDenom, ValAddrs[2], 0)
-	input.OracleKeeper.AddPrevote(input.Ctx, prevote3)
+	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[0], 0)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
+	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[1], 0)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
+	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, ValAddrs[2], 0)
+	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	// voter denom both query params
 	queryParams := types.NewQueryPrevotesParams(ValAddrs[0], core.MicroSDRDenom)
@@ -66,7 +66,7 @@ func TestQueryPrevotes(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QueryPrevotes}, req)
 	require.NoError(t, err)
 
-	var filteredPrevotes types.PricePrevotes
+	var filteredPrevotes types.ExchangeRatePrevotes
 	err = cdc.UnmarshalJSON(res, &filteredPrevotes)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(filteredPrevotes))
@@ -114,12 +114,12 @@ func TestQueryVotes(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	vote1 := types.NewPriceVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[0])
-	input.OracleKeeper.AddVote(input.Ctx, vote1)
-	vote2 := types.NewPriceVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[1])
-	input.OracleKeeper.AddVote(input.Ctx, vote2)
-	vote3 := types.NewPriceVote(sdk.NewDec(1700), core.MicroLunaDenom, ValAddrs[2])
-	input.OracleKeeper.AddVote(input.Ctx, vote3)
+	vote1 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[0])
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote1)
+	vote2 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroSDRDenom, ValAddrs[1])
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote2)
+	vote3 := types.NewExchangeRateVote(sdk.NewDec(1700), core.MicroLunaDenom, ValAddrs[2])
+	input.OracleKeeper.AddExchangeRateVote(input.Ctx, vote3)
 
 	// voter denom both query params
 	queryParams := types.NewQueryVotesParams(ValAddrs[0], core.MicroSDRDenom)
@@ -134,7 +134,7 @@ func TestQueryVotes(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QueryVotes}, req)
 	require.NoError(t, err)
 
-	var filteredVotes types.PriceVotes
+	var filteredVotes types.ExchangeRateVotes
 	err = cdc.UnmarshalJSON(res, &filteredVotes)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(filteredVotes))
@@ -177,16 +177,16 @@ func TestQueryVotes(t *testing.T) {
 	require.Equal(t, vote3, filteredVotes[0])
 }
 
-func TestQueryPrice(t *testing.T) {
+func TestQueryExchangeRate(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	price := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, price)
+	rate := sdk.NewDec(1700)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, rate)
 
 	// denom query params
-	queryParams := types.NewQueryPriceParams(core.MicroSDRDenom)
+	queryParams := types.NewQueryExchangeRateParams(core.MicroSDRDenom)
 	bz, err := cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
 
@@ -195,34 +195,34 @@ func TestQueryPrice(t *testing.T) {
 		Data: bz,
 	}
 
-	res, err := querier(input.Ctx, []string{types.QueryPrice}, req)
+	res, err := querier(input.Ctx, []string{types.QueryExchangeRate}, req)
 	require.NoError(t, err)
 
-	var rprice sdk.Dec
-	err = cdc.UnmarshalJSON(res, &rprice)
+	var rrate sdk.Dec
+	err = cdc.UnmarshalJSON(res, &rrate)
 	require.NoError(t, err)
-	require.Equal(t, price, rprice)
+	require.Equal(t, rate, rrate)
 }
 
-func TestQueryPrices(t *testing.T) {
+func TestQueryExchangeRates(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	price := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, price)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroUSDDenom, price)
+	rate := sdk.NewDec(1700)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
-	res, err := querier(input.Ctx, []string{types.QueryPrices}, abci.RequestQuery{})
+	res, err := querier(input.Ctx, []string{types.QueryExchangeRates}, abci.RequestQuery{})
 	require.NoError(t, err)
 
-	var rprice sdk.DecCoins
-	err2 := cdc.UnmarshalJSON(res, &rprice)
+	var rrate sdk.DecCoins
+	err2 := cdc.UnmarshalJSON(res, &rrate)
 	require.NoError(t, err2)
 	require.Equal(t, sdk.DecCoins{
-		sdk.NewDecCoinFromDec(core.MicroSDRDenom, price),
-		sdk.NewDecCoinFromDec(core.MicroUSDDenom, price),
-	}, rprice)
+		sdk.NewDecCoinFromDec(core.MicroSDRDenom, rate),
+		sdk.NewDecCoinFromDec(core.MicroUSDDenom, rate),
+	}, rrate)
 }
 
 func TestQueryActives(t *testing.T) {
@@ -230,10 +230,10 @@ func TestQueryActives(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	price := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, price)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, price)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroUSDDenom, price)
+	rate := sdk.NewDec(1700)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
 	res, err := querier(input.Ctx, []string{types.QueryActives}, abci.RequestQuery{})
 	require.NoError(t, err)
@@ -243,6 +243,7 @@ func TestQueryActives(t *testing.T) {
 		core.MicroSDRDenom,
 		core.MicroUSDDenom,
 	}
+
 	var denoms types.DenomList
 	err2 := cdc.UnmarshalJSON(res, &denoms)
 	require.NoError(t, err2)
@@ -254,7 +255,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	input.OracleKeeper.SetFeedDelegate(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
 	queryParams := types.NewQueryFeederDelegationParams(ValAddrs[0])
 	bz, err := cdc.MarshalJSON(queryParams)

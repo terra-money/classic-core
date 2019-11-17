@@ -88,9 +88,9 @@ func TestUpdateTaxCap(t *testing.T) {
 
 	// Create Validators
 	sdrPrice := sdk.NewDecWithPrec(13, 1)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroSDRDenom, sdrPrice)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdrPrice)
 	krwPrice := sdk.NewDecWithPrec(153412, 2)
-	input.OracleKeeper.SetLunaPrice(input.Ctx, core.MicroKRWDenom, krwPrice)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, krwPrice)
 	input.TreasuryKeeper.UpdateTaxCap(input.Ctx)
 
 	krwCap := input.TreasuryKeeper.GetTaxCap(input.Ctx, core.MicroKRWDenom)
