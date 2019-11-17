@@ -226,20 +226,9 @@ func computeTax(cliCtx context.CLIContext, taxRate sdk.Dec, principal sdk.Coins)
 }
 
 func queryTaxRate(cliCtx context.CLIContext) (sdk.Dec, error) {
-	// Query current-epoch
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryCurrentEpoch), nil)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
-	var epoch int64
-	cliCtx.Codec.MustUnmarshalJSON(res, &epoch)
-
-	params := treasury.NewQueryTaxRateParams(epoch)
-	bz := cliCtx.Codec.MustMarshalJSON(params)
 
 	// Query tax-rate
-	res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryTaxRate), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryTaxRate), nil)
 	if err != nil {
 		return sdk.Dec{}, err
 	}

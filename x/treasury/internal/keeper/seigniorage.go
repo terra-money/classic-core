@@ -8,17 +8,16 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-// SettleSeigniorage computes seigniorage and distributes it to oracle and community-pool account
+// SettleSeigniorage computes seigniorage and distributes it to oracle and distribution(community-pool) account
 func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 	// Mint seigniorage for oracle and community pool
-	epoch := core.GetEpoch(ctx)
-	seigniorageLunaAmt := k.PeekEpochSeigniorage(ctx, epoch)
+	seigniorageLunaAmt := k.PeekEpochSeigniorage(ctx)
 	if seigniorageLunaAmt.LTE(sdk.ZeroInt()) {
 		return
 	}
 
 	// Settle current epoch seigniorage
-	rewardWeight := k.GetRewardWeight(ctx, epoch)
+	rewardWeight := k.GetRewardWeight(ctx)
 
 	// Align seigniorage to usdr
 	seigniorageDecCoin := sdk.NewDecCoin(core.MicroLunaDenom, seigniorageLunaAmt)

@@ -10,25 +10,24 @@ import (
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 
-	for epoch, taxRate := range data.TaxRates {
-		keeper.SetTaxRate(ctx, int64(epoch), taxRate)
-	}
+	keeper.SetTaxRate(ctx, data.TaxRate)
+	keeper.SetRewardWeight(ctx, data.RewardWeight)
+	keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
+	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
 
-	for epoch, rewardWeight := range data.RewardWeights {
-		keeper.SetRewardWeight(ctx, int64(epoch), rewardWeight)
-	}
-
-	// store tax cap for SDT & LUNA(no tax)
+	// store tax caps
 	for denom, taxCap := range data.TaxCaps {
 		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
 
-	for epoch, historicalIssuance := range data.HistoricalIssuances {
-		keeper.SetHistoricalIssuance(ctx, int64(epoch), historicalIssuance)
+	for epoch, TR := range data.TRs {
+		keeper.SetTR(ctx, int64(epoch), TR)
 	}
-
-	for epoch, taxProceed := range data.TaxProceeds {
-		keeper.SetTaxProceeds(ctx, int64(epoch), taxProceed)
+	for epoch, SR := range data.SRs {
+		keeper.SetSR(ctx, int64(epoch), SR)
+	}
+	for epoch, TSL := range data.TSLs {
+		keeper.SetTSL(ctx, int64(epoch), TSL)
 	}
 }
 
@@ -38,22 +37,30 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
 
+	taxRate := keeper.GetTaxRate(ctx)
+	rewardWeight := keeper.GetRewardWeight(ctx)
+	taxProceeds := keeper.PeekEpochTaxProceeds(ctx)
+	epochInitialIssuance := keeper.GetEpochInitialIssuance(ctx)
+
 	taxCaps := make(map[string]sdk.Int)
 	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
 		taxCaps[denom] = taxCap
 		return false
 	})
 
-	var taxRates []sdk.Dec
-	var rewardWeights []sdk.Dec
-	var taxProceeds []sdk.Coins
-	var historicalIssuancees []sdk.Coins
-	for e := int64(0); e <= core.GetEpoch(ctx); e++ {
-		taxRates = append(taxRates, keeper.GetTaxRate(ctx, e))
-		rewardWeights = append(rewardWeights, keeper.GetRewardWeight(ctx, e))
-		taxProceeds = append(taxProceeds, keeper.PeekTaxProceeds(ctx, e))
-		historicalIssuancees = append(historicalIssuancees, keeper.GetHistoricalIssuance(ctx, e))
+	var TRs []sdk.Dec
+	var SRs []sdk.Dec
+	var TSLs []sdk.Int
+
+	curEpoch := core.GetEpoch(ctx)
+	for e := int64(0); e < curEpoch ||
+		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch)); e++ {
+
+		TRs = append(TRs, keeper.GetTR(ctx, e))
+		SRs = append(SRs, keeper.GetSR(ctx, e))
+		TSLs = append(TSLs, keeper.GetTSL(ctx, e))
 	}
 
-	return NewGenesisState(params, taxRates, rewardWeights, taxCaps, taxProceeds, historicalIssuancees)
+	return NewGenesisState(params, taxRate, rewardWeight,
+		taxCaps, taxProceeds, epochInitialIssuance, TRs, SRs, TSLs)
 }

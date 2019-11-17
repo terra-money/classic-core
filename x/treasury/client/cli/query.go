@@ -1,9 +1,7 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/terra-project/core/x/treasury/internal/types"
@@ -33,12 +31,10 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	oracleQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQueryTaxRate(cdc),
 		GetCmdQueryTaxCap(cdc),
-		GetCmdQueryHistoricalIssuance(cdc),
 		GetCmdQueryRewardWeight(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryTaxProceeds(cdc),
 		GetCmdQuerySeigniorageProceeds(cdc),
-		GetCmdQueryCurrentEpoch(cdc),
 		GetCmdQueryParams(cdc),
 	)...)
 
@@ -49,37 +45,17 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 // GetCmdQueryTaxRate implements the query tax-rate command.
 func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "tax-rate [epoch]",
-		Args:  cobra.RangeArgs(0, 1),
+		Use:   "tax-rate",
+		Args:  cobra.NoArgs,
 		Short: "Query the stability tax rate",
 		Long: strings.TrimSpace(`
-Query the stability tax rate at the specified epoch.
+Query the stability tax rate of the current epoch.
 
-$ terracli query treasury tax-rate 14
+$ terracli query treasury tax-rate
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var epoch int64
-			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-				if err != nil {
-					return err
-				}
-
-				cdc.MustUnmarshalJSON(res, &epoch)
-			} else {
-				var err error
-				epoch, err = strconv.ParseInt(args[0], 10, 64)
-				if err != nil {
-					return errors.New(sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
-				}
-			}
-
-			params := types.NewQueryTaxRateParams(epoch)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxRate), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxRate), nil)
 			if err != nil {
 				return err
 			}
@@ -127,87 +103,20 @@ $ terracli query treasury tax-cap ukrw
 	return cmd
 }
 
-// GetCmdQueryHistoricalIssuance implements the query historical issuance command.
-func GetCmdQueryHistoricalIssuance(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "historical-issuance [epoch]",
-		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the epoch historical issuance",
-		Long: strings.TrimSpace(`
-Query the epoch issuance
-
-$ terracli query treasury historical-issuance 0"
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var epoch int64
-			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-				if err != nil {
-					return err
-				}
-
-				cdc.MustUnmarshalJSON(res, &epoch)
-			} else {
-				var err error
-				epoch, err = strconv.ParseInt(args[0], 10, 64)
-				if err != nil {
-					return errors.New(sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
-				}
-			}
-
-			params := types.NewQueryHistoricalIssuanceParams(epoch)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryHistoricalIssuance), bz)
-			if err != nil {
-				return err
-			}
-
-			var issuance sdk.Coins
-			cdc.MustUnmarshalJSON(res, &issuance)
-			return cliCtx.PrintOutput(issuance)
-		},
-	}
-
-	return cmd
-}
-
 // GetCmdQueryRewardWeight implements the query reward-weight command.
 func GetCmdQueryRewardWeight(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reward-weight [epoch]",
-		Args:  cobra.RangeArgs(0, 1),
+		Use:   "reward-weight",
+		Args:  cobra.NoArgs,
 		Short: "Query the reward weight",
 		Long: strings.TrimSpace(`
-Query the reward rate at the specified epoch.
+Query the reward rate of the current epoch.
 
-$ terracli query treasury reward-weight 14
+$ terracli query treasury reward-weight
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var epoch int64
-			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-				if err != nil {
-					return err
-				}
-
-				cdc.MustUnmarshalJSON(res, &epoch)
-			} else {
-				var err error
-				epoch, err = strconv.ParseInt(args[0], 10, 64)
-				if err != nil {
-					return errors.New(sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
-				}
-			}
-
-			params := types.NewQueryRewardWeightParams(epoch)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRewardWeight), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRewardWeight), nil)
 			if err != nil {
 				return err
 			}
@@ -224,37 +133,17 @@ $ terracli query treasury reward-weight 14
 // GetCmdQueryTaxProceeds implements the query tax-proceeds command.
 func GetCmdQueryTaxProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "tax-proceeds [epoch]",
-		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the tax proceeds for the epoch",
+		Use:   "tax-proceeds",
+		Args:  cobra.NoArgs,
+		Short: "Query the tax proceeds for the current epoch",
 		Long: strings.TrimSpace(`
-Query the tax proceeds corresponding to the given epoch. The return value will be sdk.Coins{} of all the taxes collected. 
+Query the tax proceeds corresponding to the current epoch. The return value will be sdk.Coins{} of all the taxes collected. 
 
-$ terracli query treasury tax-proceeds 14
+$ terracli query treasury tax-proceeds
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var epoch int64
-			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-				if err != nil {
-					return err
-				}
-
-				cdc.MustUnmarshalJSON(res, &epoch)
-			} else {
-				var err error
-				epoch, err = strconv.ParseInt(args[0], 10, 64)
-				if err != nil {
-					return errors.New(sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
-				}
-			}
-
-			params := types.NewQueryTaxProceedsParams(epoch)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxProceeds), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxProceeds), nil)
 			if err != nil {
 				return err
 			}
@@ -265,45 +154,23 @@ $ terracli query treasury tax-proceeds 14
 		},
 	}
 
-	cmd.Flags().String(flagEpoch, "", "(optional) an epoch number which you wants to get tax proceeds of; default is current epoch")
-
 	return cmd
 }
 
 // GetCmdQuerySeigniorageProceeds implements the query seigniorage-proceeds command.
 func GetCmdQuerySeigniorageProceeds(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "seigniorage-proceeds [epoch]",
-		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the seigniorage proceeds for the epoch",
+		Use:   "seigniorage-proceeds",
+		Args:  cobra.NoArgs,
+		Short: "Query the seigniorage proceeds for the current epoch",
 		Long: strings.TrimSpace(`
-Query the seigniorage proceeds corresponding to the given epoch. The return value will be in units of 'uluna' coins. 
+Query the seigniorage proceeds corresponding to the current epoch. The return value will be in units of 'uluna' coins. 
 
-$ terracli query treasury seigniorage-proceeds 14
+$ terracli query treasury seigniorage-proceeds
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			var epoch int64
-			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-				if err != nil {
-					return err
-				}
-
-				cdc.MustUnmarshalJSON(res, &epoch)
-			} else {
-				var err error
-				epoch, err = strconv.ParseInt(args[0], 10, 64)
-				if err != nil {
-					return errors.New(sdk.AppendMsgToErr("Falied to parse epoch", err.Error()))
-				}
-			}
-
-			params := types.NewQuerySeigniorageParams(epoch)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySeigniorageProceeds), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySeigniorageProceeds), nil)
 			if err != nil {
 				return err
 			}
@@ -311,34 +178,6 @@ $ terracli query treasury seigniorage-proceeds 14
 			var seigniorageProceeds sdk.Int
 			cdc.MustUnmarshalJSON(res, &seigniorageProceeds)
 			return cliCtx.PrintOutput(seigniorageProceeds)
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdQueryCurrentEpoch implements the query seigniorage-proceeds command.
-func GetCmdQueryCurrentEpoch(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "current-epoch",
-		Args:  cobra.NoArgs,
-		Short: "Query the current epoch number",
-		Long: strings.TrimSpace(`
-Query the current epoch, starting at 0.
-
-$ terracli query treasury current-epoch
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentEpoch), nil)
-			if err != nil {
-				return err
-			}
-
-			var curEpoch int64
-			cdc.MustUnmarshalJSON(res, &curEpoch)
-			return cliCtx.PrintOutput(sdk.NewInt(curEpoch))
 		},
 	}
 

@@ -17,13 +17,17 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Update luna issuance after finish all works
-	defer k.RecordHistoricalIssuance(ctx)
+	defer k.RecordEpochInitialIssuance(ctx)
+
+	// Compute & Update internal indicators for the current epoch
+	k.UpdateIndicators(ctx)
 
 	// Check probation period
 	if ctx.BlockHeight() < (core.BlocksPerEpoch * k.WindowProbation(ctx)) {
 		return
 	}
 
+	// Settle seiniorage to oracle & distribution(community-pool) module-account
 	k.SettleSeigniorage(ctx)
 
 	// Update tax-rate and reward-weight of next epoch
@@ -33,8 +37,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(types.EventTypePolichUpdate,
-			sdk.NewAttribute(types.AttributeKeyTax, taxRate.String()),
-			sdk.NewAttribute(types.AttributeKeyReward, rewardWeight.String()),
+			sdk.NewAttribute(types.AttributeKeyTaxRate, taxRate.String()),
+			sdk.NewAttribute(types.AttributeKeyRewardWeight, rewardWeight.String()),
 			sdk.NewAttribute(types.AttributeKeyTaxCap, taxCap.String()),
 		),
 	)

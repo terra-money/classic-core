@@ -20,49 +20,33 @@ const (
 	DefaultParamspace              = types.DefaultParamspace
 	ProposalTypeTaxRateUpdate      = types.ProposalTypeTaxRateUpdate
 	ProposalTypeRewardWeightUpdate = types.ProposalTypeRewardWeightUpdate
-	QueryCurrentEpoch              = types.QueryCurrentEpoch
 	QueryTaxRate                   = types.QueryTaxRate
 	QueryTaxCap                    = types.QueryTaxCap
 	QueryRewardWeight              = types.QueryRewardWeight
 	QuerySeigniorageProceeds       = types.QuerySeigniorageProceeds
 	QueryTaxProceeds               = types.QueryTaxProceeds
 	QueryParameters                = types.QueryParameters
-	QueryHistoricalIssuance        = types.QueryHistoricalIssuance
 )
 
 var (
 	// functions aliases
-	RegisterCodec                    = types.RegisterCodec
-	ErrInvalidEpoch                  = types.ErrInvalidEpoch
-	NewGenesisState                  = types.NewGenesisState
-	DefaultGenesisState              = types.DefaultGenesisState
-	ValidateGenesis                  = types.ValidateGenesis
-	GetTaxRateKey                    = types.GetTaxRateKey
-	GetRewardWeightKey               = types.GetRewardWeightKey
-	GetTaxCapKey                     = types.GetTaxCapKey
-	GetTaxProceedsKey                = types.GetTaxProceedsKey
-	GetHistoricalIssuanceKey         = types.GetHistoricalIssuanceKey
-	DefaultParams                    = types.DefaultParams
-	NewTaxRateUpdateProposal         = types.NewTaxRateUpdateProposal
-	NewRewardWeightUpdateProposal    = types.NewRewardWeightUpdateProposal
-	NewQueryTaxCapParams             = types.NewQueryTaxCapParams
-	NewQueryTaxRateParams            = types.NewQueryTaxRateParams
-	NewQueryRewardWeightParams       = types.NewQueryRewardWeightParams
-	NewQuerySeigniorageParams        = types.NewQuerySeigniorageParams
-	NewQueryTaxProceedsParams        = types.NewQueryTaxProceedsParams
-	NewQueryHistoricalIssuanceParams = types.NewQueryHistoricalIssuanceParams
-	TaxRewardsForEpoch               = keeper.TaxRewardsForEpoch
-	SeigniorageRewardsForEpoch       = keeper.SeigniorageRewardsForEpoch
-	MiningRewardForEpoch             = keeper.MiningRewardForEpoch
-	TRL                              = keeper.TRL
-	SRL                              = keeper.SRL
-	MRL                              = keeper.MRL
-	UnitLunaIndicator                = keeper.UnitLunaIndicator
-	SumIndicator                     = keeper.SumIndicator
-	RollingAverageIndicator          = keeper.RollingAverageIndicator
-	NewKeeper                        = keeper.NewKeeper
-	ParamKeyTable                    = keeper.ParamKeyTable
-	NewQuerier                       = keeper.NewQuerier
+	RegisterCodec                 = types.RegisterCodec
+	ErrInvalidEpoch               = types.ErrInvalidEpoch
+	NewGenesisState               = types.NewGenesisState
+	DefaultGenesisState           = types.DefaultGenesisState
+	ValidateGenesis               = types.ValidateGenesis
+	GetTaxCapKey                  = types.GetTaxCapKey
+	GetTRKey                      = types.GetTRKey
+	GetSRKey                      = types.GetSRKey
+	GetTSLKey                     = types.GetTSLKey
+	GetSubkeyByEpoch              = types.GetSubkeyByEpoch
+	DefaultParams                 = types.DefaultParams
+	NewTaxRateUpdateProposal      = types.NewTaxRateUpdateProposal
+	NewRewardWeightUpdateProposal = types.NewRewardWeightUpdateProposal
+	NewQueryTaxCapParams          = types.NewQueryTaxCapParams
+	NewKeeper                     = keeper.NewKeeper
+	ParamKeyTable                 = keeper.ParamKeyTable
+	NewQuerier                    = keeper.NewQuerier
 
 	// variable aliases
 	ModuleCdc                            = types.ModuleCdc
@@ -70,7 +54,10 @@ var (
 	RewardWeightKey                      = types.RewardWeightKey
 	TaxCapKey                            = types.TaxCapKey
 	TaxProceedsKey                       = types.TaxProceedsKey
-	HistoricalIssuanceKey                = types.HistoricalIssuanceKey
+	EpochInitialIssuanceKey              = types.EpochInitialIssuanceKey
+	TRKey                                = types.TRKey
+	SRKey                                = types.SRKey
+	TSLKey                               = types.TSLKey
 	ParamStoreKeyTaxPolicy               = types.ParamStoreKeyTaxPolicy
 	ParamStoreKeyRewardPolicy            = types.ParamStoreKeyRewardPolicy
 	ParamStoreKeySeigniorageBurdenTarget = types.ParamStoreKeySeigniorageBurdenTarget
@@ -90,20 +77,15 @@ var (
 )
 
 type (
-	PolicyConstraints              = types.PolicyConstraints
-	SupplyKeeper                   = types.SupplyKeeper
-	MarketKeeper                   = types.MarketKeeper
-	StakingKeeper                  = types.StakingKeeper
-	DistributionKeeper             = types.DistributionKeeper
-	GenesisState                   = types.GenesisState
-	Params                         = types.Params
-	TaxRateUpdateProposal          = types.TaxRateUpdateProposal
-	RewardWeightUpdateProposal     = types.RewardWeightUpdateProposal
-	QueryTaxCapParams              = types.QueryTaxCapParams
-	QueryTaxRateParams             = types.QueryTaxRateParams
-	QueryRewardWeightParams        = types.QueryRewardWeightParams
-	QuerySeigniorageProceedsParams = types.QuerySeigniorageProceedsParams
-	QueryTaxProceedsParams         = types.QueryTaxProceedsParams
-	QueryHistoricalIssuanceParams  = types.QueryHistoricalIssuanceParams
-	Keeper                         = keeper.Keeper
+	PolicyConstraints          = types.PolicyConstraints
+	SupplyKeeper               = types.SupplyKeeper
+	MarketKeeper               = types.MarketKeeper
+	StakingKeeper              = types.StakingKeeper
+	DistributionKeeper         = types.DistributionKeeper
+	GenesisState               = types.GenesisState
+	Params                     = types.Params
+	TaxRateUpdateProposal      = types.TaxRateUpdateProposal
+	RewardWeightUpdateProposal = types.RewardWeightUpdateProposal
+	QueryTaxCapParams          = types.QueryTaxCapParams
+	Keeper                     = keeper.Keeper
 )

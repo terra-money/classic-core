@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury/internal/keeper"
 	"github.com/terra-project/core/x/treasury/internal/types"
 )
@@ -34,7 +33,7 @@ func TestTaxRateUpdateProposalHandler(t *testing.T) {
 	tp := testTaxRateUpdateProposal(taxRate)
 	hdlr := NewTreasuryPolicyUpdateHandler(input.TreasuryKeeper)
 	require.NoError(t, hdlr(input.Ctx, tp))
-	require.Equal(t, taxRate, input.TreasuryKeeper.GetTaxRate(input.Ctx, core.GetEpoch(input.Ctx)))
+	require.Equal(t, taxRate, input.TreasuryKeeper.GetTaxRate(input.Ctx))
 }
 
 func TestRewardWeightUpdateProposalHandler(t *testing.T) {
@@ -44,5 +43,5 @@ func TestRewardWeightUpdateProposalHandler(t *testing.T) {
 	tp := testRewardWeightUpdateProposal(rewardWeight)
 	hdlr := NewTreasuryPolicyUpdateHandler(input.TreasuryKeeper)
 	require.NoError(t, hdlr(input.Ctx, tp))
-	require.Equal(t, rewardWeight, input.TreasuryKeeper.GetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx)))
+	require.Equal(t, rewardWeight, input.TreasuryKeeper.GetRewardWeight(input.Ctx))
 }

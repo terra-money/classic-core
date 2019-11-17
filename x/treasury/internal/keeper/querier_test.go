@@ -17,19 +17,12 @@ import (
 const custom = "custom"
 
 func getQueriedTaxRate(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Dec {
-	params := types.QueryTaxRateParams{
-		Epoch: epoch,
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	require.NoError(t, err)
-
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryTaxRate}, "/"),
-		Data: bz,
+		Data: nil,
 	}
 
-	bz, err = querier(ctx, []string{types.QueryTaxRate}, query)
+	bz, err := querier(ctx, []string{types.QueryTaxRate}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
@@ -65,19 +58,12 @@ func getQueriedTaxCap(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 }
 
 func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Dec {
-	params := types.QueryRewardWeightParams{
-		Epoch: epoch,
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	require.NoError(t, err)
-
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryRewardWeight}, "/"),
-		Data: bz,
+		Data: nil,
 	}
 
-	bz, err = querier(ctx, []string{types.QueryRewardWeight}, query)
+	bz, err := querier(ctx, []string{types.QueryRewardWeight}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
@@ -89,19 +75,12 @@ func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.Codec, que
 }
 
 func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Coins {
-	params := types.QueryTaxProceedsParams{
-		Epoch: epoch,
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	require.NoError(t, err)
-
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryTaxProceeds}, "/"),
-		Data: bz,
+		Data: nil,
 	}
 
-	bz, err = querier(ctx, []string{types.QueryTaxProceeds}, query)
+	bz, err := querier(ctx, []string{types.QueryTaxProceeds}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
@@ -113,64 +92,16 @@ func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, quer
 }
 
 func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Int {
-	params := types.QuerySeigniorageProceedsParams{
-		Epoch: epoch,
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	require.NoError(t, err)
-
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QuerySeigniorageProceeds}, "/"),
-		Data: bz,
+		Data: nil,
 	}
 
-	bz, err = querier(ctx, []string{types.QuerySeigniorageProceeds}, query)
+	bz, err := querier(ctx, []string{types.QuerySeigniorageProceeds}, query)
 	require.Nil(t, err)
 	require.NotNil(t, bz)
 
 	var response sdk.Int
-	err2 := cdc.UnmarshalJSON(bz, &response)
-	require.Nil(t, err2)
-
-	return response
-}
-
-func getQueriedCurrentEpoch(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) int64 {
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryCurrentEpoch}, "/"),
-		Data: []byte{},
-	}
-
-	bz, err := querier(ctx, []string{types.QueryCurrentEpoch}, query)
-	require.Nil(t, err)
-	require.NotNil(t, bz)
-
-	var response int64
-	err2 := cdc.UnmarshalJSON(bz, &response)
-	require.Nil(t, err2)
-
-	return response
-}
-
-func getQueriedHistoricalIssuance(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Coins {
-	params := types.QueryHistoricalIssuanceParams{
-		Epoch: epoch,
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	require.NoError(t, err)
-
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryHistoricalIssuance}, "/"),
-		Data: bz,
-	}
-
-	bz, err = querier(ctx, []string{types.QueryHistoricalIssuance}, query)
-	require.Nil(t, err)
-	require.NotNil(t, bz)
-
-	var response sdk.Coins
 	err2 := cdc.UnmarshalJSON(bz, &response)
 	require.Nil(t, err2)
 
@@ -211,7 +142,7 @@ func TestQueryRewardWeight(t *testing.T) {
 	querier := NewQuerier(input.TreasuryKeeper)
 
 	rewardWeight := sdk.NewDecWithPrec(77, 2)
-	input.TreasuryKeeper.SetRewardWeight(input.Ctx, core.GetEpoch(input.Ctx), rewardWeight)
+	input.TreasuryKeeper.SetRewardWeight(input.Ctx, rewardWeight)
 
 	queriedRewardWeight := getQueriedRewardWeight(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
@@ -223,7 +154,7 @@ func TestQueryTaxRate(t *testing.T) {
 	querier := NewQuerier(input.TreasuryKeeper)
 
 	taxRate := sdk.NewDecWithPrec(1, 3)
-	input.TreasuryKeeper.SetTaxRate(input.Ctx, core.GetEpoch(input.Ctx), taxRate)
+	input.TreasuryKeeper.SetTaxRate(input.Ctx, taxRate)
 
 	queriedTaxRate := getQueriedTaxRate(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
@@ -242,17 +173,6 @@ func TestQueryTaxCap(t *testing.T) {
 	require.Equal(t, queriedTaxCap, params.TaxPolicy.Cap.Amount)
 }
 
-func TestQueryCurrentEpoch(t *testing.T) {
-	input := CreateTestInput(t)
-	querier := NewQuerier(input.TreasuryKeeper)
-
-	curEpoch := core.GetEpoch(input.Ctx)
-
-	queriedCurEpoch := getQueriedCurrentEpoch(t, input.Ctx, input.Cdc, querier)
-
-	require.Equal(t, queriedCurEpoch, curEpoch)
-}
-
 func TestQueryTaxProceeds(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.TreasuryKeeper)
@@ -260,7 +180,7 @@ func TestQueryTaxProceeds(t *testing.T) {
 	taxProceeds := sdk.Coins{
 		sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1000).MulRaw(core.MicroUnit)),
 	}
-	input.TreasuryKeeper.RecordTaxProceeds(input.Ctx, taxProceeds)
+	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
 
 	queriedTaxProceeds := getQueriedTaxProceeds(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
@@ -276,7 +196,7 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
+	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance.Sub(targetSeigniorage))))
@@ -285,19 +205,4 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx))
 
 	require.Equal(t, targetSeigniorage, queriedSeigniorageProceeds)
-}
-
-func TestQueryHistoricalIssuance(t *testing.T) {
-	input := CreateTestInput(t)
-	querier := NewQuerier(input.TreasuryKeeper)
-
-	targetIssuance := sdk.NewInt(1000)
-	supply := input.SupplyKeeper.GetSupply(input.Ctx)
-	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
-	input.SupplyKeeper.SetSupply(input.Ctx, supply)
-	input.TreasuryKeeper.RecordHistoricalIssuance(input.Ctx)
-
-	queriedHistoricalIssuance := getQueriedHistoricalIssuance(t, input.Ctx, input.Cdc, querier, core.GetEpoch(input.Ctx)).AmountOf(core.MicroLunaDenom)
-
-	require.Equal(t, targetIssuance, queriedHistoricalIssuance)
 }
