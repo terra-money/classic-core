@@ -26,11 +26,10 @@ var (
 
 // Default parameter values
 var (
-	DefaultBasePool            = sdk.NewDec(1000000 * core.MicroUnit) // 1000,000sdr = 1000,000,000,000usdr
-	DefaultPoolRecoveryPeriod  = core.BlocksPerDay                    // 14,400
-	DefaultTerraLiquidityRatio = sdk.NewDecWithPrec(1, 2)             // 1%
-	DefaultMinSpread           = sdk.NewDecWithPrec(2, 2)             // 2%
-	DefaultTobinTax            = sdk.NewDecWithPrec(30, 4)            // 0.3%
+	DefaultBasePool           = sdk.NewDec(250000 * core.MicroUnit) // 250,000sdr = 250,000,000,000usdr
+	DefaultPoolRecoveryPeriod = core.BlocksPerDay                   // 14,400
+	DefaultMinSpread          = sdk.NewDecWithPrec(2, 2)            // 2%
+	DefaultTobinTax           = sdk.NewDecWithPrec(25, 4)           // 0.25%
 )
 
 var _ subspace.ParamSet = &Params{}

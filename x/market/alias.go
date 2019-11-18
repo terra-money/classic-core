@@ -51,7 +51,6 @@ var (
 	ParmamStoreKeyTobinTax          = types.ParmamStoreKeyTobinTax
 	DefaultBasePool                 = types.DefaultBasePool
 	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
-	DefaultTerraLiquidityRatio      = types.DefaultTerraLiquidityRatio
 	DefaultMinSpread                = types.DefaultMinSpread
 	DefaultTobinTax                 = types.DefaultTobinTax
 )
