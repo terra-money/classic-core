@@ -241,9 +241,13 @@ def process_raw_genesis(genesis, parsed_args):
         'tally_params': {
             'quorum': '0.400000000000000000',
             'threshold': '0.500000000000000000',
-            'vete': '0.334000000000000000'
+            'veto': '0.334000000000000000'
         }
     }
+
+    # Increase slashing panelty for security improvement
+    genesis['app_state']['slash']['params']['slash_fraction_double_sign'] = '0.05'
+    genesis['app_state']['slash']['params']['slash_fraction_downtime'] = '0.01'
 
     # Move genesis state key from distr to distribution
     genesis['app_state']['distribution'] = genesis['app_state']['distr']
@@ -295,8 +299,8 @@ def process_raw_genesis(genesis, parsed_args):
             'reward_band': genesis['app_state']['oracle']['params']['oracle_reward_band'],
             'whitelist': ['ukrw', 'usdr', 'uusd', 'umnt'],
             'reward_distribution_window': '86400',     # votes periods per month (blocks per monty = 518,400)
-            'slash_window': '2880',                    # vote periods per day (blocks per day = 17,280)
-            'slash_fraction': '0.0001',                # 0.01%
+            'slash_window': '86400',                   # vote periods per day (blocks per day = 17,280)
+            'slash_fraction': '0.01',                  # 0.01%
             'min_valid_per_window': '0.05'             # 5%
         }
     }
@@ -504,8 +508,8 @@ def correct_decimal(float_num):
 
 if __name__ == '__main__':
     parser = init_default_argument_parser(
-        prog_desc='Convert genesis.json for columbus-3-drill',
-        default_chain_id='columbus-3-drill',
-        default_start_time='2019-10-02T19:00:00Z',
+        prog_desc='Convert genesis.json for columbus-3',
+        default_chain_id='columbus-3',
+        default_start_time='2019-12-5T19:00:00Z',
     )
     main(parser, process_raw_genesis)
