@@ -22,10 +22,6 @@ commands:
     steps:
       - attach_workspace:
           at: /tmp/bin
-      - restore_cache:
-          name: "Restore source code cache"
-          keys:
-            - go-src-v1-{{ .Revision }}
       - checkout
       - restore_cache:
           name: "Restore go modules cache"
@@ -72,11 +68,6 @@ jobs:
           key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
-      - save_cache:
-          name: "Save source code cache"
-          key: go-src-v1-{{ .Revision }}
-          paths:
-            - ".git"
       - run:
           command: |
             mkdir -p /tmp/bin
