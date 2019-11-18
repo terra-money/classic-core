@@ -318,7 +318,7 @@ def process_raw_genesis(genesis, parsed_args):
         'TSLs': []
     }
 
-    genesis['app_state']['treasury']['params']['tax_policy']['rate_min'] = '0.005' # 0.5%
+    genesis['app_state']['treasury']['params']['tax_policy']['rate_min'] = '0.001' # 0.1%
 
     # TODO - should we need to add window_probation?
     # del genesis['app_state']['treasury']['params']['window_probation']
