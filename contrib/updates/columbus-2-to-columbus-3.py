@@ -45,10 +45,14 @@ def main(argument_parser, process_genesis_func):
     genesis = process_genesis_func(genesis=genesis, parsed_args=args,)
 
     # update terra1n2kzv00yjanjpjplqtwucug45lurr8tzgrvj2p => terra1pnnruerze80znqdcl5ka6y3ntpzyu2e4j4yeev
+    # update terra1f0gxt604sn3py38u4pecf2ha3x66640cvndpv7 => terra1pln09kv8s7k3ssw0p6ymdwjn7aya3h6mj5mp2x
     raw_genesis = json.dumps(genesis, indent=4, sort_keys=True)
     raw_genesis = raw_genesis.replace(
         'terra1n2kzv00yjanjpjplqtwucug45lurr8tzgrvj2p', 
         'terra1pnnruerze80znqdcl5ka6y3ntpzyu2e4j4yeev')
+    raw_genesis = raw_genesis.replace(
+        'terra1f0gxt604sn3py38u4pecf2ha3x66640cvndpv7',
+        'terra1pln09kv8s7k3ssw0p6ymdwjn7aya3h6mj5mp2x')
 
     print(raw_genesis)
 
