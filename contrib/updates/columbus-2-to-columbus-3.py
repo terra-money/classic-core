@@ -302,9 +302,9 @@ def process_raw_genesis(genesis, parsed_args):
             'vote_threshold': genesis['app_state']['oracle']['params']['vote_threshold'],
             'reward_band': genesis['app_state']['oracle']['params']['oracle_reward_band'],
             'whitelist': ['ukrw', 'usdr', 'uusd', 'umnt'],
-            'reward_distribution_window': '86400',     # votes periods per month (blocks per monty = 518,400)
-            'slash_window': '86400',                   # vote periods per day (blocks per day = 17,280)
-            'slash_fraction': '0.01',                  # 0.01%
+            'reward_distribution_window': '5256000',   # # of blocks per a year
+            'slash_window': '100800',                  # # of blocks per a week
+            'slash_fraction': '0.01',                  # 1%
             'min_valid_per_window': '0.05'             # 5%
         }
     }
