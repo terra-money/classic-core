@@ -55,7 +55,7 @@ func DefaultParams() Params {
 // Validate a set of params
 func (params Params) Validate() error {
 	if params.BasePool.IsNegative() {
-		return fmt.Errorf("base pool should be positive or zero, is %d", params.BasePool)
+		return fmt.Errorf("base pool should be positive or zero, is %s", params.BasePool.String())
 	}
 	if params.PoolRecoveryPeriod <= 0 {
 		return fmt.Errorf("pool recovery period should be positive, is %d", params.PoolRecoveryPeriod)
