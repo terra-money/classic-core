@@ -9,15 +9,15 @@ func SlashAndResetMissCounters(ctx sdk.Context, k Keeper) {
 	height := ctx.BlockHeight()
 	distributionHeight := height - sdk.ValidatorUpdateDelay - 1
 
-	slashWindow := k.SlashWindow(ctx)
+	votePeriodsPerWindow := sdk.NewDec(k.SlashWindow(ctx)).QuoInt64(k.VotePeriod(ctx)).TruncateInt64()
 	minValidPerWindow := k.MinValidPerWindow(ctx)
 	slashFraction := k.SlashFraction(ctx)
 	k.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter int64) bool {
 
 		// Calculate valid vote rate; (SlashWindow - MissCounter)/SlashWindow
 		validVoteRate := sdk.NewDecFromInt(
-			sdk.NewInt(slashWindow - missCounter)).
-			QuoInt64(k.SlashWindow(ctx))
+			sdk.NewInt(votePeriodsPerWindow - missCounter)).
+			QuoInt64(votePeriodsPerWindow)
 
 		// Penalize the validator whoes the valid vote rate is smaller than min threshold
 		if validVoteRate.LT(minValidPerWindow) {

@@ -26,9 +26,9 @@ var (
 
 // Default parameter values
 const (
-	DefaultVotePeriod               = core.BlocksPerMinute / 2                // 30 seconds
-	DefaultSlashWindow              = core.BlocksPerDay / DefaultVotePeriod   // window for a day
-	DefaultRewardDistributionWindow = core.BlocksPerMonth / DefaultVotePeriod // window for a month
+	DefaultVotePeriod               = core.BlocksPerMinute / 2 // 30 seconds
+	DefaultSlashWindow              = core.BlocksPerWeek       // window for a week
+	DefaultRewardDistributionWindow = core.BlocksPerYear       // window for a year
 )
 
 // Default parameter values
@@ -47,10 +47,10 @@ type Params struct {
 	VotePeriod               int64     `json:"vote_period" yaml:"vote_period"`                               // the number of blocks during which voting takes place.
 	VoteThreshold            sdk.Dec   `json:"vote_threshold" yaml:"vote_threshold"`                         // the minimum percentage of votes that must be received for a ballot to pass.
 	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable exchange rate error that can be rewared.
-	RewardDistributionWindow int64     `json:"reward_distribution_window" yaml:"reward_distribution_window"` // the number of vote periods during which seigiornage reward comes in and then is distributed.
+	RewardDistributionWindow int64     `json:"reward_distribution_window" yaml:"reward_distribution_window"` // the number of blocks during which seigiornage reward comes in and then is distributed.
 	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
 	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`                         // the ratio of penalty on bonded tokens
-	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`                             // the number of vote periods for slashing tallying
+	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`                             // the number of blocks for slashing tallying
 	MinValidPerWindow        sdk.Dec   `json:"min_valid_per_window" yaml:"min_valid_per_window"`             // the ratio of minimum valid oracle votes per slash window to avoid slashing
 }
 
@@ -79,14 +79,14 @@ func (params Params) Validate() error {
 	if params.RewardBand.IsNegative() || params.RewardBand.GT(sdk.OneDec()) {
 		return fmt.Errorf("oracle parameter RewardBand must be between [0, 1]")
 	}
-	if params.RewardDistributionWindow < 100 {
-		return fmt.Errorf("oracle parameter RewardDistributionWindow must be bigger or equal than 100 votes period")
+	if params.RewardDistributionWindow < params.VotePeriod {
+		return fmt.Errorf("oracle parameter RewardDistributionWindow must be greater than or equal with votes period")
 	}
 	if params.SlashFraction.GT(sdk.OneDec()) || params.SlashFraction.IsNegative() {
 		return fmt.Errorf("oracle parameter SlashRraction must be between [0, 1]")
 	}
-	if params.SlashWindow < 50 {
-		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal 50 votes period")
+	if params.SlashWindow < params.VotePeriod {
+		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal with votes period")
 	}
 	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) || params.MinValidPerWindow.IsNegative() {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 0.5]")
