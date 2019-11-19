@@ -151,7 +151,7 @@ func queryExchangeRatesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -176,6 +176,10 @@ func queryActivesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		vars := mux.Vars(r)
 		voter := vars[RestVoter]
@@ -207,6 +211,10 @@ func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 
 func queryVoterVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		vars := mux.Vars(r)
 		voter := vars[RestVoter]
