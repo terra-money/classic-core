@@ -391,8 +391,10 @@ func TestWhitelistSlashing(t *testing.T) {
 	for i := int64(0); i < sdk.OneDec().Sub(minValidPerWindow).MulInt64(slashWindow).TruncateInt64(); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-		// Account 1, KRW
-		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+		// Account 2, KRW
+		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+		// Account 3, KRW
+		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
 
 		EndBlocker(input.Ctx, input.OracleKeeper)
 		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
@@ -401,14 +403,36 @@ func TestWhitelistSlashing(t *testing.T) {
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, stakingAmt, validator.GetBondedTokens())
 
-	// one more miss vote will inccur ValAddrs[1] slashing
-	// Account 1, KRW
-	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+	// one more miss vote will inccur Account 1 slashing
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
 
 	input.Ctx = input.Ctx.WithBlockHeight(slashWindow - 1)
 	EndBlocker(input.Ctx, input.OracleKeeper)
 	validator = input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
+}
+
+func TestNotPassedBallotSlashing(t *testing.T) {
+	input, h := setup(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.Whitelist = types.DenomList{core.MicroKRWDenom}
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
+
+	// Account 1, dummy denom
+	makePrevoteAndVote(t, input, h, 0, core.MicroCNYDenom, randomExchangeRate, 0)
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 }
 
 func TestAbstainSlashing(t *testing.T) {
