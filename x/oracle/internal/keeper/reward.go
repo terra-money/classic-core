@@ -31,9 +31,9 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]ty
 		return
 	}
 
-	// rewardCoin  = oraclePool / rewardDistributionWindow
+	// rewardCoin  = oraclePool * VotePeriod / RewardDistributionWindow
 	periodRewards := sdk.NewDecFromInt(rewardPool.AmountOf(core.MicroLunaDenom)).
-		QuoInt64(k.RewardDistributionWindow(ctx))
+		MulInt64(k.VotePeriod(ctx)).QuoInt64(k.RewardDistributionWindow(ctx))
 
 	// Dole out rewards
 	var distributedReward sdk.Coins
