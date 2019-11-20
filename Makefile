@@ -4,6 +4,7 @@ PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
+BINDIR ?= $(GOPATH)/bin
 CORE_PACK := $(shell go list -m github.com/terra-project/core | sed  's/ /\@/g')
 
 export GO111MODULE = on
@@ -93,6 +94,15 @@ install: go.sum
 install-debug: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terradebug
 
+update-swagger-docs: statik
+	$(BINDIR)/statik -src=client/lcd/swagger-ui -dest=client/lcd -f -m
+	@if [ -n "$(git status --porcelain)" ]; then \
+        echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
+        exit 1;\
+    else \
+    	echo "\033[92mSwagger docs are in sync\033[0m";\
+    fi
+.PHONY: update-swagger-docs
 
 
 ########################################
