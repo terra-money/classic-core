@@ -16,7 +16,7 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec) (we
 
 	weightedMedian = pb.WeightedMedian()
 	standardDeviation := pb.StandardDeviation()
-	rewardSpread := rewardBand.QuoInt64(2)
+	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
 	if standardDeviation.GT(rewardSpread) {
 		rewardSpread = standardDeviation

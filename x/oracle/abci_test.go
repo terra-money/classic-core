@@ -233,7 +233,7 @@ func TestOracleTally(t *testing.T) {
 	rewardees := []sdk.AccAddress{}
 	weightedMedian := ballot.WeightedMedian()
 	standardDeviation := ballot.StandardDeviation()
-	maxSpread := input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2)
+	maxSpread := weightedMedian.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
 	if standardDeviation.GT(maxSpread) {
 		maxSpread = standardDeviation
@@ -299,6 +299,48 @@ func TestOracleRewardDistribution(t *testing.T) {
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
+}
+
+func TestOracleRewardBand(t *testing.T) {
+	input, h := setup(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.Whitelist = types.DenomList{core.MicroKRWDenom}
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
+
+	// no one will miss the vote
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Sub(rewardSpread), 0)
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Add(rewardSpread), 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
+	// Account 1 will miss the vote due to raward band condition
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Sub(rewardSpread.Add(sdk.OneDec())), 0)
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Add(rewardSpread), 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
 }
 
 func TestOracleMultiRewardDistribution(t *testing.T) {
