@@ -43,11 +43,13 @@ TOOLS_DESTDIR  ?= $(GOPATH)/bin
 
 GOLANGCI_LINT = $(TOOLS_DESTDIR)/golangci-lint
 STATIK        = $(TOOLS_DESTDIR)/statik
-RUNSIM			  = $(TOOLS_DESTDIR)/runsim
+RUNSIM        = $(TOOLS_DESTDIR)/runsim
 
 all: tools
 
-tools: statik runsim golangci-lint
+tools: tools-stamp
+tools-stamp: $(RUNSIM)
+	touch $@
 
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
@@ -69,7 +71,6 @@ $(STATIK):
 # go.{mod, sum} files.
 # 
 # ref: https://github.com/golang/go/issues/30515
-runsim: $(RUNSIM)
 $(RUNSIM):
 	@echo "Installing runsim..."
 	@(cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
