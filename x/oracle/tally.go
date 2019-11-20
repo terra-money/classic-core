@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"fmt"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,8 +21,6 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec) (we
 	if standardDeviation.GT(rewardSpread) {
 		rewardSpread = standardDeviation
 	}
-
-	fmt.Println(standardDeviation)
 
 	for _, vote := range pb {
 		// Filter ballot winners & abstain voters
