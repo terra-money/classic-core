@@ -163,15 +163,15 @@ func (msg MsgExchangeRateVote) String() string {
 
 // MsgDelegateFeedConsent - struct for delegating oracle voting rights to another address.
 type MsgDelegateFeedConsent struct {
-	Operator  sdk.ValAddress `json:"operator" yaml:"operator"`
-	Delegatee sdk.AccAddress `json:"delegatee" yaml:"delegatee"`
+	Operator sdk.ValAddress `json:"operator" yaml:"operator"`
+	Delegate sdk.AccAddress `json:"delegate" yaml:"delegate"`
 }
 
 // NewMsgDelegateFeedConsent creates a MsgDelegateFeedConsent instance
 func NewMsgDelegateFeedConsent(operatorAddress sdk.ValAddress, feederAddress sdk.AccAddress) MsgDelegateFeedConsent {
 	return MsgDelegateFeedConsent{
-		Operator:  operatorAddress,
-		Delegatee: feederAddress,
+		Operator: operatorAddress,
+		Delegate: feederAddress,
 	}
 }
 
@@ -197,7 +197,7 @@ func (msg MsgDelegateFeedConsent) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
 	}
 
-	if msg.Delegatee.Empty() {
+	if msg.Delegate.Empty() {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
 	}
 
@@ -208,6 +208,6 @@ func (msg MsgDelegateFeedConsent) ValidateBasic() sdk.Error {
 func (msg MsgDelegateFeedConsent) String() string {
 	return fmt.Sprintf(`MsgDelegateFeedConsent
 	operator:    %s, 
-	delegatee:   %s`,
-		msg.Operator, msg.Delegatee)
+	delegate:   %s`,
+		msg.Operator, msg.Delegate)
 }

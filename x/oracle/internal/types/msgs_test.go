@@ -72,7 +72,7 @@ func TestMsgFeederDelegation(t *testing.T) {
 
 	tests := []struct {
 		delegator  sdk.ValAddress
-		delegatee  sdk.AccAddress
+		delegate   sdk.AccAddress
 		expectPass bool
 	}{
 		{sdk.ValAddress(addrs[0]), addrs[1], true},
@@ -82,7 +82,7 @@ func TestMsgFeederDelegation(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgDelegateFeedConsent(tc.delegator, tc.delegatee)
+		msg := NewMsgDelegateFeedConsent(tc.delegator, tc.delegate)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
