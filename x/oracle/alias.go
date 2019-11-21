@@ -48,7 +48,6 @@ var (
 	RegisterCodec                  = types.RegisterCodec
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
 	ErrUnknownDenomination         = types.ErrUnknownDenomination
-	ErrInvalidExchangeRate         = types.ErrInvalidExchangeRate
 	ErrVerificationFailed          = types.ErrVerificationFailed
 	ErrNoPrevote                   = types.ErrNoPrevote
 	ErrNoVote                      = types.ErrNoVote

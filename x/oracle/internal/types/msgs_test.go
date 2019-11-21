@@ -52,7 +52,7 @@ func TestMsgExchangeRateVote(t *testing.T) {
 	}{
 		{"", addrs[0], "123", sdk.OneDec(), false},
 		{core.MicroCNYDenom, addrs[0], "123", sdk.OneDec().MulInt64(core.MicroUnit), true},
-		{core.MicroCNYDenom, addrs[0], "123", sdk.ZeroDec(), false},
+		{core.MicroCNYDenom, addrs[0], "123", sdk.ZeroDec(), true},
 		{core.MicroCNYDenom, sdk.AccAddress{}, "123", sdk.OneDec().MulInt64(core.MicroUnit), false},
 		{core.MicroCNYDenom, addrs[0], "", sdk.OneDec().MulInt64(core.MicroUnit), false},
 	}

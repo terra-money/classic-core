@@ -139,10 +139,6 @@ func (msg MsgExchangeRateVote) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	if msg.ExchangeRate.LTE(sdk.ZeroDec()) {
-		return ErrInvalidExchangeRate(DefaultCodespace, msg.ExchangeRate)
-	}
-
 	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
 		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
 	}
