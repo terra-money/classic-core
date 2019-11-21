@@ -55,16 +55,16 @@ func DefaultParams() Params {
 // Validate a set of params
 func (params Params) Validate() error {
 	if params.BasePool.IsNegative() {
-		return fmt.Errorf("base pool should be positive or zero, is %s", params.BasePool.String())
+		return fmt.Errorf("base pool should be positive or zero, is %s", params.BasePool)
 	}
 	if params.PoolRecoveryPeriod <= 0 {
 		return fmt.Errorf("pool recovery period should be positive, is %d", params.PoolRecoveryPeriod)
 	}
 	if params.MinSpread.IsNegative() || params.MinSpread.GT(sdk.OneDec()) {
-		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", params.MinSpread.String())
+		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", params.MinSpread)
 	}
 	if params.TobinTax.IsNegative() || params.TobinTax.GT(sdk.OneDec()) {
-		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax.String())
+		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax)
 	}
 
 	return nil
@@ -85,9 +85,9 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 // String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
-	BasePool:		            %d
+	BasePool:                   %d
 	PoolRecoveryPeriod:         %d
-	MinSpread:            			%s
+	MinSpread:                  %s
 	TobinTax:                   %s
 	`, params.BasePool, params.PoolRecoveryPeriod, params.MinSpread, params.TobinTax)
 }
