@@ -303,7 +303,7 @@ def process_raw_genesis(genesis, parsed_args):
             'reward_band': genesis['app_state']['oracle']['params']['oracle_reward_band'],
             'whitelist': ['ukrw', 'usdr', 'uusd', 'umnt'],
             'reward_distribution_window': '5256000',   # # of blocks per a year
-            'slash_window': '100800',                  # # of blocks per a week
+            'slash_window': '432000',                  # # of blocks per a month
             'slash_fraction': '0.01',                  # 1%
             'min_valid_per_window': '0.05'             # 5%
         }
