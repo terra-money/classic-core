@@ -119,7 +119,7 @@ func (params Params) String() string {
 	Whitelist                    %s
 	SlashFraction                %s
 	SlashWindow                  %d
-	MinValidPerWindow       %s
+	MinValidPerWindow            %s
 	`, params.VotePeriod, params.VoteThreshold, params.RewardBand,
 		params.RewardDistributionWindow, params.Whitelist,
 		params.SlashFraction, params.SlashWindow, params.MinValidPerWindow)

@@ -76,20 +76,20 @@ func DefaultParams() Params {
 func (params Params) Validate() error {
 	if params.TaxPolicy.RateMax.LT(params.TaxPolicy.RateMin) {
 		return fmt.Errorf("treasury TaxPolicy.RateMax %s must be greater than TaxPolicy.RateMin %s",
-			params.TaxPolicy.RateMax.String(), params.TaxPolicy.RateMin.String())
+			params.TaxPolicy.RateMax, params.TaxPolicy.RateMin)
 	}
 
 	if params.TaxPolicy.RateMin.IsNegative() {
-		return fmt.Errorf("treasury parameter TaxPolicy.RateMin must be >= 0, is %s", params.TaxPolicy.RateMin.String())
+		return fmt.Errorf("treasury parameter TaxPolicy.RateMin must be >= 0, is %s", params.TaxPolicy.RateMin)
 	}
 
 	if params.RewardPolicy.RateMax.LT(params.RewardPolicy.RateMin) {
 		return fmt.Errorf("treasury RewardPolicy.RateMax %s must be greater than RewardPolicy.RateMin %s",
-			params.RewardPolicy.RateMax.String(), params.RewardPolicy.RateMin.String())
+			params.RewardPolicy.RateMax, params.RewardPolicy.RateMin)
 	}
 
 	if params.RewardPolicy.RateMin.IsNegative() {
-		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be >= 0, is %s", params.RewardPolicy.RateMin.String())
+		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be >= 0, is %s", params.RewardPolicy.RateMin)
 	}
 
 	return nil
@@ -113,14 +113,14 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 // String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
-  Tax Policy        : { %v } 
-  Reward Policy     : { %v }
+  Tax Policy        : { %s } 
+  Reward Policy     : { %s }
 
-  SeigniorageBurdenTarget : %v
-  MiningIncrement   : %v
+  SeigniorageBurdenTarget : %s
+  MiningIncrement         : %s
 
-  WindowShort        : %v
-  WindowLong         : %v
+  WindowShort        : %d
+  WindowLong         : %d
   `, params.TaxPolicy, params.RewardPolicy, params.SeigniorageBurdenTarget,
 		params.MiningIncrement, params.WindowShort, params.WindowLong)
 }
