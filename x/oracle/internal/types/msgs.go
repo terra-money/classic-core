@@ -139,6 +139,11 @@ func (msg MsgExchangeRateVote) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
+	// Check overflow bit length
+	if msg.ExchangeRate.BitLen() > 100+sdk.DecimalPrecisionBits {
+		return ErrInvalidExchangeRate(DefaultCodespace, msg.ExchangeRate)
+	}
+
 	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
 		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
 	}

@@ -39,6 +39,11 @@ func ErrUnknownDenomination(codespace sdk.CodespaceType, denom string) sdk.Error
 	return sdk.NewError(codespace, CodeUnknownDenom, fmt.Sprintf("The denom is not known: %s", denom))
 }
 
+// ErrInvalidExchangeRate called when the rate submitted is not valid
+func ErrInvalidExchangeRate(codespace sdk.CodespaceType, rate sdk.Dec) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidExchangeRate, fmt.Sprintf("ExchangeRate is invalid: %s", rate.String()))
+}
+
 // ErrVerificationFailed called when the given prevote has different hash from the retrieved one
 func ErrVerificationFailed(codespace sdk.CodespaceType, hash []byte, retrivedHash []byte) sdk.Error {
 	return sdk.NewError(codespace, CodeVerificationFailed, fmt.Sprintf("Retrieved hash [%s] differs from prevote hash [%s]", retrivedHash, hash))

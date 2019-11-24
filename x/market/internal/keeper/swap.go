@@ -131,7 +131,7 @@ func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askD
 
 	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	if retAmount.LTE(sdk.ZeroDec()) {
-		return sdk.DecCoin{}, types.ErrInsufficientSwapCoins(types.DefaultCodespace, offerCoin.Amount.TruncateInt())
+		return sdk.DecCoin{}, types.ErrInvalidOfferCoin(types.DefaultCodespace, offerCoin.Amount.TruncateInt())
 	}
 
 	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil

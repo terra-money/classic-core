@@ -35,6 +35,10 @@ func querySwap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, s
 		return nil, types.ErrRecursiveSwap(types.DefaultCodespace, params.AskDenom)
 	}
 
+	if params.OfferCoin.Amount.BigInt().BitLen() > 100 {
+		return nil, types.ErrInvalidOfferCoin(keeper.Codespace(), params.OfferCoin.Amount)
+	}
+
 	swapCoin, spread, err := keeper.ComputeSwap(ctx, params.OfferCoin, params.AskDenom)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Failed to get swapped coin amount", err.Error()))

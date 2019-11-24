@@ -13,6 +13,8 @@ import (
 func TestMsgSwap(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
+	overflowOfferAmt, _ := sdk.NewIntFromString("100000000000000000000000000000000000000000000000000000000")
+
 	tests := []struct {
 		trader     sdk.AccAddress
 		offerCoin  sdk.Coin
@@ -22,6 +24,7 @@ func TestMsgSwap(t *testing.T) {
 		{addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, true},
 		{sdk.AccAddress{}, sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, false},
 		{addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt()), core.MicroSDRDenom, false},
+		{addrs[0], sdk.NewCoin(core.MicroLunaDenom, overflowOfferAmt), core.MicroSDRDenom, false},
 		{addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroLunaDenom, false},
 	}
 
