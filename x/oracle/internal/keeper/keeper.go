@@ -258,8 +258,8 @@ func (k Keeper) IterateOracleDelegates(ctx sdk.Context,
 //-----------------------------------
 // Reward pool logic
 
-// getRewardPool retrieves the balance of the oracle module account
-func (k Keeper) getRewardPool(ctx sdk.Context) sdk.Coins {
+// GetRewardPool retrieves the balance of the oracle module account
+func (k Keeper) GetRewardPool(ctx sdk.Context) sdk.Coins {
 	acc := k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 	return acc.GetCoins()
 }

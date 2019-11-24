@@ -56,6 +56,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	keeper.SetParams(ctx, data.Params)
+	keeper.GetRewardPool(ctx)
 }
 
 // ExportGenesis writes the current store values

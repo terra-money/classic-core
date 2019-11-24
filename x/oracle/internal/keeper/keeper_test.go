@@ -229,7 +229,7 @@ func TestRewardPool(t *testing.T) {
 
 	input.SupplyKeeper.SetModuleAccount(input.Ctx, acc)
 
-	KFees := input.OracleKeeper.getRewardPool(input.Ctx)
+	KFees := input.OracleKeeper.GetRewardPool(input.Ctx)
 	require.Equal(t, fees, KFees)
 }
 
