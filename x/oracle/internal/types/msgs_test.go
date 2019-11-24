@@ -43,6 +43,8 @@ func TestMsgExchangeRatePrevote(t *testing.T) {
 func TestMsgExchangeRateVote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
+	overflowExchangeRate, _ := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000")
+
 	tests := []struct {
 		denom      string
 		voter      sdk.AccAddress
@@ -53,6 +55,7 @@ func TestMsgExchangeRateVote(t *testing.T) {
 		{"", addrs[0], "123", sdk.OneDec(), false},
 		{core.MicroCNYDenom, addrs[0], "123", sdk.OneDec().MulInt64(core.MicroUnit), true},
 		{core.MicroCNYDenom, addrs[0], "123", sdk.ZeroDec(), true},
+		{core.MicroCNYDenom, addrs[0], "123", overflowExchangeRate, false},
 		{core.MicroCNYDenom, sdk.AccAddress{}, "123", sdk.OneDec().MulInt64(core.MicroUnit), false},
 		{core.MicroCNYDenom, addrs[0], "", sdk.OneDec().MulInt64(core.MicroUnit), false},
 	}
