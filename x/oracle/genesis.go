@@ -7,12 +7,12 @@ import (
 // InitGenesis initialize default parameters
 // and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-	for delegatorBechAddr, delegatee := range data.FeederDelegations {
+	for delegatorBechAddr, delegate := range data.FeederDelegations {
 		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
 		if err != nil {
 			panic(err)
 		}
-		keeper.SetOracleDelegate(ctx, delegator, delegatee)
+		keeper.SetOracleDelegate(ctx, delegator, delegate)
 	}
 
 	for _, prevote := range data.ExchangeRatePrevotes {
@@ -27,12 +27,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetLunaExchangeRate(ctx, denom, rate)
 	}
 
-	for delegatorBechAddr, delegatee := range data.FeederDelegations {
+	for delegatorBechAddr, delegate := range data.FeederDelegations {
 		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
 		if err != nil {
 			panic(err)
 		}
-		keeper.SetOracleDelegate(ctx, delegator, delegatee)
+		keeper.SetOracleDelegate(ctx, delegator, delegate)
 	}
 
 	for _, prevote := range data.ExchangeRatePrevotes {
@@ -64,9 +64,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
 	feederDelegations := make(map[string]sdk.AccAddress)
-	keeper.IterateOracleDelegates(ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+	keeper.IterateOracleDelegates(ctx, func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool) {
 		bechAddr := delegator.String()
-		feederDelegations[bechAddr] = delegatee
+		feederDelegations[bechAddr] = delegate
 		return false
 	})
 
