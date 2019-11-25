@@ -300,10 +300,10 @@ def process_raw_genesis(genesis, parsed_args):
         'params': {
             'vote_period': '5', # blocks per half-minute
             'vote_threshold': genesis['app_state']['oracle']['params']['vote_threshold'],
-            'reward_band': genesis['app_state']['oracle']['params']['oracle_reward_band'],
             'whitelist': ['ukrw', 'usdr', 'uusd', 'umnt'],
-            'reward_distribution_window': '5256000',   # # of blocks per a year
-            'slash_window': '432000',                  # # of blocks per a month
+            'reward_band': '0.07',                     # 7%
+            'reward_distribution_window': '5256000',   # num of blocks per a year
+            'slash_window': '432000',                  # num of blocks per a month
             'slash_fraction': '0.01',                  # 1%
             'min_valid_per_window': '0.05'             # 5%
         }
@@ -315,9 +315,10 @@ def process_raw_genesis(genesis, parsed_args):
         'tax_rate': '0.005', # 0.5%
         'reward_weight': genesis['app_state']['treasury']['reward_weight'],
         'tax_caps': {
-            'ukrw': '1600',
-            'uusd': '1',
-            'umnt': '3700'
+            'ukrw': '1612000000',    # 1612 KRW
+            'uusd': '1370000',       # 1.37 USD
+            'umnt': '3715000000'     # 3715 MNT
+            'usdr': '1000000',       # 1 SDR
         },
         'tax_proceed': [],
         'epoch_initial_issuance': [],
