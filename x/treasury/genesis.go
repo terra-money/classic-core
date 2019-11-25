@@ -12,8 +12,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 
 	keeper.SetTaxRate(ctx, data.TaxRate)
 	keeper.SetRewardWeight(ctx, data.RewardWeight)
-	keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
 	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
+
+	// If EpochInitialIssuance is empty, we use current supply as epoch initial issuance
+	if data.EpochInitialIssuance.Empty() {
+		keeper.RecordEpochInitialIssuance(ctx)
+	} else {
+		keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
+	}
 
 	// store tax caps
 	for denom, taxCap := range data.TaxCaps {

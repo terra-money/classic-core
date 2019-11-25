@@ -44,13 +44,13 @@ func TestParamsEqual(t *testing.T) {
 
 	// small slash window
 	p6 := DefaultParams()
-	p6.SlashWindow = int64(49)
+	p6.SlashWindow = int64(1)
 	err = p6.Validate()
 	require.Error(t, err)
 
 	// small distribution window
 	p7 := DefaultParams()
-	p7.RewardDistributionWindow = int64(99)
+	p7.RewardDistributionWindow = int64(1)
 	err = p7.Validate()
 	require.Error(t, err)
 }

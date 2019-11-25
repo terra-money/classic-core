@@ -77,6 +77,21 @@ func TestQuerySwap(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QuerySwap}, query)
 	require.Error(t, err)
 
+	// overflow query
+	overflowAmt, _ := sdk.NewIntFromString("1000000000000000000000000000000000")
+	overflowOfferCoin := sdk.NewCoin(core.MicroLunaDenom, overflowAmt)
+	queryParams = types.NewQuerySwapParams(overflowOfferCoin, core.MicroSDRDenom)
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	query = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	_, err = querier(input.Ctx, []string{types.QuerySwap}, query)
+	require.Error(t, err)
+
 	// valid query
 	queryParams = types.NewQuerySwapParams(offerCoin, core.MicroSDRDenom)
 	bz, err = cdc.MarshalJSON(queryParams)

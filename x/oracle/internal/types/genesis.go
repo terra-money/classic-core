@@ -13,7 +13,7 @@ type GenesisState struct {
 	ExchangeRates        map[string]sdk.Dec        `json:"exchange_rates" yaml:"exchange_rates"`
 	ExchangeRatePrevotes []ExchangeRatePrevote     `json:"exchange_rate_prevotes" yaml:"exchange_rate_prevotes"`
 	ExchangeRateVotes    []ExchangeRateVote        `json:"exchange_rate_votes" yaml:"exchange_rate_votes"`
-	MissCounters         map[string]int64          `json:"miss_counters" yaml:"miss_counters`
+	MissCounters         map[string]int64          `json:"miss_counters" yaml:"miss_counters"`
 }
 
 // NewGenesisState creates a new GenesisState object

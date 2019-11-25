@@ -233,7 +233,7 @@ func TestOracleTally(t *testing.T) {
 	rewardees := []sdk.AccAddress{}
 	weightedMedian := ballot.WeightedMedian()
 	standardDeviation := ballot.StandardDeviation()
-	maxSpread := input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2)
+	maxSpread := weightedMedian.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
 	if standardDeviation.GT(maxSpread) {
 		maxSpread = standardDeviation
@@ -293,12 +293,54 @@ func TestOracleRewardDistribution(t *testing.T) {
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rewardDistributionWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(rewardDistributionWindow).TruncateInt()
+	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.RewardDistributionWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(votePeriodsPerWindow).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
+}
+
+func TestOracleRewardBand(t *testing.T) {
+	input, h := setup(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.Whitelist = types.DenomList{core.MicroKRWDenom}
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
+
+	// no one will miss the vote
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Sub(rewardSpread), 0)
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Add(rewardSpread), 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
+	// Account 1 will miss the vote due to raward band condition
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Sub(rewardSpread.Add(sdk.OneDec())), 0)
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate.Add(rewardSpread), 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
 }
 
 func TestOracleMultiRewardDistribution(t *testing.T) {
@@ -342,11 +384,11 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	params.Whitelist = types.DenomList{core.MicroKRWDenom}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	slashWindow := input.OracleKeeper.SlashWindow(input.Ctx)
+	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := int64(0); i < sdk.OneDec().Sub(minValidPerWindow).MulInt64(slashWindow).TruncateInt64(); i++ {
+	for i := int64(0); i < sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64(); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, KRW
@@ -375,7 +417,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	// Account 3, KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
 
-	input.Ctx = input.Ctx.WithBlockHeight(slashWindow - 1)
+	input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
 	EndBlocker(input.Ctx, input.OracleKeeper)
 	validator = input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
@@ -384,15 +426,17 @@ func TestInvalidVotesSlashing(t *testing.T) {
 func TestWhitelistSlashing(t *testing.T) {
 	input, h := setup(t)
 
-	slashWindow := input.OracleKeeper.SlashWindow(input.Ctx)
+	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := int64(0); i < sdk.OneDec().Sub(minValidPerWindow).MulInt64(slashWindow).TruncateInt64(); i++ {
+	for i := int64(0); i < sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64(); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-		// Account 1, KRW
-		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+		// Account 2, KRW
+		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+		// Account 3, KRW
+		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
 
 		EndBlocker(input.Ctx, input.OracleKeeper)
 		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
@@ -401,14 +445,36 @@ func TestWhitelistSlashing(t *testing.T) {
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, stakingAmt, validator.GetBondedTokens())
 
-	// one more miss vote will inccur ValAddrs[1] slashing
-	// Account 1, KRW
-	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+	// one more miss vote will inccur Account 1 slashing
 
-	input.Ctx = input.Ctx.WithBlockHeight(slashWindow - 1)
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
+
+	input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
 	EndBlocker(input.Ctx, input.OracleKeeper)
 	validator = input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
+}
+
+func TestNotPassedBallotSlashing(t *testing.T) {
+	input, h := setup(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.Whitelist = types.DenomList{core.MicroKRWDenom}
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
+
+	// Account 1, dummy denom
+	makePrevoteAndVote(t, input, h, 0, core.MicroCNYDenom, randomExchangeRate, 0)
+	// Account 1, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 }
 
 func TestAbstainSlashing(t *testing.T) {
@@ -417,10 +483,10 @@ func TestAbstainSlashing(t *testing.T) {
 	params.Whitelist = types.DenomList{core.MicroKRWDenom}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	slashWindow := input.OracleKeeper.SlashWindow(input.Ctx)
+	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := int64(0); i <= sdk.OneDec().Sub(minValidPerWindow).MulInt64(slashWindow).TruncateInt64(); i++ {
+	for i := int64(0); i <= sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64(); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, KRW

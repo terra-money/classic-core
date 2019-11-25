@@ -294,17 +294,17 @@ func TestIterateFeederDelegations(t *testing.T) {
 	input.OracleKeeper.SetOracleDelegate(input.Ctx, ValAddrs[0], Addrs[1])
 
 	var delegators []sdk.ValAddress
-	var delegatees []sdk.AccAddress
-	input.OracleKeeper.IterateOracleDelegates(input.Ctx, func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool) {
+	var delegates []sdk.AccAddress
+	input.OracleKeeper.IterateOracleDelegates(input.Ctx, func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool) {
 		delegators = append(delegators, delegator)
-		delegatees = append(delegatees, delegatee)
+		delegates = append(delegates, delegate)
 		return false
 	})
 
 	require.Equal(t, 1, len(delegators))
-	require.Equal(t, 1, len(delegatees))
+	require.Equal(t, 1, len(delegates))
 	require.Equal(t, ValAddrs[0], delegators[0])
-	require.Equal(t, Addrs[1], delegatees[0])
+	require.Equal(t, Addrs[1], delegates[0])
 }
 
 func TestMissCounter(t *testing.T) {

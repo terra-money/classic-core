@@ -17,10 +17,10 @@ type PolicyConstraints struct {
 // String implements fmt.Stringer interface
 func (pc PolicyConstraints) String() string {
 	return fmt.Sprintf(`PolicyConstraints :
- RateMin: %s
- RateMax: %s
- Cap: %s
- ChangeRateMax: %v
+ RateMin:       %s
+ RateMax:       %s
+ Cap:           %s
+ ChangeRateMax: %s
 	`, pc.RateMin, pc.RateMax, pc.Cap, pc.ChangeRateMax)
 }
 

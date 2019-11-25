@@ -14,6 +14,8 @@ import (
 // NewHandler returns a handler for "oracle" type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
 		switch msg := msg.(type) {
 		case MsgExchangeRatePrevote:
 			return handleMsgExchangeRatePrevote(ctx, k, msg)
@@ -133,13 +135,13 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelega
 	}
 
 	// Set the delegation
-	keeper.SetOracleDelegate(ctx, signer, dfpm.Delegatee)
+	keeper.SetOracleDelegate(ctx, signer, dfpm.Delegate)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeFeedDeleate,
 			sdk.NewAttribute(types.AttributeKeyOperator, dfpm.Operator.String()),
-			sdk.NewAttribute(types.AttributeKeyFeeder, dfpm.Delegatee.String()),
+			sdk.NewAttribute(types.AttributeKeyFeeder, dfpm.Delegate.String()),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,

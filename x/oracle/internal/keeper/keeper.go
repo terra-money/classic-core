@@ -238,7 +238,7 @@ func (k Keeper) SetOracleDelegate(ctx sdk.Context, operator sdk.ValAddress, dele
 
 // IterateOracleDelegates iterates over the feed delegates and performs a callback function.
 func (k Keeper) IterateOracleDelegates(ctx sdk.Context,
-	handler func(delegator sdk.ValAddress, delegatee sdk.AccAddress) (stop bool)) {
+	handler func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.FeederDelegationKey)
@@ -246,10 +246,10 @@ func (k Keeper) IterateOracleDelegates(ctx sdk.Context,
 	for ; iter.Valid(); iter.Next() {
 		delegator := sdk.ValAddress(iter.Key()[len(types.FeederDelegationKey):])
 
-		var delegatee sdk.AccAddress
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &delegatee)
+		var delegate sdk.AccAddress
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &delegate)
 
-		if handler(delegator, delegatee) {
+		if handler(delegator, delegate) {
 			break
 		}
 	}

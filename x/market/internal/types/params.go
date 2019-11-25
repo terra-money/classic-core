@@ -26,11 +26,10 @@ var (
 
 // Default parameter values
 var (
-	DefaultBasePool            = sdk.NewDec(1000000 * core.MicroUnit) // 1000,000sdr = 1000,000,000,000usdr
-	DefaultPoolRecoveryPeriod  = core.BlocksPerDay                    // 14,400
-	DefaultTerraLiquidityRatio = sdk.NewDecWithPrec(1, 2)             // 1%
-	DefaultMinSpread           = sdk.NewDecWithPrec(2, 2)             // 2%
-	DefaultTobinTax            = sdk.NewDecWithPrec(30, 4)            // 0.3%
+	DefaultBasePool           = sdk.NewDec(250000 * core.MicroUnit) // 250,000sdr = 250,000,000,000usdr
+	DefaultPoolRecoveryPeriod = core.BlocksPerDay                   // 14,400
+	DefaultMinSpread          = sdk.NewDecWithPrec(2, 2)            // 2%
+	DefaultTobinTax           = sdk.NewDecWithPrec(25, 4)           // 0.25%
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -56,16 +55,16 @@ func DefaultParams() Params {
 // Validate a set of params
 func (params Params) Validate() error {
 	if params.BasePool.IsNegative() {
-		return fmt.Errorf("base pool should be positive or zero, is %d", params.BasePool)
+		return fmt.Errorf("base pool should be positive or zero, is %s", params.BasePool)
 	}
 	if params.PoolRecoveryPeriod <= 0 {
 		return fmt.Errorf("pool recovery period should be positive, is %d", params.PoolRecoveryPeriod)
 	}
 	if params.MinSpread.IsNegative() || params.MinSpread.GT(sdk.OneDec()) {
-		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", params.MinSpread.String())
+		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", params.MinSpread)
 	}
 	if params.TobinTax.IsNegative() || params.TobinTax.GT(sdk.OneDec()) {
-		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax.String())
+		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax)
 	}
 
 	return nil
@@ -86,9 +85,9 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 // String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
-	BasePool:		            %d
+	BasePool:                   %d
 	PoolRecoveryPeriod:         %d
-	MinSpread:            			%s
+	MinSpread:                  %s
 	TobinTax:                   %s
 	`, params.BasePool, params.PoolRecoveryPeriod, params.MinSpread, params.TobinTax)
 }

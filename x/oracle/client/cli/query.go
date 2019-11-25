@@ -257,9 +257,9 @@ $ terracli query oracle feeder terravaloper...
 				return err
 			}
 
-			var delegatee sdk.AccAddress
-			cdc.MustUnmarshalJSON(res, &delegatee)
-			return cliCtx.PrintOutput(delegatee)
+			var delegate sdk.AccAddress
+			cdc.MustUnmarshalJSON(res, &delegate)
+			return cliCtx.PrintOutput(delegate)
 		},
 	}
 

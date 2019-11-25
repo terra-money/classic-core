@@ -52,8 +52,8 @@ func (msg MsgSwap) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Trader.String())
 	}
 
-	if msg.OfferCoin.Amount.LTE(sdk.ZeroInt()) {
-		return ErrInsufficientSwapCoins(DefaultCodespace, msg.OfferCoin.Amount)
+	if msg.OfferCoin.Amount.LTE(sdk.ZeroInt()) || msg.OfferCoin.Amount.BigInt().BitLen() > 100 {
+		return ErrInvalidOfferCoin(DefaultCodespace, msg.OfferCoin.Amount)
 	}
 
 	if msg.OfferCoin.Denom == msg.AskDenom {

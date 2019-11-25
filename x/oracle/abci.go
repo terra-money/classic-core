@@ -52,7 +52,14 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	for denom, ballot := range voteMap {
 
 		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists || !ballotIsPassing(ctx, ballot, k) {
+		if _, exists := whitelist[denom]; !exists {
+			continue
+		}
+
+		// If the ballot is not passed, then remove it from the whitelist array
+		// to prevent slashing validators who did valid vote.
+		if !ballotIsPassing(ctx, ballot, k) {
+			delete(whitelist, denom)
 			continue
 		}
 

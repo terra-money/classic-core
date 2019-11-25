@@ -15,16 +15,16 @@ import (
 func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), queryPrevotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes/{%s}", RestDenom, RestVoter), queryPrevotesHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/voter/{%s}/prevotes", queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), queryVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes/{%s}", RestDenom, RestVoter), queryVotesHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/voter/{%s}/votes", queryVoterVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/exchange_rate", RestDenom), queryExchangeRateHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/exchange_rates", queryExchangeRatesHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/voters/{%s}/prevotes", queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/voters/{%s}/votes", queryVoterVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/miss", RestVoter), queryMissHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
@@ -151,7 +151,7 @@ func queryExchangeRatesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -176,6 +176,10 @@ func queryActivesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		vars := mux.Vars(r)
 		voter := vars[RestVoter]
@@ -207,6 +211,10 @@ func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 
 func queryVoterVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		vars := mux.Vars(r)
 		voter := vars[RestVoter]

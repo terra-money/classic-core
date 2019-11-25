@@ -11,7 +11,7 @@ import (
 
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestInput(t)
-	input.TreasuryKeeper.SetEpochInitialIssuance(input.Ctx, sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(33))))
+	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 	input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.NewDec(1123))
 	input.TreasuryKeeper.SetTaxCap(input.Ctx, "foo", sdk.NewInt(1234))
 	input.TreasuryKeeper.SetTaxRate(input.Ctx, sdk.NewDec(5435))
@@ -31,5 +31,17 @@ func TestExportInitGenesis(t *testing.T) {
 	InitGenesis(newInput.Ctx, newInput.TreasuryKeeper, genesis)
 	newGenesis := ExportGenesis(newInput.Ctx, newInput.TreasuryKeeper)
 
+	require.Equal(t, genesis, newGenesis)
+
+	// Make epoch initial issuance to zero
+	tmp := genesis.EpochInitialIssuance
+	genesis.EpochInitialIssuance = sdk.Coins{}
+
+	newInput = keeper.CreateTestInput(t)
+	InitGenesis(newInput.Ctx, newInput.TreasuryKeeper, genesis)
+	newGenesis = ExportGenesis(newInput.Ctx, newInput.TreasuryKeeper)
+
+	// Return back epoch initial issuance
+	genesis.EpochInitialIssuance = tmp
 	require.Equal(t, genesis, newGenesis)
 }

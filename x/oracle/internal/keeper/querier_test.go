@@ -269,7 +269,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QueryFeederDelegation}, req)
 	require.NoError(t, err)
 
-	var delegatee sdk.AccAddress
-	cdc.UnmarshalJSON(res, &delegatee)
-	require.Equal(t, Addrs[1], delegatee)
+	var delegate sdk.AccAddress
+	cdc.UnmarshalJSON(res, &delegate)
+	require.Equal(t, Addrs[1], delegate)
 }

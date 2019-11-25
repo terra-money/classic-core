@@ -184,8 +184,8 @@ func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}
 
-	delegatee := keeper.GetOracleDelegate(ctx, params.Validator)
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, delegatee)
+	delegate := keeper.GetOracleDelegate(ctx, params.Validator)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, delegate)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

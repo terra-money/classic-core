@@ -1686,15 +1686,15 @@ paths:
           description: OK
           schema:
             properties:
+              quorum:
+                type: string
+                example: "0.4000000000"
               threshold:
                 type: string
                 example: "0.5000000000"
               veto:
                 type: string
                 example: "0.3340000000"
-              governance_penalty:
-                type: string
-                example: "0.0100000000"
         400:
           description: <other_path> is not a valid query request path
         404:

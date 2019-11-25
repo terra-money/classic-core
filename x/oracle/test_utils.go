@@ -25,6 +25,8 @@ func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input := keeper.CreateTestInput(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
+	params.SlashWindow = 100
+	params.RewardDistributionWindow = 100
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := NewHandler(input.OracleKeeper)
 
