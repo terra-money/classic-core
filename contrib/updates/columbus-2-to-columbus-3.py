@@ -250,8 +250,8 @@ def process_raw_genesis(genesis, parsed_args):
     }
 
     # Increase slashing panelty for security improvement
-    genesis['app_state']['slash']['params']['slash_fraction_double_sign'] = '0.05'
-    genesis['app_state']['slash']['params']['slash_fraction_downtime'] = '0.01'
+    genesis['app_state']['slashing']['params']['slash_fraction_double_sign'] = '0.05'
+    genesis['app_state']['slashing']['params']['slash_fraction_downtime'] = '0.01'
 
     # Move genesis state key from distr to distribution
     genesis['app_state']['distribution'] = genesis['app_state']['distr']
@@ -272,7 +272,7 @@ def process_raw_genesis(genesis, parsed_args):
             'update_time': val['commission']['update_time']
         }
 
-    del genesis['app_state']['staking']['pools']
+    del genesis['app_state']['staking']['pool']
 
     # Add supply module genesis state
     genesis['app_state']['supply'] = {
@@ -317,7 +317,7 @@ def process_raw_genesis(genesis, parsed_args):
         'tax_caps': {
             'ukrw': '1612000000',    # 1612 KRW
             'uusd': '1370000',       # 1.37 USD
-            'umnt': '3715000000'     # 3715 MNT
+            'umnt': '3715000000',    # 3715 MNT
             'usdr': '1000000',       # 1 SDR
         },
         'tax_proceed': [],
@@ -515,6 +515,6 @@ if __name__ == '__main__':
     parser = init_default_argument_parser(
         prog_desc='Convert genesis.json for columbus-3',
         default_chain_id='columbus-3',
-        default_start_time='2019-12-5T19:00:00Z',
+        default_start_time='2019-12-05T19:00:00Z',
     )
     main(parser, process_raw_genesis)
