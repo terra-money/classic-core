@@ -10,7 +10,7 @@ import math
 
 DECIMAL_UNIT = 3
 
-def init_default_argument_parser(prog_desc, default_chain_id, default_start_time):
+def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_time):
     parser = argparse.ArgumentParser(description=prog_desc)
     parser.add_argument(
         'exported_genesis',
@@ -18,7 +18,7 @@ def init_default_argument_parser(prog_desc, default_chain_id, default_start_time
         type=argparse.FileType('r'), default=sys.stdin,
     )
     parser.add_argument('--chain-id', type=str, default=default_chain_id)
-    parser.add_argument('--start-time', type=str, default=default_start_time)
+    parser.add_argument('--genesis-time', type=str, default=default_genesis_time)
     return parser
 
 # for coins sort
@@ -125,6 +125,7 @@ def process_raw_genesis(genesis, parsed_args):
             }
 
             add_coin(newAcc['coins'], coin)
+            newAcc['original_vesting'] = [coin]
             update_seed2_vesting_schedule(newAcc)
 
         newAccounts.append(newAcc)
@@ -283,7 +284,7 @@ def process_raw_genesis(genesis, parsed_args):
     genesis['app_state']['market'] = {
         'terra_pool_delta': '0',
         'params': {
-            'base_pool': '250000000000',           # 250,000 sdr = 250,000,000,000 usdr
+            'base_pool': '250000000000',          # 250,000 sdr = 250,000,000,000 usdr
             'pool_recovery_period': '14400',      # blocks per day
             'min_spread': '0.020000000000000000', # 2%
             'tobin_tax': '0.002500000000000000'   # 0.25%
@@ -335,7 +336,7 @@ def process_raw_genesis(genesis, parsed_args):
     
     # Set new chain ID and genesis start time
     genesis['chain_id'] = parsed_args.chain_id.strip()
-    genesis['genesis_time'] = parsed_args.start_time
+    genesis['genesis_time'] = parsed_args.genesis_time
 
     return genesis
 
@@ -515,6 +516,6 @@ if __name__ == '__main__':
     parser = init_default_argument_parser(
         prog_desc='Convert genesis.json for columbus-3',
         default_chain_id='columbus-3',
-        default_start_time='2019-12-05T19:00:00Z',
+        default_genesis_time='2019-12-13T15:00:00Z',
     )
     main(parser, process_raw_genesis)
