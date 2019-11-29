@@ -20,8 +20,8 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/exchange_rate", RestDenom), queryExchangeRateHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/exchange_rates", queryExchangeRatesHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/voters/{%s}/prevotes", queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc("/oracle/voters/{%s}/votes", queryVoterVotesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/prevotes", RestVoter), queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/votes", RestVoter), queryVoterVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/miss", RestVoter), queryMissHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
@@ -204,7 +204,7 @@ func queryVoterPrevotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
@@ -239,7 +239,7 @@ func queryVoterVotesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
