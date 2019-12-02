@@ -280,7 +280,7 @@ def process_raw_genesis(genesis, parsed_args):
         'supply': []
     }
 
-    # Migrate market moudle
+    # Migrate market module
     genesis['app_state']['market'] = {
         'terra_pool_delta': '0',
         'params': {
@@ -329,6 +329,7 @@ def process_raw_genesis(genesis, parsed_args):
     }
 
     genesis['app_state']['treasury']['params']['tax_policy']['rate_min'] = '0.001' # 0.1%
+    genesis['app_state']['treasury']['params']['reward_policy']['rate_max'] = '0.5' # 50%
 
     # TODO - should we need to add window_probation?
     # del genesis['app_state']['treasury']['params']['window_probation']
