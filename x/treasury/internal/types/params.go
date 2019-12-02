@@ -33,7 +33,7 @@ var (
 	}
 	DefaultRewardPolicy = PolicyConstraints{
 		RateMin:       sdk.NewDecWithPrec(5, 2),             // 5%
-		RateMax:       sdk.NewDecWithPrec(90, 2),            // 90%
+		RateMax:       sdk.NewDecWithPrec(50, 2),            // 50%
 		ChangeRateMax: sdk.NewDecWithPrec(25, 3),            // 2.5%
 		Cap:           sdk.NewCoin("unused", sdk.ZeroInt()), // UNUSED
 	}

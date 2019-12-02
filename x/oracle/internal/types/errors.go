@@ -69,7 +69,7 @@ func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("Now is not proper reveal period."))
 }
 
-// ErrInvalidSaltLength called when the salt length is not equal 1
+// ErrInvalidSaltLength called when the salt length is not in 1~4
 func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidSaltLength, fmt.Sprintf("Salt legnth should be 1~4, but given %d", saltLength))
 }
