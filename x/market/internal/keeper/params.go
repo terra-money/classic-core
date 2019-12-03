@@ -35,10 +35,10 @@ func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// TobinTaxList is a list of tax rates on all spot conversions of the specific Terra into another Terra
+// IlliquidTobinTaxList is the exceptions that have to pay a higher tobin tax due to illiquidity
 // TobinTax will be used for the denoms which are not in the list
-func (k Keeper) TobinTaxList(ctx sdk.Context) (res types.TobinTaxList) {
-	k.paramSpace.Get(ctx, types.ParmamStoreKeyTobinTaxList, &res)
+func (k Keeper) IlliquidTobinTaxList(ctx sdk.Context) (res types.TobinTaxList) {
+	k.paramSpace.Get(ctx, types.ParmamStoreKeyIlliquidTobinTaxList, &res)
 	return
 }
 

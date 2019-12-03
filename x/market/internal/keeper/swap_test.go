@@ -84,7 +84,7 @@ func TestComputeInternalSwap(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestTobinTaxListParams(t *testing.T) {
+func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// Set Oracle Price
@@ -96,7 +96,7 @@ func TestTobinTaxListParams(t *testing.T) {
 	// Case 1: tobin tax 2% due to umnt denom
 	params := input.MarketKeeper.GetParams(input.Ctx)
 	params.TobinTax = sdk.NewDecWithPrec(25, 4)
-	params.TobinTaxList = types.TobinTaxList{
+	params.IlliquidTobinTaxList = types.TobinTaxList{
 		types.TobinTax{
 			Denom:   core.MicroSDRDenom,
 			TaxRate: sdk.NewDecWithPrec(25, 4),
