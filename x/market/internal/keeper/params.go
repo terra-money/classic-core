@@ -29,9 +29,16 @@ func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res int64) {
 	return
 }
 
-// TobinTax is a tax on all spot conversions of one Terra into another Terra
+// TobinTax is a tax rate on all spot conversions of one Terra into another Terra
 func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParmamStoreKeyTobinTax, &res)
+	return
+}
+
+// TobinTaxList is a list of tax rates on all spot conversions of the specific Terra into another Terra
+// TobinTax will be used for the denoms which are not in the list
+func (k Keeper) TobinTaxList(ctx sdk.Context) (res types.TobinTaxList) {
+	k.paramSpace.Get(ctx, types.ParmamStoreKeyTobinTaxList, &res)
 	return
 }
 

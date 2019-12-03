@@ -22,6 +22,8 @@ var (
 	ParamStoreKeyMinSpread = []byte("minspread")
 	// Tobin tax
 	ParmamStoreKeyTobinTax = []byte("tobintax")
+	// Tobin tax list
+	ParmamStoreKeyTobinTaxList = []byte("tobintaxlist")
 )
 
 // Default parameter values
@@ -30,16 +32,23 @@ var (
 	DefaultPoolRecoveryPeriod = core.BlocksPerDay                   // 14,400
 	DefaultMinSpread          = sdk.NewDecWithPrec(2, 2)            // 2%
 	DefaultTobinTax           = sdk.NewDecWithPrec(25, 4)           // 0.25%
+	DefaultTobinTaxList       = TobinTaxList{
+		{
+			Denom:   core.MicroMNTDenom,
+			TaxRate: sdk.NewDecWithPrec(2, 2), // 2%
+		},
+	}
 )
 
 var _ subspace.ParamSet = &Params{}
 
 // Params market parameters
 type Params struct {
-	PoolRecoveryPeriod int64   `json:"pool_recovery_period" yaml:"pool_recovery_period"`
-	BasePool           sdk.Dec `json:"base_pool" yaml:"base_pool"`
-	MinSpread          sdk.Dec `json:"min_spread" yaml:"min_spread"`
-	TobinTax           sdk.Dec `json:"tobin_tax" yaml:"tobin_tax"`
+	PoolRecoveryPeriod int64        `json:"pool_recovery_period" yaml:"pool_recovery_period"`
+	BasePool           sdk.Dec      `json:"base_pool" yaml:"base_pool"`
+	MinSpread          sdk.Dec      `json:"min_spread" yaml:"min_spread"`
+	TobinTax           sdk.Dec      `json:"tobin_tax" yaml:"tobin_tax"`
+	TobinTaxList       TobinTaxList `json:"tobin_tax_list" yaml:"tobin_tax_list"`
 }
 
 // DefaultParams creates default market module parameters
@@ -49,6 +58,7 @@ func DefaultParams() Params {
 		PoolRecoveryPeriod: DefaultPoolRecoveryPeriod,
 		MinSpread:          DefaultMinSpread,
 		TobinTax:           DefaultTobinTax,
+		TobinTaxList:       DefaultTobinTaxList,
 	}
 }
 
@@ -66,6 +76,11 @@ func (params Params) Validate() error {
 	if params.TobinTax.IsNegative() || params.TobinTax.GT(sdk.OneDec()) {
 		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax)
 	}
+	for _, val := range params.TobinTaxList {
+		if val.TaxRate.IsNegative() || val.TaxRate.GT(sdk.OneDec()) {
+			return fmt.Errorf("tobin tax should be a value between [0,1], is %s", val)
+		}
+	}
 
 	return nil
 }
@@ -79,6 +94,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{Key: ParamStoreKeyPoolRecoveryPeriod, Value: &params.PoolRecoveryPeriod},
 		{Key: ParamStoreKeyMinSpread, Value: &params.MinSpread},
 		{Key: ParmamStoreKeyTobinTax, Value: &params.TobinTax},
+		{Key: ParmamStoreKeyTobinTaxList, Value: &params.TobinTaxList},
 	}
 }
 
@@ -89,5 +105,6 @@ func (params Params) String() string {
 	PoolRecoveryPeriod:         %d
 	MinSpread:                  %s
 	TobinTax:                   %s
-	`, params.BasePool, params.PoolRecoveryPeriod, params.MinSpread, params.TobinTax)
+	TobinTaxList:                   %s
+	`, params.BasePool, params.PoolRecoveryPeriod, params.MinSpread, params.TobinTax, params.TobinTaxList)
 }

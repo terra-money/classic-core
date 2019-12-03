@@ -70,6 +70,18 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	// Apply only tobin tax without constant product spread
 	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
 		spread = k.TobinTax(ctx)
+		tobinTaxList := k.TobinTaxList(ctx)
+
+		// Apply highest tobin tax for the denoms in the swap operation
+		for _, tobinTax := range tobinTaxList {
+			if tobinTax.Denom == offerCoin.Denom ||
+				tobinTax.Denom == askDenom {
+				if tobinTax.TaxRate.GT(spread) {
+					spread = tobinTax.TaxRate
+				}
+			}
+		}
+
 		return
 	}
 

@@ -19,6 +19,7 @@ const (
 	MicroJPYDenom        = assets.MicroJPYDenom
 	MicroEURDenom        = assets.MicroEURDenom
 	MicroGBPDenom        = assets.MicroGBPDenom
+	MicroMNTDenom        = assets.MicroMNTDenom
 	MicroUnit            = assets.MicroUnit
 	BlocksPerMinute      = util.BlocksPerMinute
 	BlocksPerHour        = util.BlocksPerHour
