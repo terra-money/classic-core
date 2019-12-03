@@ -83,8 +83,8 @@ func (pv ExchangeRateVote) getPower(ctx sdk.Context, powerMap map[string]int64) 
 // String implements fmt.Stringer interface
 func (pv ExchangeRateVote) String() string {
 	return fmt.Sprintf(`ExchangeRateVote
-	Denom:    %s, 
-	Voter:    %s, 
+	Denom:           %s, 
+	Voter:           %s, 
 	ExchangeRate:    %s`,
 		pv.Denom, pv.Voter, pv.ExchangeRate)
 }
