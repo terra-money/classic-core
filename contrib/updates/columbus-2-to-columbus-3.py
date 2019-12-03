@@ -284,7 +284,11 @@ def process_raw_genesis(genesis, parsed_args):
             'base_pool': '250000000000',          # 250,000 sdr = 250,000,000,000 usdr
             'pool_recovery_period': '14400',      # blocks per day
             'min_spread': '0.020000000000000000', # 2%
-            'tobin_tax': '0.002500000000000000'   # 0.25%
+            'tobin_tax': '0.002500000000000000',  # 0.25%
+            'illiquid_tobin_tax_list': {
+                'denom': 'umnt',
+                'tax_rate': '0.02'                # 2%
+            }
         }
     }
 
