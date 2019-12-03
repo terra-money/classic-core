@@ -21,9 +21,9 @@ var (
 	// Min spread
 	ParamStoreKeyMinSpread = []byte("minspread")
 	// Tobin tax
-	ParmamStoreKeyTobinTax = []byte("tobintax")
+	ParmaStoreKeyTobinTax = []byte("tobintax")
 	// Illiquid tobin tax list
-	ParmamStoreKeyIlliquidTobinTaxList = []byte("illiquidtobintaxlist")
+	ParmaStoreKeyIlliquidTobinTaxList = []byte("illiquidtobintaxlist")
 )
 
 // Default parameter values
@@ -93,8 +93,8 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 		{Key: ParamStoreKeyBasePool, Value: &params.BasePool},
 		{Key: ParamStoreKeyPoolRecoveryPeriod, Value: &params.PoolRecoveryPeriod},
 		{Key: ParamStoreKeyMinSpread, Value: &params.MinSpread},
-		{Key: ParmamStoreKeyTobinTax, Value: &params.TobinTax},
-		{Key: ParmamStoreKeyIlliquidTobinTaxList, Value: &params.IlliquidTobinTaxList},
+		{Key: ParmaStoreKeyTobinTax, Value: &params.TobinTax},
+		{Key: ParmaStoreKeyIlliquidTobinTaxList, Value: &params.IlliquidTobinTaxList},
 	}
 }
 
