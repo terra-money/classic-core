@@ -24,7 +24,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]ty
 		return
 	}
 
-	rewardPool := k.getRewardPool(ctx)
+	rewardPool := k.GetRewardPool(ctx)
 
 	// return if there's no rewards to give out
 	if rewardPool.Empty() {

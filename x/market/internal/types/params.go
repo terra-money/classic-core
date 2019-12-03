@@ -85,7 +85,7 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 // String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Treasury Params:
-	BasePool:                   %d
+	BasePool:                   %s
 	PoolRecoveryPeriod:         %d
 	MinSpread:                  %s
 	TobinTax:                   %s
