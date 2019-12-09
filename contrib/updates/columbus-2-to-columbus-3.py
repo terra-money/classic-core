@@ -75,6 +75,9 @@ def create_module_account(name, address, coins, permissions):
 
 def process_raw_genesis(genesis, parsed_args):
 
+    # Delete bugdet
+    del genesis['app_state']['budget']
+
     bondedAmt = 0
     notBondedAmt = 0
     for val in genesis['app_state']['staking']['validators']:
@@ -286,10 +289,10 @@ def process_raw_genesis(genesis, parsed_args):
             'pool_recovery_period': '14400',      # blocks per day
             'min_spread': '0.020000000000000000', # 2%
             'tobin_tax': '0.002500000000000000',  # 0.25%
-            'illiquid_tobin_tax_list': {
+            'illiquid_tobin_tax_list': [{
                 'denom': 'umnt',
                 'tax_rate': '0.02'                # 2%
-            }
+            }]
         }
     }
 
