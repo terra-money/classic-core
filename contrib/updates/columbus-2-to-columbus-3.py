@@ -84,10 +84,11 @@ def process_raw_genesis(genesis, parsed_args):
             notBondedAmt += int(val['tokens'])
         else:
             sys.exit('Invalid validator status')
-        
-    for ubd in genesis['app_state']['staking']['unbonding_delegations']:
-        for entry in ubd['entries']:
-            notBondedAmt += int(entry['balance'])
+    
+    if genesis['app_state']['staking']['unbonding_delegations']:
+        for ubd in genesis['app_state']['staking']['unbonding_delegations']:
+            for entry in ubd['entries']:
+                notBondedAmt += int(entry['balance'])
 
     newAccounts = []
     # Change old genesis accounts to new format genesis account
