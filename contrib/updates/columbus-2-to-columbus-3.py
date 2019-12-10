@@ -311,7 +311,7 @@ def process_raw_genesis(genesis, parsed_args):
             'reward_band': '0.07',                     # 7%
             'reward_distribution_window': '5256000',   # num of blocks per a year
             'slash_window': '432000',                  # num of blocks per a month
-            'slash_fraction': '0.01',                  # 1%
+            'slash_fraction': '0.0001',                # 0.01%
             'min_valid_per_window': '0.05'             # 5%
         }
     }
