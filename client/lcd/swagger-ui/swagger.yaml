@@ -542,7 +542,7 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              delegation:
+              amount:
                 $ref: "#/definitions/Coin"
       tags:
         - Staking
@@ -630,7 +630,7 @@ paths:
                 $ref: "#/definitions/Address"
               validator_address:
                 $ref: "#/definitions/ValidatorAddress"
-              shares:
+              amount:
                 type: string
                 example: "100"
       tags:
@@ -674,7 +674,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/UnbondingDelegationPair"
+            $ref: "#/definitions/UnbondingDelegation"
         400:
           description: Invalid delegator address or validator address
         500:
@@ -709,49 +709,6 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Redelegation"
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/redelegations:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    post:
-      summary: Submit a redelegation
-      parameters:
-        - in: body
-          name: delegation
-          description: The sender and tx information
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              delegator_address:
-                $ref: "#/definitions/Address"
-              validator_src_addressess:
-                $ref: "#/definitions/ValidatorAddress"
-              validator_dst_address:
-                $ref: "#/definitions/ValidatorAddress"
-              shares:
-                type: string
-                example: "100"
-      tags:
-        - Staking
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Tx was succesfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address or redelegation request body
         500:
           description: Internal Server Error
   /staking/delegators/{delegatorAddr}/validators:
@@ -828,7 +785,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/TxQuery"
+              $ref: "#/definitions/PaginatedQueryTxs"
         204:
           description: No staking transaction about this delegator address
         400:
@@ -953,17 +910,9 @@ paths:
           schema:
             type: object
             properties:
-              loose_tokens:
-                type: string
               bonded_tokens:
                 type: string
-              inflation_last_time:
-                type: string
-              inflation:
-                type: string
-              date_last_commission_reset:
-                type: string
-              prev_bonded_shares:
+              not_bonded_tokens:
                 type: string
         500:
           description: Internal Server Error
@@ -980,17 +929,11 @@ paths:
           schema:
             type: object
             properties:
-              inflation_rate_change:
-                type: string
-              inflation_max:
-                type: string
-              inflation_min:
-                type: string
-              goal_bonded:
-                type: string
               unbonding_time:
                 type: string
               max_validators:
+                type: integer
+              max_entries:
                 type: integer
               bond_denom:
                 type: string
@@ -1108,9 +1051,7 @@ paths:
                 type: string
               min_signed_per_window:
                 type: string
-              double_sign_unbond_duration:
-                type: string
-              downtime_unbond_duration:
+              downtime_jail_duration:
                 type: string
               slash_fraction_double_sign:
                 type: string
@@ -1272,9 +1213,7 @@ paths:
                 items:
                   $ref: "#/definitions/Coin"
               recipient:
-                type: array
-                items:
-                  $ref: "#/definitions/Address"
+                $ref: "#/definitions/Address"
               amount:
                 type: array
                 items:
@@ -3108,13 +3047,17 @@ definitions:
     properties:
       delegator_address:
         type: string
+        example: "terra1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0tmam9"
       validator_address:
         type: string
+        "example": "terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk"
       shares:
         type: string
-      height:
-        type: integer
-  UnbondingDelegationPair:
+        example: "1000000"
+      balance:
+        type: string
+        example: "1000000"
+  UnbondingDelegation:
     type: object
     properties:
       delegator_address:
@@ -3124,8 +3067,8 @@ definitions:
       entries:
         type: array
         items:
-          $ref: "#/definitions/UnbondingEntries"
-  UnbondingEntries:
+          $ref: "#/definitions/UnbondingEntry"
+  UnbondingEntry:
     type: object
     properties:
       initial_balance:
@@ -3134,23 +3077,8 @@ definitions:
         type: string
       creation_height:
         type: string
-      min_time:
+      completion_time:
         type: string
-  UnbondingDelegation:
-    type: object
-    properties:
-      delegator_address:
-        type: string
-      validator_address:
-        type: string
-      initial_balance:
-        type: string
-      balance:
-        type: string
-      creation_height:
-        type: integer
-      min_time:
-        type: integer
   Redelegation:
     type: object
     properties:
@@ -3163,7 +3091,7 @@ definitions:
       entries:
         type: array
         items:
-          $ref: "#/definitions/Redelegation"
+          $ref: "#/definitions/RedelegationEntry"
   RedelegationEntry:
     type: object
     properties:
@@ -3200,12 +3128,17 @@ definitions:
   SigningInfo:
     type: object
     properties:
+      address:
+        type: string
+        example: "terravalcons1qsdpq864szmfk8nh82qcg7lyle6k95w07acdqn"
       start_height:
         type: string
       index_offset:
         type: string
       jailed_until:
         type: string
+      tombstoned:
+        type: boolean
       missed_blocks_counter:
         type: string
   ParamChange:
