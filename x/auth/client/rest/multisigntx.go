@@ -1,4 +1,4 @@
-package cli
+package rest
 
 import (
 	"fmt"
@@ -6,21 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/multisig"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
-
-// RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, kb keys.Keybase) {
-	r.HandleFunc("/auth/accounts/{address}/multisign", MultiSignRequestHandlerFn(cdc, kb, cliCtx)).Methods("POST")
-}
 
 // MultiSignReq defines the properties of a multisign request's body.
 type MultiSignReq struct {
@@ -29,15 +23,22 @@ type MultiSignReq struct {
 	Signatures    []auth.StdSignature `json:"signatures"`
 	SignatureOnly bool                `json:"signature_only"`
 	Sequence      uint64              `json:"sequence_number"`
-	Pubkey        string              `json:"pubkey"` // (optional) In case the multisig account never reveals its pubkey, it is required.
+	Pubkey        MultiSignPubKey     `json:"pubkey"` // (optional) In case the multisig account never reveals its pubkey, it is required.
+}
+
+// MultiSignPubKey defines the properties of a multisig account's public key
+type MultiSignPubKey struct {
+	Threshold int      `json:"threshold"`
+	PubKeys   []string `json:"pubkeys"`
 }
 
 // MultiSignRequestHandlerFn - http request handler to build multisign transaction.
-func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context.CLIContext) http.HandlerFunc {
+func MultiSignRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Decode params
 		vars := mux.Vars(r)
 		bech32Addr := vars["address"]
+		accGetter := types.NewAccountRetriever(cliCtx)
 
 		multiSignAddr, err := sdk.AccAddressFromBech32(bech32Addr)
 		if err != nil {
@@ -45,7 +46,12 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
-		multiSignAccount, err := cliCtx.GetAccount(multiSignAddr.Bytes())
+		if err := accGetter.EnsureExists(multiSignAddr); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		multiSignAccount, err := accGetter.GetAccount(multiSignAddr)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -59,7 +65,7 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
-		err = cdc.UnmarshalJSON(body, &req)
+		err = cliCtx.Codec.UnmarshalJSON(body, &req)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -69,13 +75,26 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 		if multiSignAccount.GetPubKey() != nil {
 			multisigPub = multiSignAccount.GetPubKey().(multisig.PubKeyMultisigThreshold)
 		} else {
-			pubKey, err := sdk.GetAccPubKeyBech32(req.Pubkey)
-			if err != nil {
+
+			var pubkeys []crypto.PubKey
+			for _, bechPubkey := range req.Pubkey.PubKeys {
+				pubkey, err := sdk.GetAccPubKeyBech32(bechPubkey)
+				if err != nil {
+					rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+					return
+				}
+
+				pubkeys = append(pubkeys, pubkey)
+			}
+
+			// Ensure threshold <= len(pubkeys)
+			if req.Pubkey.Threshold > len(pubkeys) {
+				err := fmt.Errorf("Not sufficient pubkeys; required: %d given: %d", req.Pubkey.Threshold, len(pubkeys))
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
 
-			multisigPub = pubKey.(multisig.PubKeyMultisigThreshold)
+			multisigPub = multisig.NewPubKeyMultisigThreshold(req.Pubkey.Threshold, pubkeys).(multisig.PubKeyMultisigThreshold)
 		}
 
 		multisigSig := multisig.NewMultisig(len(multisigPub.PubKeys))
@@ -111,20 +130,20 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			}
 		}
 
-		newStdSig := auth.StdSignature{Signature: cdc.MustMarshalBinaryBare(multisigSig), PubKey: multisigPub}
+		newStdSig := auth.StdSignature{Signature: cliCtx.Codec.MustMarshalBinaryBare(multisigSig), PubKey: multisigPub}
 		newTx := auth.NewStdTx(req.Tx.GetMsgs(), req.Tx.Fee, []auth.StdSignature{newStdSig}, req.Tx.GetMemo())
 
 		sigOnly := req.SignatureOnly
 		var json []byte
 		switch {
 		case sigOnly:
-			json, err = cdc.MarshalJSONIndent(newTx.Signatures[0], "", "  ")
+			json, err = cliCtx.Codec.MarshalJSONIndent(newTx.Signatures[0], "", "  ")
 		case sigOnly && !cliCtx.Indent:
-			json, err = cdc.MarshalJSON(newTx.Signatures[0])
+			json, err = cliCtx.Codec.MarshalJSON(newTx.Signatures[0])
 		case !sigOnly && cliCtx.Indent:
-			json, err = cdc.MarshalJSONIndent(newTx, "", "  ")
+			json, err = cliCtx.Codec.MarshalJSONIndent(newTx, "", "  ")
 		default:
-			json, err = cdc.MarshalJSON(newTx)
+			json, err = cliCtx.Codec.MarshalJSON(newTx)
 		}
 
 		if err != nil {
@@ -132,18 +151,7 @@ func MultiSignRequestHandlerFn(cdc *codec.Codec, kb keys.Keybase, cliCtx context
 			return
 		}
 
-		rest.PostProcessResponse(w, cdc, json, cliCtx.Indent)
+		rest.PostProcessResponseBare(w, cliCtx, json)
 		return
 	}
-}
-
-func readAndUnmarshalStdSignature(cdc *amino.Codec, filename string) (stdSig auth.StdSignature, err error) {
-	var bytes []byte
-	if bytes, err = ioutil.ReadFile(filename); err != nil {
-		return
-	}
-	if err = cdc.UnmarshalJSON(bytes, &stdSig); err != nil {
-		return
-	}
-	return
 }

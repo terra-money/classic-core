@@ -1,94 +1,152 @@
 version: 2.1
 
-defaults: &linux_defaults
-  working_directory: /go/src/core
-  docker:
-    - image: circleci/golang:1.12.3
-  environment:
-    GOBIN: /tmp/workspace/bin
+executors:
+  golang:
+    docker:
+      - image: circleci/golang:1.13.1
+    working_directory: /go/src/github.com/terra-project/core
+  mac:
+    macos:
+      xcode: "10.3.0"
+    working_directory: /Users/distiller/project/src/github.com/terra-project/core
+    environment:
+      GO_VERSION: "1.13.1"
 
-deps: &dependencies
-  run:
-    name: dependencies
-    command: |
-      export PATH="$GOBIN:$PATH"
-
-refs:
-  filter_only_branches: &filter_only_branches
-    filters:
-      branches:
-        only: /^(develop|master).*/
-      tags:
-        only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-
-jobs:
-  setup_dependencies:
-    <<: *linux_defaults
+commands:
+  make:
+    parameters:
+      description:
+        type: string
+      target:
+        type: string
     steps:
-      - run: mkdir -p /tmp/workspace/bin
-      - run: mkdir -p /tmp/workspace/profiles
+      - attach_workspace:
+          at: /tmp/bin
       - checkout
       - restore_cache:
+          name: "Restore go modules cache"
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: tools
+          name: << parameters.description >>
           command: |
-            export PATH="$GOBIN:$PATH"
-            make get_tools
-      - *dependencies
+            export BINDIR=/tmp/bin
+            make << parameters.target >>
+  mac-set-env:
+    steps:
       - run:
-          name: binaries
+          name: "Set environment"
+          command: | 
+            echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
+            echo 'export GOPATH=$HOME/project' >> $BASH_ENV
+            echo 'export PATH=$PATH:$HOME/go/bin:$GOPATH/bin' >> $BASH_ENV
+            echo 'export GO111MODULE=on' 
+jobs:
+  setup-dependencies:
+    executor: golang
+    steps:
+      - checkout
+      - restore_cache:
+          name: "Restore go modules cache"
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Cache go modules
+          command: make go-mod-cache
+      - run:
+          name: Build
+          command: make build
+      - run:
+          name: "Git garbage collection"
+          command: git gc
+      - run:
+          name: "Build tools binaries"
           command: |
-            export PATH="$GOBIN:$PATH"
-            make go-mod-cache
-            make install
+            make tools
       - save_cache:
+          name: "Save go modules cache"
           key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
+      - run:
+          command: |
+            mkdir -p /tmp/bin
+            cp -r /go/bin/* /tmp/bin
       - persist_to_workspace:
-          root: /tmp/workspace
+          root: "/tmp/bin"
           paths:
-            - bin
-            - profiles
+            - "."
 
-  lint:
-    <<: *linux_defaults
-    parallelism: 1
+  test-sim-nondeterminism:
+    executor: golang
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - make:
+          target: test-sim-nondeterminism
+          description: "Test Terra non-determinism simulations"
+  
+  test-sim-fast:
+    executor: golang
+    steps:
+      - make:
+          target: test-sim-fast
+          description: "Test Terra fast simulations"
+
+  test-sim-import-export:
+    executor: golang
+    steps:
+      - make:
+          target: test-sim-import-export
+          description: "Test Terra import/export simulation"
+
+  test-sim-after-import:
+    executor: golang
+    steps:
+      - make:
+          target: test-sim-after-import
+          description: "Test Terra simulation after importing state"
+
+  test-sim-multi-seed-short:
+    executor: golang
+    steps:
+      - make:
+          target: test-sim-multi-seed-short
+          description: "Test Terra multi-seed simulation (short-lived)"
+
+  test-sim-multi-seed-long:
+    executor: golang
+    steps:
+      - make:
+          target: test-sim-multi-seed-long
+          description: "Test Terra multi-seed simulation (long-lived)"
+
+  integration-tests:
+    executor: golang
+    steps:
       - checkout
-      - *dependencies
       - restore_cache:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: Lint source
+          name: Test CLI integration
           command: |
-            export PATH="$GOBIN:$PATH"
-            make ci-lint
+            export BUILDDIR=`pwd`/build
+            make test-build
 
-  test_cover:
-    <<: *linux_defaults
-    parallelism: 1
+  test-cover:
+    executor: golang
+    parallelism: 4
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
-      - *dependencies
-      - run: mkdir -p /tmp/logs
       - restore_cache:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: Run tests
+          name: Run tests with coverage
           command: |
-            export PATH="$GOBIN:$PATH"
             export VERSION="$(git describe --tags --long | sed 's/v\(.*\)/\1/')"
             export GO111MODULE=on
-            for pkg in $(go list ./... | grep -v github.com/terra-project/core/cmd/terra/cli_test | grep -v '/simulation'); do
+            mkdir -p /tmp/logs /tmp/workspace/profiles
+            for pkg in $(go list ./... | grep -v '/simulation' | circleci tests split); do
               id=$(echo "$pkg" | sed 's|[/.]|_|g')
               go test -mod=readonly -timeout 8m -race -coverprofile=/tmp/workspace/profiles/$id.out -covermode=atomic -tags='ledger test_ledger_mock' "$pkg" | tee "/tmp/logs/$id-$RANDOM.log"
             done
@@ -101,7 +159,7 @@ jobs:
 
   release:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.13.1
     steps:
       - checkout
       - run:
@@ -111,18 +169,17 @@ jobs:
             export GOSUM=$(sha256sum go.sum | cut -d ' ' -f1)
             curl -sL https://git.io/goreleaser | bash
 
-  upload_coverage:
-    <<: *linux_defaults
-    parallelism: 1
+  upload-coverage:
+    executor: golang
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - *dependencies
       - run:
           name: gather
           command: |
             set -ex
+
             echo "--> Concatenating profiles:"
             ls /tmp/workspace/profiles/
             echo "mode: atomic" > coverage.txt
@@ -132,71 +189,26 @@ jobs:
       - run:
           name: filter out DONTCOVER
           command: |
-            excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER' | xargs realpath --relative-to=$GOPATH/src)"
+            excludelist="$(find . -type f -name '*.go' | xargs grep -l 'DONTCOVER')"
             for filename in ${excludelist}; do
-              echo "Excluding ${filename} ..."
-              sed -i "\%${filename}:%d" coverage.txt
+              filename=$(echo $filename | sed 's/^./github.com\/cosmos\/gaia/g')
+              echo "Excluding ${filename} from coverage report..."
+              sed -i.bak "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
             done
       - run:
           name: upload
           command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
-  docker_image:
-    <<: *linux_defaults
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: |
-          if [ "${CIRCLE_BRANCH}" == "master" ]; then
-            TERRA_VERSION="stable"
-          elif [ "${CIRCLE_BRANCH}" == "develop" ]; then
-            TERRA_VERSION="develop"
-          else
-            TERRA_VERSION=`/tmp/workspace/bin/terrad version`
-          fi
-          docker build -t ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION} .
-          mkdir -p docker-image
-          docker save -o docker-image/image.tar ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
-      - persist_to_workspace:
-          root: .
-          paths: docker-image
-
-  push_to_ecr:
-    docker:
-      - image: wilson208/circleci-awscli
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: |
-          if [ "${CIRCLE_BRANCH}" == "master" ]; then
-            TERRA_VERSION="stable"
-          elif [ "${CIRCLE_BRANCH}" == "develop" ]; then
-            TERRA_VERSION="develop"
-          else
-            TERRA_VERSION=`/tmp/workspace/bin/terrad version`
-          fi
-          eval $(aws --region ${AWS_DEFAULT_REGION} ecr --no-include-email get-login)
-          docker load --input /tmp/workspace/docker-image/image.tar
-          docker tag ${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION} ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
-          docker push ${AWS_ECR_URL}/${AWS_RESOURCE_NAME_PREFIX}:${TERRA_VERSION}
-
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/core
+    working_directory: /home/circleci/.go_workspace/src/github.com/terra-project/core
     machine:
       image: circleci/classic:latest
     environment:
-      GOBIN: /home/circleci/.go_workspace/bin
       GOPATH: /home/circleci/.go_workspace/
       GOOS: linux
       GOARCH: amd64
-      GO_VERSION: "1.11.5"
+      GO_VERSION: "1.13.1"
     parallelism: 1
-
     steps:
       - checkout
       - run:
@@ -208,68 +220,200 @@ jobs:
             sudo rm -rf /usr/local/go
             sudo mv go /usr/local
             popd
-
-            make go-mod-cache
+            set -x
+            make tools
             make build-linux
             make build-docker-terradnode
             make localnet-start
+            ./contrib/localnet-blocks-test.sh 40 5 10 localhost
 
-            CNT=0
-            ITER=40
-            SLEEP=5
-            NUMBLOCKS=10
-            NODEADDR=localhost
+  macos-ci:
+    executor: mac
+    steps:
+      - mac-set-env
+      - run:
+          name: Install go
+          command: |
+            source $BASH_ENV
+            curl -L -O https://dl.google.com/go/go$GO_VERSION.darwin-amd64.tar.gz
+            tar -C $HOME -xzf go$GO_VERSION.darwin-amd64.tar.gz
+            rm go$GO_VERSION.darwin-amd64.tar.gz
+            go version
+      - checkout
+      - run:
+          name: Install SDK
+          command: |
+            source $BASH_ENV
+            make tools
+            make install
+      - run:
+          name: Integration tests
+          command: |
+            source $BASH_ENV
+            make test-build
+      - run:
+          name: Test full terra simulation
+          command: |
+            source $BASH_ENV
+            make test-sim-fast
 
-            while [ ${CNT} -lt $ITER ]; do
-              var=$((curl -s --fail $NODEADDR:26657/status || echo "{\"result\":{\"sync_info\":{\"latest_block_height\":0}}}") | jq -r '.result.sync_info.latest_block_height')
-              echo "Number of Blocks: ${var}"
-              if [ ! -z ${var} ] && [ ${var} -gt ${NUMBLOCKS} ]; then
-                echo "Number of blocks reached, exiting success..."
-                exit 0
-              fi
-              let CNT=CNT+1
-              sleep $SLEEP
+  docker-image:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          TERRAD_VERSION=''
+          if [ "${CIRCLE_BRANCH}" = "master" ]; then
+            TERRAD_VERSION="stable"
+          elif [ "${CIRCLE_BRANCH}" = "develop" ]; then
+            TERRAD_VERSION="develop"
+          fi
+          if [ -z "${TERRAD_VERSION}" ]; then
+            docker build .
+          else
+            docker build -t tendermint/terra:$TERRAD_VERSION .
+            # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+            # docker push tendermint/terra:$TERRAD_VERSION
+          fi
+
+  docker-tagged:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          docker build -t tendermint/terra:$CIRCLE_TAG .
+          # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+          # docker push tendermint/terra:$CIRCLE_TAG
+
+  reproducible-builds:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build terra
+          no_output_timeout: 20m
+          command: |
+            sudo apt-get install -y ruby
+            bash -x ./contrib/gitian-build.sh all
+            for os in darwin linux windows; do
+              cp gitian-build-${os}/result/terra-${os}-res.yml .
+              rm -rf gitian-build-${os}/
             done
+      - store_artifacts:
+          path: /go/src/github.com/terra-project/core/terra-darwin-res.yml
+      - store_artifacts:
+          path: /go/src/github.com/terra-project/core/terra-linux-res.yml
+      - store_artifacts:
+          path: /go/src/github.com/terra-project/core/terra-windows-res.yml
 
-            echo "Timeout reached, exiting failure..."
-            exit 1
+# FIXME: The `setup-contract-tests-data` make target is broken as it completely
+# overrides the .terrad directory.
+#
+#  contract-tests:
+#    executor: golang
+#    steps:
+#      - attach_workspace:
+#          at: /tmp/workspace
+#      - checkout
+#      - setup_remote_docker:
+#          docker_layer_caching: true
+#      - run:
+#          name: Get Node.js and test REST implementation against swagger documentation at  https://swagger.terra.money/rpc/
+#          command: |
+#            go get github.com/snikch/goodman/cmd/goodman
+#            make build
+#            make build-contract-tests-hooks
+#            make setup-contract-tests-data
+#            export PATH=~/.local/bin:$PATH
+#            ./contrib/get_node.sh && make contract-tests
 
 workflows:
   version: 2
-  build_and_push:
+  test-suite:
     jobs:
-      - setup_dependencies: *filter_only_branches
-      - lint:
-          <<: *filter_only_branches
+      - docker-image:
           requires:
-            - setup_dependencies
-      - test_cover:
-          <<: *filter_only_branches
+            - setup-dependencies
+      - docker-tagged:
+          filters:
+            tags:
+              only:
+                - /^v.*/
+            branches:
+              ignore:
+                - /.*/
           requires:
-            - setup_dependencies
-      - localnet:
-          <<: *filter_only_branches
-      - docker_image:
-          <<: *filter_only_branches
+            - setup-dependencies
+      - macos-ci:
+          filters:
+            branches:
+              only:
+                - master
+                - develop
+      - setup-dependencies:
+          # filters here are needed to enable this job also for tags
+          filters:
+            tags:
+              only:
+                - /^v.*/
+      - integration-tests:
           requires:
-            - setup_dependencies
-      - push_to_ecr:
-          <<: *filter_only_branches
+            - setup-dependencies
+      - test-sim-nondeterminism:
           requires:
-            - lint
-            - docker_image
-            - localnet
-      - upload_coverage:
-          <<: *filter_only_branches
+            - setup-dependencies
+      - test-sim-fast:
           requires:
-            - test_cover
+            - setup-dependencies
+      - test-sim-import-export:
+          requires:
+            - setup-dependencies
+      - test-sim-multi-seed-short:
+          requires:
+            - setup-dependencies
+      - test-sim-multi-seed-long:
+          requires:
+            - setup-dependencies
+          # These filters ensure that the long sim only runs during release
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only:
+                - /^v.*/
+      - test-cover:
+          requires:
+            - setup-dependencies
+      - localnet
+      - upload-coverage:
+          requires:
+            - test-cover
+      - reproducible-builds:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - setup-dependencies
       - release:
+          # Only run this job on git tag pushes
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-          requires:
-            - lint
-            - test_cover
-            - localnet
+#      - contract-tests:
+#          requires:
+#            - setup-dependencies

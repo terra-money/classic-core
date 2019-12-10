@@ -4,81 +4,117 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/viper"
-
-	"github.com/terra-project/core/x/market"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/terra-project/core/x/market/internal/types"
 )
 
-// GetCmdQuerySwap implements the query swap amount command.
-func GetCmdQuerySwap(cdc *codec.Codec) *cobra.Command {
+// GetQueryCmd returns the cli query commands for this module
+func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	marketQueryCmd := &cobra.Command{
+		Use:                        "market",
+		Short:                      "Querying commands for the market module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+
+	marketQueryCmd.AddCommand(client.GetCommands(
+		GetCmdQuerySwap(queryRoute, cdc),
+		GetCmdQueryTerraPoolDelta(queryRoute, cdc),
+		GetCmdQueryParams(queryRoute, cdc),
+	)...)
+
+	return marketQueryCmd
+}
+
+// GetCmdQuerySwap implements the query swap simulation result command.
+func GetCmdQuerySwap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "swap",
-		Args:  cobra.NoArgs,
+		Use:   "swap [offer-coin] [ask-denom]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Query a quote for a swap operation",
 		Long: strings.TrimSpace(`
 Query a quote for how many coins can be received in a swap operation. Note; rates are dynamic and can quickly change.
 
-$ terracli query query swap --ask-denom usdr --offer-coin 5000000uluna
+$ terracli query query swap 5000000uluna usdr
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			askDenom := viper.GetString(flagAskDenom)
-
 			// parse offerCoin
-			offerCoinStr := viper.GetString(flagOfferCoin)
+			offerCoinStr := args[0]
 			offerCoin, err := sdk.ParseCoin(offerCoinStr)
 			if err != nil {
 				return err
 			}
 
-			params := market.NewQuerySwapParams(offerCoin)
+			askDenom := args[1]
+
+			params := types.NewQuerySwapParams(offerCoin, askDenom)
 			bz := cdc.MustMarshalJSON(params)
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", market.QuerierRoute, market.QuerySwap, askDenom), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s/%s", queryRoute, types.QuerySwap, askDenom), bz)
 			if err != nil {
 				return err
 			}
 
 			var retCoin sdk.Coin
-			err = cdc.UnmarshalJSON(res, &retCoin)
-			if err != nil {
-				return err
-			}
-
+			cdc.MustUnmarshalJSON(res, &retCoin)
 			return cliCtx.PrintOutput(retCoin)
 		},
 	}
 
-	cmd.Flags().String(flagAskDenom, "", "Denom of the asset to swap to")
-	cmd.Flags().String(flagOfferCoin, "", "The asset to swap from e.g. 1000ukrw")
+	return cmd
+}
 
-	cmd.MarkFlagRequired(flagAskDenom)
-	cmd.MarkFlagRequired(flagOfferCoin)
+// GetCmdQueryTerraPoolDelta implements the query terra pool delta command.
+func GetCmdQueryTerraPoolDelta(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "terra-pool-delta",
+		Args:  cobra.NoArgs,
+		Short: "Query terra pool delta",
+		Long: `Query terra pool delta, which is usdr amount used for swap operation from the TerraPool.
+It can be negative if the market wants more Terra than Luna, and vice versa if the market wants more Luna.
+
+$ terracli query market terra-pool-delta
+	`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryTerraPoolDelta), nil)
+			if err != nil {
+				return err
+			}
+
+			var poolDelta sdk.Dec
+			cdc.MustUnmarshalJSON(res, &poolDelta)
+			return cliCtx.PrintOutput(poolDelta)
+		},
+	}
 
 	return cmd
 }
 
 // GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   market.QueryParams,
+		Use:   "params",
 		Args:  cobra.NoArgs,
 		Short: "Query the current market params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", market.QuerierRoute, market.QueryParams), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters), nil)
 			if err != nil {
 				return err
 			}
 
-			var params market.Params
+			var params types.Params
 			cdc.MustUnmarshalJSON(res, &params)
 			return cliCtx.PrintOutput(params)
 		},

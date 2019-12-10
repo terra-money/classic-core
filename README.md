@@ -1,5 +1,5 @@
 # Terra Core
-![banner](docs/terra-core.png)
+![banner](banner.png)
 
 [![CircleCI](https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d)](https://circleci.com/gh/terra-project/core/tree/develop)
 [![codecov](https://codecov.io/gh/terra-project/core/branch/develop/graph/badge.svg)](https://codecov.io/gh/terra-project/core)
@@ -20,7 +20,7 @@ Terra Core builds on [Tendermint](https://github.com/tendermint/tendermint) cons
 
 **WARNING**: Terra Core has mostly stabilized, but breaking changes may come regularly.
 
-**Note**: Requires [Go 1.12+](https://golang.org/dl/)
+**Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
 ## Status
 
@@ -52,7 +52,7 @@ The current state of the Terra Alliance (businesses gearing to adopt TerraX for 
 
 Community channels actively being managed are here:
 - [Website](https://terra.money/)
-- [Discord](https://discord.gg/vutpqa)
+- [Discord](https://discord.gg/Gutqybc)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)

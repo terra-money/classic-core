@@ -1,71 +1,72 @@
 package treasury
 
 import (
-	"fmt"
-
-	"github.com/terra-project/core/types/util"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	core "github.com/terra-project/core/types"
 )
 
-// GenesisState - all treasury state that must be provided at genesis
-type GenesisState struct {
-	Params              Params  `json:"params"` // treasury params
-	GenesisTaxRate      sdk.Dec `json:"tax_rate"`
-	GenesisRewardWeight sdk.Dec `json:"reward_weight"`
-}
-
-// NewGenesisState constructs a new genesis state
-func NewGenesisState(params Params, taxRate, rewardWeight sdk.Dec) GenesisState {
-	return GenesisState{
-		Params:              params,
-		GenesisTaxRate:      taxRate,
-		GenesisRewardWeight: rewardWeight,
-	}
-}
-
-// DefaultGenesisState returns raw genesis message for testing
-func DefaultGenesisState() GenesisState {
-	params := DefaultParams()
-	return GenesisState{
-		Params:              params,
-		GenesisTaxRate:      sdk.NewDecWithPrec(1, 3), // 0.1%
-		GenesisRewardWeight: sdk.NewDecWithPrec(5, 2), // 5%
-	}
-}
-
-// InitGenesis new treasury genesis
+// InitGenesis initializes default parameters
+// and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetTaxRate(ctx, data.GenesisTaxRate)
-	keeper.setTaxCap(ctx, data.Params.TaxPolicy.Cap.Denom, data.Params.TaxPolicy.Cap.Amount)
-	keeper.SetRewardWeight(ctx, data.GenesisRewardWeight)
-}
 
-// ExportGenesis returns a GenesisState for a given context and keeper. The
-// GenesisState will contain the pool, and validator/delegator distribution info's
-func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
-	params := k.GetParams(ctx)
-	taxRate := k.GetTaxRate(ctx, sdk.ZeroInt())
-	rewardWeight := k.GetRewardWeight(ctx, util.GetEpoch(ctx))
+	keeper.SetTaxRate(ctx, data.TaxRate)
+	keeper.SetRewardWeight(ctx, data.RewardWeight)
+	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
 
-	return NewGenesisState(params, taxRate, rewardWeight)
-}
-
-// ValidateGenesis validates the provided treasury genesis state to ensure the
-// expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
-func ValidateGenesis(data GenesisState) error {
-	if data.GenesisTaxRate.GT(data.Params.TaxPolicy.RateMax) ||
-		data.GenesisTaxRate.LT(data.Params.TaxPolicy.RateMin) {
-		return fmt.Errorf("Genesis tax rate must be between %s and %s, is %s",
-			data.Params.TaxPolicy.RateMin, data.Params.TaxPolicy.RateMax, data.GenesisTaxRate)
+	// If EpochInitialIssuance is empty, we use current supply as epoch initial issuance
+	if data.EpochInitialIssuance.Empty() {
+		keeper.RecordEpochInitialIssuance(ctx)
+	} else {
+		keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
 	}
 
-	if data.GenesisRewardWeight.GT(data.Params.RewardPolicy.RateMax) ||
-		data.GenesisRewardWeight.LT(data.Params.RewardPolicy.RateMin) {
-		return fmt.Errorf("Genesis reward rate must be between %s and %s, is %s",
-			data.Params.RewardPolicy.RateMin, data.Params.RewardPolicy.RateMax, data.GenesisRewardWeight)
+	// store tax caps
+	for denom, taxCap := range data.TaxCaps {
+		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
 
-	return validateParams(data.Params)
+	for epoch, TR := range data.TRs {
+		keeper.SetTR(ctx, int64(epoch), TR)
+	}
+	for epoch, SR := range data.SRs {
+		keeper.SetSR(ctx, int64(epoch), SR)
+	}
+	for epoch, TSL := range data.TSLs {
+		keeper.SetTSL(ctx, int64(epoch), TSL)
+	}
+}
+
+// ExportGenesis writes the current store values
+// to a genesis file, which can be imported again
+// with InitGenesis
+func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
+	params := keeper.GetParams(ctx)
+
+	taxRate := keeper.GetTaxRate(ctx)
+	rewardWeight := keeper.GetRewardWeight(ctx)
+	taxProceeds := keeper.PeekEpochTaxProceeds(ctx)
+	epochInitialIssuance := keeper.GetEpochInitialIssuance(ctx)
+
+	taxCaps := make(map[string]sdk.Int)
+	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
+		taxCaps[denom] = taxCap
+		return false
+	})
+
+	var TRs []sdk.Dec
+	var SRs []sdk.Dec
+	var TSLs []sdk.Int
+
+	curEpoch := core.GetEpoch(ctx)
+	for e := int64(0); e < curEpoch ||
+		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch)); e++ {
+
+		TRs = append(TRs, keeper.GetTR(ctx, e))
+		SRs = append(SRs, keeper.GetSR(ctx, e))
+		TSLs = append(TSLs, keeper.GetTSL(ctx, e))
+	}
+
+	return NewGenesisState(params, taxRate, rewardWeight,
+		taxCaps, taxProceeds, epochInitialIssuance, TRs, SRs, TSLs)
 }
