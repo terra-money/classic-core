@@ -51,7 +51,18 @@ func ComputeFeesWithStdTx(
 	sim := (gas == 0)
 
 	if sim {
-		tx.Signatures = []auth.StdSignature{{}}
+		tx.Signatures = []auth.StdSignature{}
+
+		signers := make(map[string]bool)
+		for _, msg := range tx.Msgs {
+			for _, signer := range msg.GetSigners() {
+				if _, ok := signers[signer.String()]; !ok {
+					signers[signer.String()] = true
+					tx.Signatures = append(tx.Signatures, auth.StdSignature{})
+				}
+			}
+		}
+
 		txBytes, err := utils.GetTxEncoder(cliCtx.Codec)(tx)
 		if err != nil {
 			return nil, 0, err

@@ -12,12 +12,16 @@ import (
 func TestReplenishPools(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
-	delta := sdk.NewDec(1000000)
-	regressionAmt := delta.QuoInt64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
+	delta := sdk.NewDecWithPrec(17987573223725367, 3)
 	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, delta)
 
-	EndBlocker(input.Ctx, input.MarketKeeper)
+	for i := 0; i < 100; i++ {
+		delta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+		regressionAmt := delta.QuoInt64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
 
-	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
-	require.Equal(t, delta.Sub(regressionAmt), terraPoolDelta)
+		EndBlocker(input.Ctx, input.MarketKeeper)
+
+		terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+		require.Equal(t, delta.Sub(regressionAmt), terraPoolDelta)
+	}
 }
