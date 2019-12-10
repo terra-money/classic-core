@@ -407,6 +407,13 @@ workflows:
                 - master
           requires:
             - setup-dependencies
+      - release:
+          # Only run this job on git tag pushes
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
 #      - contract-tests:
 #          requires:
 #            - setup-dependencies
