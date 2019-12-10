@@ -1,5 +1,5 @@
 # Terra Core
-![banner](docs/terra-core.png)
+![banner](banner.png)
 
 [![CircleCI](https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d)](https://circleci.com/gh/terra-project/core/tree/develop)
 [![codecov](https://codecov.io/gh/terra-project/core/branch/develop/graph/badge.svg)](https://codecov.io/gh/terra-project/core)

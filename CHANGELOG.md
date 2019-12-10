@@ -1,4 +1,4 @@
-## 1.0.0
+## 0.3.0
 ### Breaking Changes
 #### [\#265](https://github.com/terra-project/core/pull/265) Oracle refactor & Oracle slashing
 ##### Slashing
