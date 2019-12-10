@@ -118,7 +118,8 @@ def process_raw_genesis(genesis, parsed_args):
             for coin in newAcc['coins']:
               if coin['denom'] == 'uluna':
                 coin['amount'] = str(int(coin['amount']) - 978260000000)
-
+        if acc['address'] == 'terra1nl2vrxr0qzzy4pd9m2mw0q0tvwcxe2mg8shaad':
+            update_seed_to_private_vesting_schedule(newAcc)
         if acc['address'] == 'terra10y5usrnwk2ltddm5kenhznl5uj6w3yfga5al4a':
             # 978,260 LUNA 1M, 2M, 3M, 12M 10% 10% 10% 70%
             coin = {
@@ -403,6 +404,66 @@ def update_vesting_schedule(account):
         'denom': 'usdr',
         'schedules': terra_schedules
     }
+
+    vesting_schedules.append(luna_vesting_schedule)
+    vesting_schedules.append(terra_vesting_schedule)
+    account['vesting_schedules'] = vesting_schedules
+
+def update_seed_to_private_vesting_schedule(account):
+    initial_genesis_time = '2019-04-24T06:00:00.000000Z'
+    
+    # parse genesis date
+    genesis_date = dateutil.parser.parse(initial_genesis_time)
+    vesting_schedules = []
+
+    # Luna Schedule Update
+    luna_vesting_schedule = {
+        'denom': 'uluna',
+        'schedules': [
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 4)),
+                'end_time': str(get_time_after_n_month(genesis_date, 5)),
+                'ratio': '0.166000000000000000',
+            },
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 5)),
+                'end_time': str(get_time_after_n_month(genesis_date, 6)),
+                'ratio': '0.166000000000000000',
+            },
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 6)),
+                'end_time': str(get_time_after_n_month(genesis_date, 7)),
+                'ratio': '0.166000000000000000',
+            },
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 7)),
+                'end_time': str(get_time_after_n_month(genesis_date, 8)),
+                'ratio': '0.166000000000000000',
+            },
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 8)),
+                'end_time': str(get_time_after_n_month(genesis_date, 9)),
+                'ratio': '0.166000000000000000',
+            },
+            {
+                'start_time': str(get_time_after_n_month(genesis_date, 9)),
+                'end_time': str(get_time_after_n_month(genesis_date, 10)),
+                'ratio': '0.17000000000000000',
+            }
+        ]
+    }
+
+
+    # Terra vesting has no need to be updated
+    terra_vesting_schedule = {
+        'denom': 'usdr'
+    }
+
+    # Find origin terra vesting schedule and use it to new vesting schedule
+    for vesting_schedule in account['vesting_schedules']:
+        if vesting_schedule['denom'] == 'usdr':
+            terra_vesting_schedule['schedules'] = vesting_schedule['schedules']
+            break
 
     vesting_schedules.append(luna_vesting_schedule)
     vesting_schedules.append(terra_vesting_schedule)
