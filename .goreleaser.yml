@@ -7,7 +7,8 @@ before:
 
 builds:
   -
-    main: cmd/terracli/main.go
+    id: 'terracli'
+    main: ./cmd/terracli/main.go
     binary: terracli
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
@@ -35,7 +36,8 @@ builds:
         goarch: 386
 
   -
-    main: cmd/terrad/main.go
+    id: 'terrad'
+    main: ./cmd/terrad/main.go
     binary: terrad
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
@@ -63,7 +65,8 @@ builds:
         goarch: 386
 
   -
-    main: cmd/terrakeyutil/main.go
+    id: 'terrakeyutil'
+    main: ./cmd/terrakeyutil/main.go
     binary: terrakeytutil
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
