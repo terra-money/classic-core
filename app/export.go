@@ -117,7 +117,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	}
 
 	/* Just to be safe, assert the invariants on current state. */
-	app.assertRuntimeInvariantsOnContext(ctx)
+	// app.assertRuntimeInvariantsOnContext(ctx)
 
 	/* Handle fee distribution state. */
 
