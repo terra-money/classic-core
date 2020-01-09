@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
 
 	// If EpochInitialIssuance is empty, we use current supply as epoch initial issuance
-	if data.EpochInitialIssuance.Empty() {
+	if data.EpochInitialIssuance.IsZero() {
 		keeper.RecordEpochInitialIssuance(ctx)
 	} else {
 		keeper.SetEpochInitialIssuance(ctx, data.EpochInitialIssuance)
