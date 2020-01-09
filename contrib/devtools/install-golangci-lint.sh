@@ -6,8 +6,9 @@ installer="$(mktemp)"
 trap "rm -f ${installer}" EXIT
 
 GOBIN="${1}"
+VERSION="${2}"
+HASHSUM="${3}"
 CURL="$(which curl)"
-HASHSUM="${2}"
 
 f_sha256() {
   local l_file
