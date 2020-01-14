@@ -461,7 +461,7 @@ func EnsureSufficientMempoolFees(ctx sdk.Context, stdFee StdFee, taxes sdk.Coins
 		).Result()
 	}
 
-	if !requiredFees.Empty() && !stdFee.Amount.IsAnyGTE(requiredFees) {
+	if !requiredFees.IsZero() && !stdFee.Amount.IsAnyGTE(requiredFees) {
 		return sdk.ErrInsufficientFee(
 			fmt.Sprintf(
 				"insufficient fees; got: %q, required: %q = %q(gas) +%q(stability)", stdFee.Amount.Add(taxes), requiredFees.Add(taxes), requiredFees, taxes,

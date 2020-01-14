@@ -322,7 +322,7 @@ func TestAnteHandlerFees(t *testing.T) {
 	input.ak.SetAccount(ctx, acc1)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
-	require.True(t, input.sk.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().Empty())
+	require.True(t, input.sk.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().IsZero())
 	require.True(sdk.IntEq(t, input.ak.GetAccount(ctx, addr1).GetCoins().AmountOf(core.MicroSDRDenom), sdk.NewInt(999)))
 
 	acc1.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, 1000)))

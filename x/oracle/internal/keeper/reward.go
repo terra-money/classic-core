@@ -27,7 +27,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]ty
 	rewardPool := k.GetRewardPool(ctx)
 
 	// return if there's no rewards to give out
-	if rewardPool.Empty() {
+	if rewardPool.IsZero() {
 		return
 	}
 
@@ -46,7 +46,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]ty
 		rewardCoins = append(rewardCoins, sdk.NewCoin(core.MicroLunaDenom, rewardAmt))
 
 		// In case absence of the validator, we just skip distribution
-		if rewardeeVal != nil {
+		if rewardeeVal != nil && !rewardCoins.IsZero() {
 			k.distrKeeper.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
 			distributedReward = distributedReward.Add(rewardCoins)
 		}

@@ -449,8 +449,8 @@ func (f *Fixtures) QueryAccount(address sdk.AccAddress, flags ...string) authtyp
 // terracli query txs
 
 // QueryTxs is terracli query txs
-func (f *Fixtures) QueryTxs(page, limit int, tags ...string) *sdk.SearchTxsResult {
-	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --tags='%s' %v", f.TerracliBinary, page, limit, queryTags(tags), f.Flags())
+func (f *Fixtures) QueryTxs(page, limit int, events ...string) *sdk.SearchTxsResult {
+	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --events='%s' %v", f.TerracliBinary, page, limit, queryEvents(events), f.Flags())
 	out, _ := tests.ExecuteT(f.T, cmd, "")
 	var result sdk.SearchTxsResult
 	cdc := app.MakeCodec()
@@ -460,8 +460,8 @@ func (f *Fixtures) QueryTxs(page, limit int, tags ...string) *sdk.SearchTxsResul
 }
 
 // QueryTxsInvalid query txs with wrong parameters and compare expected error
-func (f *Fixtures) QueryTxsInvalid(expectedErr error, page, limit int, tags ...string) {
-	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --tags='%s' %v", f.TerracliBinary, page, limit, queryTags(tags), f.Flags())
+func (f *Fixtures) QueryTxsInvalid(expectedErr error, page, limit int, events ...string) {
+	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --events='%s' %v", f.TerracliBinary, page, limit, queryEvents(events), f.Flags())
 	_, err := tests.ExecuteT(f.T, cmd, "")
 	require.EqualError(f.T, expectedErr, err)
 }
@@ -750,9 +750,9 @@ func addFlags(cmd string, flags []string) string {
 	return strings.TrimSpace(cmd)
 }
 
-func queryTags(tags []string) (out string) {
-	for _, tag := range tags {
-		out += tag + "&"
+func queryEvents(events []string) (out string) {
+	for _, event := range events {
+		out += event + "&"
 	}
 	return strings.TrimSuffix(out, "&")
 }
