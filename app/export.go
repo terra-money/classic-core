@@ -4,26 +4,20 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/terra-project/core/x/budget"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/treasury"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/slashing"
+	"github.com/terra-project/core/x/staking"
 )
 
-// ExportAppStateAndValidators exports the state of Terra for a genesis file
-func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string) (
-	appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+// ExportAppStateAndValidators exports the state of terra for a genesis file
+func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
+) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
@@ -32,28 +26,7 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 		app.prepForZeroHeightGenesis(ctx, jailWhiteList)
 	}
 
-	// iterate to get the accounts
-	accounts := []GenesisAccount{}
-	appendAccount := func(acc auth.Account) (stop bool) {
-		account := NewGenesisAccountI(acc)
-		accounts = append(accounts, account)
-		return false
-	}
-	app.accountKeeper.IterateAccounts(ctx, appendAccount)
-
-	genState := NewGenesisState(
-		accounts,
-		auth.ExportGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper),
-		bank.ExportGenesis(ctx, app.bankKeeper),
-		staking.ExportGenesis(ctx, app.stakingKeeper),
-		distr.ExportGenesis(ctx, app.distrKeeper),
-		oracle.ExportGenesis(ctx, app.oracleKeeper),
-		budget.ExportGenesis(ctx, app.budgetKeeper),
-		crisis.ExportGenesis(ctx, app.crisisKeeper),
-		treasury.ExportGenesis(ctx, app.treasuryKeeper),
-		slashing.ExportGenesis(ctx, app.slashingKeeper),
-		market.ExportGenesis(ctx, app.marketKeeper),
-	)
+	genState := app.mm.ExportGenesis(ctx)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {
 		return nil, nil, err
@@ -62,7 +35,9 @@ func (app *TerraApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLi
 	return appState, validators, nil
 }
 
-// prepare for fresh start at zero height
+// prepForZeroHeightGenesis prepares for fresh start at zero height
+// NOTE zero height genesis is a temporary feature which will be deprecated
+//      in favour of export at a block height
 func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
@@ -82,12 +57,12 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	}
 
 	/* Just to be safe, assert the invariants on current state. */
-	app.assertRuntimeInvariantsOnContext(ctx)
+	app.crisisKeeper.AssertInvariants(ctx)
 
 	/* Handle fee distribution state. */
 
 	// withdraw all validator commission
-	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val sdk.Validator) (stop bool) {
+	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
 		_, _ = app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
 		return false
 	})
@@ -109,7 +84,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	ctx = ctx.WithBlockHeight(0)
 
 	// reinitialize all validators
-	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val sdk.Validator) (stop bool) {
+	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
 
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
 		scraps := app.distrKeeper.GetValidatorOutstandingRewards(ctx, val.GetOperator())
@@ -152,10 +127,11 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	// Iterate through validators by power descending, reset bond heights, and
 	// update bond intra-tx counters.
-	store := ctx.KVStore(app.keyStaking)
+	store := ctx.KVStore(app.keys[staking.StoreKey])
 	iter := sdk.KVStoreReversePrefixIterator(store, staking.ValidatorsKey)
 	counter := int16(0)
 
+	var valConsAddrs []sdk.ConsAddress
 	for ; iter.Valid(); iter.Next() {
 		addr := sdk.ValAddress(iter.Key()[1:])
 		validator, found := app.stakingKeeper.GetValidator(ctx, addr)
@@ -164,6 +140,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		}
 
 		validator.UnbondingHeight = 0
+		valConsAddrs = append(valConsAddrs, validator.ConsAddress())
 		if applyWhiteList && !whiteListMap[addr.String()] {
 			validator.Jailed = true
 		}
@@ -188,10 +165,43 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		},
 	)
 
-	// reset submit height on program infos
-	app.budgetKeeper.IteratePrograms(ctx, false, func(program budget.Program) (stop bool) {
-		program.SubmitBlock = 0
-		app.budgetKeeper.StoreProgram(ctx, program)
+	/* Handle oracle state. */
+
+	// Clear all prevotes
+	app.oracleKeeper.IterateExchangeRatePrevotes(ctx, func(prevote oracle.ExchangeRatePrevote) (stop bool) {
+		app.oracleKeeper.DeleteExchangeRatePrevote(ctx, prevote)
+
 		return false
 	})
+
+	// Clear all votes
+	app.oracleKeeper.IterateExchangeRateVotes(ctx, func(vote oracle.ExchangeRateVote) (stop bool) {
+		app.oracleKeeper.DeleteExchangeRateVote(ctx, vote)
+		return false
+	})
+
+	// Clear all prices
+	app.oracleKeeper.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) bool {
+		app.oracleKeeper.DeleteLunaExchangeRate(ctx, denom)
+		return false
+	})
+
+	app.oracleKeeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, _ int64) bool {
+		app.oracleKeeper.SetMissCounter(ctx, operator, 0)
+		return false
+	})
+
+	/* Handle market state. */
+
+	// clear all market pools
+	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
+
+	/* Handle treasury state. */
+
+	// clear all indicators
+	app.treasuryKeeper.ClearTRs(ctx)
+	app.treasuryKeeper.ClearSRs(ctx)
+	app.treasuryKeeper.ClearTSLs(ctx)
+
+	app.treasuryKeeper.RecordEpochInitialIssuance(ctx)
 }

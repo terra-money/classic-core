@@ -4,39 +4,96 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GenesisState - all oracle state that must be provided at genesis
-type GenesisState struct {
-	Params Params `json:"params"` // oracle params
-}
-
-// NewGenesisState creates new oracle GenesisState
-func NewGenesisState(params Params) GenesisState {
-	return GenesisState{
-		Params: params,
-	}
-}
-
-// DefaultGenesisState get raw genesis raw message for testing
-func DefaultGenesisState() GenesisState {
-	return GenesisState{
-		Params: DefaultParams(),
-	}
-}
-
-// InitGenesis creates new oracle genesis
+// InitGenesis initialize default parameters
+// and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
+	for delegatorBechAddr, delegate := range data.FeederDelegations {
+		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
+		if err != nil {
+			panic(err)
+		}
+		keeper.SetOracleDelegate(ctx, delegator, delegate)
+	}
+
+	for _, prevote := range data.ExchangeRatePrevotes {
+		keeper.AddExchangeRatePrevote(ctx, prevote)
+	}
+
+	for _, vote := range data.ExchangeRateVotes {
+		keeper.AddExchangeRateVote(ctx, vote)
+	}
+
+	for denom, rate := range data.ExchangeRates {
+		keeper.SetLunaExchangeRate(ctx, denom, rate)
+	}
+
+	for delegatorBechAddr, delegate := range data.FeederDelegations {
+		delegator, err := sdk.ValAddressFromBech32(delegatorBechAddr)
+		if err != nil {
+			panic(err)
+		}
+		keeper.SetOracleDelegate(ctx, delegator, delegate)
+	}
+
+	for _, prevote := range data.ExchangeRatePrevotes {
+		keeper.AddExchangeRatePrevote(ctx, prevote)
+	}
+
+	for _, vote := range data.ExchangeRateVotes {
+		keeper.AddExchangeRateVote(ctx, vote)
+	}
+
+	for denom, rate := range data.ExchangeRates {
+		keeper.SetLunaExchangeRate(ctx, denom, rate)
+	}
+
+	for operatorBechAddr, missCounter := range data.MissCounters {
+		operator, err := sdk.ValAddressFromBech32(operatorBechAddr)
+		if err != nil {
+			panic(err)
+		}
+		keeper.SetMissCounter(ctx, operator, missCounter)
+	}
+
 	keeper.SetParams(ctx, data.Params)
+	keeper.GetRewardPool(ctx)
 }
 
-// ExportGenesis returns a GenesisState for a given context and keeper. The
-// GenesisState will contain the pool, and validator/delegator distribution info's
-func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
+// ExportGenesis writes the current store values
+// to a genesis file, which can be imported again
+// with InitGenesis
+func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	params := keeper.GetParams(ctx)
-	return NewGenesisState(params)
-}
+	feederDelegations := make(map[string]sdk.AccAddress)
+	keeper.IterateOracleDelegates(ctx, func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool) {
+		bechAddr := delegator.String()
+		feederDelegations[bechAddr] = delegate
+		return false
+	})
 
-// ValidateGenesis validates the provided oracle genesis state to ensure the
-// expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
-func ValidateGenesis(data GenesisState) error {
-	return validateParams(data.Params)
+	var exchangeRatePrevotes []ExchangeRatePrevote
+	keeper.IterateExchangeRatePrevotes(ctx, func(prevote ExchangeRatePrevote) (stop bool) {
+		exchangeRatePrevotes = append(exchangeRatePrevotes, prevote)
+		return false
+	})
+
+	var exchangeRateVotes []ExchangeRateVote
+	keeper.IterateExchangeRateVotes(ctx, func(vote ExchangeRateVote) (stop bool) {
+		exchangeRateVotes = append(exchangeRateVotes, vote)
+		return false
+	})
+
+	rates := make(map[string]sdk.Dec)
+	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+		rates[denom] = rate
+		return false
+	})
+
+	missCounters := make(map[string]int64)
+	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter int64) (stop bool) {
+		missCounters[operator.String()] = missCounter
+		return false
+	})
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters)
 }
