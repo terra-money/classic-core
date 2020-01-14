@@ -1,0 +1,19 @@
+[Unit]
+Description=terrad
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Restart=on-failure
+User=terrad
+Group=terrad
+PermissionsStartOnly=true
+ExecStart=/usr/bin/terrad start
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+StandardOutput=syslog+console
+StandardError=syslog+console
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,277 +1,526 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"sort"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/terra-project/core/types"
+	"github.com/terra-project/core/update"
+	"github.com/terra-project/core/version"
+	"github.com/terra-project/core/x/budget"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/pay"
+	"github.com/terra-project/core/x/treasury"
+
+	"github.com/terra-project/core/types/assets"
+
+	tdistr "github.com/terra-project/core/x/distribution"
+	tslashing "github.com/terra-project/core/x/slashing"
+	tstaking "github.com/terra-project/core/x/staking"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
-	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	treasuryclient "github.com/terra-project/core/x/treasury/client"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/bank"
-	"github.com/terra-project/core/x/crisis"
-	distr "github.com/terra-project/core/x/distribution"
-	"github.com/terra-project/core/x/genaccounts"
-	"github.com/terra-project/core/x/genutil"
-	"github.com/terra-project/core/x/gov"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/params"
-	"github.com/terra-project/core/x/slashing"
-	"github.com/terra-project/core/x/staking"
-	"github.com/terra-project/core/x/supply"
-	"github.com/terra-project/core/x/treasury"
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
-const appName = "TerraApp"
+const (
+	appName = "TerraApp"
+	// DefaultKeyPass contains the default key password for genesis transactions
+	DefaultKeyPass = "12345678"
+)
 
+// default home directories for expected binaries
 var (
-	// DefaultCLIHome defines default home directories for terracli
-	DefaultCLIHome = os.ExpandEnv("$HOME/.terracli")
-
-	// DefaultNodeHome defines default home directories for terrad
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.terracli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.terrad")
-
-	// ModuleBasics = The ModuleBasicManager is in charge of setting up basic,
-	// non-dependant module elements, such as codec registration
-	// and genesis verification.
-	ModuleBasics = module.NewBasicManager(
-		genaccounts.AppModuleBasic{},
-		genutil.AppModuleBasic{},
-		auth.AppModuleBasic{},
-		bank.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distrclient.ProposalHandler, treasuryclient.TaxRateUpdateProposalHandler, treasuryclient.RewardWeightUpdateProposalHandler),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
-		supply.AppModuleBasic{},
-		oracle.AppModuleBasic{},
-		market.AppModuleBasic{},
-		treasury.AppModuleBasic{},
-	)
-
-	// module account permissions
-	maccPerms = map[string][]string{
-		auth.FeeCollectorName:     nil, // just added to enable align fee
-		market.ModuleName:         {supply.Minter, supply.Burner},
-		oracle.ModuleName:         nil,
-		distr.ModuleName:          nil,
-		treasury.ModuleName:       {supply.Minter},
-		staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		gov.ModuleName:            {supply.Burner},
-	}
 )
 
-// MakeCodec builds application codec
-func MakeCodec() *codec.Codec {
-	var cdc = codec.New()
-	ModuleBasics.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	codec.RegisterEvidences(cdc)
-	return cdc
-}
-
-// TerraApp is Extended ABCI application
+// TerraApp contains ABCI application
 type TerraApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	invCheckPeriod uint
+	assertInvariantsBlockly bool
 
 	// keys to access the substores
-	keys  map[string]*sdk.KVStoreKey
-	tkeys map[string]*sdk.TransientStoreKey
+	keyMain          *sdk.KVStoreKey
+	keyAccount       *sdk.KVStoreKey
+	keyStaking       *sdk.KVStoreKey
+	tkeyStaking      *sdk.TransientStoreKey
+	keySlashing      *sdk.KVStoreKey
+	keyDistr         *sdk.KVStoreKey
+	tkeyDistr        *sdk.TransientStoreKey
+	keyFeeCollection *sdk.KVStoreKey
+	keyParams        *sdk.KVStoreKey
+	tkeyParams       *sdk.TransientStoreKey
+	keyOracle        *sdk.KVStoreKey
+	keyTreasury      *sdk.KVStoreKey
+	keyMarket        *sdk.KVStoreKey
+	keyBudget        *sdk.KVStoreKey
+	keyMint          *sdk.KVStoreKey
 
-	// keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	supplyKeeper   supply.Keeper
-	stakingKeeper  staking.Keeper
-	slashingKeeper slashing.Keeper
-	oracleKeeper   oracle.Keeper
-	distrKeeper    distr.Keeper
-	govKeeper      gov.Keeper
-	crisisKeeper   crisis.Keeper
-	paramsKeeper   params.Keeper
-	marketKeeper   market.Keeper
-	treasuryKeeper treasury.Keeper
-
-	// the module manager
-	mm *module.Manager
+	// Manage getting and setting accounts
+	accountKeeper       auth.AccountKeeper
+	feeCollectionKeeper auth.FeeCollectionKeeper
+	bankKeeper          bank.Keeper
+	stakingKeeper       staking.Keeper
+	slashingKeeper      slashing.Keeper
+	distrKeeper         distr.Keeper
+	crisisKeeper        crisis.Keeper
+	paramsKeeper        params.Keeper
+	oracleKeeper        oracle.Keeper
+	treasuryKeeper      treasury.Keeper
+	marketKeeper        market.Keeper
+	budgetKeeper        budget.Keeper
+	mintKeeper          mint.Keeper
 }
 
 // NewTerraApp returns a reference to an initialized TerraApp.
-func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
-
+func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest, assertInvariantsBlockly bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 	cdc := MakeCodec()
 
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetAppVersion(version.Version)
-
-	keys := sdk.NewKVStoreKeys(
-		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
-		gov.StoreKey, params.StoreKey, oracle.StoreKey,
-		market.StoreKey, treasury.StoreKey,
-	)
-	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
 	var app = &TerraApp{
-		BaseApp:        bApp,
-		cdc:            cdc,
-		invCheckPeriod: invCheckPeriod,
-		keys:           keys,
-		tkeys:          tkeys,
+		BaseApp:                 bApp,
+		cdc:                     cdc,
+		assertInvariantsBlockly: assertInvariantsBlockly,
+		keyMain:                 sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:              sdk.NewKVStoreKey(auth.StoreKey),
+		keyStaking:              sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:             sdk.NewTransientStoreKey(staking.TStoreKey),
+		keyDistr:                sdk.NewKVStoreKey(distr.StoreKey),
+		tkeyDistr:               sdk.NewTransientStoreKey(distr.TStoreKey),
+		keySlashing:             sdk.NewKVStoreKey(slashing.StoreKey),
+		keyFeeCollection:        sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyParams:               sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:              sdk.NewTransientStoreKey(params.TStoreKey),
+		keyOracle:               sdk.NewKVStoreKey(oracle.StoreKey),
+		keyTreasury:             sdk.NewKVStoreKey(treasury.StoreKey),
+		keyMarket:               sdk.NewKVStoreKey(market.StoreKey),
+		keyBudget:               sdk.NewKVStoreKey(budget.StoreKey),
+		keyMint:                 sdk.NewKVStoreKey(mint.StoreKey),
 	}
 
-	// init params keeper and subspaces
-	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
-	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
-	bankSubspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
-	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
-	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
-	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
-	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
-	oracleSubspace := app.paramsKeeper.Subspace(oracle.DefaultParamspace)
-	marketSubspace := app.paramsKeeper.Subspace(market.DefaultParamspace)
-	treasurySubspace := app.paramsKeeper.Subspace(treasury.DefaultParamspace)
-
-	// add keepers
-	app.accountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
-	sendBlackListAddrs := app.ModuleAccountAddrs()
-	delete(sendBlackListAddrs, supply.NewModuleAddress(oracle.ModuleName).String())
-	app.bankKeeper = bank.NewBaseKeeper(app.accountKeeper, bankSubspace, bank.DefaultCodespace, sendBlackListAddrs)
-	app.supplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.accountKeeper, app.bankKeeper, maccPerms)
-	stakingKeeper := staking.NewKeeper(app.cdc, keys[staking.StoreKey], tkeys[staking.TStoreKey],
-		app.supplyKeeper, stakingSubspace, staking.DefaultCodespace)
-	app.distrKeeper = distr.NewKeeper(app.cdc, keys[distr.StoreKey], distrSubspace, &stakingKeeper,
-		app.supplyKeeper, distr.DefaultCodespace, auth.FeeCollectorName, app.ModuleAccountAddrs())
-	app.slashingKeeper = slashing.NewKeeper(app.cdc, keys[slashing.StoreKey], &stakingKeeper,
-		slashingSubspace, slashing.DefaultCodespace)
-	app.crisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
-	app.oracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey], oracleSubspace, app.distrKeeper,
-		&stakingKeeper, app.supplyKeeper, distr.ModuleName, oracle.DefaultCodespace)
-	app.marketKeeper = market.NewKeeper(app.cdc, keys[market.StoreKey], marketSubspace,
-		app.oracleKeeper, app.supplyKeeper, market.DefaultCodespace)
-	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], treasurySubspace,
-		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
-		oracle.ModuleName, distr.ModuleName, treasury.DefaultCodespace)
-
-	// register the proposal types
-	govRouter := gov.NewRouter()
-	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
-		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
-		AddRoute(treasury.RouterKey, treasury.NewTreasuryPolicyUpdateHandler(app.treasuryKeeper))
-	app.govKeeper = gov.NewKeeper(app.cdc, keys[gov.StoreKey], app.paramsKeeper, govSubspace,
-		app.supplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter)
-
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = *stakingKeeper.SetHooks(
-		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
-
-	app.mm = module.NewManager(
-		genaccounts.NewAppModule(app.accountKeeper),
-		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
-		auth.NewAppModule(app.accountKeeper),
-		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		crisis.NewAppModule(&app.crisisKeeper),
-		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
-		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
-		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
-		market.NewAppModule(app.marketKeeper),
-		oracle.NewAppModule(app.oracleKeeper),
-		treasury.NewAppModule(app.treasuryKeeper),
+	app.paramsKeeper = params.NewKeeper(
+		app.cdc,
+		app.keyParams, app.tkeyParams,
 	)
 
-	// During begin block slashing happens after distr.BeginBlocker so that
-	// there is nothing left over in the validator fee pool, so as to keep the
-	// CanWithdrawInvariant invariant.
-	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
+	// define the accountKeeper
+	app.accountKeeper = auth.NewAccountKeeper(
+		app.cdc,
+		app.keyAccount, // target store
+		app.paramsKeeper.Subspace(auth.DefaultParamspace),
+		auth.ProtoBaseAccount, // prototype
+	)
+	// add handlers
+	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
+		app.cdc,
+		app.keyFeeCollection,
+	)
+	app.bankKeeper = bank.NewBaseKeeper(
+		app.accountKeeper,
+		app.paramsKeeper.Subspace(bank.DefaultParamspace),
+		bank.DefaultCodespace,
+	)
+	stakingKeeper := staking.NewKeeper(
+		app.cdc,
+		app.keyStaking, app.tkeyStaking,
+		app.bankKeeper, app.paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+	app.distrKeeper = distr.NewKeeper(
+		app.cdc,
+		app.keyDistr,
+		app.paramsKeeper.Subspace(distr.DefaultParamspace),
+		app.bankKeeper, &stakingKeeper, app.feeCollectionKeeper,
+		distr.DefaultCodespace,
+	)
+	app.slashingKeeper = slashing.NewKeeper(
+		app.cdc,
+		app.keySlashing,
+		&stakingKeeper, app.paramsKeeper.Subspace(slashing.DefaultParamspace),
+		slashing.DefaultCodespace,
+	)
+	app.crisisKeeper = crisis.NewKeeper(
+		app.paramsKeeper.Subspace(crisis.DefaultParamspace),
+		app.distrKeeper,
+		app.bankKeeper,
+		app.feeCollectionKeeper,
+	)
+	app.mintKeeper = mint.NewKeeper(
+		app.cdc,
+		app.keyMint,
+		stakingKeeper,
+		app.bankKeeper,
+		app.accountKeeper,
+	)
+	app.oracleKeeper = oracle.NewKeeper(
+		app.cdc,
+		app.keyOracle,
+		app.mintKeeper,
+		app.distrKeeper,
+		app.feeCollectionKeeper,
+		stakingKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(oracle.DefaultParamspace),
+	)
+	app.marketKeeper = market.NewKeeper(
+		app.cdc,
+		app.keyMarket,
+		app.oracleKeeper,
+		app.mintKeeper,
+		app.paramsKeeper.Subspace(market.DefaultParamspace),
+	)
+	app.treasuryKeeper = treasury.NewKeeper(
+		app.cdc,
+		app.keyTreasury,
+		stakingKeeper.GetValidatorSet(),
+		app.mintKeeper,
+		app.marketKeeper,
+		app.paramsKeeper.Subspace(treasury.DefaultParamspace),
+	)
+	app.budgetKeeper = budget.NewKeeper(
+		app.cdc,
+		app.keyBudget,
+		app.marketKeeper,
+		app.mintKeeper,
+		app.treasuryKeeper,
+		stakingKeeper.GetValidatorSet(),
+		app.paramsKeeper.Subspace(budget.DefaultParamspace),
+	)
 
-	// After slashing actions, update prev day issuance of market module
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
+	// register the staking hooks
+	// NOTE: The stakingKeeper above is passed by reference, so that it can be
+	// modified like below:
+	app.stakingKeeper = *stakingKeeper.SetHooks(
+		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()))
 
-	// genutils must occur after staking so that pools are properly
-	// initialized with tokens from genesis accounts.
-	app.mm.SetOrderInitGenesis(genaccounts.ModuleName, distr.ModuleName,
-		staking.ModuleName, auth.ModuleName, bank.ModuleName, slashing.ModuleName,
-		supply.ModuleName, oracle.ModuleName, treasury.ModuleName, gov.ModuleName,
-		market.ModuleName, crisis.ModuleName, genutil.ModuleName)
+	// register the crisis routes
+	bank.RegisterInvariants(&app.crisisKeeper, app.accountKeeper)
+	distr.RegisterInvariants(&app.crisisKeeper, app.distrKeeper, app.stakingKeeper)
+	staking.RegisterInvariants(&app.crisisKeeper, app.stakingKeeper, app.feeCollectionKeeper, app.distrKeeper, app.accountKeeper)
 
-	app.mm.RegisterInvariants(&app.crisisKeeper)
-	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
+	// register message routes
+	app.Router().
+		AddRoute(bank.RouterKey, pay.NewHandler(app.bankKeeper, app.treasuryKeeper, app.feeCollectionKeeper)).
+		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
+		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
+		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
+		AddRoute(oracle.RouterKey, oracle.NewHandler(app.oracleKeeper)).
+		AddRoute(budget.RouterKey, budget.NewHandler(app.budgetKeeper)).
+		AddRoute(market.RouterKey, market.NewHandler(app.marketKeeper)).
+		AddRoute(crisis.RouterKey, crisis.NewHandler(app.crisisKeeper))
 
-	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
+	app.QueryRouter().
+		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
+		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
+		AddRoute(treasury.QuerierRoute, treasury.NewQuerier(app.treasuryKeeper)).
+		AddRoute(market.QuerierRoute, market.NewQuerier(app.marketKeeper)).
+		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper)).
+		AddRoute(budget.QuerierRoute, budget.NewQuerier(app.budgetKeeper))
 
 	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
+	app.MountStores(
+		app.keyMain, app.keyAccount, app.keyStaking, app.keyDistr,
+		app.keySlashing, app.keyFeeCollection, app.keyParams,
+		app.tkeyParams, app.tkeyStaking, app.tkeyDistr, app.keyMarket,
+		app.keyOracle, app.keyTreasury, app.keyBudget, app.keyMint,
+	)
+	app.SetInitChainer(app.initChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.supplyKeeper, app.treasuryKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+		err := app.LoadLatestVersion(app.keyMain)
 		if err != nil {
 			cmn.Exit(err.Error())
 		}
 	}
+
 	return app
 }
 
-// BeginBlocker defines application updates at every begin block
+// Query overides query function in baseapp to change result of "/app/version" query.
+func (app *TerraApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+
+	if req.Path == "/app/version" {
+		return abci.ResponseQuery{
+			Code:      uint32(sdk.CodeOK),
+			Codespace: string(sdk.CodespaceRoot),
+			Value:     []byte(version.Version),
+		}
+	}
+
+	return app.BaseApp.Query(req)
+}
+
+// MakeCodec builds a custom tx codec
+func MakeCodec() *codec.Codec {
+	var cdc = codec.New()
+
+	// left codec for backward compatibility
+	pay.RegisterCodec(cdc)
+	tstaking.RegisterCodec(cdc)
+	tdistr.RegisterCodec(cdc)
+	tslashing.RegisterCodec(cdc)
+	auth.RegisterCodec(cdc)
+	types.RegisterCodec(cdc)
+	oracle.RegisterCodec(cdc)
+	budget.RegisterCodec(cdc)
+	market.RegisterCodec(cdc)
+	treasury.RegisterCodec(cdc)
+	crisis.RegisterCodec(cdc)
+	sdk.RegisterCodec(cdc)
+	codec.RegisterCrypto(cdc)
+
+	stakingtypes.SetMsgCodec(cdc)
+	distrtypes.SetMsgCodec(cdc)
+	bank.SetMsgCodec(cdc)
+	slashing.SetMsgCodec(cdc)
+
+	return cdc
+}
+
+// BeginBlocker application updates every end block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.mm.BeginBlock(ctx, req)
+
+	// distribute rewards for the previous block
+	distr.BeginBlocker(ctx, req, app.distrKeeper)
+
+	// slash anyone who double signed.
+	// NOTE: This should happen after distr.BeginBlocker so that
+	// there is nothing left over in the validator fee pool,
+	// so as to keep the CanWithdrawInvariant invariant.
+	// TODO: This should really happen at EndBlocker.
+	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
+
+	return abci.ResponseBeginBlock{
+		Tags: tags.ToKVPairs(),
+	}
 }
 
-// EndBlocker defines application updates at every end block
+// EndBlocker application updates every end block
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.mm.EndBlock(ctx, req)
+	validatorUpdates, tags := staking.EndBlocker(ctx, app.stakingKeeper)
+
+	oracleTags := oracle.EndBlocker(ctx, app.oracleKeeper)
+	tags = append(tags, oracleTags...)
+
+	budgetTags := budget.EndBlocker(ctx, app.budgetKeeper)
+	tags = append(tags, budgetTags...)
+
+	treasuryTags := treasury.EndBlocker(ctx, app.treasuryKeeper)
+	tags = append(tags, treasuryTags...)
+
+	updateTags := update.EndBlocker(ctx, app.accountKeeper, app.oracleKeeper, app.marketKeeper)
+	tags = append(tags, updateTags...)
+
+	if app.assertInvariantsBlockly {
+		app.assertRuntimeInvariants()
+	}
+
+	return abci.ResponseEndBlock{
+		ValidatorUpdates: validatorUpdates,
+		Tags:             tags,
+	}
 }
 
-// InitChainer defines application update at chain initialization
-func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState simapp.GenesisState
-	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
-	return app.mm.InitGenesis(ctx, genesisState)
+// initialize store from a genesis state
+func (app *TerraApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
+	genesisState.Sanitize()
+
+	// load the accounts
+	for _, gacc := range genesisState.Accounts {
+		acc := gacc.ToAccount()
+		acc = app.accountKeeper.NewAccount(ctx, acc) // set account number
+		app.accountKeeper.SetAccount(ctx, acc)
+	}
+
+	// initialize distribution (must happen before staking)
+	distr.InitGenesis(ctx, app.distrKeeper, genesisState.DistrData)
+
+	// load the initial staking information
+	validators, err := staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
+	if err != nil {
+		panic(err) // TODO find a way to do this w/o panics
+	}
+
+	// initialize module-specific stores
+	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
+	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
+	crisis.InitGenesis(ctx, app.crisisKeeper, genesisState.CrisisData)
+	treasury.InitGenesis(ctx, app.treasuryKeeper, genesisState.TreasuryData)
+	market.InitGenesis(ctx, app.marketKeeper, genesisState.MarketData)
+	budget.InitGenesis(ctx, app.budgetKeeper, genesisState.BudgetData)
+	oracle.InitGenesis(ctx, app.oracleKeeper, genesisState.OracleData)
+
+	// validate genesis state
+	if err := TerraValidateGenesisState(genesisState); err != nil {
+		panic(err) // TODO find a way to do this w/o panics
+	}
+
+	if len(genesisState.GenTxs) > 0 {
+		for _, genTx := range genesisState.GenTxs {
+			var tx auth.StdTx
+			err = app.cdc.UnmarshalJSON(genTx, &tx)
+			if err != nil {
+				panic(err)
+			}
+
+			bz := app.cdc.MustMarshalBinaryLengthPrefixed(tx)
+			res := app.BaseApp.DeliverTx(bz)
+			if !res.IsOK() {
+				panic(res.Log)
+			}
+		}
+
+		validators = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	}
+	return validators
+}
+
+// custom logic for Terra initialization
+func (app *TerraApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	stateJSON := req.AppStateBytes
+	// TODO is this now the whole genesis file?
+
+	var genesisState GenesisState
+	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
+	if err != nil {
+		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
+		// return sdk.ErrGenesisParse("").TraceCause(err, "")
+	}
+
+	validators := app.initFromGenesisState(ctx, genesisState)
+
+	// sanity check
+	if len(req.Validators) > 0 {
+		if len(req.Validators) != len(validators) {
+			panic(fmt.Errorf("len(RequestInitChain.Validators) != len(validators) (%d != %d)",
+				len(req.Validators), len(validators)))
+		}
+		sort.Sort(abci.ValidatorUpdates(req.Validators))
+		sort.Sort(abci.ValidatorUpdates(validators))
+		for i, val := range validators {
+			if !val.Equal(req.Validators[i]) {
+				panic(fmt.Errorf("validators[%d] != req.Validators[%d] ", i, i))
+			}
+		}
+	}
+
+	// GetIssuance needs to be called once to read account balances to the store
+	app.mintKeeper.GetIssuance(ctx, assets.MicroLunaDenom, sdk.ZeroInt())
+
+	// assert runtime invariants
+	app.assertRuntimeInvariants()
+
+	return abci.ResponseInitChain{
+		Validators: validators,
+	}
 }
 
 // LoadHeight loads a particular height
 func (app *TerraApp) LoadHeight(height int64) error {
-	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
+	return app.LoadVersion(height, app.keyMain)
 }
 
-// ModuleAccountAddrs returns all the app's module account addresses.
-func (app *TerraApp) ModuleAccountAddrs() map[string]bool {
-	modAccAddrs := make(map[string]bool)
-	for acc := range maccPerms {
-		modAccAddrs[supply.NewModuleAddress(acc).String()] = true
-	}
+//______________________________________________________________________________________________
 
-	return modAccAddrs
+var _ sdk.StakingHooks = StakingHooks{}
+
+// StakingHooks contains combined distribution and slashing hooks needed for the
+// staking module.
+type StakingHooks struct {
+	dh distr.Hooks
+	sh slashing.Hooks
+}
+
+// NewStakingHooks nolint
+func NewStakingHooks(dh distr.Hooks, sh slashing.Hooks) StakingHooks {
+	return StakingHooks{dh, sh}
+}
+
+// AfterValidatorCreated nolint
+func (h StakingHooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorCreated(ctx, valAddr)
+	h.sh.AfterValidatorCreated(ctx, valAddr)
+}
+
+// BeforeValidatorModified nolint
+func (h StakingHooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) {
+	h.dh.BeforeValidatorModified(ctx, valAddr)
+	h.sh.BeforeValidatorModified(ctx, valAddr)
+}
+
+// AfterValidatorRemoved nolint
+func (h StakingHooks) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorRemoved(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorRemoved(ctx, consAddr, valAddr)
+}
+
+// AfterValidatorBonded nolint
+func (h StakingHooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorBonded(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorBonded(ctx, consAddr, valAddr)
+}
+
+// AfterValidatorBeginUnbonding nolint
+func (h StakingHooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
+	h.sh.AfterValidatorBeginUnbonding(ctx, consAddr, valAddr)
+}
+
+// BeforeDelegationCreated nolint
+func (h StakingHooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationCreated(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationCreated(ctx, delAddr, valAddr)
+}
+
+// BeforeDelegationSharesModified nolint
+func (h StakingHooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+}
+
+// BeforeDelegationRemoved nolint
+func (h StakingHooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
+	h.sh.BeforeDelegationRemoved(ctx, delAddr, valAddr)
+}
+
+// AfterDelegationModified nolint
+func (h StakingHooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.dh.AfterDelegationModified(ctx, delAddr, valAddr)
+	h.sh.AfterDelegationModified(ctx, delAddr, valAddr)
+}
+
+// BeforeValidatorSlashed nolint
+func (h StakingHooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
+	h.dh.BeforeValidatorSlashed(ctx, valAddr, fraction)
+	h.sh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 }
