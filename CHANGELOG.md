@@ -1,3 +1,22 @@
+## 0.3.2
+
+### Improvements
+#### [\#313](https://github.com/terra-project/core/pull/313) upgrade SDK
+* Bump SDK version to [v0.37.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.5)
+* Tendermint version to [v0.32.8](https://github.com/tendermint/tendermint/releases/tag/v0.32.8)
+#### [\#312](https://github.com/terra-project/core/pull/312) upgrade golangci-lint version to v1.22.2
+
+## 0.3.1
+
+### Bug Fixes
+#### [\#303](https://github.com/terra-project/core/pull/303) fix estimate fee endpoint for multiple signature tx
+#### [\#304](https://github.com/terra-project/core/pull/304) genesis scrpit update
+
+### Improvements
+#### [\#301](https://github.com/terra-project/core/pull/301) README update
+#### [\#305](https://github.com/terra-project/core/pull/305) swagger update
+#### [\#306](https://github.com/terra-project/core/pull/306) circleci update for goreleaser
+
 ## 0.3.0
 ### Breaking Changes
 #### [\#265](https://github.com/terra-project/core/pull/265) Oracle refactor & Oracle slashing
