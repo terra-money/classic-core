@@ -3418,7 +3418,7 @@ definitions:
         $ref: "#/definitions/UnsignedStdTx"
       chain_id:
         type: string
-        example: "columbus-2"
+        example: "columbus-3"
       signatures:
         type: array
         items:
