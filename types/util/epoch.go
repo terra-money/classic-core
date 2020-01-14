@@ -17,9 +17,9 @@ const (
 )
 
 // GetEpoch returns the current epoch, starting from 0
-func GetEpoch(ctx sdk.Context) int64 {
+func GetEpoch(ctx sdk.Context) sdk.Int {
 	curEpoch := ctx.BlockHeight() / BlocksPerEpoch
-	return curEpoch
+	return sdk.NewInt(curEpoch)
 }
 
 // IsPeriodLastBlock returns true if we are at the last block of the period
