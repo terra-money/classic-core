@@ -17,7 +17,8 @@ endif
 
 GOPATH ?= $(shell $(GO) env GOPATH)
 GITHUBDIR := $(GOPATH)$(FS)src$(FS)github.com
-GOLANGCI_LINT_HASHSUM := 8d21cc95da8d3daf8321ac40091456fc26123c964d7c2281d339d431f2f4c840
+GOLANGCI_LINT_VERSION := v1.22.2
+GOLANGCI_LINT_HASHSUM := f11179f445385a4a6d5079d67de63fe48a9113cee8e9ee0ced19327a83a4394b
 
 ###
 # Functions
@@ -54,7 +55,7 @@ tools-stamp: $(RUNSIM)
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
 	@echo "Installing golangci-lint..."
-	@bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR) $(GOLANGCI_LINT_HASHSUM)
+	@bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR) $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
 
 # Install the runsim binary with a temporary workaround of entering an outside
 # directory as the "go get" command ignores the -mod option and will polute the
