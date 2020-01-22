@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	core "github.com/terra-project/core/types"
-
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,7 +32,7 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 
 	// Get Tax Rawards (TR)
-	TR := input.TreasuryKeeper.GetTR(input.Ctx, core.GetEpoch(input.Ctx))
+	TR := input.TreasuryKeeper.GetTR(input.Ctx, input.TreasuryKeeper.GetEpoch(input.Ctx))
 	require.Equal(t, sdk.NewDec(1111).MulInt64(core.MicroUnit), TR)
 }
 
@@ -51,7 +50,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 
 	// Set random prices
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lnasdrRate)
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek)
 
 	// Add seigniorage
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt())))
@@ -61,7 +60,7 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 
 	// Get seigniorage rewards (SR)
-	SR := input.TreasuryKeeper.GetSR(input.Ctx, core.GetEpoch(input.Ctx))
+	SR := input.TreasuryKeeper.GetSR(input.Ctx, input.TreasuryKeeper.GetEpoch(input.Ctx))
 	miningRewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx)
 	require.Equal(t, lnasdrRate.MulInt(sAmt).Mul(miningRewardWeight), SR)
 }
@@ -81,7 +80,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
 
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek)
 
 	// Record tax proceeds
 	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, sdk.Coins{
@@ -97,7 +96,7 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 
-	epoch := core.GetEpoch(input.Ctx)
+	epoch := input.TreasuryKeeper.GetEpoch(input.Ctx)
 
 	tProceeds := input.TreasuryKeeper.GetTR(input.Ctx, epoch)
 	sProceeds := input.TreasuryKeeper.GetSR(input.Ctx, epoch)
@@ -179,7 +178,7 @@ func TestSumIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 3: at epoch 3 and summing over 3, 4, 5 epochs; all should have the same rval
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * 3)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek * 3)
 	rval = input.TreasuryKeeper.sumIndicator(input.Ctx, 4, SR)
 	rval2 := input.TreasuryKeeper.sumIndicator(input.Ctx, 5, SR)
 	rval3 := input.TreasuryKeeper.sumIndicator(input.Ctx, 6, SR)
@@ -192,7 +191,7 @@ func TestSumIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 5. Sum up to 6
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * 5)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek * 5)
 	rval = input.TreasuryKeeper.sumIndicator(input.Ctx, 6, SR)
 	require.Equal(t, sdk.NewDec(2100), rval)
 }
@@ -219,7 +218,7 @@ func TestRollingAverageIndicator(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), rval)
 
 	// Case 3: at epoch 3 and averaging over 3, 4, 5 epochs; all should have the same rval
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch * 3)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek * 3)
 	rval = input.TreasuryKeeper.rollingAverageIndicator(input.Ctx, 4, SR)
 	rval2 := input.TreasuryKeeper.rollingAverageIndicator(input.Ctx, 5, SR)
 	rval3 := input.TreasuryKeeper.rollingAverageIndicator(input.Ctx, 6, SR)

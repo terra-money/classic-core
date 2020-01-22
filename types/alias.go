@@ -27,7 +27,6 @@ const (
 	BlocksPerWeek        = util.BlocksPerWeek
 	BlocksPerMonth       = util.BlocksPerMonth
 	BlocksPerYear        = util.BlocksPerYear
-	BlocksPerEpoch       = util.BlocksPerEpoch
 	CoinType             = util.CoinType
 	FullFundraiserPath   = util.FullFundraiserPath
 	Bech32PrefixAccAddr  = util.Bech32PrefixAccAddr
@@ -40,6 +39,5 @@ const (
 
 var (
 	// functions aliases
-	GetEpoch          = util.GetEpoch
 	IsPeriodLastBlock = util.IsPeriodLastBlock
 )

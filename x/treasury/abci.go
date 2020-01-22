@@ -12,7 +12,7 @@ import (
 func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	// Check epoch last block
-	if !core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch) {
+	if !core.IsPeriodLastBlock(ctx, core.BlocksPerWeek) {
 		return
 	}
 
@@ -23,7 +23,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	k.UpdateIndicators(ctx)
 
 	// Check probation period
-	if ctx.BlockHeight() < (core.BlocksPerEpoch * k.WindowProbation(ctx)) {
+	if ctx.BlockHeight() < (core.BlocksPerWeek * k.WindowProbation(ctx)) {
 		return
 	}
 

@@ -26,6 +26,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
 
+	// store cumulated block height of past chains
+	keeper.SetCumulatedHeight(ctx, data.CumulatedHeight)
+
 	for epoch, TR := range data.TRs {
 		keeper.SetTR(ctx, int64(epoch), TR)
 	}
@@ -54,13 +57,15 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
+	cumulatedHeight := keeper.GetCumulatedHeight(ctx)
+
 	var TRs []sdk.Dec
 	var SRs []sdk.Dec
 	var TSLs []sdk.Int
 
-	curEpoch := core.GetEpoch(ctx)
+	curEpoch := keeper.GetEpoch(ctx)
 	for e := int64(0); e < curEpoch ||
-		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch)); e++ {
+		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerWeek)); e++ {
 
 		TRs = append(TRs, keeper.GetTR(ctx, e))
 		SRs = append(SRs, keeper.GetSR(ctx, e))
@@ -68,5 +73,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	}
 
 	return NewGenesisState(params, taxRate, rewardWeight,
-		taxCaps, taxProceeds, epochInitialIssuance, TRs, SRs, TSLs)
+		taxCaps, taxProceeds, epochInitialIssuance,
+		cumulatedHeight, TRs, SRs, TSLs)
 }

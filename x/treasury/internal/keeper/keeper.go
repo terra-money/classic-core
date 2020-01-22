@@ -219,6 +219,26 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
 	return epochSeigniorage
 }
 
+// GetCumulatedHeight returns last block height of past chain
+func (k Keeper) GetCumulatedHeight(ctx sdk.Context) (res int64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.CumulatedHeightKey)
+
+	if bz == nil {
+		res = 0
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+	return
+}
+
+// SetCumulatedHeight sets cumulated block height of past chains
+func (k Keeper) SetCumulatedHeight(ctx sdk.Context, cumulatedHeight int64) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(cumulatedHeight)
+	store.Set(types.CumulatedHeightKey, b)
+}
+
 // GetTR returns the tax rewards for the epoch
 func (k Keeper) GetTR(ctx sdk.Context, epoch int64) (res sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)

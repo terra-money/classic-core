@@ -6,6 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// GetEpoch returns current epoch of (current block height + cumulated block height of past chains)
+func (k Keeper) GetEpoch(ctx sdk.Context) int64 {
+	return (k.GetCumulatedHeight(ctx) + ctx.BlockHeight()) / core.BlocksPerWeek
+}
+
 //
 // Computes important economic indicators for the stability of Terra currencies.
 //
@@ -36,7 +41,7 @@ func (k Keeper) alignCoins(ctx sdk.Context, coins sdk.DecCoins, denom string) (a
 
 // UpdateIndicators updates interal indicators
 func (k Keeper) UpdateIndicators(ctx sdk.Context) {
-	epoch := core.GetEpoch(ctx)
+	epoch := k.GetEpoch(ctx)
 
 	// Compute Total Staked Luna (TSL)
 	totalStakedLuna := k.stakingKeeper.TotalBondedTokens(ctx)
@@ -81,7 +86,7 @@ func MR(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
 func (k Keeper) sumIndicator(ctx sdk.Context, epochs int64,
 	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
 	sum := sdk.ZeroDec()
-	curEpoch := core.GetEpoch(ctx)
+	curEpoch := k.GetEpoch(ctx)
 
 	for i := curEpoch; i >= 0 && i > (curEpoch-epochs); i-- {
 		val := indicator(ctx, i, k)
@@ -96,7 +101,7 @@ func (k Keeper) sumIndicator(ctx sdk.Context, epochs int64,
 func (k Keeper) rollingAverageIndicator(ctx sdk.Context, epochs int64,
 	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
 	sum := sdk.ZeroDec()
-	curEpoch := core.GetEpoch(ctx)
+	curEpoch := k.GetEpoch(ctx)
 
 	var i int64
 	for i = curEpoch; i >= 0 && i > (curEpoch-epochs); i-- {
