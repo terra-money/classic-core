@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -13,7 +15,7 @@ import (
 
 // NewHandler returns a handler for "oracle" type messages.
 func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
@@ -24,25 +26,24 @@ func NewHandler(k Keeper) sdk.Handler {
 		case MsgDelegateFeedConsent:
 			return handleMsgDelegateFeedConsent(ctx, k, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized oracle message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
 		}
 	}
 }
 
 // handleMsgExchangeRatePrevote handles a MsgExchangeRatePrevote
-func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchangeRatePrevote) sdk.Result {
+func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchangeRatePrevote) (*sdk.Result, error) {
 	if !ppm.Feeder.Equals(ppm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
-			return ErrNoVotingPermission(keeper.Codespace(), ppm.Feeder, ppm.Validator).Result()
+			return nil, sdkerrors.Wrap(ErrNoVotingPermission, ppm.Feeder.String())
 		}
 	}
 
 	// Check that the given validator exists
 	val := keeper.StakingKeeper.Validator(ctx, ppm.Validator)
 	if val == nil {
-		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
+		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, ppm.Validator.String())
 	}
 
 	prevote := NewExchangeRatePrevote(ppm.Hash, ppm.Denom, ppm.Validator, ctx.BlockHeight())
@@ -61,22 +62,22 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchang
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 // handleMsgExchangeRateVote handles a MsgExchangeRateVote
-func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRateVote) sdk.Result {
+func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRateVote) (*sdk.Result, error) {
 	if !pvm.Feeder.Equals(pvm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, pvm.Validator)
 		if !delegate.Equals(pvm.Feeder) {
-			return ErrNoVotingPermission(keeper.Codespace(), pvm.Feeder, pvm.Validator).Result()
+			return nil, sdkerrors.Wrap(ErrNoVotingPermission, pvm.Feeder.String())
 		}
 	}
 
 	// Check that the given validator exists
 	val := keeper.StakingKeeper.Validator(ctx, pvm.Validator)
 	if val == nil {
-		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
+		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, pvm.Validator.String())
 	}
 
 	params := keeper.GetParams(ctx)
@@ -84,23 +85,19 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 	// Get prevote
 	prevote, err := keeper.GetExchangeRatePrevote(ctx, pvm.Denom, pvm.Validator)
 	if err != nil {
-		return ErrNoPrevote(keeper.Codespace(), pvm.Validator, pvm.Denom).Result()
+		return nil, sdkerrors.Wrap(ErrNoPrevote, fmt.Sprintf("(%s, %s)", pvm.Validator, pvm.Denom))
 	}
 
 	// Check a msg is submitted porper period
 	if (ctx.BlockHeight()/params.VotePeriod)-(prevote.SubmitBlock/params.VotePeriod) != 1 {
-		return ErrNotRevealPeriod(keeper.Codespace()).Result()
+		return nil, ErrRevealPeriodMissMatch
 	}
 
 	// If there is an prevote, we verify a exchange rate with prevote hash and move prevote to vote with given exchange rate
 	bz, _ := hex.DecodeString(prevote.Hash) // prevote hash
 	bz2, err2 := VoteHash(pvm.Salt, pvm.ExchangeRate, prevote.Denom, prevote.Voter)
-	if err2 != nil {
-		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
-	}
-
-	if !bytes.Equal(bz, bz2) {
-		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
+	if err2 != nil || !bytes.Equal(bz, bz2) {
+		return nil, ErrVerificationFailed
 	}
 
 	// Add the vote to the store
@@ -121,17 +118,17 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 // handleMsgDelegateFeedConsent handles a MsgDelegateFeedConsent
-func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelegateFeedConsent) sdk.Result {
+func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelegateFeedConsent) (*sdk.Result, error) {
 	signer := dfpm.Operator
 
 	// Check the delegator is a validator
 	val := keeper.StakingKeeper.Validator(ctx, signer)
 	if val == nil {
-		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
+		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, signer.String())
 	}
 
 	// Set the delegation
@@ -149,5 +146,5 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelega
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
 
 	core "github.com/terra-project/core/types"
@@ -24,25 +25,32 @@ type Keeper struct {
 	supplyKeeper  types.SupplyKeeper
 
 	distrName string
-
-	// codespace
-	codespace sdk.CodespaceType
 }
 
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	paramspace params.Subspace, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, supplyKeeper types.SupplyKeeper,
-	distrName string, codespace sdk.CodespaceType) Keeper {
+	distrName string) Keeper {
+
+	// ensure oracle module account is set
+	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
+
+	// set KeyTable if it has not already been set
+	if !paramspace.HasKeyTable() {
+		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
-		paramSpace:    paramspace.WithKeyTable(ParamKeyTable()),
+		paramSpace:    paramspace,
 		distrKeeper:   distrKeeper,
 		StakingKeeper: stakingKeeper,
 		supplyKeeper:  supplyKeeper,
 		distrName:     distrName,
-		codespace:     codespace,
 	}
 }
 
@@ -51,20 +59,15 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// Codespace returns a codespace of keeper
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
-}
-
 //-----------------------------------
 // ExchangeRatePrevote logic
 
 // GetExchangeRatePrevote retrieves an oracle prevote from the store
-func (k Keeper) GetExchangeRatePrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) (prevote types.ExchangeRatePrevote, err sdk.Error) {
+func (k Keeper) GetExchangeRatePrevote(ctx sdk.Context, denom string, voter sdk.ValAddress) (prevote types.ExchangeRatePrevote, err error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetExchangeRatePrevoteKey(denom, voter))
 	if b == nil {
-		err = types.ErrNoPrevote(k.codespace, voter, denom)
+		err = sdkerrors.Wrap(types.ErrNoPrevote, fmt.Sprintf("(%s, %s)", voter, denom))
 		return
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &prevote)
@@ -144,11 +147,11 @@ func (k Keeper) iterateExchangeRateVotesWithPrefix(ctx sdk.Context, prefix []byt
 }
 
 // Retrieves an oracle vote from the store
-func (k Keeper) getExchangeRateVote(ctx sdk.Context, denom string, voter sdk.ValAddress) (vote types.ExchangeRateVote, err sdk.Error) {
+func (k Keeper) getExchangeRateVote(ctx sdk.Context, denom string, voter sdk.ValAddress) (vote types.ExchangeRateVote, err error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetVoteKey(denom, voter))
 	if b == nil {
-		err = types.ErrNoVote(k.codespace, voter, denom)
+		err = sdkerrors.Wrap(types.ErrNoVote, fmt.Sprintf("(%s, %s)", voter, denom))
 		return
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &vote)
@@ -172,7 +175,7 @@ func (k Keeper) DeleteExchangeRateVote(ctx sdk.Context, vote types.ExchangeRateV
 // ExchangeRate logic
 
 // GetLunaExchangeRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate sdk.Dec, err sdk.Error) {
+func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate sdk.Dec, err error) {
 	if denom == core.MicroLunaDenom {
 		return sdk.OneDec(), nil
 	}
@@ -180,7 +183,7 @@ func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetExchangeRateKey(denom))
 	if b == nil {
-		return sdk.ZeroDec(), types.ErrUnknownDenomination(k.codespace, denom)
+		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknowDenom, denom)
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &exchangeRate)
 	return
@@ -253,15 +256,6 @@ func (k Keeper) IterateOracleDelegates(ctx sdk.Context,
 			break
 		}
 	}
-}
-
-//-----------------------------------
-// Reward pool logic
-
-// GetRewardPool retrieves the balance of the oracle module account
-func (k Keeper) GetRewardPool(ctx sdk.Context) sdk.Coins {
-	acc := k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
-	return acc.GetCoins()
 }
 
 //-----------------------------------

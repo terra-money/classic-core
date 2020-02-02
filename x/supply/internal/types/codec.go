@@ -4,6 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
+
+	"github.com/terra-project/core/x/auth"
 )
 
 // RegisterCodec registers the account types and interface
@@ -22,4 +24,9 @@ func init() {
 	RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	ModuleCdc = cdc.Seal()
+
+	// Register the ModuleAccount type as a GenesisAccount so that when no
+	// concrete GenesisAccount types exist and **default** genesis state is used,
+	// the genesis state will serialize correctly.
+	auth.RegisterAccountTypeCodec(&supply.ModuleAccount{}, "supply/ModuleAccount")
 }

@@ -17,14 +17,14 @@ func TestMarketFilters(t *testing.T) {
 
 	// Case 1: non-oracle message being sent fails
 	bankMsg := bank.MsgSend{}
-	res := h(input.Ctx, bankMsg)
-	require.False(t, res.IsOK())
+	_, err := h(input.Ctx, bankMsg)
+	require.Error(t, err)
 
 	// Case 2: Normal MsgSwap submission goes through
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10))
 	prevoteMsg := NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 }
 
 func TestSwapMsg(t *testing.T) {
@@ -35,8 +35,8 @@ func TestSwapMsg(t *testing.T) {
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
 	swapMsg := NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
-	res := h(input.Ctx, swapMsg)
-	require.True(t, res.IsOK())
+	_, err := h(input.Ctx, swapMsg)
+	require.NoError(t, err)
 
 	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	diff := beforeTerraPoolDelta.Sub(afterTerraPoolDelta)
@@ -44,6 +44,6 @@ func TestSwapMsg(t *testing.T) {
 	require.Equal(t, price.MulInt(amt), diff.Abs())
 
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
-	res = h(input.Ctx, swapMsg)
-	require.False(t, res.IsOK())
+	_, err = h(input.Ctx, swapMsg)
+	require.Error(t, err)
 }

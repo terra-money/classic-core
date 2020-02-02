@@ -3,8 +3,10 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
@@ -55,22 +57,27 @@ func (msg MsgExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgExchangeRatePrevote) ValidateBasic() sdk.Error {
+func (msg MsgExchangeRatePrevote) ValidateBasic() error {
 
-	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
-		return ErrInvalidHashLength(DefaultCodespace, len(bz))
+	bz, err := hex.DecodeString(msg.Hash)
+	if err != nil {
+		return sdkerrors.Wrap(ErrInvalidHash, err.Error())
+	}
+
+	if l := len(bz); l != tmhash.TruncatedSize {
+		return sdkerrors.Wrap(ErrInvalidHashLength, strconv.FormatInt(int64(l), 10))
 	}
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknownDenomination(DefaultCodespace, "")
+		return ErrUnknowDenom
 	}
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	return nil
@@ -125,27 +132,27 @@ func (msg MsgExchangeRateVote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgExchangeRateVote) ValidateBasic() sdk.Error {
+func (msg MsgExchangeRateVote) ValidateBasic() error {
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknownDenomination(DefaultCodespace, "")
+		return ErrUnknowDenom
 	}
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	// Check overflow bit length
 	if msg.ExchangeRate.BitLen() > 100+sdk.DecimalPrecisionBits {
-		return ErrInvalidExchangeRate(DefaultCodespace, msg.ExchangeRate)
+		return sdkerrors.Wrap(ErrInvalidExchangeRate, msg.ExchangeRate.String())
 	}
 
-	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
-		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+	if l := len(msg.Salt); l > 4 || l < 1 {
+		return sdkerrors.Wrap(ErrInvalidSaltLength, strconv.FormatInt(int64(l), 10))
 	}
 
 	return nil
@@ -193,13 +200,13 @@ func (msg MsgDelegateFeedConsent) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgDelegateFeedConsent) ValidateBasic() sdk.Error {
+func (msg MsgDelegateFeedConsent) ValidateBasic() error {
 	if msg.Operator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	if msg.Delegate.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	return nil

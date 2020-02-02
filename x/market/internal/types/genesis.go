@@ -31,7 +31,7 @@ func DefaultGenesisState() GenesisState {
 // ValidateGenesis validates the provided oracle genesis state to ensure the
 // expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
 func ValidateGenesis(data GenesisState) error {
-	return data.Params.Validate()
+	return data.Params.ValidateBasic()
 }
 
 // Equal checks whether 2 GenesisState structs are equivalent.

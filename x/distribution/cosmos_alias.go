@@ -6,12 +6,6 @@ import (
 )
 
 const (
-	DefaultParamspace                = distr.DefaultParamspace
-	DefaultCodespace                 = distr.DefaultCodespace
-	CodeInvalidInput                 = distr.CodeInvalidInput
-	CodeNoDistributionInfo           = distr.CodeNoDistributionInfo
-	CodeNoValidatorCommission        = distr.CodeNoValidatorCommission
-	CodeSetWithdrawAddrDisabled      = distr.CodeSetWithdrawAddrDisabled
 	ModuleName                       = distr.ModuleName
 	StoreKey                         = distr.StoreKey
 	RouterKey                        = distr.RouterKey
@@ -26,10 +20,8 @@ const (
 	QueryDelegatorValidators         = distr.QueryDelegatorValidators
 	QueryWithdrawAddr                = distr.QueryWithdrawAddr
 	QueryCommunityPool               = distr.QueryCommunityPool
-	ParamCommunityTax                = distr.ParamCommunityTax
-	ParamBaseProposerReward          = distr.ParamBaseProposerReward
-	ParamBonusProposerReward         = distr.ParamBonusProposerReward
-	ParamWithdrawAddrEnabled         = distr.ParamWithdrawAddrEnabled
+	DefaultParamspace                = distr.DefaultParamspace
+	TypeMsgFundCommunityPool         = distr.TypeMsgFundCommunityPool
 )
 
 var (
@@ -65,11 +57,13 @@ var (
 	CreateTestInputDefault                     = distr.CreateTestInputDefault
 	CreateTestInputAdvanced                    = distr.CreateTestInputAdvanced
 	NewDelegatorStartingInfo                   = distr.NewDelegatorStartingInfo
-	ErrNilDelegatorAddr                        = distr.ErrNilDelegatorAddr
-	ErrNilWithdrawAddr                         = distr.ErrNilWithdrawAddr
-	ErrNilValidatorAddr                        = distr.ErrNilValidatorAddr
-	ErrNoDelegationDistInfo                    = distr.ErrNoDelegationDistInfo
+	ErrEmptyDelegatorAddr                      = distr.ErrEmptyDelegatorAddr
+	ErrEmptyWithdrawAddr                       = distr.ErrEmptyWithdrawAddr
+	ErrEmptyValidatorAddr                      = distr.ErrEmptyValidatorAddr
+	ErrEmptyDelegationDistInfo                 = distr.ErrEmptyDelegationDistInfo
 	ErrNoValidatorDistInfo                     = distr.ErrNoValidatorDistInfo
+	ErrNoValidatorExists                       = distr.ErrNoValidatorExists
+	ErrNoDelegationExists                      = distr.ErrNoDelegationExists
 	ErrNoValidatorCommission                   = distr.ErrNoValidatorCommission
 	ErrSetWithdrawAddrDisabled                 = distr.ErrSetWithdrawAddrDisabled
 	ErrBadDistribution                         = distr.ErrBadDistribution
@@ -109,7 +103,6 @@ var (
 	ParamStoreKeyBaseProposerReward      = distr.ParamStoreKeyBaseProposerReward
 	ParamStoreKeyBonusProposerReward     = distr.ParamStoreKeyBonusProposerReward
 	ParamStoreKeyWithdrawAddrEnabled     = distr.ParamStoreKeyWithdrawAddrEnabled
-	TestAddrs                            = distr.TestAddrs
 	EventTypeRewards                     = distr.EventTypeRewards
 	EventTypeCommission                  = distr.EventTypeCommission
 	AttributeValueCategory               = distr.AttributeValueCategory
@@ -121,7 +114,6 @@ type (
 	Hooks                                  = distr.Hooks
 	Keeper                                 = distr.Keeper
 	DelegatorStartingInfo                  = distr.DelegatorStartingInfo
-	CodeType                               = distr.CodeType
 	FeePool                                = distr.FeePool
 	DelegatorWithdrawInfo                  = distr.DelegatorWithdrawInfo
 	ValidatorOutstandingRewardsRecord      = distr.ValidatorOutstandingRewardsRecord
@@ -130,6 +122,7 @@ type (
 	ValidatorCurrentRewardsRecord          = distr.ValidatorCurrentRewardsRecord
 	DelegatorStartingInfoRecord            = distr.DelegatorStartingInfoRecord
 	ValidatorSlashEventRecord              = distr.ValidatorSlashEventRecord
+	Params                                 = distr.Params
 	GenesisState                           = distr.GenesisState
 	MsgSetWithdrawAddress                  = distr.MsgSetWithdrawAddress
 	MsgWithdrawDelegatorReward             = distr.MsgWithdrawDelegatorReward

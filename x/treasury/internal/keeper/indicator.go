@@ -44,7 +44,7 @@ func (k Keeper) UpdateIndicators(ctx sdk.Context) {
 	k.SetTSL(ctx, epoch, totalStakedLuna)
 
 	// Compute Tax Rewards (TR)
-	taxRewards := sdk.NewDecCoins(k.PeekEpochTaxProceeds(ctx))
+	taxRewards := sdk.NewDecCoinsFromCoins(k.PeekEpochTaxProceeds(ctx)...)
 	TR := k.alignCoins(ctx, taxRewards, core.MicroSDRDenom)
 
 	k.SetTR(ctx, epoch, TR)

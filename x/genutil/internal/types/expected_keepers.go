@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/auth"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
 // StakingKeeper defeins expected staking keeper
@@ -17,9 +17,9 @@ type StakingKeeper interface {
 
 // AccountKeeper defines expected account keeper
 type AccountKeeper interface {
-	NewAccount(sdk.Context, auth.Account) auth.Account
-	SetAccount(sdk.Context, auth.Account)
-	IterateAccounts(ctx sdk.Context, process func(auth.Account) (stop bool))
+	NewAccount(sdk.Context, authexported.Account) authexported.Account
+	SetAccount(sdk.Context, authexported.Account)
+	IterateAccounts(ctx sdk.Context, process func(authexported.Account) (stop bool))
 }
 
 // GenesisAccountsIterator defines the expected interface for iterating genesis accounts object
@@ -27,6 +27,6 @@ type GenesisAccountsIterator interface {
 	IterateGenesisAccounts(
 		cdc *codec.Codec,
 		appGenesis map[string]json.RawMessage,
-		iterateFn func(auth.Account) (stop bool),
+		iterateFn func(authexported.Account) (stop bool),
 	)
 }

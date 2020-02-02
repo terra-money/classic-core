@@ -3,8 +3,10 @@ package types
 import (
 	"fmt"
 
+	"gopkg.in/yaml.v2"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/cosmos/cosmos-sdk/x/params"
 
 	core "github.com/terra-project/core/types"
 )
@@ -40,12 +42,12 @@ var (
 	}
 )
 
-var _ subspace.ParamSet = &Params{}
+var _ params.ParamSet = &Params{}
 
 // Params market parameters
 type Params struct {
-	PoolRecoveryPeriod   int64        `json:"pool_recovery_period" yaml:"pool_recovery_period"`
 	BasePool             sdk.Dec      `json:"base_pool" yaml:"base_pool"`
+	PoolRecoveryPeriod   int64        `json:"pool_recovery_period" yaml:"pool_recovery_period"`
 	MinSpread            sdk.Dec      `json:"min_spread" yaml:"min_spread"`
 	TobinTax             sdk.Dec      `json:"tobin_tax" yaml:"tobin_tax"`
 	IlliquidTobinTaxList TobinTaxList `json:"illiquid_tobin_tax_list" yaml:"illiquid_tobin_tax_list"`
@@ -62,21 +64,45 @@ func DefaultParams() Params {
 	}
 }
 
-// Validate a set of params
-func (params Params) Validate() error {
-	if params.BasePool.IsNegative() {
-		return fmt.Errorf("base pool should be positive or zero, is %s", params.BasePool)
+// ParamKeyTable returns the parameter key table.
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+// String implements fmt.Stringer interface
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}
+
+// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
+// pairs of market module's parameters.
+// nolint
+func (p *Params) ParamSetPairs() params.ParamSetPairs {
+	return params.ParamSetPairs{
+		params.NewParamSetPair(ParamStoreKeyBasePool, &p.BasePool, validateBasePool),
+		params.NewParamSetPair(ParamStoreKeyPoolRecoveryPeriod, &p.PoolRecoveryPeriod, validatePoolRecoveryPeriod),
+		params.NewParamSetPair(ParamStoreKeyMinSpread, &p.MinSpread, validateMinSpread),
+		params.NewParamSetPair(ParmaStoreKeyTobinTax, &p.TobinTax, validateTobinTax),
+		params.NewParamSetPair(ParmaStoreKeyIlliquidTobinTaxList, &p.IlliquidTobinTaxList, validateIlliquidTobinTaxList),
 	}
-	if params.PoolRecoveryPeriod <= 0 {
-		return fmt.Errorf("pool recovery period should be positive, is %d", params.PoolRecoveryPeriod)
+}
+
+// ValidateBasic a set of params
+func (p Params) ValidateBasic() error {
+	if p.BasePool.IsNegative() {
+		return fmt.Errorf("base pool should be positive or zero, is %s", p.BasePool)
 	}
-	if params.MinSpread.IsNegative() || params.MinSpread.GT(sdk.OneDec()) {
-		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", params.MinSpread)
+	if p.PoolRecoveryPeriod <= 0 {
+		return fmt.Errorf("pool recovery period should be positive, is %d", p.PoolRecoveryPeriod)
 	}
-	if params.TobinTax.IsNegative() || params.TobinTax.GT(sdk.OneDec()) {
-		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", params.TobinTax)
+	if p.MinSpread.IsNegative() || p.MinSpread.GT(sdk.OneDec()) {
+		return fmt.Errorf("market minimum spead should be a value between [0,1], is %s", p.MinSpread)
 	}
-	for _, val := range params.IlliquidTobinTaxList {
+	if p.TobinTax.IsNegative() || p.TobinTax.GT(sdk.OneDec()) {
+		return fmt.Errorf("tobin tax should be a value between [0,1], is %s", p.TobinTax)
+	}
+	for _, val := range p.IlliquidTobinTaxList {
 		if val.TaxRate.IsNegative() || val.TaxRate.GT(sdk.OneDec()) {
 			return fmt.Errorf("tobin tax should be a value between [0,1], is %s", val)
 		}
@@ -85,26 +111,77 @@ func (params Params) Validate() error {
 	return nil
 }
 
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of market module's parameters.
-// nolint
-func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{Key: ParamStoreKeyBasePool, Value: &params.BasePool},
-		{Key: ParamStoreKeyPoolRecoveryPeriod, Value: &params.PoolRecoveryPeriod},
-		{Key: ParamStoreKeyMinSpread, Value: &params.MinSpread},
-		{Key: ParmaStoreKeyTobinTax, Value: &params.TobinTax},
-		{Key: ParmaStoreKeyIlliquidTobinTaxList, Value: &params.IlliquidTobinTaxList},
+func validateBasePool(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("base pool must be positive or zero: %s", v)
+	}
+
+	return nil
 }
 
-// String implements fmt.Stringer interface
-func (params Params) String() string {
-	return fmt.Sprintf(`Treasury Params:
-	BasePool:                   %s
-	PoolRecoveryPeriod:         %d
-	MinSpread:                  %s
-	TobinTax:                   %s
-	IlliquidTobinTaxList:                   %s
-	`, params.BasePool, params.PoolRecoveryPeriod, params.MinSpread, params.TobinTax, params.IlliquidTobinTaxList)
+func validatePoolRecoveryPeriod(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("pool recovery period must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMinSpread(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("min spread must be positive or zero: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("min spread is too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateTobinTax(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("min spread must be positive or zero: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("min spread is too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateIlliquidTobinTaxList(i interface{}) error {
+	v, ok := i.(TobinTaxList)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	for _, tobinTax := range v {
+		if tobinTax.TaxRate.IsNegative() || tobinTax.TaxRate.GT(sdk.OneDec()) {
+			return fmt.Errorf("tobin tax should be a value between [0,1], is %s", tobinTax)
+		}
+	}
+
+	return nil
 }

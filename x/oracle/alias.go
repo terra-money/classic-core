@@ -11,18 +11,6 @@ import (
 )
 
 const (
-	DefaultCodespace                = types.DefaultCodespace
-	CodeUnknownDenom                = types.CodeUnknownDenom
-	CodeInvalidExchangeRate         = types.CodeInvalidExchangeRate
-	CodeVoterNotValidator           = types.CodeVoterNotValidator
-	CodeInvalidVote                 = types.CodeInvalidVote
-	CodeNoVotingPermission          = types.CodeNoVotingPermission
-	CodeInvalidHashLength           = types.CodeInvalidHashLength
-	CodeInvalidPrevote              = types.CodeInvalidPrevote
-	CodeVerificationFailed          = types.CodeVerificationFailed
-	CodeNotRevealPeriod             = types.CodeNotRevealPeriod
-	CodeInvalidSaltLength           = types.CodeInvalidSaltLength
-	CodeInvalidMsgFormat            = types.CodeInvalidMsgFormat
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	RouterKey                       = types.RouterKey
@@ -47,12 +35,12 @@ var (
 	NewClaim                       = types.NewClaim
 	RegisterCodec                  = types.RegisterCodec
 	ErrInvalidHashLength           = types.ErrInvalidHashLength
-	ErrUnknownDenomination         = types.ErrUnknownDenomination
+	ErrUnknownDenomination         = types.ErrUnknowDenom
 	ErrVerificationFailed          = types.ErrVerificationFailed
 	ErrNoPrevote                   = types.ErrNoPrevote
 	ErrNoVote                      = types.ErrNoVote
 	ErrNoVotingPermission          = types.ErrNoVotingPermission
-	ErrNotRevealPeriod             = types.ErrNotRevealPeriod
+	ErrRevealPeriodMissMatch       = types.ErrRevealPeriodMissMatch
 	ErrInvalidSaltLength           = types.ErrInvalidSaltLength
 	NewGenesisState                = types.NewGenesisState
 	DefaultGenesisState            = types.DefaultGenesisState
@@ -74,8 +62,8 @@ var (
 	NewExchangeRatePrevote         = types.NewExchangeRatePrevote
 	VoteHash                       = types.VoteHash
 	NewExchangeRateVote            = types.NewExchangeRateVote
+	ParamKeyTable                  = types.ParamKeyTable
 	NewKeeper                      = keeper.NewKeeper
-	ParamKeyTable                  = keeper.ParamKeyTable
 	NewQuerier                     = keeper.NewQuerier
 
 	// variable aliases

@@ -1,22 +1,11 @@
 package types
 
 import (
-	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Treasury error codes
-const (
-	DefaultCodespace sdk.CodespaceType = "treasury"
-
-	CodeInvalidEpoch sdk.CodeType = 1
+// x/treasury module sentinel errors
+//
+var (
+	ErrInvalidEpoch = sdkerrors.Register(ModuleName, 1, "The query epoch should be between [0, current epoch]")
 )
-
-// ----------------------------------------
-// Error constructors
-
-// ErrInvalidEpoch called when the epoch exceeds the current epoch
-func ErrInvalidEpoch(codespace sdk.CodespaceType, curEpoch, epoch int64) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidEpoch, fmt.Sprintf("The query epoch should be between [0, %d] but given %d", curEpoch, epoch))
-}

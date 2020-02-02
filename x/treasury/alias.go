@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	DefaultCodespace               = types.DefaultCodespace
-	CodeInvalidEpoch               = types.CodeInvalidEpoch
 	ModuleName                     = types.ModuleName
 	StoreKey                       = types.StoreKey
 	RouterKey                      = types.RouterKey
@@ -44,8 +42,8 @@ var (
 	NewTaxRateUpdateProposal      = types.NewTaxRateUpdateProposal
 	NewRewardWeightUpdateProposal = types.NewRewardWeightUpdateProposal
 	NewQueryTaxCapParams          = types.NewQueryTaxCapParams
+	ParamKeyTable                 = types.ParamKeyTable
 	NewKeeper                     = keeper.NewKeeper
-	ParamKeyTable                 = keeper.ParamKeyTable
 	NewQuerier                    = keeper.NewQuerier
 
 	// variable aliases

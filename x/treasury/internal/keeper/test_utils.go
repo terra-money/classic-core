@@ -89,7 +89,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
@@ -105,7 +104,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
@@ -123,9 +121,9 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.ModuleName:          true,
 	}
 
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, params.DefaultCodespace)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accountKeeper := auth.NewAccountKeeper(cdc, keyAcc, paramsKeeper.Subspace(auth.DefaultParamspace), auth.ProtoBaseAccount)
-	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), bank.DefaultCodespace, blackListAddrs)
+	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), blackListAddrs)
 
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:     nil,
@@ -143,34 +141,34 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	stakingKeeper := staking.NewKeeper(
 		cdc,
-		keyStaking, tKeyStaking,
+		keyStaking,
 		supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
-		staking.DefaultCodespace,
 	)
 
 	distrKeeper := distr.NewKeeper(
 		cdc,
 		keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
-		stakingKeeper, supplyKeeper, distr.DefaultCodespace,
-		auth.FeeCollectorName, blackListAddrs,
+		stakingKeeper, supplyKeeper, auth.FeeCollectorName, blackListAddrs,
 	)
 
+	// initialize distribution keeper
 	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
-	distrKeeper.SetCommunityTax(ctx, sdk.NewDecWithPrec(2, 2))
-	distrKeeper.SetBaseProposerReward(ctx, sdk.NewDecWithPrec(1, 2))
-	distrKeeper.SetBonusProposerReward(ctx, sdk.NewDecWithPrec(4, 2))
+	distrParams := distrKeeper.GetParams(ctx)
+	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
+	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
+	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)
+	distrKeeper.SetParams(ctx, distrParams)
 
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle, paramsKeeper.Subspace(oracle.DefaultParamspace),
 		distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName,
-		oracle.DefaultCodespace,
 	)
 
 	marketKeeper := market.NewKeeper(
 		cdc,
 		keyMarket, paramsKeeper.Subspace(market.DefaultParamspace),
-		oracleKeeper, supplyKeeper, market.DefaultCodespace,
+		oracleKeeper, supplyKeeper,
 	)
 
 	treasuryKeeper := NewKeeper(
@@ -178,7 +176,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		keyTreasury, paramsKeeper.Subspace(types.DefaultParamspace),
 		supplyKeeper, marketKeeper, stakingKeeper, distrKeeper,
 		oracle.ModuleName, distr.ModuleName,
-		types.DefaultCodespace,
 	)
 
 	treasuryKeeper.SetParams(ctx, types.DefaultParams())
@@ -229,11 +226,12 @@ func setupValidators(t *testing.T) (TestInput, sdk.Handler) {
 	amt := sdk.TokensFromConsensusPower(100)
 	addr, val := ValAddrs[0], PubKeys[0]
 	addr1, val1 := ValAddrs[1], PubKeys[1]
-	res := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
 
-	require.True(t, res.IsOK())
-	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
-	require.True(t, res.IsOK())
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.NoError(t, err)
+
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	return input, sh

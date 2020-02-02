@@ -23,13 +23,13 @@ func TestOracleThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	prevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	res := h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+	require.NoError(t, err)
 
 	// Vote and new Prevote
 	voteMsg := NewMsgExchangeRateVote(randomExchangeRate, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx.WithBlockHeight(1), voteMsg)
+	require.NoError(t, err)
 
 	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
@@ -111,57 +111,57 @@ func TestOracleMultiVote(t *testing.T) {
 	require.NoError(t, err)
 
 	prevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	res := h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	bz, err = VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[1])
 	require.NoError(t, err)
 
 	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	bz, err = VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[2])
 	require.NoError(t, err)
 
 	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	bz, err = VoteHash(salt, anotherRandomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
 	require.NoError(t, err)
 
 	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	bz, err = VoteHash(salt, anotherRandomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[1])
 	require.NoError(t, err)
 
 	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	bz, err = VoteHash(salt, anotherRandomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[2])
 	require.NoError(t, err)
 
 	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
-	res = h(input.Ctx, prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, prevoteMsg)
+	require.NoError(t, err)
 
 	// Reveal ExchangeRate
 	input.Ctx = input.Ctx.WithBlockHeight(1)
 	voteMsg := NewMsgExchangeRateVote(anotherRandomExchangeRate, salt, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
-	res = h(input.Ctx, voteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, voteMsg)
+	require.NoError(t, err)
 
 	voteMsg = NewMsgExchangeRateVote(anotherRandomExchangeRate, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[1])
-	res = h(input.Ctx, voteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, voteMsg)
+	require.NoError(t, err)
 
 	voteMsg = NewMsgExchangeRateVote(anotherRandomExchangeRate, salt, core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[2])
-	res = h(input.Ctx, voteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, voteMsg)
+	require.NoError(t, err)
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -207,8 +207,8 @@ func TestOracleTally(t *testing.T) {
 			valAddrs[i],
 		)
 
-		res := h(input.Ctx.WithBlockHeight(0), prevoteMsg)
-		require.True(t, res.IsOK())
+		_, err = h(input.Ctx.WithBlockHeight(0), prevoteMsg)
+		require.NoError(t, err)
 
 		voteMsg := NewMsgExchangeRateVote(
 			decExchangeRate,
@@ -218,8 +218,8 @@ func TestOracleTally(t *testing.T) {
 			valAddrs[i],
 		)
 
-		res = h(input.Ctx.WithBlockHeight(1), voteMsg)
-		require.True(t, res.IsOK())
+		_, err = h(input.Ctx.WithBlockHeight(1), voteMsg)
+		require.NoError(t, err)
 
 		vote := NewVoteForTally(NewExchangeRateVote(decExchangeRate, core.MicroSDRDenom, valAddrs[i]), stakingAmt.QuoRaw(core.MicroUnit).Int64())
 		ballot = append(ballot, vote)
@@ -513,10 +513,10 @@ func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, hei
 	require.NoError(t, err)
 
 	prevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), denom, keeper.Addrs[idx], keeper.ValAddrs[idx])
-	res := h(input.Ctx.WithBlockHeight(height), prevoteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx.WithBlockHeight(height), prevoteMsg)
+	require.NoError(t, err)
 
 	voteMsg := NewMsgExchangeRateVote(rate, salt, denom, keeper.Addrs[idx], keeper.ValAddrs[idx])
-	res = h(input.Ctx.WithBlockHeight(height+1), voteMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx.WithBlockHeight(height+1), voteMsg)
+	require.NoError(t, err)
 }

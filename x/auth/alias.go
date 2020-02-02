@@ -10,21 +10,9 @@ import (
 
 var (
 	// functions aliases
-	RegisterCodec                      = types.RegisterCodec
-	NewLazySchedule                    = types.NewLazySchedule
-	NewVestingSchedule                 = types.NewVestingSchedule
-	NewBaseLazyGradedVestingAccountRaw = types.NewBaseLazyGradedVestingAccountRaw
-	NewBaseLazyGradedVestingAccount    = types.NewBaseLazyGradedVestingAccount
+	RegisterCodec            = types.RegisterCodec
+	RegisterAccountTypeCodec = types.RegisterAccountTypeCodec
 
 	// variable aliases
 	ModuleCdc = types.ModuleCdc
-)
-
-type (
-	LazySchedule                 = types.LazySchedule
-	VestingSchedule              = types.VestingSchedule
-	LazyGradedVestingAccount     = types.LazyGradedVestingAccount
-	BaseLazyGradedVestingAccount = types.BaseLazyGradedVestingAccount
-	TreasuryKeeper               = types.TreasuryKeeper
-	SupplyKeeper                 = types.SupplyKeeper
 )

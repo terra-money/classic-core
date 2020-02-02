@@ -102,8 +102,6 @@ update-swagger-docs: statik
     else \
     	echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
-.PHONY: update-swagger-docs
-
 
 ########################################
 ### Tools & dependencies
@@ -121,11 +119,12 @@ draw-deps:
 	go get github.com/RobotsAndPencils/goviz
 	@goviz -i ./cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
 
-clean:
-	rm -rf snapcraft-local.yaml build/
-
-distclean: clean
-	rm -rf vendor/
+distclean:
+	rm -rf \
+    gitian-build-darwin/ \
+    gitian-build-linux/ \
+    gitian-build-windows/ \
+    .gitian-builder-cache/
 
 ########################################
 ### Testing
@@ -202,8 +201,8 @@ contract-tests: setup-transactions
 # include simulations
 include sims.mk
 
-.PHONY: all build-linux install install-debug \
-	go-mod-cache draw-deps clean build \
+.PHONY: all build-linux install install-debug format lint \
+	go-mod-cache draw-deps distclean build update-swagger-docs \
 	setup-transactions setup-contract-tests-data start-terra run-lcd-contract-tests contract-tests \
 	test test-all test-build test-cover test-unit test-race
 

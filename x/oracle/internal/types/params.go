@@ -3,10 +3,12 @@ package types
 import (
 	"fmt"
 
+	"gopkg.in/yaml.v2"
+
 	core "github.com/terra-project/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // DefaultParamspace defines default space for oracle params
@@ -40,7 +42,7 @@ var (
 	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2)                                              // 5%
 )
 
-var _ subspace.ParamSet = &Params{}
+var _ params.ParamSet = &Params{}
 
 // Params oracle parameters
 type Params struct {
@@ -68,59 +70,169 @@ func DefaultParams() Params {
 	}
 }
 
-// Validate validates a set of params
-func (params Params) Validate() error {
-	if params.VotePeriod <= 0 {
-		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %d", params.VotePeriod)
+// ParamSetPairs returns the parameter set pairs.
+func (p *Params) ParamSetPairs() params.ParamSetPairs {
+	return params.ParamSetPairs{
+		params.NewParamSetPair(ParamStoreKeyVotePeriod, &p.VotePeriod, validateVotePeriod),
+		params.NewParamSetPair(ParamStoreKeyVoteThreshold, &p.VoteThreshold, validateVoteThreshold),
+		params.NewParamSetPair(ParamStoreKeyRewardBand, &p.RewardBand, validateRewardBand),
+		params.NewParamSetPair(ParamStoreKeyRewardDistributionWindow, &p.RewardDistributionWindow, validateRewardDistributionWindow),
+		params.NewParamSetPair(ParamStoreKeyWhitelist, &p.Whitelist, validateWhitelist),
+		params.NewParamSetPair(ParamStoreKeySlashFraction, &p.SlashFraction, validateSlashFraction),
+		params.NewParamSetPair(ParamStoreKeySlashWindow, &p.SlashWindow, validateSlashWindow),
+		params.NewParamSetPair(ParamStoreKeyMinValidPerWindow, &p.MinValidPerWindow, validateMinValidPerWindow),
 	}
-	if params.VoteThreshold.LTE(sdk.NewDecWithPrec(33, 2)) {
+}
+
+// ParamKeyTable returns the parameter key table.
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+// String implements fmt.Stringer interface
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}
+
+// ValidateBasic performs basic validation on oracle parameters.
+func (p Params) ValidateBasic() error {
+	if p.VotePeriod <= 0 {
+		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %d", p.VotePeriod)
+	}
+	if p.VoteThreshold.LTE(sdk.NewDecWithPrec(33, 2)) {
 		return fmt.Errorf("oracle parameter VoteTheshold must be greater than 33 percent")
 	}
-	if params.RewardBand.IsNegative() || params.RewardBand.GT(sdk.OneDec()) {
+	if p.RewardBand.IsNegative() || p.RewardBand.GT(sdk.OneDec()) {
 		return fmt.Errorf("oracle parameter RewardBand must be between [0, 1]")
 	}
-	if params.RewardDistributionWindow < params.VotePeriod {
+	if p.RewardDistributionWindow < p.VotePeriod {
 		return fmt.Errorf("oracle parameter RewardDistributionWindow must be greater than or equal with votes period")
 	}
-	if params.SlashFraction.GT(sdk.OneDec()) || params.SlashFraction.IsNegative() {
+	if p.SlashFraction.GT(sdk.OneDec()) || p.SlashFraction.IsNegative() {
 		return fmt.Errorf("oracle parameter SlashRraction must be between [0, 1]")
 	}
-	if params.SlashWindow < params.VotePeriod {
+	if p.SlashWindow < p.VotePeriod {
 		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal with votes period")
 	}
-	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) || params.MinValidPerWindow.IsNegative() {
+	if p.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) || p.MinValidPerWindow.IsNegative() {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 0.5]")
 	}
 	return nil
 }
 
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of oracle module's parameters.
-func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{Key: ParamStoreKeyVotePeriod, Value: &params.VotePeriod},
-		{Key: ParamStoreKeyVoteThreshold, Value: &params.VoteThreshold},
-		{Key: ParamStoreKeyRewardBand, Value: &params.RewardBand},
-		{Key: ParamStoreKeyRewardDistributionWindow, Value: &params.RewardDistributionWindow},
-		{Key: ParamStoreKeyWhitelist, Value: &params.Whitelist},
-		{Key: ParamStoreKeySlashFraction, Value: &params.SlashFraction},
-		{Key: ParamStoreKeySlashWindow, Value: &params.SlashWindow},
-		{Key: ParamStoreKeyMinValidPerWindow, Value: &params.MinValidPerWindow},
+func validateVotePeriod(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
+
+	if v <= 0 {
+		return fmt.Errorf("vote period must be positive: %d", v)
+	}
+
+	return nil
 }
 
-// String implements fmt.Stringer interface
-func (params Params) String() string {
-	return fmt.Sprintf(`Oracle Params:
-  VotePeriod:                  %d
-  VoteThreshold:               %s
-	RewardBand:                  %s
-	RewardDistributionWindow:    %d
-	Whitelist                    %s
-	SlashFraction                %s
-	SlashWindow                  %d
-	MinValidPerWindow            %s
-	`, params.VotePeriod, params.VoteThreshold, params.RewardBand,
-		params.RewardDistributionWindow, params.Whitelist,
-		params.SlashFraction, params.SlashWindow, params.MinValidPerWindow)
+func validateVoteThreshold(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.LT(sdk.NewDecWithPrec(33, 2)) {
+		return fmt.Errorf("vote threshold must be bigger than 33%%: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("vote threshold too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateRewardBand(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("reward band must be positive: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("reward band is too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateRewardDistributionWindow(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("reward distribution window must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateWhitelist(i interface{}) error {
+	_, ok := i.(DenomList)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+func validateSlashFraction(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("slash fraction must be positive: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash fraction is too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateSlashWindow(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("slash window must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMinValidPerWindow(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("min valid per window must be positive: %s", v)
+	}
+
+	if v.GT(sdk.NewDecWithPrec(5, 1)) {
+		return fmt.Errorf("min valid per window is too large: %s", v)
+	}
+
+	return nil
 }

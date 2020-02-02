@@ -18,7 +18,6 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(gov.MsgVote{}, "gov/MsgVote", nil)
 
 	cdc.RegisterConcrete(gov.TextProposal{}, "gov/TextProposal", nil)
-	cdc.RegisterConcrete(gov.SoftwareUpgradeProposal{}, "gov/SoftwareUpgradeProposal", nil)
 }
 
 // RegisterProposalTypeCodec registers an external proposal content type defined

@@ -1,6 +1,8 @@
 package treasury
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	core "github.com/terra-project/core/types"
 )
@@ -34,6 +36,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 	for epoch, TSL := range data.TSLs {
 		keeper.SetTSL(ctx, int64(epoch), TSL)
+	}
+
+	// check if the module account exists
+	moduleAcc := keeper.GetTreasuryAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 }
 

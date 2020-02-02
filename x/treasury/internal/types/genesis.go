@@ -64,7 +64,7 @@ func ValidateGenesis(data GenesisState) error {
 		return fmt.Errorf("reward-weight must less than WeightMax(%s) and bigger than RateMin(%s)", data.Params.RewardPolicy.RateMax, data.Params.RewardPolicy.RateMin)
 	}
 
-	return data.Params.Validate()
+	return data.Params.ValidateBasic()
 }
 
 // Equal checks whether 2 GenesisState structs are equivalent.

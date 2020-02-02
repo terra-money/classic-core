@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -56,7 +58,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	keeper.SetParams(ctx, data.Params)
-	keeper.GetRewardPool(ctx)
+
+	// check if the module account exists
+	moduleAcc := keeper.GetOracleAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
+	}
 }
 
 // ExportGenesis writes the current store values

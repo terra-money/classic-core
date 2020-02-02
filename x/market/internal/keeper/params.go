@@ -2,14 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/terra-project/core/x/market/internal/types"
 )
-
-// ParamKeyTable for market module
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable().RegisterParamSet(&types.Params{})
-}
 
 // BasePool is Terra liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod
 func (k Keeper) BasePool(ctx sdk.Context) (res sdk.Dec) {
