@@ -221,7 +221,7 @@ jobs:
             sudo mv go /usr/local
             popd
             set -x
-            make clean localnet-start
+            make clean build-docker-terradnode localnet-start
             ./contrib/localnet-blocks-test.sh 40 5 10 localhost
 
   macos-ci:

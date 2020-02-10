@@ -119,6 +119,9 @@ draw-deps:
 	go get github.com/RobotsAndPencils/goviz
 	@goviz -i ./cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
 
+clean:
+	rm -rf snapcraft-local.yaml build/
+
 distclean:
 	rm -rf \
     gitian-build-darwin/ \
@@ -167,7 +170,7 @@ build-docker-terradnode:
 	$(MAKE) -C networks/local
 
 # Run a 4-node testnet locally
-localnet-start: localnet-stop
+localnet-start: build-linux localnet-stop
 	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/terradnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 
