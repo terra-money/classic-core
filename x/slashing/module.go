@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	
+
 	"github.com/terra-project/core/x/slashing/internal/types"
 )
 

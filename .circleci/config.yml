@@ -221,10 +221,7 @@ jobs:
             sudo mv go /usr/local
             popd
             set -x
-            make tools
-            make build-linux
-            make build-docker-terradnode
-            make localnet-start
+            make clean localnet-start
             ./contrib/localnet-blocks-test.sh 40 5 10 localhost
 
   macos-ci:
@@ -275,9 +272,9 @@ jobs:
           if [ -z "${TERRAD_VERSION}" ]; then
             docker build .
           else
-            docker build -t tendermint/terra:$TERRAD_VERSION .
-            # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-            # docker push tendermint/terra:$TERRAD_VERSION
+            docker build -t terraproject/core:$TERRAD_VERSION .
+            docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+            docker push terraproject/core:$TERRAD_VERSION
           fi
 
   docker-tagged:
@@ -289,9 +286,9 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: |
-          docker build -t tendermint/terra:$CIRCLE_TAG .
-          # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-          # docker push tendermint/terra:$CIRCLE_TAG
+          docker build -t terraproject/core:$CIRCLE_TAG .
+          docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+          docker push terraproject/core:$CIRCLE_TAG
 
   reproducible-builds:
     executor: golang
@@ -306,17 +303,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             sudo apt-get install -y ruby
-            bash -x ./contrib/gitian-build.sh all
-            for os in darwin linux windows; do
-              cp gitian-build-${os}/result/terra-${os}-res.yml .
-              rm -rf gitian-build-${os}/
-            done
+            bash -x ./contrib/gitian-build.sh multi
+            cp gitian-build-multi/result/terra-multi-res.yml .
+            rm -rf gitian-build-multi/
       - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-darwin-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-linux-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-windows-res.yml
+          path: /go/src/github.com/terra-project/core/terra-multi-res.yml
 
 # FIXME: The `setup-contract-tests-data` make target is broken as it completely
 # overrides the .terrad directory.

@@ -16,6 +16,7 @@ import (
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/terra-project/core/x/supply/internal/types"
+	"github.com/terra-project/core/x/supply/simulation"
 )
 
 var (
@@ -135,7 +136,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, rbb abci.RequestEndBlock) []abci.V
 
 // GenerateGenesisState creates a randomized GenState of the auth module
 func (am AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	am.cosmosAppModule.GenerateGenesisState(simState)
+	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.

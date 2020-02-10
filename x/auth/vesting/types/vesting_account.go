@@ -2,13 +2,14 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/tendermint/tendermint/crypto"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	vestexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
+	vesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	customauthtypes "github.com/terra-project/core/x/auth/internal/types"
 
@@ -43,7 +44,6 @@ func init() {
 	customauthtypes.RegisterAccountTypeCodec(&vesttypes.BaseVestingAccount{}, "core/BaseVestingAccount")
 	customauthtypes.RegisterAccountTypeCodec(&LazyGradedVestingAccount{}, "core/LazyGradedVestingAccount")
 }
-
 
 // LazyGradedVestingAccount implements the VestingAccount interface. It vests tokens according to
 // a predefined set of vesting schedule.
@@ -209,6 +209,38 @@ func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
 	return json.Marshal(alias)
 }
 
+// UnmarshalJSON unmarshals raw JSON bytes into a ContinuousVestingAccount.
+func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
+	var alias vestingAccountPretty
+	if err := json.Unmarshal(bz, &alias); err != nil {
+		return err
+	}
+
+	var (
+		pk  crypto.PubKey
+		err error
+	)
+
+	if alias.PubKey != "" {
+		pk, err = sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeAccPub, alias.PubKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	lgva.BaseVestingAccount = &vesttypes.BaseVestingAccount{
+		BaseAccount:      authtypes.NewBaseAccount(alias.Address, alias.Coins, pk, alias.AccountNumber, alias.Sequence),
+		OriginalVesting:  alias.OriginalVesting,
+		DelegatedFree:    alias.DelegatedFree,
+		DelegatedVesting: alias.DelegatedVesting,
+		EndTime:          alias.EndTime,
+	}
+
+	lgva.VestingSchedules = alias.VestingSchedules
+
+	return nil
+}
+
 // spendableCoins returns all the spendable coins for a vesting account given a
 // set of vesting coins.
 //
@@ -273,7 +305,5 @@ func (lgva *LazyGradedVestingAccount) trackDelegation(vestingCoins, amount sdk.C
 			yCoin := sdk.NewCoin(coin.Denom, y)
 			lgva.DelegatedFree = lgva.DelegatedFree.Add(yCoin)
 		}
-
-		lgva.Coins = lgva.Coins.Sub(sdk.Coins{coin})
 	}
 }

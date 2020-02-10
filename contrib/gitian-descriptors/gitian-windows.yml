@@ -20,26 +20,21 @@ packages:
 - "xxd"
 - "quilt"
 remotes:
-- "url": "https://github.com/cosmos/terra.git"
-  "dir": "terra"
+- "url": "https://github.com/terra-project/core.git"
+  "dir": "core"
 files:
-- "golang-debian-1.13.1-1.tar.gz"
+- "go1.13.7.linux-amd64.tar.gz"
 script: |
   set -e -o pipefail
 
-  GO_SRC_RELEASE=golang-debian-1.13.1-1
+  GO_SRC_RELEASE=go1.13.7.linux-amd64
   GO_SRC_TARBALL="${GO_SRC_RELEASE}.tar.gz"
   # Compile go and configure the environment
   export TAR_OPTIONS="--mtime="$REFERENCE_DATE\\\ $REFERENCE_TIME""
   export BUILD_DIR=`pwd`
   tar xf "${GO_SRC_TARBALL}"
   rm -f "${GO_SRC_TARBALL}"
-  [ -d "${GO_SRC_RELEASE}/" ]
-  mv "${GO_SRC_RELEASE}/" go/
-  pushd go/
-  QUILT_PATCHES=debian/patches quilt push -a
-  fakeroot debian/rules build RUN_TESTS=false GOCACHE=/tmp/go-cache
-  popd
+  [ -d go/ ]
 
   export GOOS=windows
   export GOROOT=${BUILD_DIR}/go
@@ -70,7 +65,7 @@ script: |
   popd
 
   # Prepare GOPATH and install deps
-  distsrc=${GOPATH}/src/github.com/cosmos/terra
+  distsrc=${GOPATH}/src/github.com/terra-project/core
   mkdir -p ${distsrc}
   pushd ${distsrc}
   tar --strip-components=1 -xf $SOURCEDIST
@@ -96,6 +91,7 @@ script: |
     for prog in terracli terrad; do
       exe=${prog}.exe
       GOARCH=${arch} GOROOT_FINAL=${GOROOT} go build -a \
+        -trimpath \
         -gcflags=all=-trimpath=${GOPATH} \
         -asmflags=all=-trimpath=${GOPATH} \
         -mod=readonly -tags "netgo ledger" \

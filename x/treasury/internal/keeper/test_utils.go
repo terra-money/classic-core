@@ -25,6 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
@@ -153,7 +154,7 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	// initialize distribution keeper
 	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
-	distrParams := distrKeeper.GetParams(ctx)
+	distrParams := distrtypes.DefaultParams()
 	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
 	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
 	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)

@@ -15,8 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
@@ -24,6 +22,8 @@ import (
 	treasuryclient "github.com/terra-project/core/x/treasury/client"
 
 	"github.com/terra-project/core/x/auth"
+	"github.com/terra-project/core/x/auth/ante"
+	"github.com/terra-project/core/x/auth/vesting"
 	"github.com/terra-project/core/x/bank"
 	"github.com/terra-project/core/x/crisis"
 	distr "github.com/terra-project/core/x/distribution"
@@ -90,7 +90,6 @@ var (
 
 	// module accounts that are allowed to receive tokens
 	allowedReceivingModAcc = map[string]bool{
-		distr.ModuleName:  true,
 		oracle.ModuleName: true,
 	}
 )
@@ -102,8 +101,12 @@ func MakeCodec() *codec.Codec {
 	vesting.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
+	codec.RegisterEvidences(cdc)
 	return cdc
 }
+
+// Verify app interface at compile time
+var _ simapp.App = (*TerraApp)(nil)
 
 // TerraApp is Extended ABCI application
 type TerraApp struct {
@@ -125,13 +128,13 @@ type TerraApp struct {
 	supplyKeeper   supply.Keeper
 	stakingKeeper  staking.Keeper
 	slashingKeeper slashing.Keeper
-	oracleKeeper   oracle.Keeper
 	distrKeeper    distr.Keeper
 	govKeeper      gov.Keeper
 	crisisKeeper   crisis.Keeper
 	paramsKeeper   params.Keeper
 	upgradeKeeper  upgrade.Keeper
 	evidenceKeeper evidence.Keeper
+	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
 	treasuryKeeper treasury.Keeper
 
@@ -144,7 +147,7 @@ type TerraApp struct {
 
 // NewTerraApp returns a reference to an initialized TerraApp.
 func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	skipUpgradeHeights map[int64]bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
+	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 
 	cdc := MakeCodec()
 
@@ -236,8 +239,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
-		market.NewAppModule(app.marketKeeper),
-		oracle.NewAppModule(app.oracleKeeper),
+		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
+		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 	)
 
@@ -245,11 +248,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, distr.ModuleName, slashing.ModuleName, evidence.ModuleName)
-
-	// After slashing actions, update prev day issuance of market module
 	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
+	// treasury must occur after supply so that initial issuance is properly
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(auth.ModuleName, distr.ModuleName,
 		staking.ModuleName, bank.ModuleName, slashing.ModuleName,
@@ -269,6 +271,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 		params.NewAppModule(), // NOTE: only used for simulation to generate randomized param change proposals
+		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
+		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
+		treasury.NewAppModule(app.treasuryKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -280,7 +285,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(ante.NewAnteHandler(app.accountKeeper, app.supplyKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetAnteHandler(ante.NewAnteHandler(app.accountKeeper, app.supplyKeeper, app.treasuryKeeper, auth.DefaultSigVerificationGasConsumer))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -291,6 +296,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	}
 	return app
 }
+
+// Name returns the name of the App
+func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker defines application updates at every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {

@@ -4,6 +4,7 @@ package simulation
 
 import (
 	"fmt"
+	core "github.com/terra-project/core/types"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -87,7 +88,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	params := types.NewParams(maxMemoChars, txSigLimit, txSizeCostPerByte,
 		sigVerifyCostED25519, sigVerifyCostSECP256K1)
 	genesisAccs := RandomGenesisAccounts(simState)
-
 	authGenesis := types.NewGenesisState(params, genesisAccs)
 
 	fmt.Printf("Selected randomly generated auth parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, authGenesis.Params))
@@ -97,7 +97,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 // RandomGenesisAccounts returns randomly generated genesis accounts
 func RandomGenesisAccounts(simState *module.SimulationState) (genesisAccs exported.GenesisAccounts) {
 	for i, acc := range simState.Accounts {
-		coins := sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(simState.InitialStake))}
+		coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(simState.InitialStake)), sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(simState.InitialStake)))
 		bacc := types.NewBaseAccountWithAddress(acc.Address)
 		if err := bacc.SetCoins(coins); err != nil {
 			panic(err)
