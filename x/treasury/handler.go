@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/terra-project/core/x/treasury/internal/types"
 )
 
 // NewTreasuryPolicyUpdateHandler custom gov proposal handler
@@ -32,6 +34,13 @@ func handleTaxRateUpdateProposal(ctx sdk.Context, k Keeper, p TaxRateUpdatePropo
 	// Set the new tax rate to the store
 	k.SetTaxRate(ctx, newTaxRate)
 
+	// Emit gov handler events
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.EventTypeTaxRateUpdate,
+			sdk.NewAttribute(types.AttributeKeyTaxRate, newTaxRate.String()),
+		),
+	)
+
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated tax-rate to %s", newTaxRate))
 	return nil
@@ -45,6 +54,13 @@ func handleRewardWeightUpdateProposal(ctx sdk.Context, k Keeper, p RewardWeightU
 
 	// Set the new reward rate to the store
 	k.SetRewardWeight(ctx, newRewardWeight)
+
+	// Emit gov handler events
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.EventTypeRewardWeightUpdate,
+			sdk.NewAttribute(types.AttributeKeyRewardWeight, newRewardWeight.String()),
+		),
+	)
 
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("updated reward-weight to %s", newRewardWeight))
