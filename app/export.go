@@ -191,6 +191,11 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
+	app.oracleKeeper.IterateAssociateExchangeRatePrevotes(ctx, func(associatePrevote oracle.AssociateExchangeRatePrevote) (stop bool) {
+		app.oracleKeeper.DeleteAssociateExchangeRatePrevote(ctx, associatePrevote)
+		return false
+	})
+
 	/* Handle market state. */
 
 	// clear all market pools
