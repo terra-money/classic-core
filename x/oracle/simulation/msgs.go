@@ -13,6 +13,9 @@ import (
 	"github.com/terra-project/core/x/oracle"
 )
 
+var (
+	exchangeRates string
+)
 // SimulateMsgPrevote generates a MsgPrevote with random values
 func SimulateMsgPrevote(k oracle.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
@@ -75,6 +78,63 @@ func SimulateMsgDelegateFeedConsent(k oracle.Keeper) simulation.Operation {
 		ctx, write := ctx.CacheContext()
 		ok := oracle.NewHandler(k)(ctx, msg).IsOK()
 		if ok {
+			write()
+		}
+		opMsg = simulation.NewOperationMsg(msg, ok, "")
+		return opMsg, nil, nil
+	}
+}
+
+// SimulateMsgAssociateExchangeRatePrevote generates a MsgAssociateExchangeRatePrevote with random values
+func SimulateMsgAssociateExchangeRatePrevote(k oracle.Keeper) simulation.Operation {
+	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
+
+		acc := simulation.RandomAcc(r, accs)
+		valAddr := sdk.ValAddress(acc.Address)
+		exchangeRates = fmt.Sprintf("%s%s,%s%s", simulation.RandomDecAmount(r,
+			sdk.NewDec(1000000)).String(),
+			core.MicroKRWDenom,
+			simulation.RandomDecAmount(r, sdk.NewDec(1)).String(),
+			core.MicroSDRDenom)
+
+		bz, _ := oracle.VoteHashForAssociate("1234", exchangeRates, valAddr)
+		voteHash := hex.EncodeToString(bz)
+
+		msg := oracle.NewMsgAssociateExchangeRatePrevote(voteHash, acc.Address, valAddr)
+		if msg.ValidateBasic() != nil {
+			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
+		}
+		ctx, write := ctx.CacheContext()
+		ok := oracle.NewHandler(k)(ctx, msg).IsOK()
+		if ok {
+			write()
+		}
+		opMsg = simulation.NewOperationMsg(msg, ok, "")
+		return opMsg, nil, nil
+	}
+}
+
+// SimulateMsgAssociateExchangeRateVote generates a MsgVote with random values
+func SimulateMsgAssociateExchangeRateVote(k oracle.Keeper) simulation.Operation {
+	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
+
+		acc := simulation.RandomAcc(r, accs)
+		valAddr := sdk.ValAddress(acc.Address)
+
+		if len(exchangeRates) == 0 {
+			return simulation.NoOpMsg(oracle.ModuleName), nil, nil
+		}
+
+		msg := oracle.NewMsgAssociateExchangeRateVote("1234", exchangeRates, acc.Address, valAddr)
+		if msg.ValidateBasic() != nil {
+			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
+		}
+		ctx, write := ctx.CacheContext()
+		ok := oracle.NewHandler(k)(ctx, msg).IsOK()
+		if ok {
+			exchangeRates = ""
 			write()
 		}
 		opMsg = simulation.NewOperationMsg(msg, ok, "")

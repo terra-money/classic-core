@@ -12,8 +12,8 @@ import (
 	"github.com/terra-project/core/x/market"
 )
 
-// SimulateMsgPrevote generates a MsgPrevote with random values
-func SimulateMsgPrevote(k market.Keeper) simulation.Operation {
+// SimulateMsgSwap generates a MsgSwap with random values
+func SimulateMsgSwap(k market.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
 
