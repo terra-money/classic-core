@@ -3,9 +3,9 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+	"strings"
 )
 
 // ensure Msg interface compliance at compile time
@@ -13,6 +13,8 @@ var (
 	_ sdk.Msg = &MsgDelegateFeedConsent{}
 	_ sdk.Msg = &MsgExchangeRatePrevote{}
 	_ sdk.Msg = &MsgExchangeRateVote{}
+	_ sdk.Msg = &MsgAssociateExchangeRatePrevote{}
+	_ sdk.Msg = &MsgAssociateExchangeRateVote{}
 )
 
 //-------------------------------------------------
@@ -20,7 +22,7 @@ var (
 
 // MsgExchangeRatePrevote - struct for prevoting on the ExchangeRateVote.
 // The purpose of prevote is to hide vote exchange rate with hash
-// which is formatted as hex string in SHA256("salt:exchange_rate:denom:voter")
+// which is formatted as hex string in SHA256("{salt}:{exchange_rate}:{denom}:{voter}")
 type MsgExchangeRatePrevote struct {
 	Hash      string         `json:"hash" yaml:"hash"` // hex string
 	Denom     string         `json:"denom" yaml:"denom"`
@@ -211,4 +213,167 @@ func (msg MsgDelegateFeedConsent) String() string {
 	operator:    %s, 
 	delegate:   %s`,
 		msg.Operator, msg.Delegate)
+}
+
+// MsgAssociateExchangeRatePrevote - struct for aggregate prevoting on the ExchangeRateVote.
+// The purpose of aggregate prevote is to hide vote exchange rates with hash
+// which is formatted as hex string in SHA256("{salt}:{exchange rate}{denom},...,{exchange rate}{denom}:{voter}")
+type MsgAssociateExchangeRatePrevote struct {
+	Hash      string         `json:"hash" yaml:"hash"` // hex string
+	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
+	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
+}
+
+// NewMsgAssociateExchangeRatePrevote returns MsgAssociateExchangeRatePrevote instance
+func NewMsgAssociateExchangeRatePrevote(hash string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAssociateExchangeRatePrevote {
+	return MsgAssociateExchangeRatePrevote{
+		Hash:      hash,
+		Feeder:    feeder,
+		Validator: validator,
+	}
+}
+
+// Route implements sdk.Msg
+func (msg MsgAssociateExchangeRatePrevote) Route() string { return RouterKey }
+
+// Type implements sdk.Msg
+func (msg MsgAssociateExchangeRatePrevote) Type() string { return "associateexchangerateprevote" }
+
+// GetSignBytes implements sdk.Msg
+func (msg MsgAssociateExchangeRatePrevote) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners implements sdk.Msg
+func (msg MsgAssociateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Feeder}
+}
+
+// ValidateBasic Implements sdk.Msg
+func (msg MsgAssociateExchangeRatePrevote) ValidateBasic() sdk.Error {
+
+	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
+		return ErrInvalidHashLength(DefaultCodespace, len(bz))
+	}
+
+	if msg.Feeder.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if msg.Validator.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	return nil
+}
+
+// String implements fmt.Stringer interface
+func (msg MsgAssociateExchangeRatePrevote) String() string {
+	return fmt.Sprintf(`MsgAssociateExchangeRateVote
+	hash:         %s,
+	feeder:       %s, 
+	validator:    %s`,
+		msg.Hash, msg.Feeder, msg.Validator)
+}
+
+// MsgAssociateExchangeRateVote - struct for voting on the exchange rates of Luna denominated in various Terra assets.
+type MsgAssociateExchangeRateVote struct {
+	Salt          string         `json:"salt" yaml:"salt"`
+	ExchangeRates string         `json:"exchange_rates" yaml:"exchange_rates"` // comma separated dec coins
+	Feeder        sdk.AccAddress `json:"feeder" yaml:"feeder"`
+	Validator     sdk.ValAddress `json:"validator" yaml:"validator"`
+}
+
+// NewMsgAssociateExchangeRateVote returns MsgAssociateExchangeRateVote instance
+func NewMsgAssociateExchangeRateVote(salt string, exchangeRates string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAssociateExchangeRateVote {
+	return MsgAssociateExchangeRateVote{
+		Salt:          salt,
+		ExchangeRates: exchangeRates,
+		Feeder:        feeder,
+		Validator:     validator,
+	}
+}
+
+// Route implements sdk.Msg
+func (msg MsgAssociateExchangeRateVote) Route() string { return RouterKey }
+
+// Type implements sdk.Msg
+func (msg MsgAssociateExchangeRateVote) Type() string { return "associateexchangeratevote" }
+
+// GetSignBytes implements sdk.Msg
+func (msg MsgAssociateExchangeRateVote) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners implements sdk.Msg
+func (msg MsgAssociateExchangeRateVote) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Feeder}
+}
+
+// ValidateBasic implements sdk.Msg
+func (msg MsgAssociateExchangeRateVote) ValidateBasic() sdk.Error {
+
+	if msg.Feeder.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if msg.Validator.Empty() {
+		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+	}
+
+	if len(msg.ExchangeRates) == 0 {
+		return sdk.ErrUnknownRequest("must provide at least one oracle exchange rate")
+	}
+
+	exchangeRates, err := ParseDecCoins(msg.ExchangeRates)
+	if err != nil {
+		return sdk.ErrInvalidCoins(err.Error())
+	}
+
+	for _, exchangeRate := range exchangeRates {
+		// Check overflow bit length
+		if exchangeRate.Amount.BitLen() > 100+sdk.DecimalPrecisionBits {
+			return ErrInvalidExchangeRate(DefaultCodespace, exchangeRate.Amount)
+		}
+	}
+
+	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
+		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+	}
+
+	return nil
+}
+
+// String implements fmt.Stringer interface
+func (msg MsgAssociateExchangeRateVote) String() string {
+	return fmt.Sprintf(`MsgAssociateExchangeRateVote
+	exchangerate:      %s,
+	salt:              %s,
+	feeder:            %s, 
+	validator:         %s`,
+		msg.ExchangeRates, msg.Salt, msg.Feeder, msg.Validator)
+}
+
+// ParseDecCoins DecCoin parser to treat non-positive values as valid
+func ParseDecCoins(coinsStr string) (sdk.DecCoins, error) {
+	coinsStr = strings.TrimSpace(coinsStr)
+	if len(coinsStr) == 0 {
+		return nil, nil
+	}
+
+	coinStrs := strings.Split(coinsStr, ",")
+	coins := make(sdk.DecCoins, len(coinStrs))
+	for i, coinStr := range coinStrs {
+		coin, err := sdk.ParseDecCoin(coinStr)
+		if err != nil {
+			return nil, err
+		}
+
+		coins[i] = coin
+	}
+
+	// sort coins for determinism
+	coins.Sort()
+
+	return coins, nil
 }

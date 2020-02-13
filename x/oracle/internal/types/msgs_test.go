@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	core "github.com/terra-project/core/types"
@@ -86,6 +87,67 @@ func TestMsgFeederDelegation(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgDelegateFeedConsent(tc.delegator, tc.delegate)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgAssociateExchangeRatePrevote(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
+
+	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroSDRDenom, sdk.OneDec()), sdk.NewDecCoinFromDec(core.MicroKRWDenom, sdk.NewDecWithPrec(32121, 1))}
+	bz, err := VoteHashForAssociate("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
+	require.Nil(t, err)
+
+	tests := []struct {
+		hash          string
+		exchangeRates sdk.DecCoins
+		voter         sdk.AccAddress
+		expectPass    bool
+	}{
+		{hex.EncodeToString(bz), exchangeRates, addrs[0], true},
+		{string(bz), exchangeRates, addrs[0], false},
+		{hex.EncodeToString(bz), exchangeRates, sdk.AccAddress{}, false},
+		{"", exchangeRates, addrs[0], false},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgAssociateExchangeRatePrevote(tc.hash, tc.voter, sdk.ValAddress(tc.voter))
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgAssociateExchangeRateVote(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
+
+	exchangeRates := fmt.Sprintf("1.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
+	emptyDenomExchangeRates := fmt.Sprintf("1.0%s,1232.132%s", "", core.MicroKRWDenom)
+	abstainExchangeRates := fmt.Sprintf("0.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
+	overFlowExchangeRates := fmt.Sprintf("100000000000000000000000000000000000000000000000000000000.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
+
+	tests := []struct {
+		voter         sdk.AccAddress
+		salt          string
+		exchangeRates string
+		expectPass    bool
+	}{
+		{addrs[0], "123", exchangeRates, true},
+		{addrs[0], "123", emptyDenomExchangeRates, false},
+		{addrs[0], "123", abstainExchangeRates, true},
+		{addrs[0], "123", overFlowExchangeRates, false},
+		{sdk.AccAddress{}, "123", exchangeRates, false},
+		{addrs[0], "", exchangeRates, false},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgAssociateExchangeRateVote(tc.salt, tc.exchangeRates, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

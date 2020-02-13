@@ -238,13 +238,13 @@ func TestQueryActives(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QueryActives}, abci.RequestQuery{})
 	require.NoError(t, err)
 
-	targetDenoms := types.DenomList{
+	targetDenoms := []string{
 		core.MicroKRWDenom,
 		core.MicroSDRDenom,
 		core.MicroUSDDenom,
 	}
 
-	var denoms types.DenomList
+	var denoms []string
 	err2 := cdc.UnmarshalJSON(res, &denoms)
 	require.NoError(t, err2)
 	require.Equal(t, targetDenoms, denoms)

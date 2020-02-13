@@ -46,7 +46,7 @@ func TestOracleFilters(t *testing.T) {
 	require.False(t, res.IsOK())
 }
 
-func TestPrevoteCheck(t *testing.T) {
+func TestPrevoteVote(t *testing.T) {
 	input, h := setup(t)
 
 	salt := "1"
@@ -72,7 +72,6 @@ func TestPrevoteCheck(t *testing.T) {
 	exchangeRateVoteMsg = NewMsgExchangeRateVote(randomExchangeRate, salt, core.MicroSDRDenom, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
 	res = h(input.Ctx, exchangeRateVoteMsg)
 	require.True(t, res.IsOK())
-
 }
 
 func TestFeederDelegation(t *testing.T) {
@@ -129,5 +128,50 @@ func TestFeederDelegation(t *testing.T) {
 	// Case 4.4: Normal Vote - with delegation succeeds
 	voteMsg = NewMsgExchangeRateVote(randomExchangeRate, salt, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
 	res = h(input.Ctx.WithBlockHeight(1), voteMsg)
+	require.True(t, res.IsOK())
+}
+
+func TestAssociatePrevoteVote(t *testing.T) {
+	input, h := setup(t)
+
+	salt := "1"
+	exchangeRatesStr := "1000.23ukrw,0.29uusd,0.27usdr"
+	otherExchangeRateStr := "1000.12ukrw,0.29uusd,0.27usdr"
+	invalidExchangeRateStr := "1000.23ukrw,2324"
+
+	bz, err := VoteHashForAssociate(salt, exchangeRatesStr, keeper.ValAddrs[0])
+	require.Nil(t, err)
+
+	associateExchangeRatePrevoteMsg := NewMsgAssociateExchangeRatePrevote(hex.EncodeToString(bz), keeper.Addrs[0], keeper.ValAddrs[0])
+	res := h(input.Ctx, associateExchangeRatePrevoteMsg)
+	require.True(t, res.IsOK())
+
+	// Invalid reveal period
+	associateExchangeRateVoteMsg := NewMsgAssociateExchangeRateVote(salt, exchangeRatesStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, associateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+
+	// Invalid reveal period
+	input.Ctx = input.Ctx.WithBlockHeight(2)
+	associateExchangeRateVoteMsg = NewMsgAssociateExchangeRateVote(salt, exchangeRatesStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, associateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+
+	// Other exchange rate with valid real period
+	input.Ctx = input.Ctx.WithBlockHeight(1)
+	associateExchangeRateVoteMsg = NewMsgAssociateExchangeRateVote(salt, otherExchangeRateStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, associateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+
+	// Invalid exchange rate with valid real period
+	input.Ctx = input.Ctx.WithBlockHeight(1)
+	associateExchangeRateVoteMsg = NewMsgAssociateExchangeRateVote(salt, invalidExchangeRateStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, associateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+
+	// Valid exchange rate reveal submission
+	input.Ctx = input.Ctx.WithBlockHeight(1)
+	associateExchangeRateVoteMsg = NewMsgAssociateExchangeRateVote(salt, exchangeRatesStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, associateExchangeRateVoteMsg)
 	require.True(t, res.IsOK())
 }

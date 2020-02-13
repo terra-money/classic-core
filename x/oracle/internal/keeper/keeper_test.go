@@ -249,9 +249,9 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := int64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	whilelist := types.DenomList{
-		core.MicroSDRDenom,
-		core.MicroKRWDenom,
+	whitelist := types.DenomList{
+		{Name: core.MicroSDRDenom, IlliquidFactor: sdk.OneDec()},
+		{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -260,7 +260,7 @@ func TestParams(t *testing.T) {
 		VoteThreshold:            voteThreshold,
 		RewardBand:               oracleRewardBand,
 		RewardDistributionWindow: rewardDistributionWindow,
-		Whitelist:                whilelist,
+		Whitelist:                whitelist,
 		SlashFraction:            slashFraction,
 		SlashWindow:              slashWindow,
 		MinValidPerWindow:        minValidPerWindow,
@@ -342,4 +342,42 @@ func TestIterateMissCounters(t *testing.T) {
 	require.Equal(t, 1, len(missCounters))
 	require.Equal(t, ValAddrs[1], operators[0])
 	require.Equal(t, missCounter, missCounters[0])
+}
+
+func TestAssociatePrevoteAddDelete(t *testing.T) {
+	input := CreateTestInput(t)
+
+	associatePrevote := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote)
+
+	KPrevote, err := input.OracleKeeper.GetAssociateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.NoError(t, err)
+	require.Equal(t, associatePrevote, KPrevote)
+
+	input.OracleKeeper.DeleteAssociateExchangeRatePrevote(input.Ctx, associatePrevote)
+	_, err = input.OracleKeeper.GetAssociateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.Error(t, err)
+}
+
+func TestAssociatePrevoteIterate(t *testing.T) {
+	input := CreateTestInput(t)
+
+	associatePrevote1 := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote1)
+
+	associatePrevote2 := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[1]), 0)
+	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote2)
+
+	i := 0
+	bigger := bytes.Compare(Addrs[0], Addrs[1])
+	input.OracleKeeper.IterateAssociateExchangeRatePrevotes(input.Ctx, func(p types.AssociateExchangeRatePrevote) (stop bool) {
+		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
+			require.Equal(t, associatePrevote1, p)
+		} else {
+			require.Equal(t, associatePrevote2, p)
+		}
+
+		i++
+		return false
+	})
 }

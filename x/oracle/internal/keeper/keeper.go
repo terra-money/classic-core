@@ -304,3 +304,45 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 		}
 	}
 }
+
+//-----------------------------------
+// AssociateExchangeRatePrevote logic
+
+// GetAssociateExchangeRatePrevote retrieves an oracle prevote from the store
+func (k Keeper) GetAssociateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAddress) (associatePrevote types.AssociateExchangeRatePrevote, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetAssociateExchangeRatePrevoteKey(voter))
+	if b == nil {
+		err = types.ErrNoAssociatePrevote(k.codespace, voter)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &associatePrevote)
+	return
+}
+
+// AddAssociateExchangeRatePrevote adds an oracle associate prevote to the store
+func (k Keeper) AddAssociateExchangeRatePrevote(ctx sdk.Context, associatePrevote types.AssociateExchangeRatePrevote) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(associatePrevote)
+	store.Set(types.GetAssociateExchangeRatePrevoteKey(associatePrevote.Voter), bz)
+}
+
+// DeleteAssociateExchangeRatePrevote deletes an oracle prevote from the store
+func (k Keeper) DeleteAssociateExchangeRatePrevote(ctx sdk.Context, associatePrevote types.AssociateExchangeRatePrevote) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAssociateExchangeRatePrevoteKey(associatePrevote.Voter))
+}
+
+// IterateAssociateExchangeRatePrevotes iterates rate over prevotes in the store
+func (k Keeper) IterateAssociateExchangeRatePrevotes(ctx sdk.Context, handler func(associatePrevote types.AssociateExchangeRatePrevote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.PrevoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var associatePrevote types.AssociateExchangeRatePrevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &associatePrevote)
+		if handler(associatePrevote) {
+			break
+		}
+	}
+}

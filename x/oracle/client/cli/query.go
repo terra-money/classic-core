@@ -26,7 +26,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryExchangeRate(cdc),
 		GetCmdQueryVotes(cdc),
 		GetCmdQueryPrevotes(cdc),
-		GetCmdQueryActive(cdc),
+		GetCmdQueryActives(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryFeederDelegation(cdc),
 		GetCmdQueryMissCounter(cdc),
@@ -71,8 +71,16 @@ $ terracli query oracle exchange-rate ukrw
 	return cmd
 }
 
-// GetCmdQueryActive implements the query actives command.
-func GetCmdQueryActive(cdc *codec.Codec) *cobra.Command {
+// Actives receiver struct
+type Actives []string
+
+// String implements fmt.Stringer interface
+func (a Actives) String() string {
+	return strings.Join(a, ",")
+}
+
+// GetCmdQueryActives implements the query actives command.
+func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "actives",
 		Args:  cobra.NoArgs,
@@ -90,7 +98,7 @@ $ terracli query oracle actives
 				return err
 			}
 
-			var actives types.DenomList
+			var actives Actives
 			cdc.MustUnmarshalJSON(res, &actives)
 			return cliCtx.PrintOutput(actives)
 		},

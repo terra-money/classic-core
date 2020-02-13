@@ -53,4 +53,16 @@ func TestParamsEqual(t *testing.T) {
 	p7.RewardDistributionWindow = int64(1)
 	err = p7.Validate()
 	require.Error(t, err)
+
+	// non-positive illiquid factor
+	p8 := DefaultParams()
+	p8.Whitelist[0].IlliquidFactor = sdk.NewDec(-1)
+	err = p8.Validate()
+	require.Error(t, err)
+
+	// empty name
+	p9 := DefaultParams()
+	p9.Whitelist[0].Name = ""
+	err = p9.Validate()
+	require.Error(t, err)
 }

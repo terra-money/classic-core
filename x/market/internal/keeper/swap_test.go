@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/terra-project/core/x/oracle"
 	"math/rand"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/types"
 )
 
 func TestApplySwapToPool(t *testing.T) {
@@ -93,35 +93,28 @@ func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroMNTDenom, lunaPriceInMNT)
 
-	// Case 1: tobin tax 2% due to umnt denom
+	tobinTax := sdk.NewDecWithPrec(25, 4)
 	params := input.MarketKeeper.GetParams(input.Ctx)
-	params.TobinTax = sdk.NewDecWithPrec(25, 4)
-	params.IlliquidTobinTaxList = types.TobinTaxList{
-		types.TobinTax{
-			Denom:   core.MicroSDRDenom,
-			TaxRate: sdk.NewDecWithPrec(25, 4),
+	params.TobinTax = tobinTax
+	input.MarketKeeper.SetParams(input.Ctx, params)
+
+	illiquidFactor := sdk.NewDec(2)
+	oracleParams := input.OracleKeeper.GetParams(input.Ctx)
+	oracleParams.Whitelist = oracle.DenomList{
+		{
+			Name:           core.MicroSDRDenom,
+			IlliquidFactor: sdk.OneDec(),
 		},
-		types.TobinTax{
-			Denom:   core.MicroMNTDenom,
-			TaxRate: sdk.NewDecWithPrec(2, 2),
+		{
+			Name:           core.MicroMNTDenom,
+			IlliquidFactor: illiquidFactor,
 		},
 	}
-	input.MarketKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetParams(input.Ctx, oracleParams)
 
 	swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
 	offerCoin := sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)
 	_, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroMNTDenom)
 	require.NoError(t, err)
-	require.Equal(t, sdk.NewDecWithPrec(2, 2), spread)
-
-	// Case 2: tobin tax 5% due to default
-	params.TobinTax = sdk.NewDecWithPrec(5, 2)
-	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	swapAmountInSDR = lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
-	offerCoin = sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)
-	_, spread, err = input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroMNTDenom)
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewDecWithPrec(5, 2), spread)
-
+	require.Equal(t, tobinTax.Mul(illiquidFactor), spread)
 }

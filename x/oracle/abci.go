@@ -35,7 +35,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	whitelist := make(map[string]bool)
 	for _, denom := range k.Whitelist(ctx) {
-		whitelist[denom] = true
+		whitelist[denom.Name] = true
 	}
 
 	// Clear exchange rates
@@ -44,7 +44,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Organize votes to ballot by denom
-	// NOTE: **Filter out inative or jailed validators**
+	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 

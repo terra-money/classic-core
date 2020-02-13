@@ -37,7 +37,7 @@ func (pp ExchangeRatePrevote) String() string {
 		pp.Hash, pp.Denom, pp.Voter, pp.SubmitBlock)
 }
 
-// ExchangeRatePrevotes is a collection of PreicePrevote
+// ExchangeRatePrevotes is a collection of ExchangeRatePrevote
 type ExchangeRatePrevotes []ExchangeRatePrevote
 
 // String implements fmt.Stringer interface
@@ -98,4 +98,50 @@ func (v ExchangeRateVotes) String() (out string) {
 		out += val.String() + "\n"
 	}
 	return strings.TrimSpace(out)
+}
+
+// AssociateExchangeRatePrevote - struct to store a validator's prevote on the rate of Luna in the denom asset
+type AssociateExchangeRatePrevote struct {
+	Hash        string         `json:"hash"`  // Vote hex hash to protect centralize data source problem
+	Voter       sdk.ValAddress `json:"voter"` // Voter val address
+	SubmitBlock int64          `json:"submit_block"`
+}
+
+// NewAssociateExchangeRatePrevote returns AssociateExchangeRatePrevote object
+func NewAssociateExchangeRatePrevote(hash string, voter sdk.ValAddress, submitBlock int64) AssociateExchangeRatePrevote {
+	return AssociateExchangeRatePrevote{
+		Hash:        hash,
+		Voter:       voter,
+		SubmitBlock: submitBlock,
+	}
+}
+
+// String implements fmt.Stringer interface
+func (pp AssociateExchangeRatePrevote) String() string {
+	return fmt.Sprintf(`AssociateExchangeRatePrevote
+	Hash:    %s,  
+	Voter:    %s, 
+	SubmitBlock:    %d`,
+		pp.Hash, pp.Voter, pp.SubmitBlock)
+}
+
+// AssociateExchangeRatePrevotes is a collection of AssociateExchangeRatePrevote
+type AssociateExchangeRatePrevotes []AssociateExchangeRatePrevote
+
+// String implements fmt.Stringer interface
+func (v AssociateExchangeRatePrevotes) String() (out string) {
+	for _, val := range v {
+		out += val.String() + "\n"
+	}
+	return strings.TrimSpace(out)
+}
+
+// VoteHash computes hash value of ExchangeRateVote
+// to avoid redundant DecCoins stringify, use string argument
+func VoteHashForAssociate(salt string, exchangeRatesStr string, voter sdk.ValAddress) ([]byte, error) {
+	hash := tmhash.NewTruncated()
+	sourceStr := fmt.Sprintf("%s:%s:%s", salt, exchangeRatesStr, voter.String())
+	_, err := hash.Write([]byte(sourceStr))
+	bz := hash.Sum(nil)
+	return bz, err
 }

@@ -73,3 +73,8 @@ func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
 func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidSaltLength, fmt.Sprintf("Salt legnth should be 1~4, but given %d", saltLength))
 }
+
+// ErrNoAssociatePrevote called when no prevote exists
+func ErrNoAssociatePrevote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidPrevote, fmt.Sprintf("No associate prevote exists from %s", voter))
+}
