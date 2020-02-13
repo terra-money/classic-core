@@ -118,7 +118,7 @@ $ terracli tx oracle vote 1234 8890.0ukrw
 
 where "ukrw" is the denominating currency, and "8890.0" is the exchange rate of micro Luna in micro KRW from the voter's point of view.
 
-"salt" should match the salt used to generate the SHA256 hex in the associated pre-vote. 
+"salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
 $ terracli tx oracle vote 1234 8890.0ukrw terravaloper1....
@@ -209,19 +209,19 @@ where "terra1..." is the address you want to delegate your voting rights to.
 	return cmd
 }
 
-// GetCmdAssociateExchangeRatePrevote will create a associateExchangeRatePrevote tx and sign it with the given key.
-func GetCmdAssociateExchangeRatePrevote(cdc *codec.Codec) *cobra.Command {
+// GetCmdAggregateExchangeRatePrevote will create a aggregateExchangeRatePrevote tx and sign it with the given key.
+func GetCmdAggregateExchangeRatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "associate-prevote [salt] [exchange_rates] [validator]",
+		Use:   "aggregate-prevote [salt] [exchange_rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle associate prevote for the exchange rates of Luna",
+		Short: "Submit an oracle aggregate prevote for the exchange rates of Luna",
 		Long: strings.TrimSpace(`
-Submit an oracle associate prevote for the exchange rates of Luna denominated in multiple denoms.
-The purpose of associate prevote is to hide associate exchange rate vote with hash which is formatted 
+Submit an oracle aggregate prevote for the exchange rates of Luna denominated in multiple denoms.
+The purpose of aggregate prevote is to hide aggregate exchange rate vote with hash which is formatted 
 as hex string in SHA256("{salt}:{exchange_rate}{denom},...,{exchange_rate}{denom}:{voter}")
 
-# Associate Prevote
-$ terracli tx oracle associate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr 
+# Aggregate Prevote
+$ terracli tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr 
 
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
@@ -255,14 +255,14 @@ $ terracli tx oracle prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 				validator = parsedVal
 			}
 
-			hashBytes, err := types.VoteHashForAssociate(salt, exchangeRatesStr, validator)
+			hashBytes, err := types.VoteHashForAggregate(salt, exchangeRatesStr, validator)
 			if err != nil {
 				return err
 			}
 
 			hash := hex.EncodeToString(hashBytes)
 
-			msg := types.NewMsgAssociateExchangeRatePrevote(hash, voter, validator)
+			msg := types.NewMsgAggregateExchangeRatePrevote(hash, voter, validator)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -275,10 +275,10 @@ $ terracli tx oracle prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 	return cmd
 }
 
-// GetCmdAssociateExchangeRateVote will create a associateExchangeRateVote tx and sign it with the given key.
-func GetCmdAssociateExchangeRateVote(cdc *codec.Codec) *cobra.Command {
+// GetCmdAggregateExchangeRateVote will create a aggregateExchangeRateVote tx and sign it with the given key.
+func GetCmdAggregateExchangeRateVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "associate-vote [salt] [exchange_rates] [validator]",
+		Use:   "aggregate-vote [salt] [exchange_rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle vote for the exchange_rates of Luna",
 		Long: strings.TrimSpace(`
@@ -288,7 +288,7 @@ $ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr
 
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
-"salt" should match the salt used to generate the SHA256 hex in the associated pre-vote. 
+"salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
 $ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
@@ -320,7 +320,7 @@ $ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
 				validator = parsedVal
 			}
 
-			msg := types.NewMsgAssociateExchangeRateVote(salt, exchangeRatesStr, voter, validator)
+			msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, voter, validator)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

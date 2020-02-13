@@ -344,37 +344,37 @@ func TestIterateMissCounters(t *testing.T) {
 	require.Equal(t, missCounter, missCounters[0])
 }
 
-func TestAssociatePrevoteAddDelete(t *testing.T) {
+func TestAggregatePrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	associatePrevote := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
-	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote)
+	aggregatePrevote := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote)
 
-	KPrevote, err := input.OracleKeeper.GetAssociateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	KPrevote, err := input.OracleKeeper.GetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
 	require.NoError(t, err)
-	require.Equal(t, associatePrevote, KPrevote)
+	require.Equal(t, aggregatePrevote, KPrevote)
 
-	input.OracleKeeper.DeleteAssociateExchangeRatePrevote(input.Ctx, associatePrevote)
-	_, err = input.OracleKeeper.GetAssociateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.DeleteAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote)
+	_, err = input.OracleKeeper.GetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
 	require.Error(t, err)
 }
 
-func TestAssociatePrevoteIterate(t *testing.T) {
+func TestAggregatePrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	associatePrevote1 := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
-	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote1)
+	aggregatePrevote1 := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote1)
 
-	associatePrevote2 := types.NewAssociateExchangeRatePrevote("", sdk.ValAddress(Addrs[1]), 0)
-	input.OracleKeeper.AddAssociateExchangeRatePrevote(input.Ctx, associatePrevote2)
+	aggregatePrevote2 := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[1]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote2)
 
 	i := 0
 	bigger := bytes.Compare(Addrs[0], Addrs[1])
-	input.OracleKeeper.IterateAssociateExchangeRatePrevotes(input.Ctx, func(p types.AssociateExchangeRatePrevote) (stop bool) {
+	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(p types.AggregateExchangeRatePrevote) (stop bool) {
 		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
-			require.Equal(t, associatePrevote1, p)
+			require.Equal(t, aggregatePrevote1, p)
 		} else {
-			require.Equal(t, associatePrevote2, p)
+			require.Equal(t, aggregatePrevote2, p)
 		}
 
 		i++

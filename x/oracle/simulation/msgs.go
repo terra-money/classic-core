@@ -85,8 +85,8 @@ func SimulateMsgDelegateFeedConsent(k oracle.Keeper) simulation.Operation {
 	}
 }
 
-// SimulateMsgAssociateExchangeRatePrevote generates a MsgAssociateExchangeRatePrevote with random values
-func SimulateMsgAssociateExchangeRatePrevote(k oracle.Keeper) simulation.Operation {
+// SimulateMsgAggregateExchangeRatePrevote generates a MsgAggregateExchangeRatePrevote with random values
+func SimulateMsgAggregateExchangeRatePrevote(k oracle.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
 
@@ -98,10 +98,10 @@ func SimulateMsgAssociateExchangeRatePrevote(k oracle.Keeper) simulation.Operati
 			simulation.RandomDecAmount(r, sdk.NewDec(1)).String(),
 			core.MicroSDRDenom)
 
-		bz, _ := oracle.VoteHashForAssociate("1234", exchangeRates, valAddr)
+		bz, _ := oracle.VoteHashForAggregate("1234", exchangeRates, valAddr)
 		voteHash := hex.EncodeToString(bz)
 
-		msg := oracle.NewMsgAssociateExchangeRatePrevote(voteHash, acc.Address, valAddr)
+		msg := oracle.NewMsgAggregateExchangeRatePrevote(voteHash, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}
@@ -115,8 +115,8 @@ func SimulateMsgAssociateExchangeRatePrevote(k oracle.Keeper) simulation.Operati
 	}
 }
 
-// SimulateMsgAssociateExchangeRateVote generates a MsgVote with random values
-func SimulateMsgAssociateExchangeRateVote(k oracle.Keeper) simulation.Operation {
+// SimulateMsgAggregateExchangeRateVote generates a MsgVote with random values
+func SimulateMsgAggregateExchangeRateVote(k oracle.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simulation.Account) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
 
@@ -127,7 +127,7 @@ func SimulateMsgAssociateExchangeRateVote(k oracle.Keeper) simulation.Operation 
 			return simulation.NoOpMsg(oracle.ModuleName), nil, nil
 		}
 
-		msg := oracle.NewMsgAssociateExchangeRateVote("1234", exchangeRates, acc.Address, valAddr)
+		msg := oracle.NewMsgAggregateExchangeRateVote("1234", exchangeRates, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}

@@ -13,8 +13,8 @@ var (
 	_ sdk.Msg = &MsgDelegateFeedConsent{}
 	_ sdk.Msg = &MsgExchangeRatePrevote{}
 	_ sdk.Msg = &MsgExchangeRateVote{}
-	_ sdk.Msg = &MsgAssociateExchangeRatePrevote{}
-	_ sdk.Msg = &MsgAssociateExchangeRateVote{}
+	_ sdk.Msg = &MsgAggregateExchangeRatePrevote{}
+	_ sdk.Msg = &MsgAggregateExchangeRateVote{}
 )
 
 //-------------------------------------------------
@@ -215,18 +215,18 @@ func (msg MsgDelegateFeedConsent) String() string {
 		msg.Operator, msg.Delegate)
 }
 
-// MsgAssociateExchangeRatePrevote - struct for aggregate prevoting on the ExchangeRateVote.
+// MsgAggregateExchangeRatePrevote - struct for aggregate prevoting on the ExchangeRateVote.
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange rate}{denom},...,{exchange rate}{denom}:{voter}")
-type MsgAssociateExchangeRatePrevote struct {
+type MsgAggregateExchangeRatePrevote struct {
 	Hash      string         `json:"hash" yaml:"hash"` // hex string
 	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
 	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
 }
 
-// NewMsgAssociateExchangeRatePrevote returns MsgAssociateExchangeRatePrevote instance
-func NewMsgAssociateExchangeRatePrevote(hash string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAssociateExchangeRatePrevote {
-	return MsgAssociateExchangeRatePrevote{
+// NewMsgAggregateExchangeRatePrevote returns MsgAggregateExchangeRatePrevote instance
+func NewMsgAggregateExchangeRatePrevote(hash string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAggregateExchangeRatePrevote {
+	return MsgAggregateExchangeRatePrevote{
 		Hash:      hash,
 		Feeder:    feeder,
 		Validator: validator,
@@ -234,23 +234,23 @@ func NewMsgAssociateExchangeRatePrevote(hash string, feeder sdk.AccAddress, vali
 }
 
 // Route implements sdk.Msg
-func (msg MsgAssociateExchangeRatePrevote) Route() string { return RouterKey }
+func (msg MsgAggregateExchangeRatePrevote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgAssociateExchangeRatePrevote) Type() string { return "associateexchangerateprevote" }
+func (msg MsgAggregateExchangeRatePrevote) Type() string { return "aggregateexchangerateprevote" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgAssociateExchangeRatePrevote) GetSignBytes() []byte {
+func (msg MsgAggregateExchangeRatePrevote) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgAssociateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
+func (msg MsgAggregateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgAssociateExchangeRatePrevote) ValidateBasic() sdk.Error {
+func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() sdk.Error {
 
 	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
 		return ErrInvalidHashLength(DefaultCodespace, len(bz))
@@ -268,25 +268,25 @@ func (msg MsgAssociateExchangeRatePrevote) ValidateBasic() sdk.Error {
 }
 
 // String implements fmt.Stringer interface
-func (msg MsgAssociateExchangeRatePrevote) String() string {
-	return fmt.Sprintf(`MsgAssociateExchangeRateVote
+func (msg MsgAggregateExchangeRatePrevote) String() string {
+	return fmt.Sprintf(`MsgAggregateExchangeRateVote
 	hash:         %s,
 	feeder:       %s, 
 	validator:    %s`,
 		msg.Hash, msg.Feeder, msg.Validator)
 }
 
-// MsgAssociateExchangeRateVote - struct for voting on the exchange rates of Luna denominated in various Terra assets.
-type MsgAssociateExchangeRateVote struct {
+// MsgAggregateExchangeRateVote - struct for voting on the exchange rates of Luna denominated in various Terra assets.
+type MsgAggregateExchangeRateVote struct {
 	Salt          string         `json:"salt" yaml:"salt"`
 	ExchangeRates string         `json:"exchange_rates" yaml:"exchange_rates"` // comma separated dec coins
 	Feeder        sdk.AccAddress `json:"feeder" yaml:"feeder"`
 	Validator     sdk.ValAddress `json:"validator" yaml:"validator"`
 }
 
-// NewMsgAssociateExchangeRateVote returns MsgAssociateExchangeRateVote instance
-func NewMsgAssociateExchangeRateVote(salt string, exchangeRates string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAssociateExchangeRateVote {
-	return MsgAssociateExchangeRateVote{
+// NewMsgAggregateExchangeRateVote returns MsgAggregateExchangeRateVote instance
+func NewMsgAggregateExchangeRateVote(salt string, exchangeRates string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAggregateExchangeRateVote {
+	return MsgAggregateExchangeRateVote{
 		Salt:          salt,
 		ExchangeRates: exchangeRates,
 		Feeder:        feeder,
@@ -295,23 +295,23 @@ func NewMsgAssociateExchangeRateVote(salt string, exchangeRates string, feeder s
 }
 
 // Route implements sdk.Msg
-func (msg MsgAssociateExchangeRateVote) Route() string { return RouterKey }
+func (msg MsgAggregateExchangeRateVote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgAssociateExchangeRateVote) Type() string { return "associateexchangeratevote" }
+func (msg MsgAggregateExchangeRateVote) Type() string { return "aggregateexchangeratevote" }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgAssociateExchangeRateVote) GetSignBytes() []byte {
+func (msg MsgAggregateExchangeRateVote) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgAssociateExchangeRateVote) GetSigners() []sdk.AccAddress {
+func (msg MsgAggregateExchangeRateVote) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Feeder}
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgAssociateExchangeRateVote) ValidateBasic() sdk.Error {
+func (msg MsgAggregateExchangeRateVote) ValidateBasic() sdk.Error {
 
 	if msg.Feeder.Empty() {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
@@ -345,8 +345,8 @@ func (msg MsgAssociateExchangeRateVote) ValidateBasic() sdk.Error {
 }
 
 // String implements fmt.Stringer interface
-func (msg MsgAssociateExchangeRateVote) String() string {
-	return fmt.Sprintf(`MsgAssociateExchangeRateVote
+func (msg MsgAggregateExchangeRateVote) String() string {
+	return fmt.Sprintf(`MsgAggregateExchangeRateVote
 	exchangerate:      %s,
 	salt:              %s,
 	feeder:            %s, 

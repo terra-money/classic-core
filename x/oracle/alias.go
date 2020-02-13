@@ -55,7 +55,7 @@ var (
 	ErrNoVotingPermission              = types.ErrNoVotingPermission
 	ErrNotRevealPeriod                 = types.ErrNotRevealPeriod
 	ErrInvalidSaltLength               = types.ErrInvalidSaltLength
-	ErrNoAssociatePrevote              = types.ErrNoAssociatePrevote
+	ErrNoAggregatePrevote              = types.ErrNoAggregatePrevote
 	NewGenesisState                    = types.NewGenesisState
 	DefaultGenesisState                = types.DefaultGenesisState
 	ValidateGenesis                    = types.ValidateGenesis
@@ -64,12 +64,12 @@ var (
 	GetExchangeRateKey                 = types.GetExchangeRateKey
 	GetFeederDelegationKey             = types.GetFeederDelegationKey
 	GetMissCounterKey                  = types.GetMissCounterKey
-	GetAssociateExchangeRatePrevoteKey = types.GetAssociateExchangeRatePrevoteKey
+	GetAggregateExchangeRatePrevoteKey = types.GetAggregateExchangeRatePrevoteKey
 	NewMsgExchangeRatePrevote          = types.NewMsgExchangeRatePrevote
 	NewMsgExchangeRateVote             = types.NewMsgExchangeRateVote
 	NewMsgDelegateFeedConsent          = types.NewMsgDelegateFeedConsent
-	NewMsgAssociateExchangeRatePrevote = types.NewMsgAssociateExchangeRatePrevote
-	NewMsgAssociateExchangeRateVote    = types.NewMsgAssociateExchangeRateVote
+	NewMsgAggregateExchangeRatePrevote = types.NewMsgAggregateExchangeRatePrevote
+	NewMsgAggregateExchangeRateVote    = types.NewMsgAggregateExchangeRateVote
 	ParseDecCoins                      = types.ParseDecCoins
 	DefaultParams                      = types.DefaultParams
 	NewQueryExchangeRateParams         = types.NewQueryExchangeRateParams
@@ -80,8 +80,8 @@ var (
 	NewExchangeRatePrevote             = types.NewExchangeRatePrevote
 	VoteHash                           = types.VoteHash
 	NewExchangeRateVote                = types.NewExchangeRateVote
-	NewAssociateExchangeRatePrevote    = types.NewAssociateExchangeRatePrevote
-	VoteHashForAssociate               = types.VoteHashForAssociate
+	NewAggregateExchangeRatePrevote    = types.NewAggregateExchangeRatePrevote
+	VoteHashForAggregate               = types.VoteHashForAggregate
 	NewKeeper                          = keeper.NewKeeper
 	ParamKeyTable                      = keeper.ParamKeyTable
 	NewQuerier                         = keeper.NewQuerier
@@ -93,7 +93,7 @@ var (
 	ExchangeRateKey                       = types.ExchangeRateKey
 	FeederDelegationKey                   = types.FeederDelegationKey
 	MissCounterKey                        = types.MissCounterKey
-	AssociatePrevoteKey                   = types.AssociatePrevoteKey
+	AggregatePrevoteKey                   = types.AggregatePrevoteKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
 	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
@@ -122,8 +122,8 @@ type (
 	MsgExchangeRatePrevote          = types.MsgExchangeRatePrevote
 	MsgExchangeRateVote             = types.MsgExchangeRateVote
 	MsgDelegateFeedConsent          = types.MsgDelegateFeedConsent
-	MsgAssociateExchangeRatePrevote = types.MsgAssociateExchangeRatePrevote
-	MsgAssociateExchangeRateVote    = types.MsgAssociateExchangeRateVote
+	MsgAggregateExchangeRatePrevote = types.MsgAggregateExchangeRatePrevote
+	MsgAggregateExchangeRateVote    = types.MsgAggregateExchangeRateVote
 	Params                          = types.Params
 	QueryExchangeRateParams         = types.QueryExchangeRateParams
 	QueryPrevotesParams             = types.QueryPrevotesParams
@@ -134,6 +134,6 @@ type (
 	ExchangeRatePrevotes            = types.ExchangeRatePrevotes
 	ExchangeRateVote                = types.ExchangeRateVote
 	ExchangeRateVotes               = types.ExchangeRateVotes
-	AssociateExchangeRatePrevote    = types.AssociateExchangeRatePrevote
+	AggregateExchangeRatePrevote    = types.AggregateExchangeRatePrevote
 	Keeper                          = keeper.Keeper
 )

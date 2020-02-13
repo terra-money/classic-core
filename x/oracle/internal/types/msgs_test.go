@@ -95,11 +95,11 @@ func TestMsgFeederDelegation(t *testing.T) {
 	}
 }
 
-func TestMsgAssociateExchangeRatePrevote(t *testing.T) {
+func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroSDRDenom, sdk.OneDec()), sdk.NewDecCoinFromDec(core.MicroKRWDenom, sdk.NewDecWithPrec(32121, 1))}
-	bz, err := VoteHashForAssociate("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
+	bz, err := VoteHashForAggregate("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
 	require.Nil(t, err)
 
 	tests := []struct {
@@ -115,7 +115,7 @@ func TestMsgAssociateExchangeRatePrevote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgAssociateExchangeRatePrevote(tc.hash, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgAggregateExchangeRatePrevote(tc.hash, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -124,7 +124,7 @@ func TestMsgAssociateExchangeRatePrevote(t *testing.T) {
 	}
 }
 
-func TestMsgAssociateExchangeRateVote(t *testing.T) {
+func TestMsgAggregateExchangeRateVote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	exchangeRates := fmt.Sprintf("1.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
@@ -147,7 +147,7 @@ func TestMsgAssociateExchangeRateVote(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgAssociateExchangeRateVote(tc.salt, tc.exchangeRates, tc.voter, sdk.ValAddress(tc.voter))
+		msg := NewMsgAggregateExchangeRateVote(tc.salt, tc.exchangeRates, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

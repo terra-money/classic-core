@@ -449,7 +449,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 					})
 				return v
 			}(nil),
-			oraclesim.SimulateMsgAssociateExchangeRatePrevote(app.oracleKeeper),
+			oraclesim.SimulateMsgAggregateExchangeRatePrevote(app.oracleKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -460,7 +460,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 					})
 				return v
 			}(nil),
-			oraclesim.SimulateMsgAssociateExchangeRateVote(app.oracleKeeper),
+			oraclesim.SimulateMsgAggregateExchangeRateVote(app.oracleKeeper),
 		},
 	}
 }

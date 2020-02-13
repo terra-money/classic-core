@@ -14,7 +14,7 @@ const (
 	QueryVotes            = "votes"
 	QueryFeederDelegation = "feederDelegation"
 	QueryMissCounter      = "missCounter"
-	QueryAssociatePrevote = "associatePrevote"
+	QueryAggregatePrevote = "aggregatePrevote"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -74,13 +74,13 @@ func NewQueryMissCounterParams(validator sdk.ValAddress) QueryMissCounterParams 
 	return QueryMissCounterParams{validator}
 }
 
-// QueryAssociatePrevoteParams defines the params for the following queries:
-// - 'custom/oracle/associatePrevote'
-type QueryAssociatePrevoteParams struct {
+// QueryAggregatePrevoteParams defines the params for the following queries:
+// - 'custom/oracle/aggregatePrevote'
+type QueryAggregatePrevoteParams struct {
 	Validator sdk.ValAddress
 }
 
-// NewQueryAssociatePrevoteParams returns params for feeder delegation query
-func NewQueryAssociatePrevoteParams(validator sdk.ValAddress) QueryAssociatePrevoteParams {
-	return QueryAssociatePrevoteParams{validator}
+// NewQueryAggregatePrevoteParams returns params for feeder delegation query
+func NewQueryAggregatePrevoteParams(validator sdk.ValAddress) QueryAggregatePrevoteParams {
+	return QueryAggregatePrevoteParams{validator}
 }

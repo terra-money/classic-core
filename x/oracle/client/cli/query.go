@@ -314,16 +314,16 @@ $ terracli query oracle miss terravaloper...
 	return cmd
 }
 
-// GetCmdQueryAssociatePrevote implements the query associate prevote of the validator command
-func GetCmdQueryAssociatePrevote(cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryAggregatePrevote implements the query aggregate prevote of the validator command
+func GetCmdQueryAggregatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "associate-prevote [validator]",
+		Use:   "aggregate-prevote [validator]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query outstanding oracle prevotes, filtered by voter address.",
 		Long: strings.TrimSpace(`
 Query outstanding oracle prevotes, filtered by voter address.
 
-$ terracli query oracle associate-prevote terravaloper...
+$ terracli query oracle aggregate-prevote terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -334,20 +334,20 @@ $ terracli query oracle associate-prevote terravaloper...
 				return err
 			}
 
-			params := types.NewQueryAssociatePrevoteParams(validator)
+			params := types.NewQueryAggregatePrevoteParams(validator)
 			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAssociatePrevote), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregatePrevote), bz)
 			if err != nil {
 				return err
 			}
 
-			var associatePrevote types.AssociateExchangeRatePrevote
-			cdc.MustUnmarshalJSON(res, &associatePrevote)
-			return cliCtx.PrintOutput(associatePrevote)
+			var aggregatePrevote types.AggregateExchangeRatePrevote
+			cdc.MustUnmarshalJSON(res, &aggregatePrevote)
+			return cliCtx.PrintOutput(aggregatePrevote)
 		},
 	}
 

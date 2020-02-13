@@ -19,8 +19,8 @@ func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), submitPrevoteHandlerFunction(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/associate_prevote", RestVoter), submitAssociatePrevoteHandlerFunction(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/associate_vote", RestVoter), submitAssociateVoteHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/aggregate_prevote", RestVoter), submitAggregatePrevoteHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/aggregate_vote", RestVoter), submitAggregateVoteHandlerFunction(cliCtx)).Methods("POST")
 }
 
 // PrevoteReq ...
@@ -207,8 +207,8 @@ func submitDelegateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// AssociatePrevoteReq ...
-type AssociatePrevoteReq struct {
+// AggregatePrevoteReq ...
+type AggregatePrevoteReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
 	Hash          string `json:"hash"`
@@ -218,9 +218,9 @@ type AssociatePrevoteReq struct {
 	Validator string `json:"validator"`
 }
 
-func submitAssociatePrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req AssociatePrevoteReq
+		var req AggregatePrevoteReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -257,7 +257,7 @@ func submitAssociatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 				return
 			}
 
-			hashBytes, err := types.VoteHashForAssociate(req.Salt, req.ExchangeRates, valAddress)
+			hashBytes, err := types.VoteHashForAggregate(req.Salt, req.ExchangeRates, valAddress)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
@@ -267,7 +267,7 @@ func submitAssociatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 		}
 
 		// create the message
-		msg := types.NewMsgAssociateExchangeRatePrevote(req.Hash, fromAddress, valAddress)
+		msg := types.NewMsgAggregateExchangeRatePrevote(req.Hash, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -278,8 +278,8 @@ func submitAssociatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 	}
 }
 
-// AssociateVoteReq ...
-type AssociateVoteReq struct {
+// AggregateVoteReq ...
+type AggregateVoteReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 
 	ExchangeRates string `json:"exchange_rates"`
@@ -288,9 +288,9 @@ type AssociateVoteReq struct {
 	Validator string `json:"validator"`
 }
 
-func submitAssociateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+func submitAggregateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req AssociateVoteReq
+		var req AggregateVoteReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -320,7 +320,7 @@ func submitAssociateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerF
 		}
 
 		// create the message
-		msg := types.NewMsgAssociateExchangeRateVote(req.Salt, req.ExchangeRates, fromAddress, valAddress)
+		msg := types.NewMsgAggregateExchangeRateVote(req.Salt, req.ExchangeRates, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

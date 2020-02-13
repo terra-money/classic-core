@@ -31,9 +31,9 @@ const (
 //
 // - 0x05<valAddress_Bytes>: int64
 //
-// - 0x06<valAddress_Bytes>: AssociateExchangeRatePrevote
+// - 0x06<valAddress_Bytes>: AggregateExchangeRatePrevote
 //
-// - 0x07<valAddress_Bytes>: AssociateExchangeRateVote
+// - 0x07<valAddress_Bytes>: AggregateExchangeRateVote
 var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
@@ -41,7 +41,7 @@ var (
 	ExchangeRateKey     = []byte{0x03} // prefix for each key to a rate
 	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
 	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
-	AssociatePrevoteKey = []byte{0x06} // prefix for each key to a associate prevote
+	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -69,7 +69,7 @@ func GetMissCounterKey(v sdk.ValAddress) []byte {
 	return append(MissCounterKey, v.Bytes()...)
 }
 
-// GetAssociatePrevoteKey - stored by *Validator* address
-func GetAssociateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
-	return append(AssociatePrevoteKey, v.Bytes()...)
+// GetAggregatePrevoteKey - stored by *Validator* address
+func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
+	return append(AggregatePrevoteKey, v.Bytes()...)
 }

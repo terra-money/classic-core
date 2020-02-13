@@ -191,8 +191,8 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
-	app.oracleKeeper.IterateAssociateExchangeRatePrevotes(ctx, func(associatePrevote oracle.AssociateExchangeRatePrevote) (stop bool) {
-		app.oracleKeeper.DeleteAssociateExchangeRatePrevote(ctx, associatePrevote)
+	app.oracleKeeper.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote oracle.AggregateExchangeRatePrevote) (stop bool) {
+		app.oracleKeeper.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
 		return false
 	})
 

@@ -306,42 +306,42 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 }
 
 //-----------------------------------
-// AssociateExchangeRatePrevote logic
+// AggregateExchangeRatePrevote logic
 
-// GetAssociateExchangeRatePrevote retrieves an oracle prevote from the store
-func (k Keeper) GetAssociateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAddress) (associatePrevote types.AssociateExchangeRatePrevote, err sdk.Error) {
+// GetAggregateExchangeRatePrevote retrieves an oracle prevote from the store
+func (k Keeper) GetAggregateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAddress) (aggregatePrevote types.AggregateExchangeRatePrevote, err sdk.Error) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetAssociateExchangeRatePrevoteKey(voter))
+	b := store.Get(types.GetAggregateExchangeRatePrevoteKey(voter))
 	if b == nil {
-		err = types.ErrNoAssociatePrevote(k.codespace, voter)
+		err = types.ErrNoAggregatePrevote(k.codespace, voter)
 		return
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &associatePrevote)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &aggregatePrevote)
 	return
 }
 
-// AddAssociateExchangeRatePrevote adds an oracle associate prevote to the store
-func (k Keeper) AddAssociateExchangeRatePrevote(ctx sdk.Context, associatePrevote types.AssociateExchangeRatePrevote) {
+// AddAggregateExchangeRatePrevote adds an oracle aggregate prevote to the store
+func (k Keeper) AddAggregateExchangeRatePrevote(ctx sdk.Context, aggregatePrevote types.AggregateExchangeRatePrevote) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(associatePrevote)
-	store.Set(types.GetAssociateExchangeRatePrevoteKey(associatePrevote.Voter), bz)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(aggregatePrevote)
+	store.Set(types.GetAggregateExchangeRatePrevoteKey(aggregatePrevote.Voter), bz)
 }
 
-// DeleteAssociateExchangeRatePrevote deletes an oracle prevote from the store
-func (k Keeper) DeleteAssociateExchangeRatePrevote(ctx sdk.Context, associatePrevote types.AssociateExchangeRatePrevote) {
+// DeleteAggregateExchangeRatePrevote deletes an oracle prevote from the store
+func (k Keeper) DeleteAggregateExchangeRatePrevote(ctx sdk.Context, aggregatePrevote types.AggregateExchangeRatePrevote) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAssociateExchangeRatePrevoteKey(associatePrevote.Voter))
+	store.Delete(types.GetAggregateExchangeRatePrevoteKey(aggregatePrevote.Voter))
 }
 
-// IterateAssociateExchangeRatePrevotes iterates rate over prevotes in the store
-func (k Keeper) IterateAssociateExchangeRatePrevotes(ctx sdk.Context, handler func(associatePrevote types.AssociateExchangeRatePrevote) (stop bool)) {
+// IterateAggregateExchangeRatePrevotes iterates rate over prevotes in the store
+func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.AssociatePrevoteKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregatePrevoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var associatePrevote types.AssociateExchangeRatePrevote
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &associatePrevote)
-		if handler(associatePrevote) {
+		var aggregatePrevote types.AggregateExchangeRatePrevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &aggregatePrevote)
+		if handler(aggregatePrevote) {
 			break
 		}
 	}

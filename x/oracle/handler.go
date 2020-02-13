@@ -23,10 +23,10 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleMsgExchangeRateVote(ctx, k, msg)
 		case MsgDelegateFeedConsent:
 			return handleMsgDelegateFeedConsent(ctx, k, msg)
-		case MsgAssociateExchangeRatePrevote:
-			return handleMsgAssociateExchangeRatePrevote(ctx, k, msg)
-		case MsgAssociateExchangeRateVote:
-			return handleMsgAssociateExchangeRateVote(ctx, k, msg)
+		case MsgAggregateExchangeRatePrevote:
+			return handleMsgAggregateExchangeRatePrevote(ctx, k, msg)
+		case MsgAggregateExchangeRateVote:
+			return handleMsgAggregateExchangeRateVote(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized oracle message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -157,8 +157,8 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelega
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// handleMsgAssociateExchangeRatePrevote handles a MsgAssociateExchangeRatePrevote
-func handleMsgAssociateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgAssociateExchangeRatePrevote) sdk.Result {
+// handleMsgAggregateExchangeRatePrevote handles a MsgAggregateExchangeRatePrevote
+func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgAggregateExchangeRatePrevote) sdk.Result {
 	if !ppm.Feeder.Equals(ppm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
@@ -172,12 +172,12 @@ func handleMsgAssociateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm M
 		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
 	}
 
-	associatePrevote := NewAssociateExchangeRatePrevote(ppm.Hash, ppm.Validator, ctx.BlockHeight())
-	keeper.AddAssociateExchangeRatePrevote(ctx, associatePrevote)
+	aggregatePrevote := NewAggregateExchangeRatePrevote(ppm.Hash, ppm.Validator, ctx.BlockHeight())
+	keeper.AddAggregateExchangeRatePrevote(ctx, aggregatePrevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeAssociatePrevote,
+			types.EventTypeAggregatePrevote,
 			sdk.NewAttribute(types.AttributeKeyVoter, ppm.Validator.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeder, ppm.Feeder.String()),
 		),
@@ -190,8 +190,8 @@ func handleMsgAssociateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm M
 	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// handleMsgAssociateExchangeRateVote handles a MsgAssociateExchangeRateVote
-func handleMsgAssociateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgAssociateExchangeRateVote) sdk.Result {
+// handleMsgAggregateExchangeRateVote handles a MsgAggregateExchangeRateVote
+func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgAggregateExchangeRateVote) sdk.Result {
 	if !pvm.Feeder.Equals(pvm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, pvm.Validator)
 		if !delegate.Equals(pvm.Feeder) {
@@ -207,13 +207,13 @@ func handleMsgAssociateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 
 	params := keeper.GetParams(ctx)
 
-	associatePrevote, err := keeper.GetAssociateExchangeRatePrevote(ctx, pvm.Validator)
+	aggregatePrevote, err := keeper.GetAggregateExchangeRatePrevote(ctx, pvm.Validator)
 	if err != nil {
-		return ErrNoAssociatePrevote(keeper.Codespace(), pvm.Validator).Result()
+		return ErrNoAggregatePrevote(keeper.Codespace(), pvm.Validator).Result()
 	}
 
 	// Check a msg is submitted porper period
-	if (ctx.BlockHeight()/params.VotePeriod)-(associatePrevote.SubmitBlock/params.VotePeriod) != 1 {
+	if (ctx.BlockHeight()/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
 		return ErrNotRevealPeriod(keeper.Codespace()).Result()
 	}
 
@@ -222,9 +222,9 @@ func handleMsgAssociateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 		return sdk.ErrInvalidCoins(err2.Error()).Result()
 	}
 
-	// Verify a exchange rate with associate prevote hash
-	bz, _ := hex.DecodeString(associatePrevote.Hash) // prevote hash
-	bz2, err2 := VoteHashForAssociate(pvm.Salt, pvm.ExchangeRates, associatePrevote.Voter)
+	// Verify a exchange rate with aggregate prevote hash
+	bz, _ := hex.DecodeString(aggregatePrevote.Hash) // prevote hash
+	bz2, err2 := VoteHashForAggregate(pvm.Salt, pvm.ExchangeRates, aggregatePrevote.Voter)
 	if err2 != nil {
 		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
 	}
@@ -233,17 +233,17 @@ func handleMsgAssociateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
 	}
 
-	// Move associate prevote to votes with given exchange rate
+	// Move aggregate prevote to votes with given exchange rate
 	for _, exchangeRate := range exchangeRates {
-		vote := NewExchangeRateVote(exchangeRate.Amount, exchangeRate.Denom, associatePrevote.Voter)
+		vote := NewExchangeRateVote(exchangeRate.Amount, exchangeRate.Denom, aggregatePrevote.Voter)
 		keeper.AddExchangeRateVote(ctx, vote)
 	}
 
-	keeper.DeleteAssociateExchangeRatePrevote(ctx, associatePrevote)
+	keeper.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeAssociateVote,
+			types.EventTypeAggregateVote,
 			sdk.NewAttribute(types.AttributeKeyVoter, pvm.Validator.String()),
 			sdk.NewAttribute(types.AttributeKeyExchangeRates, pvm.ExchangeRates),
 			sdk.NewAttribute(types.AttributeKeyFeeder, pvm.Feeder.String()),
