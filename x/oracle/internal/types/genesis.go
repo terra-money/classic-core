@@ -8,12 +8,13 @@ import (
 
 // GenesisState - all oracle state that must be provided at genesis
 type GenesisState struct {
-	Params               Params                    `json:"params" yaml:"params"`
-	FeederDelegations    map[string]sdk.AccAddress `json:"feeder_delegations" yaml:"feeder_delegations"`
-	ExchangeRates        map[string]sdk.Dec        `json:"exchange_rates" yaml:"exchange_rates"`
-	ExchangeRatePrevotes []ExchangeRatePrevote     `json:"exchange_rate_prevotes" yaml:"exchange_rate_prevotes"`
-	ExchangeRateVotes    []ExchangeRateVote        `json:"exchange_rate_votes" yaml:"exchange_rate_votes"`
-	MissCounters         map[string]int64          `json:"miss_counters" yaml:"miss_counters"`
+	Params                        Params                         `json:"params" yaml:"params"`
+	FeederDelegations             map[string]sdk.AccAddress      `json:"feeder_delegations" yaml:"feeder_delegations"`
+	ExchangeRates                 map[string]sdk.Dec             `json:"exchange_rates" yaml:"exchange_rates"`
+	ExchangeRatePrevotes          []ExchangeRatePrevote          `json:"exchange_rate_prevotes" yaml:"exchange_rate_prevotes"`
+	ExchangeRateVotes             []ExchangeRateVote             `json:"exchange_rate_votes" yaml:"exchange_rate_votes"`
+	MissCounters                  map[string]int64               `json:"miss_counters" yaml:"miss_counters"`
+	AssociateExchangeRatePrevotes []AssociateExchangeRatePrevote `json:"associate_exchange_rate_prevotes" yaml:"associate_exchange_rate_prevotes"`
 }
 
 // NewGenesisState creates a new GenesisState object
@@ -21,27 +22,30 @@ func NewGenesisState(
 	params Params, exchangeRatePrevotes []ExchangeRatePrevote,
 	exchangeRateVotes []ExchangeRateVote, rates map[string]sdk.Dec,
 	feederDelegations map[string]sdk.AccAddress, missCounters map[string]int64,
+	associateExchangeRatePrevotes []AssociateExchangeRatePrevote,
 ) GenesisState {
 
 	return GenesisState{
-		Params:               params,
-		ExchangeRatePrevotes: exchangeRatePrevotes,
-		ExchangeRateVotes:    exchangeRateVotes,
-		ExchangeRates:        rates,
-		FeederDelegations:    feederDelegations,
-		MissCounters:         missCounters,
+		Params:                        params,
+		ExchangeRatePrevotes:          exchangeRatePrevotes,
+		ExchangeRateVotes:             exchangeRateVotes,
+		ExchangeRates:                 rates,
+		FeederDelegations:             feederDelegations,
+		MissCounters:                  missCounters,
+		AssociateExchangeRatePrevotes: associateExchangeRatePrevotes,
 	}
 }
 
 // DefaultGenesisState - default GenesisState used by columbus-2
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:               DefaultParams(),
-		ExchangeRatePrevotes: []ExchangeRatePrevote{},
-		ExchangeRateVotes:    []ExchangeRateVote{},
-		ExchangeRates:        make(map[string]sdk.Dec),
-		FeederDelegations:    make(map[string]sdk.AccAddress),
-		MissCounters:         make(map[string]int64),
+		Params:                        DefaultParams(),
+		ExchangeRatePrevotes:          []ExchangeRatePrevote{},
+		ExchangeRateVotes:             []ExchangeRateVote{},
+		ExchangeRates:                 make(map[string]sdk.Dec),
+		FeederDelegations:             make(map[string]sdk.AccAddress),
+		MissCounters:                  make(map[string]int64),
+		AssociateExchangeRatePrevotes: []AssociateExchangeRatePrevote{},
 	}
 }
 

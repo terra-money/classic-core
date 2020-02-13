@@ -336,7 +336,7 @@ func (k Keeper) DeleteAssociateExchangeRatePrevote(ctx sdk.Context, associatePre
 // IterateAssociateExchangeRatePrevotes iterates rate over prevotes in the store
 func (k Keeper) IterateAssociateExchangeRatePrevotes(ctx sdk.Context, handler func(associatePrevote types.AssociateExchangeRatePrevote) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PrevoteKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AssociatePrevoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var associatePrevote types.AssociateExchangeRatePrevote

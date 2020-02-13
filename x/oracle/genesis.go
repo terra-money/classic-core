@@ -55,6 +55,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetMissCounter(ctx, operator, missCounter)
 	}
 
+	for _, associatePrevote := range data.AssociateExchangeRatePrevotes {
+		keeper.AddAssociateExchangeRatePrevote(ctx, associatePrevote)
+	}
+
 	keeper.SetParams(ctx, data.Params)
 	keeper.GetRewardPool(ctx)
 }
@@ -95,5 +99,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters)
+	var associateExchangeRatePrevotes []AssociateExchangeRatePrevote
+	keeper.IterateAssociateExchangeRatePrevotes(ctx, func(associatePrevote AssociateExchangeRatePrevote) (stop bool) {
+		associateExchangeRatePrevotes = append(associateExchangeRatePrevotes, associatePrevote)
+		return false
+	})
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, associateExchangeRatePrevotes)
 }
