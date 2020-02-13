@@ -313,3 +313,43 @@ $ terracli query oracle miss terravaloper...
 
 	return cmd
 }
+
+// GetCmdQueryAssociatePrevote implements the query associate prevote of the validator command
+func GetCmdQueryAssociatePrevote(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "associate-prevote [validator]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query outstanding oracle prevotes, filtered by voter address.",
+		Long: strings.TrimSpace(`
+Query outstanding oracle prevotes, filtered by voter address.
+
+$ terracli query oracle associate-prevote terravaloper...
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := args[0]
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryAssociatePrevoteParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAssociatePrevote), bz)
+			if err != nil {
+				return err
+			}
+
+			var associatePrevote types.AssociateExchangeRatePrevote
+			cdc.MustUnmarshalJSON(res, &associatePrevote)
+			return cliCtx.PrintOutput(associatePrevote)
+		},
+	}
+
+	return cmd
+}

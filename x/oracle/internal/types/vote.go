@@ -125,17 +125,6 @@ func (pp AssociateExchangeRatePrevote) String() string {
 		pp.Hash, pp.Voter, pp.SubmitBlock)
 }
 
-// AssociateExchangeRatePrevotes is a collection of AssociateExchangeRatePrevote
-type AssociateExchangeRatePrevotes []AssociateExchangeRatePrevote
-
-// String implements fmt.Stringer interface
-func (v AssociateExchangeRatePrevotes) String() (out string) {
-	for _, val := range v {
-		out += val.String() + "\n"
-	}
-	return strings.TrimSpace(out)
-}
-
 // VoteHash computes hash value of ExchangeRateVote
 // to avoid redundant DecCoins stringify, use string argument
 func VoteHashForAssociate(salt string, exchangeRatesStr string, voter sdk.ValAddress) ([]byte, error) {

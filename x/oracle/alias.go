@@ -135,6 +135,5 @@ type (
 	ExchangeRateVote                = types.ExchangeRateVote
 	ExchangeRateVotes               = types.ExchangeRateVotes
 	AssociateExchangeRatePrevote    = types.AssociateExchangeRatePrevote
-	AssociateExchangeRatePrevotes   = types.AssociateExchangeRatePrevotes
 	Keeper                          = keeper.Keeper
 )

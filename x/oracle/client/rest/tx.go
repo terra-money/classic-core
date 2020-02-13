@@ -19,6 +19,8 @@ func resgisterTxRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/prevotes", RestDenom), submitPrevoteHandlerFunction(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), submitVoteHandlerFunction(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), submitDelegateHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/associate_prevote", RestVoter), submitAssociatePrevoteHandlerFunction(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/associate_vote", RestVoter), submitAssociateVoteHandlerFunction(cliCtx)).Methods("POST")
 }
 
 // PrevoteReq ...
@@ -195,6 +197,130 @@ func submitDelegateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// create the message
 		msg := types.NewMsgDelegateFeedConsent(valAddress, feeder)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+// AssociatePrevoteReq ...
+type AssociatePrevoteReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+
+	Hash          string `json:"hash"`
+	ExchangeRates string `json:"exchange_rates"`
+	Salt          string `json:"salt"`
+
+	Validator string `json:"validator"`
+}
+
+func submitAssociatePrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req AssociatePrevoteReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// Default validator is self address
+		var valAddress sdk.ValAddress
+		if len(req.Validator) == 0 {
+			valAddress = sdk.ValAddress(fromAddress)
+		} else {
+			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
+		// If hash is not given, then retrieve hash from exchange_rate and salt
+		if len(req.Hash) == 0 && (len(req.ExchangeRates) > 0 && len(req.Salt) > 0) {
+			_, err := types.ParseDecCoins(req.ExchangeRates)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			hashBytes, err := types.VoteHashForAssociate(req.Salt, req.ExchangeRates, valAddress)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			req.Hash = hex.EncodeToString(hashBytes)
+		}
+
+		// create the message
+		msg := types.NewMsgAssociateExchangeRatePrevote(req.Hash, fromAddress, valAddress)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+// AssociateVoteReq ...
+type AssociateVoteReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+
+	ExchangeRates string `json:"exchange_rates"`
+	Salt          string `json:"salt"`
+
+	Validator string `json:"validator"`
+}
+
+func submitAssociateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req AssociateVoteReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// Default validator is self address
+		var valAddress sdk.ValAddress
+		if len(req.Validator) == 0 {
+			valAddress = sdk.ValAddress(fromAddress)
+		} else {
+			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
+		// create the message
+		msg := types.NewMsgAssociateExchangeRateVote(req.Salt, req.ExchangeRates, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

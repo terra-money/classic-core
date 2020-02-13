@@ -29,6 +29,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryFeederDelegation(ctx, req, keeper)
 		case types.QueryMissCounter:
 			return queryMissCounter(ctx, req, keeper)
+		case types.QueryAssociatePrevote:
+			return queryAssociatePrevote(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -201,6 +203,25 @@ func queryMissCounter(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 
 	missCounter := keeper.GetMissCounter(ctx, params.Validator)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, missCounter)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryAssociatePrevote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryAssociatePrevoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	associateExchangeRatePrevote, err := keeper.GetAssociateExchangeRatePrevote(ctx, params.Validator)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, associateExchangeRatePrevote)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
