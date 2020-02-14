@@ -72,14 +72,6 @@ func NewExchangeRateVote(rate sdk.Dec, denom string, voter sdk.ValAddress) Excha
 	}
 }
 
-func (pv ExchangeRateVote) getPower(ctx sdk.Context, powerMap map[string]int64) int64 {
-	if power, ok := powerMap[pv.Voter.String()]; ok {
-		return power
-	}
-
-	return 0
-}
-
 // String implements fmt.Stringer interface
 func (pv ExchangeRateVote) String() string {
 	return fmt.Sprintf(`ExchangeRateVote
@@ -100,7 +92,7 @@ func (v ExchangeRateVotes) String() (out string) {
 	return strings.TrimSpace(out)
 }
 
-// AggregateExchangeRatePrevote - struct to store a validator's prevote on the rate of Luna in the denom asset
+// AggregateExchangeRatePrevote - struct to store a validator's aggregate prevote on the rate of Luna in the denom asset
 type AggregateExchangeRatePrevote struct {
 	Hash        string         `json:"hash"`  // Vote hex hash to protect centralize data source problem
 	Voter       sdk.ValAddress `json:"voter"` // Voter val address

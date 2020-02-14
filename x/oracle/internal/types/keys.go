@@ -42,6 +42,7 @@ var (
 	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
 	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
 	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
+	AggregateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom

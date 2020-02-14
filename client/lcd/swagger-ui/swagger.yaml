@@ -2408,6 +2408,79 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/voters/{validator}/aggregate_prevote:
+    get:
+      summary: Get the currently outstanding aggregate exchange rate oracle prevotes of a validator
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/AggregateExchangeRatePrevote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+    post:
+      summary: Generate oracle aggregate exchange rate prevote message containing hash
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+        - in: body
+          name: Aggregate Prevote request body
+          schema:
+            $ref: "#/definitions/AggregatePrevoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /oracle/voters/{validator}/aggregate_vote:
+    post:
+      summary: Generate oracle aggregate exchange rate vote message containing exchange rates and salt to prove aggregate prevote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+        - in: body
+          name: Aggregate Vote request body
+          schema:
+            $ref: "#/definitions/AggregateVoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
   /oracle/parameters:
     get:
       summary: Get oracle params
@@ -3274,11 +3347,11 @@ definitions:
       exchange_rate:
         type: number
         example: "1000.0"
-        description: "exchange rate of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash"
+        description: "exchange rate of Luna in denom currency is to make prevote hash; this field is required to submit prevote in case absence of hash"
       salt:
         type: string
         example: "abcd"
-        description: "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash"
+        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
       hash:
         type: string
         example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
@@ -3294,6 +3367,40 @@ definitions:
         type: number
         example: "1000.0"
         description: "proof exchange rate of Luna in denom currency was used to make prevote hash; initial prevote does not require this field"
+      salt:
+        type: string
+        example: "abcd"
+        description: "proof salt was used to make prevote hash; initial prevote does not require this field"
+      validator:
+        $ref: "#/definitions/ValidatorAddress"
+  AggregatePrevoteReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      exchange_rates:
+        type: string
+        example: "1000.0ukrw,1.2uusd,0.99usdr"
+        description: "exchange rates of Luna in denom currencies are to make aggregate prevote hash; this field is required to submit prevote in case absence of hash"
+      salt:
+        type: string
+        example: "abcd"
+        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
+        description: "hex string; hash of next vote; empty == skip prevote"
+      validator:
+        $ref: "#/definitions/ValidatorAddress"
+  AggregateVoteReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      exchange_rates:
+        type: string
+        example: "1000.0ukrw,1.2uusd,0.99usdr"
+        description: "proof exchange rates of Luna in denom currency were used to make aggregate prevote hash"
       salt:
         type: string
         example: "abcd"
@@ -3327,6 +3434,17 @@ definitions:
       denom:
         type: string
         example: "uusd"
+      voter:
+        $ref: "#/definitions/ValidatorAddress"
+      submit_block:
+        type: number
+        example: "1"
+  AggregateExchangeRatePrevote:
+    type: object
+    properties:
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
       voter:
         $ref: "#/definitions/ValidatorAddress"
       submit_block:
