@@ -126,3 +126,25 @@ func VoteHashForAggregate(salt string, exchangeRatesStr string, voter sdk.ValAdd
 	bz := hash.Sum(nil)
 	return bz, err
 }
+
+// AggregateExchangeRateVote - struct to store a validator's aggregate vote on the rate of Luna in the denom asset
+type AggregateExchangeRateVote struct {
+	ExchangeRates sdk.DecCoins   `json:"exchange_rates"` // ExchangeRates of Luna in target fiat currencies
+	Voter         sdk.ValAddress `json:"voter"`          // voter val address of validator
+}
+
+// NewAggregateExchangeRateVote creates a AggregateExchangeRateVote instance
+func NewAggregateExchangeRateVote(rates sdk.DecCoins, voter sdk.ValAddress) AggregateExchangeRateVote {
+	return AggregateExchangeRateVote{
+		ExchangeRates: rates,
+		Voter:         voter,
+	}
+}
+
+// String implements fmt.Stringer interface
+func (pv AggregateExchangeRateVote) String() string {
+	return fmt.Sprintf(`AggregateExchangeRateVote
+	ExchangeRate:    %s,
+	Voter:           %s`,
+		pv.ExchangeRates, pv.Voter)
+}

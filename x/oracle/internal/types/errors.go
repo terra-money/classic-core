@@ -25,6 +25,7 @@ const (
 	CodeInvalidSaltLength   codeType = 10
 	CodeInvalidMsgFormat    codeType = 11
 	CodeNoAggregatePrevote  codeType = 12
+	CodeNoAggregateVote     codeType = 13
 )
 
 // ----------------------------------------
@@ -78,4 +79,9 @@ func ErrInvalidSaltLength(codespace sdk.CodespaceType, saltLength int) sdk.Error
 // ErrNoAggregatePrevote called when no prevote exists
 func ErrNoAggregatePrevote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.Error {
 	return sdk.NewError(codespace, CodeNoAggregatePrevote, fmt.Sprintf("No aggregate prevote exists from %s", voter))
+}
+
+// ErrNoAggregateVote called when no prevote exists
+func ErrNoAggregateVote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.Error {
+	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No aggregate vote exists from %s", voter))
 }

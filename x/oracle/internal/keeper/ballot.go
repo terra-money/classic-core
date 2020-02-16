@@ -8,6 +8,8 @@ import (
 // OrganizeBallotByDenom collects all oracle votes for the period, categorized by the votes' denom parameter
 func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.ExchangeRateBallot) {
 	votes = map[string]types.ExchangeRateBallot{}
+
+	// organize individual votes
 	handler := func(vote types.ExchangeRateVote) (stop bool) {
 		validator := k.StakingKeeper.Validator(ctx, vote.Voter)
 
@@ -30,5 +32,33 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 		return false
 	}
 	k.IterateExchangeRateVotes(ctx, handler)
+
+	// Organize aggregate votes
+	aggregateHandler := func(vote types.AggregateExchangeRateVote) (stop bool) {
+		validator := k.StakingKeeper.Validator(ctx, vote.Voter)
+
+		// organize ballot only for the active validators
+		if validator != nil && validator.IsBonded() && !validator.IsJailed() {
+			power := validator.GetConsensusPower()
+			for _, rate := range vote.ExchangeRates {
+				tmpPower := power
+				if !rate.IsPositive() {
+					// Make the power of abstain vote zero
+					tmpPower = 0
+				}
+
+				votes[rate.Denom] = append(votes[rate.Denom],
+					types.NewVoteForTally(
+						types.NewExchangeRateVote(rate.Amount, rate.Denom, vote.Voter),
+						tmpPower,
+					),
+				)
+			}
+
+		}
+
+		return false
+	}
+	k.IterateAggregateExchangeRateVotes(ctx, aggregateHandler)
 	return
 }

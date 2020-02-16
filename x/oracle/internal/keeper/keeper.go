@@ -346,3 +346,45 @@ func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler fu
 		}
 	}
 }
+
+//-----------------------------------
+// AggregateExchangeRateVote logic
+
+// GetAggregateExchangeRateVote retrieves an oracle prevote from the store
+func (k Keeper) GetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) (aggregateVote types.AggregateExchangeRateVote, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetAggregateExchangeRateVoteKey(voter))
+	if b == nil {
+		err = types.ErrNoAggregateVote(k.codespace, voter)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &aggregateVote)
+	return
+}
+
+// AddAggregateExchangeRateVote adds an oracle aggregate prevote to the store
+func (k Keeper) AddAggregateExchangeRateVote(ctx sdk.Context, aggregateVote types.AggregateExchangeRateVote) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(aggregateVote)
+	store.Set(types.GetAggregateExchangeRateVoteKey(aggregateVote.Voter), bz)
+}
+
+// DeleteAggregateExchangeRateVote deletes an oracle prevote from the store
+func (k Keeper) DeleteAggregateExchangeRateVote(ctx sdk.Context, aggregateVote types.AggregateExchangeRateVote) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAggregateExchangeRateVoteKey(aggregateVote.Voter))
+}
+
+// IterateAggregateExchangeRateVotes iterates rate over prevotes in the store
+func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(aggregateVote types.AggregateExchangeRateVote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregateVoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var aggregateVote types.AggregateExchangeRateVote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &aggregateVote)
+		if handler(aggregateVote) {
+			break
+		}
+	}
+}

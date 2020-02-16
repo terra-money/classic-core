@@ -74,3 +74,8 @@ func GetMissCounterKey(v sdk.ValAddress) []byte {
 func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
 	return append(AggregatePrevoteKey, v.Bytes()...)
 }
+
+// GetAggregateVoteKey - stored by *Validator* address
+func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
+	return append(AggregateVoteKey, v.Bytes()...)
+}

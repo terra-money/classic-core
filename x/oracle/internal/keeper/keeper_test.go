@@ -381,3 +381,53 @@ func TestAggregatePrevoteIterate(t *testing.T) {
 		return false
 	})
 }
+
+func TestAggregateVoteAddDelete(t *testing.T) {
+	input := CreateTestInput(t)
+
+	aggregateVote := types.NewAggregateExchangeRateVote(sdk.DecCoins{
+		{Denom: "foo", Amount: sdk.NewDec(-1)},
+		{Denom:"foo", Amount:sdk.NewDec(0)},
+		{Denom:"foo", Amount:sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote)
+
+	KVote, err := input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.NoError(t, err)
+	require.Equal(t, aggregateVote, KVote)
+
+	input.OracleKeeper.DeleteAggregateExchangeRateVote(input.Ctx, aggregateVote)
+	_, err = input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.Error(t, err)
+}
+
+func TestAggregateVoteIterate(t *testing.T) {
+	input := CreateTestInput(t)
+
+	aggregateVote1 := types.NewAggregateExchangeRateVote(sdk.DecCoins{
+		{Denom: "foo", Amount: sdk.NewDec(-1)},
+		{Denom:"foo", Amount:sdk.NewDec(0)},
+		{Denom:"foo", Amount:sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote1)
+
+	aggregateVote2 := types.NewAggregateExchangeRateVote(sdk.DecCoins{
+		{Denom: "foo", Amount: sdk.NewDec(-1)},
+		{Denom:"foo", Amount:sdk.NewDec(0)},
+		{Denom:"foo", Amount:sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[1]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote2)
+
+	i := 0
+	bigger := bytes.Compare(Addrs[0], Addrs[1])
+	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(p types.AggregateExchangeRateVote) (stop bool) {
+		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
+			require.Equal(t, aggregateVote1, p)
+		} else {
+			require.Equal(t, aggregateVote2, p)
+		}
+
+		i++
+		return false
+	})
+}

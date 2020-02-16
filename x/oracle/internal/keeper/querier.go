@@ -31,6 +31,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryMissCounter(ctx, req, keeper)
 		case types.QueryAggregatePrevote:
 			return queryAggregatePrevote(ctx, req, keeper)
+		case types.QueryAggregateVote:
+			return queryAggregateVote(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -222,6 +224,25 @@ func queryAggregatePrevote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRatePrevote)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+	return bz, nil
+}
+
+func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryAggregateVoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+	}
+
+	aggregateExchangeRateVote, err := keeper.GetAggregateExchangeRateVote(ctx, params.Validator)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRateVote)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

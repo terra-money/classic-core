@@ -25,6 +25,7 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/feeder", RestVoter), queryFeederDelegationHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/miss", RestVoter), queryMissHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/aggregate_prevote", RestVoter), queryAggregatePrevoteHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/aggregate_vote", RestVoter), queryAggregateVoteHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
@@ -355,6 +356,40 @@ func queryAggregatePrevoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 		}
 
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregatePrevote), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryAggregateVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		validator, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := types.NewQueryAggregateVoteParams(validator)
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregateVote), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

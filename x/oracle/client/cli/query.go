@@ -30,6 +30,8 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryParams(cdc),
 		GetCmdQueryFeederDelegation(cdc),
 		GetCmdQueryMissCounter(cdc),
+		GetCmdQueryAggregatePrevote(cdc),
+		GetCmdQueryAggregateVote(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -319,9 +321,9 @@ func GetCmdQueryAggregatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aggregate-prevote [validator]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query outstanding oracle prevotes, filtered by voter address.",
+		Short: "Query outstanding oracle aggregate prevote, filtered by voter address.",
 		Long: strings.TrimSpace(`
-Query outstanding oracle prevotes, filtered by voter address.
+Query outstanding oracle aggregate prevote, filtered by voter address.
 
 $ terracli query oracle aggregate-prevote terravaloper...
 `),
@@ -348,6 +350,46 @@ $ terracli query oracle aggregate-prevote terravaloper...
 			var aggregatePrevote types.AggregateExchangeRatePrevote
 			cdc.MustUnmarshalJSON(res, &aggregatePrevote)
 			return cliCtx.PrintOutput(aggregatePrevote)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryAggregateVote implements the query aggregate prevote of the validator command
+func GetCmdQueryAggregateVote(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "aggregate-vote [validator]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query outstanding oracle aggregate vote, filtered by voter address.",
+		Long: strings.TrimSpace(`
+Query outstanding oracle aggregate vote, filtered by voter address.
+
+$ terracli query oracle aggregate-vote terravaloper...
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := args[0]
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryAggregateVoteParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregateVote), bz)
+			if err != nil {
+				return err
+			}
+
+			var aggregateVote types.AggregateExchangeRateVote
+			cdc.MustUnmarshalJSON(res, &aggregateVote)
+			return cliCtx.PrintOutput(aggregateVote)
 		},
 	}
 
