@@ -81,6 +81,7 @@ var (
 	VoteHash                           = types.VoteHash
 	NewExchangeRateVote                = types.NewExchangeRateVote
 	NewAggregateExchangeRatePrevote    = types.NewAggregateExchangeRatePrevote
+	NewAggregateExchangeRateVote       = types.NewAggregateExchangeRateVote
 	VoteHashForAggregate               = types.VoteHashForAggregate
 	NewKeeper                          = keeper.NewKeeper
 	ParamKeyTable                      = keeper.ParamKeyTable
@@ -135,5 +136,6 @@ type (
 	ExchangeRateVote                = types.ExchangeRateVote
 	ExchangeRateVotes               = types.ExchangeRateVotes
 	AggregateExchangeRatePrevote    = types.AggregateExchangeRatePrevote
+	AggregateExchangeRateVote       = types.AggregateExchangeRateVote
 	Keeper                          = keeper.Keeper
 )

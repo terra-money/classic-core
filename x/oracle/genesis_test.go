@@ -23,6 +23,8 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, NewExchangeRatePrevote("1234", "denom", sdk.ValAddress{}, int64(2)))
 	input.OracleKeeper.AddExchangeRateVote(input.Ctx, NewExchangeRateVote(sdk.NewDec(1), "denom", sdk.ValAddress{}))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, "denom", sdk.NewDec(123))
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, NewAggregateExchangeRatePrevote("1234", sdk.ValAddress{}, int64(2)))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, NewAggregateExchangeRateVote(sdk.DecCoins{{Denom:"foo", Amount: sdk.NewDec(123)}}, sdk.ValAddress{}))
 	genesis := ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestInput(t)

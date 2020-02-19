@@ -196,6 +196,11 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
+	app.oracleKeeper.IterateAggregateExchangeRateVotes(ctx, func(aggregateVote oracle.AggregateExchangeRateVote) bool {
+		app.oracleKeeper.DeleteAggregateExchangeRateVote(ctx, aggregateVote)
+		return false
+	})
+
 	/* Handle market state. */
 
 	// clear all market pools

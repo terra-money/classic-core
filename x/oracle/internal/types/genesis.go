@@ -15,6 +15,7 @@ type GenesisState struct {
 	ExchangeRateVotes             []ExchangeRateVote             `json:"exchange_rate_votes" yaml:"exchange_rate_votes"`
 	MissCounters                  map[string]int64               `json:"miss_counters" yaml:"miss_counters"`
 	AggregateExchangeRatePrevotes []AggregateExchangeRatePrevote `json:"aggregate_exchange_rate_prevotes" yaml:"aggregate_exchange_rate_prevotes"`
+	AggregateExchangeRateVotes    []AggregateExchangeRateVote    `json:"aggregate_exchange_rate_votes" yaml:"aggregate_exchange_rate_votes"`
 }
 
 // NewGenesisState creates a new GenesisState object
@@ -23,6 +24,7 @@ func NewGenesisState(
 	exchangeRateVotes []ExchangeRateVote, rates map[string]sdk.Dec,
 	feederDelegations map[string]sdk.AccAddress, missCounters map[string]int64,
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
+	aggregateExchangeRateVotes []AggregateExchangeRateVote,
 ) GenesisState {
 
 	return GenesisState{
@@ -33,6 +35,7 @@ func NewGenesisState(
 		FeederDelegations:             feederDelegations,
 		MissCounters:                  missCounters,
 		AggregateExchangeRatePrevotes: aggregateExchangeRatePrevotes,
+		AggregateExchangeRateVotes:    aggregateExchangeRateVotes,
 	}
 }
 
@@ -46,6 +49,7 @@ func DefaultGenesisState() GenesisState {
 		FeederDelegations:             make(map[string]sdk.AccAddress),
 		MissCounters:                  make(map[string]int64),
 		AggregateExchangeRatePrevotes: []AggregateExchangeRatePrevote{},
+		AggregateExchangeRateVotes:    []AggregateExchangeRateVote{},
 	}
 }
 
