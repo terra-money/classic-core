@@ -33,6 +33,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdExchangeRatePrevote(cdc),
 		GetCmdExchangeRateVote(cdc),
 		GetCmdDelegateFeederPermission(cdc),
+		GetCmdAggregateExchangeRatePrevote(cdc),
+		GetCmdAggregateExchangeRateVote(cdc),
 	)...)
 
 	return oracleTxCmd
