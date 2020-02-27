@@ -63,7 +63,17 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.AddAggregateExchangeRateVote(ctx, aggregateVote)
 	}
 
-	keeper.SetVoteTargets(ctx, data.VoteTargets)
+	if len(data.VoteTargets) > 0 {
+		keeper.SetVoteTargets(ctx, data.VoteTargets)
+	} else {
+		var voteTargets []string
+		for _, denom := range data.Params.Whitelist {
+			voteTargets = append(voteTargets, denom.Name)
+		}
+
+		keeper.SetVoteTargets(ctx, voteTargets)
+	}
+
 	keeper.SetParams(ctx, data.Params)
 	keeper.GetRewardPool(ctx)
 }

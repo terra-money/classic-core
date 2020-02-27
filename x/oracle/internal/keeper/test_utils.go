@@ -174,7 +174,13 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper := NewKeeper(cdc, keyOracle, paramsKeeper.Subspace(types.DefaultParamspace), distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName, types.DefaultCodespace)
 
 	defaults := types.DefaultParams()
+	var voteTargets []string
+	for _, denom := range defaults.Whitelist {
+		voteTargets = append(voteTargets, denom.Name)
+	}
+
 	keeper.SetParams(ctx, defaults)
+	keeper.SetVoteTargets(ctx, voteTargets)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 

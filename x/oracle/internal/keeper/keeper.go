@@ -393,9 +393,7 @@ func (k Keeper) GetVoteTargets(ctx sdk.Context) (voteTargets []string) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.VoteTargetsKey)
 	if bz == nil {
-		for _, denom := range k.Whitelist(ctx) {
-			voteTargets = append(voteTargets, denom.Name)
-		}
+		voteTargets = []string{}
 	}else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &voteTargets)
 	}

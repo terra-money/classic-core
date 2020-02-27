@@ -306,6 +306,7 @@ func TestOracleRewardBand(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -383,6 +384,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 
 	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -463,6 +465,7 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
@@ -482,6 +485,7 @@ func TestAbstainSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 
 	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -510,8 +514,8 @@ func TestVoteTargets(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}, {Name: core.MicroSDRDenom, IlliquidFactor: sdk.OneDec()}}
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
 
 	// KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
