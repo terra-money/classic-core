@@ -16,6 +16,7 @@ const (
 	QueryMissCounter      = "missCounter"
 	QueryAggregatePrevote = "aggregatePrevote"
 	QueryAggregateVote    = "aggregateVote"
+	QueryVoteTargets       = "voteTargets"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:

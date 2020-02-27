@@ -33,15 +33,16 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
-	whitelist := make(map[string]bool)
-	for _, denom := range k.Whitelist(ctx) {
-		whitelist[denom.Name] = true
+	voteTargets := make(map[string]bool)
+	for _, denom := range k.GetVoteTargets(ctx) {
+		voteTargets[denom] = true
 	}
 
-	// Clear exchange rates
-	for denom := range whitelist {
+	// Clear all exchange rates
+	k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
 		k.DeleteLunaExchangeRate(ctx, denom)
-	}
+		return false
+	})
 
 	// Organize votes to ballot by denom
 	// NOTE: **Filter out inactive or jailed validators**
@@ -51,15 +52,15 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	for denom, ballot := range voteMap {
 
-		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists {
+		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
+		if _, exists := voteTargets[denom]; !exists {
 			continue
 		}
 
-		// If the ballot is not passed, then remove it from the whitelist array
+		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
 		if !ballotIsPassing(ctx, ballot, k) {
-			delete(whitelist, denom)
+			delete(voteTargets, denom)
 			continue
 		}
 
@@ -93,11 +94,10 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	//---------------------------
 	// Do miss counting & slashing
-
-	whitelistLen := int64(len(whitelist))
+	voteTargetsLen := int64(len(voteTargets))
 	for operatorBechAddr, count := range validVotesCounterMap {
 		// Skip abstain & valid voters
-		if count == whitelistLen {
+		if count == voteTargetsLen {
 			continue
 		}
 
@@ -116,16 +116,19 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	k.RewardBallotWinners(ctx, winnerMap)
 
 	// Clear the ballot
-	clearBallots(k, ctx, params)
+	clearBallots(ctx, k, params.VotePeriod)
+
+	// Update vote targets
+	updateVoteTargets(ctx, k, params.Whitelist)
 
 	return
 }
 
 // clearBallots clears all tallied prevotes and votes from the store
-func clearBallots(k Keeper, ctx sdk.Context, params Params) {
+func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 	// Clear all prevotes
 	k.IterateExchangeRatePrevotes(ctx, func(prevote types.ExchangeRatePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
+		if ctx.BlockHeight() > prevote.SubmitBlock+votePeriod {
 			k.DeleteExchangeRatePrevote(ctx, prevote)
 		}
 
@@ -137,4 +140,14 @@ func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 		k.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
+}
+
+// updateVoteTargets update vote target denom list with params whitelist
+func updateVoteTargets(ctx sdk.Context, k Keeper, whitelist types.DenomList) {
+	var denoms []string
+	for _, item := range whitelist {
+		denoms = append(denoms, item.Name)
+	}
+
+	k.SetVoteTargets(ctx, denoms)
 }

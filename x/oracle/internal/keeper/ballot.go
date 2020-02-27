@@ -40,16 +40,16 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 		// organize ballot only for the active validators
 		if validator != nil && validator.IsBonded() && !validator.IsJailed() {
 			power := validator.GetConsensusPower()
-			for _, rate := range vote.ExchangeRates {
+			for _, tuple := range vote.ExchangeRateTuples {
 				tmpPower := power
-				if !rate.IsPositive() {
+				if !tuple.ExchangeRate.IsPositive() {
 					// Make the power of abstain vote zero
 					tmpPower = 0
 				}
 
-				votes[rate.Denom] = append(votes[rate.Denom],
+				votes[tuple.Denom] = append(votes[tuple.Denom],
 					types.NewVoteForTally(
-						types.NewExchangeRateVote(rate.Amount, rate.Denom, vote.Voter),
+						types.NewExchangeRateVote(tuple.ExchangeRate, tuple.Denom, vote.Voter),
 						tmpPower,
 					),
 				)

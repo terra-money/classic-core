@@ -492,7 +492,7 @@ func TestAbstainSlashing(t *testing.T) {
 		// Account 1, KRW
 		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
 
-		// Account 2, KRW, miss vote
+		// Account 2, KRW, abstain vote
 		makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, sdk.ZeroDec(), 1)
 
 		// Account 3, KRW
@@ -504,6 +504,40 @@ func TestAbstainSlashing(t *testing.T) {
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
 	require.Equal(t, stakingAmt, validator.GetBondedTokens())
+}
+
+func TestVoteTargets(t *testing.T) {
+	input, h := setup(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}, {Name: core.MicroSDRDenom, IlliquidFactor: sdk.OneDec()}}
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	// KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	// no missing current
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
+	// now vote targets are {KRW, SDR}
+	require.Equal(t, []string{core.MicroKRWDenom, core.MicroSDRDenom}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+
+	// KRW, missing
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 }
 
 func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, height int64, denom string, rate sdk.Dec, idx int) {

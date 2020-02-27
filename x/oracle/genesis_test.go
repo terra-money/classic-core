@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"github.com/terra-project/core/x/oracle/internal/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,8 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.AddExchangeRateVote(input.Ctx, NewExchangeRateVote(sdk.NewDec(1), "denom", sdk.ValAddress{}))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, "denom", sdk.NewDec(123))
 	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, NewAggregateExchangeRatePrevote("1234", sdk.ValAddress{}, int64(2)))
-	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, NewAggregateExchangeRateVote(sdk.DecCoins{{Denom:"foo", Amount: sdk.NewDec(123)}}, sdk.ValAddress{}))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Denom:"foo", ExchangeRate: sdk.NewDec(123)}}, sdk.ValAddress{}))
+	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{"foo", "bar"})
 	genesis := ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestInput(t)

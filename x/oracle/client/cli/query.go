@@ -32,6 +32,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryMissCounter(cdc),
 		GetCmdQueryAggregatePrevote(cdc),
 		GetCmdQueryAggregateVote(cdc),
+		GetCmdQueryVoteTargets(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -74,10 +75,10 @@ $ terracli query oracle exchange-rate ukrw
 }
 
 // Actives receiver struct
-type Actives []string
+type Denoms []string
 
 // String implements fmt.Stringer interface
-func (a Actives) String() string {
+func (a Denoms) String() string {
 	return strings.Join(a, ",")
 }
 
@@ -100,7 +101,7 @@ $ terracli query oracle actives
 				return err
 			}
 
-			var actives Actives
+			var actives Denoms
 			cdc.MustUnmarshalJSON(res, &actives)
 			return cliCtx.PrintOutput(actives)
 		},
@@ -390,6 +391,29 @@ $ terracli query oracle aggregate-vote terravaloper...
 			var aggregateVote types.AggregateExchangeRateVote
 			cdc.MustUnmarshalJSON(res, &aggregateVote)
 			return cliCtx.PrintOutput(aggregateVote)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryVoteTargets implements the query params command.
+func GetCmdQueryVoteTargets(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vote-targets",
+		Args:  cobra.NoArgs,
+		Short: "Query the current Oracle vote targets",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVoteTargets), nil)
+			if err != nil {
+				return err
+			}
+
+			var voteTargets Denoms
+			cdc.MustUnmarshalJSON(res, &voteTargets)
+			return cliCtx.PrintOutput(voteTargets)
 		},
 	}
 

@@ -127,24 +127,73 @@ func VoteHashForAggregate(salt string, exchangeRatesStr string, voter sdk.ValAdd
 	return bz, err
 }
 
+// ExchangeRateTuple - struct to represent a exchange rate of Luna in the denom asset
+type ExchangeRateTuple struct {
+	Denom        string  `json:"denom" yaml:"denom"`
+	ExchangeRate sdk.Dec `json:"exchange_rate" yaml:"exchange_rate"`
+}
+
+// String implements fmt.Stringer interface
+func (tuple ExchangeRateTuple) String() string {
+	return fmt.Sprintf(`ExchangeRateTuple
+	Denom:        %s,
+	ExchangeRate: %s`,
+		tuple.Denom, tuple.ExchangeRate.String())
+}
+
+// ExchangeRateTuples - array of ExchangeRateTuple
+type ExchangeRateTuples []ExchangeRateTuple
+
+// String implements fmt.Stringer interface
+func (tuples ExchangeRateTuples) String() (out string) {
+	for _, tuple := range tuples {
+		out += tuple.String() + "\n"
+	}
+	return strings.TrimSpace(out)
+}
+
+// ParseExchangeRateTuples ExchangeRateTuple parser
+func ParseExchangeRateTuples(tuplesStr string) (ExchangeRateTuples, error) {
+	tuplesStr = strings.TrimSpace(tuplesStr)
+	if len(tuplesStr) == 0 {
+		return nil, nil
+	}
+
+	tupleStrs := strings.Split(tuplesStr, ",")
+	tuples := make(ExchangeRateTuples, len(tupleStrs))
+	for i, tupleStr := range tupleStrs {
+		decCoin, err := sdk.ParseDecCoin(tupleStr)
+		if err != nil {
+			return nil, err
+		}
+
+		tuples[i] = ExchangeRateTuple{
+			Denom:        decCoin.Denom,
+			ExchangeRate: decCoin.Amount,
+		}
+	}
+
+	return tuples, nil
+}
+
 // AggregateExchangeRateVote - struct to store a validator's aggregate vote on the rate of Luna in the denom asset
 type AggregateExchangeRateVote struct {
-	ExchangeRates sdk.DecCoins   `json:"exchange_rates"` // ExchangeRates of Luna in target fiat currencies
-	Voter         sdk.ValAddress `json:"voter"`          // voter val address of validator
+	ExchangeRateTuples ExchangeRateTuples `json:"exchange_rate_tuples"` // ExchangeRates of Luna in target fiat currencies
+	Voter              sdk.ValAddress     `json:"voter"`                // voter val address of validator
 }
 
 // NewAggregateExchangeRateVote creates a AggregateExchangeRateVote instance
-func NewAggregateExchangeRateVote(rates sdk.DecCoins, voter sdk.ValAddress) AggregateExchangeRateVote {
+func NewAggregateExchangeRateVote(tuples ExchangeRateTuples, voter sdk.ValAddress) AggregateExchangeRateVote {
 	return AggregateExchangeRateVote{
-		ExchangeRates: rates,
-		Voter:         voter,
+		ExchangeRateTuples: tuples,
+		Voter:              voter,
 	}
 }
 
 // String implements fmt.Stringer interface
 func (pv AggregateExchangeRateVote) String() string {
 	return fmt.Sprintf(`AggregateExchangeRateVote
-	ExchangeRate:    %s,
-	Voter:           %s`,
-		pv.ExchangeRates, pv.Voter)
+	ExchangeRateTuples:    %s,
+	Voter:                 %s`,
+		pv.ExchangeRateTuples, pv.Voter)
 }

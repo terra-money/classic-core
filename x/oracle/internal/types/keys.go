@@ -34,6 +34,8 @@ const (
 // - 0x06<valAddress_Bytes>: AggregateExchangeRatePrevote
 //
 // - 0x07<valAddress_Bytes>: AggregateExchangeRateVote
+//
+// - 0x08: []string
 var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
@@ -43,6 +45,7 @@ var (
 	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
 	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
 	AggregateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
+	VoteTargetsKey      = []byte{0x08} // key to a vote targets for current oracle vote period
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom

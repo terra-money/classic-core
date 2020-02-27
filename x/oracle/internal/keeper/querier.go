@@ -33,6 +33,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAggregatePrevote(ctx, req, keeper)
 		case types.QueryAggregateVote:
 			return queryAggregateVote(ctx, req, keeper)
+		case types.QueryVoteTargets:
+			return queryVoteTargets(ctx, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -246,5 +248,15 @@ func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+	return bz, nil
+}
+
+func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	voteTargets := keeper.GetVoteTargets(ctx)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, voteTargets)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
 	return bz, nil
 }

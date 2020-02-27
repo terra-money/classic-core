@@ -23,6 +23,8 @@ const (
 	CodeNotRevealPeriod             = types.CodeNotRevealPeriod
 	CodeInvalidSaltLength           = types.CodeInvalidSaltLength
 	CodeInvalidMsgFormat            = types.CodeInvalidMsgFormat
+	CodeNoAggregatePrevote          = types.CodeNoAggregatePrevote
+	CodeNoAggregateVote             = types.CodeNoAggregateVote
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	RouterKey                       = types.RouterKey
@@ -39,6 +41,9 @@ const (
 	QueryVotes                      = types.QueryVotes
 	QueryFeederDelegation           = types.QueryFeederDelegation
 	QueryMissCounter                = types.QueryMissCounter
+	QueryAggregatePrevote           = types.QueryAggregatePrevote
+	QueryAggregateVote              = types.QueryAggregateVote
+	QueryVoteTargets                = types.QueryVoteTargets
 )
 
 var (
@@ -53,9 +58,10 @@ var (
 	ErrNoPrevote                       = types.ErrNoPrevote
 	ErrNoVote                          = types.ErrNoVote
 	ErrNoVotingPermission              = types.ErrNoVotingPermission
-	ErrNotRevealPeriod                 = types.ErrNotRevealPeriod
+	ErrInvalidRevealPeriod             = types.ErrInvalidRevealPeriod
 	ErrInvalidSaltLength               = types.ErrInvalidSaltLength
 	ErrNoAggregatePrevote              = types.ErrNoAggregatePrevote
+	ErrNoAggregateVote                 = types.ErrNoAggregateVote
 	NewGenesisState                    = types.NewGenesisState
 	DefaultGenesisState                = types.DefaultGenesisState
 	ValidateGenesis                    = types.ValidateGenesis
@@ -65,24 +71,27 @@ var (
 	GetFeederDelegationKey             = types.GetFeederDelegationKey
 	GetMissCounterKey                  = types.GetMissCounterKey
 	GetAggregateExchangeRatePrevoteKey = types.GetAggregateExchangeRatePrevoteKey
+	GetAggregateExchangeRateVoteKey    = types.GetAggregateExchangeRateVoteKey
 	NewMsgExchangeRatePrevote          = types.NewMsgExchangeRatePrevote
 	NewMsgExchangeRateVote             = types.NewMsgExchangeRateVote
 	NewMsgDelegateFeedConsent          = types.NewMsgDelegateFeedConsent
 	NewMsgAggregateExchangeRatePrevote = types.NewMsgAggregateExchangeRatePrevote
 	NewMsgAggregateExchangeRateVote    = types.NewMsgAggregateExchangeRateVote
-	ParseDecCoins                      = types.ParseDecCoins
 	DefaultParams                      = types.DefaultParams
 	NewQueryExchangeRateParams         = types.NewQueryExchangeRateParams
 	NewQueryPrevotesParams             = types.NewQueryPrevotesParams
 	NewQueryVotesParams                = types.NewQueryVotesParams
 	NewQueryFeederDelegationParams     = types.NewQueryFeederDelegationParams
 	NewQueryMissCounterParams          = types.NewQueryMissCounterParams
+	NewQueryAggregatePrevoteParams     = types.NewQueryAggregatePrevoteParams
+	NewQueryAggregateVoteParams        = types.NewQueryAggregateVoteParams
 	NewExchangeRatePrevote             = types.NewExchangeRatePrevote
 	VoteHash                           = types.VoteHash
 	NewExchangeRateVote                = types.NewExchangeRateVote
 	NewAggregateExchangeRatePrevote    = types.NewAggregateExchangeRatePrevote
-	NewAggregateExchangeRateVote       = types.NewAggregateExchangeRateVote
 	VoteHashForAggregate               = types.VoteHashForAggregate
+	ParseExchangeRateTuples            = types.ParseExchangeRateTuples
+	NewAggregateExchangeRateVote       = types.NewAggregateExchangeRateVote
 	NewKeeper                          = keeper.NewKeeper
 	ParamKeyTable                      = keeper.ParamKeyTable
 	NewQuerier                         = keeper.NewQuerier
@@ -95,6 +104,8 @@ var (
 	FeederDelegationKey                   = types.FeederDelegationKey
 	MissCounterKey                        = types.MissCounterKey
 	AggregatePrevoteKey                   = types.AggregatePrevoteKey
+	AggregateVoteKey                      = types.AggregateVoteKey
+	VoteTargetsKey                        = types.VoteTargetsKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
 	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
@@ -131,11 +142,15 @@ type (
 	QueryVotesParams                = types.QueryVotesParams
 	QueryFeederDelegationParams     = types.QueryFeederDelegationParams
 	QueryMissCounterParams          = types.QueryMissCounterParams
+	QueryAggregatePrevoteParams     = types.QueryAggregatePrevoteParams
+	QueryAggregateVoteParams        = types.QueryAggregateVoteParams
 	ExchangeRatePrevote             = types.ExchangeRatePrevote
 	ExchangeRatePrevotes            = types.ExchangeRatePrevotes
 	ExchangeRateVote                = types.ExchangeRateVote
 	ExchangeRateVotes               = types.ExchangeRateVotes
 	AggregateExchangeRatePrevote    = types.AggregateExchangeRatePrevote
+	ExchangeRateTuple               = types.ExchangeRateTuple
+	ExchangeRateTuples              = types.ExchangeRateTuples
 	AggregateExchangeRateVote       = types.AggregateExchangeRateVote
 	Keeper                          = keeper.Keeper
 )

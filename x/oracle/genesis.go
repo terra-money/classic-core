@@ -63,6 +63,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.AddAggregateExchangeRateVote(ctx, aggregateVote)
 	}
 
+	keeper.SetVoteTargets(ctx, data.VoteTargets)
 	keeper.SetParams(ctx, data.Params)
 	keeper.GetRewardPool(ctx)
 }
@@ -115,5 +116,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes)
+	voteTargets := keeper.GetVoteTargets(ctx)
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, voteTargets)
 }

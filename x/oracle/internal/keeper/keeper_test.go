@@ -385,10 +385,10 @@ func TestAggregatePrevoteIterate(t *testing.T) {
 func TestAggregateVoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	aggregateVote := types.NewAggregateExchangeRateVote(sdk.DecCoins{
-		{Denom: "foo", Amount: sdk.NewDec(-1)},
-		{Denom:"foo", Amount:sdk.NewDec(0)},
-		{Denom:"foo", Amount:sdk.NewDec(1)},
+	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote)
 
@@ -404,17 +404,17 @@ func TestAggregateVoteAddDelete(t *testing.T) {
 func TestAggregateVoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	aggregateVote1 := types.NewAggregateExchangeRateVote(sdk.DecCoins{
-		{Denom: "foo", Amount: sdk.NewDec(-1)},
-		{Denom:"foo", Amount:sdk.NewDec(0)},
-		{Denom:"foo", Amount:sdk.NewDec(1)},
+	aggregateVote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote1)
 
-	aggregateVote2 := types.NewAggregateExchangeRateVote(sdk.DecCoins{
-		{Denom: "foo", Amount: sdk.NewDec(-1)},
-		{Denom:"foo", Amount:sdk.NewDec(0)},
-		{Denom:"foo", Amount:sdk.NewDec(1)},
+	aggregateVote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
+		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[1]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote2)
 
@@ -430,4 +430,20 @@ func TestAggregateVoteIterate(t *testing.T) {
 		i++
 		return false
 	})
+}
+
+func TestVoteTargetsGetSet(t *testing.T) {
+	input := CreateTestInput(t)
+
+	var denomList []string
+	for _, denom := range input.OracleKeeper.Whitelist(input.Ctx) {
+		denomList = append(denomList, denom.Name)
+	}
+	// return params Whitelist
+	require.Equal(t, denomList, input.OracleKeeper.GetVoteTargets(input.Ctx))
+
+	testDenomList := []string{"foo1", "foo2", "foo3"}
+
+	input.OracleKeeper.SetVoteTargets(input.Ctx, testDenomList)
+	require.Equal(t, testDenomList, input.OracleKeeper.GetVoteTargets(input.Ctx))
 }

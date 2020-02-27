@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	core "github.com/terra-project/core/types"
@@ -127,10 +126,10 @@ func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 func TestMsgAggregateExchangeRateVote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
-	exchangeRates := fmt.Sprintf("1.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
-	emptyDenomExchangeRates := fmt.Sprintf("1.0%s,1232.132%s", "", core.MicroKRWDenom)
-	abstainExchangeRates := fmt.Sprintf("0.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
-	overFlowExchangeRates := fmt.Sprintf("100000000000000000000000000000000000000000000000000000000.0%s,1232.132%s", core.MicroSDRDenom, core.MicroKRWDenom)
+	invalidExchangeRates := "a,b"
+	exchangeRates := "1.0foo,1232.132bar"
+	abstainExchangeRates := "0.0foo,1232.132bar"
+	overFlowExchangeRates := "100000000000000000000000000000000000000000000000000000000.0foo,1232.132bar"
 
 	tests := []struct {
 		voter         sdk.AccAddress
@@ -139,7 +138,7 @@ func TestMsgAggregateExchangeRateVote(t *testing.T) {
 		expectPass    bool
 	}{
 		{addrs[0], "123", exchangeRates, true},
-		{addrs[0], "123", emptyDenomExchangeRates, false},
+		{addrs[0], "123", invalidExchangeRates, false},
 		{addrs[0], "123", abstainExchangeRates, true},
 		{addrs[0], "123", overFlowExchangeRates, false},
 		{sdk.AccAddress{}, "123", exchangeRates, false},

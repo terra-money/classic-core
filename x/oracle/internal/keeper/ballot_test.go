@@ -90,9 +90,9 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	for i, _ := range sdrBallot {
-		input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, types.NewAggregateExchangeRateVote(sdk.DecCoins{
-			{Denom: sdrBallot[i].Denom, Amount: sdrBallot[i].ExchangeRate},
-			{Denom: krwBallot[i].Denom, Amount: krwBallot[i].ExchangeRate},
+		input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+			{Denom: sdrBallot[i].Denom, ExchangeRate: sdrBallot[i].ExchangeRate},
+			{Denom: krwBallot[i].Denom, ExchangeRate: krwBallot[i].ExchangeRate},
 		}, ValAddrs[i]))
 	}
 

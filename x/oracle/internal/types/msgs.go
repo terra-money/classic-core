@@ -5,7 +5,6 @@ import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	"strings"
 )
 
 // ensure Msg interface compliance at compile time
@@ -325,15 +324,15 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownRequest("must provide at least one oracle exchange rate")
 	}
 
-	exchangeRates, err := ParseDecCoins(msg.ExchangeRates)
+	exchangeRateTuples, err := ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
 		return sdk.ErrInvalidCoins(err.Error())
 	}
 
-	for _, exchangeRate := range exchangeRates {
+	for _, tuple := range exchangeRateTuples {
 		// Check overflow bit length
-		if exchangeRate.Amount.BitLen() > 100+sdk.DecimalPrecisionBits {
-			return ErrInvalidExchangeRate(DefaultCodespace, exchangeRate.Amount)
+		if tuple.ExchangeRate.BitLen() > 100+sdk.DecimalPrecisionBits {
+			return ErrInvalidExchangeRate(DefaultCodespace, tuple.ExchangeRate)
 		}
 	}
 
@@ -352,28 +351,4 @@ func (msg MsgAggregateExchangeRateVote) String() string {
 	feeder:            %s, 
 	validator:         %s`,
 		msg.ExchangeRates, msg.Salt, msg.Feeder, msg.Validator)
-}
-
-// ParseDecCoins DecCoin parser to treat non-positive values as valid
-func ParseDecCoins(coinsStr string) (sdk.DecCoins, error) {
-	coinsStr = strings.TrimSpace(coinsStr)
-	if len(coinsStr) == 0 {
-		return nil, nil
-	}
-
-	coinStrs := strings.Split(coinsStr, ",")
-	coins := make(sdk.DecCoins, len(coinStrs))
-	for i, coinStr := range coinStrs {
-		coin, err := sdk.ParseDecCoin(coinStr)
-		if err != nil {
-			return nil, err
-		}
-
-		coins[i] = coin
-	}
-
-	// sort coins for determinism
-	coins.Sort()
-
-	return coins, nil
 }

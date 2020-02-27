@@ -251,7 +251,7 @@ func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 
 		// If hash is not given, then retrieve hash from exchange_rate and salt
 		if len(req.Hash) == 0 && (len(req.ExchangeRates) > 0 && len(req.Salt) > 0) {
-			_, err := types.ParseDecCoins(req.ExchangeRates)
+			_, err := types.ParseExchangeRateTuples(req.ExchangeRates)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
@@ -317,6 +317,13 @@ func submitAggregateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerF
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
+		}
+
+		// Check validation of tuples
+		_, err = types.ParseExchangeRateTuples(req.ExchangeRates)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		// create the message

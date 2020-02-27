@@ -91,9 +91,9 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 		return ErrNoPrevote(keeper.Codespace(), pvm.Validator, pvm.Denom).Result()
 	}
 
-	// Check a msg is submitted porper period
+	// Check a msg is submitted proper period
 	if (ctx.BlockHeight()/params.VotePeriod)-(prevote.SubmitBlock/params.VotePeriod) != 1 {
-		return ErrNotRevealPeriod(keeper.Codespace()).Result()
+		return ErrInvalidRevealPeriod(keeper.Codespace()).Result()
 	}
 
 	// If there is an prevote, we verify a exchange rate with prevote hash and move prevote to vote with given exchange rate
@@ -214,10 +214,10 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 
 	// Check a msg is submitted porper period
 	if (ctx.BlockHeight()/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
-		return ErrNotRevealPeriod(keeper.Codespace()).Result()
+		return ErrInvalidRevealPeriod(keeper.Codespace()).Result()
 	}
 
-	exchangeRates, err2 := types.ParseDecCoins(pvm.ExchangeRates)
+	exchangeRateTuples, err2 := types.ParseExchangeRateTuples(pvm.ExchangeRates)
 	if err2 != nil {
 		return sdk.ErrInvalidCoins(err2.Error()).Result()
 	}
@@ -233,12 +233,8 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
 	}
 
-	// Move aggregate prevote to votes with given exchange rate
-	for _, exchangeRate := range exchangeRates {
-		vote := NewExchangeRateVote(exchangeRate.Amount, exchangeRate.Denom, aggregatePrevote.Voter)
-		keeper.AddExchangeRateVote(ctx, vote)
-	}
-
+	// Move aggregate prevote to aggregate vote with given exchange rates
+	keeper.AddAggregateExchangeRateVote(ctx, NewAggregateExchangeRateVote(exchangeRateTuples, aggregatePrevote.Voter))
 	keeper.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{

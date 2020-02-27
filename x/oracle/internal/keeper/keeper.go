@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -387,4 +386,26 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 			break
 		}
 	}
+}
+
+// GetVoteTargets returns current oracle vote target denom list
+func (k Keeper) GetVoteTargets(ctx sdk.Context) (voteTargets []string) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.VoteTargetsKey)
+	if bz == nil {
+		for _, denom := range k.Whitelist(ctx) {
+			voteTargets = append(voteTargets, denom.Name)
+		}
+	}else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &voteTargets)
+	}
+
+	return
+}
+
+// SetVoteTargets updates vote target denom list for next vote period
+func (k Keeper) SetVoteTargets(ctx sdk.Context, voteTargets []string) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(voteTargets)
+	store.Set(types.VoteTargetsKey, bz)
 }

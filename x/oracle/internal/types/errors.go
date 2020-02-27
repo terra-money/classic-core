@@ -66,9 +66,9 @@ func ErrNoVotingPermission(codespace sdk.CodespaceType, feeder sdk.AccAddress, o
 	return sdk.NewError(codespace, CodeNoVotingPermission, fmt.Sprintf("Feeder %s not permitted to vote on behalf of: %s", feeder.String(), operator.String()))
 }
 
-// ErrNotRevealPeriod called when the feeder submit rate reveal vote in wrong period.
-func ErrNotRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("Now is not proper reveal period."))
+// ErrInvalidRevealPeriod called when the feeder submit rate reveal vote in wrong period.
+func ErrInvalidRevealPeriod(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeNotRevealPeriod, fmt.Sprintf("invalid reveal period."))
 }
 
 // ErrInvalidSaltLength called when the salt length is not in 1~4
