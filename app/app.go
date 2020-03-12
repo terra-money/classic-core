@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/terra-project/core/x/nameservice"
 	"io"
 	"os"
 
@@ -63,6 +64,7 @@ var (
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
+		nameservice.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -75,6 +77,7 @@ var (
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
+		nameservice.ModuleName:    {supply.Burner},
 	}
 )
 
@@ -100,18 +103,19 @@ type TerraApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	supplyKeeper   supply.Keeper
-	stakingKeeper  staking.Keeper
-	slashingKeeper slashing.Keeper
-	oracleKeeper   oracle.Keeper
-	distrKeeper    distr.Keeper
-	govKeeper      gov.Keeper
-	crisisKeeper   crisis.Keeper
-	paramsKeeper   params.Keeper
-	marketKeeper   market.Keeper
-	treasuryKeeper treasury.Keeper
+	accountKeeper     auth.AccountKeeper
+	bankKeeper        bank.Keeper
+	supplyKeeper      supply.Keeper
+	stakingKeeper     staking.Keeper
+	slashingKeeper    slashing.Keeper
+	oracleKeeper      oracle.Keeper
+	distrKeeper       distr.Keeper
+	govKeeper         gov.Keeper
+	crisisKeeper      crisis.Keeper
+	paramsKeeper      params.Keeper
+	marketKeeper      market.Keeper
+	treasuryKeeper    treasury.Keeper
+	nameserviceKeeper nameservice.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -131,7 +135,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, oracle.StoreKey,
-		market.StoreKey, treasury.StoreKey,
+		market.StoreKey, treasury.StoreKey, nameservice.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -155,6 +159,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	oracleSubspace := app.paramsKeeper.Subspace(oracle.DefaultParamspace)
 	marketSubspace := app.paramsKeeper.Subspace(market.DefaultParamspace)
 	treasurySubspace := app.paramsKeeper.Subspace(treasury.DefaultParamspace)
+	nameserviceSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
 
 	// add keepers
 	app.accountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
@@ -176,6 +181,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], treasurySubspace,
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName, treasury.DefaultCodespace)
+	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], nameserviceSubspace,
+		app.supplyKeeper, app.marketKeeper, nameservice.DefaultCodespace)
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
@@ -205,6 +212,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		market.NewAppModule(app.marketKeeper),
 		oracle.NewAppModule(app.oracleKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
+		nameservice.NewAppModule(app.nameserviceKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -213,14 +221,14 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
 
 	// After slashing actions, update prev day issuance of market module
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, nameservice.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(genaccounts.ModuleName, distr.ModuleName,
 		staking.ModuleName, auth.ModuleName, bank.ModuleName, slashing.ModuleName,
 		supply.ModuleName, oracle.ModuleName, treasury.ModuleName, gov.ModuleName,
-		market.ModuleName, crisis.ModuleName, genutil.ModuleName)
+		market.ModuleName, nameservice.ModuleName, crisis.ModuleName, genutil.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())

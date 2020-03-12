@@ -18,5 +18,6 @@ require (
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.9
 	github.com/tendermint/tm-db v0.2.0
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
+	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+	gopkg.in/yaml.v2 v2.2.7
 )
