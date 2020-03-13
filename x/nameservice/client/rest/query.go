@@ -13,7 +13,6 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/nameservice/auctions", queryAuctionHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/nameservice/names/{%s}/auction", RestName), queryAuctionHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/nameservice/names/{%s}/auction/bids", RestName), queryBidHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/nameservice/names/{%s}/auction/bids/{%s}", RestName, RestBidderAddr), queryBidHandlerFn(cliCtx)).Methods("GET")
@@ -22,6 +21,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/nameservice/auctions", queryAuctionHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/nameservice/auctions/{%s}", RestStatus), queryAuctionHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/nameservice/addresses/{%s}/registry", RestAddress), queryReverseHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/nameservice/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryAuctionHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -205,6 +205,24 @@ func queryReverseHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryReverse), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 

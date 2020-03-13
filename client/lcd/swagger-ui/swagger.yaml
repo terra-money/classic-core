@@ -29,6 +29,8 @@ tags:
     description: Get price and voting modules APIs
   - name: Treasury
     description: Treasury modules APIs
+  - name: Nameservice
+    description: Nameservice modeuls APIs
   - name: version
   - name: Misc
     description: Query app version
@@ -2523,6 +2525,391 @@ paths:
             $ref: "#/definitions/TreasuryParams"
         404:
           description: Not Found
+  /nameserivce/names/{name}/auction:
+    post:
+      summary: Generate open auction message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: open auction request body
+          schema:
+            $ref: "#/definitions/OpenAuctionReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get auction for the name
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#definitions/Auction"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameserivce/names/{name}/auction/bids:
+    post:
+      summary: Generate bid auction message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: bid auction request body
+          schema:
+            $ref: "#/definitions/BidAuctionReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get all bids of the name auction
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#definitions/Bid"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameserivce/names/{name}/auction/bids/{bidder}:
+    get:
+      summary: Get bid of the bidder in the name auction
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: path
+          name: bidder
+          description: Bidder Account Address
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#definitions/Bid"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameserivce/names/{name}/auction/reveals:
+    post:
+      summary: Generate reveal bid message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: reveal bid request body
+          schema:
+            $ref: "#/definitions/RevealBidReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /nameserivce/names/{name}/registry:
+    get:
+      summary: Get registry of the name
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#definitions/Registry"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameservice/names/{name}/registry/renew:
+    post:
+      summary: Generate renew registry message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: renew registry request body
+          schema:
+            $ref: "#/definitions/RenewRegistryReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /nameservice/names/{name}/registry/owner:
+    post:
+      summary: Generate update owner message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: update owner request body
+          schema:
+            $ref: "#/definitions/UpdateOwnerReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /nameservice/names/{name}/register:
+    post:
+      summary: Generate register sub-name message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: register sub-name request body
+          schema:
+            $ref: "#/definitions/RegisterReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /nameservice/names/{name}/unregister:
+    post:
+      summary: Generate unregister sub-name message
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+        - in: body
+          name: unregister sub-name request body
+          schema:
+            $ref: "#/definitions/UnregisterReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /nameserivce/names/{name}/resolve:
+    get:
+      summary: Get resolved address of the name
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: name
+          description: Name
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#definitions/Address"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameservice/auctions:
+    get:
+      summary: Get all auctions
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Auction"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameservice/auctions/{status}:
+    get:
+      summary: Get all auctions in the given status
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: status
+          description: Auction status (Bid or Reveal)
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Auction"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameservice/addresses/{address}/registry:
+    get:
+      summary: Get the registry containing the address.
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: address
+          description: Bech32 address
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Registry"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /nameservice/parameters:
+    get:
+      summary: Get nameservice module params
+      tags:
+        - Nameservice
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/NameserviceParams"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
 definitions:
   CheckTxResult:
     type: object
@@ -3332,6 +3719,99 @@ definitions:
       submit_block:
         type: number
         example: "1"
+  OpenAuctionReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+  BidAuctionReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      salt:
+        type: string
+        example: "abc"
+      amount:
+        $ref: "#/definitions/Coin"
+      deposit:
+        $ref: "#/definitions/Coin"
+  RevealBidReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      salt:
+        type: string
+        example: "abc"
+      amount:
+        $ref: "#/definitions/Coin"
+  RenewRegistryReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      amount:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+  UpdateOwnerReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      owner_addr:
+        $ref: "#/definitions/Address"
+  RegisterReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      address:
+        $ref: "#/definitions/Address"
+  UnregisterReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+  Auction:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "chai.terra"
+      status:
+        type: string
+        example: "Bid"
+      end_time:
+        type: string
+        example: "2020-03-12T06:06:48.526058Z"
+      top_bidder:
+        $ref: "#/definitions/Address"
+      top_bid_amount:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+  Bid:
+    type: object
+    properties:
+      hash:
+        $ref: "#/definitions/Hash"
+      deposit:
+        $ref: "#/definitions/Coin"
+      bidder:
+        $ref: "#/definitions/Address"
+  Registry:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "chai.terra"
+      owner:
+        $ref: "#/definitions/Address"
+      end_time:
+        type: string
+        example: "2020-03-12T06:06:48.526058Z"
   OracleParams:
     type: object
     properties:
@@ -3400,6 +3880,36 @@ definitions:
         type: number
         format: float
         example: "0.9"
+  NameserviceParams:
+    type: object
+    properties:
+      bid_period:
+        type: integer
+        example: "600000000000"
+      reveal_period:
+        type: integer
+        example: "600000000000"
+      renewal_interval:
+        type: integer
+        example: "600000000000"
+      min_deposit:
+        $ref: "#/definitions/Coin"
+      root_name:
+        type: string
+        example: "terra"
+      min_name_length:
+        type: integer
+        example: "3"
+      renewal_fees:
+        type: array
+        items:
+          type: object
+          properties:
+            length:
+              type: integer
+              example: "3"
+            amount:
+              $ref: "#/definitions/Coin"
   MultiSignPubKey:
     type: object
     properties:

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/terra-project/core/x/nameservice"
 	"io"
 	"os"
 
@@ -35,6 +34,7 @@ import (
 	"github.com/terra-project/core/x/staking"
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/x/nameservice"
 )
 
 const appName = "TerraApp"
