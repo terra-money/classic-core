@@ -160,6 +160,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		ctx,
 		func(addr sdk.ConsAddress, info slashing.ValidatorSigningInfo) (stop bool) {
 			info.StartHeight = 0
+			info.Address = addr
 			app.slashingKeeper.SetValidatorSigningInfo(ctx, addr, info)
 			return false
 		},
