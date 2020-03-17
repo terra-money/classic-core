@@ -72,7 +72,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
-			key := ballotWinningClaim.Recipient.String()
+			key := string(ballotWinningClaim.Recipient)
 
 			// Update claim
 			prevClaim := winnerMap[key]

@@ -266,7 +266,7 @@ func (k Keeper) GetRewardPool(ctx sdk.Context) sdk.Coins {
 //-----------------------------------
 // Miss counter logic
 
-// GetMissCounter retrives the # of vote periods missed in this oracle slash window
+// GetMissCounter retrieves the # of vote periods missed in this oracle slash window
 func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) (missCounter int64) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetMissCounterKey(operator))
@@ -386,6 +386,12 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 			break
 		}
 	}
+}
+
+// HashAggregateExchangeRateVote
+func (k Keeper) HashAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetAggregateExchangeRateVoteKey(voter))
 }
 
 // GetVoteTargets returns current oracle vote target denom list
