@@ -65,7 +65,7 @@ $ terracli query oracle exchange-rates ukrw
 					return err
 				}
 
-				var rate sdk.Dec
+				var rate sdk.DecCoins
 				cdc.MustUnmarshalJSON(res, &rate)
 				return cliCtx.PrintOutput(rate)
 			}
@@ -83,7 +83,7 @@ $ terracli query oracle exchange-rates ukrw
 				return err
 			}
 
-			var rates sdk.DecCoins
+			var rates sdk.Dec
 			cdc.MustUnmarshalJSON(res, &rates)
 			return cliCtx.PrintOutput(rates)
 

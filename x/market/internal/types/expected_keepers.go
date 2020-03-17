@@ -3,7 +3,6 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
-	"github.com/terra-project/core/x/oracle"
 )
 
 // SupplyKeeper defines expected supply keeper
@@ -21,5 +20,5 @@ type SupplyKeeper interface {
 // OracleKeeper defines expected oracle keeper
 type OracleKeeper interface {
 	GetLunaExchangeRate(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error)
-	Whitelist(ctx sdk.Context) oracle.DenomList
+	GetIlliquidFactor(ctx sdk.Context, denom string) (illiquidFactor sdk.Dec, err sdk.Error)
 }

@@ -70,17 +70,19 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	// Apply only tobin tax without constant product spread
 	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
 		spread = k.TobinTax(ctx)
-		illiquidFactor := sdk.OneDec()
-		whitelist := k.oracleKeeper.Whitelist(ctx)
+		illiquidFactor, err2 := k.oracleKeeper.GetIlliquidFactor(ctx, offerCoin.Denom)
+		if err2 != nil {
+			return sdk.DecCoin{}, sdk.Dec{}, err2
+		}
+
+		askIlliquidFactor, err2 := k.oracleKeeper.GetIlliquidFactor(ctx, askDenom)
+		if err2 != nil {
+			return sdk.DecCoin{}, sdk.Dec{}, err2
+		}
 
 		// Apply highest illiquid factor for the denoms in the swap operation
-		for _, item := range whitelist {
-			if item.Name == offerCoin.Denom ||
-				item.Name == askDenom {
-				if item.IlliquidFactor.GT(illiquidFactor) {
-					illiquidFactor = item.IlliquidFactor
-				}
-			}
+		if askIlliquidFactor.GT(illiquidFactor) {
+			illiquidFactor = askIlliquidFactor
 		}
 
 		spread = spread.Mul(illiquidFactor)

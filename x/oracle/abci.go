@@ -140,6 +140,21 @@ func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 		k.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
+
+	// Clear all aggregate prevotes
+	k.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool) {
+		if ctx.BlockHeight() > aggregatePrevote.SubmitBlock+votePeriod {
+			k.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+		}
+
+		return false
+	})
+
+	// Clear all aggregate votes
+	k.IterateAggregateExchangeRateVotes(ctx, func(vote types.AggregateExchangeRateVote) (stop bool) {
+		k.DeleteAggregateExchangeRateVote(ctx, vote)
+		return false
+	})
 }
 
 // applyWhitelist update vote target denom list and set illiquid factor with params whitelist

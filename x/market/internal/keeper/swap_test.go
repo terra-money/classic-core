@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/terra-project/core/x/oracle"
 	"math/rand"
 	"testing"
 
@@ -99,18 +98,8 @@ func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input.MarketKeeper.SetParams(input.Ctx, params)
 
 	illiquidFactor := sdk.NewDec(2)
-	oracleParams := input.OracleKeeper.GetParams(input.Ctx)
-	oracleParams.Whitelist = oracle.DenomList{
-		{
-			Name:           core.MicroSDRDenom,
-			IlliquidFactor: sdk.OneDec(),
-		},
-		{
-			Name:           core.MicroMNTDenom,
-			IlliquidFactor: illiquidFactor,
-		},
-	}
-	input.OracleKeeper.SetParams(input.Ctx, oracleParams)
+	input.OracleKeeper.SetIlliquidFactor(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
+	input.OracleKeeper.SetIlliquidFactor(input.Ctx, core.MicroMNTDenom, illiquidFactor)
 
 	swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
 	offerCoin := sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)
