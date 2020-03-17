@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/stretchr/testify/require"
@@ -38,15 +37,12 @@ func TestMsgBidAuction_ValidateBasic(t *testing.T) {
 	validName := Name("valid.terra")
 	invalidName := Name("invalid.valid.terra")
 	validCoin := sdk.NewInt64Coin("foo", 123)
-	validHash := hex.EncodeToString(GetBidHash(validSalt, validName, validCoin, acc[0]))
+	validHash := GetBidHash(validSalt, validName, validCoin, acc[0])
 
 	require.NoError(t, NewMsgBidAuction(validName, validHash, validCoin, acc[0]).ValidateBasic())
 
-	// invalid hash
-	require.Error(t, NewMsgBidAuction(validName, "invalid", validCoin, acc[0]).ValidateBasic())
-
 	// invalid hash length
-	require.Error(t, NewMsgBidAuction(validName, "1234", validCoin, acc[0]).ValidateBasic())
+	require.Error(t, NewMsgBidAuction(validName, BidHash{123}, validCoin, acc[0]).ValidateBasic())
 
 	// invalid deposit
 	require.Error(t, NewMsgBidAuction(validName, validHash, sdk.Coin{}, acc[0]).ValidateBasic())
@@ -86,7 +82,7 @@ func TestMsgRevealBid_ValidateBasic(t *testing.T) {
 	require.Error(t, NewMsgRevealBid(validName, validSalt, validCoin, sdk.AccAddress{}).ValidateBasic())
 
 	// invalid name
-	require.Error(t, NewMsgBidAuction(invalidName, validSalt, validCoin, acc[0]).ValidateBasic())
+	require.Error(t, NewMsgRevealBid(invalidName, validSalt, validCoin, acc[0]).ValidateBasic())
 }
 
 func TestMsgRenewRegistry_ValidateBasic(t *testing.T) {

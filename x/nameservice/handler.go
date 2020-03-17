@@ -113,15 +113,9 @@ func handleMsgBidAuction(ctx sdk.Context, keeper Keeper, msg MsgBidAuction) sdk.
 	if err != nil {
 		return err.Result()
 	}
-
-	// parse bid hash
-	bidHash, err2 := BidHashFromHexString(msg.Hash)
-	if err2 != nil {
-		return sdk.ErrUnknownRequest(err2.Error()).Result()
-	}
-
+	
 	// store bid
-	keeper.SetBid(ctx, nameHash, NewBid(bidHash, msg.Deposit, msg.Bidder))
+	keeper.SetBid(ctx, nameHash, NewBid(msg.Hash, msg.Deposit, msg.Bidder))
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

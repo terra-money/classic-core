@@ -10,6 +10,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var _ yaml.Marshaler = NameHash{}
+var _ yaml.Marshaler = BidHash{}
+
 // NameHash holds hash byte of name
 type NameHash []byte
 
@@ -91,23 +94,6 @@ func (h NameHash) MarshalYAML() (interface{}, error) {
 func (h *NameHash) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
-	if err != nil {
-		return err
-	}
-
-	h2, err := NameHashFromHexString(s)
-	if err != nil {
-		return err
-	}
-
-	*h = h2
-	return nil
-}
-
-// UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
-func (h *NameHash) UnmarshalYAML(data []byte) error {
-	var s string
-	err := yaml.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}
@@ -211,19 +197,3 @@ func (h *BidHash) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
-func (h *BidHash) UnmarshalYAML(data []byte) error {
-	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
-		return err
-	}
-
-	h2, err := BidHashFromHexString(s)
-	if err != nil {
-		return err
-	}
-
-	*h = h2
-	return nil
-}

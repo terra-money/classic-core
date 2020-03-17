@@ -128,7 +128,7 @@ $ terracli ns bid-auction "wallet.terra" "100uluna" "1000uluna" "salt"
 			bidHash := types.GetBidHash(salt, name, bidAmount, fromAddress)
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgBidAuction(name, bidHash.String(), deposit, fromAddress)
+			msg := types.NewMsgBidAuction(name, bidHash, deposit, fromAddress)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

@@ -1,7 +1,6 @@
 package nameservice
 
 import (
-	"encoding/hex"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/stretchr/testify/assert"
@@ -90,8 +89,7 @@ func TestHandle_MsgBidAuction(t *testing.T) {
 	deposit := params.MinDeposit.Add(bidAmount)
 	endTime := input.Ctx.BlockTime().Add(params.BidPeriod)
 
-	rawBidHash := GetBidHash(salt, validName, bidAmount, keeper.Addrs[0])
-	bidHash := hex.EncodeToString(rawBidHash)
+	bidHash := GetBidHash(salt, validName, bidAmount, keeper.Addrs[0])
 
 	// register auction
 	auction := NewAuction(validName, AuctionStatusBid, endTime)
@@ -104,7 +102,7 @@ func TestHandle_MsgBidAuction(t *testing.T) {
 
 	bid, err := input.NameserviceKeeper.GetBid(input.Ctx, validNameHash, keeper.Addrs[0])
 	require.NoError(t, err)
-	require.Equal(t, NewBid(rawBidHash, deposit, keeper.Addrs[0]), bid)
+	require.Equal(t, NewBid(bidHash, deposit, keeper.Addrs[0]), bid)
 	require.Equal(t, keeper.InitCoins.Sub(sdk.NewCoins(deposit)), input.BankKeeper.GetCoins(input.Ctx, keeper.Addrs[0]))
 	require.Equal(t, sdk.NewCoins(deposit), input.SupplyKeeper.GetModuleAccount(input.Ctx, ModuleName).GetCoins())
 

@@ -120,7 +120,7 @@ func submitBidAuctionHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		bidHash := types.GetBidHash(req.Salt, name, req.Amount, fromAddress)
 
 		// create the message
-		msg := types.NewMsgBidAuction(name, bidHash.String(), req.Deposit, fromAddress)
+		msg := types.NewMsgBidAuction(name, bidHash, req.Deposit, fromAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -77,13 +76,13 @@ func (msg MsgOpenAuction) String() string {
 // which is formatted as hex string in first 20 bytes of SHA256("salt:name:amount:bidder")
 type MsgBidAuction struct {
 	Name    Name           `json:"name" yaml:"name"`
-	Hash    string         `json:"hash" yaml:"hash"`
+	Hash    BidHash        `json:"hash" yaml:"hash"`
 	Deposit sdk.Coin       `json:"deposit" yaml:"deposit"`
 	Bidder  sdk.AccAddress `json:"bidder" yaml:"bidder"`
 }
 
 // NewMsgBidAuction creates a MsgBidAuction instance
-func NewMsgBidAuction(name Name, hash string, deposit sdk.Coin, bidder sdk.AccAddress) MsgBidAuction {
+func NewMsgBidAuction(name Name, hash BidHash, deposit sdk.Coin, bidder sdk.AccAddress) MsgBidAuction {
 	return MsgBidAuction{
 		Name:    name,
 		Hash:    hash,
@@ -119,10 +118,8 @@ func (msg MsgBidAuction) ValidateBasic() sdk.Error {
 		return ErrInvalidName(DefaultCodespace, msg.Name, "only second level name is accepted for auction")
 	}
 
-	if bz, err := hex.DecodeString(msg.Hash); err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to decode hash: %s", err.Error()))
-	} else if len(bz) != tmhash.TruncatedSize {
-		return ErrInvalidHashLength(DefaultCodespace, len(bz))
+	if l := len(msg.Hash); l != tmhash.TruncatedSize {
+		return ErrInvalidHashLength(DefaultCodespace, l)
 	}
 
 	if msg.Bidder.Empty() {
