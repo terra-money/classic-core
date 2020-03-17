@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/rand"
 
@@ -24,10 +23,9 @@ func SimulateMsgPrevote(k oracle.Keeper) simulation.Operation {
 
 		acc := simulation.RandomAcc(r, accs)
 		valAddr := sdk.ValAddress(acc.Address)
-		bz, _ := oracle.VoteHash("1234", sdk.NewDec(1700), core.MicroSDRDenom, valAddr)
-		voteHash := hex.EncodeToString(bz)
+		hash := oracle.GetVoteHash("1234", sdk.NewDec(1700), core.MicroSDRDenom, valAddr)
 
-		msg := oracle.NewMsgExchangeRatePrevote(voteHash, core.MicroSDRDenom, acc.Address, valAddr)
+		msg := oracle.NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}
@@ -99,10 +97,9 @@ func SimulateMsgAggregateExchangeRatePrevote(k oracle.Keeper) simulation.Operati
 			simulation.RandomDecAmount(r, sdk.NewDec(1)).String(),
 			core.MicroSDRDenom)
 
-		bz, _ := oracle.VoteHashForAggregate("1234", exchangeRates, valAddr)
-		voteHash := hex.EncodeToString(bz)
+		hash := oracle.GetAggregateVoteHash("1234", exchangeRates, valAddr)
 
-		msg := oracle.NewMsgAggregateExchangeRatePrevote(voteHash, acc.Address, valAddr)
+		msg := oracle.NewMsgAggregateExchangeRatePrevote(hash, acc.Address, valAddr)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(oracle.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
 		}
