@@ -26,6 +26,7 @@ const (
 	CodeInvalidMsgFormat    codeType = 11
 	CodeNoAggregatePrevote  codeType = 12
 	CodeNoAggregateVote     codeType = 13
+	CodeNoIlliquidFactor    codeType = 14
 )
 
 // ----------------------------------------
@@ -84,4 +85,9 @@ func ErrNoAggregatePrevote(codespace sdk.CodespaceType, voter sdk.ValAddress) sd
 // ErrNoAggregateVote called when no prevote exists
 func ErrNoAggregateVote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.Error {
 	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No aggregate vote exists from %s", voter))
+}
+
+// ErrNoIlliquidFactor called when no illiquid factor exists
+func ErrNoIlliquidFactor(codespace sdk.CodespaceType, denom string) sdk.Error {
+	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No illiquid factor exists for %s", denom))
 }

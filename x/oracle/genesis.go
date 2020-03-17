@@ -74,6 +74,16 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetVoteTargets(ctx, voteTargets)
 	}
 
+	if len(data.IlliquidFactors) > 0 {
+		for denom, illiquidFactor := range data.IlliquidFactors {
+			keeper.SetIlliquidFactor(ctx, denom, illiquidFactor)
+		}
+	} else {
+		for _, item := range data.Params.Whitelist {
+			keeper.SetIlliquidFactor(ctx, item.Name, item.IlliquidFactor)
+		}
+	}
+
 	keeper.SetParams(ctx, data.Params)
 	keeper.GetRewardPool(ctx)
 }
@@ -128,5 +138,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 
 	voteTargets := keeper.GetVoteTargets(ctx)
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, voteTargets)
+	illiquidFactors := make(map[string]sdk.Dec)
+	keeper.IterateIlliquidFactors(ctx, func(denom string, illiquidFactor sdk.Dec) (stop bool) {
+		illiquidFactors[denom] = illiquidFactor
+		return false
+	})
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, voteTargets, illiquidFactors)
 }

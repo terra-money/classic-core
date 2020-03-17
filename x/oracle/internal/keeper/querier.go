@@ -35,6 +35,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAggregateVote(ctx, req, keeper)
 		case types.QueryVoteTargets:
 			return queryVoteTargets(ctx, keeper)
+		case types.QueryIlliquidFactor:
+			return queryIlliquidFactor(ctx, req, keeper)
+		case types.QueryIlliquidFactors:
+			return queryIlliquidFactors(ctx, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -254,6 +258,42 @@ func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	voteTargets := keeper.GetVoteTargets(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, voteTargets)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryIlliquidFactor(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryIlliquidFactorParams
+	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(err.Error())
+	}
+
+	factor, err := keeper.GetIlliquidFactor(ctx, params.Denom)
+	if err != nil {
+		return nil, types.ErrUnknownDenomination(types.DefaultCodespace, params.Denom)
+	}
+
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, factor)
+	if err2 != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryIlliquidFactors(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	var denoms types.DenomList
+
+	keeper.IterateIlliquidFactors(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+		denoms = append(denoms, types.Denom{denom, rate})
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -68,19 +67,22 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 		}
 
+
+		var hash types.VoteHash
+
 		// If hash is not given, then retrieve hash from exchange_rate and salt
 		if len(req.Hash) == 0 && (!req.ExchangeRate.Equal(sdk.ZeroDec()) && len(req.Salt) > 0) {
-			hashBytes, err := types.VoteHash(req.Salt, req.ExchangeRate, denom, valAddress)
+			hash = types.GetVoteHash(req.Salt, req.ExchangeRate, denom, valAddress)
+		} else {
+			hash, err = types.VoteHashFromHexString(req.Hash)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-
-			req.Hash = hex.EncodeToString(hashBytes)
 		}
 
 		// create the message
-		msg := types.NewMsgExchangeRatePrevote(req.Hash, denom, fromAddress, valAddress)
+		msg := types.NewMsgExchangeRatePrevote(hash, denom, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -249,6 +251,8 @@ func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 			}
 		}
 
+		var hash types.AggregateVoteHash
+
 		// If hash is not given, then retrieve hash from exchange_rate and salt
 		if len(req.Hash) == 0 && (len(req.ExchangeRates) > 0 && len(req.Salt) > 0) {
 			_, err := types.ParseExchangeRateTuples(req.ExchangeRates)
@@ -257,17 +261,17 @@ func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 				return
 			}
 
-			hashBytes, err := types.VoteHashForAggregate(req.Salt, req.ExchangeRates, valAddress)
+			hash = types.GetAggregateVoteHash(req.Salt, req.ExchangeRates, valAddress)
+		} else {
+			hash, err = types.AggregateVoteHashFromHexString(req.Hash)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-
-			req.Hash = hex.EncodeToString(hashBytes)
 		}
 
 		// create the message
-		msg := types.NewMsgAggregateExchangeRatePrevote(req.Hash, fromAddress, valAddress)
+		msg := types.NewMsgAggregateExchangeRatePrevote(hash, fromAddress, valAddress)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

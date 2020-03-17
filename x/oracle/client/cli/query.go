@@ -23,7 +23,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	oracleQueryCmd.AddCommand(client.GetCommands(
-		GetCmdQueryExchangeRate(cdc),
+		GetCmdQueryExchangeRates(cdc),
 		GetCmdQueryVotes(cdc),
 		GetCmdQueryPrevotes(cdc),
 		GetCmdQueryActives(cdc),
@@ -33,29 +33,46 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryAggregatePrevote(cdc),
 		GetCmdQueryAggregateVote(cdc),
 		GetCmdQueryVoteTargets(cdc),
+		GetCmdQueryIlliquidFactors(cdc),
 	)...)
 
 	return oracleQueryCmd
 
 }
 
-// GetCmdQueryExchangeRate implements the query rate command.
-func GetCmdQueryExchangeRate(cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryExchangeRates implements the query rate command.
+func GetCmdQueryExchangeRates(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exchange-rate [denom]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "exchange-rates [denom]",
+		Args:  cobra.RangeArgs(0, 1),
 		Short: "Query the current Luna exchange rate w.r.t an asset",
 		Long: strings.TrimSpace(`
-Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
+Query the current exchange rate of Luna with an asset. 
+You can find the current list of active denoms by running
 
-$ terracli query oracle exchange-rate ukrw
+$ terracli query oracle exchange-rates 
+
+Or, can filter with denom
+
+$ terracli query oracle exchange-rates ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			denom := args[0]
+			if len(args) == 0 {
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryExchangeRates), nil)
+				if err != nil {
+					return err
+				}
 
+				var rate sdk.Dec
+				cdc.MustUnmarshalJSON(res, &rate)
+				return cliCtx.PrintOutput(rate)
+			}
+
+			denom := args[0]
 			params := types.NewQueryExchangeRateParams(denom)
+
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -66,9 +83,10 @@ $ terracli query oracle exchange-rate ukrw
 				return err
 			}
 
-			var rate sdk.Dec
-			cdc.MustUnmarshalJSON(res, &rate)
-			return cliCtx.PrintOutput(rate)
+			var rates sdk.DecCoins
+			cdc.MustUnmarshalJSON(res, &rates)
+			return cliCtx.PrintOutput(rates)
+
 		},
 	}
 	return cmd
@@ -414,6 +432,59 @@ func GetCmdQueryVoteTargets(cdc *codec.Codec) *cobra.Command {
 			var voteTargets Denoms
 			cdc.MustUnmarshalJSON(res, &voteTargets)
 			return cliCtx.PrintOutput(voteTargets)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryIlliquidFactors implements the query params command.
+func GetCmdQueryIlliquidFactors(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "illiquid-factors [denom]",
+		Args:  cobra.RangeArgs(0, 1),
+		Short: "Query the current Oracle illiquid factors.",
+		Long: strings.TrimSpace(`
+Query the current Oracle illiquid factors.
+
+$ terracli query oracle illiquid-factors 
+
+Or, can filter with denom
+
+$ terracli query oracle illiquid-factors ukrw
+
+Or, can 
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			if len(args) == 0 {
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIlliquidFactors), nil)
+				if err != nil {
+					return err
+				}
+
+				var illiquidFactors types.DenomList
+				cdc.MustUnmarshalJSON(res, &illiquidFactors)
+				return cliCtx.PrintOutput(illiquidFactors)
+			}
+
+			denom := args[0]
+			params := types.NewQueryIlliquidFactorParams(denom)
+
+			bz, err := cliCtx.Codec.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIlliquidFactor), bz)
+			if err != nil {
+				return err
+			}
+
+			var illiquidFactor sdk.Dec
+			cdc.MustUnmarshalJSON(res, &illiquidFactor)
+			return cliCtx.PrintOutput(illiquidFactor)
 		},
 	}
 

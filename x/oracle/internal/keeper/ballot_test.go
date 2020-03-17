@@ -89,7 +89,7 @@ func TestOrganizeAggregate(t *testing.T) {
 		types.NewVoteForTally(types.NewExchangeRateVote(sdk.NewDec(2000), core.MicroKRWDenom, ValAddrs[2]), power),
 	}
 
-	for i, _ := range sdrBallot {
+	for i := range sdrBallot {
 		input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 			{Denom: sdrBallot[i].Denom, ExchangeRate: sdrBallot[i].ExchangeRate},
 			{Denom: krwBallot[i].Denom, ExchangeRate: krwBallot[i].ExchangeRate},

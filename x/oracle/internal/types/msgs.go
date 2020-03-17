@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -23,16 +22,16 @@ var (
 // The purpose of prevote is to hide vote exchange rate with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange_rate}:{denom}:{voter}")
 type MsgExchangeRatePrevote struct {
-	Hash      string         `json:"hash" yaml:"hash"` // hex string
+	Hash      VoteHash       `json:"hash" yaml:"hash"`
 	Denom     string         `json:"denom" yaml:"denom"`
 	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
 	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
 }
 
 // NewMsgExchangeRatePrevote creates a MsgExchangeRatePrevote instance
-func NewMsgExchangeRatePrevote(VoteHash string, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgExchangeRatePrevote {
+func NewMsgExchangeRatePrevote(hash VoteHash, denom string, feederAddress sdk.AccAddress, valAddress sdk.ValAddress) MsgExchangeRatePrevote {
 	return MsgExchangeRatePrevote{
-		Hash:      VoteHash,
+		Hash:      hash,
 		Denom:     denom,
 		Feeder:    feederAddress,
 		Validator: valAddress,
@@ -58,8 +57,8 @@ func (msg MsgExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 // ValidateBasic Implements sdk.Msg
 func (msg MsgExchangeRatePrevote) ValidateBasic() sdk.Error {
 
-	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
-		return ErrInvalidHashLength(DefaultCodespace, len(bz))
+	if len(msg.Hash) != tmhash.TruncatedSize {
+		return ErrInvalidHashLength(DefaultCodespace, len(msg.Hash))
 	}
 
 	if len(msg.Denom) == 0 {
@@ -218,13 +217,13 @@ func (msg MsgDelegateFeedConsent) String() string {
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange rate}{denom},...,{exchange rate}{denom}:{voter}")
 type MsgAggregateExchangeRatePrevote struct {
-	Hash      string         `json:"hash" yaml:"hash"` // hex string
-	Feeder    sdk.AccAddress `json:"feeder" yaml:"feeder"`
-	Validator sdk.ValAddress `json:"validator" yaml:"validator"`
+	Hash      AggregateVoteHash `json:"hash" yaml:"hash"`
+	Feeder    sdk.AccAddress    `json:"feeder" yaml:"feeder"`
+	Validator sdk.ValAddress    `json:"validator" yaml:"validator"`
 }
 
 // NewMsgAggregateExchangeRatePrevote returns MsgAggregateExchangeRatePrevote instance
-func NewMsgAggregateExchangeRatePrevote(hash string, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAggregateExchangeRatePrevote {
+func NewMsgAggregateExchangeRatePrevote(hash AggregateVoteHash, feeder sdk.AccAddress, validator sdk.ValAddress) MsgAggregateExchangeRatePrevote {
 	return MsgAggregateExchangeRatePrevote{
 		Hash:      hash,
 		Feeder:    feeder,
@@ -251,8 +250,8 @@ func (msg MsgAggregateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 // ValidateBasic Implements sdk.Msg
 func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() sdk.Error {
 
-	if bz, err := hex.DecodeString(msg.Hash); len(bz) != tmhash.TruncatedSize || err != nil {
-		return ErrInvalidHashLength(DefaultCodespace, len(bz))
+	if len(msg.Hash) != tmhash.TruncatedSize {
+		return ErrInvalidHashLength(DefaultCodespace, len(msg.Hash))
 	}
 
 	if msg.Feeder.Empty() {

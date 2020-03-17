@@ -46,11 +46,11 @@ func TestQueryPrevotes(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[0], 0)
+	prevote1 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroSDRDenom, ValAddrs[0], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
-	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[1], 0)
+	prevote2 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroSDRDenom, ValAddrs[1], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
-	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, ValAddrs[2], 0)
+	prevote3 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroLunaDenom, ValAddrs[2], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	// voter denom both query params
@@ -272,4 +272,170 @@ func TestQueryFeederDelegation(t *testing.T) {
 	var delegate sdk.AccAddress
 	cdc.UnmarshalJSON(res, &delegate)
 	require.Equal(t, Addrs[1], delegate)
+}
+
+func TestQueryAggregatePrevote(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote1)
+	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote2)
+	prevote3 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[2], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote3)
+
+	// validator 0 address params
+	queryParams := types.NewQueryAggregatePrevoteParams(ValAddrs[0])
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryAggregatePrevote}, req)
+	require.NoError(t, err)
+
+	var prevote types.AggregateExchangeRatePrevote
+	err = cdc.UnmarshalJSON(res, &prevote)
+	require.NoError(t, err)
+	require.Equal(t, prevote1, prevote)
+
+	// validator 1 address params
+	queryParams = types.NewQueryAggregatePrevoteParams(ValAddrs[1])
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err = querier(input.Ctx, []string{types.QueryAggregatePrevote}, req)
+	require.NoError(t, err)
+
+	err = cdc.UnmarshalJSON(res, &prevote)
+	require.NoError(t, err)
+	require.Equal(t, prevote2, prevote)
+}
+
+
+func TestQueryAggregateVote(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[0])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote1)
+	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[1])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote2)
+	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[2])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote3)
+
+	// validator 0 address params
+	queryParams := types.NewQueryAggregateVoteParams(ValAddrs[0])
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryAggregateVote}, req)
+	require.NoError(t, err)
+
+	var vote types.AggregateExchangeRateVote
+	err = cdc.UnmarshalJSON(res, &vote)
+	require.NoError(t, err)
+	require.Equal(t, vote1, vote)
+
+	// validator 1 address params
+	queryParams = types.NewQueryAggregateVoteParams(ValAddrs[1])
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err = querier(input.Ctx, []string{types.QueryAggregateVote}, req)
+	require.NoError(t, err)
+
+	err = cdc.UnmarshalJSON(res, &vote)
+	require.NoError(t, err)
+	require.Equal(t, vote2, vote)
+}
+
+func TestQueryVoteTargets(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	voteTargets := []string{"denom", "denom2", "denom3"}
+	input.OracleKeeper.SetVoteTargets(input.Ctx, voteTargets)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryVoteTargets}, req)
+	require.NoError(t, err)
+
+	var voteTargetsRes []string
+	cdc.UnmarshalJSON(res, &voteTargetsRes)
+	require.Equal(t, voteTargets, voteTargetsRes)
+}
+
+func TestQueryIlliquidFactors(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	illiquidFactors := types.DenomList{{core.MicroKRWDenom, sdk.OneDec()}, {core.MicroSDRDenom, sdk.NewDecWithPrec(123, 2)}}
+	for _, item := range illiquidFactors {
+		input.OracleKeeper.SetIlliquidFactor(input.Ctx, item.Name, item.IlliquidFactor)
+	}
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryIlliquidFactors}, req)
+	require.NoError(t, err)
+
+	var illiquidFactorsRes types.DenomList
+	cdc.UnmarshalJSON(res, &illiquidFactorsRes)
+	require.Equal(t, illiquidFactors, illiquidFactorsRes)
+}
+
+func TestQueryIlliquidFactor(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	denom := types.Denom{core.MicroKRWDenom, sdk.OneDec()}
+	input.OracleKeeper.SetIlliquidFactor(input.Ctx, denom.Name, denom.IlliquidFactor)
+
+	queryParams := types.NewQueryIlliquidFactorParams(core.MicroKRWDenom)
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryIlliquidFactor}, req)
+	require.NoError(t, err)
+
+	var illiquidFactorRes sdk.Dec
+	cdc.UnmarshalJSON(res, &illiquidFactorRes)
+	require.Equal(t, denom.IlliquidFactor, illiquidFactorRes)
 }

@@ -16,7 +16,9 @@ const (
 	QueryMissCounter      = "missCounter"
 	QueryAggregatePrevote = "aggregatePrevote"
 	QueryAggregateVote    = "aggregateVote"
-	QueryVoteTargets       = "voteTargets"
+	QueryVoteTargets      = "voteTargets"
+	QueryIlliquidFactor   = "illiquidFactor"
+	QueryIlliquidFactors  = "illiquidFactors"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -96,4 +98,15 @@ type QueryAggregateVoteParams struct {
 // NewQueryAggregateVoteParams returns params for feeder delegation query
 func NewQueryAggregateVoteParams(validator sdk.ValAddress) QueryAggregateVoteParams {
 	return QueryAggregateVoteParams{validator}
+}
+
+// QueryIlliquidFactorParams defines the params for the following queries:
+// - 'custom/oracle/illiquidFactor'
+type QueryIlliquidFactorParams struct {
+	Denom string
+}
+
+// NewQueryIlliquidFactorParams returns params for feeder delegation query
+func NewQueryIlliquidFactorParams(denom string) QueryIlliquidFactorParams {
+	return QueryIlliquidFactorParams{denom}
 }

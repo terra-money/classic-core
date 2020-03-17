@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,9 +23,8 @@ func TestOracleFilters(t *testing.T) {
 
 	// Case 2: Normal MsgExchangeRatePrevote submission goes through
 	salt := "1"
-	bz, err := VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
-	require.Nil(t, err)
-	prevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	hash := GetVoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
+	prevoteMsg := NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
@@ -38,10 +36,9 @@ func TestOracleFilters(t *testing.T) {
 	// Case 4: a non-validator sending an oracle message fails
 	_, addrs := mock.GeneratePrivKeyAddressPairs(1)
 	salt = "2"
-	bz, err = VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
-	require.Nil(t, err)
+	hash = GetVoteHash(salt, randomExchangeRate, core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 
-	prevoteMsg = NewMsgExchangeRatePrevote("", core.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
+	prevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, addrs[0], sdk.ValAddress(addrs[0]))
 	res = h(input.Ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 }
@@ -50,10 +47,9 @@ func TestPrevoteVote(t *testing.T) {
 	input, h := setup(t)
 
 	salt := "1"
-	bz, err := VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
-	require.Nil(t, err)
+	hash := GetVoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
 
-	exchangeRatePrevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	exchangeRatePrevoteMsg := NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx, exchangeRatePrevoteMsg)
 	require.True(t, res.IsOK())
 
@@ -78,8 +74,7 @@ func TestFeederDelegation(t *testing.T) {
 	input, h := setup(t)
 
 	salt := "1"
-	bz, err := VoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
-	require.Nil(t, err)
+	hash := GetVoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
 
 	// Case 1: empty message
 	bankMsg := MsgDelegateFeedConsent{}
@@ -87,12 +82,12 @@ func TestFeederDelegation(t *testing.T) {
 	require.False(t, res.IsOK())
 
 	// Case 2: Normal Prevote - without delegation
-	prevoteMsg := NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	prevoteMsg := NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 
 	// Case 2.1: Normal Prevote - with delegation fails
-	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
+	prevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
@@ -112,12 +107,12 @@ func TestFeederDelegation(t *testing.T) {
 	require.True(t, res.IsOK())
 
 	// Case 4.1: Normal Prevote - without delegation fails
-	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[0])
+	prevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[2], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.False(t, res.IsOK())
 
 	// Case 4.2: Normal Prevote - with delegation succeeds
-	prevoteMsg = NewMsgExchangeRatePrevote(hex.EncodeToString(bz), core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
+	prevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
 	res = h(input.Ctx, prevoteMsg)
 	require.True(t, res.IsOK())
 	// Case 4.3: Normal Vote - without delegation fails
@@ -139,10 +134,9 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	otherExchangeRateStr := "1000.12ukrw,0.29uusd,0.27usdr"
 	invalidExchangeRateStr := "1000.23ukrw,2324"
 
-	bz, err := VoteHashForAggregate(salt, exchangeRatesStr, keeper.ValAddrs[0])
-	require.Nil(t, err)
+	hash := GetAggregateVoteHash(salt, exchangeRatesStr, keeper.ValAddrs[0])
 
-	aggregateExchangeRatePrevoteMsg := NewMsgAggregateExchangeRatePrevote(hex.EncodeToString(bz), keeper.Addrs[0], keeper.ValAddrs[0])
+	aggregateExchangeRatePrevoteMsg := NewMsgAggregateExchangeRatePrevote(hash, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.True(t, res.IsOK())
 

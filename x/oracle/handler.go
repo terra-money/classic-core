@@ -1,8 +1,6 @@
 package oracle
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -97,18 +95,13 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 	}
 
 	// If there is an prevote, we verify a exchange rate with prevote hash and move prevote to vote with given exchange rate
-	bz, _ := hex.DecodeString(prevote.Hash) // prevote hash
-	bz2, err2 := VoteHash(pvm.Salt, pvm.ExchangeRate, prevote.Denom, prevote.Voter)
-	if err2 != nil {
-		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
-	}
-
-	if !bytes.Equal(bz, bz2) {
-		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
+	hash := GetVoteHash(pvm.Salt, pvm.ExchangeRate, pvm.Denom, pvm.Validator)
+	if !prevote.Hash.Equal(hash) {
+		return ErrVerificationFailed(keeper.Codespace(), prevote.Hash, hash).Result()
 	}
 
 	// Add the vote to the store
-	vote := NewExchangeRateVote(pvm.ExchangeRate, prevote.Denom, prevote.Voter)
+	vote := NewExchangeRateVote(pvm.ExchangeRate, pvm.Denom, pvm.Validator)
 	keeper.DeleteExchangeRatePrevote(ctx, prevote)
 	keeper.AddExchangeRateVote(ctx, vote)
 
@@ -223,14 +216,10 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 	}
 
 	// Verify a exchange rate with aggregate prevote hash
-	bz, _ := hex.DecodeString(aggregatePrevote.Hash) // prevote hash
-	bz2, err2 := VoteHashForAggregate(pvm.Salt, pvm.ExchangeRates, aggregatePrevote.Voter)
-	if err2 != nil {
-		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
-	}
+	hash := GetAggregateVoteHash(pvm.Salt, pvm.ExchangeRates, aggregatePrevote.Voter)
 
-	if !bytes.Equal(bz, bz2) {
-		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
+	if !aggregatePrevote.Hash.Equal(hash) {
+		return ErrVerificationFailed(keeper.Codespace(), aggregatePrevote.Hash, hash).Result()
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates

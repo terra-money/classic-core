@@ -46,6 +46,7 @@ var (
 	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
 	AggregateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
 	VoteTargetsKey      = []byte{0x08} // key to a vote targets for current oracle vote period
+	IlliquidFactoerKey  = []byte{0x09} // prefix for each key to a illiquid factor
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -81,4 +82,15 @@ func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
 // GetAggregateVoteKey - stored by *Validator* address
 func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
 	return append(AggregateVoteKey, v.Bytes()...)
+}
+
+// IlliquidFactorKey - stored by *denom* bytes
+func GetIlliquidFactorKey(d string) []byte {
+	return append(IlliquidFactoerKey, []byte(d)...)
+}
+
+// SplitDenomFromIlliquidFactorKey - split denom from the illiquid factor key
+func SplitDenomFromIlliquidFactorKey(key []byte) (denom string) {
+	denom = string(key[1:])
+	return
 }

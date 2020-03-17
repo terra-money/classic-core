@@ -394,7 +394,7 @@ func (k Keeper) GetVoteTargets(ctx sdk.Context) (voteTargets []string) {
 	bz := store.Get(types.VoteTargetsKey)
 	if bz == nil {
 		voteTargets = []string{}
-	}else {
+	} else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &voteTargets)
 	}
 
@@ -406,4 +406,51 @@ func (k Keeper) SetVoteTargets(ctx sdk.Context, voteTargets []string) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(voteTargets)
 	store.Set(types.VoteTargetsKey, bz)
+}
+
+// GetIlliquidFactor return illiquid factor for the denom
+func (k Keeper) GetIlliquidFactor(ctx sdk.Context, denom string) (illiquidFactor sdk.Dec, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetIlliquidFactorKey(denom))
+	if bz == nil {
+		err = types.ErrNoIlliquidFactor(k.codespace, denom)
+		return
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &illiquidFactor)
+	}
+
+	return
+}
+
+// SetIlliquidFactor updates illiquid factor for the denom
+func (k Keeper) SetIlliquidFactor(ctx sdk.Context, denom string, illiquidFactor sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(illiquidFactor)
+	store.Set(types.GetIlliquidFactorKey(denom), bz)
+}
+
+// IterateIlliquidFactors iterates rate over illiquid factors in the store
+func (k Keeper) IterateIlliquidFactors(ctx sdk.Context, handler func(denom string, illiquidFactor sdk.Dec) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.IlliquidFactoerKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		denom := types.SplitDenomFromIlliquidFactorKey(iter.Key())
+
+		var illiquidFactor sdk.Dec
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &illiquidFactor)
+		if handler(denom, illiquidFactor) {
+			break
+		}
+	}
+}
+
+// ClearIlliquidFactors clears illiquid factors
+func (k Keeper) ClearIlliquidFactors(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.IlliquidFactoerKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
+	}
 }

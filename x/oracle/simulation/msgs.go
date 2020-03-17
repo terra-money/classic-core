@@ -16,6 +16,7 @@ import (
 var (
 	exchangeRates string
 )
+
 // SimulateMsgPrevote generates a MsgPrevote with random values
 func SimulateMsgPrevote(k oracle.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,

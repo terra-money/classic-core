@@ -15,7 +15,8 @@ import (
 func TestPrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	prevote := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[0]))
+	prevote := types.NewExchangeRatePrevote(hash, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote)
 
 	KPrevote, err := input.OracleKeeper.GetExchangeRatePrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
@@ -30,10 +31,12 @@ func TestPrevoteAddDelete(t *testing.T) {
 func TestPrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[0]))
+	prevote1 := types.NewExchangeRatePrevote(hash, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
 
-	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[1]), 0)
+	hash2 := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[1]))
+	prevote2 := types.NewExchangeRatePrevote(hash2, core.MicroSDRDenom, sdk.ValAddress(Addrs[1]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
 
 	i := 0
@@ -49,7 +52,8 @@ func TestPrevoteIterate(t *testing.T) {
 		return false
 	})
 
-	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, sdk.ValAddress(Addrs[2]), 0)
+	hash3 := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[2]))
+	prevote3 := types.NewExchangeRatePrevote(hash3, core.MicroLunaDenom, sdk.ValAddress(Addrs[2]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	input.OracleKeeper.iterateExchangeRatePrevotesWithPrefix(input.Ctx, types.GetExchangeRatePrevoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRatePrevote) (stop bool) {
@@ -347,7 +351,8 @@ func TestIterateMissCounters(t *testing.T) {
 func TestAggregatePrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	aggregatePrevote := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	aggregatePrevote := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote)
 
 	KPrevote, err := input.OracleKeeper.GetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
@@ -362,10 +367,12 @@ func TestAggregatePrevoteAddDelete(t *testing.T) {
 func TestAggregatePrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	aggregatePrevote1 := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	aggregatePrevote1 := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote1)
 
-	aggregatePrevote2 := types.NewAggregateExchangeRatePrevote("", sdk.ValAddress(Addrs[1]), 0)
+	hash2 := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[1]))
+	aggregatePrevote2 := types.NewAggregateExchangeRatePrevote(hash2, sdk.ValAddress(Addrs[1]), 0)
 	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote2)
 
 	i := 0
@@ -387,8 +394,8 @@ func TestAggregateVoteAddDelete(t *testing.T) {
 
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote)
 
@@ -406,15 +413,15 @@ func TestAggregateVoteIterate(t *testing.T) {
 
 	aggregateVote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote1)
 
 	aggregateVote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(0)},
-		{Denom:"foo", ExchangeRate:sdk.NewDec(1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[1]))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote2)
 
@@ -446,4 +453,33 @@ func TestVoteTargetsGetSet(t *testing.T) {
 
 	input.OracleKeeper.SetVoteTargets(input.Ctx, testDenomList)
 	require.Equal(t, testDenomList, input.OracleKeeper.GetVoteTargets(input.Ctx))
+}
+
+func TestIlliquidFactorGetSet(t *testing.T) {
+	input := CreateTestInput(t)
+
+	illiquidFactors := map[string]sdk.Dec{
+		core.MicroSDRDenom: sdk.NewDec(1),
+		core.MicroUSDDenom: sdk.NewDecWithPrec(1, 3),
+		core.MicroKRWDenom: sdk.NewDecWithPrec(123, 3),
+		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 1),
+	}
+
+	for denom, illiquidFactor := range illiquidFactors {
+		input.OracleKeeper.SetIlliquidFactor(input.Ctx, denom, illiquidFactor)
+		factor, err := input.OracleKeeper.GetIlliquidFactor(input.Ctx, denom)
+		require.NoError(t, err)
+		require.Equal(t, illiquidFactors[denom], factor)
+	}
+
+	input.OracleKeeper.IterateIlliquidFactors(input.Ctx, func(denom string, illiquidFactor sdk.Dec) (stop bool) {
+		require.Equal(t, illiquidFactors[denom], illiquidFactor)
+		return false
+	})
+
+	input.OracleKeeper.ClearIlliquidFactors(input.Ctx)
+	for denom := range illiquidFactors {
+		_, err := input.OracleKeeper.GetIlliquidFactor(input.Ctx, denom)
+		require.Error(t, err)
+	}
 }

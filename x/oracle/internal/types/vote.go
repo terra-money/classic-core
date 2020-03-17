@@ -5,20 +5,18 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 // ExchangeRatePrevote - struct to store a validator's prevote on the rate of Luna in the denom asset
 type ExchangeRatePrevote struct {
-	Hash        string         `json:"hash"`  // Vote hex hash to protect centralize data source problem
+	Hash        VoteHash       `json:"hash"`  // Vote hex hash to protect centralize data source problem
 	Denom       string         `json:"denom"` // Ticker name of target fiat currency
 	Voter       sdk.ValAddress `json:"voter"` // Voter val address
 	SubmitBlock int64          `json:"submit_block"`
 }
 
 // NewExchangeRatePrevote returns ExchangeRatePrevote object
-func NewExchangeRatePrevote(hash string, denom string, voter sdk.ValAddress, submitBlock int64) ExchangeRatePrevote {
+func NewExchangeRatePrevote(hash VoteHash, denom string, voter sdk.ValAddress, submitBlock int64) ExchangeRatePrevote {
 	return ExchangeRatePrevote{
 		Hash:        hash,
 		Denom:       denom,
@@ -30,10 +28,10 @@ func NewExchangeRatePrevote(hash string, denom string, voter sdk.ValAddress, sub
 // String implements fmt.Stringer interface
 func (pp ExchangeRatePrevote) String() string {
 	return fmt.Sprintf(`ExchangeRatePrevote
-	Hash:    %s, 
-	Denom:    %s, 
-	Voter:    %s, 
-	SubmitBlock:    %d`,
+	Hash:        %s, 
+	Denom:       %s, 
+	Voter:       %s, 
+	SubmitBlock: %d`,
 		pp.Hash, pp.Denom, pp.Voter, pp.SubmitBlock)
 }
 
@@ -46,14 +44,6 @@ func (v ExchangeRatePrevotes) String() (out string) {
 		out += val.String() + "\n"
 	}
 	return strings.TrimSpace(out)
-}
-
-// VoteHash computes hash value of ExchangeRateVote
-func VoteHash(salt string, rate sdk.Dec, denom string, voter sdk.ValAddress) ([]byte, error) {
-	hash := tmhash.NewTruncated()
-	_, err := hash.Write([]byte(fmt.Sprintf("%s:%s:%s:%s", salt, rate, denom, voter)))
-	bz := hash.Sum(nil)
-	return bz, err
 }
 
 // ExchangeRateVote - struct to store a validator's vote on the rate of Luna in the denom asset
@@ -94,13 +84,13 @@ func (v ExchangeRateVotes) String() (out string) {
 
 // AggregateExchangeRatePrevote - struct to store a validator's aggregate prevote on the rate of Luna in the denom asset
 type AggregateExchangeRatePrevote struct {
-	Hash        string         `json:"hash"`  // Vote hex hash to protect centralize data source problem
-	Voter       sdk.ValAddress `json:"voter"` // Voter val address
-	SubmitBlock int64          `json:"submit_block"`
+	Hash        AggregateVoteHash `json:"hash"`  // Vote hex hash to protect centralize data source problem
+	Voter       sdk.ValAddress    `json:"voter"` // Voter val address
+	SubmitBlock int64             `json:"submit_block"`
 }
 
 // NewAggregateExchangeRatePrevote returns AggregateExchangeRatePrevote object
-func NewAggregateExchangeRatePrevote(hash string, voter sdk.ValAddress, submitBlock int64) AggregateExchangeRatePrevote {
+func NewAggregateExchangeRatePrevote(hash AggregateVoteHash, voter sdk.ValAddress, submitBlock int64) AggregateExchangeRatePrevote {
 	return AggregateExchangeRatePrevote{
 		Hash:        hash,
 		Voter:       voter,
@@ -111,20 +101,10 @@ func NewAggregateExchangeRatePrevote(hash string, voter sdk.ValAddress, submitBl
 // String implements fmt.Stringer interface
 func (pp AggregateExchangeRatePrevote) String() string {
 	return fmt.Sprintf(`AggregateExchangeRatePrevote
-	Hash:    %s,  
-	Voter:    %s, 
-	SubmitBlock:    %d`,
+	Hash:        %s,  
+	Voter:       %s, 
+	SubmitBlock: %d`,
 		pp.Hash, pp.Voter, pp.SubmitBlock)
-}
-
-// VoteHash computes hash value of ExchangeRateVote
-// to avoid redundant DecCoins stringify, use string argument
-func VoteHashForAggregate(salt string, exchangeRatesStr string, voter sdk.ValAddress) ([]byte, error) {
-	hash := tmhash.NewTruncated()
-	sourceStr := fmt.Sprintf("%s:%s:%s", salt, exchangeRatesStr, voter.String())
-	_, err := hash.Write([]byte(sourceStr))
-	bz := hash.Sum(nil)
-	return bz, err
 }
 
 // ExchangeRateTuple - struct to represent a exchange rate of Luna in the denom asset
@@ -161,6 +141,7 @@ func ParseExchangeRateTuples(tuplesStr string) (ExchangeRateTuples, error) {
 
 	tupleStrs := strings.Split(tuplesStr, ",")
 	tuples := make(ExchangeRateTuples, len(tupleStrs))
+	duplicateCheckMap := make(map[string]bool)
 	for i, tupleStr := range tupleStrs {
 		decCoin, err := sdk.ParseDecCoin(tupleStr)
 		if err != nil {
@@ -171,6 +152,12 @@ func ParseExchangeRateTuples(tuplesStr string) (ExchangeRateTuples, error) {
 			Denom:        decCoin.Denom,
 			ExchangeRate: decCoin.Amount,
 		}
+
+		if _, ok := duplicateCheckMap[decCoin.Denom]; ok {
+			return nil, fmt.Errorf("duplicated denom %s", decCoin.Denom)
+		}
+
+		duplicateCheckMap[decCoin.Denom] = true
 	}
 
 	return tuples, nil

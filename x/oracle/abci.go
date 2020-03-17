@@ -19,14 +19,14 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Build valid votes counter and winner map over all validators in active set
-	validVotesCounterMap := make(map[string]int64)
+	validVotesCounterMap := make(map[string]int)
 	winnerMap := make(map[string]types.Claim)
-	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
+	k.StakingKeeper.IterateValidators(ctx, func(_ int64, validator exported.ValidatorI) bool {
 
 		// Exclude not bonded validator or jailed validators from tallying
 		if validator.IsBonded() && !validator.IsJailed() {
 			valAddr := validator.GetOperator()
-			validVotesCounterMap[valAddr.String()] = int64(0)
+			validVotesCounterMap[valAddr.String()] = 0
 			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
 		}
 
@@ -94,7 +94,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	//---------------------------
 	// Do miss counting & slashing
-	voteTargetsLen := int64(len(voteTargets))
+	voteTargetsLen := len(voteTargets)
 	for operatorBechAddr, count := range validVotesCounterMap {
 		// Skip abstain & valid voters
 		if count == voteTargetsLen {
@@ -118,8 +118,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Clear the ballot
 	clearBallots(ctx, k, params.VotePeriod)
 
-	// Update vote targets
-	updateVoteTargets(ctx, k, params.Whitelist)
+	// Update vote targets and illiquid factor
+	applyWhitelist(ctx, k, params.Whitelist, voteTargets)
 
 	return
 }
@@ -142,12 +142,33 @@ func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 	})
 }
 
-// updateVoteTargets update vote target denom list with params whitelist
-func updateVoteTargets(ctx sdk.Context, k Keeper, whitelist types.DenomList) {
-	var denoms []string
-	for _, item := range whitelist {
-		denoms = append(denoms, item.Name)
+// applyWhitelist update vote target denom list and set illiquid factor with params whitelist
+func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]bool) {
+
+	// check is there any update in whitelist params
+	updateRequired := false
+	if len(voteTargets) != len(whitelist) {
+		updateRequired = true
+	} else {
+		for _, item := range whitelist {
+			if _, ok := voteTargets[item.Name]; !ok {
+				updateRequired = true
+				break
+			}
+		}
 	}
 
-	k.SetVoteTargets(ctx, denoms)
+	if updateRequired {
+		k.ClearIlliquidFactors(ctx)
+
+		var denoms []string
+		for _, item := range whitelist {
+			denoms = append(denoms, item.Name)
+
+			k.SetIlliquidFactor(ctx, item.Name, item.IlliquidFactor)
+		}
+
+		k.SetVoteTargets(ctx, denoms)
+	}
+
 }

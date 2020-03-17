@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"testing"
 
 	core "github.com/terra-project/core/types"
@@ -14,20 +13,19 @@ import (
 func TestMsgExchangeRatePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
-	bz, err := VoteHash("1", sdk.OneDec(), core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
-	require.Nil(t, err)
+	bz := GetVoteHash("1", sdk.OneDec(), core.MicroSDRDenom, sdk.ValAddress(addrs[0]))
 
 	tests := []struct {
-		hash       string
+		hash       VoteHash
 		denom      string
 		voter      sdk.AccAddress
 		expectPass bool
 	}{
-		{hex.EncodeToString(bz), "", addrs[0], false},
-		{hex.EncodeToString(bz), core.MicroCNYDenom, addrs[0], true},
-		{hex.EncodeToString(bz), core.MicroCNYDenom, addrs[0], true},
-		{hex.EncodeToString(bz), core.MicroCNYDenom, sdk.AccAddress{}, false},
-		{"", core.MicroCNYDenom, addrs[0], false},
+		{bz, "", addrs[0], false},
+		{bz, core.MicroCNYDenom, addrs[0], true},
+		{bz, core.MicroCNYDenom, addrs[0], true},
+		{bz, core.MicroCNYDenom, sdk.AccAddress{}, false},
+		{VoteHash{}, core.MicroCNYDenom, addrs[0], false},
 	}
 
 	for i, tc := range tests {
@@ -98,27 +96,26 @@ func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
 
 	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroSDRDenom, sdk.OneDec()), sdk.NewDecCoinFromDec(core.MicroKRWDenom, sdk.NewDecWithPrec(32121, 1))}
-	bz, err := VoteHashForAggregate("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
-	require.Nil(t, err)
+	bz := GetAggregateVoteHash("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
 
 	tests := []struct {
-		hash          string
+		hash          AggregateVoteHash
 		exchangeRates sdk.DecCoins
 		voter         sdk.AccAddress
 		expectPass    bool
 	}{
-		{hex.EncodeToString(bz), exchangeRates, addrs[0], true},
-		{string(bz), exchangeRates, addrs[0], false},
-		{hex.EncodeToString(bz), exchangeRates, sdk.AccAddress{}, false},
-		{"", exchangeRates, addrs[0], false},
+		{bz, exchangeRates, addrs[0], true},
+		{bz[1:], exchangeRates, addrs[0], false},
+		{bz, exchangeRates, sdk.AccAddress{}, false},
+		{AggregateVoteHash{}, exchangeRates, addrs[0], false},
 	}
 
 	for i, tc := range tests {
 		msg := NewMsgAggregateExchangeRatePrevote(tc.hash, tc.voter, sdk.ValAddress(tc.voter))
 		if tc.expectPass {
-			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+			require.NoError(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
-			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+			require.Error(t, msg.ValidateBasic(), "test: %v", i)
 		}
 	}
 }

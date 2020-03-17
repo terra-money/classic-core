@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -87,12 +86,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 				validator = parsedVal
 			}
 
-			hashBytes, err := types.VoteHash(salt, amount, denom, validator)
-			if err != nil {
-				return err
-			}
-
-			hash := hex.EncodeToString(hashBytes)
+			hash := types.GetVoteHash(salt, amount, denom, validator)
 
 			msg := types.NewMsgExchangeRatePrevote(hash, denom, voter, validator)
 			err = msg.ValidateBasic()
@@ -257,12 +251,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 				validator = parsedVal
 			}
 
-			hashBytes, err := types.VoteHashForAggregate(salt, exchangeRatesStr, validator)
-			if err != nil {
-				return err
-			}
-
-			hash := hex.EncodeToString(hashBytes)
+			hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, validator)
 
 			msg := types.NewMsgAggregateExchangeRatePrevote(hash, voter, validator)
 			err = msg.ValidateBasic()
