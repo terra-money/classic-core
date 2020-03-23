@@ -44,13 +44,13 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 	handler := func(vote types.ExchangeRateVote) (stop bool) {
 		validator := k.StakingKeeper.Validator(ctx, vote.Voter)
 
-		// block normal vote from the voter who did aggregate vote
-		if _, ok := aggregateVoterMap[string(validator.GetOperator().Bytes())]; ok {
-			return false
-		}
-
 		// organize ballot only for the active validators
 		if validator != nil && validator.IsBonded() && !validator.IsJailed() {
+			// block normal vote from the voter who did aggregate vote
+			if _, ok := aggregateVoterMap[string(validator.GetOperator().Bytes())]; ok {
+				return false
+			}
+
 			power := validator.GetConsensusPower()
 			if !vote.ExchangeRate.IsPositive() {
 				// Make the power of abstain vote zero

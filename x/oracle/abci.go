@@ -25,9 +25,11 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 		// Exclude not bonded validator or jailed validators from tallying
 		if validator.IsBonded() && !validator.IsJailed() {
+
+			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
 			valAddr := validator.GetOperator()
-			validVotesCounterMap[valAddr.String()] = 0
-			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
+			validVotesCounterMap[string(valAddr)] = 0
+			winnerMap[string(valAddr)] = types.NewClaim(0, valAddr)
 		}
 
 		return false
@@ -72,6 +74,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
+
+			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
 			key := string(ballotWinningClaim.Recipient)
 
 			// Update claim
@@ -95,14 +99,14 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	//---------------------------
 	// Do miss counting & slashing
 	voteTargetsLen := len(voteTargets)
-	for operatorBechAddr, count := range validVotesCounterMap {
+	for operatorAddrByteStr, count := range validVotesCounterMap {
 		// Skip abstain & valid voters
 		if count == voteTargetsLen {
 			continue
 		}
 
 		// Increase miss counter
-		operator, _ := sdk.ValAddressFromBech32(operatorBechAddr) // error never occur
+		operator := sdk.ValAddress(operatorAddrByteStr) // error never occur
 		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
 	}
 
