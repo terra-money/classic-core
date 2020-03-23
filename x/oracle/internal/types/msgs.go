@@ -319,8 +319,10 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
 	}
 
-	if len(msg.ExchangeRates) == 0 {
+	if l := len(msg.ExchangeRates); l == 0 {
 		return sdk.ErrUnknownRequest("must provide at least one oracle exchange rate")
+	} else if l > 4096 {
+		return sdk.ErrInternal("exchange rates string can not exceed 512 character")
 	}
 
 	exchangeRateTuples, err := ParseExchangeRateTuples(msg.ExchangeRates)

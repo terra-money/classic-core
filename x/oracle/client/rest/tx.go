@@ -30,7 +30,7 @@ type PrevoteReq struct {
 	ExchangeRate sdk.Dec `json:"exchange_rate"`
 	Salt         string  `json:"salt"`
 
-	Validator string `json:"validator"`
+	Validator sdk.ValAddress `json:"validator"`
 }
 
 func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
@@ -56,15 +56,9 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// Default validator is self address
-		var valAddress sdk.ValAddress
+		valAddress := req.Validator
 		if len(req.Validator) == 0 {
 			valAddress = sdk.ValAddress(fromAddress)
-		} else {
-			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
 		}
 
 
@@ -100,7 +94,7 @@ type VoteReq struct {
 	ExchangeRate sdk.Dec `json:"exchange_rate"`
 	Salt         string  `json:"salt"`
 
-	Validator string `json:"validator"`
+	Validator sdk.ValAddress `json:"validator"`
 }
 
 func submitVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
@@ -126,15 +120,9 @@ func submitVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// Default validator is self address
-		var valAddress sdk.ValAddress
+		valAddress := req.Validator
 		if len(req.Validator) == 0 {
 			valAddress = sdk.ValAddress(fromAddress)
-		} else {
-			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
 		}
 
 		// create the message
@@ -216,12 +204,19 @@ type AggregatePrevoteReq struct {
 	Hash          string `json:"hash"`
 	ExchangeRates string `json:"exchange_rates"`
 	Salt          string `json:"salt"`
-
-	Validator string `json:"validator"`
 }
 
 func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		valAddress, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		var req AggregatePrevoteReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
@@ -237,18 +232,6 @@ func submitAggregatePrevoteHandlerFunction(cliCtx context.CLIContext) http.Handl
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
-		}
-
-		// Default validator is self address
-		var valAddress sdk.ValAddress
-		if len(req.Validator) == 0 {
-			valAddress = sdk.ValAddress(fromAddress)
-		} else {
-			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
 		}
 
 		var hash types.AggregateVoteHash
@@ -288,12 +271,19 @@ type AggregateVoteReq struct {
 
 	ExchangeRates string `json:"exchange_rates"`
 	Salt          string `json:"salt"`
-
-	Validator string `json:"validator"`
 }
 
 func submitAggregateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		voter := vars[RestVoter]
+
+		valAddress, err := sdk.ValAddressFromBech32(voter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		var req AggregateVoteReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
@@ -309,18 +299,6 @@ func submitAggregateVoteHandlerFunction(cliCtx context.CLIContext) http.HandlerF
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
-		}
-
-		// Default validator is self address
-		var valAddress sdk.ValAddress
-		if len(req.Validator) == 0 {
-			valAddress = sdk.ValAddress(fromAddress)
-		} else {
-			valAddress, err = sdk.ValAddressFromBech32(req.Validator)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
 		}
 
 		// Check validation of tuples

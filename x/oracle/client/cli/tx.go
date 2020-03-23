@@ -66,7 +66,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 			salt := args[0]
 			rate, err := sdk.ParseDecCoin(args[1])
 			if err != nil {
-				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange_rate should be formatted as DecCoin", rate)
+				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange_rate should be formatted as DecCoin; %s", rate, err.Error())
 			}
 
 			// Get from address
@@ -127,7 +127,7 @@ $ terracli tx oracle vote 1234 8890.0ukrw terravaloper1....
 			salt := args[0]
 			rate, err := sdk.ParseDecCoin(args[1])
 			if err != nil {
-				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange rate should be formatted as DecCoin", rate)
+				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange_rate should be formatted as DecCoin; %s", rate, err.Error())
 			}
 
 			// Get from address
@@ -233,7 +233,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 			exchangeRatesStr := args[1]
 			_, err := types.ParseExchangeRateTuples(exchangeRatesStr)
 			if err != nil {
-				return fmt.Errorf("given exchange_rates {%s} is not a valid format; exchange_rate should be formatted as DecCoins", exchangeRatesStr)
+				return fmt.Errorf("given exchange_rates {%s} is not a valid format; exchange_rate should be formatted as DecCoins; %s", exchangeRatesStr, err.Error())
 			}
 
 			// Get from address
@@ -293,7 +293,7 @@ $ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
 			exchangeRatesStr := args[1]
 			_, err := types.ParseExchangeRateTuples(exchangeRatesStr)
 			if err != nil {
-				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange rate should be formatted as DecCoin", exchangeRatesStr)
+				return fmt.Errorf("given exchange_rate {%s} is not a valid format; exchange rate should be formatted as DecCoin; %s", exchangeRatesStr, err.Error())
 			}
 
 			// Get from address

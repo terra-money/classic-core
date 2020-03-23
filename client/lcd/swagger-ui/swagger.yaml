@@ -3411,8 +3411,6 @@ definitions:
         type: string
         example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
         description: "hex string; hash of next vote; empty == skip prevote"
-      validator:
-        $ref: "#/definitions/ValidatorAddress"
   AggregateVoteReq:
     type: object
     properties:
@@ -3426,8 +3424,6 @@ definitions:
         type: string
         example: "abcd"
         description: "proof salt was used to make prevote hash; initial prevote does not require this field"
-      validator:
-        $ref: "#/definitions/ValidatorAddress"
   DelegateReq:
     type: object
     properties:
