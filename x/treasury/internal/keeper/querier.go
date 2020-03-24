@@ -5,7 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury/internal/types"
 )
 
@@ -32,7 +31,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryCurrentEpoch(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	curEpoch := core.GetEpoch(ctx)
+	curEpoch := keeper.GetEpoch(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, curEpoch)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
