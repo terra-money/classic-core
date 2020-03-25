@@ -169,35 +169,12 @@ build-docker-terradnode:
 
 # Run a 4-node testnet locally
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z tendermint/terradnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
 	docker-compose up -d
 
 # Stop testnet
 localnet-stop:
 	docker-compose down
-
-setup-contract-tests-data:
-	echo 'Prepare data for the contract tests'
-	rm -rf /tmp/contract_tests ; \
-	mkdir /tmp/contract_tests ; \
-	cp "${GOPATH}/pkg/mod/${CORE_PACK}/client/lcd/swagger-ui/swagger.yaml" /tmp/contract_tests/swagger.yaml ; \
-	./build/terrad init --home /tmp/contract_tests/.terrad --chain-id lcd contract-tests ; \
-	tar -xzf lcd_test/testdata/state.tar.gz -C /tmp/contract_tests/
-
-start-terra: setup-contract-tests-data
-	./build/terrad --home /tmp/contract_tests/.terrad start &
-	@sleep 2s
-
-setup-transactions: start-terra
-	@bash ./lcd_test/testdata/setup.sh
-
-run-lcd-contract-tests:
-	@echo "Running Terra LCD for contract tests"
-	./build/terracli rest-server --laddr tcp://0.0.0.0:8080 --home /tmp/contract_tests/.terracli --node http://localhost:26657 --chain-id lcd --trust-node true
-
-contract-tests: setup-transactions
-	@echo "Running Terra LCD for contract tests"
-	dredd && pkill terrad
 
 # include simulations
 include sims.mk
@@ -206,4 +183,3 @@ include sims.mk
 	go-mod-cache draw-deps clean build \
 	setup-transactions setup-contract-tests-data start-terra run-lcd-contract-tests contract-tests \
 	test test-all test-build test-cover test-unit test-race
-

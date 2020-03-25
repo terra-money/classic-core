@@ -275,9 +275,9 @@ jobs:
           if [ -z "${TERRAD_VERSION}" ]; then
             docker build .
           else
-            docker build -t tendermint/terra:$TERRAD_VERSION .
-            # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-            # docker push tendermint/terra:$TERRAD_VERSION
+            docker build -t terraproject/core:$TERRAD_VERSION .
+            docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+            docker push terraproject/core:$TERRAD_VERSION
           fi
 
   docker-tagged:
@@ -289,9 +289,9 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: |
-          docker build -t tendermint/terra:$CIRCLE_TAG .
-          # docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-          # docker push tendermint/terra:$CIRCLE_TAG
+          docker build -t terraproject/core:$CIRCLE_TAG .
+          docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+          docker push terraproject/core:$CIRCLE_TAG
 
   reproducible-builds:
     executor: golang
@@ -317,27 +317,6 @@ jobs:
           path: /go/src/github.com/terra-project/core/terra-linux-res.yml
       - store_artifacts:
           path: /go/src/github.com/terra-project/core/terra-windows-res.yml
-
-# FIXME: The `setup-contract-tests-data` make target is broken as it completely
-# overrides the .terrad directory.
-#
-#  contract-tests:
-#    executor: golang
-#    steps:
-#      - attach_workspace:
-#          at: /tmp/workspace
-#      - checkout
-#      - setup_remote_docker:
-#          docker_layer_caching: true
-#      - run:
-#          name: Get Node.js and test REST implementation against swagger documentation at  https://swagger.terra.money/rpc/
-#          command: |
-#            go get github.com/snikch/goodman/cmd/goodman
-#            make build
-#            make build-contract-tests-hooks
-#            make setup-contract-tests-data
-#            export PATH=~/.local/bin:$PATH
-#            ./contrib/get_node.sh && make contract-tests
 
 workflows:
   version: 2
@@ -414,6 +393,3 @@ workflows:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-#      - contract-tests:
-#          requires:
-#            - setup-dependencies
