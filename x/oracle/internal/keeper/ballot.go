@@ -69,6 +69,5 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 	}
 	k.IterateExchangeRateVotes(ctx, handler)
 
-
 	return
 }

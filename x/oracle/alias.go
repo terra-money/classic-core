@@ -81,7 +81,7 @@ var (
 	GetAggregateExchangeRatePrevoteKey = types.GetAggregateExchangeRatePrevoteKey
 	GetAggregateExchangeRateVoteKey    = types.GetAggregateExchangeRateVoteKey
 	GetTobinTaxKey                     = types.GetTobinTaxKey
-	ExtractDenomFromTobinTaxKey          = types.ExtractDenomFromTobinTaxKey
+	ExtractDenomFromTobinTaxKey        = types.ExtractDenomFromTobinTaxKey
 	NewMsgExchangeRatePrevote          = types.NewMsgExchangeRatePrevote
 	NewMsgExchangeRateVote             = types.NewMsgExchangeRateVote
 	NewMsgDelegateFeedConsent          = types.NewMsgDelegateFeedConsent

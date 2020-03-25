@@ -322,7 +322,6 @@ func TestQueryAggregatePrevote(t *testing.T) {
 	require.Equal(t, prevote2, prevote)
 }
 
-
 func TestQueryAggregateVote(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)

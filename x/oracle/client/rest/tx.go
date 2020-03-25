@@ -61,7 +61,6 @@ func submitPrevoteHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 			valAddress = sdk.ValAddress(fromAddress)
 		}
 
-
 		var hash types.VoteHash
 
 		// If hash is not given, then retrieve hash from exchange_rate and salt

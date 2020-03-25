@@ -26,7 +26,7 @@ const (
 	CodeInvalidMsgFormat    codeType = 11
 	CodeNoAggregatePrevote  codeType = 12
 	CodeNoAggregateVote     codeType = 13
-	CodeNoTobinTax    codeType = 14
+	CodeNoTobinTax          codeType = 14
 )
 
 // ----------------------------------------
