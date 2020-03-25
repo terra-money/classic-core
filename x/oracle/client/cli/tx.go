@@ -222,7 +222,7 @@ $ terracli tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
+$ terracli tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -271,18 +271,18 @@ func GetCmdAggregateExchangeRateVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aggregate-vote [salt] [exchange_rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle vote for the exchange_rates of Luna",
+		Short: "Submit an oracle aggregate vote for the exchange_rates of Luna",
 		Long: strings.TrimSpace(`
-Submit a vote for the exchange_rates of Luna w.r.t the input denom. Companion to a prevote submitted in the previous vote period. 
+Submit a aggregate vote for the exchange_rates of Luna w.r.t the input denom. Companion to a prevote submitted in the previous vote period. 
 
-$ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr 
+$ terracli tx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr 
 
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
 "salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terracli tx oracle vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
+$ terracli tx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
