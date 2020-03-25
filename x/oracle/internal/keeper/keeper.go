@@ -421,7 +421,7 @@ func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, to
 	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := types.SplitDenomFromTobinTaxKey(iter.Key())
+		denom := types.ExtractDenomFromTobinTaxKey(iter.Key())
 
 		var tobinTax sdk.Dec
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &tobinTax)

@@ -17,7 +17,8 @@ func (k Keeper) BasePool(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// MinStabilitySpread is the minimum swap fee(spread)
+// MinStabilitySpread is the minimum spread applied to swaps to / from Luna.
+// Intended to prevent swing trades exploiting oracle period delays
 func (k Keeper) MinStabilitySpread(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyMinStabilitySpread, &res)
 	return

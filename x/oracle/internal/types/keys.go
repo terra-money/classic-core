@@ -88,8 +88,8 @@ func GetTobinTaxKey(d string) []byte {
 	return append(TobinTaxKey, []byte(d)...)
 }
 
-// SplitDenomFromTobinTaxKey - split denom from the tobin tax key
-func SplitDenomFromTobinTaxKey(key []byte) (denom string) {
+// ExtractDenomFromTobinTaxKey - split denom from the tobin tax key
+func ExtractDenomFromTobinTaxKey(key []byte) (denom string) {
 	denom = string(key[1:])
 	return
 }
