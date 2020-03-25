@@ -42,17 +42,14 @@ var (
 	NewQuerier          = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                         = types.ModuleCdc
-	TerraPoolDeltaKey                 = types.TerraPoolDeltaKey
-	ParamStoreKeyBasePool             = types.ParamStoreKeyBasePool
-	ParamStoreKeyPoolRecoveryPeriod   = types.ParamStoreKeyPoolRecoveryPeriod
-	ParamStoreKeyMinSpread            = types.ParamStoreKeyMinSpread
-	ParmaStoreKeyTobinTax             = types.ParmaStoreKeyTobinTax
-	ParmaStoreKeyIlliquidTobinTaxList = types.ParmaStoreKeyIlliquidTobinTaxList
-	DefaultBasePool                   = types.DefaultBasePool
-	DefaultPoolRecoveryPeriod         = types.DefaultPoolRecoveryPeriod
-	DefaultMinSpread                  = types.DefaultMinSpread
-	DefaultTobinTax                   = types.DefaultTobinTax
+	ModuleCdc                       = types.ModuleCdc
+	TerraPoolDeltaKey               = types.TerraPoolDeltaKey
+	ParamStoreKeyBasePool           = types.ParamStoreKeyBasePool
+	ParamStoreKeyPoolRecoveryPeriod = types.ParamStoreKeyPoolRecoveryPeriod
+	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinStabilitySpread
+	DefaultBasePool                 = types.DefaultBasePool
+	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
+	DefaultMinSpread                = types.DefaultMinStabilitySpread
 )
 
 type (
