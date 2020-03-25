@@ -394,67 +394,47 @@ func (k Keeper) HashAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddr
 	return store.Has(types.GetAggregateExchangeRateVoteKey(voter))
 }
 
-// GetVoteTargets returns current oracle vote target denom list
-func (k Keeper) GetVoteTargets(ctx sdk.Context) (voteTargets []string) {
+// GetTobinTax return tobin tax for the denom
+func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, err sdk.Error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.VoteTargetsKey)
+	bz := store.Get(types.GetTobinTaxKey(denom))
 	if bz == nil {
-		voteTargets = []string{}
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &voteTargets)
-	}
-
-	return
-}
-
-// SetVoteTargets updates vote target denom list for next vote period
-func (k Keeper) SetVoteTargets(ctx sdk.Context, voteTargets []string) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(voteTargets)
-	store.Set(types.VoteTargetsKey, bz)
-}
-
-// GetIlliquidFactor return illiquid factor for the denom
-func (k Keeper) GetIlliquidFactor(ctx sdk.Context, denom string) (illiquidFactor sdk.Dec, err sdk.Error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetIlliquidFactorKey(denom))
-	if bz == nil {
-		err = types.ErrNoIlliquidFactor(k.codespace, denom)
+		err = types.ErrNoTobinTax(k.codespace, denom)
 		return
 	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &illiquidFactor)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &tobinTax)
 	}
 
 	return
 }
 
-// SetIlliquidFactor updates illiquid factor for the denom
-func (k Keeper) SetIlliquidFactor(ctx sdk.Context, denom string, illiquidFactor sdk.Dec) {
+// SetTobinTax updates tobin tax for the denom
+func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(illiquidFactor)
-	store.Set(types.GetIlliquidFactorKey(denom), bz)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(tobinTax)
+	store.Set(types.GetTobinTaxKey(denom), bz)
 }
 
-// IterateIlliquidFactors iterates rate over illiquid factors in the store
-func (k Keeper) IterateIlliquidFactors(ctx sdk.Context, handler func(denom string, illiquidFactor sdk.Dec) (stop bool)) {
+// IterateTobinTaxs iterates rate over tobin taxes in the store
+func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, tobinTax sdk.Dec) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.IlliquidFactoerKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := types.SplitDenomFromIlliquidFactorKey(iter.Key())
+		denom := types.SplitDenomFromTobinTaxKey(iter.Key())
 
-		var illiquidFactor sdk.Dec
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &illiquidFactor)
-		if handler(denom, illiquidFactor) {
+		var tobinTax sdk.Dec
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &tobinTax)
+		if handler(denom, tobinTax) {
 			break
 		}
 	}
 }
 
-// ClearIlliquidFactors clears illiquid factors
-func (k Keeper) ClearIlliquidFactors(ctx sdk.Context) {
+// ClearTobinTaxes clears tobin taxes
+func (k Keeper) ClearTobinTaxes(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.IlliquidFactoerKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())

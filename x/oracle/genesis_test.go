@@ -19,9 +19,8 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, "denom", sdk.NewDec(123))
 	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, NewAggregateExchangeRatePrevote(AggregateVoteHash{123}, sdk.ValAddress{}, int64(2)))
 	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Denom: "foo", ExchangeRate: sdk.NewDec(123)}}, sdk.ValAddress{}))
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{"foo", "bar"})
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, "denom", sdk.NewDec(123))
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, "denom2", sdk.NewDec(123))
+	input.OracleKeeper.SetTobinTax(input.Ctx, "denom", sdk.NewDecWithPrec(123, 3))
+	input.OracleKeeper.SetTobinTax(input.Ctx, "denom2", sdk.NewDecWithPrec(123, 3))
 	genesis := ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestInput(t)

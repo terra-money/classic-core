@@ -26,7 +26,7 @@ const (
 	CodeInvalidMsgFormat    codeType = 11
 	CodeNoAggregatePrevote  codeType = 12
 	CodeNoAggregateVote     codeType = 13
-	CodeNoIlliquidFactor    codeType = 14
+	CodeNoTobinTax    codeType = 14
 )
 
 // ----------------------------------------
@@ -87,7 +87,7 @@ func ErrNoAggregateVote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.E
 	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No aggregate vote exists from %s", voter))
 }
 
-// ErrNoIlliquidFactor called when no illiquid factor exists
-func ErrNoIlliquidFactor(codespace sdk.CodespaceType, denom string) sdk.Error {
-	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No illiquid factor exists for %s", denom))
+// ErrNoTobinTax called when no tobin tax exists for the given denom
+func ErrNoTobinTax(codespace sdk.CodespaceType, denom string) sdk.Error {
+	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No tobin tax exists for %s", denom))
 }

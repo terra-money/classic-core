@@ -8,16 +8,16 @@ import (
 
 // Denom is the object to hold configurations of each denom
 type Denom struct {
-	Name           string  `json:"name" yaml:"name"`
-	IlliquidFactor sdk.Dec `json:"illiquid_factor" yaml:"illiquid_factor"`
+	Name     string  `json:"name" yaml:"name"`
+	TobinTax sdk.Dec `json:"tobin_tax" yaml:"tobin_tax"`
 }
 
 // String implements fmt.Stringer interface
 func (d Denom) String() string {
 	return fmt.Sprintf(`
 Name:           %s
-IlliquidFactor: %s
-`, d.Name, d.IlliquidFactor)
+TobinTax:       %s
+`, d.Name, d.TobinTax)
 }
 
 // DenomList is array of Denom

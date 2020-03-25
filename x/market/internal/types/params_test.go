@@ -15,10 +15,6 @@ func TestParams_Validate(t *testing.T) {
 	require.Error(t, params.Validate())
 
 	params = DefaultParams()
-	params.MinSpread = sdk.NewDec(-1)
-	require.Error(t, params.Validate())
-
-	params = DefaultParams()
-	params.TobinTax = sdk.NewDec(-1)
+	params.MinStabilitySpread = sdk.NewDec(-1)
 	require.Error(t, params.Validate())
 }

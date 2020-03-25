@@ -290,9 +290,12 @@ func TestOracleRewardDistribution(t *testing.T) {
 func TestOracleRewardBand(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
+
+	// clear tobin tax to reset vote targets
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -368,9 +371,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
 
 	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -449,14 +452,15 @@ func TestWhitelistSlashing(t *testing.T) {
 func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
+
+	// clear tobin tax to reset vote targets
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-	// Account 1, dummy denom
-	makePrevoteAndVote(t, input, h, 0, core.MicroCNYDenom, randomExchangeRate, 0)
 	// Account 1, KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
 
@@ -469,9 +473,12 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 func TestAbstainSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
+
+	// clear tobin tax to reset vote targets
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
 
 	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -499,10 +506,12 @@ func TestAbstainSlashing(t *testing.T) {
 func TestVoteTargets(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}, {Name: core.MicroSDRDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}, {Name: core.MicroSDRDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetVoteTargets(input.Ctx, []string{core.MicroKRWDenom})
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, core.MicroKRWDenom, sdk.OneDec())
+
+	// clear tobin tax to reset vote targets
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
 
 	// KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
@@ -519,13 +528,13 @@ func TestVoteTargets(t *testing.T) {
 	// vote targets are {KRW, SDR}
 	require.Equal(t, []string{core.MicroKRWDenom, core.MicroSDRDenom}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
-	// illiquid factor must be exists for SDR
-	sdrFactor, err := input.OracleKeeper.GetIlliquidFactor(input.Ctx, core.MicroSDRDenom)
+	// tobin tax must be exists for SDR
+	sdrTobinTax, err := input.OracleKeeper.GetTobinTax(input.Ctx, core.MicroSDRDenom)
 	require.NoError(t, err)
-	require.Equal(t, sdk.OneDec(), sdrFactor)
+	require.Equal(t, DefaultTobinTax, sdrTobinTax)
 
 	// delete SDR
-	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()}}
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// KRW, missing
@@ -542,7 +551,7 @@ func TestVoteTargets(t *testing.T) {
 	// SDR must be deleted
 	require.Equal(t, []string{core.MicroKRWDenom}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
-	_, err = input.OracleKeeper.GetIlliquidFactor(input.Ctx, core.MicroSDRDenom)
+	_, err = input.OracleKeeper.GetTobinTax(input.Ctx, core.MicroSDRDenom)
 	require.Error(t, err)
 }
 

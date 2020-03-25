@@ -254,8 +254,8 @@ func TestParams(t *testing.T) {
 	slashWindow := int64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.DenomList{
-		{Name: core.MicroSDRDenom, IlliquidFactor: sdk.OneDec()},
-		{Name: core.MicroKRWDenom, IlliquidFactor: sdk.OneDec()},
+		{Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax},
+		{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -439,47 +439,31 @@ func TestAggregateVoteIterate(t *testing.T) {
 	})
 }
 
-func TestVoteTargetsGetSet(t *testing.T) {
+func TestTobinTaxGetSet(t *testing.T) {
 	input := CreateTestInput(t)
 
-	var denomList []string
-	for _, denom := range input.OracleKeeper.Whitelist(input.Ctx) {
-		denomList = append(denomList, denom.Name)
-	}
-	// return params Whitelist
-	require.Equal(t, denomList, input.OracleKeeper.GetVoteTargets(input.Ctx))
-
-	testDenomList := []string{"foo1", "foo2", "foo3"}
-
-	input.OracleKeeper.SetVoteTargets(input.Ctx, testDenomList)
-	require.Equal(t, testDenomList, input.OracleKeeper.GetVoteTargets(input.Ctx))
-}
-
-func TestIlliquidFactorGetSet(t *testing.T) {
-	input := CreateTestInput(t)
-
-	illiquidFactors := map[string]sdk.Dec{
+	tobinTaxes := map[string]sdk.Dec{
 		core.MicroSDRDenom: sdk.NewDec(1),
 		core.MicroUSDDenom: sdk.NewDecWithPrec(1, 3),
 		core.MicroKRWDenom: sdk.NewDecWithPrec(123, 3),
-		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 1),
+		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 4),
 	}
 
-	for denom, illiquidFactor := range illiquidFactors {
-		input.OracleKeeper.SetIlliquidFactor(input.Ctx, denom, illiquidFactor)
-		factor, err := input.OracleKeeper.GetIlliquidFactor(input.Ctx, denom)
+	for denom, tobinTax := range tobinTaxes {
+		input.OracleKeeper.SetTobinTax(input.Ctx, denom, tobinTax)
+		factor, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
 		require.NoError(t, err)
-		require.Equal(t, illiquidFactors[denom], factor)
+		require.Equal(t, tobinTaxes[denom], factor)
 	}
 
-	input.OracleKeeper.IterateIlliquidFactors(input.Ctx, func(denom string, illiquidFactor sdk.Dec) (stop bool) {
-		require.Equal(t, illiquidFactors[denom], illiquidFactor)
+	input.OracleKeeper.IterateTobinTaxes(input.Ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		require.Equal(t, tobinTaxes[denom], tobinTax)
 		return false
 	})
 
-	input.OracleKeeper.ClearIlliquidFactors(input.Ctx)
-	for denom := range illiquidFactors {
-		_, err := input.OracleKeeper.GetIlliquidFactor(input.Ctx, denom)
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	for denom := range tobinTaxes {
+		_, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
 		require.Error(t, err)
 	}
 }

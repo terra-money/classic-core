@@ -2179,7 +2179,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/{denom}/prevotes:
     post:
-      summary: Generate oracle exchange rate prevote message containing hash of an vote
+      summary: Generate oracle exchange rate prevote message containing a hash of a vote
       tags:
         - Oracle
       produces:
@@ -2410,7 +2410,7 @@ paths:
           description: Internal Server Error
   /oracle/voters/{validator}/aggregate_prevote:
     post:
-      summary: Generate oracle aggregate exchange rate prevote message containing hash
+      summary: Generate oracle aggregate exchange rate prevote message containing a hash
       tags:
         - Oracle
       produces:
@@ -2457,7 +2457,7 @@ paths:
           description: Internal Server Error
   /oracle/voters/{validator}/aggregate_vote:
     post:
-      summary: Generate oracle aggregate exchange rate vote message containing exchange rates and salt to prove aggregate prevote
+      summary: Generate oracle aggregate exchange rate vote message containing exchange rates and salt to prove the aggregate prevote
       tags:
         - Oracle
       produces:

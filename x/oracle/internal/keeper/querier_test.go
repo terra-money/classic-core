@@ -376,8 +376,13 @@ func TestQueryVoteTargets(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
+	// clear tobin taxes
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+
 	voteTargets := []string{"denom", "denom2", "denom3"}
-	input.OracleKeeper.SetVoteTargets(input.Ctx, voteTargets)
+	for _, target := range voteTargets {
+		input.OracleKeeper.SetTobinTax(input.Ctx, target, sdk.OneDec())
+	}
 
 	req := abci.RequestQuery{
 		Path: "",
@@ -388,18 +393,22 @@ func TestQueryVoteTargets(t *testing.T) {
 	require.NoError(t, err)
 
 	var voteTargetsRes []string
-	cdc.UnmarshalJSON(res, &voteTargetsRes)
+	err2 := cdc.UnmarshalJSON(res, &voteTargetsRes)
+	require.NoError(t, err2)
 	require.Equal(t, voteTargets, voteTargetsRes)
 }
 
-func TestQueryIlliquidFactors(t *testing.T) {
+func TestQueryTobinTaxes(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	illiquidFactors := types.DenomList{{core.MicroKRWDenom, sdk.OneDec()}, {core.MicroSDRDenom, sdk.NewDecWithPrec(123, 2)}}
-	for _, item := range illiquidFactors {
-		input.OracleKeeper.SetIlliquidFactor(input.Ctx, item.Name, item.IlliquidFactor)
+	// clear tobin taxes
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+
+	tobinTaxes := types.DenomList{{core.MicroKRWDenom, sdk.OneDec()}, {core.MicroSDRDenom, sdk.NewDecWithPrec(123, 2)}}
+	for _, item := range tobinTaxes {
+		input.OracleKeeper.SetTobinTax(input.Ctx, item.Name, item.TobinTax)
 	}
 
 	req := abci.RequestQuery{
@@ -407,23 +416,24 @@ func TestQueryIlliquidFactors(t *testing.T) {
 		Data: nil,
 	}
 
-	res, err := querier(input.Ctx, []string{types.QueryIlliquidFactors}, req)
+	res, err := querier(input.Ctx, []string{types.QueryTobinTaxes}, req)
 	require.NoError(t, err)
 
-	var illiquidFactorsRes types.DenomList
-	cdc.UnmarshalJSON(res, &illiquidFactorsRes)
-	require.Equal(t, illiquidFactors, illiquidFactorsRes)
+	var tobinTaxesRes types.DenomList
+	err2 := cdc.UnmarshalJSON(res, &tobinTaxesRes)
+	require.NoError(t, err2)
+	require.Equal(t, tobinTaxes, tobinTaxesRes)
 }
 
-func TestQueryIlliquidFactor(t *testing.T) {
+func TestQueryTobinTax(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
 	denom := types.Denom{core.MicroKRWDenom, sdk.OneDec()}
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, denom.Name, denom.IlliquidFactor)
+	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
 
-	queryParams := types.NewQueryIlliquidFactorParams(core.MicroKRWDenom)
+	queryParams := types.NewQueryTobinTaxParams(core.MicroKRWDenom)
 	bz, err := cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
 
@@ -432,10 +442,10 @@ func TestQueryIlliquidFactor(t *testing.T) {
 		Data: bz,
 	}
 
-	res, err := querier(input.Ctx, []string{types.QueryIlliquidFactor}, req)
+	res, err := querier(input.Ctx, []string{types.QueryTobinTax}, req)
 	require.NoError(t, err)
 
-	var illiquidFactorRes sdk.Dec
-	cdc.UnmarshalJSON(res, &illiquidFactorRes)
-	require.Equal(t, denom.IlliquidFactor, illiquidFactorRes)
+	var tobinTaxRes sdk.Dec
+	cdc.UnmarshalJSON(res, &tobinTaxRes)
+	require.Equal(t, denom.TobinTax, tobinTaxRes)
 }

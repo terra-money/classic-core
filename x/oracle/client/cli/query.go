@@ -33,7 +33,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryAggregatePrevote(cdc),
 		GetCmdQueryAggregateVote(cdc),
 		GetCmdQueryVoteTargets(cdc),
-		GetCmdQueryIlliquidFactors(cdc),
+		GetCmdQueryTobinTaxes(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -438,20 +438,20 @@ func GetCmdQueryVoteTargets(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryIlliquidFactors implements the query params command.
-func GetCmdQueryIlliquidFactors(cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryTobinTaxes implements the query params command.
+func GetCmdQueryTobinTaxes(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "illiquid-factors [denom]",
+		Use:   "tobin-taxes [denom]",
 		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the current Oracle illiquid factors.",
+		Short: "Query the current Oracle tobin taxes.",
 		Long: strings.TrimSpace(`
-Query the current Oracle illiquid factors.
+Query the current Oracle tobin taxes.
 
-$ terracli query oracle illiquid-factors 
+$ terracli query oracle tobin-taxes
 
 Or, can filter with denom
 
-$ terracli query oracle illiquid-factors ukrw
+$ terracli query oracle tobin-taxes ukrw
 
 Or, can 
 `),
@@ -459,32 +459,32 @@ Or, can
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			if len(args) == 0 {
-				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIlliquidFactors), nil)
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTobinTaxes), nil)
 				if err != nil {
 					return err
 				}
 
-				var illiquidFactors types.DenomList
-				cdc.MustUnmarshalJSON(res, &illiquidFactors)
-				return cliCtx.PrintOutput(illiquidFactors)
+				var tobinTaxes types.DenomList
+				cdc.MustUnmarshalJSON(res, &tobinTaxes)
+				return cliCtx.PrintOutput(tobinTaxes)
 			}
 
 			denom := args[0]
-			params := types.NewQueryIlliquidFactorParams(denom)
+			params := types.NewQueryTobinTaxParams(denom)
 
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIlliquidFactor), bz)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTobinTax), bz)
 			if err != nil {
 				return err
 			}
 
-			var illiquidFactor sdk.Dec
-			cdc.MustUnmarshalJSON(res, &illiquidFactor)
-			return cliCtx.PrintOutput(illiquidFactor)
+			var tobinTax sdk.Dec
+			cdc.MustUnmarshalJSON(res, &tobinTax)
+			return cliCtx.PrintOutput(tobinTax)
 		},
 	}
 

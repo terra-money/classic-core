@@ -54,9 +54,9 @@ func TestParamsEqual(t *testing.T) {
 	err = p7.Validate()
 	require.Error(t, err)
 
-	// non-positive illiquid factor
+	// non-positive tobin tax
 	p8 := DefaultParams()
-	p8.Whitelist[0].IlliquidFactor = sdk.NewDec(-1)
+	p8.Whitelist[0].TobinTax = sdk.NewDec(-1)
 	err = p8.Validate()
 	require.Error(t, err)
 

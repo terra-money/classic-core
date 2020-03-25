@@ -55,7 +55,7 @@ func TestComputeSwap(t *testing.T) {
 		retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 
 		require.NoError(t, err)
-		require.True(t, spread.GTE(input.MarketKeeper.MinSpread(input.Ctx)))
+		require.True(t, spread.GTE(input.MarketKeeper.MinStabilitySpread(input.Ctx)))
 		require.Equal(t, sdk.NewDecFromInt(offerCoin.Amount).Quo(lunaPriceInSDR), retCoin.Amount)
 	}
 
@@ -94,12 +94,11 @@ func TestIlliquidTobinTaxListParams(t *testing.T) {
 
 	tobinTax := sdk.NewDecWithPrec(25, 4)
 	params := input.MarketKeeper.GetParams(input.Ctx)
-	params.TobinTax = tobinTax
 	input.MarketKeeper.SetParams(input.Ctx, params)
 
 	illiquidFactor := sdk.NewDec(2)
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
-	input.OracleKeeper.SetIlliquidFactor(input.Ctx, core.MicroMNTDenom, illiquidFactor)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, tobinTax)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroMNTDenom, tobinTax.Mul(illiquidFactor))
 
 	swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
 	offerCoin := sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)

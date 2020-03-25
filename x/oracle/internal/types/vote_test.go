@@ -14,11 +14,11 @@ func TestParseExchangeRateTuples(t *testing.T) {
 	_, err = ParseExchangeRateTuples(duplicatedDenom)
 	require.Error(t, err)
 
-	invalidCoin := "123.123"
-	_, err = ParseExchangeRateTuples(invalidCoin)
+	invalidCoins := "123.123"
+	_, err = ParseExchangeRateTuples(invalidCoins)
 	require.Error(t, err)
 
-	invalidCoinWithValid := "123.0uluna,123.1"
-	_, err = ParseExchangeRateTuples(invalidCoinWithValid)
+	invalidCoinsWithValid := "123.0uluna,123.1"
+	_, err = ParseExchangeRateTuples(invalidCoinsWithValid)
 	require.Error(t, err)
 }

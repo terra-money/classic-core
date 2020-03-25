@@ -35,7 +35,7 @@ const (
 //
 // - 0x07<valAddress_Bytes>: AggregateExchangeRateVote
 //
-// - 0x08: []string
+// - 0x08<denom_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
 	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
@@ -45,8 +45,7 @@ var (
 	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
 	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
 	AggregateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
-	VoteTargetsKey      = []byte{0x08} // key to a vote targets for current oracle vote period
-	IlliquidFactoerKey  = []byte{0x09} // prefix for each key to a illiquid factor
+	TobinTaxKey         = []byte{0x08} // prefix for each key to a tobin tax
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -84,13 +83,13 @@ func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
 	return append(AggregateVoteKey, v.Bytes()...)
 }
 
-// IlliquidFactorKey - stored by *denom* bytes
-func GetIlliquidFactorKey(d string) []byte {
-	return append(IlliquidFactoerKey, []byte(d)...)
+// GetTobinTaxKey - stored by *denom* bytes
+func GetTobinTaxKey(d string) []byte {
+	return append(TobinTaxKey, []byte(d)...)
 }
 
-// SplitDenomFromIlliquidFactorKey - split denom from the illiquid factor key
-func SplitDenomFromIlliquidFactorKey(key []byte) (denom string) {
+// SplitDenomFromTobinTaxKey - split denom from the tobin tax key
+func SplitDenomFromTobinTaxKey(key []byte) (denom string) {
 	denom = string(key[1:])
 	return
 }

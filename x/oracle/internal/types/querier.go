@@ -17,8 +17,8 @@ const (
 	QueryAggregatePrevote = "aggregatePrevote"
 	QueryAggregateVote    = "aggregateVote"
 	QueryVoteTargets      = "voteTargets"
-	QueryIlliquidFactor   = "illiquidFactor"
-	QueryIlliquidFactors  = "illiquidFactors"
+	QueryTobinTax         = "tobinTax"
+	QueryTobinTaxes       = "tobinTaxes"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -100,13 +100,13 @@ func NewQueryAggregateVoteParams(validator sdk.ValAddress) QueryAggregateVotePar
 	return QueryAggregateVoteParams{validator}
 }
 
-// QueryIlliquidFactorParams defines the params for the following queries:
-// - 'custom/oracle/illiquidFactor'
-type QueryIlliquidFactorParams struct {
+// QueryTobinTaxParams defines the params for the following queries:
+// - 'custom/oracle/tobinTax'
+type QueryTobinTaxParams struct {
 	Denom string
 }
 
-// NewQueryIlliquidFactorParams returns params for feeder delegation query
-func NewQueryIlliquidFactorParams(denom string) QueryIlliquidFactorParams {
-	return QueryIlliquidFactorParams{denom}
+// NewQueryTobinTaxParams returns params for tobin tax query
+func NewQueryTobinTaxParams(denom string) QueryTobinTaxParams {
+	return QueryTobinTaxParams{denom}
 }

@@ -63,24 +63,13 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.AddAggregateExchangeRateVote(ctx, aggregateVote)
 	}
 
-	if len(data.VoteTargets) > 0 {
-		keeper.SetVoteTargets(ctx, data.VoteTargets)
-	} else {
-		var voteTargets []string
-		for _, denom := range data.Params.Whitelist {
-			voteTargets = append(voteTargets, denom.Name)
-		}
-
-		keeper.SetVoteTargets(ctx, voteTargets)
-	}
-
-	if len(data.IlliquidFactors) > 0 {
-		for denom, illiquidFactor := range data.IlliquidFactors {
-			keeper.SetIlliquidFactor(ctx, denom, illiquidFactor)
+	if len(data.TobinTaxes) > 0 {
+		for denom, tobinTax := range data.TobinTaxes {
+			keeper.SetTobinTax(ctx, denom, tobinTax)
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
-			keeper.SetIlliquidFactor(ctx, item.Name, item.IlliquidFactor)
+			keeper.SetTobinTax(ctx, item.Name, item.TobinTax)
 		}
 	}
 
@@ -136,13 +125,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	voteTargets := keeper.GetVoteTargets(ctx)
-
-	illiquidFactors := make(map[string]sdk.Dec)
-	keeper.IterateIlliquidFactors(ctx, func(denom string, illiquidFactor sdk.Dec) (stop bool) {
-		illiquidFactors[denom] = illiquidFactor
+	tobinTaxes := make(map[string]sdk.Dec)
+	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		tobinTaxes[denom] = tobinTax
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, voteTargets, illiquidFactors)
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, tobinTaxes)
 }

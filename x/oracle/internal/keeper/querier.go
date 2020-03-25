@@ -35,10 +35,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAggregateVote(ctx, req, keeper)
 		case types.QueryVoteTargets:
 			return queryVoteTargets(ctx, keeper)
-		case types.QueryIlliquidFactor:
-			return queryIlliquidFactor(ctx, req, keeper)
-		case types.QueryIlliquidFactors:
-			return queryIlliquidFactors(ctx, keeper)
+		case types.QueryTobinTax:
+			return queryTobinTax(ctx, req, keeper)
+		case types.QueryTobinTaxes:
+			return queryTobinTaxes(ctx, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
 		}
@@ -265,19 +265,19 @@ func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	return bz, nil
 }
 
-func queryIlliquidFactor(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params types.QueryIlliquidFactorParams
+func queryTobinTax(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryTobinTaxParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}
 
-	factor, err := keeper.GetIlliquidFactor(ctx, params.Denom)
+	tobinTax, err := keeper.GetTobinTax(ctx, params.Denom)
 	if err != nil {
 		return nil, types.ErrUnknownDenomination(types.DefaultCodespace, params.Denom)
 	}
 
-	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, factor)
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, tobinTax)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
 	}
@@ -285,11 +285,11 @@ func queryIlliquidFactor(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func queryIlliquidFactors(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryTobinTaxes(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	var denoms types.DenomList
 
-	keeper.IterateIlliquidFactors(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		denoms = append(denoms, types.Denom{denom, rate})
+	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		denoms = append(denoms, types.Denom{Name: denom, TobinTax: tobinTax})
 		return false
 	})
 

@@ -46,12 +46,10 @@ var (
 	TerraPoolDeltaKey               = types.TerraPoolDeltaKey
 	ParamStoreKeyBasePool           = types.ParamStoreKeyBasePool
 	ParamStoreKeyPoolRecoveryPeriod = types.ParamStoreKeyPoolRecoveryPeriod
-	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinSpread
-	ParamStoreKeyTobinTax           = types.ParamStoreKeyTobinTax
+	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinStabilitySpread
 	DefaultBasePool                 = types.DefaultBasePool
 	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
-	DefaultMinSpread                = types.DefaultMinSpread
-	DefaultTobinTax                 = types.DefaultTobinTax
+	DefaultMinSpread                = types.DefaultMinStabilitySpread
 )
 
 type (

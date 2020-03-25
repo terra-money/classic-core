@@ -122,7 +122,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Clear the ballot
 	clearBallots(ctx, k, params.VotePeriod)
 
-	// Update vote targets and illiquid factor
+	// Update vote targets and tobin tax
 	applyWhitelist(ctx, k, params.Whitelist, voteTargets)
 
 	return
@@ -161,7 +161,7 @@ func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 	})
 }
 
-// applyWhitelist update vote target denom list and set illiquid factor with params whitelist
+// applyWhitelist update vote target denom list and set tobin tax with params whitelist
 func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]bool) {
 
 	// check is there any update in whitelist params
@@ -178,16 +178,10 @@ func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTa
 	}
 
 	if updateRequired {
-		k.ClearIlliquidFactors(ctx)
+		k.ClearTobinTaxes(ctx)
 
-		var denoms []string
 		for _, item := range whitelist {
-			denoms = append(denoms, item.Name)
-
-			k.SetIlliquidFactor(ctx, item.Name, item.IlliquidFactor)
+			k.SetTobinTax(ctx, item.Name, item.TobinTax)
 		}
-
-		k.SetVoteTargets(ctx, denoms)
 	}
-
 }

@@ -25,7 +25,7 @@ const (
 	CodeInvalidMsgFormat            = types.CodeInvalidMsgFormat
 	CodeNoAggregatePrevote          = types.CodeNoAggregatePrevote
 	CodeNoAggregateVote             = types.CodeNoAggregateVote
-	CodeNoIlliquidFactor            = types.CodeNoIlliquidFactor
+	CodeNoTobinTax                  = types.CodeNoTobinTax
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	RouterKey                       = types.RouterKey
@@ -45,8 +45,8 @@ const (
 	QueryAggregatePrevote           = types.QueryAggregatePrevote
 	QueryAggregateVote              = types.QueryAggregateVote
 	QueryVoteTargets                = types.QueryVoteTargets
-	QueryIlliquidFactor             = types.QueryIlliquidFactor
-	QueryIlliquidFactors            = types.QueryIlliquidFactors
+	QueryTobinTax                   = types.QueryTobinTax
+	QueryTobinTaxes                 = types.QueryTobinTaxes
 )
 
 var (
@@ -65,7 +65,7 @@ var (
 	ErrInvalidSaltLength               = types.ErrInvalidSaltLength
 	ErrNoAggregatePrevote              = types.ErrNoAggregatePrevote
 	ErrNoAggregateVote                 = types.ErrNoAggregateVote
-	ErrNoIlliquidFactor                = types.ErrNoIlliquidFactor
+	ErrNoTobinTax                      = types.ErrNoTobinTax
 	NewGenesisState                    = types.NewGenesisState
 	DefaultGenesisState                = types.DefaultGenesisState
 	ValidateGenesis                    = types.ValidateGenesis
@@ -80,8 +80,8 @@ var (
 	GetMissCounterKey                  = types.GetMissCounterKey
 	GetAggregateExchangeRatePrevoteKey = types.GetAggregateExchangeRatePrevoteKey
 	GetAggregateExchangeRateVoteKey    = types.GetAggregateExchangeRateVoteKey
-	GetIlliquidFactorKey               = types.GetIlliquidFactorKey
-	SplitDenomFromIlliquidFactorKey    = types.SplitDenomFromIlliquidFactorKey
+	GetTobinTaxKey                     = types.GetTobinTaxKey
+	SplitDenomFromTobinTaxKey          = types.SplitDenomFromTobinTaxKey
 	NewMsgExchangeRatePrevote          = types.NewMsgExchangeRatePrevote
 	NewMsgExchangeRateVote             = types.NewMsgExchangeRateVote
 	NewMsgDelegateFeedConsent          = types.NewMsgDelegateFeedConsent
@@ -95,7 +95,7 @@ var (
 	NewQueryMissCounterParams          = types.NewQueryMissCounterParams
 	NewQueryAggregatePrevoteParams     = types.NewQueryAggregatePrevoteParams
 	NewQueryAggregateVoteParams        = types.NewQueryAggregateVoteParams
-	NewQueryIlliquidFactorParams       = types.NewQueryIlliquidFactorParams
+	NewQueryTobinTaxParams             = types.NewQueryTobinTaxParams
 	NewExchangeRatePrevote             = types.NewExchangeRatePrevote
 	NewExchangeRateVote                = types.NewExchangeRateVote
 	NewAggregateExchangeRatePrevote    = types.NewAggregateExchangeRatePrevote
@@ -114,8 +114,7 @@ var (
 	MissCounterKey                        = types.MissCounterKey
 	AggregatePrevoteKey                   = types.AggregatePrevoteKey
 	AggregateVoteKey                      = types.AggregateVoteKey
-	VoteTargetsKey                        = types.VoteTargetsKey
-	IlliquidFactoerKey                    = types.IlliquidFactoerKey
+	TobinTaxKey                           = types.TobinTaxKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold
 	ParamStoreKeyRewardBand               = types.ParamStoreKeyRewardBand
@@ -126,6 +125,7 @@ var (
 	ParamStoreKeyMinValidPerWindow        = types.ParamStoreKeyMinValidPerWindow
 	DefaultVoteThreshold                  = types.DefaultVoteThreshold
 	DefaultRewardBand                     = types.DefaultRewardBand
+	DefaultTobinTax                       = types.DefaultTobinTax
 	DefaultWhitelist                      = types.DefaultWhitelist
 	DefaultSlashFraction                  = types.DefaultSlashFraction
 	DefaultMinValidPerWindow              = types.DefaultMinValidPerWindow
@@ -156,7 +156,7 @@ type (
 	QueryMissCounterParams          = types.QueryMissCounterParams
 	QueryAggregatePrevoteParams     = types.QueryAggregatePrevoteParams
 	QueryAggregateVoteParams        = types.QueryAggregateVoteParams
-	QueryIlliquidFactorParams       = types.QueryIlliquidFactorParams
+	QueryTobinTaxParams             = types.QueryTobinTaxParams
 	ExchangeRatePrevote             = types.ExchangeRatePrevote
 	ExchangeRatePrevotes            = types.ExchangeRatePrevotes
 	ExchangeRateVote                = types.ExchangeRateVote

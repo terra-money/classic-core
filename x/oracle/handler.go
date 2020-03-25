@@ -34,6 +34,12 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleMsgExchangeRatePrevote handles a MsgExchangeRatePrevote
 func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchangeRatePrevote) sdk.Result {
+
+	// check the denom is in the vote target
+	if !keeper.IsVoteTarget(ctx, ppm.Denom) {
+		return ErrUnknownDenomination(keeper.Codespace(), ppm.Denom).Result()
+	}
+
 	if !ppm.Feeder.Equals(ppm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
@@ -213,6 +219,13 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgA
 	exchangeRateTuples, err2 := types.ParseExchangeRateTuples(pvm.ExchangeRates)
 	if err2 != nil {
 		return sdk.ErrInvalidCoins(err2.Error()).Result()
+	}
+
+	// check all denoms are in the vote target
+	for _, tuple := range exchangeRateTuples {
+		if !keeper.IsVoteTarget(ctx, tuple.Denom) {
+			return ErrUnknownDenomination(keeper.Codespace(), tuple.Denom).Result()
+		}
 	}
 
 	// Verify a exchange rate with aggregate prevote hash

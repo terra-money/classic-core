@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -49,8 +50,21 @@ func TestPrevoteVote(t *testing.T) {
 	salt := "1"
 	hash := GetVoteHash(salt, randomExchangeRate, core.MicroSDRDenom, keeper.ValAddrs[0])
 
-	exchangeRatePrevoteMsg := NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	// Unintended denom prevote
+	exchangeRatePrevoteMsg := NewMsgExchangeRatePrevote(hash, core.MicroCNYDenom, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx, exchangeRatePrevoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeUnknownDenom, res.Code)
+
+	// Unauthorized feeder
+	exchangeRatePrevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[1], keeper.ValAddrs[0])
+	res = h(input.Ctx, exchangeRatePrevoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeNoVotingPermission, res.Code)
+
+	// Valid prevote
+	exchangeRatePrevoteMsg = NewMsgExchangeRatePrevote(hash, core.MicroSDRDenom, keeper.Addrs[0], keeper.ValAddrs[0])
+	res = h(input.Ctx, exchangeRatePrevoteMsg)
 	require.True(t, res.IsOK())
 
 	// Invalid exchange rate reveal period
@@ -63,7 +77,13 @@ func TestPrevoteVote(t *testing.T) {
 	res = h(input.Ctx, exchangeRateVoteMsg)
 	require.False(t, res.IsOK())
 
-	// valid exchange rate reveal submission
+	// Unauthorized feeder
+	exchangeRateVoteMsg = NewMsgExchangeRateVote(randomExchangeRate, salt, core.MicroSDRDenom, sdk.AccAddress(keeper.Addrs[1]), keeper.ValAddrs[0])
+	res = h(input.Ctx, exchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeNoVotingPermission, res.Code)
+
+	// Valid exchange rate reveal submission
 	input.Ctx = input.Ctx.WithBlockHeight(1)
 	exchangeRateVoteMsg = NewMsgExchangeRateVote(randomExchangeRate, salt, core.MicroSDRDenom, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
 	res = h(input.Ctx, exchangeRateVoteMsg)
@@ -130,15 +150,22 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	input, h := setup(t)
 
 	salt := "1"
-	exchangeRatesStr := "1000.23ukrw,0.29uusd,0.27usdr"
-	otherExchangeRateStr := "1000.12ukrw,0.29uusd,0.27usdr"
-	invalidExchangeRateStr := "1000.23ukrw,2324"
+	exchangeRatesStr := fmt.Sprintf("1000.23%s,0.29%s,0.27%s", core.MicroKRWDenom, core.MicroUSDDenom, core.MicroSDRDenom)
+	otherExchangeRateStr := fmt.Sprintf("1000.12%s,0.29%s,0.27%s", core.MicroKRWDenom, core.MicroUSDDenom, core.MicroUSDDenom)
+	unintendedExchageRateStr := fmt.Sprintf("1000.23%s,0.29%s,0.27%s", core.MicroKRWDenom, core.MicroUSDDenom, core.MicroCNYDenom)
+	invalidExchangeRateStr := fmt.Sprintf("1000.23%s,0.29%s,0.27", core.MicroKRWDenom, core.MicroUSDDenom)
 
 	hash := GetAggregateVoteHash(salt, exchangeRatesStr, keeper.ValAddrs[0])
 
 	aggregateExchangeRatePrevoteMsg := NewMsgAggregateExchangeRatePrevote(hash, keeper.Addrs[0], keeper.ValAddrs[0])
 	res := h(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.True(t, res.IsOK())
+
+	// Unauthorized feeder
+	aggregateExchangeRatePrevoteMsg = NewMsgAggregateExchangeRatePrevote(hash, keeper.Addrs[1], keeper.ValAddrs[0])
+	res = h(input.Ctx, aggregateExchangeRatePrevoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeNoVotingPermission, res.Code)
 
 	// Invalid reveal period
 	aggregateExchangeRateVoteMsg := NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
@@ -162,6 +189,18 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	aggregateExchangeRateVoteMsg = NewMsgAggregateExchangeRateVote(salt, invalidExchangeRateStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
 	res = h(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.False(t, res.IsOK())
+
+	// Unauthorized feeder
+	aggregateExchangeRateVoteMsg = NewMsgAggregateExchangeRateVote(salt, invalidExchangeRateStr, sdk.AccAddress(keeper.Addrs[1]), keeper.ValAddrs[0])
+	res = h(input.Ctx, aggregateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeNoVotingPermission, res.Code)
+
+	// Unintended denom vote
+	aggregateExchangeRateVoteMsg = NewMsgAggregateExchangeRateVote(salt, unintendedExchageRateStr, sdk.AccAddress(keeper.Addrs[0]), keeper.ValAddrs[0])
+	res = h(input.Ctx, aggregateExchangeRateVoteMsg)
+	require.False(t, res.IsOK())
+	require.Equal(t, CodeUnknownDenom, res.Code)
 
 	// Valid exchange rate reveal submission
 	input.Ctx = input.Ctx.WithBlockHeight(1)

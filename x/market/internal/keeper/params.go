@@ -17,21 +17,15 @@ func (k Keeper) BasePool(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// MinSpread is the minimum swap fee(spread)
-func (k Keeper) MinSpread(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMinSpread, &res)
+// MinStabilitySpread is the minimum swap fee(spread)
+func (k Keeper) MinStabilitySpread(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMinStabilitySpread, &res)
 	return
 }
 
 // PoolRecoveryPeriod is the period required to recover Terra&Luna Pools to the BasePool
 func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyPoolRecoveryPeriod, &res)
-	return
-}
-
-// TobinTax is a tax rate on all spot conversions of one Terra into another Terra
-func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyTobinTax, &res)
 	return
 }
 

@@ -69,28 +69,30 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 	// Terra->Terra swap
 	// Apply only tobin tax without constant product spread
 	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
-		spread = k.TobinTax(ctx)
-		illiquidFactor, err2 := k.oracleKeeper.GetIlliquidFactor(ctx, offerCoin.Denom)
+		var tobinTax sdk.Dec
+		offerTobinTax, err2 := k.oracleKeeper.GetTobinTax(ctx, offerCoin.Denom)
 		if err2 != nil {
 			return sdk.DecCoin{}, sdk.Dec{}, err2
 		}
 
-		askIlliquidFactor, err2 := k.oracleKeeper.GetIlliquidFactor(ctx, askDenom)
+		askTobinTax, err2 := k.oracleKeeper.GetTobinTax(ctx, askDenom)
 		if err2 != nil {
 			return sdk.DecCoin{}, sdk.Dec{}, err2
 		}
 
-		// Apply highest illiquid factor for the denoms in the swap operation
-		if askIlliquidFactor.GT(illiquidFactor) {
-			illiquidFactor = askIlliquidFactor
+		// Apply highest tobin tax for the denoms in the swap operation
+		if askTobinTax.GT(offerTobinTax) {
+			tobinTax = askTobinTax
+		} else {
+			tobinTax = offerTobinTax
 		}
 
-		spread = spread.Mul(illiquidFactor)
+		spread = tobinTax
 		return
 	}
 
 	basePool := k.BasePool(ctx)
-	minSpread := k.MinSpread(ctx)
+	minSpread := k.MinStabilitySpread(ctx)
 
 	// constant-product, which by construction is square of base(equilibrium) pool
 	cp := basePool.Mul(basePool)

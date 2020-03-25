@@ -18,6 +18,7 @@ var (
 //-------------------------------------------------
 //-------------------------------------------------
 
+// Deprecated: normal prevote and vote will be deprecated after columbus-4
 // MsgExchangeRatePrevote - struct for prevoting on the ExchangeRateVote.
 // The purpose of prevote is to hide vote exchange rate with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange_rate}:{denom}:{voter}")
@@ -86,6 +87,7 @@ func (msg MsgExchangeRatePrevote) String() string {
 		msg.Hash, msg.Feeder, msg.Validator, msg.Denom)
 }
 
+// Deprecated: normal prevote and vote will be deprecated after columbus-4
 // MsgExchangeRateVote - struct for voting on the exchange rate of Luna denominated in various Terra assets.
 // For example, if the validator believes that the effective exchange rate of Luna in USD is 10.39, that's
 // what the exchange rate field would be, and if 1213.34 for KRW, same.
