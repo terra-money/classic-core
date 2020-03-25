@@ -109,8 +109,8 @@ func (pp AggregateExchangeRatePrevote) String() string {
 
 // ExchangeRateTuple - struct to represent a exchange rate of Luna in the denom asset
 type ExchangeRateTuple struct {
-	Denom        string  `json:"denom" yaml:"denom"`
-	ExchangeRate sdk.Dec `json:"exchange_rate" yaml:"exchange_rate"`
+	Denom        string  `json:"denom"`
+	ExchangeRate sdk.Dec `json:"exchange_rate"`
 }
 
 // String implements fmt.Stringer interface
