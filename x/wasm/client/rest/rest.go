@@ -9,9 +9,6 @@ import (
 const (
 	RestCodeID          = "code_id"
 	RestContractAddress = "contract_address"
-	RestKey             = "key"
-	RestSubkey          = "subkey"
-	RestMsg             = "msg"
 )
 
 // RegisterRoutes registers staking-related REST handlers to a router

@@ -29,8 +29,7 @@ const (
 	QueryGetByteCode      = types.QueryGetByteCode
 	QueryGetCodeInfo      = types.QueryGetCodeInfo
 	QueryGetContractInfo  = types.QueryGetContractInfo
-	QueryStore            = types.QueryStore
-	QueryContract         = types.QueryContract
+	QueryContractStore         = types.QueryContractStore
 )
 
 var (
@@ -65,7 +64,7 @@ var (
 	DefaultParams                 = types.DefaultParams
 	NewQueryCodeIDParams          = types.NewQueryCodeIDParams
 	NewQueryContractAddressParams = types.NewQueryContractAddressParams
-	NewQueryStoreParams           = types.NewQueryStoreParams
+	NewQueryStoreParams           = types.NewQueryRawStoreParams
 	NewQueryContractParams        = types.NewQueryContractParams
 	NewKeeper                     = keeper.NewKeeper
 	ParamKeyTable                 = keeper.ParamKeyTable
@@ -102,7 +101,7 @@ type (
 	Params                     = types.Params
 	QueryCodeIDParams          = types.QueryCodeIDParams
 	QueryContractAddressParams = types.QueryContractAddressParams
-	QueryStoreParams           = types.QueryStoreParams
+	QueryStoreParams           = types.QueryRawStoreParams
 	QueryContractParams        = types.QueryContractParams
 	Keeper                     = keeper.Keeper
 	InitMsg                    = keeper.InitMsg

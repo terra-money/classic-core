@@ -7,8 +7,8 @@ const (
 	QueryGetByteCode     = "bytecode"
 	QueryGetCodeInfo     = "codeInfo"
 	QueryGetContractInfo = "contractInfo"
-	QueryStore           = "store"
-	QueryContract        = "contract"
+	QueryRawStore        = "rawStore"
+	QueryContractStore   = "contractStore"
 )
 
 // QueryCodeIDParams defines the params for the following queries:
@@ -34,20 +34,20 @@ func NewQueryContractAddressParams(contractAddress sdk.AccAddress) QueryContract
 	return QueryContractAddressParams{contractAddress}
 }
 
-// QueryStoreParams defines the params for the following queries:
-// - 'custom/wasm/store'
-type QueryStoreParams struct {
+// QueryRawStoreParams defines the params for the following queries:
+// - 'custom/wasm/rawStore'
+type QueryRawStoreParams struct {
 	ContractAddress sdk.AccAddress
 	Key             []byte
 }
 
-// NewQueryStoreParams returns QueryStoreParams instance
-func NewQueryStoreParams(contractAddress sdk.AccAddress, key []byte) QueryStoreParams {
-	return QueryStoreParams{contractAddress, key}
+// NewQueryRawStoreParams returns QueryRawStoreParams instance
+func NewQueryRawStoreParams(contractAddress sdk.AccAddress, key []byte) QueryRawStoreParams {
+	return QueryRawStoreParams{contractAddress, key}
 }
 
 // QueryContractParams defines the params for the following queries:
-// - 'custom/wasm/contract'
+// - 'custom/wasm/contractStore'
 type QueryContractParams struct {
 	ContractAddress sdk.AccAddress
 	Msg             []byte

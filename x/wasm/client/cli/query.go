@@ -32,8 +32,8 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryByteCode(cdc),
 		GetCmdQueryCodeInfo(cdc),
 		GetCmdGetContractInfo(cdc),
-		GetCmdGetStore(cdc),
-		GetCmdGetMsg(cdc),
+		GetCmdGetContractStore(cdc),
+		GetCmdGetRawStore(cdc),
 	)...)
 	return queryCmd
 }
@@ -152,12 +152,12 @@ func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// GetCmdGetMsg send query msg to a given contract
-func GetCmdGetMsg(cdc *codec.Codec) *cobra.Command {
+// GetCmdGetContractStore send query msg to a given contract
+func GetCmdGetContractStore(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "contract [bech32-address] [msg]",
-		Short: "Query contract state of the address with query data and prints the returned result",
-		Long:  "Query contract state of the address with query data and prints the returned result",
+		Use:   "contract-store [bech32-address] [msg]",
+		Short: "Query contract store of the address with query data and prints the returned result",
+		Long:  "Query contract store of the address with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -174,7 +174,7 @@ func GetCmdGetMsg(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContract)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContractStore)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -186,12 +186,12 @@ func GetCmdGetMsg(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// GetCmdGetStore dumps full internal state of a given contract
-func GetCmdGetStore(cdc *codec.Codec) *cobra.Command {
+// GetCmdGetRawStore dumps full internal state of a given contract
+func GetCmdGetRawStore(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "store [bech32-address] [key] [subkey]",
-		Short: "Prints out internal state of a contract",
-		Long:  "Prints out internal state of a contract",
+		Use:   "raw-store [bech32-address] [key] [subkey]",
+		Short: "Prints out raw store of a contract",
+		Long:  "Prints out raw store of a contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -209,13 +209,13 @@ func GetCmdGetStore(cdc *codec.Codec) *cobra.Command {
 			}
 
 			keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
-			params := types.NewQueryStoreParams(addr, keyBz)
+			params := types.NewQueryRawStoreParams(addr, keyBz)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryStore)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRawStore)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err

@@ -62,7 +62,7 @@ func TestQueryContractState(t *testing.T) {
 	bz, err := cdc.MarshalJSON(types.NewQueryStoreParams(addr, []byte("foo")))
 	require.NoError(t, err)
 
-	res, err := querier(ctx, []string{types.QueryStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err := querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
 	require.NoError(t, err)
 	require.Equal(t, []byte(`"bar"`), res)
 
@@ -70,7 +70,7 @@ func TestQueryContractState(t *testing.T) {
 	bz, err = cdc.MarshalJSON(types.NewQueryStoreParams(addr, []byte{0x0, 0x1}))
 	require.NoError(t, err)
 
-	res, err = querier(ctx, []string{types.QueryStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err = querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
 	require.NoError(t, err)
 	require.Equal(t, []byte(`{"count":8}`), res)
 
@@ -78,7 +78,7 @@ func TestQueryContractState(t *testing.T) {
 	bz, err = cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"verifier":{}}`)))
 	require.NoError(t, err)
 
-	res, err = querier(ctx, []string{types.QueryContract}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)}, )
 	require.NoError(t, err)
 	require.Equal(t, anyAddr.String(), string(res))
 
@@ -86,6 +86,6 @@ func TestQueryContractState(t *testing.T) {
 	bz, err = cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"raw":{"key":"config"}}`)))
 	require.NoError(t, err)
 
-	_, err = querier(ctx, []string{types.QueryContract}, abci.RequestQuery{Data: []byte(bz)}, )
+	_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)}, )
 	require.Error(t, err)
 }

@@ -19,10 +19,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryCodeInfo(ctx, req, keeper)
 		case types.QueryGetContractInfo:
 			return queryContractInfo(ctx, req, keeper)
-		case types.QueryStore:
-			return queryStore(ctx, req, keeper)
-		case types.QueryContract:
-			return queryContract(ctx, req, keeper)
+		case types.QueryRawStore:
+			return queryRawStore(ctx, req, keeper)
+		case types.QueryContractStore:
+			return queryContractStore(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown data query endpoint")
 		}
@@ -89,8 +89,8 @@ func queryContractInfo(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-func queryStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params types.QueryStoreParams
+func queryRawStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryRawStoreParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
@@ -100,7 +100,7 @@ func queryStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 	return res, nil
 }
 
-func queryContract(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params types.QueryContractParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {

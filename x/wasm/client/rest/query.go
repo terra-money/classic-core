@@ -18,9 +18,8 @@ import (
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/msg/{%s}", RestContractAddress, RestMsg), queryContractStateSmartHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/{%s}", RestContractAddress, RestKey), queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/{%s}/{%s}", RestContractAddress, RestKey, RestSubkey), queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -91,7 +90,7 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -100,7 +99,7 @@ func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFun
 
 		vars := mux.Vars(r)
 		contractAddrStr := vars[RestContractAddress]
-		msg := vars[RestMsg]
+		queryMsg := r.URL.Query().Get("query_msg")
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
@@ -108,14 +107,14 @@ func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFun
 			return
 		}
 
-		params := types.NewQueryContractParams(addr, []byte(msg))
+		params := types.NewQueryContractParams(addr, []byte(queryMsg))
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContract)
+		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContractStore)
 		res, height, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -127,7 +126,7 @@ func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFun
 	}
 }
 
-func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -136,8 +135,8 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 
 		vars := mux.Vars(r)
 		contractAddrStr := vars[RestContractAddress]
-		key := vars[RestKey]
-		subkey := vars[RestSubkey]
+		key := r.URL.Query().Get("key")
+		subkey := r.URL.Query().Get("subkey")
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
@@ -146,14 +145,14 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 		}
 
 		keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
-		params := types.NewQueryStoreParams(addr, keyBz)
+		params := types.NewQueryRawStoreParams(addr, keyBz)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryStore)
+		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRawStore)
 		res, height, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())

@@ -43,15 +43,20 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store [from_key_or_address] [wasm-file]",
+		Use:   "store [wasm-file]",
 		Short: "Upload a wasm binary",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContextWithFrom(args[0]).WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			fromAddr := cliCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("must specify flag --from")
+			}
 
 			// parse coins trying to be sent
-			wasm, err := ioutil.ReadFile(args[1])
+			wasm, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return err
 			}
@@ -75,7 +80,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgStoreCode{
-				Sender:       cliCtx.GetFromAddress(),
+				Sender:       fromAddr,
 				WASMByteCode: wasm,
 			}
 
@@ -88,24 +93,38 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [from_key_or_address] [code-id-int64] [json-encoded-args] [coins]",
+		Use:   "instantiate [code-id-int64] [json-encoded-args] [coins]",
 		Short: "Instantiate a wasm contract",
-		Args:  cobra.RangeArgs(3, 4),
+		Long: `
+Instantiate a wasm contract of the code which has the given id
+
+$ terracli instantiate 1 '{"arbiter": "terra~~"}'
+
+You can also instantiate it with funds
+
+$ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
+`,
+		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithFrom(args[0]).WithCodec(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			fromAddr := cliCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("must specify flag --from")
+			}
 
 			// get the id of the code to instantiate
-			codeID, err := strconv.ParseUint(args[1], 10, 64)
+			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			initMsg := args[2]
+			initMsg := args[1]
 
 			var coins sdk.Coins
-			if len(args) == 4 {
-				coins, err = sdk.ParseCoins(args[3])
+			if len(args) == 3 {
+				coins, err = sdk.ParseCoins(args[2])
 				if err != nil {
 					return err
 				}
@@ -113,7 +132,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgInstantiateContract{
-				Sender:    cliCtx.GetFromAddress(),
+				Sender:    fromAddr,
 				CodeID:    codeID,
 				InitCoins: coins,
 				InitMsg:   []byte(initMsg),
@@ -128,24 +147,29 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute [from_key_or_address] [contract_addr_bech32] [json_encoded_args] [coins]",
+		Use:   "execute [contract_addr_bech32] [json_encoded_args] [coins]",
 		Short: "Execute a command on a wasm contract",
-		Args:  cobra.RangeArgs(3, 4),
+		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithFrom(args[0]).WithCodec(cdc)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			fromAddr := cliCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("must specify flag --from")
+			}
 
 			// get the id of the code to instantiate
-			contractAddr, err := sdk.AccAddressFromBech32(args[1])
+			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			execMsg := args[2]
+			execMsg := args[1]
 
 			var coins sdk.Coins
-			if len(args) == 4 {
-				coins, err = sdk.ParseCoins(args[3])
+			if len(args) == 3 {
+				coins, err = sdk.ParseCoins(args[2])
 				if err != nil {
 					return err
 				}
@@ -153,7 +177,7 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
-				Sender:   cliCtx.GetFromAddress(),
+				Sender:   fromAddr,
 				Contract: contractAddr,
 				Coins:    coins,
 				Msg:      []byte(execMsg),
