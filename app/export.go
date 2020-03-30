@@ -199,10 +199,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	/* Handle treasury state. */
 
-	// clear all indicators
-	app.treasuryKeeper.ClearTRs(ctx)
-	app.treasuryKeeper.ClearSRs(ctx)
-	app.treasuryKeeper.ClearTSLs(ctx)
-
-	app.treasuryKeeper.RecordEpochInitialIssuance(ctx)
+	// update cumulated height
+	newCumulatedHeight := app.treasuryKeeper.GetCumulatedHeight(ctx) + ctx.BlockHeight()
+	app.treasuryKeeper.SetCumulatedHeight(ctx, newCumulatedHeight)
 }

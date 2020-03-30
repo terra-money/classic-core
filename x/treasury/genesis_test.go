@@ -25,6 +25,7 @@ func TestExportInitGenesis(t *testing.T) {
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(0), sdk.NewInt(123))
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(1), sdk.NewInt(345))
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(2), sdk.NewInt(567))
+	input.TreasuryKeeper.SetCumulatedHeight(input.Ctx, int64(123))
 	genesis := ExportGenesis(input.Ctx, input.TreasuryKeeper)
 
 	newInput := keeper.CreateTestInput(t)
