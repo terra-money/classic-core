@@ -17,28 +17,16 @@ func (k Keeper) BasePool(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// MinSpread is the minimum swap fee(spread)
-func (k Keeper) MinSpread(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMinSpread, &res)
+// MinStabilitySpread is the minimum spread applied to swaps to / from Luna.
+// Intended to prevent swing trades exploiting oracle period delays
+func (k Keeper) MinStabilitySpread(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMinStabilitySpread, &res)
 	return
 }
 
 // PoolRecoveryPeriod is the period required to recover Terra&Luna Pools to the BasePool
 func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res int64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyPoolRecoveryPeriod, &res)
-	return
-}
-
-// TobinTax is a tax rate on all spot conversions of one Terra into another Terra
-func (k Keeper) TobinTax(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.ParmaStoreKeyTobinTax, &res)
-	return
-}
-
-// IlliquidTobinTaxList is the exceptions that have to pay a higher tobin tax due to illiquidity
-// TobinTax will be used for the denoms which are not in the list
-func (k Keeper) IlliquidTobinTaxList(ctx sdk.Context) (res types.TobinTaxList) {
-	k.paramSpace.Get(ctx, types.ParmaStoreKeyIlliquidTobinTaxList, &res)
 	return
 }
 

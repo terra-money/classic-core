@@ -27,7 +27,8 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec) (we
 		if (vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
 			!vote.ExchangeRate.IsPositive() {
-			// Abstain votes will have zero vote power
+
+			// Abstain votes have zero vote power
 			ballotWinners = append(ballotWinners, types.Claim{
 				Recipient: vote.Voter,
 				Weight:    vote.Power,

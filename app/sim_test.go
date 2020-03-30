@@ -399,7 +399,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 		{
 			func(_ *rand.Rand) int {
 				var v int
-				ap.GetOrGenerate(cdc, OpWeightMsgUnjail, &v, nil,
+				ap.GetOrGenerate(cdc, OpWeightMsgSend, &v, nil,
 					func(_ *rand.Rand) {
 						v = 100
 					})
@@ -410,7 +410,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 		{
 			func(_ *rand.Rand) int {
 				var v int
-				ap.GetOrGenerate(cdc, OpWeightMsgUnjail, &v, nil,
+				ap.GetOrGenerate(cdc, OpWeightMsgSend, &v, nil,
 					func(_ *rand.Rand) {
 						v = 100
 					})
@@ -421,7 +421,7 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 		{
 			func(_ *rand.Rand) int {
 				var v int
-				ap.GetOrGenerate(cdc, OpWeightMsgUnjail, &v, nil,
+				ap.GetOrGenerate(cdc, OpWeightMsgDelegate, &v, nil,
 					func(_ *rand.Rand) {
 						v = 100
 					})
@@ -438,7 +438,29 @@ func testAndRunTxs(app *TerraApp) []simulation.WeightedOperation {
 					})
 				return v
 			}(nil),
-			marketsim.SimulateMsgPrevote(app.marketKeeper),
+			marketsim.SimulateMsgSwap(app.marketKeeper),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightMsgSend, &v, nil,
+					func(_ *rand.Rand) {
+						v = 100
+					})
+				return v
+			}(nil),
+			oraclesim.SimulateMsgAggregateExchangeRatePrevote(app.oracleKeeper),
+		},
+		{
+			func(_ *rand.Rand) int {
+				var v int
+				ap.GetOrGenerate(cdc, OpWeightMsgSend, &v, nil,
+					func(_ *rand.Rand) {
+						v = 100
+					})
+				return v
+			}(nil),
+			oraclesim.SimulateMsgAggregateExchangeRateVote(app.oracleKeeper),
 		},
 	}
 }
