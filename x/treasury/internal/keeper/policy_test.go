@@ -31,7 +31,7 @@ func TestUpdateTaxRate(t *testing.T) {
 
 	// zero reward tax proceeds
 	for i := int64(0); i < windowLong; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
+		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerWeek)
 
 		taxProceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.ZeroInt()))
 		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)

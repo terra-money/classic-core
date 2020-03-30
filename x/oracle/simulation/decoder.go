@@ -39,6 +39,21 @@ func DecodeStore(cdc *codec.Codec, kvA, kvB tmkv.Pair) string {
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &counterA)
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &counterB)
 		return fmt.Sprintf("%v\n%v", counterA, counterB)
+	case bytes.Equal(kvA.Key[:1], types.AggregatePrevoteKey):
+		var prevoteA, prevoteB types.AggregateExchangeRatePrevote
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &prevoteA)
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &prevoteB)
+		return fmt.Sprintf("%v\n%v", prevoteA, prevoteB)
+	case bytes.Equal(kvA.Key[:1], types.AggregateVoteKey):
+		var voteA, voteB types.AggregateExchangeRateVote
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &voteA)
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &voteB)
+		return fmt.Sprintf("%v\n%v", voteA, voteB)
+	case bytes.Equal(kvA.Key[:1], types.TobinTaxKey):
+		var tobinTaxA, tobinTaxB sdk.Dec
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &tobinTaxA)
+		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &tobinTaxB)
+		return fmt.Sprintf("%v\n%v", tobinTaxA, tobinTaxB)
 	default:
 		panic(fmt.Sprintf("invalid oracle key prefix %X", kvA.Key[:1]))
 	}

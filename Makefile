@@ -149,7 +149,7 @@ test-build: build
 	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags='cli_test skipsecretserviceintegrationtests' -v
 
 
-lint:
+lint: golangci-lint
 	golangci-lint run
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	go mod verify
@@ -170,6 +170,7 @@ build-docker-terradnode:
 	$(MAKE) -C networks/local
 
 # Run a 4-node testnet locally
+
 localnet-start: build-linux localnet-stop
 	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/terradnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
@@ -178,29 +179,6 @@ localnet-start: build-linux localnet-stop
 localnet-stop:
 	docker-compose down
 
-setup-contract-tests-data:
-	echo 'Prepare data for the contract tests'
-	rm -rf /tmp/contract_tests ; \
-	mkdir /tmp/contract_tests ; \
-	cp "${GOPATH}/pkg/mod/${CORE_PACK}/client/lcd/swagger-ui/swagger.yaml" /tmp/contract_tests/swagger.yaml ; \
-	./build/terrad init --home /tmp/contract_tests/.terrad --chain-id lcd contract-tests ; \
-	tar -xzf lcd_test/testdata/state.tar.gz -C /tmp/contract_tests/
-
-start-terra: setup-contract-tests-data
-	./build/terrad --home /tmp/contract_tests/.terrad start &
-	@sleep 2s
-
-setup-transactions: start-terra
-	@bash ./lcd_test/testdata/setup.sh
-
-run-lcd-contract-tests:
-	@echo "Running Terra LCD for contract tests"
-	./build/terracli rest-server --laddr tcp://0.0.0.0:8080 --home /tmp/contract_tests/.terracli --node http://localhost:26657 --chain-id lcd --trust-node true
-
-contract-tests: setup-transactions
-	@echo "Running Terra LCD for contract tests"
-	dredd && pkill terrad
-
 # include simulations
 include sims.mk
 
@@ -208,4 +186,3 @@ include sims.mk
 	go-mod-cache draw-deps distclean build update-swagger-docs \
 	setup-transactions setup-contract-tests-data start-terra run-lcd-contract-tests contract-tests \
 	test test-all test-build test-cover test-unit test-race
-

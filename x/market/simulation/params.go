@@ -8,7 +8,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/market/internal/types"
 )
 
@@ -26,19 +25,9 @@ func ParamChanges(r *rand.Rand) []simulation.ParamChange {
 				return fmt.Sprintf("\"%d\"", GenPoolRecoveryPeriod(r))
 			},
 		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyMinSpread),
+		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyMinStabilitySpread),
 			func(r *rand.Rand) string {
 				return fmt.Sprintf("\"%s\"", GenMinSpread(r))
-			},
-		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.ParmaStoreKeyTobinTax),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%s\"", GenTobinTax(r))
-			},
-		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.ParmaStoreKeyIlliquidTobinTaxList),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf("[{\"denom\": \"%s\", \"tax_rate\": \"%s\"}]", core.MicroMNTDenom, GenIlliquidTobinTaxRate(r))
 			},
 		),
 	}

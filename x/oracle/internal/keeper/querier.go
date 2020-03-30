@@ -31,6 +31,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryFeederDelegation(ctx, req, keeper)
 		case types.QueryMissCounter:
 			return queryMissCounter(ctx, req, keeper)
+		case types.QueryAggregatePrevote:
+			return queryAggregatePrevote(ctx, req, keeper)
+		case types.QueryAggregateVote:
+			return queryAggregateVote(ctx, req, keeper)
+		case types.QueryVoteTargets:
+			return queryVoteTargets(ctx, keeper)
+		case types.QueryTobinTax:
+			return queryTobinTax(ctx, req, keeper)
+		case types.QueryTobinTaxes:
+			return queryTobinTaxes(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
 		}
@@ -206,5 +216,89 @@ func queryMissCounter(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
+	return bz, nil
+}
+
+func queryAggregatePrevote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	var params types.QueryAggregatePrevoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	aggregateExchangeRatePrevote, err := keeper.GetAggregateExchangeRatePrevote(ctx, params.Validator)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRatePrevote)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return bz, nil
+}
+
+func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	var params types.QueryAggregateVoteParams
+	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	aggregateExchangeRateVote, err := keeper.GetAggregateExchangeRateVote(ctx, params.Validator)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRateVote)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return bz, nil
+}
+
+func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	voteTargets := keeper.GetVoteTargets(ctx)
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, voteTargets)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryTobinTax(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	var params types.QueryTobinTaxParams
+	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	tobinTax, err := keeper.GetTobinTax(ctx, params.Denom)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, tobinTax)
+	if err2 != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryTobinTaxes(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var denoms types.DenomList
+
+	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		denoms = append(denoms, types.Denom{Name: denom, TobinTax: tobinTax})
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
 	return bz, nil
 }

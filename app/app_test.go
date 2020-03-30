@@ -15,12 +15,14 @@ import (
 
 func TestTerraExport(t *testing.T) {
 	db := dbm.NewMemDB()
+
 	tapp := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{})
-	setGenesis(tapp)
+	err := setGenesis(tapp)
+	require.NoError(t, err)
 
 	// Making a new app object with the db, so that initchain hasn't been called
 	newTapp := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{})
-	_, _, err := newTapp.ExportAppStateAndValidators(false, []string{})
+	_, _, err = newTapp.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 
 	_, _, err = newTapp.ExportAppStateAndValidators(true, []string{})

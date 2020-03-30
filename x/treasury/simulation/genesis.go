@@ -130,6 +130,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		map[string]sdk.Int{},
 		sdk.Coins{},
 		sdk.Coins{},
+		0,
 		[]sdk.Dec{},
 		[]sdk.Dec{},
 		[]sdk.Int{},

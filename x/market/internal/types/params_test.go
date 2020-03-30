@@ -26,23 +26,11 @@ func TestParamsEqual(t *testing.T) {
 
 	// invalid min spread
 	p3 := DefaultParams()
-	p3.MinSpread = sdk.NewDecWithPrec(-1, 2)
+	p3.MinStabilitySpread = sdk.NewDecWithPrec(-1, 2)
 	err = p3.ValidateBasic()
 	require.Error(t, err)
 
-	// invalid tobin tax
 	p4 := DefaultParams()
-	p4.TobinTax = sdk.NewDec(-1)
-	err = p4.ValidateBasic()
-	require.Error(t, err)
-
-	// invalid illiquid tobin tax list
-	p5 := DefaultParams()
-	p5.IlliquidTobinTaxList = TobinTaxList{TobinTax{Denom: "foo", TaxRate: sdk.NewDec(-1)}}
-	err = p5.ValidateBasic()
-	require.Error(t, err)
-
-	p6 := DefaultParams()
-	require.NotNil(t, p6.ParamSetPairs())
-	require.NotNil(t, p6.String())
+	require.NotNil(t, p4.ParamSetPairs())
+	require.NotNil(t, p4.String())
 }

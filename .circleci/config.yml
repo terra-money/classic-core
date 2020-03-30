@@ -309,27 +309,6 @@ jobs:
       - store_artifacts:
           path: /go/src/github.com/terra-project/core/terra-multi-res.yml
 
-# FIXME: The `setup-contract-tests-data` make target is broken as it completely
-# overrides the .terrad directory.
-#
-#  contract-tests:
-#    executor: golang
-#    steps:
-#      - attach_workspace:
-#          at: /tmp/workspace
-#      - checkout
-#      - setup_remote_docker:
-#          docker_layer_caching: true
-#      - run:
-#          name: Get Node.js and test REST implementation against swagger documentation at  https://swagger.terra.money/rpc/
-#          command: |
-#            go get github.com/snikch/goodman/cmd/goodman
-#            make build
-#            make build-contract-tests-hooks
-#            make setup-contract-tests-data
-#            export PATH=~/.local/bin:$PATH
-#            ./contrib/get_node.sh && make contract-tests
-
 workflows:
   version: 2
   test-suite:
@@ -405,6 +384,3 @@ workflows:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-#      - contract-tests:
-#          requires:
-#            - setup-dependencies

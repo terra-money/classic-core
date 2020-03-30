@@ -111,16 +111,23 @@ func RandomizedGenState(simState *module.SimulationState) {
 			VoteThreshold:            voteThreshold,
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
-			Whitelist:                types.DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom, core.MicroMNTDenom},
-			SlashFraction:            slashFraction,
-			SlashWindow:              slashWindow,
-			MinValidPerWindow:        minValidPerWindow,
+			Whitelist: types.DenomList{
+				{core.MicroKRWDenom, types.DefaultTobinTax},
+				{core.MicroSDRDenom, types.DefaultTobinTax},
+				{core.MicroUSDDenom, types.DefaultTobinTax},
+				{core.MicroMNTDenom, sdk.NewDecWithPrec(2, 2)}},
+			SlashFraction:     slashFraction,
+			SlashWindow:       slashWindow,
+			MinValidPerWindow: minValidPerWindow,
 		},
 		[]types.ExchangeRatePrevote{},
 		[]types.ExchangeRateVote{},
 		map[string]sdk.Dec{},
 		map[string]sdk.AccAddress{},
 		map[string]int64{},
+		[]types.AggregateExchangeRatePrevote{},
+		[]types.AggregateExchangeRateVote{},
+		map[string]sdk.Dec{},
 	)
 
 	fmt.Printf("Selected randomly generated oracle parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, oracleGenesis))

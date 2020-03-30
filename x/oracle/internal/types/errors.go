@@ -3,9 +3,8 @@ package types
 import (
 	"fmt"
 
-	"github.com/tendermint/tendermint/crypto/tmhash"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 // Oracle Errors
@@ -20,4 +19,7 @@ var (
 	ErrVerificationFailed    = sdkerrors.Register(ModuleName, 8, "hash verification failed")
 	ErrRevealPeriodMissMatch = sdkerrors.Register(ModuleName, 9, "reveal period of submitted vote do not match with registered prevote")
 	ErrInvalidSaltLength     = sdkerrors.Register(ModuleName, 10, "invalid salt length; should be 1~4")
+	ErrNoAggregatePrevote    = sdkerrors.Register(ModuleName, 11, "no aggregate prevote")
+	ErrNoAggregateVote       = sdkerrors.Register(ModuleName, 12, "no aggregate vote")
+	ErrNoTobinTax            = sdkerrors.Register(ModuleName, 13, "no tobin tax")
 )

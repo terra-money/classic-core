@@ -33,10 +33,18 @@ func makeTestCodec() (cdc *codec.Codec) {
 func TestDecodeDistributionStore(t *testing.T) {
 	cdc := makeTestCodec()
 
-	prevote := types.NewExchangeRatePrevote("12345", core.MicroKRWDenom, valAddr, 123)
+	prevote := types.NewExchangeRatePrevote(types.VoteHash([]byte("12345")), core.MicroKRWDenom, valAddr, 123)
 	vote := types.NewExchangeRateVote(sdk.NewDecWithPrec(1234, 1), core.MicroKRWDenom, valAddr)
 	exchangeRate := sdk.NewDecWithPrec(1234, 1)
 	missCounter := 123
+
+	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
+	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{core.MicroKRWDenom, sdk.NewDecWithPrec(1234, 1)},
+		{core.MicroKRWDenom, sdk.NewDecWithPrec(4321, 1)},
+	}, valAddr)
+
+	tobinTax := sdk.NewDecWithPrec(2, 2)
 
 	kvPairs := tmkv.Pairs{
 		tmkv.Pair{Key: types.PrevoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(prevote)},
@@ -44,6 +52,9 @@ func TestDecodeDistributionStore(t *testing.T) {
 		tmkv.Pair{Key: types.ExchangeRateKey, Value: cdc.MustMarshalBinaryLengthPrefixed(exchangeRate)},
 		tmkv.Pair{Key: types.FeederDelegationKey, Value: cdc.MustMarshalBinaryLengthPrefixed(feederAddr)},
 		tmkv.Pair{Key: types.MissCounterKey, Value: cdc.MustMarshalBinaryLengthPrefixed(missCounter)},
+		tmkv.Pair{Key: types.AggregatePrevoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregatePrevote)},
+		tmkv.Pair{Key: types.AggregateVoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregateVote)},
+		tmkv.Pair{Key: types.TobinTaxKey, Value: cdc.MustMarshalBinaryLengthPrefixed(tobinTax)},
 		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
 	}
 
@@ -56,6 +67,9 @@ func TestDecodeDistributionStore(t *testing.T) {
 		{"ExchangeRate", fmt.Sprintf("%v\n%v", exchangeRate, exchangeRate)},
 		{"FeederDelegation", fmt.Sprintf("%v\n%v", feederAddr, feederAddr)},
 		{"MissCounter", fmt.Sprintf("%v\n%v", missCounter, missCounter)},
+		{"AggregatePrevote", fmt.Sprintf("%v\n%v", aggregatePrevote, aggregatePrevote)},
+		{"AggregateVote", fmt.Sprintf("%v\n%v", aggregateVote, aggregateVote)},
+		{"TobinTax", fmt.Sprintf("%v\n%v", tobinTax, tobinTax)},
 		{"other", ""},
 	}
 

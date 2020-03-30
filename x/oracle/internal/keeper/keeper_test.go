@@ -15,7 +15,8 @@ import (
 func TestPrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	prevote := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[0]))
+	prevote := types.NewExchangeRatePrevote(hash, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote)
 
 	KPrevote, err := input.OracleKeeper.GetExchangeRatePrevote(input.Ctx, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]))
@@ -30,10 +31,12 @@ func TestPrevoteAddDelete(t *testing.T) {
 func TestPrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
+	hash := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[0]))
+	prevote1 := types.NewExchangeRatePrevote(hash, core.MicroSDRDenom, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
 
-	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, sdk.ValAddress(Addrs[1]), 0)
+	hash2 := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[1]))
+	prevote2 := types.NewExchangeRatePrevote(hash2, core.MicroSDRDenom, sdk.ValAddress(Addrs[1]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
 
 	i := 0
@@ -49,7 +52,8 @@ func TestPrevoteIterate(t *testing.T) {
 		return false
 	})
 
-	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, sdk.ValAddress(Addrs[2]), 0)
+	hash3 := types.GetVoteHash("salt", sdk.NewDec(123), "foo", sdk.ValAddress(Addrs[2]))
+	prevote3 := types.NewExchangeRatePrevote(hash3, core.MicroLunaDenom, sdk.ValAddress(Addrs[2]), 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	input.OracleKeeper.iterateExchangeRatePrevotesWithPrefix(input.Ctx, types.GetExchangeRatePrevoteKey(core.MicroLunaDenom, sdk.ValAddress{}), func(p types.ExchangeRatePrevote) (stop bool) {
@@ -249,9 +253,9 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := int64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	whilelist := types.DenomList{
-		core.MicroSDRDenom,
-		core.MicroKRWDenom,
+	whitelist := types.DenomList{
+		{Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax},
+		{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -260,7 +264,7 @@ func TestParams(t *testing.T) {
 		VoteThreshold:            voteThreshold,
 		RewardBand:               oracleRewardBand,
 		RewardDistributionWindow: rewardDistributionWindow,
-		Whitelist:                whilelist,
+		Whitelist:                whitelist,
 		SlashFraction:            slashFraction,
 		SlashWindow:              slashWindow,
 		MinValidPerWindow:        minValidPerWindow,
@@ -342,4 +346,124 @@ func TestIterateMissCounters(t *testing.T) {
 	require.Equal(t, 1, len(missCounters))
 	require.Equal(t, ValAddrs[1], operators[0])
 	require.Equal(t, missCounter, missCounters[0])
+}
+
+func TestAggregatePrevoteAddDelete(t *testing.T) {
+	input := CreateTestInput(t)
+
+	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	aggregatePrevote := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote)
+
+	KPrevote, err := input.OracleKeeper.GetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.NoError(t, err)
+	require.Equal(t, aggregatePrevote, KPrevote)
+
+	input.OracleKeeper.DeleteAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote)
+	_, err = input.OracleKeeper.GetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.Error(t, err)
+}
+
+func TestAggregatePrevoteIterate(t *testing.T) {
+	input := CreateTestInput(t)
+
+	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	aggregatePrevote1 := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote1)
+
+	hash2 := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[1]))
+	aggregatePrevote2 := types.NewAggregateExchangeRatePrevote(hash2, sdk.ValAddress(Addrs[1]), 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, aggregatePrevote2)
+
+	i := 0
+	bigger := bytes.Compare(Addrs[0], Addrs[1])
+	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(p types.AggregateExchangeRatePrevote) (stop bool) {
+		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
+			require.Equal(t, aggregatePrevote1, p)
+		} else {
+			require.Equal(t, aggregatePrevote2, p)
+		}
+
+		i++
+		return false
+	})
+}
+
+func TestAggregateVoteAddDelete(t *testing.T) {
+	input := CreateTestInput(t)
+
+	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote)
+
+	KVote, err := input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.NoError(t, err)
+	require.Equal(t, aggregateVote, KVote)
+
+	input.OracleKeeper.DeleteAggregateExchangeRateVote(input.Ctx, aggregateVote)
+	_, err = input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
+	require.Error(t, err)
+}
+
+func TestAggregateVoteIterate(t *testing.T) {
+	input := CreateTestInput(t)
+
+	aggregateVote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[0]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote1)
+
+	aggregateVote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
+		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+	}, sdk.ValAddress(Addrs[1]))
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, aggregateVote2)
+
+	i := 0
+	bigger := bytes.Compare(Addrs[0], Addrs[1])
+	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(p types.AggregateExchangeRateVote) (stop bool) {
+		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
+			require.Equal(t, aggregateVote1, p)
+		} else {
+			require.Equal(t, aggregateVote2, p)
+		}
+
+		i++
+		return false
+	})
+}
+
+func TestTobinTaxGetSet(t *testing.T) {
+	input := CreateTestInput(t)
+
+	tobinTaxes := map[string]sdk.Dec{
+		core.MicroSDRDenom: sdk.NewDec(1),
+		core.MicroUSDDenom: sdk.NewDecWithPrec(1, 3),
+		core.MicroKRWDenom: sdk.NewDecWithPrec(123, 3),
+		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 4),
+	}
+
+	for denom, tobinTax := range tobinTaxes {
+		input.OracleKeeper.SetTobinTax(input.Ctx, denom, tobinTax)
+		factor, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
+		require.NoError(t, err)
+		require.Equal(t, tobinTaxes[denom], factor)
+	}
+
+	input.OracleKeeper.IterateTobinTaxes(input.Ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		require.Equal(t, tobinTaxes[denom], tobinTax)
+		return false
+	})
+
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	for denom := range tobinTaxes {
+		_, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
+		require.Error(t, err)
+	}
 }

@@ -3,7 +3,6 @@ package simulation
 // DONTCOVER
 
 import (
-	"encoding/hex"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -96,10 +95,7 @@ func SimulateMsgExchangeRatePrevote(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		denom := whitelist[simulation.RandIntBetween(r, 0, len(whitelist))]
 		price := sdk.NewDecWithPrec(int64(simulation.RandIntBetween(r, 1, 10000)), int64(1))
-		voteHash, err := types.VoteHash(salt, price, denom, address)
-		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
-		}
+		voteHash := types.GetVoteHash(salt, price, denom, address)
 
 		feederAddr := k.GetOracleDelegate(ctx, address)
 		feederSimAccount, _ := simulation.FindAccount(accs, feederAddr)
@@ -110,7 +106,7 @@ func SimulateMsgExchangeRatePrevote(ak authkeeper.AccountKeeper, k keeper.Keeper
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgExchangeRatePrevote(hex.EncodeToString(voteHash), denom, feederAddr, address)
+		msg := types.NewMsgExchangeRatePrevote(voteHash, denom, feederAddr, address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},

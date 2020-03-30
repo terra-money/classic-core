@@ -20,7 +20,7 @@ func TestSettle(t *testing.T) {
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
 	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt())))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
 

@@ -14,6 +14,11 @@ const (
 	QueryVotes            = "votes"
 	QueryFeederDelegation = "feederDelegation"
 	QueryMissCounter      = "missCounter"
+	QueryAggregatePrevote = "aggregatePrevote"
+	QueryAggregateVote    = "aggregateVote"
+	QueryVoteTargets      = "voteTargets"
+	QueryTobinTax         = "tobinTax"
+	QueryTobinTaxes       = "tobinTaxes"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -62,7 +67,7 @@ func NewQueryFeederDelegationParams(validator sdk.ValAddress) QueryFeederDelegat
 	return QueryFeederDelegationParams{validator}
 }
 
-// QueryMissCounterParams defeins the params for the following queries:
+// QueryMissCounterParams defines the params for the following queries:
 // - 'custom/oracle/missCounter'
 type QueryMissCounterParams struct {
 	Validator sdk.ValAddress
@@ -71,4 +76,37 @@ type QueryMissCounterParams struct {
 // NewQueryMissCounterParams returns params for feeder delegation query
 func NewQueryMissCounterParams(validator sdk.ValAddress) QueryMissCounterParams {
 	return QueryMissCounterParams{validator}
+}
+
+// QueryAggregatePrevoteParams defines the params for the following queries:
+// - 'custom/oracle/aggregatePrevote'
+type QueryAggregatePrevoteParams struct {
+	Validator sdk.ValAddress
+}
+
+// NewQueryAggregatePrevoteParams returns params for feeder delegation query
+func NewQueryAggregatePrevoteParams(validator sdk.ValAddress) QueryAggregatePrevoteParams {
+	return QueryAggregatePrevoteParams{validator}
+}
+
+// QueryAggregateVoteParams defines the params for the following queries:
+// - 'custom/oracle/aggregateVote'
+type QueryAggregateVoteParams struct {
+	Validator sdk.ValAddress
+}
+
+// NewQueryAggregateVoteParams returns params for feeder delegation query
+func NewQueryAggregateVoteParams(validator sdk.ValAddress) QueryAggregateVoteParams {
+	return QueryAggregateVoteParams{validator}
+}
+
+// QueryTobinTaxParams defines the params for the following queries:
+// - 'custom/oracle/tobinTax'
+type QueryTobinTaxParams struct {
+	Denom string
+}
+
+// NewQueryTobinTaxParams returns params for tobin tax query
+func NewQueryTobinTaxParams(denom string) QueryTobinTaxParams {
+	return QueryTobinTaxParams{denom}
 }

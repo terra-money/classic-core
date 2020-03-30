@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/market/internal/types"
 )
 
@@ -18,7 +17,7 @@ import (
 const (
 	basePoolKey             = "base_pool"
 	poolRecoveryPeriodKey   = "pool_recovery_period"
-	minSpreadKey            = "min_spread"
+	minStabilitySpreadKey   = "min_spread"
 	tobinTaxKey             = "tobin_tax"
 	illiquidTobinTaxRateKey = "illiquid_tobin_tax_rate"
 )
@@ -63,10 +62,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { poolRecoveryPeriod = GenPoolRecoveryPeriod(r) },
 	)
 
-	var minSpread sdk.Dec
+	var minStabilitySpread sdk.Dec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, minSpreadKey, &minSpread, simState.Rand,
-		func(r *rand.Rand) { minSpread = GenMinSpread(r) },
+		simState.Cdc, minStabilitySpreadKey, &minStabilitySpread, simState.Rand,
+		func(r *rand.Rand) { minStabilitySpread = GenMinSpread(r) },
 	)
 
 	var tobinTax sdk.Dec
@@ -86,11 +85,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		types.Params{
 			BasePool:           basePool,
 			PoolRecoveryPeriod: poolRecoveryPeriod,
-			MinSpread:          minSpread,
-			TobinTax:           tobinTax,
-			IlliquidTobinTaxList: types.TobinTaxList{
-				{Denom: core.MicroMNTDenom, TaxRate: illiquidTobinTaxRate},
-			},
+			MinStabilitySpread: minStabilitySpread,
 		},
 	)
 

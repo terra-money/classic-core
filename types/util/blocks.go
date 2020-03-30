@@ -12,15 +12,7 @@ const (
 	BlocksPerWeek   = BlocksPerDay * 7
 	BlocksPerMonth  = BlocksPerDay * 30
 	BlocksPerYear   = BlocksPerDay * 365
-
-	BlocksPerEpoch = BlocksPerWeek
 )
-
-// GetEpoch returns the current epoch, starting from 0
-func GetEpoch(ctx sdk.Context) int64 {
-	curEpoch := ctx.BlockHeight() / BlocksPerEpoch
-	return curEpoch
-}
 
 // IsPeriodLastBlock returns true if we are at the last block of the period
 func IsPeriodLastBlock(ctx sdk.Context, blocksPerPeriod int64) bool {

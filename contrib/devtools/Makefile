@@ -47,6 +47,11 @@ all: tools
 
 tools: statik runsim
 
+golangci-lint: $(GOLANGCI_LINT)
+$(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
+	@echo "Installing golangci-lint..."
+	@bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR)
+
 # Install the runsim binary with a temporary workaround of entering an outside
 # directory as the "go get" command ignores the -mod option and will polute the
 # go.{mod, sum} files.
@@ -71,4 +76,4 @@ tools-clean:
 	rm -f $(STATIK) $(RUNSIM)
 	rm -f tools-stamp
 
-.PHONY: all tools tools-clean
+.PHONY: all tools tools-clean golangci-lint

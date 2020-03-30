@@ -90,7 +90,7 @@ func TestMicroLunaIssuance(t *testing.T) {
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
 
 	// See that we can get and set luna issuance
-	blocksPerEpoch := core.BlocksPerEpoch
+	blocksPerEpoch := core.BlocksPerWeek
 	for i := int64(0); i < 10; i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(i * blocksPerEpoch)
 
@@ -106,7 +106,7 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 	input := CreateTestInput(t)
 
 	for i := int64(0); i < 10; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
+		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerWeek)
 		supply := input.SupplyKeeper.GetSupply(input.Ctx)
 
 		preIssuance := sdk.NewInt(rand.Int63() + 1)
@@ -124,6 +124,16 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 		}
 
 		require.Equal(t, targetSeigniorage, input.TreasuryKeeper.PeekEpochSeigniorage(input.Ctx))
+	}
+}
+
+func TestCumulatedHeight(t *testing.T) {
+	input := CreateTestInput(t)
+
+	// See that we can get and set reward weights
+	for i := int64(0); i < 10; i++ {
+		input.TreasuryKeeper.SetCumulatedHeight(input.Ctx, i*100)
+		require.Equal(t, i*100, input.TreasuryKeeper.GetCumulatedHeight(input.Ctx))
 	}
 }
 

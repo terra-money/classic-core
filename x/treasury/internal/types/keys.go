@@ -36,6 +36,8 @@ const (
 // - 0x07<epoch_Bytes>: sdk.Dec
 //
 // - 0x08<epoch_Bytes>: sdk.Int
+//
+// - 0x09: int64
 var (
 	// Keys for store prefixes
 	TaxRateKey              = []byte{0x01} // a key for a tax-rate
@@ -43,6 +45,7 @@ var (
 	TaxCapKey               = []byte{0x03} // prefix for each key to a tax-cap
 	TaxProceedsKey          = []byte{0x04} // a key for a tax-proceeds
 	EpochInitialIssuanceKey = []byte{0x05} // a key for a initial epoch issuance
+	CumulatedHeightKey      = []byte{0x09} // a key for a cumulated height
 
 	// Keys for store prefixes of internal purpose variables
 	TRKey  = []byte{0x06} // prefix for each key to a TR
