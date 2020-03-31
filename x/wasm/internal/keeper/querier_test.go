@@ -59,7 +59,7 @@ func TestQueryContractState(t *testing.T) {
 	querier := NewQuerier(keeper)
 
 	// query store []byte("foo")
-	bz, err := cdc.MarshalJSON(types.NewQueryStoreParams(addr, []byte("foo")))
+	bz, err := cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte("foo")))
 	require.NoError(t, err)
 
 	res, err := querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
@@ -67,7 +67,7 @@ func TestQueryContractState(t *testing.T) {
 	require.Equal(t, []byte(`"bar"`), res)
 
 	// query store []byte{0x0, 0x1}
-	bz, err = cdc.MarshalJSON(types.NewQueryStoreParams(addr, []byte{0x0, 0x1}))
+	bz, err = cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte{0x0, 0x1}))
 	require.NoError(t, err)
 
 	res, err = querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
