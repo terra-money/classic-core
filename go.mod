@@ -3,7 +3,7 @@ module github.com/terra-project/core
 go 1.13
 
 require (
-	github.com/confio/go-cosmwasm v0.7.2
+	github.com/confio/go-cosmwasm v0.0.0
 	github.com/cosmos/cosmos-sdk v0.37.7
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d // indirect
 	github.com/gorilla/mux v1.7.2
@@ -22,3 +22,5 @@ require (
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )
+
+replace github.com/confio/go-cosmwasm => github.com/terra-project/go-cosmwasm v0.7.2-alpha

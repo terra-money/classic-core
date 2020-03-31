@@ -35,6 +35,16 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		return k.handleSdkMessage(ctx, contract, sendMsg)
 	}
 
+	// Handle MsgSwap
+	if msg.Swap != nil {
+		swapMsg, err := types.ParseMsgSwap(msg.Swap)
+		if err != nil {
+			return err
+		}
+
+		return k.handleSdkMessage(ctx, contract, swapMsg)
+	}
+
 	// Handle MsgExecuteContract
 	if msg.Contract != nil {
 		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)

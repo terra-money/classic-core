@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/terra-project/core/x/market"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,6 +33,28 @@ func ParseMsgSend(wasmMsg *wasmTypes.SendMsg) (msgSend bank.MsgSend, err sdk.Err
 		FromAddress: fromAddr,
 		ToAddress:   toAddr,
 		Amount:      coins,
+	}
+
+	return
+}
+
+// ParseMsgSend converts wasm msg to sdk.Msg
+func ParseMsgSwap(wasmMsg *wasmTypes.SwapMsg) (msgSend market.MsgSwap, err sdk.Error) {
+	traderAddr, stderr := sdk.AccAddressFromBech32(wasmMsg.TraderAddress)
+	if stderr != nil {
+		err = sdk.ErrInvalidAddress(wasmMsg.TraderAddress)
+		return
+	}
+
+	offerCoin, err := ParseToCoin(wasmMsg.OfferCoin)
+	if err != nil {
+		return
+	}
+
+	msgSend = market.MsgSwap{
+		Trader:    traderAddr,
+		OfferCoin: offerCoin,
+		AskDenom:  wasmMsg.AskDenom,
 	}
 
 	return
@@ -89,18 +112,29 @@ func ParseResult(wasmResult *wasmTypes.Result, contractAddr sdk.AccAddress) sdk.
 	}
 }
 
+// ParseToCoin converts wasm coin to sdk.Coin
+func ParseToCoin(wasmCoin wasmTypes.Coin) (coin sdk.Coin, err sdk.Error) {
+	amount, ok := sdk.NewIntFromString(wasmCoin.Amount)
+	if !ok {
+		err = sdk.ErrInvalidCoins(fmt.Sprintf("Failed to parse %s", coin.Amount))
+		return
+	}
+
+	coin = sdk.Coin{
+		Denom:  wasmCoin.Denom,
+		Amount: amount,
+	}
+	return
+}
+
 // ParseToCoins converts wasm coins to sdk.Coins
 func ParseToCoins(wasmCoins []wasmTypes.Coin) (coins sdk.Coins, err sdk.Error) {
 	for _, coin := range wasmCoins {
-		amount, ok := sdk.NewIntFromString(coin.Amount)
-		if !ok {
-			err = sdk.ErrInvalidCoins(fmt.Sprintf("Failed to parse %s", coin.Amount))
-			return
+		c, err := ParseToCoin(coin)
+		if err != nil {
+			return nil, err
 		}
-		c := sdk.Coin{
-			Denom:  coin.Denom,
-			Amount: amount,
-		}
+
 		coins = append(coins, c)
 	}
 	return
