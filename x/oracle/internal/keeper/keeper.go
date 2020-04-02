@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -267,7 +266,7 @@ func (k Keeper) GetRewardPool(ctx sdk.Context) sdk.Coins {
 //-----------------------------------
 // Miss counter logic
 
-// GetMissCounter retrives the # of vote periods missed in this oracle slash window
+// GetMissCounter retrieves the # of vote periods missed in this oracle slash window
 func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) (missCounter int64) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetMissCounterKey(operator))
@@ -302,5 +301,142 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 		if handler(operator, missCounter) {
 			break
 		}
+	}
+}
+
+//-----------------------------------
+// AggregateExchangeRatePrevote logic
+
+// GetAggregateExchangeRatePrevote retrieves an oracle prevote from the store
+func (k Keeper) GetAggregateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAddress) (aggregatePrevote types.AggregateExchangeRatePrevote, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetAggregateExchangeRatePrevoteKey(voter))
+	if b == nil {
+		err = types.ErrNoAggregatePrevote(k.codespace, voter)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &aggregatePrevote)
+	return
+}
+
+// AddAggregateExchangeRatePrevote adds an oracle aggregate prevote to the store
+func (k Keeper) AddAggregateExchangeRatePrevote(ctx sdk.Context, aggregatePrevote types.AggregateExchangeRatePrevote) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(aggregatePrevote)
+	store.Set(types.GetAggregateExchangeRatePrevoteKey(aggregatePrevote.Voter), bz)
+}
+
+// DeleteAggregateExchangeRatePrevote deletes an oracle prevote from the store
+func (k Keeper) DeleteAggregateExchangeRatePrevote(ctx sdk.Context, aggregatePrevote types.AggregateExchangeRatePrevote) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAggregateExchangeRatePrevoteKey(aggregatePrevote.Voter))
+}
+
+// IterateAggregateExchangeRatePrevotes iterates rate over prevotes in the store
+func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregatePrevoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var aggregatePrevote types.AggregateExchangeRatePrevote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &aggregatePrevote)
+		if handler(aggregatePrevote) {
+			break
+		}
+	}
+}
+
+//-----------------------------------
+// AggregateExchangeRateVote logic
+
+// GetAggregateExchangeRateVote retrieves an oracle prevote from the store
+func (k Keeper) GetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) (aggregateVote types.AggregateExchangeRateVote, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetAggregateExchangeRateVoteKey(voter))
+	if b == nil {
+		err = types.ErrNoAggregateVote(k.codespace, voter)
+		return
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &aggregateVote)
+	return
+}
+
+// AddAggregateExchangeRateVote adds an oracle aggregate prevote to the store
+func (k Keeper) AddAggregateExchangeRateVote(ctx sdk.Context, aggregateVote types.AggregateExchangeRateVote) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(aggregateVote)
+	store.Set(types.GetAggregateExchangeRateVoteKey(aggregateVote.Voter), bz)
+}
+
+// DeleteAggregateExchangeRateVote deletes an oracle prevote from the store
+func (k Keeper) DeleteAggregateExchangeRateVote(ctx sdk.Context, aggregateVote types.AggregateExchangeRateVote) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAggregateExchangeRateVoteKey(aggregateVote.Voter))
+}
+
+// IterateAggregateExchangeRateVotes iterates rate over prevotes in the store
+func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(aggregateVote types.AggregateExchangeRateVote) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregateVoteKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var aggregateVote types.AggregateExchangeRateVote
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &aggregateVote)
+		if handler(aggregateVote) {
+			break
+		}
+	}
+}
+
+// HashAggregateExchangeRateVote
+func (k Keeper) HashAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetAggregateExchangeRateVoteKey(voter))
+}
+
+// GetTobinTax return tobin tax for the denom
+func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, err sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetTobinTaxKey(denom))
+	if bz == nil {
+		err = types.ErrNoTobinTax(k.codespace, denom)
+		return
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &tobinTax)
+	}
+
+	return
+}
+
+// SetTobinTax updates tobin tax for the denom
+func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(tobinTax)
+	store.Set(types.GetTobinTaxKey(denom), bz)
+}
+
+// IterateTobinTaxs iterates rate over tobin taxes in the store
+func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, tobinTax sdk.Dec) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		denom := types.ExtractDenomFromTobinTaxKey(iter.Key())
+
+		var tobinTax sdk.Dec
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &tobinTax)
+		if handler(denom, tobinTax) {
+			break
+		}
+	}
+}
+
+// ClearTobinTaxes clears tobin taxes
+func (k Keeper) ClearTobinTaxes(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		store.Delete(iter.Key())
 	}
 }

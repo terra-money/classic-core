@@ -1,8 +1,6 @@
 package oracle
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +21,10 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleMsgExchangeRateVote(ctx, k, msg)
 		case MsgDelegateFeedConsent:
 			return handleMsgDelegateFeedConsent(ctx, k, msg)
+		case MsgAggregateExchangeRatePrevote:
+			return handleMsgAggregateExchangeRatePrevote(ctx, k, msg)
+		case MsgAggregateExchangeRateVote:
+			return handleMsgAggregateExchangeRateVote(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized oracle message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -32,6 +34,12 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // handleMsgExchangeRatePrevote handles a MsgExchangeRatePrevote
 func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgExchangeRatePrevote) sdk.Result {
+
+	// check the denom is in the vote target
+	if !keeper.IsVoteTarget(ctx, ppm.Denom) {
+		return ErrUnknownDenomination(keeper.Codespace(), ppm.Denom).Result()
+	}
+
 	if !ppm.Feeder.Equals(ppm.Validator) {
 		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
 		if !delegate.Equals(ppm.Feeder) {
@@ -87,24 +95,19 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 		return ErrNoPrevote(keeper.Codespace(), pvm.Validator, pvm.Denom).Result()
 	}
 
-	// Check a msg is submitted porper period
+	// Check a msg is submitted proper period
 	if (ctx.BlockHeight()/params.VotePeriod)-(prevote.SubmitBlock/params.VotePeriod) != 1 {
-		return ErrNotRevealPeriod(keeper.Codespace()).Result()
+		return ErrInvalidRevealPeriod(keeper.Codespace()).Result()
 	}
 
 	// If there is an prevote, we verify a exchange rate with prevote hash and move prevote to vote with given exchange rate
-	bz, _ := hex.DecodeString(prevote.Hash) // prevote hash
-	bz2, err2 := VoteHash(pvm.Salt, pvm.ExchangeRate, prevote.Denom, prevote.Voter)
-	if err2 != nil {
-		return ErrVerificationFailed(keeper.Codespace(), bz, []byte{}).Result()
-	}
-
-	if !bytes.Equal(bz, bz2) {
-		return ErrVerificationFailed(keeper.Codespace(), bz, bz2).Result()
+	hash := GetVoteHash(pvm.Salt, pvm.ExchangeRate, pvm.Denom, pvm.Validator)
+	if !prevote.Hash.Equal(hash) {
+		return ErrVerificationFailed(keeper.Codespace(), prevote.Hash, hash).Result()
 	}
 
 	// Add the vote to the store
-	vote := NewExchangeRateVote(pvm.ExchangeRate, prevote.Denom, prevote.Voter)
+	vote := NewExchangeRateVote(pvm.ExchangeRate, pvm.Denom, pvm.Validator)
 	keeper.DeleteExchangeRatePrevote(ctx, prevote)
 	keeper.AddExchangeRateVote(ctx, vote)
 
@@ -113,6 +116,7 @@ func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgExchangeRa
 			types.EventTypeVote,
 			sdk.NewAttribute(types.AttributeKeyDenom, pvm.Denom),
 			sdk.NewAttribute(types.AttributeKeyVoter, pvm.Validator.String()),
+			sdk.NewAttribute(types.AttributeKeyExchangeRate, pvm.ExchangeRate.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeder, pvm.Feeder.String()),
 		),
 		sdk.NewEvent(
@@ -139,9 +143,108 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, dfpm MsgDelega
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeFeedDeleate,
+			types.EventTypeFeedDelegate,
 			sdk.NewAttribute(types.AttributeKeyOperator, dfpm.Operator.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeder, dfpm.Delegate.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+}
+
+// handleMsgAggregateExchangeRatePrevote handles a MsgAggregateExchangeRatePrevote
+func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, ppm MsgAggregateExchangeRatePrevote) sdk.Result {
+	if !ppm.Feeder.Equals(ppm.Validator) {
+		delegate := keeper.GetOracleDelegate(ctx, ppm.Validator)
+		if !delegate.Equals(ppm.Feeder) {
+			return ErrNoVotingPermission(keeper.Codespace(), ppm.Feeder, ppm.Validator).Result()
+		}
+	}
+
+	// Check that the given validator exists
+	val := keeper.StakingKeeper.Validator(ctx, ppm.Validator)
+	if val == nil {
+		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
+	}
+
+	aggregatePrevote := NewAggregateExchangeRatePrevote(ppm.Hash, ppm.Validator, ctx.BlockHeight())
+	keeper.AddAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeAggregatePrevote,
+			sdk.NewAttribute(types.AttributeKeyVoter, ppm.Validator.String()),
+			sdk.NewAttribute(types.AttributeKeyFeeder, ppm.Feeder.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+}
+
+// handleMsgAggregateExchangeRateVote handles a MsgAggregateExchangeRateVote
+func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, pvm MsgAggregateExchangeRateVote) sdk.Result {
+	if !pvm.Feeder.Equals(pvm.Validator) {
+		delegate := keeper.GetOracleDelegate(ctx, pvm.Validator)
+		if !delegate.Equals(pvm.Feeder) {
+			return ErrNoVotingPermission(keeper.Codespace(), pvm.Feeder, pvm.Validator).Result()
+		}
+	}
+
+	// Check that the given validator exists
+	val := keeper.StakingKeeper.Validator(ctx, pvm.Validator)
+	if val == nil {
+		return staking.ErrNoValidatorFound(keeper.Codespace()).Result()
+	}
+
+	params := keeper.GetParams(ctx)
+
+	aggregatePrevote, err := keeper.GetAggregateExchangeRatePrevote(ctx, pvm.Validator)
+	if err != nil {
+		return ErrNoAggregatePrevote(keeper.Codespace(), pvm.Validator).Result()
+	}
+
+	// Check a msg is submitted porper period
+	if (ctx.BlockHeight()/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
+		return ErrInvalidRevealPeriod(keeper.Codespace()).Result()
+	}
+
+	exchangeRateTuples, err2 := types.ParseExchangeRateTuples(pvm.ExchangeRates)
+	if err2 != nil {
+		return sdk.ErrInvalidCoins(err2.Error()).Result()
+	}
+
+	// check all denoms are in the vote target
+	for _, tuple := range exchangeRateTuples {
+		if !keeper.IsVoteTarget(ctx, tuple.Denom) {
+			return ErrUnknownDenomination(keeper.Codespace(), tuple.Denom).Result()
+		}
+	}
+
+	// Verify a exchange rate with aggregate prevote hash
+	hash := GetAggregateVoteHash(pvm.Salt, pvm.ExchangeRates, aggregatePrevote.Voter)
+
+	if !aggregatePrevote.Hash.Equal(hash) {
+		return ErrVerificationFailed(keeper.Codespace(), aggregatePrevote.Hash, hash).Result()
+	}
+
+	// Move aggregate prevote to aggregate vote with given exchange rates
+	keeper.AddAggregateExchangeRateVote(ctx, NewAggregateExchangeRateVote(exchangeRateTuples, aggregatePrevote.Voter))
+	keeper.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeAggregateVote,
+			sdk.NewAttribute(types.AttributeKeyVoter, pvm.Validator.String()),
+			sdk.NewAttribute(types.AttributeKeyExchangeRates, pvm.ExchangeRates),
+			sdk.NewAttribute(types.AttributeKeyFeeder, pvm.Feeder.String()),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,

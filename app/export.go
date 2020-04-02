@@ -160,6 +160,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		ctx,
 		func(addr sdk.ConsAddress, info slashing.ValidatorSigningInfo) (stop bool) {
 			info.StartHeight = 0
+			info.Address = addr
 			app.slashingKeeper.SetValidatorSigningInfo(ctx, addr, info)
 			return false
 		},
@@ -191,6 +192,16 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 		return false
 	})
 
+	app.oracleKeeper.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote oracle.AggregateExchangeRatePrevote) (stop bool) {
+		app.oracleKeeper.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+		return false
+	})
+
+	app.oracleKeeper.IterateAggregateExchangeRateVotes(ctx, func(aggregateVote oracle.AggregateExchangeRateVote) bool {
+		app.oracleKeeper.DeleteAggregateExchangeRateVote(ctx, aggregateVote)
+		return false
+	})
+
 	/* Handle market state. */
 
 	// clear all market pools
@@ -198,10 +209,7 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	/* Handle treasury state. */
 
-	// clear all indicators
-	app.treasuryKeeper.ClearTRs(ctx)
-	app.treasuryKeeper.ClearSRs(ctx)
-	app.treasuryKeeper.ClearTSLs(ctx)
-
-	app.treasuryKeeper.RecordEpochInitialIssuance(ctx)
+	// update cumulated height
+	newCumulatedHeight := app.treasuryKeeper.GetCumulatedHeight(ctx) + ctx.BlockHeight()
+	app.treasuryKeeper.SetCumulatedHeight(ctx, newCumulatedHeight)
 }

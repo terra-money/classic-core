@@ -19,47 +19,50 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// Build valid votes counter and winner map over all validators in active set
-	validVotesCounterMap := make(map[string]int64)
+	validVotesCounterMap := make(map[string]int)
 	winnerMap := make(map[string]types.Claim)
-	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) bool {
+	k.StakingKeeper.IterateValidators(ctx, func(_ int64, validator exported.ValidatorI) bool {
 
-		// Exclude not bonded vaildator or jailed validators from tallying
+		// Exclude not bonded validator or jailed validators from tallying
 		if validator.IsBonded() && !validator.IsJailed() {
+
+			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
 			valAddr := validator.GetOperator()
-			validVotesCounterMap[valAddr.String()] = int64(0)
-			winnerMap[valAddr.String()] = types.NewClaim(0, valAddr)
+			validVotesCounterMap[string(valAddr)] = 0
+			winnerMap[string(valAddr)] = types.NewClaim(0, valAddr)
 		}
 
 		return false
 	})
 
-	whitelist := make(map[string]bool)
-	for _, denom := range k.Whitelist(ctx) {
-		whitelist[denom] = true
+	voteTargets := make(map[string]bool)
+	for _, denom := range k.GetVoteTargets(ctx) {
+		voteTargets[denom] = true
 	}
 
-	// Clear exchange rates
-	for denom := range whitelist {
+	// Clear all exchange rates
+	k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
 		k.DeleteLunaExchangeRate(ctx, denom)
-	}
+		return false
+	})
 
 	// Organize votes to ballot by denom
-	// NOTE: **Filter out inative or jailed validators**
+	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	for denom, ballot := range voteMap {
 
-		// If denom is not in the whitelist, or the ballot for it has failed, then skip
-		if _, exists := whitelist[denom]; !exists {
+		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
+		if _, exists := voteTargets[denom]; !exists {
 			continue
 		}
 
-		// If the ballot is not passed, then remove it from the whitelist array
+		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
 		if !ballotIsPassing(ctx, ballot, k) {
-			delete(whitelist, denom)
+			delete(voteTargets, denom)
 			continue
 		}
 
@@ -71,7 +74,9 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 		// Collect claims of ballot winners
 		for _, ballotWinningClaim := range ballotWinningClaims {
-			key := ballotWinningClaim.Recipient.String()
+
+			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
+			key := string(ballotWinningClaim.Recipient)
 
 			// Update claim
 			prevClaim := winnerMap[key]
@@ -93,16 +98,15 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	//---------------------------
 	// Do miss counting & slashing
-
-	whitelistLen := int64(len(whitelist))
-	for operatorBechAddr, count := range validVotesCounterMap {
+	voteTargetsLen := len(voteTargets)
+	for operatorAddrByteStr, count := range validVotesCounterMap {
 		// Skip abstain & valid voters
-		if count == whitelistLen {
+		if count == voteTargetsLen {
 			continue
 		}
 
 		// Increase miss counter
-		operator, _ := sdk.ValAddressFromBech32(operatorBechAddr) // error never occur
+		operator := sdk.ValAddress(operatorAddrByteStr) // error never occur
 		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
 	}
 
@@ -116,16 +120,19 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	k.RewardBallotWinners(ctx, winnerMap)
 
 	// Clear the ballot
-	clearBallots(k, ctx, params)
+	clearBallots(ctx, k, params.VotePeriod)
+
+	// Update vote targets and tobin tax
+	applyWhitelist(ctx, k, params.Whitelist, voteTargets)
 
 	return
 }
 
 // clearBallots clears all tallied prevotes and votes from the store
-func clearBallots(k Keeper, ctx sdk.Context, params Params) {
+func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 	// Clear all prevotes
 	k.IterateExchangeRatePrevotes(ctx, func(prevote types.ExchangeRatePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock+params.VotePeriod {
+		if ctx.BlockHeight() > prevote.SubmitBlock+votePeriod {
 			k.DeleteExchangeRatePrevote(ctx, prevote)
 		}
 
@@ -137,4 +144,44 @@ func clearBallots(k Keeper, ctx sdk.Context, params Params) {
 		k.DeleteExchangeRateVote(ctx, vote)
 		return false
 	})
+
+	// Clear all aggregate prevotes
+	k.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool) {
+		if ctx.BlockHeight() > aggregatePrevote.SubmitBlock+votePeriod {
+			k.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+		}
+
+		return false
+	})
+
+	// Clear all aggregate votes
+	k.IterateAggregateExchangeRateVotes(ctx, func(vote types.AggregateExchangeRateVote) (stop bool) {
+		k.DeleteAggregateExchangeRateVote(ctx, vote)
+		return false
+	})
+}
+
+// applyWhitelist update vote target denom list and set tobin tax with params whitelist
+func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]bool) {
+
+	// check is there any update in whitelist params
+	updateRequired := false
+	if len(voteTargets) != len(whitelist) {
+		updateRequired = true
+	} else {
+		for _, item := range whitelist {
+			if _, ok := voteTargets[item.Name]; !ok {
+				updateRequired = true
+				break
+			}
+		}
+	}
+
+	if updateRequired {
+		k.ClearTobinTaxes(ctx)
+
+		for _, item := range whitelist {
+			k.SetTobinTax(ctx, item.Name, item.TobinTax)
+		}
+	}
 }

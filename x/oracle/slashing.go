@@ -19,7 +19,7 @@ func SlashAndResetMissCounters(ctx sdk.Context, k Keeper) {
 			sdk.NewInt(votePeriodsPerWindow - missCounter)).
 			QuoInt64(votePeriodsPerWindow)
 
-		// Penalize the validator whoes the valid vote rate is smaller than min threshold
+		// Penalize the validator whose the valid vote rate is smaller than min threshold
 		if validVoteRate.LT(minValidPerWindow) {
 			validator := k.StakingKeeper.Validator(ctx, operator)
 			k.StakingKeeper.Slash(

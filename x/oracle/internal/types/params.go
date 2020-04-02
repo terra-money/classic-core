@@ -33,11 +33,16 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold     = sdk.NewDecWithPrec(50, 2)                                             // 50%
-	DefaultRewardBand        = sdk.NewDecWithPrec(2, 2)                                              // 1%
-	DefaultWhitelist         = DenomList{core.MicroKRWDenom, core.MicroSDRDenom, core.MicroUSDDenom} // ukrw, usdr, uusd
-	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4)                                              // 0.01%
-	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2)                                              // 5%
+	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
+	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
+	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
+	DefaultWhitelist     = DenomList{
+		{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroSDRDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)}}
+	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
+	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2) // 5%
 )
 
 var _ subspace.ParamSet = &Params{}
@@ -46,9 +51,9 @@ var _ subspace.ParamSet = &Params{}
 type Params struct {
 	VotePeriod               int64     `json:"vote_period" yaml:"vote_period"`                               // the number of blocks during which voting takes place.
 	VoteThreshold            sdk.Dec   `json:"vote_threshold" yaml:"vote_threshold"`                         // the minimum percentage of votes that must be received for a ballot to pass.
-	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable exchange rate error that can be rewared.
-	RewardDistributionWindow int64     `json:"reward_distribution_window" yaml:"reward_distribution_window"` // the number of blocks during which seigiornage reward comes in and then is distributed.
-	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be acitivated,
+	RewardBand               sdk.Dec   `json:"reward_band" yaml:"reward_band"`                               // the ratio of allowable exchange rate error that can be rewarded.
+	RewardDistributionWindow int64     `json:"reward_distribution_window" yaml:"reward_distribution_window"` // the number of blocks during which seigniorage reward comes in and then is distributed.
+	Whitelist                DenomList `json:"whitelist" yaml:"whitelist"`                                   // the denom list that can be activated,
 	SlashFraction            sdk.Dec   `json:"slash_fraction" yaml:"slash_fraction"`                         // the ratio of penalty on bonded tokens
 	SlashWindow              int64     `json:"slash_window" yaml:"slash_window"`                             // the number of blocks for slashing tallying
 	MinValidPerWindow        sdk.Dec   `json:"min_valid_per_window" yaml:"min_valid_per_window"`             // the ratio of minimum valid oracle votes per slash window to avoid slashing
@@ -91,6 +96,14 @@ func (params Params) Validate() error {
 	if params.MinValidPerWindow.GT(sdk.NewDecWithPrec(5, 1)) || params.MinValidPerWindow.IsNegative() {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 0.5]")
 	}
+	for _, denom := range params.Whitelist {
+		if denom.TobinTax.LT(sdk.ZeroDec()) || denom.TobinTax.GT(sdk.OneDec()) {
+			return fmt.Errorf("oracle parameter Whitelist Denom must have TobinTax between [0, 1]")
+		}
+		if len(denom.Name) == 0 {
+			return fmt.Errorf("oracle parameter Whitelist Denom must have name")
+		}
+	}
 	return nil
 }
 
@@ -112,8 +125,8 @@ func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
 // String implements fmt.Stringer interface
 func (params Params) String() string {
 	return fmt.Sprintf(`Oracle Params:
-  VotePeriod:                  %d
-  VoteThreshold:               %s
+	VotePeriod:                  %d
+	VoteThreshold:               %s
 	RewardBand:                  %s
 	RewardDistributionWindow:    %d
 	Whitelist                    %s

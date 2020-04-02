@@ -46,13 +46,8 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, ballotWinners map[string]ty
 		rewardCoins = append(rewardCoins, sdk.NewCoin(core.MicroLunaDenom, rewardAmt))
 
 		// In case absence of the validator, we just skip distribution
-		if rewardeeVal != nil {
-			tmpDecCoins := make(sdk.DecCoins, len(rewardCoins))
-			for i, coin := range rewardCoins {
-				tmpDecCoins[i] = sdk.NewDecCoinFromCoin(coin)
-			}
-
-			k.distrKeeper.AllocateTokensToValidator(ctx, rewardeeVal, tmpDecCoins)
+		if rewardeeVal != nil && !rewardCoins.IsZero() {
+			k.distrKeeper.AllocateTokensToValidator(ctx, rewardeeVal, sdk.NewDecCoins(rewardCoins))
 			distributedReward = distributedReward.Add(rewardCoins)
 		}
 	}

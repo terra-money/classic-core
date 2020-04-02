@@ -196,4 +196,3 @@ func (h *BidHash) UnmarshalJSON(data []byte) error {
 	*h = h2
 	return nil
 }
-

@@ -176,6 +176,10 @@ func CreateTestInput(t *testing.T) TestInput {
 	defaults := types.DefaultParams()
 	keeper.SetParams(ctx, defaults)
 
+	for _, denom := range defaults.Whitelist {
+		keeper.SetTobinTax(ctx, denom.Name, denom.TobinTax)
+	}
+
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 
 	return TestInput{ctx, cdc, accountKeeper, bankKeeper, keeper, supplyKeeper, stakingKeeper, distrKeeper}

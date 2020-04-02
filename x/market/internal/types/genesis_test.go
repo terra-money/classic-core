@@ -18,7 +18,7 @@ func TestGenesisValidation(t *testing.T) {
 	genState.Params.PoolRecoveryPeriod = -1
 	require.Error(t, ValidateGenesis(genState))
 
-	genState.Params.MinSpread = sdk.NewDec(-1)
+	genState.Params.MinStabilitySpread = sdk.NewDec(-1)
 	require.Error(t, ValidateGenesis(genState))
 
 	require.True(t, len(genState.Params.String()) != 0)

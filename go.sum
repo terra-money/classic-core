@@ -38,8 +38,8 @@ github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8Nz
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/cosmos/cosmos-sdk v0.37.6 h1:l7urou9aTPqW/x3Hq+SAWn6OHDzjma+1OVi0TT+O36M=
-github.com/cosmos/cosmos-sdk v0.37.6/go.mod h1:63Y8V75rRDzUrtRUwy+5cBOy5mr6xytI11PBk53tBrE=
+github.com/cosmos/cosmos-sdk v0.37.7 h1:3RpPXxEShRjx2tSgB9/RTtah4wTYom+vF8ZogPum6RM=
+github.com/cosmos/cosmos-sdk v0.37.7/go.mod h1:63Y8V75rRDzUrtRUwy+5cBOy5mr6xytI11PBk53tBrE=
 github.com/cosmos/go-bip39 v0.0.0-20180618194314-52158e4697b8/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d h1:49RLWk1j44Xu4fjHb6JFYmeUnDORVwHNkDxaQ0ctCVU=
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=

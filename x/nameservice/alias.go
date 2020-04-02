@@ -45,8 +45,8 @@ const (
 	DefaultRootName                 = types.DefaultRootName
 	DefaultMinNameLength            = types.DefaultMinNameLength
 	QueryParameters                 = types.QueryParameters
-	QueryAuctions                    = types.QueryAuctions
-	QueryBids                        = types.QueryBids
+	QueryAuctions                   = types.QueryAuctions
+	QueryBids                       = types.QueryBids
 	QueryRegistry                   = types.QueryRegistry
 	QueryResolve                    = types.QueryResolve
 	QueryReverse                    = types.QueryReverse
@@ -165,8 +165,8 @@ type (
 	MsgUnregisterSubName = types.MsgUnregisterSubName
 	Name                 = types.Name
 	Params               = types.Params
-	QueryAuctionsParams   = types.QueryAuctionsParams
-	QueryBidsParams       = types.QueryBidsParams
+	QueryAuctionsParams  = types.QueryAuctionsParams
+	QueryBidsParams      = types.QueryBidsParams
 	QueryRegistryParams  = types.QueryRegistryParams
 	QueryResolveParams   = types.QueryResolveParams
 	QueryReverseParams   = types.QueryReverseParams

@@ -5,8 +5,8 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 // Defines the prefix of each query path
 const (
 	QueryParameters = "parameters"
-	QueryAuctions    = "auctions"
-	QueryBids        = "bids"
+	QueryAuctions   = "auctions"
+	QueryBids       = "bids"
 	QueryRegistry   = "registry"
 	QueryResolve    = "resolve"
 	QueryReverse    = "reverse"

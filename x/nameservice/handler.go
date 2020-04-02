@@ -113,7 +113,7 @@ func handleMsgBidAuction(ctx sdk.Context, keeper Keeper, msg MsgBidAuction) sdk.
 	if err != nil {
 		return err.Result()
 	}
-	
+
 	// store bid
 	keeper.SetBid(ctx, nameHash, NewBid(msg.Hash, msg.Deposit, msg.Bidder))
 

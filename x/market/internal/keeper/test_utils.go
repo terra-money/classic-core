@@ -157,6 +157,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	)
 
 	keeper.SetParams(ctx, types.DefaultParams())
+	oracleKeeper.SetParams(ctx, oracle.DefaultParams())
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
 	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)

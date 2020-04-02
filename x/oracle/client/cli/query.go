@@ -23,36 +23,56 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	oracleQueryCmd.AddCommand(client.GetCommands(
-		GetCmdQueryExchangeRate(cdc),
+		GetCmdQueryExchangeRates(cdc),
 		GetCmdQueryVotes(cdc),
 		GetCmdQueryPrevotes(cdc),
-		GetCmdQueryActive(cdc),
+		GetCmdQueryActives(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryFeederDelegation(cdc),
 		GetCmdQueryMissCounter(cdc),
+		GetCmdQueryAggregatePrevote(cdc),
+		GetCmdQueryAggregateVote(cdc),
+		GetCmdQueryVoteTargets(cdc),
+		GetCmdQueryTobinTaxes(cdc),
 	)...)
 
 	return oracleQueryCmd
 
 }
 
-// GetCmdQueryExchangeRate implements the query rate command.
-func GetCmdQueryExchangeRate(cdc *codec.Codec) *cobra.Command {
+// GetCmdQueryExchangeRates implements the query rate command.
+func GetCmdQueryExchangeRates(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exchange-rate [denom]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "exchange-rates [denom]",
+		Args:  cobra.RangeArgs(0, 1),
 		Short: "Query the current Luna exchange rate w.r.t an asset",
 		Long: strings.TrimSpace(`
-Query the current exchange rate of Luna with an asset. You can find the current list of active denoms by running: terracli query oracle active
+Query the current exchange rate of Luna with an asset. 
+You can find the current list of active denoms by running
 
-$ terracli query oracle exchange-rate ukrw
+$ terracli query oracle exchange-rates 
+
+Or, can filter with denom
+
+$ terracli query oracle exchange-rates ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			denom := args[0]
+			if len(args) == 0 {
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryExchangeRates), nil)
+				if err != nil {
+					return err
+				}
 
+				var rate sdk.DecCoins
+				cdc.MustUnmarshalJSON(res, &rate)
+				return cliCtx.PrintOutput(rate)
+			}
+
+			denom := args[0]
 			params := types.NewQueryExchangeRateParams(denom)
+
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -63,16 +83,25 @@ $ terracli query oracle exchange-rate ukrw
 				return err
 			}
 
-			var rate sdk.Dec
-			cdc.MustUnmarshalJSON(res, &rate)
-			return cliCtx.PrintOutput(rate)
+			var rates sdk.Dec
+			cdc.MustUnmarshalJSON(res, &rates)
+			return cliCtx.PrintOutput(rates)
+
 		},
 	}
 	return cmd
 }
 
-// GetCmdQueryActive implements the query actives command.
-func GetCmdQueryActive(cdc *codec.Codec) *cobra.Command {
+// Actives receiver struct
+type Denoms []string
+
+// String implements fmt.Stringer interface
+func (a Denoms) String() string {
+	return strings.Join(a, ",")
+}
+
+// GetCmdQueryActives implements the query actives command.
+func GetCmdQueryActives(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "actives",
 		Args:  cobra.NoArgs,
@@ -90,7 +119,7 @@ $ terracli query oracle actives
 				return err
 			}
 
-			var actives types.DenomList
+			var actives Denoms
 			cdc.MustUnmarshalJSON(res, &actives)
 			return cliCtx.PrintOutput(actives)
 		},
@@ -300,6 +329,162 @@ $ terracli query oracle miss terravaloper...
 			var missCounter int64
 			cdc.MustUnmarshalJSON(res, &missCounter)
 			return cliCtx.PrintOutput(sdk.NewInt(missCounter))
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryAggregatePrevote implements the query aggregate prevote of the validator command
+func GetCmdQueryAggregatePrevote(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "aggregate-prevote [validator]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query outstanding oracle aggregate prevote, filtered by voter address.",
+		Long: strings.TrimSpace(`
+Query outstanding oracle aggregate prevote, filtered by voter address.
+
+$ terracli query oracle aggregate-prevote terravaloper...
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := args[0]
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryAggregatePrevoteParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregatePrevote), bz)
+			if err != nil {
+				return err
+			}
+
+			var aggregatePrevote types.AggregateExchangeRatePrevote
+			cdc.MustUnmarshalJSON(res, &aggregatePrevote)
+			return cliCtx.PrintOutput(aggregatePrevote)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryAggregateVote implements the query aggregate prevote of the validator command
+func GetCmdQueryAggregateVote(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "aggregate-vote [validator]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query outstanding oracle aggregate vote, filtered by voter address.",
+		Long: strings.TrimSpace(`
+Query outstanding oracle aggregate vote, filtered by voter address.
+
+$ terracli query oracle aggregate-vote terravaloper...
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valString := args[0]
+			validator, err := sdk.ValAddressFromBech32(valString)
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryAggregateVoteParams(validator)
+			bz, err := cdc.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAggregateVote), bz)
+			if err != nil {
+				return err
+			}
+
+			var aggregateVote types.AggregateExchangeRateVote
+			cdc.MustUnmarshalJSON(res, &aggregateVote)
+			return cliCtx.PrintOutput(aggregateVote)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryVoteTargets implements the query params command.
+func GetCmdQueryVoteTargets(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vote-targets",
+		Args:  cobra.NoArgs,
+		Short: "Query the current Oracle vote targets",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryVoteTargets), nil)
+			if err != nil {
+				return err
+			}
+
+			var voteTargets Denoms
+			cdc.MustUnmarshalJSON(res, &voteTargets)
+			return cliCtx.PrintOutput(voteTargets)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryTobinTaxes implements the query params command.
+func GetCmdQueryTobinTaxes(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tobin-taxes [denom]",
+		Args:  cobra.RangeArgs(0, 1),
+		Short: "Query the current Oracle tobin taxes.",
+		Long: strings.TrimSpace(`
+Query the current Oracle tobin taxes.
+
+$ terracli query oracle tobin-taxes
+
+Or, can filter with denom
+
+$ terracli query oracle tobin-taxes ukrw
+
+Or, can 
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			if len(args) == 0 {
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTobinTaxes), nil)
+				if err != nil {
+					return err
+				}
+
+				var tobinTaxes types.DenomList
+				cdc.MustUnmarshalJSON(res, &tobinTaxes)
+				return cliCtx.PrintOutput(tobinTaxes)
+			}
+
+			denom := args[0]
+			params := types.NewQueryTobinTaxParams(denom)
+
+			bz, err := cliCtx.Codec.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTobinTax), bz)
+			if err != nil {
+				return err
+			}
+
+			var tobinTax sdk.Dec
+			cdc.MustUnmarshalJSON(res, &tobinTax)
+			return cliCtx.PrintOutput(tobinTax)
 		},
 	}
 
