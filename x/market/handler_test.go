@@ -46,14 +46,14 @@ func TestSwapMsg(t *testing.T) {
 	// invalid recursive swap
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
 
-	res = h(input.Ctx, swapMsg)
-	require.False(t, res.IsOK())
+	_, err = h(input.Ctx, swapMsg)
+	require.Error(t, err)
 
 	// valid zero tobin tax test
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, sdk.ZeroDec())
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, sdk.ZeroDec())
 	offerCoin = sdk.NewCoin(core.MicroSDRDenom, amt)
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
-	res = h(input.Ctx, swapMsg)
-	require.True(t, res.IsOK())
+	_, err = h(input.Ctx, swapMsg)
+	require.NoError(t, err)
 }
