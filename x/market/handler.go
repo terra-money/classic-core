@@ -58,6 +58,8 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 			swapFee = sdk.NewDecCoinFromDec(swapCoin.Denom, swapFeeAmt)
 			swapCoin = swapCoin.Sub(swapFee)
 		}
+	} else {
+		swapFee = sdk.NewDecCoin(swapCoin.Denom, sdk.ZeroInt())
 	}
 
 	// Burn offered coins and subtract from the trader's account
