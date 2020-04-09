@@ -1,3 +1,18 @@
+## v0.3.4
+
+### Improvements
+
+ * (sdk) Bump SDK version to [v0.37.9](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.9).
+
+
+## 0.3.3
+
+### Improvements
+* [\#319](https://github.com/terra-project/core/pull/319) Bump SDK version to [v0.37.6]((https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.6))
+
+### Bug Fixes
+ * [\#321](https://github.com/terra-project/core/pull/321) revert to distribute zero oracle reward (#321)
+ 
 ## 0.3.2
 
 ### Improvements
