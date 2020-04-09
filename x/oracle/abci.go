@@ -35,10 +35,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
-	voteTargets := make(map[string]bool)
-	for _, denom := range k.GetVoteTargets(ctx) {
-		voteTargets[denom] = true
-	}
+	// Denom-TobinTax map
+	voteTargets := make(map[string]sdk.Dec)
+	k.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
+		voteTargets[denom] = tobinTax
+		return false
+	})
 
 	// Clear all exchange rates
 	k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
@@ -162,7 +164,7 @@ func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
 }
 
 // applyWhitelist update vote target denom list and set tobin tax with params whitelist
-func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]bool) {
+func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]sdk.Dec) {
 
 	// check is there any update in whitelist params
 	updateRequired := false
@@ -170,7 +172,7 @@ func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTa
 		updateRequired = true
 	} else {
 		for _, item := range whitelist {
-			if _, ok := voteTargets[item.Name]; !ok {
+			if tobinTax, ok := voteTargets[item.Name]; !ok || !tobinTax.Equal(item.TobinTax) {
 				updateRequired = true
 				break
 			}
