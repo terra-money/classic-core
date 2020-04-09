@@ -553,6 +553,26 @@ func TestVoteTargets(t *testing.T) {
 
 	_, err = input.OracleKeeper.GetTobinTax(input.Ctx, core.MicroSDRDenom)
 	require.Error(t, err)
+
+	// change KRW tobin tax
+	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: sdk.ZeroDec()}}
+	input.OracleKeeper.SetParams(input.Ctx, params)
+
+	// KRW, no missing
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 0)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 1)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+	require.Equal(t, int64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+
+	// KRW tobin tax must be 0
+	tobinTax, err := input.OracleKeeper.GetTobinTax(input.Ctx, core.MicroKRWDenom)
+	require.NoError(t, err)
+	require.True(t, sdk.ZeroDec().Equal(tobinTax))
 }
 
 func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, height int64, denom string, rate sdk.Dec, idx int) {
