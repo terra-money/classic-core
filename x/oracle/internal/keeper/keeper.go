@@ -286,6 +286,12 @@ func (k Keeper) SetMissCounter(ctx sdk.Context, operator sdk.ValAddress, missCou
 	store.Set(types.GetMissCounterKey(operator), bz)
 }
 
+// DeleteMissCounter removes miss counter for the validator
+func (k Keeper) DeleteMissCounter(ctx sdk.Context, operator sdk.ValAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetMissCounterKey(operator))
+}
+
 // IterateMissCounters iterates over the miss counters and performs a callback function.
 func (k Keeper) IterateMissCounters(ctx sdk.Context,
 	handler func(operator sdk.ValAddress, missCounter int64) (stop bool)) {

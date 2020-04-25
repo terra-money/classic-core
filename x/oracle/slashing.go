@@ -9,7 +9,7 @@ func SlashAndResetMissCounters(ctx sdk.Context, k Keeper) {
 	height := ctx.BlockHeight()
 	distributionHeight := height - sdk.ValidatorUpdateDelay - 1
 
-	votePeriodsPerWindow := sdk.NewDec(k.SlashWindow(ctx)).QuoInt64(k.VotePeriod(ctx)).TruncateInt64()
+	votePeriodsPerWindow := k.SlashWindow(ctx)
 	minValidPerWindow := k.MinValidPerWindow(ctx)
 	slashFraction := k.SlashFraction(ctx)
 	k.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter int64) bool {
@@ -22,14 +22,16 @@ func SlashAndResetMissCounters(ctx sdk.Context, k Keeper) {
 		// Penalize the validator whoes the valid vote rate is smaller than min threshold
 		if validVoteRate.LT(minValidPerWindow) {
 			validator := k.StakingKeeper.Validator(ctx, operator)
-			k.StakingKeeper.Slash(
-				ctx, validator.GetConsAddr(),
-				distributionHeight, validator.GetConsensusPower(), slashFraction,
-			)
-			k.StakingKeeper.Jail(ctx, validator.GetConsAddr())
+			if validator.IsBonded() && !validator.IsJailed() {
+				k.StakingKeeper.Slash(
+					ctx, validator.GetConsAddr(),
+					distributionHeight, validator.GetConsensusPower(), slashFraction,
+				)
+				k.StakingKeeper.Jail(ctx, validator.GetConsAddr())
+			}
 		}
 
-		k.SetMissCounter(ctx, operator, 0)
+		k.DeleteMissCounter(ctx, operator)
 		return false
 	})
 }
