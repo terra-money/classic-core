@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
 // Model is a struct that holds a KV pair
@@ -73,7 +73,7 @@ func (ci ContractInfo) String() string {
 }
 
 // NewWasmAPIParams initializes params for a contract instance
-func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
+func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
 	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
@@ -81,12 +81,11 @@ func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Signer:    wasmTypes.CanonicalAddress(creator),
+			Sender:    wasmTypes.CanonicalAddress(creator),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
-			Balance: NewWasmCoins(contractAcct.GetCoins()),
+			Address: wasmTypes.CanonicalAddress(contractAddr),
 		},
 	}
 }
@@ -102,4 +101,3 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 	}
 	return wasmCoins
 }
-

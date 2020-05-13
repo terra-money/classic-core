@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	wasm "github.com/confio/go-cosmwasm"
+	wasm "github.com/CosmWasm/go-cosmwasm"
 	"github.com/spf13/viper"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -28,12 +28,14 @@ type Keeper struct {
 	paramSpace params.Subspace
 	codespace  sdk.CodespaceType
 
-	accountKeeper auth.AccountKeeper
-	bankKeeper    bank.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 
 	router sdk.Router
 
-	wasmer        wasm.Wasmer
+	wasmer    wasm.Wasmer
+	querier   types.Querier
+	msgParser types.MsgParser
 
 	queryGasLimit uint64
 	cacheSize     uint64
@@ -144,4 +146,20 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, sdk.Error) 
 		return nil, sdk.ErrInternal(err.Error())
 	}
 	return byteCode, nil
+}
+
+// RegisterMsgParsers register module msg parsers
+func (k *Keeper) RegisterMsgParsers(parsers map[string]types.WasmMsgParser) {
+	for route, parser := range parsers {
+		k.msgParser[route] = parser
+	}
+}
+
+// RegisterQueriers register module queriers
+func (k *Keeper) RegisterQueriers(ctx sdk.Context, queriers map[string]types.WasmQuerier) {
+	k.querier.Ctx = ctx
+
+	for route, querier := range queriers {
+		k.querier.Queriers[route] = querier
+	}
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/x/wasm/internal/types"
 
@@ -69,10 +69,10 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, sdkErr)
 
 	execCmd := MsgExecuteContract{
-		Sender:    fred,
-		Contract:  contractAddr,
-		Msg:       []byte(`{"release":{}}`),
-		Coins: topUp,
+		Sender:   fred,
+		Contract: contractAddr,
+		Msg:      []byte(`{"release":{}}`),
+		Coins:    topUp,
 	}
 	res = h(data.ctx, execCmd)
 	require.True(t, res.IsOK())

@@ -18,12 +18,12 @@ var (
 
 // Default parameter values
 var (
-	DefaultMaxContractSize = int64(500 * 1024) // 500 KB
-	DefaultMaxContractGas = uint64(900_000_000) // 900,000,000
+	DefaultMaxContractSize = int64(500 * 1024)   // 500 KB
+	DefaultMaxContractGas  = uint64(900_000_000) // 900,000,000
 	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 	// A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
 	// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
-	DefaultGasMultiplier  = uint64(100)
+	DefaultGasMultiplier = uint64(100)
 )
 
 var _ subspace.ParamSet = &Params{}

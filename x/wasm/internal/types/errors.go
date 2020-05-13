@@ -10,13 +10,16 @@ import (
 const (
 	DefaultCodespace sdk.CodespaceType = ModuleName
 
-	CodeCreatedFailed     sdk.CodeType = 1
-	CodeAccountExists     sdk.CodeType = 2
-	CodeInstantiateFailed sdk.CodeType = 3
-	CodeExecuteFailed     sdk.CodeType = 4
-	CodeGasLimit          sdk.CodeType = 5
-	CodeInvalidGenesis    sdk.CodeType = 6
-	CodeNotFound          sdk.CodeType = 7
+	CodeCreatedFailed       sdk.CodeType = 1
+	CodeAccountExists       sdk.CodeType = 2
+	CodeInstantiateFailed   sdk.CodeType = 3
+	CodeExecuteFailed       sdk.CodeType = 4
+	CodeGasLimit            sdk.CodeType = 5
+	CodeInvalidGenesis      sdk.CodeType = 6
+	CodeNotFound            sdk.CodeType = 7
+	CodeInvalidMsg          sdk.CodeType = 8
+	CodeNoRegisteredQuerier sdk.CodeType = 9
+	CodeNoRegisteredParser  sdk.CodeType = 10
 )
 
 // ErrCreateFailed error for wasm code that has already been uploaded or failed
@@ -49,7 +52,22 @@ func ErrInvalidGenesis(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidGenesis, fmt.Sprintf("invalid genesis: %s", msg))
 }
 
-// ErrNotFound error for an entry not found in the stoe
+// ErrNotFound error for an entry not found in the store
 func ErrNotFound(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeNotFound, fmt.Sprintf("not found: %s", msg))
+}
+
+// ErrInvalidMsg error when we cannot process the error returned from the contract
+func ErrInvalidMsg(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeInvalidMsg, fmt.Sprintf("invalid CosmosMsg from the contract: %s", msg))
+}
+
+// ErrNoRegisteredQuerier error when we cannot find querier
+func ErrNoRegisteredQuerier(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeNoRegisteredQuerier, fmt.Sprintf("failed to find querier for route %s", msg))
+}
+
+// ErrNoRegisteredParser error when we cannot find msg parser
+func ErrNoRegisteredParser(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeNoRegisteredParser, fmt.Sprintf("failed to find parser for route %s", msg))
 }

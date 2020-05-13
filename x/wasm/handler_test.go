@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/x/wasm/internal/types"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 )
 
 func TestHandleCreate(t *testing.T) {

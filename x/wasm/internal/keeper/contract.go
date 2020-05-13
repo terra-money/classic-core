@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -60,7 +61,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	// prepare params for contract instantiate call
-	apiParams := types.NewWasmAPIParams(ctx, creator, deposit, contractAccount)
+	apiParams := types.NewWasmAPIParams(ctx, creator, deposit, contractAddress)
 
 	// create prefixed data store
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
@@ -68,7 +69,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	// instantiate wasm contract
 	gas := k.gasForContract(ctx)
-	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash, apiParams, initMsg, contractStore, cosmwasmAPI, gas)
+	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash, apiParams, initMsg, contractStore, cosmwasmAPI, k.querier, gas)
 	if err2 != nil {
 		err = types.ErrInstantiateFailed(err2)
 		return
@@ -76,7 +77,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	k.consumeGas(ctx, res.GasUsed)
 
-	err = k.dispatchMessages(ctx, contractAccount, res.Messages)
+	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
 		return
 	}
@@ -103,18 +104,21 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		}
 	}
 
-	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
-	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAccount)
+	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
 
 	gas := k.gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, apiParams, msg, storePrefix, cosmwasmAPI, gas)
+	res, err := k.wasmer.Execute(codeInfo.CodeHash, apiParams, msg, storePrefix, cosmwasmAPI, k.querier, gas)
 	if err != nil {
+		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
+		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
+		// this contract died due to gas limit in Storage
+		k.consumeGas(ctx, k.GasMultiplier(ctx))
 		return sdk.Result{}, types.ErrExecuteFailed(err)
 	}
 
 	k.consumeGas(ctx, res.GasUsed)
 
-	sdkerr = k.dispatchMessages(ctx, contractAccount, res.Messages)
+	sdkerr = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if sdkerr != nil {
 		return sdk.Result{}, sdkerr
 	}
@@ -209,7 +213,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, ke
 	if err != nil {
 		return nil, err
 	}
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, key, contractStorePrefix, cosmwasmAPI, k.gasForContract(ctx))
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, key, contractStorePrefix, cosmwasmAPI, k.querier, k.gasForContract(ctx))
 	if qErr != nil {
 
 		return nil, sdk.ErrInternal(qErr.Error())
