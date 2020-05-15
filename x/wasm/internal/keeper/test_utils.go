@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -19,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	bankwasm "github.com/terra-project/core/x/bank/wasm"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
@@ -53,7 +56,7 @@ func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	cdc := makeTestCodec()
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams, params.DefaultCodespace)
+	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
 
 	accountKeeper := auth.NewAccountKeeper(
 		cdc,    // amino codec
@@ -65,15 +68,11 @@ func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
 	bk := bank.NewBaseKeeper(
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
-		bank.DefaultCodespace,
 		nil,
 	)
 	bk.SetSendEnabled(ctx, true)
 
-	// TODO: register more than bank.send
 	router := baseapp.NewRouter()
-	h := bank.NewHandler(bk)
-	router.AddRoute(bank.RouterKey, h)
 
 	keeper := NewKeeper(
 		cdc,
@@ -82,10 +81,23 @@ func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
 		accountKeeper,
 		bk,
 		router,
+		types.FeatureStaking,
 		types.DefaultWasmConfig(),
 	)
 
+	h := bank.NewHandler(bk)
+	router.AddRoute(bank.RouterKey, h)
+	router.AddRoute(types.RouterKey, TestHandler(keeper))
+
 	keeper.SetParams(ctx, types.DefaultParams())
+	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
+		types.WasmQueryRouteBank: bankwasm.NewWasmQuerier(bk),
+		types.WasmQueryRouteWasm: NewWasmQuerier(keeper),
+	})
+	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
+		types.WasmMsgParserRouteBank: bankwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteWasm: NewWasmMsgParser(),
+	})
 
 	return ctx, accountKeeper, keeper
 }
@@ -110,4 +122,50 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
 	return key, pub, addr
+}
+
+// TestHandler returns a wasm handler for tests (to avoid circular imports)
+func TestHandler(k Keeper) sdk.Handler {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		switch msg := msg.(type) {
+		case types.MsgInstantiateContract:
+
+			return handleInstantiate(ctx, k, msg)
+		case *types.MsgInstantiateContract:
+			return handleInstantiate(ctx, k, *msg)
+
+		case types.MsgExecuteContract:
+			return handleExecute(ctx, k, msg)
+		case *types.MsgExecuteContract:
+			return handleExecute(ctx, k, *msg)
+
+		default:
+			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+		}
+	}
+}
+
+func handleInstantiate(ctx sdk.Context, k Keeper, msg types.MsgInstantiateContract) (*sdk.Result, error) {
+	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Sender, msg.InitMsg, msg.InitCoins)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdk.Result{
+		Data:   contractAddr,
+		Events: ctx.EventManager().Events(),
+	}, nil
+}
+
+func handleExecute(ctx sdk.Context, k Keeper, msg types.MsgExecuteContract) (*sdk.Result, error) {
+	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.Msg, msg.Coins)
+	if err != nil {
+		return nil, err
+	}
+
+	res.Events = ctx.EventManager().Events()
+	return &res, nil
 }

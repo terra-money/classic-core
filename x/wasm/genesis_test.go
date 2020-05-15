@@ -12,12 +12,14 @@ import (
 )
 
 func TestInitGenesis(t *testing.T) {
+	loadContracts()
+
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
 
 	h := data.module.NewHandler()
@@ -26,8 +28,8 @@ func TestInitGenesis(t *testing.T) {
 		Sender:       creator,
 		WASMByteCode: testContract,
 	}
-	res := h(data.ctx, msg)
-	require.True(t, res.IsOK())
+	_, err := h(data.ctx, msg)
+	require.NoError(t, err)
 
 	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
 	require.NoError(t, sdkErr)
@@ -47,8 +49,8 @@ func TestInitGenesis(t *testing.T) {
 		InitMsg:   initMsgBz,
 		InitCoins: deposit,
 	}
-	res = h(data.ctx, initCmd)
-	require.True(t, res.IsOK())
+	res, err := h(data.ctx, initCmd)
+	require.NoError(t, err)
 
 	// Check contract address
 	var contractAddr sdk.AccAddress
@@ -74,8 +76,8 @@ func TestInitGenesis(t *testing.T) {
 		Msg:      []byte(`{"release":{}}`),
 		Coins:    topUp,
 	}
-	res = h(data.ctx, execCmd)
-	require.True(t, res.IsOK())
+	_, err = h(data.ctx, execCmd)
+	require.NoError(t, err)
 
 	// ensure all contract state is as after init
 	bytecode, sdkErr = data.keeper.GetByteCode(data.ctx, 1)

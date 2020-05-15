@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -32,7 +34,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	txCmd.AddCommand(client.PostCommands(
+	txCmd.AddCommand(flags.PostCommands(
 		StoreCodeCmd(cdc),
 		InstantiateContractCmd(cdc),
 		ExecuteContractCmd(cdc),
@@ -47,8 +49,9 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			fromAddr := cliCtx.GetFromAddress()
 			if fromAddr.Empty() {
@@ -104,10 +107,11 @@ You can also instantiate it with funds
 
 $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 `,
-		Args:  cobra.RangeArgs(2, 3),
+		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			fromAddr := cliCtx.GetFromAddress()
 			if fromAddr.Empty() {
@@ -151,8 +155,9 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			fromAddr := cliCtx.GetFromAddress()
 			if fromAddr.Empty() {

@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 // NewHandler returns a handler for "bank" type messages.
 func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
@@ -27,16 +28,15 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleExecute(ctx, k, msg)
 
 		default:
-			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
 		}
 	}
 }
 
-func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
+func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
 	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(
@@ -53,13 +53,13 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
 		},
 	)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) sdk.Result {
+func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (*sdk.Result, error) {
 	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Sender, msg.InitMsg, msg.InitCoins)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(
@@ -77,13 +77,13 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) s
 		},
 	)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) sdk.Result {
-	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.Coins, msg.Msg)
+func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Result, error) {
+	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.Msg, msg.Coins)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(
@@ -96,5 +96,18 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) sdk.Resul
 	)
 
 	res.Events = res.Events.AppendEvents(ctx.EventManager().Events())
+	return &res, nil
+}
+
+// filterMessageEvents returns the same events with all of type == EventTypeMessage removed.
+// this is so only our top-level message event comes through
+func filterMessageEvents(manager *sdk.EventManager) sdk.Events {
+	events := manager.Events()
+	res := make([]sdk.Event, 0, len(events)+1)
+	for _, e := range events {
+		if e.Type != sdk.EventTypeMessage {
+			res = append(res, e)
+		}
+	}
 	return res
 }

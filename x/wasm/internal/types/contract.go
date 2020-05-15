@@ -76,8 +76,8 @@ func (ci ContractInfo) String() string {
 func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
 	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
-			Height:  ctx.BlockHeight(),
-			Time:    ctx.BlockTime().Unix(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(ctx.BlockTime().Unix()),
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{

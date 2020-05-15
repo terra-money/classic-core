@@ -2,14 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
-
-// ParamKeyTable returns ParamTable for wasm module
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable().RegisterParamSet(&types.Params{})
-}
 
 // MaxContractSize defines maximum bytes size of a contract
 func (k Keeper) MaxContractSize(ctx sdk.Context) (res int64) {

@@ -9,6 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -118,7 +120,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 
 	const nonExistingCodeID = 9999
 	_, err = keeper.InstantiateContract(ctx, nonExistingCodeID, creator, initMsgBz, nil)
-	require.Error(t, err, types.ErrNotFound("contract"))
+	require.Error(t, err, sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", nonExistingCodeID))
 }
 
 func TestExecute(t *testing.T) {
@@ -131,7 +133,7 @@ func TestExecute(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
@@ -169,35 +171,35 @@ func TestExecute(t *testing.T) {
 
 	// unauthorized - trialCtx so we don't change state
 	trialCtx := ctx.WithMultiStore(ctx.MultiStore().CacheWrap().(sdk.MultiStore))
-	res, err := keeper.ExecuteContract(trialCtx, addr, creator, nil, []byte(`{"release":{}}`))
+	res, err := keeper.ExecuteContract(trialCtx, addr, creator, []byte(`{"release":{}}`), nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unauthorized")
+	require.Contains(t, err.Error(), "unauthorized")
 
 	// verifier can execute, and get proper gas amount
 	start := time.Now()
 	gasBefore := ctx.GasMeter().GasConsumed()
 
-	res, err = keeper.ExecuteContract(ctx, addr, fred, topUp, []byte(`{"release":{}}`))
+	res, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"release":{}}`), topUp)
 	diff := time.Now().Sub(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(35267), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x8b23), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
 	require.NotNil(t, bobAcct)
 	balance := bobAcct.GetCoins()
-	assert.Equal(t, deposit.Add(topUp), balance)
+	assert.Equal(t, deposit.Add(topUp...), balance)
 
 	// ensure contract has updated balance
 	contractAcct = accKeeper.GetAccount(ctx, addr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
 
-	t.Logf("Duration: %v (31728 gas)\n", diff)
+	t.Logf("Duration: %v (35619 gas)\n", diff)
 }
 
 func TestExecuteWithNonExistingContractAddress(t *testing.T) {
@@ -209,10 +211,124 @@ func TestExecuteWithNonExistingContractAddress(t *testing.T) {
 	ctx, accKeeper, keeper := CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 
 	// unauthorized - trialCtx so we don't change state
 	nonExistingContractAddress := addrFromUint64(9999)
-	_, err = keeper.ExecuteContract(ctx, nonExistingContractAddress, creator, nil, []byte(`{}`))
-	require.Error(t, err, types.ErrNotFound("contract info"))
+	_, err = keeper.ExecuteContract(ctx, nonExistingContractAddress, creator, []byte(`{}`), nil)
+	require.Error(t, err, sdkerrors.Wrapf(types.ErrNotFound, "contract %s", nonExistingContractAddress))
+}
+
+func TestExecuteWithPanic(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	ctx, accKeeper, keeper := CreateTestInput(t)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	// let's make sure we get a reasonable error, no panic/crash
+	_, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
+	require.Error(t, err)
+}
+
+func TestExecuteWithCpuLoop(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	// make sure we set a limit before calling
+	var gasLimit uint64 = 400_000
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
+	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
+
+	// this must fail
+	_, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
+	require.Error(t, err)
+}
+
+func TestExecuteWithStorageLoop(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	// make sure we set a limit before calling
+	var gasLimit uint64 = 400_000
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
+	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
+
+	// ensure we get an out of gas panic
+	require.PanicsWithValue(t, sdk.ErrorOutOfGas{"ReadFlat"}, func() {
+		_, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	})
 }

@@ -4,9 +4,13 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 )
+
+// FeatureStaking - Cosmwasm feature
+const FeatureStaking = "staking"
 
 // ParseResult converts wasm result to sdk.Result
 func ParseResult(wasmResult *wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
@@ -32,10 +36,10 @@ func ParseResult(wasmResult *wasmTypes.Result, contractAddr sdk.AccAddress) sdk.
 }
 
 // ParseToCoin converts wasm coin to sdk.Coin
-func ParseToCoin(wasmCoin wasmTypes.Coin) (coin sdk.Coin, err sdk.Error) {
+func ParseToCoin(wasmCoin wasmTypes.Coin) (coin sdk.Coin, err error) {
 	amount, ok := sdk.NewIntFromString(wasmCoin.Amount)
 	if !ok {
-		err = sdk.ErrInvalidCoins(fmt.Sprintf("Failed to parse %s", coin.Amount))
+		err = sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("Failed to parse %s", coin.Amount))
 		return
 	}
 
@@ -47,7 +51,7 @@ func ParseToCoin(wasmCoin wasmTypes.Coin) (coin sdk.Coin, err sdk.Error) {
 }
 
 // ParseToCoins converts wasm coins to sdk.Coins
-func ParseToCoins(wasmCoins []wasmTypes.Coin) (coins sdk.Coins, err sdk.Error) {
+func ParseToCoins(wasmCoins []wasmTypes.Coin) (coins sdk.Coins, err error) {
 	for _, coin := range wasmCoins {
 		c, err := ParseToCoin(coin)
 		if err != nil {
@@ -57,4 +61,21 @@ func ParseToCoins(wasmCoins []wasmTypes.Coin) (coins sdk.Coins, err sdk.Error) {
 		coins = append(coins, c)
 	}
 	return
+}
+
+// EncodeSdkCoin - encode sdk coin to wasm coin
+func EncodeSdkCoin(coin sdk.Coin) wasmTypes.Coin {
+	return wasmTypes.Coin{
+		Denom:  coin.Denom,
+		Amount: coin.Amount.String(),
+	}
+}
+
+// EncodeSdkCoins - encode sdk coins to wasm coins
+func EncodeSdkCoins(coins sdk.Coins) wasmTypes.Coins {
+	encodedCoins := make(wasmTypes.Coins, len(coins))
+	for i, c := range coins {
+		encodedCoins[i] = EncodeSdkCoin(c)
+	}
+	return encodedCoins
 }

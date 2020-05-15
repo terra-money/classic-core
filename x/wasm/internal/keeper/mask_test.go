@@ -2,24 +2,26 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/viper"
-	"github.com/terra-project/core/x/bank"
-	"github.com/terra-project/core/x/wasm/internal/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/terra-project/core/x/wasm/internal/types"
+
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // MaskInitMsg is {}
@@ -125,7 +127,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	}
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
-	_, err = keeper.ExecuteContract(ctx, maskAddr, creator, nil, reflectSendBz)
+	_, err = keeper.ExecuteContract(ctx, maskAddr, creator, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// did this work???
@@ -141,10 +143,10 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	ctx, accKeeper, keeper := CreateTestInput(t)
-	keeper.RegisterQueriers(ctx, map[string]types.WasmQuerier{
+	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"mask": maskQuerier{},
 	})
-	keeper.RegisterMsgParsers(map[string]types.WasmMsgParser{
+	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		"mask": maskRawMsgParser{
 			cdc: makeTestCodec(),
 		},
@@ -176,7 +178,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	}
 	transferBz, err := json.Marshal(transfer)
 	require.NoError(t, err)
-	_, err = keeper.ExecuteContract(ctx, contractAddr, creator, nil, transferBz)
+	_, err = keeper.ExecuteContract(ctx, contractAddr, creator, transferBz, nil)
 	require.NoError(t, err)
 
 	// check some account values
@@ -204,7 +206,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	}
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
-	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, nil, reflectSendBz)
+	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// fred got coins
@@ -229,7 +231,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
 	require.NoError(t, err)
 
-	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, nil, reflectOpaqueBz)
+	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, reflectOpaqueBz, nil)
 	require.NoError(t, err)
 
 	// fred got more coins
@@ -244,10 +246,10 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	ctx, accKeeper, keeper := CreateTestInput(t)
-	keeper.RegisterQueriers(ctx, map[string]types.WasmQuerier{
+	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"mask": maskQuerier{},
 	})
-	keeper.RegisterMsgParsers(map[string]types.WasmMsgParser{
+	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		"mask": maskRawMsgParser{
 			cdc: makeTestCodec(),
 		},
@@ -314,7 +316,6 @@ func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, a
 }
 
 /**** Code to support custom messages *****/
-
 type maskCustomMsg struct {
 	Debug string `json:"debug,omitempty"`
 	Raw   []byte `json:"raw,omitempty"`
@@ -325,11 +326,22 @@ type maskCustomMsg struct {
 func toMaskRawMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
 	rawBz, err := cdc.MarshalJSON(msg)
 	if err != nil {
-		return wasmTypes.CosmosMsg{}, sdk.ErrInternal(err.Error())
+		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	customMsg, err := json.Marshal(maskCustomMsg{
-		Raw: rawBz,
+
+	customMsgData, err := json.Marshal(maskCustomMsg{Raw: rawBz})
+	if err != nil {
+		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	customMsg, err := json.Marshal(types.WasmCustomMsg{
+		Route:   "mask",
+		MsgData: customMsgData,
 	})
+	if err != nil {
+		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
 	res := wasmTypes.CosmosMsg{
 		Custom: customMsg,
 	}
@@ -342,30 +354,30 @@ type maskRawMsgParser struct {
 	cdc *codec.Codec
 }
 
-var _ types.WasmMsgParser = maskRawMsgParser{}
+var _ types.WasmMsgParserInterface = maskRawMsgParser{}
 
-func (p maskRawMsgParser) Parse(_sender sdk.AccAddress, msg wasmTypes.CosmosMsg) ([]sdk.Msg, sdk.Error) {
+func (p maskRawMsgParser) Parse(_sender sdk.AccAddress, msg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
 	return nil, nil
 }
 
-func (p maskRawMsgParser) ParseCustom(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, sdk.Error) {
+func (p maskRawMsgParser) ParseCustom(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 	var custom maskCustomMsg
 	err := json.Unmarshal(msg, &custom)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if custom.Raw != nil {
 		var sdkMsg sdk.Msg
 		err := p.cdc.UnmarshalJSON(custom.Raw, &sdkMsg)
 		if err != nil {
-			return nil, sdk.ErrInternal(err.Error())
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		return []sdk.Msg{sdkMsg}, nil
 	}
 	if custom.Debug != "" {
-		return nil, types.ErrInvalidMsg(fmt.Sprintf("Custom Debug: %s", custom.Debug))
+		return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
 	}
-	return nil, types.ErrInvalidMsg("Unknown Custom message variant")
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 }
 
 type maskQuerier struct{}
@@ -375,37 +387,37 @@ type maskCustomQuery struct {
 	Capital *Text     `json:"capital,omitempty"`
 }
 
-var _ types.WasmQuerier = maskQuerier{}
+var _ types.WasmQuerierInterface = maskQuerier{}
 
 type customQueryResponse struct {
 	Msg string `json:"msg"`
 }
 
-func (maskQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, sdk.Error) {
+func (maskQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error) {
 	return nil, nil
 }
 
-func (maskQuerier) QueryCustom(_ sdk.Context, request json.RawMessage) ([]byte, sdk.Error) {
+func (maskQuerier) QueryCustom(_ sdk.Context, request json.RawMessage) ([]byte, error) {
 	var custom maskCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if custom.Capital != nil {
 		msg := strings.ToUpper(custom.Capital.Text)
 		bz, err := json.Marshal(customQueryResponse{Msg: msg})
 		if err != nil {
-			return nil, sdk.ErrInternal(err.Error())
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 		}
 		return bz, nil
 	}
 	if custom.Ping != nil {
 		bz, err := json.Marshal(customQueryResponse{Msg: "pong"})
 		if err != nil {
-			return nil, sdk.ErrInternal(err.Error())
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 		}
 		return bz, nil
 	}
 
-	return nil, types.ErrInvalidMsg("Unknown Custom query variant")
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }

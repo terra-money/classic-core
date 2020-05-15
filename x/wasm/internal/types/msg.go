@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -47,12 +48,13 @@ func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgStoreCode) ValidateBasic() sdk.Error {
+func (msg MsgStoreCode) ValidateBasic() error {
 	if len(msg.WASMByteCode) == 0 {
-		return sdk.ErrInternal("empty wasm code")
+
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
 	if len(msg.WASMByteCode) > MaxWasmSize {
-		return sdk.ErrInternal("wasm code too large")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
 	}
 	return nil
 }
@@ -86,9 +88,9 @@ func (msg MsgInstantiateContract) Type() string {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgInstantiateContract) ValidateBasic() sdk.Error {
-	if msg.InitCoins.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative InitCoins")
+func (msg MsgInstantiateContract) ValidateBasic() error {
+	if msg.InitCoins.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.InitCoins.String())
 	}
 	return nil
 }
@@ -132,9 +134,9 @@ func (msg MsgExecuteContract) Type() string {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgExecuteContract) ValidateBasic() sdk.Error {
-	if msg.Coins.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative Coins")
+func (msg MsgExecuteContract) ValidateBasic() error {
+	if msg.Coins.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coins.String())
 	}
 	return nil
 }

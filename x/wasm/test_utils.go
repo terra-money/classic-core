@@ -24,7 +24,8 @@ import (
 var (
 	key1, pub1, addr1 = keyPubAddr()
 	testContract      []byte
-	escrowContract    []byte
+	maskContract      []byte
+	oldEscrowContract []byte
 )
 
 type testData struct {
@@ -34,15 +35,18 @@ type testData struct {
 	keeper     Keeper
 }
 
+func loadContracts() {
+	testContract = mustLoad("./internal/keeper/testdata/contract.wasm")
+	maskContract = mustLoad("./internal/keeper/testdata/mask.wasm")
+	oldEscrowContract = mustLoad("./testdata/escrow.wasm")
+}
+
 // Returns a cleanup function, which must be defered on
 func setupTest(t *testing.T) (testData, func()) {
 	// Create & set temp as home
 	tempDir, err := ioutil.TempDir("", "wasmtest")
 	require.NoError(t, err)
 	viper.Set(flags.FlagHome, tempDir)
-
-	testContract = mustLoad("./internal/keeper/testdata/contract.wasm")
-	escrowContract = mustLoad("./testdata/escrow.wasm")
 
 	ctx, acctKeeper, keeper := CreateTestInput(t)
 	data := testData{

@@ -5,20 +5,21 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 // StoreCode uploads and compiles a WASM contract bytecode, returning a short identifier for the stored code
-func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, sdkErr sdk.Error) {
-	wasmCode, err := k.uncompress(ctx, wasmCode)
+func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+	wasmCode, err = k.uncompress(ctx, wasmCode)
 	if err != nil {
-		return 0, types.ErrCreateFailed(err)
+		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
 	codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
-		return 0, types.ErrCreateFailed(err)
+		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
 	codeID = k.increaseLastCodeID(ctx)
@@ -29,12 +30,12 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 }
 
 // InstantiateContract creates an instance of a WASM contract
-func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (contractAddress sdk.AccAddress, err sdk.Error) {
+func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (contractAddress sdk.AccAddress, err error) {
 	// create contract address
 	contractAddress = k.generateContractAddress(ctx, codeID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
-		err = types.ErrAccountExists(existingAcct.GetAddress())
+		err = sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
 		return
 	}
 
@@ -54,9 +55,10 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeInfoKey(codeID))
 	if bz == nil {
-		err = types.ErrNotFound("contract")
+		err = sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", codeID)
 		return
 	}
+
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
@@ -69,9 +71,9 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	// instantiate wasm contract
 	gas := k.gasForContract(ctx)
-	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash, apiParams, initMsg, contractStore, cosmwasmAPI, k.querier, gas)
+	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash, apiParams, initMsg, contractStore, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
 	if err2 != nil {
-		err = types.ErrInstantiateFailed(err2)
+		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err2.Error())
 		return
 	}
 
@@ -90,7 +92,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 }
 
 // ExecuteContract executes the contract instance
-func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msg []byte) (sdk.Result, sdk.Error) {
+func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (sdk.Result, error) {
 	codeInfo, storePrefix, sdkerr := k.getContractDetails(ctx, contractAddress)
 	if sdkerr != nil {
 		return sdk.Result{}, sdkerr
@@ -107,13 +109,13 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
 
 	gas := k.gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, apiParams, msg, storePrefix, cosmwasmAPI, k.querier, gas)
+	res, err := k.wasmer.Execute(codeInfo.CodeHash, apiParams, msg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
 	if err != nil {
 		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
 		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
 		// this contract died due to gas limit in Storage
 		k.consumeGas(ctx, k.GasMultiplier(ctx))
-		return sdk.Result{}, types.ErrExecuteFailed(err)
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
 
 	k.consumeGas(ctx, res.GasUsed)
@@ -206,29 +208,29 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 	return
 }
 
-func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, key []byte) ([]byte, sdk.Error) {
+func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, key []byte) ([]byte, error) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
 
 	codeInfo, contractStorePrefix, err := k.getContractDetails(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, key, contractStorePrefix, cosmwasmAPI, k.querier, k.gasForContract(ctx))
-	if qErr != nil {
 
-		return nil, sdk.ErrInternal(qErr.Error())
+	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash, key, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
+	if err != nil {
+		return nil, err
 	}
 
 	k.consumeGas(ctx, gasUsed)
 	return queryResult, nil
 }
 
-func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractStorePrefix prefix.Store, err sdk.Error) {
+func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractStorePrefix prefix.Store, err error) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.GetContractInfoKey(contractAddress))
 	if bz == nil {
-		err = types.ErrNotFound("contract")
+		err = sdkerrors.Wrapf(types.ErrNotFound, "contract %s", contractAddress)
 		return
 	}
 
@@ -237,7 +239,7 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 
 	bz = store.Get(types.GetCodeInfoKey(contractInfo.CodeID))
 	if bz == nil {
-		err = types.ErrNotFound("contract info")
+		err = sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", contractInfo.CodeID)
 		return
 	}
 

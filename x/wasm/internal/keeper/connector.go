@@ -3,9 +3,10 @@ package keeper
 import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmTypes.CosmosMsg) sdk.Error {
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmTypes.CosmosMsg) error {
 	for _, msg := range msgs {
 		if err := k.dispatchMessage(ctx, contractAddr, msg); err != nil {
 			return err
@@ -14,7 +15,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 	return nil
 }
 
-func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) sdk.Error {
+func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
 	msgs, err := k.msgParser.Parse(contractAddr, msg)
 	if err != nil {
 		return err
@@ -29,23 +30,23 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	return nil
 }
 
-func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) sdk.Error {
+func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) error {
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
-			return sdk.ErrUnauthorized("contract doesn't have permission")
+			return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
 
 	// find the handler and execute it
-	h := k.router.Route(msg.Route())
+	h := k.router.Route(ctx, msg.Route())
 	if h == nil {
-		return sdk.ErrUnknownRequest(msg.Route())
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
 	}
 
-	res := h(ctx, msg)
-	if !res.IsOK() {
-		return sdk.NewError(res.Codespace, res.Code, res.Log)
+	res, err := h(ctx, msg)
+	if err != nil {
+		return err
 	}
 
 	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)

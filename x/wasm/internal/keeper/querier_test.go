@@ -2,12 +2,14 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/spf13/viper"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/viper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -29,7 +31,7 @@ func TestQueryContractState(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
@@ -62,7 +64,7 @@ func TestQueryContractState(t *testing.T) {
 	bz, err := cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte("foo")))
 	require.NoError(t, err)
 
-	res, err := querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err := querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.NoError(t, err)
 	require.Equal(t, []byte(`"bar"`), res)
 
@@ -70,7 +72,7 @@ func TestQueryContractState(t *testing.T) {
 	bz, err = cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte{0x0, 0x1}))
 	require.NoError(t, err)
 
-	res, err = querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err = querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.NoError(t, err)
 	require.Equal(t, []byte(`{"count":8}`), res)
 
@@ -78,14 +80,14 @@ func TestQueryContractState(t *testing.T) {
 	bz, err = cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"verifier":{}}`)))
 	require.NoError(t, err)
 
-	res, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	res, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.NoError(t, err)
-	require.Equal(t, anyAddr.String(), string(res))
+	require.Equal(t, fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String()), string(res))
 
 	// query contract []byte(`{"raw":{"key":"config"}}`
 	bz, err = cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"raw":{"key":"config"}}`)))
 	require.NoError(t, err)
 
-	_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)}, )
+	_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.Error(t, err)
 }

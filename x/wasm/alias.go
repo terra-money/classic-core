@@ -11,47 +11,40 @@ import (
 )
 
 const (
-	DefaultCodespace      = types.DefaultCodespace
-	CodeCreatedFailed     = types.CodeCreatedFailed
-	CodeAccountExists     = types.CodeAccountExists
-	CodeInstantiateFailed = types.CodeInstantiateFailed
-	CodeExecuteFailed     = types.CodeExecuteFailed
-	CodeGasLimit          = types.CodeGasLimit
-	CodeInvalidGenesis    = types.CodeInvalidGenesis
-	CodeNotFound          = types.CodeNotFound
-	ModuleName            = types.ModuleName
-	StoreKey              = types.StoreKey
-	TStoreKey             = types.TStoreKey
-	QuerierRoute          = types.QuerierRoute
-	RouterKey             = types.RouterKey
-	MaxWasmSize           = types.MaxWasmSize
-	DefaultParamspace     = types.DefaultParamspace
-	QueryGetByteCode      = types.QueryGetByteCode
-	QueryGetCodeInfo      = types.QueryGetCodeInfo
-	QueryGetContractInfo  = types.QueryGetContractInfo
-	QueryContractStore         = types.QueryContractStore
+	ModuleName                = types.ModuleName
+	StoreKey                  = types.StoreKey
+	TStoreKey                 = types.TStoreKey
+	QuerierRoute              = types.QuerierRoute
+	RouterKey                 = types.RouterKey
+	MaxWasmSize               = types.MaxWasmSize
+	WasmMsgParserRouteBank    = types.WasmMsgParserRouteBank
+	WasmMsgParserRouteStaking = types.WasmMsgParserRouteStaking
+	WasmMsgParserRouteWasm    = types.WasmMsgParserRouteWasm
+	DefaultParamspace         = types.DefaultParamspace
+	QueryGetByteCode          = types.QueryGetByteCode
+	QueryGetCodeInfo          = types.QueryGetCodeInfo
+	QueryGetContractInfo      = types.QueryGetContractInfo
+	QueryRawStore             = types.QueryRawStore
+	QueryContractStore        = types.QueryContractStore
+	WasmQueryRouteBank        = types.WasmQueryRouteBank
+	WasmQueryRouteStaking     = types.WasmQueryRouteStaking
+	WasmQueryRouteWasm        = types.WasmQueryRouteWasm
 )
 
 var (
 	// functions aliases
 	RegisterCodec                 = types.RegisterCodec
 	DefaultWasmConfig             = types.DefaultWasmConfig
-	ParseMsgSend                  = types.ParseMsgSend
-	ParseOpaqueMsg                = types.ParseOpaqueMsg
-	ToWasmMsg                     = types.ToWasmMsg
+	EncodeSdkCoin                 = types.EncodeSdkCoin
+	EncodeSdkCoins                = types.EncodeSdkCoins
+	FeatureStaking                = types.FeatureStaking
 	ParseResult                   = types.ParseResult
+	ParseToCoin                   = types.ParseToCoin
 	ParseToCoins                  = types.ParseToCoins
 	NewCodeInfo                   = types.NewCodeInfo
 	NewContractInfo               = types.NewContractInfo
 	NewWasmAPIParams              = types.NewWasmAPIParams
 	NewWasmCoins                  = types.NewWasmCoins
-	ErrCreateFailed               = types.ErrCreateFailed
-	ErrAccountExists              = types.ErrAccountExists
-	ErrInstantiateFailed          = types.ErrInstantiateFailed
-	ErrExecuteFailed              = types.ErrExecuteFailed
-	ErrGasLimit                   = types.ErrGasLimit
-	ErrInvalidGenesis             = types.ErrInvalidGenesis
-	ErrNotFound                   = types.ErrNotFound
 	NewGenesisState               = types.NewGenesisState
 	DefaultGenesisState           = types.DefaultGenesisState
 	ValidateGenesis               = types.ValidateGenesis
@@ -62,17 +55,29 @@ var (
 	NewMsgInstantiateContract     = types.NewMsgInstantiateContract
 	NewMsgExecuteContract         = types.NewMsgExecuteContract
 	DefaultParams                 = types.DefaultParams
+	ParamKeyTable                 = types.ParamKeyTable
 	NewQueryCodeIDParams          = types.NewQueryCodeIDParams
 	NewQueryContractAddressParams = types.NewQueryContractAddressParams
-	NewQueryStoreParams           = types.NewQueryRawStoreParams
+	NewQueryRawStoreParams        = types.NewQueryRawStoreParams
 	NewQueryContractParams        = types.NewQueryContractParams
+	NewWasmMsgParser              = keeper.NewWasmMsgParser
+	NewWasmQuerier                = keeper.NewWasmQuerier
 	NewKeeper                     = keeper.NewKeeper
-	ParamKeyTable                 = keeper.ParamKeyTable
 	NewQuerier                    = keeper.NewQuerier
 	CreateTestInput               = keeper.CreateTestInput
 
 	// variable aliases
 	ModuleCdc                    = types.ModuleCdc
+	ErrStoreCodeFailed           = types.ErrStoreCodeFailed
+	ErrAccountExists             = types.ErrAccountExists
+	ErrInstantiateFailed         = types.ErrInstantiateFailed
+	ErrExecuteFailed             = types.ErrExecuteFailed
+	ErrGasLimit                  = types.ErrGasLimit
+	ErrInvalidGenesis            = types.ErrInvalidGenesis
+	ErrNotFound                  = types.ErrNotFound
+	ErrInvalidMsg                = types.ErrInvalidMsg
+	ErrNoRegisteredQuerier       = types.ErrNoRegisteredQuerier
+	ErrNoRegisteredParser        = types.ErrNoRegisteredParser
 	LastCodeIDKey                = types.LastCodeIDKey
 	LastInstanceIDKey            = types.LastInstanceIDKey
 	CodeKey                      = types.CodeKey
@@ -92,17 +97,25 @@ type (
 	Model                      = types.Model
 	CodeInfo                   = types.CodeInfo
 	ContractInfo               = types.ContractInfo
+	AccountKeeper              = types.AccountKeeper
+	BankKeeper                 = types.BankKeeper
 	GenesisState               = types.GenesisState
 	Code                       = types.Code
 	Contract                   = types.Contract
 	MsgStoreCode               = types.MsgStoreCode
 	MsgInstantiateContract     = types.MsgInstantiateContract
 	MsgExecuteContract         = types.MsgExecuteContract
+	WasmMsgParserInterface     = types.WasmMsgParserInterface
+	WasmCustomMsg              = types.WasmCustomMsg
+	MsgParser                  = types.MsgParser
 	Params                     = types.Params
 	QueryCodeIDParams          = types.QueryCodeIDParams
 	QueryContractAddressParams = types.QueryContractAddressParams
-	QueryStoreParams           = types.QueryRawStoreParams
+	QueryRawStoreParams        = types.QueryRawStoreParams
 	QueryContractParams        = types.QueryContractParams
+	WasmQuerierInterface       = types.WasmQuerierInterface
+	Querier                    = types.Querier
+	WasmCustomQuery            = types.WasmCustomQuery
 	Keeper                     = keeper.Keeper
 	InitMsg                    = keeper.InitMsg
 )

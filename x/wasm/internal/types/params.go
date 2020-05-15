@@ -3,7 +3,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	"gopkg.in/yaml.v2"
+
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // DefaultParamspace defines default space for treasury params
@@ -26,7 +28,7 @@ var (
 	DefaultGasMultiplier = uint64(100)
 )
 
-var _ subspace.ParamSet = &Params{}
+var _ params.ParamSet = &Params{}
 
 // Params wasm parameters
 type Params struct {
@@ -44,40 +46,80 @@ func DefaultParams() Params {
 	}
 }
 
+// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
+// pairs of treasury module's parameters.
+// nolint
+func (p *Params) ParamSetPairs() params.ParamSetPairs {
+	return params.ParamSetPairs{
+		params.NewParamSetPair(ParamStoreKeyMaxContractSize, &p.MaxContractSize, validateMaxContractSize),
+		params.NewParamSetPair(ParamStoreKeyMaxContractGas, &p.MaxContractGas, validateMaxContractGas),
+		params.NewParamSetPair(ParamStoreKeyGasMultiplier, &p.GasMultiplier, validateGasMultiplier),
+	}
+}
+
+// ParamKeyTable returns the parameter key table.
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+// String implements fmt.Stringer interface
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}
+
 // Validate params
-func (params Params) Validate() error {
-	if params.MaxContractSize < 1024 || params.MaxContractSize > 400*1024 {
-		return fmt.Errorf("max contract byte size %d must be between [1KB, 400KB]", params.MaxContractSize)
+func (p Params) Validate() error {
+	if p.MaxContractSize < 1024 || p.MaxContractSize > 500*1024 {
+		return fmt.Errorf("max contract byte size %d must be between [1KB, 500KB]", p.MaxContractSize)
 	}
 
-	if params.GasMultiplier <= 0 {
-		return fmt.Errorf("gas multiplier %d must be positive", params.GasMultiplier)
+	if p.GasMultiplier <= 0 {
+		return fmt.Errorf("gas multiplier %d must be positive", p.GasMultiplier)
 	}
 
-	if params.MaxContractGas > 900_000_000 {
-		return fmt.Errorf("max contract gas %d must be equal or smaller than 900,000,000 (enforced in rust)", params.MaxContractGas)
+	if p.MaxContractGas > 900_000_000 {
+		return fmt.Errorf("max contract gas %d must be equal or smaller than 900,000,000 (enforced in rust)", p.MaxContractGas)
 	}
 
 	return nil
 }
 
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of treasury module's parameters.
-// nolint
-func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{Key: ParamStoreKeyMaxContractSize, Value: &params.MaxContractSize},
-		{Key: ParamStoreKeyMaxContractGas, Value: &params.MaxContractGas},
-		{Key: ParamStoreKeyGasMultiplier, Value: &params.GasMultiplier},
+func validateMaxContractSize(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
+
+	if v < 1024 || v > 500*1024 {
+		return fmt.Errorf("max contract byte size %d must be between [1KB, 500KB]", v)
+	}
+
+	return nil
 }
 
-// String implements fmt.Stringer interface
-func (params Params) String() string {
-	return fmt.Sprintf(`Treasury Params:
-  Max Contract Size        : %d
-  Max Contract Gas         : %d
+func validateGasMultiplier(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
 
-  Gas Multiplier  : %d
-  `, params.MaxContractSize, params.MaxContractGas, params.GasMultiplier)
+	if v <= 0 {
+		return fmt.Errorf("gas multiplier %d must be positive", v)
+	}
+
+	return nil
+}
+
+func validateMaxContractGas(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v > 900_000_000 {
+		return fmt.Errorf("max contract gas %d must be equal or smaller than 900,000,000 (enforced in rust)", v)
+	}
+
+	return nil
 }

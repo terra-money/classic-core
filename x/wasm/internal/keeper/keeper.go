@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	"github.com/terra-project/core/x/params"
 	"github.com/terra-project/core/x/wasm/internal/types"
@@ -22,11 +22,9 @@ import (
 
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
-	cdc      *codec.Codec
-	storeKey sdk.StoreKey
-
+	cdc        *codec.Codec
+	storeKey   sdk.StoreKey
 	paramSpace params.Subspace
-	codespace  sdk.CodespaceType
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -42,24 +40,35 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new contract Keeper instance
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramspace params.Subspace, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, router sdk.Router, wasmConfig types.WasmConfig) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
+	paramspace params.Subspace, accountKeeper auth.AccountKeeper,
+	bankKeeper types.BankKeeper, router sdk.Router,
+	supportedFeatures string,
+	wasmConfig types.WasmConfig) Keeper {
 	homeDir := viper.GetString(flags.FlagHome)
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), 0)
+	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, 0)
 
 	if err != nil {
 		panic(err)
 	}
 
+	// set KeyTable if it has not already been set
+	if !paramspace.HasKeyTable() {
+		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
-		paramSpace:    paramspace.WithKeyTable(ParamKeyTable()),
+		paramSpace:    paramspace,
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		router:        router,
 		queryGasLimit: wasmConfig.ContractQueryGasLimit,
 		cacheSize:     wasmConfig.CacheSize,
+		msgParser:     types.NewMsgParser(),
+		querier:       types.NewQuerier(),
 	}
 }
 
@@ -69,11 +78,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetCodeInfo returns CodeInfo for the given codeID
-func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) (codeInfo types.CodeInfo, err sdk.Error) {
+func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) (codeInfo types.CodeInfo, err error) {
 	store := ctx.KVStore(k.storeKey)
 	codeInfoBz := store.Get(types.GetCodeInfoKey(codeID))
 	if codeInfoBz == nil {
-		return types.CodeInfo{}, types.ErrNotFound(fmt.Sprintf("codeID %d", codeID))
+		return types.CodeInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", codeID)
 	}
 	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
 	return
@@ -87,11 +96,11 @@ func (k Keeper) SetCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeI
 }
 
 // GetContractInfo returns contract info of the given address
-func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) (contractInfo types.ContractInfo, err sdk.Error) {
+func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) (contractInfo types.ContractInfo, err error) {
 	store := ctx.KVStore(k.storeKey)
 	contractBz := store.Get(types.GetContractInfoKey(contractAddress))
 	if contractBz == nil {
-		return types.ContractInfo{}, types.ErrNotFound(fmt.Sprintf("constractInfo %s", contractAddress.String()))
+		return types.ContractInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "constractInfo %s", contractAddress.String())
 	}
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contractInfo)
 	return contractInfo, nil
@@ -135,7 +144,7 @@ func (k Keeper) SetContractStore(ctx sdk.Context, contractAddress sdk.AccAddress
 }
 
 // GetByteCode returns ByteCode of the given CodeHash
-func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, sdk.Error) {
+func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	codeInfo, sdkErr := k.GetCodeInfo(ctx, codeID)
 	if sdkErr != nil {
 		return nil, sdkErr
@@ -143,22 +152,20 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, sdk.Error) 
 
 	byteCode, err := k.wasmer.GetCode(codeInfo.CodeHash)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, err
 	}
 	return byteCode, nil
 }
 
 // RegisterMsgParsers register module msg parsers
-func (k *Keeper) RegisterMsgParsers(parsers map[string]types.WasmMsgParser) {
+func (k *Keeper) RegisterMsgParsers(parsers map[string]types.WasmMsgParserInterface) {
 	for route, parser := range parsers {
 		k.msgParser[route] = parser
 	}
 }
 
 // RegisterQueriers register module queriers
-func (k *Keeper) RegisterQueriers(ctx sdk.Context, queriers map[string]types.WasmQuerier) {
-	k.querier.Ctx = ctx
-
+func (k *Keeper) RegisterQueriers(queriers map[string]types.WasmQuerierInterface) {
 	for route, querier := range queriers {
 		k.querier.Queriers[route] = querier
 	}

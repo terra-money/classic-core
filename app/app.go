@@ -41,6 +41,9 @@ import (
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/upgrade"
+
+	bankwasm "github.com/terra-project/core/x/bank/wasm"
+	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 )
 
 const appName = "TerraApp"
@@ -226,8 +229,19 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		panic("error while reading wasm config: " + err.Error())
 	}
 
+	// create wasm keeper with msg parser & querier
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName],
-		app.accountKeeper, app.bankKeeper, bApp.Router(), wasmConfigWrapper.Wasm)
+		app.accountKeeper, app.bankKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfigWrapper.Wasm)
+	app.wasmKeeper.RegisterMsgParsers(map[string]wasm.WasmMsgParserInterface{
+		wasm.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
+		wasm.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
+		wasm.WasmMsgParserRouteWasm:    wasm.NewWasmMsgParser(),
+	})
+	app.wasmKeeper.RegisterQueriers(map[string]wasm.WasmQuerierInterface{
+		wasm.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(app.bankKeeper),
+		wasm.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(app.stakingKeeper),
+		wasm.WasmQueryRouteWasm:    wasm.NewWasmQuerier(app.wasmKeeper),
+	})
 
 	// register the proposal types
 	govRouter := gov.NewRouter()

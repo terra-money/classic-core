@@ -62,7 +62,7 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 // GetQueryCmd returns no root query command for the wasm module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetQueryCmd(cdc)
+	return cli.GetQueryCmd(QuerierRoute, cdc)
 }
 
 //____________________________________________________________________________

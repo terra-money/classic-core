@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,7 +21,7 @@ import (
 const flagRaw = "raw"
 
 // GetQueryCmd returns the cli query commands for wasm   module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the wasm module",
@@ -28,18 +29,18 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	queryCmd.AddCommand(client.GetCommands(
-		GetCmdQueryByteCode(cdc),
-		GetCmdQueryCodeInfo(cdc),
-		GetCmdGetContractInfo(cdc),
-		GetCmdGetContractStore(cdc),
-		GetCmdGetRawStore(cdc),
+	queryCmd.AddCommand(flags.GetCommands(
+		GetCmdQueryByteCode(queryRoute, cdc),
+		GetCmdQueryCodeInfo(queryRoute, cdc),
+		GetCmdGetContractInfo(queryRoute, cdc),
+		GetCmdGetContractStore(queryRoute, cdc),
+		GetCmdGetRawStore(queryRoute, cdc),
 	)...)
 	return queryCmd
 }
 
 // GetCmdQueryCodeInfo is for querying code information
-func GetCmdQueryCodeInfo(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryCodeInfo(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "code [code-id]",
 		Short: "query code information",
@@ -59,7 +60,7 @@ func GetCmdQueryCodeInfo(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetCodeInfo)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetCodeInfo)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -73,7 +74,7 @@ func GetCmdQueryCodeInfo(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryByteCode returns the bytecode for a given contract
-func GetCmdQueryByteCode(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryByteCode(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "bytecode [code-id] [output-filename]",
 		Short: "Downloads wasm bytecode for given code id",
@@ -93,7 +94,7 @@ func GetCmdQueryByteCode(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetByteCode)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetByteCode)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -119,7 +120,7 @@ func GetCmdQueryByteCode(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdGetContractInfo gets details about a given contract
-func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
+func GetCmdGetContractInfo(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "contract [contract-address]",
 		Short: "Prints out metadata of a contract given its address",
@@ -139,7 +140,7 @@ func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetContractInfo)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetContractInfo)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -153,7 +154,7 @@ func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdGetContractStore send query msg to a given contract
-func GetCmdGetContractStore(cdc *codec.Codec) *cobra.Command {
+func GetCmdGetContractStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "contract-store [bech32-address] [msg]",
 		Short: "Query contract store of the address with query data and prints the returned result",
@@ -174,7 +175,7 @@ func GetCmdGetContractStore(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContractStore)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryContractStore)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -187,7 +188,7 @@ func GetCmdGetContractStore(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdGetRawStore dumps full internal state of a given contract
-func GetCmdGetRawStore(cdc *codec.Codec) *cobra.Command {
+func GetCmdGetRawStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "raw-store [bech32-address] [key] [subkey]",
 		Short: "Prints out raw store of a contract",
@@ -215,7 +216,7 @@ func GetCmdGetRawStore(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRawStore)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRawStore)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
