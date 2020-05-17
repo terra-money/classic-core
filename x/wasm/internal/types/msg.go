@@ -1,10 +1,10 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	core "github.com/terra-project/core/types"
 )
 
 const (
@@ -16,11 +16,11 @@ const (
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
-	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	WASMByteCode core.HexBytes `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 }
 
 // NewMsgStoreCode creates a MsgStoreCode instance
-func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode []byte) MsgStoreCode {
+func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode core.HexBytes) MsgStoreCode {
 	return MsgStoreCode{
 		Sender:       sender,
 		WASMByteCode: wasmByteCode,
@@ -61,10 +61,10 @@ func (msg MsgStoreCode) ValidateBasic() error {
 
 // MsgInstantiateContract - struct for instantiate contract from uploaded code
 type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
-	CodeID    uint64          `json:"code_id" yaml:"code_id"`
-	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
-	InitCoins sdk.Coins       `json:"init_coins" yaml:"init_coins"`
+	Sender    sdk.AccAddress `json:"sender" yaml:"sender"`
+	CodeID    uint64         `json:"code_id" yaml:"code_id"`
+	InitMsg   core.HexBytes  `json:"init_msg" yaml:"init_msg"`
+	InitCoins sdk.Coins      `json:"init_coins" yaml:"init_coins"`
 }
 
 // NewMsgInstantiateContract creates a MsgInstantiateContract instance
@@ -89,7 +89,7 @@ func (msg MsgInstantiateContract) Type() string {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgInstantiateContract) ValidateBasic() error {
-	if msg.InitCoins.IsValid() {
+	if !msg.InitCoins.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.InitCoins.String())
 	}
 	return nil
@@ -107,10 +107,10 @@ func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 
 // MsgExecuteContract - struct for execute instantiated contract with givn inner msg bytes
 type MsgExecuteContract struct {
-	Sender   sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Contract sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Msg      json.RawMessage `json:"msg" yaml:"msg"`
-	Coins    sdk.Coins       `json:"coins" yaml:"coins"`
+	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
+	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	Msg      core.HexBytes  `json:"msg" yaml:"msg"`
+	Coins    sdk.Coins      `json:"coins" yaml:"coins"`
 }
 
 // NewMsgExecuteContract creates a NewMsgExecuteContract instance
@@ -135,7 +135,7 @@ func (msg MsgExecuteContract) Type() string {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgExecuteContract) ValidateBasic() error {
-	if msg.Coins.IsValid() {
+	if !msg.Coins.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coins.String())
 	}
 	return nil

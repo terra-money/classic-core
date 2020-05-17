@@ -21,3 +21,4 @@ CMD ["start"]
 STOPSIGNAL SIGTERM
 
 COPY wrapper.sh /usr/bin/wrapper.sh
+RUN cp /lib/x86_64-linux-gnu/libgo_cosmwasm.so /lib/x86_64-linux-gnu/libgo_cosmwasm.so

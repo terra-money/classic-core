@@ -22,8 +22,15 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
-	codeID = k.increaseLastCodeID(ctx)
+	codeID, err = k.GetLastCodeID(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	codeID++
 	contractInfo := types.NewCodeInfo(codeHash, creator)
+
+	k.SetLastCodeID(ctx, codeID)
 	k.SetCodeInfo(ctx, codeID, contractInfo)
 
 	return codeID, nil
@@ -31,12 +38,18 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 
 // InstantiateContract creates an instance of a WASM contract
 func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (contractAddress sdk.AccAddress, err error) {
+	instanceID, err := k.GetLastInstanceID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	instanceID++
+
 	// create contract address
-	contractAddress = k.generateContractAddress(ctx, codeID)
+	contractAddress = k.generateContractAddress(ctx, codeID, instanceID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
-		err = sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
-		return
+		return nil, sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
 	}
 
 	// create contract account
@@ -60,7 +73,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 	}
 
 	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &codeInfo)
 
 	// prepare params for contract instantiate call
 	apiParams := types.NewWasmAPIParams(ctx, creator, deposit, contractAddress)
@@ -71,7 +84,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	// instantiate wasm contract
 	gas := k.gasForContract(ctx)
-	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash, apiParams, initMsg, contractStore, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
+	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash.Bytes(), apiParams, initMsg, contractStore, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
 	if err2 != nil {
 		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err2.Error())
 		return
@@ -86,6 +99,8 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	// persist contractInfo
 	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg)
+
+	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
 	return contractAddress, nil
@@ -109,7 +124,7 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
 
 	gas := k.gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, apiParams, msg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
+	res, err := k.wasmer.Execute(codeInfo.CodeHash.Bytes(), apiParams, msg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
 	if err != nil {
 		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
 		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
@@ -145,47 +160,11 @@ func (k Keeper) consumeGas(ctx sdk.Context, gas uint64) {
 
 // generates a contract address from codeID + instanceID
 // and increases last instanceID
-func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
-	instanceID := k.increaseLastInstanceID(ctx)
+func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64, instanceID uint64) sdk.AccAddress {
 	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
 	// overflow 32 bits. This is highly improbable, but something that could be refactored.
 	contractID := codeID<<32 + instanceID
 	return addrFromUint64(contractID)
-}
-
-// GetNextCodeID returns next code ID which is sequentially increasing
-func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.LastCodeIDKey)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	return id
-}
-
-func (k Keeper) increaseLastCodeID(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.LastCodeIDKey)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(types.LastCodeIDKey, bz)
-	return id
-}
-
-func (k Keeper) increaseLastInstanceID(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.LastInstanceIDKey)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(types.LastInstanceIDKey, bz)
-	return id
 }
 
 func addrFromUint64(id uint64) sdk.AccAddress {
@@ -216,7 +195,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, ke
 		return nil, err
 	}
 
-	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash, key, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
+	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash.Bytes(), key, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +214,7 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 	}
 
 	var contractInfo types.ContractInfo
-	k.cdc.MustUnmarshalBinaryBare(bz, &contractInfo)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &contractInfo)
 
 	bz = store.Get(types.GetCodeInfoKey(contractInfo.CodeID))
 	if bz == nil {
@@ -243,7 +222,7 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 		return
 	}
 
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &codeInfo)
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
 	contractStorePrefix = prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
 	return

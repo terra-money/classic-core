@@ -14,6 +14,8 @@ import (
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
+	keeper.SetLastCodeID(ctx, 0)
+	keeper.SetLastInstanceID(ctx, data.LastInstanceID)
 
 	for _, code := range data.Codes {
 		newCodeID, err := keeper.StoreCode(ctx, code.CodeInfo.Creator, code.CodesBytes)
@@ -35,6 +37,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		keeper.SetContractStore(ctx, contract.ContractInfo.Address, contract.ContractStore)
 	}
 
+	if lastCodeID, err := keeper.GetLastCodeID(ctx); err != nil || lastCodeID != data.LastCodeID {
+		panic("last code id is differ from the genesis")
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -42,8 +47,17 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	var codes []types.Code
 	var contracts []types.Contract
 
-	maxCodeID := keeper.GetNextCodeID(ctx)
-	for i := uint64(1); i < maxCodeID; i++ {
+	lastCodeID, err := keeper.GetLastCodeID(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	lastInstanceID, err := keeper.GetLastInstanceID(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := uint64(1); i <= lastCodeID; i++ {
 		bytecode, err := keeper.GetByteCode(ctx, i)
 		if err != nil {
 			panic(err)
@@ -81,5 +95,5 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 	params := keeper.GetParams(ctx)
 
-	return types.NewGenesisState(params, codes, contracts)
+	return types.NewGenesisState(params, lastCodeID, lastInstanceID, codes, contracts)
 }

@@ -50,7 +50,7 @@ func setupTest(t *testing.T) (testData, func()) {
 
 	ctx, acctKeeper, keeper := CreateTestInput(t)
 	data := testData{
-		module:     NewAppModule(keeper),
+		module:     NewAppModule(keeper, acctKeeper),
 		ctx:        ctx,
 		acctKeeper: acctKeeper,
 		keeper:     keeper,
@@ -96,9 +96,9 @@ func createFakeFundedAccount(ctx sdk.Context, am auth.AccountKeeper, coins sdk.C
 
 func assertContractStore(t *testing.T, models []Model, expected state) {
 	require.Equal(t, 1, len(models), "#v", models)
-	require.Equal(t, []byte("config"), models[0].Key)
+	require.Equal(t, []byte("config"), models[0].Key.Bytes())
 
 	expectedBz, err := json.Marshal(expected)
 	require.NoError(t, err)
-	require.Equal(t, expectedBz, models[0].Value)
+	require.Equal(t, expectedBz, models[0].Value.Bytes())
 }

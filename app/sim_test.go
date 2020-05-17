@@ -3,13 +3,17 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/treasury"
 	"math/rand"
 	"os"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/spf13/viper"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/x/wasm"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -65,6 +69,7 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
+	viper.Set(flags.FlagHome, dir)
 	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
@@ -97,6 +102,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
+	viper.Set(flags.FlagHome, dir)
 	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
@@ -131,6 +137,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
+	viper.Set(flags.FlagHome, dir)
 	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", newApp.Name())
 
@@ -159,6 +166,7 @@ func TestAppImportExport(t *testing.T) {
 		{app.keys[oracle.StoreKey], newApp.keys[oracle.StoreKey], [][]byte{}},
 		{app.keys[market.StoreKey], newApp.keys[market.StoreKey], [][]byte{}},
 		{app.keys[treasury.StoreKey], newApp.keys[treasury.StoreKey], [][]byte{}},
+		{app.keys[wasm.StoreKey], newApp.keys[wasm.StoreKey], [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {
@@ -185,6 +193,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
+	viper.Set(flags.FlagHome, dir)
 	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
@@ -224,6 +233,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
+	viper.Set(flags.FlagHome, dir)
 	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", newApp.Name())
 

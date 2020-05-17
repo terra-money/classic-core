@@ -31,6 +31,13 @@ func TestInitGenesis(t *testing.T) {
 	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: maskContract,
+	}
+	_, err = h(data.ctx, msg)
+	require.NoError(t, err)
+
 	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)

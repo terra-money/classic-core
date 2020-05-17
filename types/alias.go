@@ -41,3 +41,7 @@ var (
 	// functions aliases
 	IsPeriodLastBlock = util.IsPeriodLastBlock
 )
+
+type (
+	HexBytes = util.HexBytes
+)

@@ -2,9 +2,11 @@ package types
 
 // GenesisState is the struct representation of the export genesis
 type GenesisState struct {
-	Params    Params     `json:"params" yaml:"params"`
-	Codes     []Code     `json:"codes" yaml:"codes"`
-	Contracts []Contract `json:"contracts" yaml:"contracts"`
+	Params         Params     `json:"params" yaml:"params"`
+	LastCodeID     uint64     `json:"last_code_id" yaml:"last_code_id"`
+	LastInstanceID uint64     `json:"last_instance_id" yaml:"last_instance_id"`
+	Codes          []Code     `json:"codes" yaml:"codes"`
+	Contracts      []Contract `json:"contracts" yaml:"contracts"`
 }
 
 // Code struct encompasses CodeInfo and CodeBytes
@@ -20,20 +22,24 @@ type Contract struct {
 }
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(params Params, codes []Code, contracts []Contract) GenesisState {
+func NewGenesisState(params Params, lastCodeID, lastInstanceID uint64, codes []Code, contracts []Contract) GenesisState {
 	return GenesisState{
-		Params:    params,
-		Codes:     codes,
-		Contracts: contracts,
+		Params:         params,
+		LastCodeID:     lastCodeID,
+		LastInstanceID: lastInstanceID,
+		Codes:          codes,
+		Contracts:      contracts,
 	}
 }
 
 // DefaultGenesisState gets raw genesis raw message for testing
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:    DefaultParams(),
-		Codes:     []Code{},
-		Contracts: []Contract{},
+		Params:         DefaultParams(),
+		LastCodeID:     0,
+		LastInstanceID: 0,
+		Codes:          []Code{},
+		Contracts:      []Contract{},
 	}
 }
 

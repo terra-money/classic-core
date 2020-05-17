@@ -33,8 +33,9 @@ func TestContractInfo(t *testing.T) {
 	_, _, bob := keyPubAddr()
 
 	codeID := uint64(1)
+	instanceID := uint64(1)
 	creatorAddr := addrFromUint64(codeID)
-	contractAddr := keeper.generateContractAddress(ctx, codeID)
+	contractAddr := keeper.generateContractAddress(ctx, codeID, instanceID)
 
 	initMsg := InitMsg{
 		Verifier:    alice,

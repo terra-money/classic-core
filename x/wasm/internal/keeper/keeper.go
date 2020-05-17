@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 
@@ -77,22 +78,58 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// GetLastCodeID return last code ID
+func (k Keeper) GetLastCodeID(ctx sdk.Context) (uint64, error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LastCodeIDKey)
+	if bz == nil {
+		return 0, sdkerrors.Wrap(types.ErrInvalidGenesis, "initial code ID hasn't been set")
+	}
+
+	return binary.BigEndian.Uint64(bz), nil
+}
+
+// SetLastCodeID set last code id
+func (k Keeper) SetLastCodeID(ctx sdk.Context, id uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := sdk.Uint64ToBigEndian(id)
+	store.Set(types.LastCodeIDKey, bz)
+}
+
+// GetLastInstanceID return last instance ID
+func (k Keeper) GetLastInstanceID(ctx sdk.Context) (uint64, error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LastInstanceIDKey)
+	if bz == nil {
+		return 0, sdkerrors.Wrap(types.ErrInvalidGenesis, "initial instance ID hasn't been set")
+	}
+
+	return binary.BigEndian.Uint64(bz), nil
+}
+
+// SetLastInstanceID set last instance id
+func (k Keeper) SetLastInstanceID(ctx sdk.Context, id uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := sdk.Uint64ToBigEndian(id)
+	store.Set(types.LastInstanceIDKey, bz)
+}
+
 // GetCodeInfo returns CodeInfo for the given codeID
 func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) (codeInfo types.CodeInfo, err error) {
 	store := ctx.KVStore(k.storeKey)
-	codeInfoBz := store.Get(types.GetCodeInfoKey(codeID))
-	if codeInfoBz == nil {
+	bz := store.Get(types.GetCodeInfoKey(codeID))
+	if bz == nil {
 		return types.CodeInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", codeID)
 	}
-	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &codeInfo)
 	return
 }
 
 // SetCodeInfo stores CodeInfo for the given codeID
 func (k Keeper) SetCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryBare(codeInfo)
-	store.Set(types.GetCodeInfoKey(codeID), b)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(codeInfo)
+	store.Set(types.GetCodeInfoKey(codeID), bz)
 }
 
 // GetContractInfo returns contract info of the given address
@@ -102,14 +139,14 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	if contractBz == nil {
 		return types.ContractInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "constractInfo %s", contractAddress.String())
 	}
-	k.cdc.MustUnmarshalBinaryBare(contractBz, &contractInfo)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(contractBz, &contractInfo)
 	return contractInfo, nil
 }
 
 // SetContractInfo stores ContractInfo for the given contractAddress
 func (k Keeper) SetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, codeInfo types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryBare(codeInfo)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(codeInfo)
 	store.Set(types.GetContractInfoKey(contractAddress), b)
 }
 
@@ -119,7 +156,7 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(types.ContractInfo)
 	iter := prefixStore.Iterator(nil, nil)
 	for ; iter.Valid(); iter.Next() {
 		var contract types.ContractInfo
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &contract)
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &contract)
 		// cb returns true to stop early
 		if cb(contract) {
 			break
@@ -150,7 +187,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 		return nil, sdkErr
 	}
 
-	byteCode, err := k.wasmer.GetCode(codeInfo.CodeHash)
+	byteCode, err := k.wasmer.GetCode(codeInfo.CodeHash.Bytes())
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -12,13 +13,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/wasm/client/cli"
 	"github.com/terra-project/core/x/wasm/client/rest"
+	"github.com/terra-project/core/x/wasm/simulation"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule           = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleSimulation = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.
@@ -70,14 +75,16 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
 	AppModuleBasic
-	keeper Keeper
+	keeper        Keeper
+	accountKeeper auth.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper auth.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		accountKeeper:  accountKeeper,
 	}
 }
 
@@ -132,4 +139,37 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+//____________________________________________________________________________
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the distribution module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalContents returns all the distribution content functions used to
+// simulate governance proposals.
+func (am AppModule) ProposalContents(_ module.SimulationState) []sim.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized distribution param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+	return simulation.ParamChanges(r)
+}
+
+// RegisterStoreDecoder registers a decoder for distribution module's types
+func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[StoreKey] = simulation.DecodeStore
+}
+
+// WeightedOperations returns the all the gov module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc,
+		am.accountKeeper, am.keeper,
+	)
 }

@@ -99,6 +99,9 @@ func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
 		types.WasmMsgParserRouteWasm: NewWasmMsgParser(),
 	})
 
+	keeper.SetLastCodeID(ctx, 0)
+	keeper.SetLastInstanceID(ctx, 0)
+
 	return ctx, accountKeeper, keeper
 }
 

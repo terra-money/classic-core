@@ -12,7 +12,7 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 )
 
-func TestHandleCreate(t *testing.T) {
+func TestHandleStore(t *testing.T) {
 	loadContracts()
 
 	cases := map[string]struct {

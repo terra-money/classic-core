@@ -7,12 +7,13 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	core "github.com/terra-project/core/types"
 )
 
 // Model is a struct that holds a KV pair
 type Model struct {
-	Key   []byte `json:"key"`
-	Value []byte `json:"value"`
+	Key   core.HexBytes `json:"key"`
+	Value core.HexBytes `json:"value"`
 }
 
 // String implements fmt.Stringer interface
@@ -20,12 +21,12 @@ func (m Model) String() string {
 	return fmt.Sprintf(`Model
 	Key:   %s,
 	Value: %s`,
-		hex.EncodeToString(m.Key), m.Value)
+		m.Key, m.Value)
 }
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
+	CodeHash core.HexBytes  `json:"code_hash"`
 	Creator  sdk.AccAddress `json:"creator"`
 }
 
@@ -50,7 +51,7 @@ type ContractInfo struct {
 	CodeID  uint64         `json:"code_id"`
 	Address sdk.AccAddress `json:"address"`
 	Creator sdk.AccAddress `json:"creator"`
-	InitMsg []byte         `json:"init_msg"`
+	InitMsg core.HexBytes  `json:"init_msg"`
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
