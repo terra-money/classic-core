@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -37,19 +36,19 @@ func WeightedOperations(
 	var weightMsgExecuteContract int
 	appParams.GetOrGenerate(cdc, OpWeightMsgStoreCoce, &weightMsgStoreCode, nil,
 		func(_ *rand.Rand) {
-			weightMsgStoreCode = simappparams.DefaultWeightMsgEditValidator
+			weightMsgStoreCode = 1
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil,
 		func(_ *rand.Rand) {
-			weightMsgInstantiateContract = simappparams.DefaultWeightMsgEditValidator
+			weightMsgInstantiateContract = 1
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgExecuteContract, &weightMsgExecuteContract, nil,
 		func(_ *rand.Rand) {
-			weightMsgExecuteContract = simappparams.DefaultWeightMsgEditValidator
+			weightMsgExecuteContract = 1
 		},
 	)
 

@@ -8,7 +8,7 @@ SIMAPP = ./app
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
-	@RUST_BACKTRACE=1 go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
 
 test-sim-custom-genesis-fast:
@@ -23,7 +23,7 @@ test-sim-fast:
 
 test-sim-import-export: runsim
 	@echo "Running application import/export simulation. This may take several minutes..."
-	@RUST_BACKTRACE=1 $(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) 50 5 TestAppImportExport
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) 50 5 TestAppImportExport
 
 test-sim-after-import: runsim
 	@echo "Running App simulation-after-import. This may take several minutes..."
