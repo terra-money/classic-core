@@ -47,7 +47,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	supportedFeatures string,
 	wasmConfig types.WasmConfig) Keeper {
 	homeDir := viper.GetString(flags.FlagHome)
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, 0)
+	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "data/wasm"), supportedFeatures, 0)
 
 	if err != nil {
 		panic(err)
