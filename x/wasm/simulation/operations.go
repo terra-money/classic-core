@@ -37,7 +37,7 @@ func WeightedOperations(
 	var weightMsgExecuteContract int
 	appParams.GetOrGenerate(cdc, OpWeightMsgStoreCoce, &weightMsgStoreCode, nil,
 		func(_ *rand.Rand) {
-			weightMsgStoreCode = simappparams.DefaultWeightMsgCreateValidator
+			weightMsgStoreCode = simappparams.DefaultWeightMsgEditValidator
 		},
 	)
 
@@ -49,7 +49,7 @@ func WeightedOperations(
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgExecuteContract, &weightMsgExecuteContract, nil,
 		func(_ *rand.Rand) {
-			weightMsgExecuteContract = simappparams.DefaultWeightMsgDelegate
+			weightMsgExecuteContract = simappparams.DefaultWeightMsgEditValidator
 		},
 	)
 
