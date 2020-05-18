@@ -6,6 +6,9 @@ COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 CORE_PACK := $(shell go list -m github.com/terra-project/core | sed  's/ /\@/g')
+ifneq ($(OS),Windows_NT)
+  UNAME_S = $(shell uname -s)
+endif
 
 export GO111MODULE = on
 
@@ -21,7 +24,6 @@ ifeq ($(LEDGER_ENABLED),true)
       build_tags += ledger
     endif
   else
-    UNAME_S = $(shell uname -s)
     ifeq ($(UNAME_S),OpenBSD)
       $(warning OpenBSD detected, disabling ledger support (https://github.com/cosmos/cosmos-sdk/issues/1988))
     else
@@ -78,7 +80,17 @@ else
 endif
 
 build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
+ifeq ($(OS),Windows_NT)
+	$(error Windows is not supported)
+else
+  ifeq ($(UNAME_S),Darwin)
+		$(info You need to install cross compiler and register path)
+		$(info http://crossgcc.rts-software.org/doku.php?id=compiling_for_linux)
+		LEDGER_ENABLED=false CC=x86_64-pc-linux-gcc GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(MAKE) build
+  else
+		LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
+  endif
+endif
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
@@ -165,13 +177,14 @@ benchmark:
 
 ########################################
 ### Local validator nodes using docker and docker-compose
-
-build-docker-terradnode:
+build-docker-terradnode: build-linux
+	cp `ls $(GOPATH)/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*/api/libgo_cosmwasm.so | sort -V | tail -n 1` ./networks/local/core/libgo_cosmwasm.so
 	$(MAKE) -C networks/local
+	@rm -f ./networks/local/core/libgo_cosmwasm.so
 
 # Run a 4-node testnet locally
 
-localnet-start: build-linux localnet-stop
+localnet-start: localnet-stop
 	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 

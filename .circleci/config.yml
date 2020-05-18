@@ -221,8 +221,6 @@ jobs:
             sudo mv go /usr/local
             popd
             set -x
-            make build-linux
-            sudo cp $GOPATH/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*/api/libgo_cosmwasm.so /tmp
             make clean build-docker-terradnode localnet-start
             ./contrib/localnet-blocks-test.sh 40 5 10 localhost
 
