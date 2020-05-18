@@ -24,7 +24,7 @@ const (
 
 // GenBasePool randomized BasePool
 func GenBasePool(r *rand.Rand) sdk.Dec {
-	return sdk.NewDec(100000000).Add(sdk.NewDec(int64(r.Intn(10000000000))))
+	return sdk.NewDec(50000000000000).Add(sdk.NewDec(int64(r.Intn(10000000000))))
 }
 
 // GenPoolRecoveryPeriod randomized PoolRecoveryPeriod

@@ -18,6 +18,7 @@ import (
 	"github.com/terra-project/core/x/bank/client/cli"
 	"github.com/terra-project/core/x/bank/client/rest"
 	"github.com/terra-project/core/x/bank/internal/types"
+	"github.com/terra-project/core/x/bank/simulation"
 )
 
 var (
@@ -72,6 +73,8 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 	cosmosAppModule CosmosAppModule
+	accountKeeper   types.AccountKeeper
+	keeper          Keeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -79,6 +82,8 @@ func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic:  AppModuleBasic{},
 		cosmosAppModule: NewCosmosAppModule(keeper, accountKeeper),
+		accountKeeper:   accountKeeper,
+		keeper:          keeper,
 	}
 }
 
@@ -155,5 +160,8 @@ func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 
 // WeightedOperations doesn't return any auth module operation.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
-	return am.cosmosAppModule.WeightedOperations(simState)
+	// We implement our own bank operations to prevent insufficient fee due to tax
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc, am.accountKeeper, am.keeper,
+	)
 }
