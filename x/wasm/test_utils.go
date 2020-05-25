@@ -48,12 +48,12 @@ func setupTest(t *testing.T) (testData, func()) {
 	require.NoError(t, err)
 	viper.Set(flags.FlagHome, tempDir)
 
-	ctx, acctKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
 	data := testData{
-		module:     NewAppModule(keeper, acctKeeper),
-		ctx:        ctx,
-		acctKeeper: acctKeeper,
-		keeper:     keeper,
+		module:     NewAppModule(input.WasmKeeper, input.AccKeeper),
+		ctx:        input.Ctx,
+		acctKeeper: input.AccKeeper,
+		keeper:     input.WasmKeeper,
 	}
 	cleanup := func() { os.RemoveAll(tempDir) }
 	return data, cleanup

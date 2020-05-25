@@ -9,12 +9,14 @@ import (
 )
 
 func TestNewKeeper(t *testing.T) {
-	_, _, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	keeper := input.WasmKeeper
 	require.NotNil(t, keeper)
 }
 
 func TestCodeInfo(t *testing.T) {
-	ctx, _, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	codeID := uint64(1)
 	creatorAddr := addrFromUint64(codeID)
@@ -27,7 +29,8 @@ func TestCodeInfo(t *testing.T) {
 }
 
 func TestContractInfo(t *testing.T) {
-	ctx, _, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	_, _, alice := keyPubAddr()
 	_, _, bob := keyPubAddr()
@@ -73,7 +76,8 @@ func TestContractStore(t *testing.T) {
 		},
 	}
 
-	ctx, _, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	_, _, contractAddr := keyPubAddr()
 	keeper.SetContractStore(ctx, contractAddr, models)

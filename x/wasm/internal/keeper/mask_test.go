@@ -59,7 +59,8 @@ func TestMaskReflectContractSend(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -142,7 +143,10 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
+
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"mask": maskQuerier{},
 	})
@@ -245,7 +249,10 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
+
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"mask": maskQuerier{},
 	})

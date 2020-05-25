@@ -14,7 +14,8 @@ import (
 )
 
 func TestUncompress(t *testing.T) {
-	ctx, _, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	wasmRaw, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)

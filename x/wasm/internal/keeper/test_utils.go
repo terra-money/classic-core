@@ -11,7 +11,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +24,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	core "github.com/terra-project/core/types"
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
+	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
@@ -33,16 +38,34 @@ func makeTestCodec() *codec.Codec {
 	bank.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
+	staking.RegisterCodec(cdc)
+	supply.RegisterCodec(cdc)
+	distr.RegisterCodec(cdc)
 
 	return cdc
 }
 
+// TestInput nolint
+type TestInput struct {
+	Ctx           sdk.Context
+	Cdc           *codec.Codec
+	AccKeeper     auth.AccountKeeper
+	BankKeepe     bank.Keeper
+	SupplyKeeper  supply.Keeper
+	StakingKeeper staking.Keeper
+	DistrKeeper   distr.Keeper
+	WasmKeeper    Keeper
+}
+
 // CreateTestInput nolint
-func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
+func CreateTestInput(t *testing.T) TestInput {
 	keyContract := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
+	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -50,59 +73,124 @@ func CreateTestInput(t *testing.T) (sdk.Context, auth.AccountKeeper, Keeper) {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
-	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
+
+	require.NoError(t, ms.LoadLatestVersion())
+
+	blackListAddrs := map[string]bool{
+		auth.FeeCollectorName:     true,
+		staking.NotBondedPoolName: true,
+		staking.BondedPoolName:    true,
+		distr.ModuleName:          true,
+	}
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	cdc := makeTestCodec()
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tkeyParams)
 
 	accountKeeper := auth.NewAccountKeeper(
 		cdc,    // amino codec
 		keyAcc, // target store
-		pk.Subspace(auth.DefaultParamspace),
+		paramsKeeper.Subspace(auth.DefaultParamspace),
 		auth.ProtoBaseAccount, // prototype
 	)
 
-	bk := bank.NewBaseKeeper(
+	bankKeeper := bank.NewBaseKeeper(
 		accountKeeper,
-		pk.Subspace(bank.DefaultParamspace),
-		nil,
+		paramsKeeper.Subspace(bank.DefaultParamspace),
+		blackListAddrs,
 	)
-	bk.SetSendEnabled(ctx, true)
+	bankKeeper.SetSendEnabled(ctx, true)
+
+	maccPerms := map[string][]string{
+		auth.FeeCollectorName:     nil,
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		distr.ModuleName:          nil,
+	}
+
+	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
+	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(100000000)))
+	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
+
+	stakingKeeper := staking.NewKeeper(
+		cdc,
+		keyStaking,
+		supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
+	)
+
+	distrKeeper := distr.NewKeeper(
+		cdc,
+		keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		stakingKeeper, supplyKeeper, auth.FeeCollectorName, blackListAddrs)
+
+	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
+	distrParams := distr.DefaultParams()
+	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
+	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
+	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)
+	distrKeeper.SetParams(ctx, distrParams)
+
+	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
+	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
+	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
+	distrAcc := supply.NewEmptyModuleAccount(distr.ModuleName)
+
+	// funds for huge withdraw
+	distrAcc.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000)))
+	notBondedPool.SetCoins(totalSupply)
+
+	supplyKeeper.SetModuleAccount(ctx, feeCollectorAcc)
+	supplyKeeper.SetModuleAccount(ctx, bondPool)
+	supplyKeeper.SetModuleAccount(ctx, notBondedPool)
+	supplyKeeper.SetModuleAccount(ctx, distrAcc)
+
+	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
+
+	genesis := staking.DefaultGenesisState()
+	genesis.Params.BondDenom = core.MicroLunaDenom
+	_ = staking.InitGenesis(ctx, stakingKeeper, accountKeeper, supplyKeeper, genesis)
 
 	router := baseapp.NewRouter()
 
 	keeper := NewKeeper(
 		cdc,
 		keyContract,
-		pk.Subspace(types.DefaultParamspace),
+		paramsKeeper.Subspace(types.DefaultParamspace),
 		accountKeeper,
-		bk,
+		bankKeeper,
 		router,
 		types.FeatureStaking,
 		types.DefaultWasmConfig(),
 	)
 
-	h := bank.NewHandler(bk)
-	router.AddRoute(bank.RouterKey, h)
+	bankHandler := bank.NewHandler(bankKeeper)
+	stakingHandler := staking.NewHandler(stakingKeeper)
+	distrHandler := distr.NewHandler(distrKeeper)
+	router.AddRoute(bank.RouterKey, bankHandler)
+	router.AddRoute(staking.RouterKey, stakingHandler)
+	router.AddRoute(distr.RouterKey, distrHandler)
 	router.AddRoute(types.RouterKey, TestHandler(keeper))
 
 	keeper.SetParams(ctx, types.DefaultParams())
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
-		types.WasmQueryRouteBank: bankwasm.NewWasmQuerier(bk),
-		types.WasmQueryRouteWasm: NewWasmQuerier(keeper),
+		types.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(bankKeeper),
+		types.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(stakingKeeper),
+		types.WasmQueryRouteWasm:    NewWasmQuerier(keeper),
 	})
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
-		types.WasmMsgParserRouteBank: bankwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteWasm: NewWasmMsgParser(),
+		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteWasm:    NewWasmMsgParser(),
 	})
 
 	keeper.SetLastCodeID(ctx, 0)
 	keeper.SetLastInstanceID(ctx, 0)
 
-	return ctx, accountKeeper, keeper
+	return TestInput{ctx, cdc, accountKeeper, bankKeeper, supplyKeeper, stakingKeeper, distrKeeper, keeper}
 }
 
 // InitMsg nolint

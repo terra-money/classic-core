@@ -140,6 +140,14 @@ func NewWasmQuerier(keeper staking.Keeper) WasmQuerier {
 
 // Query - implement query function
 func (querier WasmQuerier) Query(ctx sdk.Context, request wasmTypes.QueryRequest) ([]byte, error) {
+	if request.Staking.BondedDenom != nil {
+		res := wasmTypes.BondedDenomResponse{
+			Denom: querier.keeper.BondDenom(ctx),
+		}
+
+		return json.Marshal(res)
+	}
+
 	if request.Staking.Validators != nil {
 		validators := querier.keeper.GetBondedValidatorsByPower(ctx)
 		wasmVals := make([]wasmTypes.Validator, len(validators))
@@ -160,47 +168,47 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmTypes.QueryRequest
 		return json.Marshal(res)
 	}
 
-	if request.Staking.Delegations != nil {
-		delegator, err := sdk.AccAddressFromBech32(request.Staking.Delegations.Delegator)
+	if request.Staking.AllDelegations != nil {
+		delegator, err := sdk.AccAddressFromBech32(request.Staking.AllDelegations.Delegator)
 		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Staking.Delegations.Delegator)
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Staking.AllDelegations.Delegator)
 		}
 
-		var delegations []staking.Delegation
-		if len(request.Staking.Delegations.Validator) == 0 {
-			delegations = querier.keeper.GetAllDelegatorDelegations(ctx, delegator)
-		} else {
-			var validator sdk.ValAddress
-			validator, err = sdk.ValAddressFromBech32(request.Staking.Delegations.Validator)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Staking.Delegations.Validator)
-			}
+		delegations := querier.keeper.GetAllDelegatorDelegations(ctx, delegator)
 
-			delegation, found := querier.keeper.GetDelegation(ctx, delegator, validator)
-			if found {
-				delegations = append(delegations, delegation)
-			}
+		responseDelegations, err := querier.encodeDelegations(ctx, delegations)
+		if err != nil {
+			return nil, err
 		}
 
-		var responseDelegations wasmTypes.Delegations
-		bondDenom := querier.keeper.BondDenom(ctx)
-		for _, del := range delegations {
-			val, found := querier.keeper.GetValidator(ctx, del.ValidatorAddress)
-			if !found {
-				return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
-			}
-
-			amount := sdk.NewCoin(bondDenom, val.TokensFromShares(del.Shares).TruncateInt())
-
-			responseDelegations = append(responseDelegations, wasmTypes.Delegation{
-				Delegator: del.DelegatorAddress.String(),
-				Validator: del.ValidatorAddress.String(),
-				Amount:    wasm.EncodeSdkCoin(amount),
-			})
-		}
-
-		res := wasmTypes.DelegationsResponse{
+		res := wasmTypes.AllDelegationsResponse{
 			Delegations: responseDelegations,
+		}
+
+		return json.Marshal(res)
+	}
+
+	if request.Staking.Delegation != nil {
+		delegator, err := sdk.AccAddressFromBech32(request.Staking.Delegation.Delegator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Staking.Delegation.Delegator)
+		}
+		validator, err := sdk.ValAddressFromBech32(request.Staking.Delegation.Validator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Staking.Delegation.Validator)
+		}
+
+		var responseFullDelegation wasmTypes.FullDelegation
+		delegation, found := querier.keeper.GetDelegation(ctx, delegator, validator)
+		if found {
+			responseFullDelegation, err = querier.encodeDelegation(ctx, delegation)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		res := wasmTypes.DelegationResponse{
+			Delegation: &responseFullDelegation,
 		}
 
 		return json.Marshal(res)
@@ -212,4 +220,47 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmTypes.QueryRequest
 // QueryCustom implements custom query interface
 func (WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	return nil, nil
+}
+
+// encdoe cosmos delegations to wasm delegations
+func (querier WasmQuerier) encodeDelegations(ctx sdk.Context, dels staking.Delegations) (wasmTypes.Delegations, error) {
+	bondDenom := querier.keeper.BondDenom(ctx)
+
+	var responseDelegations wasmTypes.Delegations
+	for _, del := range dels {
+		val, found := querier.keeper.GetValidator(ctx, del.ValidatorAddress)
+		if !found {
+			return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
+		}
+
+		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(del.Shares).TruncateInt())
+
+		responseDelegations = append(responseDelegations, wasmTypes.Delegation{
+			Delegator: del.DelegatorAddress.String(),
+			Validator: del.ValidatorAddress.String(),
+			Amount:    wasm.EncodeSdkCoin(amount),
+		})
+	}
+	return responseDelegations, nil
+}
+
+// encode cosmos staking to wasm delegation
+func (querier WasmQuerier) encodeDelegation(ctx sdk.Context, del staking.Delegation) (wasmTypes.FullDelegation, error) {
+	val, found := querier.keeper.GetValidator(ctx, del.ValidatorAddress)
+	if !found {
+		return wasmTypes.FullDelegation{}, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
+	}
+
+	bondDenom := querier.keeper.BondDenom(ctx)
+	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(del.Shares).TruncateInt())
+
+	return wasmTypes.FullDelegation{
+		Delegator: del.DelegatorAddress.String(),
+		Validator: del.ValidatorAddress.String(),
+		Amount:    wasm.EncodeSdkCoin(amount),
+		// TODO: AccumulatedRewards
+		AccumulatedRewards: wasmTypes.NewCoin(0, bondDenom),
+		// TODO: Determine redelegate
+		CanRedelegate: wasmTypes.NewCoin(0, bondDenom),
+	}, nil
 }

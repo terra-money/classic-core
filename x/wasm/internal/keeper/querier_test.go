@@ -27,7 +27,8 @@ func TestQueryContractState(t *testing.T) {
 	viper.Set(flags.FlagHome, tempDir)
 
 	cdc := codec.New()
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))

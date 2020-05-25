@@ -24,7 +24,8 @@ func TestStoreCode(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -50,7 +51,8 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -75,7 +77,8 @@ func TestInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -109,7 +112,8 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -129,7 +133,8 @@ func TestExecute(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -186,7 +191,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x8b2c), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x8b2d), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -208,7 +213,8 @@ func TestExecuteWithNonExistingContractAddress(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
@@ -225,7 +231,8 @@ func TestExecuteWithPanic(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -259,7 +266,8 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -298,7 +306,8 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t)
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
