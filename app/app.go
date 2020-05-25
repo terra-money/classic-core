@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/viper"
 	"github.com/terra-project/core/x/wasm"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -41,6 +40,7 @@ import (
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/upgrade"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
@@ -155,7 +155,8 @@ type TerraApp struct {
 
 // NewTerraApp returns a reference to an initialized TerraApp.
 func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
+	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, wasmConfig *wasmconfig.Config,
+	baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 
 	cdc := MakeCodec()
 
@@ -222,16 +223,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	evidenceKeeper.SetRouter(evidenceRouter)
 	app.evidenceKeeper = *evidenceKeeper
 
-	// load wasm config
-	wasmConfigWrapper := wasm.WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
-	err := viper.Unmarshal(&wasmConfigWrapper)
-	if err != nil {
-		panic("error while reading wasm config: " + err.Error())
-	}
-
 	// create wasm keeper with msg parser & querier
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName],
-		app.accountKeeper, app.bankKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfigWrapper.Wasm)
+		app.accountKeeper, app.bankKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfig)
 	app.wasmKeeper.RegisterMsgParsers(map[string]wasm.WasmMsgParserInterface{
 		wasm.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
 		wasm.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),

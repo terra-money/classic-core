@@ -27,6 +27,7 @@ import (
 	core "github.com/terra-project/core/types"
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
+	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
@@ -164,7 +165,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		bankKeeper,
 		router,
 		types.FeatureStaking,
-		types.DefaultWasmConfig(),
+		config.DefaultConfig(),
 	)
 
 	bankHandler := bank.NewHandler(bankKeeper)

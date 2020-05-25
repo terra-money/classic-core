@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,6 +28,7 @@ import (
 
 	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/staking"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 )
 
 // terrad custom flags
@@ -49,7 +52,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:               "terrad",
 		Short:             "Terra Daemon (server)",
-		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+		PersistentPreRunE: persistentPreRunEFn(ctx),
 	}
 
 	rootCmd.AddCommand(genutilcli.InitCmd(ctx, cdc, app.ModuleBasics, app.DefaultNodeHome))
@@ -89,6 +92,10 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 
 	return app.NewTerraApp(
 		logger, db, traceStore, true, invCheckPeriod, skipUpgradeHeights,
+		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
+			ContractQueryGasLimit: viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
+			CacheSize:             viper.GetUint64(wasmconfig.FlagCacheSize),
+		}},
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
@@ -102,13 +109,37 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		tApp := app.NewTerraApp(logger, db, traceStore, false, uint(1), map[int64]bool{})
+		tApp := app.NewTerraApp(logger, db, traceStore, false, uint(1), map[int64]bool{}, wasmconfig.DefaultConfig())
 		err := tApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	tApp := app.NewTerraApp(logger, db, traceStore, true, uint(1), map[int64]bool{})
+	tApp := app.NewTerraApp(logger, db, traceStore, true, uint(1), map[int64]bool{}, wasmconfig.DefaultConfig())
 	return tApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+}
+
+// custom pre-run to generate wasm config
+func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string) error {
+	originPreRun := server.PersistentPreRunEFn(context)
+	return func(cmd *cobra.Command, args []string) error {
+		err := originPreRun(cmd, args)
+		if err != nil {
+			return err
+		}
+
+		rootDir := viper.GetString(flags.FlagHome)
+
+		wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
+		if _, err := os.Stat(wasmConfigFilePath); os.IsNotExist(err) {
+			wasmConf, _ := wasmconfig.ParseConfig()
+			wasmconfig.WriteConfigFile(wasmConfigFilePath, wasmConf)
+		}
+
+		viper.SetConfigName("wasm")
+		err = viper.MergeInConfig()
+
+		return err
+	}
 }

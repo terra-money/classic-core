@@ -34,7 +34,6 @@ const (
 var (
 	// functions aliases
 	RegisterCodec                 = types.RegisterCodec
-	DefaultWasmConfig             = types.DefaultWasmConfig
 	EncodeSdkCoin                 = types.EncodeSdkCoin
 	EncodeSdkCoins                = types.EncodeSdkCoins
 	FeatureStaking                = types.FeatureStaking
@@ -92,8 +91,6 @@ var (
 )
 
 type (
-	WasmConfig                 = types.WasmConfig
-	WasmWrapper                = types.WasmWrapper
 	Model                      = types.Model
 	CodeInfo                   = types.CodeInfo
 	ContractInfo               = types.ContractInfo

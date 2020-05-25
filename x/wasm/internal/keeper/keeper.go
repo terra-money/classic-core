@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 
 	"github.com/terra-project/core/x/params"
+	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
@@ -45,7 +46,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	paramspace params.Subspace, accountKeeper auth.AccountKeeper,
 	bankKeeper types.BankKeeper, router sdk.Router,
 	supportedFeatures string,
-	wasmConfig types.WasmConfig) Keeper {
+	wasmConfig *config.Config) Keeper {
 	homeDir := viper.GetString(flags.FlagHome)
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "data/wasm"), supportedFeatures, 0)
 
