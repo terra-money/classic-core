@@ -43,7 +43,17 @@ func TestSwapMsg(t *testing.T) {
 	price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
 	require.Equal(t, price.MulInt(amt), diff.Abs())
 
+	// invalid recursive swap
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
+
 	_, err = h(input.Ctx, swapMsg)
 	require.Error(t, err)
+
+	// valid zero tobin tax test
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, sdk.ZeroDec())
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, sdk.ZeroDec())
+	offerCoin = sdk.NewCoin(core.MicroSDRDenom, amt)
+	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
+	_, err = h(input.Ctx, swapMsg)
+	require.NoError(t, err)
 }
