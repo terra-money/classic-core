@@ -34,7 +34,7 @@ func TestStoreCode(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create contract
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
@@ -56,7 +56,7 @@ func TestStoreCodeWithHugeCode(t *testing.T) {
 
 	_, _, creator := keyPubAddr()
 	wasmCode := make([]byte, keeper.MaxContractSize(ctx)+1)
-	_, err = keeper.StoreCode(ctx, creator, wasmCode)
+	_, err = keeper.StoreCode(ctx, creator, wasmCode, true)
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "contract size is too huge")
@@ -78,7 +78,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -104,7 +104,7 @@ func TestInstantiate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	codeID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -160,7 +160,7 @@ func TestInstantiateWithBigInitMsg(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	codeID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	// test max init msg size
@@ -187,7 +187,7 @@ func TestExecute(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	codeID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -285,7 +285,7 @@ func TestExecuteWithHugeMsg(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	codeID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -323,7 +323,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -358,7 +358,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -398,7 +398,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()

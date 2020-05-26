@@ -11,8 +11,8 @@ import (
 )
 
 // StoreCode uploads and compiles a WASM contract bytecode, returning a short identifier for the stored code
-func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
-	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, checkSize bool) (codeID uint64, err error) {
+	if checkSize && uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
 		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 

@@ -38,7 +38,7 @@ func TestQueryContractState(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()

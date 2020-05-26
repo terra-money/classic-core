@@ -28,7 +28,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
-	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode)
+	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode, true)
 	if err != nil {
 		return nil, err
 	}

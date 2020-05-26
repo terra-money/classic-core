@@ -67,7 +67,7 @@ func TestInstantiateMaker(t *testing.T) {
 	// upload staking derivates code
 	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
-	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
+	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode, true)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), makerID)
 
@@ -214,7 +214,7 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	// upload staking derivates code
 	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
-	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
+	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode, true)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), makerID)
 
