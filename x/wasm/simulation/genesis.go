@@ -21,7 +21,7 @@ const (
 
 // GenMaxContractSize randomized MaxContractSize
 func GenMaxContractSize(r *rand.Rand) uint64 {
-	return uint64(1024 + r.Intn(499*1024))
+	return uint64(300*1024 + r.Intn(200*1024))
 }
 
 // GenMaxContractGas randomized MaxContractGas
