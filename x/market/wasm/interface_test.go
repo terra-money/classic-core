@@ -15,17 +15,7 @@ import (
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/market/internal/keeper"
 	"github.com/terra-project/core/x/market/internal/types"
-	"github.com/terra-project/core/x/wasm"
 )
-
-func mustMarshalJSON(v interface{}) []byte {
-	bz, err := json.Marshal(v)
-	if err != nil {
-		panic(err)
-	}
-
-	return bz
-}
 
 func TestEncoding(t *testing.T) {
 	_, addrs := mock.GeneratePrivKeyAddressPairs(2)
@@ -44,7 +34,7 @@ func TestEncoding(t *testing.T) {
 			input: wasmTypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
-						`{"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}`,
+						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
 						addrs[0], core.MicroLunaDenom, core.MicroSDRDenom,
 					),
 				),
@@ -62,7 +52,7 @@ func TestEncoding(t *testing.T) {
 			input: wasmTypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
-						`{"trader": "%s", "offer_coin": {"amount": "1234.123", "denom": "%s"}, "ask_denom": "%s"}`,
+						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234.123", "denom": "%s"}, "ask_denom": "%s"}}`,
 						addrs[0], core.MicroLunaDenom, core.MicroSDRDenom,
 					),
 				),
@@ -74,7 +64,7 @@ func TestEncoding(t *testing.T) {
 			input: wasmTypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
-						`{"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}`,
+						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
 						invalidAddr, core.MicroLunaDenom, core.MicroSDRDenom,
 					),
 				),
@@ -114,7 +104,10 @@ func TestQuerySwap(t *testing.T) {
 	// recursive query
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10))
 	queryParams := types.NewQuerySwapParams(offerCoin, core.MicroLunaDenom)
-	bz, err := json.Marshal(queryParams)
+	bz, err := json.Marshal(CosmosQuery{
+		Swap: queryParams,
+	})
+
 	require.NoError(t, err)
 
 	res, err := querier.QueryCustom(input.Ctx, bz)
@@ -124,7 +117,9 @@ func TestQuerySwap(t *testing.T) {
 	overflowAmt, _ := sdk.NewIntFromString("1000000000000000000000000000000000")
 	overflowOfferCoin := sdk.NewCoin(core.MicroLunaDenom, overflowAmt)
 	queryParams = types.NewQuerySwapParams(overflowOfferCoin, core.MicroSDRDenom)
-	bz, err = json.Marshal(queryParams)
+	bz, err = json.Marshal(CosmosQuery{
+		Swap: queryParams,
+	})
 	require.NoError(t, err)
 
 	_, err = querier.QueryCustom(input.Ctx, bz)
@@ -132,7 +127,9 @@ func TestQuerySwap(t *testing.T) {
 
 	// valid query
 	queryParams = types.NewQuerySwapParams(offerCoin, core.MicroSDRDenom)
-	bz, err = json.Marshal(queryParams)
+	bz, err = json.Marshal(CosmosQuery{
+		Swap: queryParams,
+	})
 	require.NoError(t, err)
 
 	res, err = querier.QueryCustom(input.Ctx, bz)
@@ -142,9 +139,9 @@ func TestQuerySwap(t *testing.T) {
 	err = json.Unmarshal(res, &swapResponse)
 	require.NoError(t, err)
 
-	swapCoin, err := wasm.ParseToCoin(swapResponse.Receive)
-	require.NoError(t, err)
-	require.Equal(t, core.MicroSDRDenom, swapCoin.Denom)
-	require.True(t, sdk.NewInt(17).GTE(swapCoin.Amount))
-	require.True(t, swapCoin.Amount.IsPositive())
+	swapAmount, ok := sdk.NewIntFromString(swapResponse.Receive.Amount)
+	require.True(t, ok)
+	require.Equal(t, core.MicroSDRDenom, swapResponse.Receive.Denom)
+	require.True(t, sdk.NewInt(17).GTE(swapAmount))
+	require.True(t, swapAmount.IsPositive())
 }

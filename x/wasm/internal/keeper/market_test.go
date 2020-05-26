@@ -88,6 +88,11 @@ func TestInstantiateMaker(t *testing.T) {
 }
 
 func TestQuerier(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	input, _, makerAddr, offerCoin := setupMakerContract(t)
 
 	ctx, keeper := input.Ctx, input.WasmKeeper
@@ -122,6 +127,11 @@ func TestQuerier(t *testing.T) {
 }
 
 func TestBuyMsg(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	input, creatorAddr, makerAddr, offerCoin := setupMakerContract(t)
 
 	ctx, keeper, accKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper
@@ -150,6 +160,11 @@ func TestBuyMsg(t *testing.T) {
 }
 
 func TestSellMsg(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	input, creatorAddr, makerAddr, offerCoin := setupMakerContract(t)
 
 	ctx, keeper, accKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper
@@ -184,11 +199,6 @@ func TestSellMsg(t *testing.T) {
 }
 
 func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr sdk.AccAddress, initCoin sdk.Coin) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input = CreateTestInput(t)
 
 	ctx, keeper, accKeeper, oracleKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.OracleKeeper

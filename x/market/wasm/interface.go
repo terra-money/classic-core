@@ -31,7 +31,7 @@ func (WasmMsgParser) Parse(_ sdk.AccAddress, _ wasmTypes.CosmosMsg) ([]sdk.Msg, 
 
 // CosmosMsg only contains swap msg
 type CosmosMsg struct {
-	Swap *types.MsgSwap `json:"swap"`
+	Swap types.MsgSwap `json:"swap"`
 }
 
 // ParseCustom implements custom parser
@@ -42,7 +42,7 @@ func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessa
 		return nil, sdkerrors.Wrap(err, "failed to parse market custom msg")
 	}
 
-	return []sdk.Msg{*sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
+	return []sdk.Msg{sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
 }
 
 // WasmQuerier - staking query interface for wasm contract
@@ -60,7 +60,7 @@ func (WasmQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error
 
 // CosmosQuery only contains swap simulation
 type CosmosQuery struct {
-	Swap *types.QuerySwapParams `json:"swap"`
+	Swap types.QuerySwapParams `json:"swap"`
 }
 
 // SwapQueryResponse - swap simulation query response for wasm module
@@ -77,7 +77,7 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	retCoin, err := keeper.QuerySwap(ctx, *params.Swap, querier.keeper)
+	retCoin, err := keeper.QuerySwap(ctx, params.Swap, querier.keeper)
 	if err != nil {
 		return nil, err
 	}
