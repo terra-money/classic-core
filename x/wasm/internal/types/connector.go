@@ -9,8 +9,8 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 )
 
-// FeatureStaking - Cosmwasm feature
-const FeatureStaking = "staking"
+// DefaultFeatures - Cosmwasm feature
+const DefaultFeatures = "staking,terra"
 
 // ParseResult converts wasm result to sdk.Result
 func ParseResult(wasmResult *wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {

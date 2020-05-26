@@ -337,7 +337,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 	// ensure we get an out of gas panic
-	require.PanicsWithValue(t, sdk.ErrorOutOfGas{"ReadFlat"}, func() {
+	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
 		_, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
 	})
 }

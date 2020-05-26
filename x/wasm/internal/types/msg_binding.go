@@ -13,6 +13,7 @@ import (
 const (
 	WasmMsgParserRouteBank    = "bank"
 	WasmMsgParserRouteStaking = "staking"
+	WasmMsgParserRouteMarket  = "market"
 	WasmMsgParserRouteWasm    = "wasm"
 )
 

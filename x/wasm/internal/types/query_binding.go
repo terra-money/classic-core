@@ -40,6 +40,7 @@ var _ wasmTypes.Querier = Querier{}
 const (
 	WasmQueryRouteBank    = "bank"
 	WasmQueryRouteStaking = "staking"
+	WasmQueryRouteMarket  = "market"
 	WasmQueryRouteWasm    = "wasm"
 )
 

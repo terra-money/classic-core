@@ -25,7 +25,7 @@ func NewWasmMsgParser() WasmMsgParser {
 }
 
 // Parse implements wasm staking msg parser
-func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.CosmosMsg) (msgs []sdk.Msg, err error) {
 	msg := wasmMsg.Staking
 
 	if msg.Delegate != nil {
@@ -45,7 +45,11 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes
 			Amount:           coin,
 		}
 
-		return []sdk.Msg{sdkMsg}, nil
+		if err := sdkMsg.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		msgs = append(msgs, sdkMsg)
 	}
 
 	if msg.Redelegate != nil {
@@ -69,7 +73,11 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes
 			Amount:              coin,
 		}
 
-		return []sdk.Msg{sdkMsg}, nil
+		if err := sdkMsg.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		msgs = append(msgs, sdkMsg)
 	}
 
 	if msg.Undelegate != nil {
@@ -89,38 +97,56 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes
 			Amount:           coin,
 		}
 
-		return []sdk.Msg{sdkMsg}, nil
+		if err := sdkMsg.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		msgs = append(msgs, sdkMsg)
 	}
 
-	if msg.Withdraw != nil {
-		var err error
-		rcpt := contractAddr
-
-		if len(msg.Withdraw.Recipient) != 0 {
-			rcpt, err = sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
-			}
+	if msg.Withdraw != nil && len(msg.Withdraw.Recipient) != 0 {
+		rcpt, err := sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
 		}
+
+		sdkMsg := distribution.MsgSetWithdrawAddress{
+			DelegatorAddress: contractAddr,
+			WithdrawAddress:  rcpt,
+		}
+
+		if err := sdkMsg.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		msgs = append(msgs, sdkMsg)
+	}
+
+	if msg.Withdraw != nil && len(msg.Withdraw.Validator) != 0 {
+		var err error
 
 		validator, err := sdk.ValAddressFromBech32(msg.Withdraw.Validator)
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
 		}
 
-		setMsg := distribution.MsgSetWithdrawAddress{
-			DelegatorAddress: contractAddr,
-			WithdrawAddress:  rcpt,
-		}
-
-		withdrawMsg := distribution.MsgWithdrawDelegatorReward{
+		sdkMsg := distribution.MsgWithdrawDelegatorReward{
 			DelegatorAddress: contractAddr,
 			ValidatorAddress: validator,
 		}
 
-		return []sdk.Msg{setMsg, withdrawMsg}, nil
+		if err := sdkMsg.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		msgs = append(msgs, sdkMsg)
 	}
-	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Staking")
+
+	if len(msgs) == 0 {
+		return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Staking")
+	}
+
+	return
 }
 
 // ParseCustom implements custom parser

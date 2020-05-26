@@ -36,7 +36,7 @@ var (
 	RegisterCodec                 = types.RegisterCodec
 	EncodeSdkCoin                 = types.EncodeSdkCoin
 	EncodeSdkCoins                = types.EncodeSdkCoins
-	FeatureStaking                = types.FeatureStaking
+	FeatureStaking                = types.DefaultFeatures
 	ParseResult                   = types.ParseResult
 	ParseToCoin                   = types.ParseToCoin
 	ParseToCoins                  = types.ParseToCoins

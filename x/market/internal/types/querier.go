@@ -14,8 +14,8 @@ const (
 // QuerySwapParams for query
 // - 'custom/market/swap'
 type QuerySwapParams struct {
-	OfferCoin sdk.Coin
-	AskDenom  string
+	OfferCoin sdk.Coin `json:"offer_coin"`
+	AskDenom  string   `json:"ask_denom"`
 }
 
 // NewQuerySwapParams returns param object for swap query

@@ -90,10 +90,6 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				distribution.MsgSetWithdrawAddress{
-					DelegatorAddress: addrs[0],
-					WithdrawAddress:  addrs[0],
-				},
 				distribution.MsgWithdrawDelegatorReward{
 					DelegatorAddress: addrs[0],
 					ValidatorAddress: valAddr2,

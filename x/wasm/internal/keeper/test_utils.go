@@ -26,6 +26,9 @@ import (
 
 	core "github.com/terra-project/core/types"
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
+	"github.com/terra-project/core/x/market"
+	marketwasm "github.com/terra-project/core/x/market/wasm"
+	"github.com/terra-project/core/x/oracle"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/internal/types"
@@ -42,6 +45,8 @@ func makeTestCodec() *codec.Codec {
 	staking.RegisterCodec(cdc)
 	supply.RegisterCodec(cdc)
 	distr.RegisterCodec(cdc)
+	oracle.RegisterCodec(cdc)
+	market.RegisterCodec(cdc)
 
 	return cdc
 }
@@ -55,6 +60,8 @@ type TestInput struct {
 	SupplyKeeper  supply.Keeper
 	StakingKeeper staking.Keeper
 	DistrKeeper   distr.Keeper
+	OracleKeeper  oracle.Keeper
+	MarketKeeper  market.Keeper
 	WasmKeeper    Keeper
 }
 
@@ -67,6 +74,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
+	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
+	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -77,6 +86,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -85,6 +96,8 @@ func CreateTestInput(t *testing.T) TestInput {
 		staking.NotBondedPoolName: true,
 		staking.BondedPoolName:    true,
 		distr.ModuleName:          true,
+		oracle.ModuleName:         true,
+		market.ModuleName:         true,
 	}
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
@@ -111,10 +124,12 @@ func CreateTestInput(t *testing.T) TestInput {
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		distr.ModuleName:          nil,
+		oracle.ModuleName:         nil,
+		market.ModuleName:         {supply.Burner, supply.Minter},
 	}
 
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
-	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(100000000)))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(100000000)), sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(100000000)))
 	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
 
 	stakingKeeper := staking.NewKeeper(
@@ -128,6 +143,18 @@ func CreateTestInput(t *testing.T) TestInput {
 		keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
 		stakingKeeper, supplyKeeper, auth.FeeCollectorName, blackListAddrs)
 
+	oracleKeeper := oracle.NewKeeper(
+		cdc,
+		keyOracle, paramsKeeper.Subspace(oracle.DefaultParamspace),
+		distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName,
+	)
+
+	marketKeeper := market.NewKeeper(
+		cdc,
+		keyMarket, paramsKeeper.Subspace(market.DefaultParamspace),
+		oracleKeeper, supplyKeeper,
+	)
+
 	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
 	distrParams := distr.DefaultParams()
 	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
@@ -139,6 +166,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
 	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
 	distrAcc := supply.NewEmptyModuleAccount(distr.ModuleName)
+	marketAcc := supply.NewEmptyModuleAccount(types.ModuleName, supply.Burner, supply.Minter)
 
 	// funds for huge withdraw
 	distrAcc.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000)))
@@ -148,6 +176,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	supplyKeeper.SetModuleAccount(ctx, bondPool)
 	supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 	supplyKeeper.SetModuleAccount(ctx, distrAcc)
+	supplyKeeper.SetModuleAccount(ctx, marketAcc)
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 
@@ -164,34 +193,50 @@ func CreateTestInput(t *testing.T) TestInput {
 		accountKeeper,
 		bankKeeper,
 		router,
-		types.FeatureStaking,
+		types.DefaultFeatures,
 		config.DefaultConfig(),
 	)
 
 	bankHandler := bank.NewHandler(bankKeeper)
 	stakingHandler := staking.NewHandler(stakingKeeper)
 	distrHandler := distr.NewHandler(distrKeeper)
+	marketHandler := market.NewHandler(marketKeeper)
 	router.AddRoute(bank.RouterKey, bankHandler)
 	router.AddRoute(staking.RouterKey, stakingHandler)
 	router.AddRoute(distr.RouterKey, distrHandler)
+	router.AddRoute(market.RouterKey, marketHandler)
 	router.AddRoute(types.RouterKey, TestHandler(keeper))
+
+	marketKeeper.SetParams(ctx, market.DefaultParams())
+	oracleKeeper.SetParams(ctx, oracle.DefaultParams())
 
 	keeper.SetParams(ctx, types.DefaultParams())
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		types.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(bankKeeper),
 		types.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(stakingKeeper),
+		types.WasmQueryRouteMarket:  marketwasm.NewWasmQuerier(marketKeeper),
 		types.WasmQueryRouteWasm:    NewWasmQuerier(keeper),
 	})
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteWasm:    NewWasmMsgParser(),
 	})
 
 	keeper.SetLastCodeID(ctx, 0)
 	keeper.SetLastInstanceID(ctx, 0)
 
-	return TestInput{ctx, cdc, accountKeeper, bankKeeper, supplyKeeper, stakingKeeper, distrKeeper, keeper}
+	return TestInput{
+		ctx, cdc,
+		accountKeeper,
+		bankKeeper,
+		supplyKeeper,
+		stakingKeeper,
+		distrKeeper,
+		oracleKeeper,
+		marketKeeper,
+		keeper}
 }
 
 // InitMsg nolint

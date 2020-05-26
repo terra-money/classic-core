@@ -187,7 +187,7 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 	return
 }
 
-func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, key []byte) ([]byte, error) {
+func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, queryMsg []byte) ([]byte, error) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
 
 	codeInfo, contractStorePrefix, err := k.getContractDetails(ctx, contractAddr)
@@ -195,7 +195,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, ke
 		return nil, err
 	}
 
-	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash.Bytes(), key, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
+	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash.Bytes(), queryMsg, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
 	if err != nil {
 		return nil, err
 	}

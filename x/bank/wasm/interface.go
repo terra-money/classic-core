@@ -24,7 +24,7 @@ func NewWasmMsgParser() WasmMsgParser {
 }
 
 // Parse implements wasm staking msg parser
-func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
 	msg := wasmMsg.Bank
 
 	if msg.Send == nil {
@@ -55,11 +55,12 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes
 		ToAddress:   toAddr,
 		Amount:      amount,
 	}
-	return []sdk.Msg{sdkMsg}, nil
+
+	return []sdk.Msg{sdkMsg}, sdkMsg.ValidateBasic()
 }
 
 // ParseCustom implements custom parser
-func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) ([]sdk.Msg, error) {
+func (WasmMsgParser) ParseCustom(_ sdk.AccAddress, _ json.RawMessage) ([]sdk.Msg, error) {
 	return nil, nil
 }
 

@@ -156,3 +156,31 @@ func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askD
 
 	return sdk.NewDecCoinFromDec(askDenom, retAmount), nil
 }
+
+// QuerySwap interface for simulate swap
+func QuerySwap(ctx sdk.Context, params types.QuerySwapParams, keeper Keeper) (sdk.Coin, error) {
+
+	if params.AskDenom == params.OfferCoin.Denom {
+		return sdk.Coin{}, sdkerrors.Wrap(types.ErrRecursiveSwap, params.AskDenom)
+	}
+
+	if params.OfferCoin.Amount.BigInt().BitLen() > 100 {
+		return sdk.Coin{}, sdkerrors.Wrap(types.ErrInvalidOfferCoin, params.OfferCoin.String())
+	}
+
+	swapCoin, spread, err := keeper.ComputeSwap(ctx, params.OfferCoin, params.AskDenom)
+	if err != nil {
+		return sdk.Coin{}, sdkerrors.Wrap(sdkerrors.ErrPanic, err.Error())
+	}
+
+	if spread.IsPositive() {
+		swapFeeAmt := spread.Mul(swapCoin.Amount)
+		if swapFeeAmt.IsPositive() {
+			swapFee := sdk.NewDecCoinFromDec(swapCoin.Denom, swapFeeAmt)
+			swapCoin = swapCoin.Sub(swapFee)
+		}
+	}
+
+	retCoin, _ := swapCoin.TruncateDecimal()
+	return retCoin, nil
+}
