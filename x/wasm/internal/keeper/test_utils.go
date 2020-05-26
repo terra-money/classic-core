@@ -1,3 +1,4 @@
+// nolint:deadcode unused noalias
 package keeper
 
 import (

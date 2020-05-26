@@ -30,5 +30,5 @@ func (k Keeper) uncompress(ctx sdk.Context, src []byte) ([]byte, error) {
 	}
 	zr.Multistream(false)
 
-	return ioutil.ReadAll(io.LimitReader(zr, k.MaxContractSize(ctx)))
+	return ioutil.ReadAll(io.LimitReader(zr, int64(k.MaxContractSize(ctx))))
 }

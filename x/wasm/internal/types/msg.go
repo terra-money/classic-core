@@ -7,11 +7,6 @@ import (
 	core "github.com/terra-project/core/types"
 )
 
-const (
-	// MaxWasmSize 500 KB (hard-cap)
-	MaxWasmSize = 500 * 1024
-)
-
 // MsgStoreCode - struct for upload contract wasm byte codes
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
@@ -49,13 +44,18 @@ func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements sdk.Msg
 func (msg MsgStoreCode) ValidateBasic() error {
-	if len(msg.WASMByteCode) == 0 {
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty sender")
+	}
 
+	if len(msg.WASMByteCode) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
-	if len(msg.WASMByteCode) > MaxWasmSize {
+
+	if uint64(len(msg.WASMByteCode)) > EnforcedMaxContractSize {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
 	}
+
 	return nil
 }
 
@@ -89,9 +89,18 @@ func (msg MsgInstantiateContract) Type() string {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgInstantiateContract) ValidateBasic() error {
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty sender")
+	}
+
 	if !msg.InitCoins.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.InitCoins.String())
 	}
+
+	if uint64(len(msg.InitMsg)) > EnforcedMaxContractMsgSize {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte size is too huge")
+	}
+
 	return nil
 }
 
@@ -135,9 +144,22 @@ func (msg MsgExecuteContract) Type() string {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgExecuteContract) ValidateBasic() error {
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty sender")
+	}
+
+	if msg.Contract.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "empty contract")
+	}
+
 	if !msg.Coins.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coins.String())
 	}
+
+	if uint64(len(msg.Msg)) > EnforcedMaxContractMsgSize {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte size is too huge")
+	}
+
 	return nil
 }
 

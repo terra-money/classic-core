@@ -1,5 +1,11 @@
 package types
 
+import (
+	"bytes"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
+
 // GenesisState is the struct representation of the export genesis
 type GenesisState struct {
 	Params         Params     `json:"params" yaml:"params"`
@@ -46,5 +52,27 @@ func DefaultGenesisState() GenesisState {
 // ValidateGenesis performs basic validation of wasm genesis data returning an
 // error for any failed validation criteria.
 func ValidateGenesis(data GenesisState) error {
-	return nil
+
+	if uint64(len(data.Codes)) != data.LastCodeID {
+		return sdkerrors.Wrap(ErrInvalidGenesis, "the number of codes is not met with LastCodeID")
+	}
+
+	if uint64(len(data.Contracts)) != data.LastInstanceID {
+		return sdkerrors.Wrap(ErrInvalidGenesis, "the number of contracts is not met with LastInstanceID")
+	}
+
+	return data.Params.Validate()
+}
+
+// Equal checks whether 2 GenesisState structs are equivalent.
+func (data GenesisState) Equal(data2 GenesisState) bool {
+	b1 := ModuleCdc.MustMarshalBinaryBare(data)
+	b2 := ModuleCdc.MustMarshalBinaryBare(data2)
+	return bytes.Equal(b1, b2)
+}
+
+// IsEmpty returns if a GenesisState is empty or has data in it
+func (data GenesisState) IsEmpty() bool {
+	emptyGenState := GenesisState{}
+	return data.Equal(emptyGenState)
 }

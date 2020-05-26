@@ -16,7 +16,6 @@ const (
 	TStoreKey                 = types.TStoreKey
 	QuerierRoute              = types.QuerierRoute
 	RouterKey                 = types.RouterKey
-	MaxWasmSize               = types.MaxWasmSize
 	WasmMsgParserRouteBank    = types.WasmMsgParserRouteBank
 	WasmMsgParserRouteStaking = types.WasmMsgParserRouteStaking
 	WasmMsgParserRouteWasm    = types.WasmMsgParserRouteWasm

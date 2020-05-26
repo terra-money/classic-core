@@ -13,19 +13,25 @@ import (
 
 // Simulation parameter constants
 const (
-	maxContractSizeKey = "max_contract_size"
-	maxContractGasKey  = "max_contract_gas"
-	gasMultiplierKey   = "gas_multiplier"
+	maxContractSizeKey    = "max_contract_size"
+	maxContractGasKey     = "max_contract_gas"
+	maxContractMsgSizeKey = "max_contract_msg_size"
+	gasMultiplierKey      = "gas_multiplier"
 )
 
 // GenMaxContractSize randomized MaxContractSize
-func GenMaxContractSize(r *rand.Rand) int64 {
-	return int64(1024 + r.Intn(499*1024))
+func GenMaxContractSize(r *rand.Rand) uint64 {
+	return uint64(1024 + r.Intn(499*1024))
 }
 
 // GenMaxContractGas randomized MaxContractGas
 func GenMaxContractGas(r *rand.Rand) uint64 {
 	return uint64(10000 + r.Intn(500_000_000))
+}
+
+// GenMaxContractMsgSize randomized MaxContractMsgSize
+func GenMaxContractMsgSize(r *rand.Rand) uint64 {
+	return uint64(128 + r.Intn(9*1024))
 }
 
 // GenGasMultiplier randomized GasMultiplier
@@ -36,7 +42,7 @@ func GenGasMultiplier(r *rand.Rand) uint64 {
 // RandomizedGenState generates a random GenesisState for wasm
 func RandomizedGenState(simState *module.SimulationState) {
 
-	var maxContractSize int64
+	var maxContractSize uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, maxContractSizeKey, &maxContractSize, simState.Rand,
 		func(r *rand.Rand) { maxContractSize = GenMaxContractSize(r) },
@@ -48,6 +54,12 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { maxContractGas = GenMaxContractGas(r) },
 	)
 
+	var maxContractMsgSize uint64
+	simState.AppParams.GetOrGenerate(
+		simState.Cdc, maxContractMsgSizeKey, &maxContractMsgSize, simState.Rand,
+		func(r *rand.Rand) { maxContractMsgSize = GenMaxContractMsgSize(r) },
+	)
+
 	var gasMultiplier uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, gasMultiplierKey, &gasMultiplier, simState.Rand,
@@ -56,9 +68,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	wasmGenesis := types.NewGenesisState(
 		types.Params{
-			MaxContractSize: maxContractSize,
-			MaxContractGas:  maxContractGas,
-			GasMultiplier:   gasMultiplier,
+			MaxContractSize:    maxContractSize,
+			MaxContractGas:     maxContractGas,
+			MaxContractMsgSize: maxContractMsgSize,
+			GasMultiplier:      gasMultiplier,
 		},
 		0,
 		0,

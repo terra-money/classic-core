@@ -12,6 +12,10 @@ import (
 
 // StoreCode uploads and compiles a WASM contract bytecode, returning a short identifier for the stored code
 func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
+	}
+
 	wasmCode, err = k.uncompress(ctx, wasmCode)
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
@@ -38,6 +42,10 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 
 // InstantiateContract creates an instance of a WASM contract
 func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (contractAddress sdk.AccAddress, err error) {
+	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "init msg size is too huge")
+	}
+
 	instanceID, err := k.GetLastInstanceID(ctx)
 	if err != nil {
 		return nil, err
@@ -107,7 +115,11 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 }
 
 // ExecuteContract executes the contract instance
-func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (sdk.Result, error) {
+func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, exeMsg []byte, coins sdk.Coins) (sdk.Result, error) {
+	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+	}
+
 	codeInfo, storePrefix, sdkerr := k.getContractDetails(ctx, contractAddress)
 	if sdkerr != nil {
 		return sdk.Result{}, sdkerr
@@ -124,7 +136,7 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
 
 	gas := k.gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash.Bytes(), apiParams, msg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
+	res, err := k.wasmer.Execute(codeInfo.CodeHash.Bytes(), apiParams, exeMsg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
 	if err != nil {
 		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
 		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if

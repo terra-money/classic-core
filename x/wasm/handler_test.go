@@ -276,7 +276,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Sender:       creator,
 		WASMByteCode: testContract,
 	}
-	_, err := h(data.ctx, &msg)
+	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
 	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)

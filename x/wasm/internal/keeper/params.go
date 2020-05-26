@@ -6,7 +6,7 @@ import (
 )
 
 // MaxContractSize defines maximum bytes size of a contract
-func (k Keeper) MaxContractSize(ctx sdk.Context) (res int64) {
+func (k Keeper) MaxContractSize(ctx sdk.Context) (res uint64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxContractSize, &res)
 	return
 }
@@ -14,6 +14,12 @@ func (k Keeper) MaxContractSize(ctx sdk.Context) (res int64) {
 // MaxContractGas defines allowed maximum gas usage per each contract execution
 func (k Keeper) MaxContractGas(ctx sdk.Context) (res uint64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxContractGas, &res)
+	return
+}
+
+// MaxContractMsgSize defines maximum bytes size of a contract
+func (k Keeper) MaxContractMsgSize(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxContractMsgSize, &res)
 	return
 }
 

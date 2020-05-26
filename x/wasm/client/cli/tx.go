@@ -65,9 +65,9 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// limit the input size
-			if len(wasm) > types.MaxWasmSize {
-				return fmt.Errorf("input size exceeds the max size hard-cap (allowed:%d, actual: %d)",
-					types.MaxWasmSize, len(wasm))
+			if wasmLen := uint64(len(wasm)); wasmLen > types.EnforcedMaxContractSize {
+				return fmt.Errorf("wasm code size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractSize, wasmLen)
 			}
 
 			// gzip the wasm file
@@ -124,7 +124,13 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return err
 			}
 
-			initMsg := args[1]
+			initMsgBz := []byte(args[1])
+
+			// limit the input size
+			if initMsgLen := uint64(len(initMsgBz)); initMsgLen > types.EnforcedMaxContractMsgSize {
+				return fmt.Errorf("init msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, initMsgLen)
+			}
 
 			var coins sdk.Coins
 			if len(args) == 3 {
@@ -139,7 +145,7 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				Sender:    fromAddr,
 				CodeID:    codeID,
 				InitCoins: coins,
-				InitMsg:   []byte(initMsg),
+				InitMsg:   initMsgBz,
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
@@ -170,7 +176,13 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			execMsg := args[1]
+			execMsgBz := []byte(args[1])
+
+			// limit the input size
+			if execMsgLen := uint64(len(execMsgBz)); execMsgLen > types.EnforcedMaxContractMsgSize {
+				return fmt.Errorf("exec msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, execMsgLen)
+			}
 
 			var coins sdk.Coins
 			if len(args) == 3 {
@@ -185,7 +197,7 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				Sender:   fromAddr,
 				Contract: contractAddr,
 				Coins:    coins,
-				Msg:      []byte(execMsg),
+				Msg:      execMsgBz,
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
