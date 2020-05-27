@@ -2,12 +2,14 @@ package ante
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/x/wasm"
 )
 
 // FeeTx defines the interface to be implemented by Tx to use the FeeDecorators
@@ -115,6 +117,13 @@ func filterMsgAndComputeTax(ctx sdk.Context, tk treasury.Keeper, msgs []sdk.Msg)
 			for _, input := range msg.Inputs {
 				taxes = taxes.Add(computeTax(ctx, tk, input.Coins)...)
 			}
+
+		case wasm.MsgInstantiateContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.InitCoins)...)
+
+		case wasm.MsgExecuteContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Coins)...)
+
 		}
 	}
 

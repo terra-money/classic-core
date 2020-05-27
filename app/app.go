@@ -403,6 +403,11 @@ func (app *TerraApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
+// GetTreasuryKeeper is test purpose function to return treasury keeper
+func (app *TerraApp) GetTreasuryKeeper() treasury.Keeper {
+	return app.treasuryKeeper
+}
+
 // GetMaccPerms returns a copy of the module account permissions
 func GetMaccPerms() map[string][]string {
 	dupMaccPerms := make(map[string][]string)

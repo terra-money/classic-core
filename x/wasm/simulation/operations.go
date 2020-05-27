@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"math/rand"
+	"strings"
 
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -179,6 +180,10 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		_, _, err = app.Deliver(tx)
 		if err != nil {
+			if strings.Contains(err.Error(), "insufficient fee") {
+				return simulation.NoOpMsg(types.ModuleName), nil, nil
+			}
+
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
@@ -223,6 +228,10 @@ func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, k keeper.Keeper) si
 
 		_, _, err = app.Deliver(tx)
 		if err != nil {
+			if strings.Contains(err.Error(), "insufficient fee") {
+				return simulation.NoOpMsg(types.ModuleName), nil, nil
+			}
+
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
