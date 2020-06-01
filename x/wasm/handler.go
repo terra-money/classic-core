@@ -16,10 +16,16 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgStoreCode:
 			return handleStoreCode(ctx, k, &msg)
+		case *MsgStoreCode:
+			return handleStoreCode(ctx, k, msg)
 		case MsgInstantiateContract:
 			return handleInstantiate(ctx, k, &msg)
+		case *MsgInstantiateContract:
+			return handleInstantiate(ctx, k, msg)
 		case MsgExecuteContract:
 			return handleExecute(ctx, k, &msg)
+		case *MsgExecuteContract:
+			return handleExecute(ctx, k, msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
