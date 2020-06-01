@@ -318,6 +318,10 @@ func TestMissCounter(t *testing.T) {
 	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
 	counter = input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
 	require.Equal(t, missCounter, counter)
+
+	input.OracleKeeper.DeleteMissCounter(input.Ctx, ValAddrs[0])
+	counter = input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
+	require.Equal(t, int64(0), counter)
 }
 
 func TestIterateMissCounters(t *testing.T) {
