@@ -77,11 +77,17 @@ func mustLoad(path string) []byte {
 	return bz
 }
 
+var testContract []byte
+
 // nolint: funlen
 func SimulateMsgStoreCode(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		if testContract == nil {
+			loadContract()
+		}
+
 		simAccount, _ := simulation.RandomAcc(r, accs)
 
 		account := ak.GetAccount(ctx, simAccount.Address)

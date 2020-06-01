@@ -10,6 +10,8 @@ import (
 	"github.com/terra-project/core/x/wasm/internal/types"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+
+	core "github.com/terra-project/core/types"
 )
 
 func TestHandleStore(t *testing.T) {
@@ -78,7 +80,7 @@ func TestHandleInstantiate(t *testing.T) {
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit)
 
 	h := data.module.NewHandler()
@@ -155,8 +157,8 @@ func TestHandleExecute(t *testing.T) {
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
 	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
 
@@ -265,8 +267,8 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
 	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
 

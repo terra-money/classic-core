@@ -13,7 +13,7 @@ const (
 // QueryTaxCapParams for query
 // - 'custom/treasury/taxRate
 type QueryTaxCapParams struct {
-	Denom string
+	Denom string `json:"denom"`
 }
 
 // NewQueryTaxCapParams returns new QueryTaxCapParams instance

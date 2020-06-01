@@ -103,7 +103,7 @@ func TestInitializeStaking(t *testing.T) {
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, deposit)
 
 	// upload staking derivates code
@@ -171,7 +171,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1000000))
 	assert.Equal(t, v.Status, sdk.Bonded)
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, deposit)
 
 	// upload staking derivates code

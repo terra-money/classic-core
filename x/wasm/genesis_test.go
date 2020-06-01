@@ -6,6 +6,8 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/require"
+
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/wasm/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +19,8 @@ func TestInitGenesis(t *testing.T) {
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
 	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
 

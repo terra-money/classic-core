@@ -29,7 +29,7 @@ func TestEncoding(t *testing.T) {
 		// set if invalid
 		isError bool
 	}{
-		"simple send": {
+		"simple swap": {
 			sender: addrs[0],
 			input: wasmTypes.CosmosMsg{
 				Custom: []byte(
@@ -47,7 +47,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
-		"invalid send amount": {
+		"invalid swap amount": {
 			sender: addrs[0],
 			input: wasmTypes.CosmosMsg{
 				Custom: []byte(

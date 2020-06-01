@@ -10,9 +10,13 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
 	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/treasury"
+	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
@@ -26,6 +30,14 @@ type MakerInitMsg struct {
 type MakerHandleMsg struct {
 	Buy  *buyPayload  `json:"buy,omitempty"`
 	Sell *sellPayload `json:"sell,omitempty"`
+}
+
+type buyPayload struct {
+	Limit uint64 `json:"limit,omitempty"`
+}
+
+type sellPayload struct {
+	Limit uint64 `json:"limit,omitempty"`
 }
 
 // MakerQueryMsg nolint
@@ -42,12 +54,18 @@ type simulateResponse struct {
 	BuyCoin  wasmTypes.Coin `json:"buy"`
 }
 
-type buyPayload struct {
-	Limit uint64 `json:"limit,omitempty"`
+// MakerTreasuryQuerymsg nolint
+type MakerTreasuryQuerymsg struct {
+	Reflect treasuryQueryMsg `json:"reflect,omitempty"`
 }
 
-type sellPayload struct {
-	Limit uint64 `json:"limit,omitempty"`
+type treasuryQueryMsg struct {
+	TerraQueryWrapper treasuryQueryWrapper `json:"query"`
+}
+
+type treasuryQueryWrapper struct {
+	Route     string                   `json:"route"`
+	QueryData treasurywasm.CosmosQuery `json:"query_data"`
 }
 
 func TestInstantiateMaker(t *testing.T) {
@@ -87,7 +105,7 @@ func TestInstantiateMaker(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestQuerier(t *testing.T) {
+func TestMarketQuerier(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
@@ -124,6 +142,73 @@ func TestQuerier(t *testing.T) {
 	buyCoin, err := types.ParseToCoin(simulRes.BuyCoin)
 	require.NoError(t, err)
 	require.Equal(t, expectedRetCoins[0], buyCoin)
+}
+
+func TestTreasuryQuerier(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	input, _, makerAddr, _ := setupMakerContract(t)
+
+	ctx, keeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.TreasuryKeeper
+
+	expectedTaxRate := treasuryKeeper.GetTaxRate(ctx)
+	expectedTaxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
+
+	// querier test
+	taxRateQueryMsg := MakerTreasuryQuerymsg{
+		Reflect: treasuryQueryMsg{
+			TerraQueryWrapper: treasuryQueryWrapper{
+				Route: types.WasmQueryRouteTreasury,
+				QueryData: treasurywasm.CosmosQuery{
+					TaxRate: &struct{}{},
+				},
+			},
+		},
+	}
+
+	bz, err := json.Marshal(taxRateQueryMsg)
+	require.NoError(t, err)
+
+	res, err := keeper.queryToContract(ctx, makerAddr, bz)
+	require.NoError(t, err)
+
+	var taxRateRes treasurywasm.TaxRateQueryResponse
+	err = json.Unmarshal(res, &taxRateRes)
+	require.NoError(t, err)
+
+	taxRate, err := sdk.NewDecFromStr(taxRateRes.Rate)
+	require.NoError(t, err)
+	require.Equal(t, expectedTaxRate, taxRate)
+
+	taxCapQueryMsg := MakerTreasuryQuerymsg{
+		Reflect: treasuryQueryMsg{
+			TerraQueryWrapper: treasuryQueryWrapper{
+				Route: types.WasmQueryRouteTreasury,
+				QueryData: treasurywasm.CosmosQuery{
+					TaxCap: &treasury.QueryTaxCapParams{
+						Denom: core.MicroSDRDenom,
+					},
+				},
+			},
+		},
+	}
+
+	bz, err = json.Marshal(taxCapQueryMsg)
+	require.NoError(t, err)
+
+	res, err = keeper.queryToContract(ctx, makerAddr, bz)
+	require.NoError(t, err)
+
+	var taxCapRes treasurywasm.TaxCapQueryResponse
+	err = json.Unmarshal(res, &taxCapRes)
+	require.NoError(t, err)
+
+	taxCap, ok := sdk.NewIntFromString(taxCapRes.Cap)
+	require.True(t, ok)
+	require.Equal(t, expectedTaxCap, taxCap)
 }
 
 func TestBuyMsg(t *testing.T) {

@@ -225,7 +225,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// create wasm keeper with msg parser & querier
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName],
-		app.accountKeeper, app.bankKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfig)
+		app.accountKeeper, app.bankKeeper, app.supplyKeeper, app.treasuryKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfig)
 	app.wasmKeeper.RegisterMsgParsers(map[string]wasm.WasmMsgParserInterface{
 		wasm.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
 		wasm.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),

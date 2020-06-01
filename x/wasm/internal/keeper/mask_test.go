@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/wasm/internal/types"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -62,7 +63,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, keeper := input.Ctx, input.AccKeeper, input.WasmKeeper
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 	_, _, bob := keyPubAddr()
 
@@ -81,7 +82,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	require.Equal(t, uint64(2), escrowID)
 
 	// creator instantiates a contract and gives it tokens
-	maskStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	maskStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
 	maskAddr, err := keeper.InstantiateContract(ctx, maskID, creator, []byte("{}"), maskStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, maskAddr)
@@ -93,13 +94,13 @@ func TestMaskReflectContractSend(t *testing.T) {
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
-	escrowStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 25000))
+	escrowStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 25000))
 	escrowAddr, err := keeper.InstantiateContract(ctx, escrowID, creator, initMsgBz, escrowStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, escrowAddr)
 
 	// let's make sure all balances make sense
-	checkAccount(t, ctx, accKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000))) // 100k - 40k - 25k
+	checkAccount(t, ctx, accKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 35000))) // 100k - 40k - 25k
 	checkAccount(t, ctx, accKeeper, maskAddr, maskStart)
 	checkAccount(t, ctx, accKeeper, escrowAddr, escrowStart)
 	checkAccount(t, ctx, accKeeper, bob, nil)
@@ -115,7 +116,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 				ContractAddr: escrowAddr.String(),
 				Msg:          approveMsg,
 				Send: []wasmTypes.Coin{{
-					Denom:  "denom",
+					Denom:  core.MicroLunaDenom,
 					Amount: "14000",
 				}},
 			},
@@ -132,10 +133,10 @@ func TestMaskReflectContractSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// did this work???
-	checkAccount(t, ctx, accKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000)))  // same as before
-	checkAccount(t, ctx, accKeeper, maskAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 26000))) // 40k - 14k (from send)
-	checkAccount(t, ctx, accKeeper, escrowAddr, sdk.Coins{})                                  // emptied reserved
-	checkAccount(t, ctx, accKeeper, bob, sdk.NewCoins(sdk.NewInt64Coin("denom", 39000)))      // all escrow of 25k + 14k
+	checkAccount(t, ctx, accKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 35000)))  // same as before
+	checkAccount(t, ctx, accKeeper, maskAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 26000))) // 40k - 14k (from send)
+	checkAccount(t, ctx, accKeeper, escrowAddr, sdk.Coins{})                                              // emptied reserved
+	checkAccount(t, ctx, accKeeper, bob, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 39000)))      // all escrow of 25k + 14k
 
 }
 
@@ -156,7 +157,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 		},
 	})
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 	bob := createFakeFundedAccount(ctx, accKeeper, deposit)
 	_, _, fred := keyPubAddr()
@@ -169,7 +170,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
-	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
 	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
@@ -197,7 +198,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 				FromAddress: contractAddr.String(),
 				ToAddress:   fred.String(),
 				Amount: []wasmTypes.Coin{{
-					Denom:  "denom",
+					Denom:  core.MicroLunaDenom,
 					Amount: "15000",
 				}},
 			},
@@ -214,16 +215,16 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 15000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 25000)))
 	checkAccount(t, ctx, accKeeper, bob, deposit)
 
 	// construct an opaque message
 	var sdkSendMsg sdk.Msg = &bank.MsgSend{
 		FromAddress: contractAddr,
 		ToAddress:   fred,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin("denom", 23000)),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 23000)),
 	}
 	opaque, err := toMaskRawMsg(keeper.cdc, sdkSendMsg)
 	require.NoError(t, err)
@@ -239,9 +240,9 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got more coins
-	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
+	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 38000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 2000)))
 	checkAccount(t, ctx, accKeeper, bob, deposit)
 }
 
@@ -262,7 +263,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 		},
 	})
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 
 	// upload code
@@ -273,7 +274,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
-	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
 	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)

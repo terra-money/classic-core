@@ -114,7 +114,7 @@ func GetCmdQueryByteCode(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], bytecode, 0644)
+			return ioutil.WriteFile(args[1], bytecode, 0600)
 		},
 	}
 }

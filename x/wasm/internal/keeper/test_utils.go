@@ -31,6 +31,8 @@ import (
 	marketwasm "github.com/terra-project/core/x/market/wasm"
 	"github.com/terra-project/core/x/oracle"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
+	"github.com/terra-project/core/x/treasury"
+	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
 	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
@@ -54,16 +56,17 @@ func makeTestCodec() *codec.Codec {
 
 // TestInput nolint
 type TestInput struct {
-	Ctx           sdk.Context
-	Cdc           *codec.Codec
-	AccKeeper     auth.AccountKeeper
-	BankKeepe     bank.Keeper
-	SupplyKeeper  supply.Keeper
-	StakingKeeper staking.Keeper
-	DistrKeeper   distr.Keeper
-	OracleKeeper  oracle.Keeper
-	MarketKeeper  market.Keeper
-	WasmKeeper    Keeper
+	Ctx            sdk.Context
+	Cdc            *codec.Codec
+	AccKeeper      auth.AccountKeeper
+	BankKeepe      bank.Keeper
+	SupplyKeeper   supply.Keeper
+	StakingKeeper  staking.Keeper
+	DistrKeeper    distr.Keeper
+	OracleKeeper   oracle.Keeper
+	MarketKeeper   market.Keeper
+	TreasuryKeeper treasury.Keeper
+	WasmKeeper     Keeper
 }
 
 // CreateTestInput nolint
@@ -77,6 +80,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(market.StoreKey)
+	keyTreasury := sdk.NewKVStoreKey(treasury.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -89,6 +93,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -99,6 +104,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		distr.ModuleName:          true,
 		oracle.ModuleName:         true,
 		market.ModuleName:         true,
+		treasury.ModuleName:       true,
 	}
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
@@ -127,6 +133,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		distr.ModuleName:          nil,
 		oracle.ModuleName:         nil,
 		market.ModuleName:         {supply.Burner, supply.Minter},
+		treasury.ModuleName:       {supply.Minter},
 	}
 
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
@@ -155,6 +162,15 @@ func CreateTestInput(t *testing.T) TestInput {
 		keyMarket, paramsKeeper.Subspace(market.DefaultParamspace),
 		oracleKeeper, supplyKeeper,
 	)
+
+	treasuryKeeper := treasury.NewKeeper(
+		cdc,
+		keyTreasury, paramsKeeper.Subspace(treasury.DefaultParamspace),
+		supplyKeeper, marketKeeper, stakingKeeper, distrKeeper,
+		oracle.ModuleName, distr.ModuleName,
+	)
+
+	treasuryKeeper.SetParams(ctx, treasury.DefaultParams())
 
 	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
 	distrParams := distr.DefaultParams()
@@ -193,6 +209,8 @@ func CreateTestInput(t *testing.T) TestInput {
 		paramsKeeper.Subspace(types.DefaultParamspace),
 		accountKeeper,
 		bankKeeper,
+		supplyKeeper,
+		treasuryKeeper,
 		router,
 		types.DefaultFeatures,
 		config.DefaultConfig(),
@@ -213,10 +231,11 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	keeper.SetParams(ctx, types.DefaultParams())
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
-		types.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(bankKeeper),
-		types.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(stakingKeeper),
-		types.WasmQueryRouteMarket:  marketwasm.NewWasmQuerier(marketKeeper),
-		types.WasmQueryRouteWasm:    NewWasmQuerier(keeper),
+		types.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(bankKeeper),
+		types.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(stakingKeeper),
+		types.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(marketKeeper),
+		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
+		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
 	})
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
@@ -237,6 +256,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		distrKeeper,
 		oracleKeeper,
 		marketKeeper,
+		treasuryKeeper,
 		keeper}
 }
 

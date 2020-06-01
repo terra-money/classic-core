@@ -24,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"github.com/terra-project/core/x/auth"
@@ -124,6 +125,10 @@ func exportAppStateAndTMValidators(
 func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string) error {
 	originPreRun := server.PersistentPreRunEFn(context)
 	return func(cmd *cobra.Command, args []string) error {
+		if cmd.Name() == version.Cmd.Name() {
+			return nil
+		}
+
 		err := originPreRun(cmd, args)
 		if err != nil {
 			return err

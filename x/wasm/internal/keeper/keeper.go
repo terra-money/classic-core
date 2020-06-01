@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 
 	"github.com/terra-project/core/x/params"
 	"github.com/terra-project/core/x/wasm/config"
@@ -28,8 +27,10 @@ type Keeper struct {
 	storeKey   sdk.StoreKey
 	paramSpace params.Subspace
 
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
+	accountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	supplyKeeper   types.SupplyKeeper
+	treasuryKeeper types.TreasuryKeeper
 
 	router sdk.Router
 
@@ -43,8 +44,8 @@ type Keeper struct {
 
 // NewKeeper creates a new contract Keeper instance
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
-	paramspace params.Subspace, accountKeeper auth.AccountKeeper,
-	bankKeeper types.BankKeeper, router sdk.Router,
+	paramspace params.Subspace, accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper, supplyKeeper types.SupplyKeeper, treasuryKeeper types.TreasuryKeeper, router sdk.Router,
 	supportedFeatures string,
 	wasmConfig *config.Config) Keeper {
 	homeDir := viper.GetString(flags.FlagHome)
@@ -60,17 +61,19 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	}
 
 	return Keeper{
-		storeKey:      storeKey,
-		cdc:           cdc,
-		paramSpace:    paramspace,
-		wasmer:        *wasmer,
-		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
-		router:        router,
-		queryGasLimit: wasmConfig.ContractQueryGasLimit,
-		cacheSize:     wasmConfig.CacheSize,
-		msgParser:     types.NewMsgParser(),
-		querier:       types.NewQuerier(),
+		storeKey:       storeKey,
+		cdc:            cdc,
+		paramSpace:     paramspace,
+		wasmer:         *wasmer,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
+		supplyKeeper:   supplyKeeper,
+		treasuryKeeper: treasuryKeeper,
+		router:         router,
+		queryGasLimit:  wasmConfig.ContractQueryGasLimit,
+		cacheSize:      wasmConfig.CacheSize,
+		msgParser:      types.NewMsgParser(),
+		querier:        types.NewQuerier(),
 	}
 }
 

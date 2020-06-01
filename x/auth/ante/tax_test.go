@@ -1,8 +1,11 @@
 package ante_test
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -10,6 +13,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -36,6 +40,11 @@ func createTestApp() (*app.TerraApp, sdk.Context) {
 }
 
 func TestEnsureMempoolFeesGas(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	// setup
 	tapp, ctx := createTestApp()
 
@@ -63,7 +72,7 @@ func TestEnsureMempoolFeesGas(t *testing.T) {
 	ctx = ctx.WithIsCheckTx(true)
 
 	// antehandler errors with insufficient fees
-	_, err := antehandler(ctx, tx, false)
+	_, err = antehandler(ctx, tx, false)
 	require.NotNil(t, err, "Decorator should have errored on too low fee for local gasPrice")
 
 	// Set IsCheckTx to false
@@ -85,6 +94,11 @@ func TestEnsureMempoolFeesGas(t *testing.T) {
 }
 
 func TestEnsureMempoolFeesSend(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	// setup
 	tapp, ctx := createTestApp()
 
@@ -105,7 +119,7 @@ func TestEnsureMempoolFeesSend(t *testing.T) {
 
 	fee := auth.NewStdFee(100000, sdk.NewCoins())
 	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err := antehandler(ctx, tx, false)
+	_, err = antehandler(ctx, tx, false)
 	require.NotNil(t, err, "Decorator should errored on low fee for local gasPrice + tax")
 
 	expectedTax := tk.GetTaxRate(ctx).MulInt64(sendAmount).TruncateInt()
@@ -120,6 +134,11 @@ func TestEnsureMempoolFeesSend(t *testing.T) {
 }
 
 func TestEnsureMempoolFeesMultiSend(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	// setup
 	tapp, ctx := createTestApp()
 
@@ -153,7 +172,7 @@ func TestEnsureMempoolFeesMultiSend(t *testing.T) {
 
 	fee := auth.NewStdFee(100000, sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, expectedTax)))
 	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err := antehandler(ctx, tx, false)
+	_, err = antehandler(ctx, tx, false)
 	require.NotNil(t, err, "Decorator should errored on low fee for local gasPrice + tax")
 
 	fee.Amount = sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, expectedTax.Add(expectedTax)))
@@ -163,6 +182,11 @@ func TestEnsureMempoolFeesMultiSend(t *testing.T) {
 }
 
 func TestEnsureMempoolFeesInstantiateContract(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	// setup
 	tapp, ctx := createTestApp()
 
@@ -183,7 +207,7 @@ func TestEnsureMempoolFeesInstantiateContract(t *testing.T) {
 
 	fee := auth.NewStdFee(100000, sdk.NewCoins())
 	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err := antehandler(ctx, tx, false)
+	_, err = antehandler(ctx, tx, false)
 	require.NotNil(t, err, "Decorator should errored on low fee for local gasPrice + tax")
 
 	expectedTax := tk.GetTaxRate(ctx).MulInt64(sendAmount).TruncateInt()
@@ -198,6 +222,11 @@ func TestEnsureMempoolFeesInstantiateContract(t *testing.T) {
 }
 
 func TestEnsureMempoolFeesExecuteContract(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
 	// setup
 	tapp, ctx := createTestApp()
 
@@ -218,7 +247,7 @@ func TestEnsureMempoolFeesExecuteContract(t *testing.T) {
 
 	fee := auth.NewStdFee(100000, sdk.NewCoins())
 	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err := antehandler(ctx, tx, false)
+	_, err = antehandler(ctx, tx, false)
 	require.NotNil(t, err, "Decorator should errored on low fee for local gasPrice + tax")
 
 	expectedTax := tk.GetTaxRate(ctx).MulInt64(sendAmount).TruncateInt()

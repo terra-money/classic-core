@@ -15,4 +15,7 @@ var (
 type (
 	WasmMsgParserInterface = types.WasmMsgParserInterface
 	WasmQuerierInterface   = types.WasmQuerierInterface
+	MsgInstantiateContract = types.MsgInstantiateContract
+	MsgExecuteContract     = types.MsgExecuteContract
+	MsgStoreCode           = types.MsgStoreCode
 )

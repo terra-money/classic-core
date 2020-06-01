@@ -38,10 +38,11 @@ var _ wasmTypes.Querier = Querier{}
 
 // Routes of pre-determined wasm querier
 const (
-	WasmQueryRouteBank    = "bank"
-	WasmQueryRouteStaking = "staking"
-	WasmQueryRouteMarket  = "market"
-	WasmQueryRouteWasm    = "wasm"
+	WasmQueryRouteBank     = "bank"
+	WasmQueryRouteStaking  = "staking"
+	WasmQueryRouteMarket   = "market"
+	WasmQueryRouteTreasury = "treasury"
+	WasmQueryRouteWasm     = "wasm"
 )
 
 // WithCtx returns new querier with context

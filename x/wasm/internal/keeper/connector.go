@@ -2,27 +2,34 @@ package keeper
 
 import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/terra-project/core/x/auth/ante"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
 func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmTypes.CosmosMsg) error {
+	var sdkMsgs []sdk.Msg
 	for _, msg := range msgs {
-		if err := k.dispatchMessage(ctx, contractAddr, msg); err != nil {
+
+		msgs, err := k.msgParser.Parse(contractAddr, msg)
+		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
 
-func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
-	msgs, err := k.msgParser.Parse(contractAddr, msg)
-	if err != nil {
+		sdkMsgs = append(sdkMsgs, msgs...)
+	}
+
+	// Charge tax on result msg
+	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsgs)
+	contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
+	if err := cosmosante.DeductFees(k.supplyKeeper, ctx, contractAcc, taxes); err != nil {
 		return err
 	}
 
-	for _, msg := range msgs {
-		if err := k.handleSdkMessage(ctx, contractAddr, msg); err != nil {
+	for _, sdkMsg := range sdkMsgs {
+		if err := k.handleSdkMessage(ctx, contractAddr, sdkMsg); err != nil {
 			return err
 		}
 	}
