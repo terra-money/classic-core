@@ -318,7 +318,7 @@ func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, a
 			// there is confusion between nil and empty slice... let's just treat them the same
 			assert.True(t, acct.GetCoins().Empty())
 		} else {
-			assert.Equal(t, acct.GetCoins(), expected)
+			assert.Equal(t, expected, acct.GetCoins())
 		}
 	}
 }

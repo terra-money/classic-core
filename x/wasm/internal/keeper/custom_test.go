@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -30,6 +31,7 @@ type MakerInitMsg struct {
 type MakerHandleMsg struct {
 	Buy  *buyPayload  `json:"buy,omitempty"`
 	Sell *sellPayload `json:"sell,omitempty"`
+	Send *sendPayload `json:"send,omitempty"`
 }
 
 type buyPayload struct {
@@ -38,6 +40,11 @@ type buyPayload struct {
 
 type sellPayload struct {
 	Limit uint64 `json:"limit,omitempty"`
+}
+
+type sendPayload struct {
+	Coin      wasmTypes.Coin `json:"coin"`
+	Recipient string         `json:"recipient"`
 }
 
 // MakerQueryMsg nolint
@@ -281,6 +288,41 @@ func TestSellMsg(t *testing.T) {
 	bob := createFakeFundedAccount(ctx, accKeeper, sdk.NewCoins(sellCoin))
 	_, err = keeper.ExecuteContract(ctx, makerAddr, bob, bz, sdk.NewCoins(sellCoin))
 	require.Error(t, err)
+}
+
+func TestSendMsg(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	input, creatorAddr, makerAddr, offerCoin := setupMakerContract(t)
+
+	// Check tax charging
+	ctx, keeper, accKeeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.TreasuryKeeper
+	taxRate := treasuryKeeper.GetTaxRate(ctx)
+	taxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
+
+	sendMsg := MakerHandleMsg{
+		Send: &sendPayload{
+			Coin:      types.EncodeSdkCoin(offerCoin),
+			Recipient: creatorAddr.String(),
+		},
+	}
+
+	bz, err := json.Marshal(&sendMsg)
+
+	expectedTaxAmount := taxRate.MulInt(offerCoin.Amount).TruncateInt()
+	if expectedTaxAmount.GT(taxCap) {
+		expectedTaxAmount = taxCap
+	}
+
+	fmt.Println(expectedTaxAmount, sdk.NewCoins(offerCoin.Sub(sdk.NewCoin(offerCoin.Denom, expectedTaxAmount))))
+
+	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
+	require.NoError(t, err)
+
+	checkAccount(t, ctx, accKeeper, creatorAddr, sdk.NewCoins(offerCoin.Sub(sdk.NewCoin(offerCoin.Denom, expectedTaxAmount))))
 }
 
 func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr sdk.AccAddress, initCoin sdk.Coin) {
