@@ -2,6 +2,7 @@ package bank
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 
 	"github.com/gorilla/mux"
@@ -75,15 +76,17 @@ type AppModule struct {
 	cosmosAppModule CosmosAppModule
 	accountKeeper   types.AccountKeeper
 	keeper          Keeper
+	supplyKeeper    types.SupplyKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper, supplyKeeper types.SupplyKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic:  AppModuleBasic{},
 		cosmosAppModule: NewCosmosAppModule(keeper, accountKeeper),
 		accountKeeper:   accountKeeper,
 		keeper:          keeper,
+		supplyKeeper:    supplyKeeper,
 	}
 }
 
@@ -104,7 +107,7 @@ func (am AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the bank module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return am.cosmosAppModule.NewHandler()
+	return NewHookHandler(am.keeper, am.supplyKeeper, am.cosmosAppModule.NewHandler())
 }
 
 // QuerierRoute returns the bank module's querier route name.
@@ -115,6 +118,12 @@ func (am AppModule) NewQuerierHandler() sdk.Querier { return am.cosmosAppModule.
 
 // InitGenesis performs genesis initialization for the bank module.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
+	// check if the burn module account exists
+	burnModuleAcc := am.supplyKeeper.GetModuleAccount(ctx, types.BurnModuleName)
+	if burnModuleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.BurnModuleName))
+	}
+
 	return am.cosmosAppModule.InitGenesis(ctx, data)
 }
 
