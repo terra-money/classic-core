@@ -121,13 +121,15 @@ func createTestInput(t *testing.T) TestInput {
 func TestBurnAddress(t *testing.T) {
 	input := createTestInput(t)
 
-	originHandler := bank.NewHandler(input.BankKeeper)
-	h := NewHookHandler(input.BankKeeper, input.SupplyKeeper, originHandler)
+	h := bank.NewHandler(input.BankKeeper)
 
 	burnAddress := input.SupplyKeeper.GetModuleAddress(types.BurnModuleName)
 	msg := bank.NewMsgSend(addrs[0], burnAddress, initCoins)
 
 	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
+	require.Equal(t, initCoins, input.AccountKeeper.GetAccount(input.Ctx, burnAddress).GetCoins())
+
+	EndBlocker(input.Ctx, input.BankKeeper, input.SupplyKeeper)
 	require.True(t, input.AccountKeeper.GetAccount(input.Ctx, burnAddress).GetCoins().IsZero())
 }

@@ -107,7 +107,7 @@ func (am AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the bank module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHookHandler(am.keeper, am.supplyKeeper, am.cosmosAppModule.NewHandler())
+	return am.cosmosAppModule.NewHandler()
 }
 
 // QuerierRoute returns the bank module's querier route name.
@@ -140,6 +140,7 @@ func (am AppModule) BeginBlock(ctx sdk.Context, rbb abci.RequestBeginBlock) {
 
 // EndBlock returns the end blocker for the bank module.
 func (am AppModule) EndBlock(ctx sdk.Context, rbb abci.RequestEndBlock) []abci.ValidatorUpdate {
+	EndBlocker(ctx, am.keeper, am.supplyKeeper)
 	return am.cosmosAppModule.EndBlock(ctx, rbb)
 }
 
