@@ -8,7 +8,7 @@ import (
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
-// NewHandler returns a handler for "bank" type messages.
+// NewHandler returns a handler for "wasm" type messages.
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -28,7 +28,7 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleExecute(ctx, k, msg)
 
 		default:
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm message type: %T", msg)
 		}
 	}
 }
