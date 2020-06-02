@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	feeutils "github.com/terra-project/core/x/auth/client/utils"
 	wasmUtils "github.com/terra-project/core/x/wasm/client/utils"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
@@ -147,6 +148,29 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				InitCoins: coins,
 				InitMsg:   initMsgBz,
 			}
+
+			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
+				// extimate tax and gas
+				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+					Memo:          txBldr.Memo(),
+					ChainID:       txBldr.ChainID(),
+					AccountNumber: txBldr.AccountNumber(),
+					Sequence:      txBldr.Sequence(),
+					GasPrices:     txBldr.GasPrices(),
+					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
+					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
+					Msgs:          []sdk.Msg{msg},
+				})
+
+				if err != nil {
+					return err
+				}
+
+				// override gas and fees
+				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
+					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+			}
+
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -199,6 +223,29 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				Coins:    coins,
 				Msg:      execMsgBz,
 			}
+
+			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
+				// extimate tax and gas
+				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+					Memo:          txBldr.Memo(),
+					ChainID:       txBldr.ChainID(),
+					AccountNumber: txBldr.AccountNumber(),
+					Sequence:      txBldr.Sequence(),
+					GasPrices:     txBldr.GasPrices(),
+					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
+					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
+					Msgs:          []sdk.Msg{msg},
+				})
+
+				if err != nil {
+					return err
+				}
+
+				// override gas and fees
+				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
+					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+			}
+
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

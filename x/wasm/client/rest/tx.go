@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/gorilla/mux"
 
+	feeutils "github.com/terra-project/core/x/auth/client/utils"
 	wasmUtils "github.com/terra-project/core/x/wasm/client/utils"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
@@ -126,6 +127,29 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		if req.BaseReq.Fees.IsZero() {
+			fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+				Memo:          req.BaseReq.Memo,
+				ChainID:       req.BaseReq.ChainID,
+				AccountNumber: req.BaseReq.AccountNumber,
+				Sequence:      req.BaseReq.Sequence,
+				GasPrices:     req.BaseReq.GasPrices,
+				Gas:           req.BaseReq.Gas,
+				GasAdjustment: req.BaseReq.GasAdjustment,
+				Msgs:          []sdk.Msg{msg},
+			})
+
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			// override gas and fees
+			req.BaseReq.Gas = strconv.FormatUint(gas, 10)
+			req.BaseReq.Fees = fees
+			req.BaseReq.GasPrices = sdk.DecCoins{}
+		}
+
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
@@ -161,6 +185,29 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		if req.BaseReq.Fees.IsZero() {
+			fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+				Memo:          req.BaseReq.Memo,
+				ChainID:       req.BaseReq.ChainID,
+				AccountNumber: req.BaseReq.AccountNumber,
+				Sequence:      req.BaseReq.Sequence,
+				GasPrices:     req.BaseReq.GasPrices,
+				Gas:           req.BaseReq.Gas,
+				GasAdjustment: req.BaseReq.GasAdjustment,
+				Msgs:          []sdk.Msg{msg},
+			})
+
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			// override gas and fees
+			req.BaseReq.Gas = strconv.FormatUint(gas, 10)
+			req.BaseReq.Fees = fees
+			req.BaseReq.GasPrices = sdk.DecCoins{}
 		}
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
