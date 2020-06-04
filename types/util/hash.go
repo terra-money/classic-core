@@ -2,21 +2,21 @@ package util
 
 import (
 	"bytes"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
 	"gopkg.in/yaml.v2"
 )
 
-var _ yaml.Marshaler = HexBytes{}
+var _ yaml.Marshaler = Base64Bytes{}
 
-// HexBytes is hash value of wasm bytes code
-type HexBytes []byte
+// Base64Bytes is hash value of wasm bytes code
+type Base64Bytes []byte
 
-// HexBytesFromHexString convert hex string to HexBytes
-func HexBytesFromHexString(s string) (HexBytes, error) {
-	h, err := hex.DecodeString(s)
+// Base64FromHexString convert base64 string to Base64
+func Base64FromHexString(s string) (Base64Bytes, error) {
+	h, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
 	}
@@ -25,27 +25,27 @@ func HexBytesFromHexString(s string) (HexBytes, error) {
 }
 
 // String implements fmt.Stringer interface
-func (h HexBytes) String() string {
-	return hex.EncodeToString(h)
+func (h Base64Bytes) String() string {
+	return base64.StdEncoding.EncodeToString(h)
 }
 
 // Equal does bytes equal check
-func (h HexBytes) Equal(h2 HexBytes) bool {
+func (h Base64Bytes) Equal(h2 Base64Bytes) bool {
 	return bytes.Equal(h, h2)
 }
 
 // Empty check the name hash has zero length
-func (h HexBytes) Empty() bool {
+func (h Base64Bytes) Empty() bool {
 	return len(h) == 0
 }
 
 // Bytes returns the raw address bytes.
-func (h HexBytes) Bytes() []byte {
+func (h Base64Bytes) Bytes() []byte {
 	return h
 }
 
 // Format implements the fmt.Formatter interface.
-func (h HexBytes) Format(s fmt.State, verb rune) {
+func (h Base64Bytes) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
 		_, _ = s.Write([]byte(h.String()))
@@ -58,36 +58,36 @@ func (h HexBytes) Format(s fmt.State, verb rune) {
 
 // Marshal returns the raw address bytes. It is needed for protobuf
 // compatibility.
-func (h HexBytes) Marshal() ([]byte, error) {
+func (h Base64Bytes) Marshal() ([]byte, error) {
 	return h, nil
 }
 
 // Unmarshal sets the address to the given data. It is needed for protobuf
 // compatibility.
-func (h *HexBytes) Unmarshal(data []byte) error {
+func (h *Base64Bytes) Unmarshal(data []byte) error {
 	*h = data
 	return nil
 }
 
-// MarshalJSON marshals to JSON using Bech32.
-func (h HexBytes) MarshalJSON() ([]byte, error) {
+// MarshalJSON marshals to JSON using base64.
+func (h Base64Bytes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(h.String())
 }
 
-// MarshalYAML marshals to YAML using Bech32.
-func (h HexBytes) MarshalYAML() (interface{}, error) {
+// MarshalYAML marshals to YAML using base64.
+func (h Base64Bytes) MarshalYAML() (interface{}, error) {
 	return h.String(), nil
 }
 
-// UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
-func (h *HexBytes) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON unmarshals from JSON assuming base64 encoding.
+func (h *Base64Bytes) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}
 
-	h2, err := HexBytesFromHexString(s)
+	h2, err := Base64FromHexString(s)
 	if err != nil {
 		return err
 	}

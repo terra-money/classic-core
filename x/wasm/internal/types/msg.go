@@ -11,11 +11,11 @@ import (
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
-	WASMByteCode core.HexBytes `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	WASMByteCode core.Base64Bytes `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 }
 
 // NewMsgStoreCode creates a MsgStoreCode instance
-func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode core.HexBytes) MsgStoreCode {
+func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode core.Base64Bytes) MsgStoreCode {
 	return MsgStoreCode{
 		Sender:       sender,
 		WASMByteCode: wasmByteCode,
@@ -61,10 +61,10 @@ func (msg MsgStoreCode) ValidateBasic() error {
 
 // MsgInstantiateContract - struct for instantiate contract from uploaded code
 type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress `json:"sender" yaml:"sender"`
-	CodeID    uint64         `json:"code_id" yaml:"code_id"`
-	InitMsg   core.HexBytes  `json:"init_msg" yaml:"init_msg"`
-	InitCoins sdk.Coins      `json:"init_coins" yaml:"init_coins"`
+	Sender    sdk.AccAddress   `json:"sender" yaml:"sender"`
+	CodeID    uint64           `json:"code_id" yaml:"code_id"`
+	InitMsg   core.Base64Bytes `json:"init_msg" yaml:"init_msg"`
+	InitCoins sdk.Coins        `json:"init_coins" yaml:"init_coins"`
 }
 
 // NewMsgInstantiateContract creates a MsgInstantiateContract instance
@@ -116,10 +116,10 @@ func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 
 // MsgExecuteContract - struct for execute instantiated contract with givn inner msg bytes
 type MsgExecuteContract struct {
-	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
-	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
-	Msg      core.HexBytes  `json:"msg" yaml:"msg"`
-	Coins    sdk.Coins      `json:"coins" yaml:"coins"`
+	Sender   sdk.AccAddress   `json:"sender" yaml:"sender"`
+	Contract sdk.AccAddress   `json:"contract" yaml:"contract"`
+	Msg      core.Base64Bytes `json:"msg" yaml:"msg"`
+	Coins    sdk.Coins        `json:"coins" yaml:"coins"`
 }
 
 // NewMsgExecuteContract creates a NewMsgExecuteContract instance

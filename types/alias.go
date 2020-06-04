@@ -43,5 +43,5 @@ var (
 )
 
 type (
-	HexBytes = util.HexBytes
+	Base64Bytes = util.Base64Bytes
 )

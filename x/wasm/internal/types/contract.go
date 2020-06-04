@@ -12,8 +12,8 @@ import (
 
 // Model is a struct that holds a KV pair
 type Model struct {
-	Key   core.HexBytes `json:"key"`
-	Value core.HexBytes `json:"value"`
+	Key   core.Base64Bytes `json:"key"`
+	Value core.Base64Bytes `json:"value"`
 }
 
 // String implements fmt.Stringer interface
@@ -26,8 +26,8 @@ func (m Model) String() string {
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash core.HexBytes  `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
+	CodeHash core.Base64Bytes `json:"code_hash"`
+	Creator  sdk.AccAddress   `json:"creator"`
 }
 
 // String implements fmt.Stringer interface
@@ -48,10 +48,10 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
-	CodeID  uint64         `json:"code_id"`
-	Address sdk.AccAddress `json:"address"`
-	Creator sdk.AccAddress `json:"creator"`
-	InitMsg core.HexBytes  `json:"init_msg"`
+	CodeID  uint64           `json:"code_id"`
+	Address sdk.AccAddress   `json:"address"`
+	Creator sdk.AccAddress   `json:"creator"`
+	InitMsg core.Base64Bytes `json:"init_msg"`
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info

@@ -15,7 +15,7 @@ func TestMsgStoreCode(t *testing.T) {
 
 	tests := []struct {
 		sender       sdk.AccAddress
-		wasmByteCode core.HexBytes
+		wasmByteCode core.Base64Bytes
 		expectPass   bool
 	}{
 		{addrs[0], []byte{}, false},
@@ -40,7 +40,7 @@ func TestMsgInstantiateCode(t *testing.T) {
 	tests := []struct {
 		creator    sdk.AccAddress
 		codeID     uint64
-		initMsg    core.HexBytes
+		initMsg    core.Base64Bytes
 		initCoins  sdk.Coins
 		expectPass bool
 	}{
@@ -66,7 +66,7 @@ func TestMsgExecuteCode(t *testing.T) {
 	tests := []struct {
 		sender     sdk.AccAddress
 		contract   sdk.AccAddress
-		msg        core.HexBytes
+		msg        core.Base64Bytes
 		coins      sdk.Coins
 		expectPass bool
 	}{
