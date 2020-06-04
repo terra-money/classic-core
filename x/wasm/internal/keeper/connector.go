@@ -23,9 +23,11 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 
 	// Charge tax on result msg
 	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsgs)
-	contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
-	if err := cosmosante.DeductFees(k.supplyKeeper, ctx, contractAcc, taxes); err != nil {
-		return err
+	if !taxes.IsZero() {
+		contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
+		if err := cosmosante.DeductFees(k.supplyKeeper, ctx, contractAcc, taxes); err != nil {
+			return err
+		}
 	}
 
 	for _, sdkMsg := range sdkMsgs {
