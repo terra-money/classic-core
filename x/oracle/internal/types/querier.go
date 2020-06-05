@@ -6,19 +6,22 @@ import (
 
 // Defines the prefix of each query path
 const (
-	QueryParameters       = "parameters"
-	QueryExchangeRate     = "exchangeRate"
-	QueryExchangeRates    = "exchangeRates"
-	QueryActives          = "actives"
-	QueryPrevotes         = "prevotes"
-	QueryVotes            = "votes"
-	QueryFeederDelegation = "feederDelegation"
-	QueryMissCounter      = "missCounter"
-	QueryAggregatePrevote = "aggregatePrevote"
-	QueryAggregateVote    = "aggregateVote"
-	QueryVoteTargets      = "voteTargets"
-	QueryTobinTax         = "tobinTax"
-	QueryTobinTaxes       = "tobinTaxes"
+	QueryParameters                  = "parameters"
+	QueryExchangeRate                = "exchangeRate"
+	QueryExchangeRates               = "exchangeRates"
+	QueryCrossExchangeRate           = "crossExchangeRate"
+	QueryCrossExchangeRates          = "crossExchangeRates"
+	QueryCrossExchangeRatesWithDenom = "crossExchangeRatesWithDenom"
+	QueryActives                     = "actives"
+	QueryPrevotes                    = "prevotes"
+	QueryVotes                       = "votes"
+	QueryFeederDelegation            = "feederDelegation"
+	QueryMissCounter                 = "missCounter"
+	QueryAggregatePrevote            = "aggregatePrevote"
+	QueryAggregateVote               = "aggregateVote"
+	QueryVoteTargets                 = "voteTargets"
+	QueryTobinTax                    = "tobinTax"
+	QueryTobinTaxes                  = "tobinTaxes"
 )
 
 // QueryExchangeRateParams defines the params for the following queries:
@@ -30,6 +33,29 @@ type QueryExchangeRateParams struct {
 // NewQueryExchangeRateParams returns params for exchange_rate query
 func NewQueryExchangeRateParams(denom string) QueryExchangeRateParams {
 	return QueryExchangeRateParams{denom}
+}
+
+// QueryCrossExchangeRatesWithDenomParams defines the params for the following queries:
+// - 'custom/oracle/crossExchangeRatesWithDenom'
+type QueryCrossExchangeRatesWithDenomParams struct {
+	Denom string
+}
+
+// NewQueryCrossExchangeRatesWithDenomParams returns params for cross_exchange_rate query
+func NewQueryCrossExchangeRatesWithDenomParams(denom string) QueryCrossExchangeRatesWithDenomParams {
+	return QueryCrossExchangeRatesWithDenomParams{denom}
+}
+
+// QueryCrossExchangeRateParams defines the params for the following queries:
+// - 'custom/oracle/cross_exchange_rate'
+type QueryCrossExchangeRateParams struct {
+	Denom1 string
+	Denom2 string
+}
+
+// NewQueryCrossExchangeRateParams returns params for cross_exchange_rate query
+func NewQueryCrossExchangeRateParams(denom1, denom2 string) QueryCrossExchangeRateParams {
+	return QueryCrossExchangeRateParams{denom1, denom2}
 }
 
 // QueryPrevotesParams defines the params for the following queries:

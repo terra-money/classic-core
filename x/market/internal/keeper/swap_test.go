@@ -83,6 +83,27 @@ func TestComputeInternalSwap(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestComputeInternalSwapTerraTerraCase(t *testing.T) {
+	input := CreateTestInput(t)
+
+	for i := 0; i < 100; i++ {
+		// Set Oracle Price
+		lunaPriceInUSD := sdk.NewDecWithPrec(int64(rand.Intn(100)+1), 1)
+		lunaPriceInKRW := sdk.NewDecWithPrec(int64(rand.Intn(1000)+1), 1)
+		input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroUSDDenom, lunaPriceInKRW.Quo(lunaPriceInUSD))
+
+		// Set Cross Exchange Rate
+		cer, err := input.OracleKeeper.GetCrossExchangeRate(input.Ctx, core.MicroKRWDenom, core.MicroUSDDenom)
+		require.NoError(t, err)
+		require.Equal(t, cer.CrossExchangeRate, lunaPriceInKRW.Quo(lunaPriceInUSD))
+
+		offerCoin := sdk.NewDecCoin(core.MicroUSDDenom, sdk.NewInt(int64(rand.Intn(100)+1)))
+		retCoin, err := input.MarketKeeper.ComputeInternalSwap(input.Ctx, offerCoin, core.MicroKRWDenom)
+		require.NoError(t, err)
+		require.Equal(t, offerCoin.Amount.Mul(lunaPriceInKRW.Quo(lunaPriceInUSD)), retCoin.Amount)
+	}
+}
+
 func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input := CreateTestInput(t)
 
@@ -91,6 +112,7 @@ func TestIlliquidTobinTaxListParams(t *testing.T) {
 	lunaPriceInMNT := sdk.NewDecWithPrec(7652, 1)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroMNTDenom, lunaPriceInMNT)
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroMNTDenom, core.MicroSDRDenom, lunaPriceInMNT.Quo(lunaPriceInSDR))
 
 	tobinTax := sdk.NewDecWithPrec(25, 4)
 	params := input.MarketKeeper.GetParams(input.Ctx)

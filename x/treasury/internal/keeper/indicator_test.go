@@ -19,6 +19,9 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, sdk.NewDec(10))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroSDRDenom, sdk.NewDec(10))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroGBPDenom, core.MicroSDRDenom, sdk.NewDec(100))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroCNYDenom, core.MicroSDRDenom, sdk.NewDec(1000))
 
 	// Record tax proceeds
 	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, sdk.Coins{
@@ -79,6 +82,9 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, sdk.NewDec(10))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, sdk.NewDec(100))
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, sdk.NewDec(1000))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroSDRDenom, sdk.NewDec(10))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroGBPDenom, core.MicroSDRDenom, sdk.NewDec(100))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroCNYDenom, core.MicroSDRDenom, sdk.NewDec(1000))
 
 	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek)
 

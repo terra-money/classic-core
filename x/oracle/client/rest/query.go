@@ -18,9 +18,12 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes", RestDenom), queryVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/votes/{%s}", RestDenom, RestVoter), queryVotesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/exchange_rate", RestDenom), queryExchangeRateHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/cross_exchange_rates", RestDenom), queryCrossExchangeRatesWithDenomHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/{%s}/cross_exchange_rate", RestDenom1, RestDenom2), queryCrossExchangeRateHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/denoms/{%s}/tobin_tax", RestDenom), queryTobinTaxHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/actives", queryActivesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/exchange_rates", queryExchangeRatesHandlerFunction(cliCtx)).Methods("GET")
+	r.HandleFunc("/oracle/denoms/cross_exchange_rates", queryCrossExchangeRatesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/vote_targets", queryVoteTargetsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/oracle/denoms/tobin_taxes", queryTobinTaxesHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/oracle/voters/{%s}/prevotes", RestVoter), queryVoterPrevotesHandlerFunction(cliCtx)).Methods("GET")
@@ -123,7 +126,7 @@ func queryExchangeRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFun
 		}
 
 		vars := mux.Vars(r)
-		denom := vars[RestDenom]
+		denom := vars[RestDenom1]
 
 		params := types.NewQueryExchangeRateParams(denom)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
@@ -156,6 +159,80 @@ func queryExchangeRatesHandlerFunction(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryCrossExchangeRatesHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRates), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryCrossExchangeRatesWithDenomHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		denom := vars[RestDenom]
+
+		params := types.NewQueryExchangeRateParams(denom)
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRatesWithDenom), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryCrossExchangeRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		denom1 := vars[RestDenom1]
+		denom2 := vars[RestDenom2]
+
+		params := types.NewQueryCrossExchangeRateParams(denom1, denom2)
+		bz, err := cliCtx.Codec.MarshalJSON(params)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRate), bz)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}

@@ -27,6 +27,9 @@ const (
 	CodeNoAggregatePrevote  codeType = 12
 	CodeNoAggregateVote     codeType = 13
 	CodeNoTobinTax          codeType = 14
+	CodeRecursiveCrossRate  codeType = 15
+	CodeLunaForCrossRate    codeType = 16
+	CodeUnknownDenomPair    codeType = 17
 )
 
 // ----------------------------------------
@@ -90,4 +93,19 @@ func ErrNoAggregateVote(codespace sdk.CodespaceType, voter sdk.ValAddress) sdk.E
 // ErrNoTobinTax called when no tobin tax exists for the given denom
 func ErrNoTobinTax(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeNoAggregateVote, fmt.Sprintf("No tobin tax exists for %s", denom))
+}
+
+// ErrRecursiveCrossRate called when denom1 and denom2 denominatioins are equal
+func ErrRecursiveCrossRate(codespace sdk.CodespaceType, denom string) sdk.Error {
+	return sdk.NewError(codespace, CodeRecursiveCrossRate, "Can't get Exchange rate with the same denomination: "+denom)
+}
+
+// ErrLunaForCrossRate called when called Luna denominatioin for cross exchange rates
+func ErrLunaForCrossRate(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeLunaForCrossRate, "Can't get Cross Exchange rate with the Luna denomination")
+}
+
+// ErrUnknownDenomPair called when the denom pair is not known for cross exchange rate
+func ErrUnknownDenomPair(codespace sdk.CodespaceType, denom1, denom2 string) sdk.Error {
+	return sdk.NewError(codespace, CodeUnknownDenomPair, fmt.Sprintf("The denom pair is not known: %s_%s", denom1, denom2))
 }

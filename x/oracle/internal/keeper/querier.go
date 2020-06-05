@@ -17,6 +17,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryExchangeRate(ctx, req, keeper)
 		case types.QueryExchangeRates:
 			return queryExchangeRates(ctx, keeper)
+		case types.QueryCrossExchangeRates:
+			return queryCrossExchangeRates(ctx, keeper)
+		case types.QueryCrossExchangeRate:
+			return queryCrossExchangeRate(ctx, req, keeper)
+		case types.QueryCrossExchangeRatesWithDenom:
+			return queryCrossExchangeRatesWithDenom(ctx, req, keeper)
 		case types.QueryActives:
 			return queryActives(ctx, keeper)
 		case types.QueryVotes:
@@ -74,6 +80,64 @@ func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 	})
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryCrossExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+	var rates types.CrossExchangeRates
+
+	keeper.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		rates = append(rates, cer)
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryCrossExchangeRatesWithDenom(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var rates types.CrossExchangeRates
+	var params types.QueryCrossExchangeRatesWithDenomParams
+	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(err.Error())
+	}
+
+	keeper.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		if cer.Denom1 == params.Denom || cer.Denom2 == params.Denom {
+			rates = append(rates, cer)
+		}
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func queryCrossExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryCrossExchangeRateParams
+	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrUnknownRequest(err.Error())
+	}
+	cer, err := keeper.GetCrossExchangeRate(ctx, params.Denom1, params.Denom2)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, cer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

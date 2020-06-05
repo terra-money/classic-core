@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -21,6 +22,52 @@ func NewVoteForTally(vote ExchangeRateVote, power int64) VoteForTally {
 		vote,
 		power,
 	}
+}
+
+type CrossExchangeRate struct {
+	Denom1            string  `json:"denom1"`              // Ticker name of target first terra currency
+	Denom2            string  `json:"denom2"`              // Ticker name of target second terra currency
+	CrossExchangeRate sdk.Dec `json:"cross_exchange_rate"` // CrossExchangeRate of Luna in target fiat currency
+}
+
+func GetDenomOrderAsc(denom1, denom2 string) (string, string) {
+	if denom1 > denom2 {
+		return denom2, denom1
+	}
+	return denom1, denom2
+}
+
+func NewCrossExchangeRate(denom1, denom2 string, exchangeRate sdk.Dec) CrossExchangeRate {
+	// swap ascending order for deterministic kv indexing
+	denom1, denom2 = GetDenomOrderAsc(denom1, denom2)
+	return CrossExchangeRate{
+		denom1,
+		denom2,
+		exchangeRate,
+	}
+}
+
+func (cer CrossExchangeRate) DenomPair() string {
+	return cer.Denom1 + "_" + cer.Denom2
+}
+
+// String implements fmt.Stringer interface
+func (cer CrossExchangeRate) String() string {
+	return fmt.Sprintf(`CrossExchangeRate
+	Denom1:             %s, 
+	Denom2:             %s, 
+	CrossExchangeRate:  %s`,
+		cer.Denom1, cer.Denom2, cer.CrossExchangeRate)
+}
+
+type CrossExchangeRates []CrossExchangeRate
+
+// String implements fmt.Stringer interface
+func (v CrossExchangeRates) String() (out string) {
+	for _, val := range v {
+		out += val.String() + "\n"
+	}
+	return strings.TrimSpace(out)
 }
 
 // ExchangeRateBallot is a convinience wrapper around a ExchangeRateVote slice

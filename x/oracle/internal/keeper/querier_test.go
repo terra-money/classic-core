@@ -225,6 +225,102 @@ func TestQueryExchangeRates(t *testing.T) {
 	}, rrate)
 }
 
+func TestQueryCrossExchangeRates(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	rate := sdk.NewDec(1700)
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroUSDDenom, rate))
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroSDRDenom, rate)
+
+	res, err := querier(input.Ctx, []string{types.QueryCrossExchangeRates}, abci.RequestQuery{})
+	require.NoError(t, err)
+
+	var rcers types.CrossExchangeRates
+	err2 := cdc.UnmarshalJSON(res, &rcers)
+	require.NoError(t, err2)
+	require.Equal(t, types.CrossExchangeRates{  // alphabet asc ordered, uusd > usdr
+		types.CrossExchangeRate{core.MicroKRWDenom, core.MicroSDRDenom, rate},
+		types.CrossExchangeRate{core.MicroKRWDenom, core.MicroUSDDenom, rate},
+	}, rcers)
+}
+
+func TestQueryCrossExchangeRate(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	rate := sdk.NewDec(1700)
+	cer := types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroUSDDenom, rate)
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cer)
+
+	// denom query params
+	queryParams := types.NewQueryCrossExchangeRateParams(core.MicroUSDDenom, core.MicroKRWDenom)
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryCrossExchangeRate}, req)
+	require.NoError(t, err)
+
+	var rcer types.CrossExchangeRate
+	err = cdc.UnmarshalJSON(res, &rcer)
+	require.NoError(t, err)
+	require.Equal(t, cer, rcer)
+}
+
+
+func TestQueryCrossExchangeRatesWithDenom(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	rate := sdk.NewDec(1700)
+	cerKrwUsd := types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroUSDDenom, rate)
+	cerKrwSdr := types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroSDRDenom, rate)
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cerKrwUsd)
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cerKrwSdr)
+
+	// denom query params
+	queryParams := types.NewQueryCrossExchangeRatesWithDenomParams(core.MicroKRWDenom)
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryCrossExchangeRatesWithDenom}, req)
+	require.NoError(t, err)
+
+	var rcers types.CrossExchangeRates
+	err = cdc.UnmarshalJSON(res, &rcers)
+	require.NoError(t, err)
+	require.Equal(t, rcers, types.CrossExchangeRates{cerKrwSdr, cerKrwUsd})
+
+	queryParams = types.NewQueryCrossExchangeRatesWithDenomParams(core.MicroUSDDenom)
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err = querier(input.Ctx, []string{types.QueryCrossExchangeRatesWithDenom}, req)
+	require.NoError(t, err)
+
+	err = cdc.UnmarshalJSON(res, &rcers)
+	require.NoError(t, err)
+	require.Equal(t, rcers, types.CrossExchangeRates{cerKrwUsd})
+}
+
 func TestQueryActives(t *testing.T) {
 	cdc := codec.New()
 	input := CreateTestInput(t)

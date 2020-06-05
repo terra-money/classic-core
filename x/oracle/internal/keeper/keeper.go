@@ -213,6 +213,94 @@ func (k Keeper) IterateLunaExchangeRates(ctx sdk.Context, handler func(denom str
 	}
 }
 
+// GetCrossExchangeRate gets the consensus cross exchange rate of two denom asset to the store.
+func (k Keeper) GetCrossExchangeRate(ctx sdk.Context, denom1, denom2 string) (cer types.CrossExchangeRate, err sdk.Error) {
+	if denom1 == denom2 {
+		return types.CrossExchangeRate{}, types.ErrRecursiveCrossRate(k.codespace, denom1)
+	}
+
+	if denom1 == core.MicroLunaDenom || denom2 == core.MicroLunaDenom{
+		return types.CrossExchangeRate{}, types.ErrLunaForCrossRate(k.codespace)
+	}
+	denom1, denom2 = types.GetDenomOrderAsc(denom1, denom2)
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.GetCrossExchangeRateKey(denom1, denom2))
+	if b == nil {
+		return types.CrossExchangeRate{}, types.ErrUnknownDenomPair(k.codespace, denom1, denom2)
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &cer)
+	return
+}
+
+func (k Keeper) GetCrossExchangeRateExported(ctx sdk.Context, denom1, denom2 string) (crossExchangeRate sdk.Dec, err sdk.Error) {
+	if denom1 == denom2 {
+		return sdk.ZeroDec(), types.ErrRecursiveCrossRate(k.codespace, denom1)
+	}
+
+	if denom1 == core.MicroLunaDenom || denom2 == core.MicroLunaDenom{
+		return sdk.ZeroDec(), types.ErrLunaForCrossRate(k.codespace)
+	}
+	denom1, denom2 = types.GetDenomOrderAsc(denom1, denom2)
+	store := ctx.KVStore(k.storeKey)
+	var cer types.CrossExchangeRate
+	b := store.Get(types.GetCrossExchangeRateKey(denom1, denom2))
+	if b == nil {
+		return sdk.ZeroDec(), types.ErrUnknownDenomPair(k.codespace, denom1, denom2)
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &cer)
+	return cer.CrossExchangeRate, nil
+}
+
+// SetCrossExchangeRate sets the consensus cross exchange rate of two denom asset to the store.
+func (k Keeper) SetCrossExchangeRate(ctx sdk.Context, cer types.CrossExchangeRate) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cer)
+	store.Set(types.GetCrossExchangeRateKey(cer.Denom1, cer.Denom2), bz)
+}
+
+// SetCrossExchangeRate sets the consensus cross exchange rate of two denom asset to the store.
+func (k Keeper) SetCrossExchangeRateExported(ctx sdk.Context, denom1, denom2 string, crossExchangeRate sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	cer := types.NewCrossExchangeRate(denom1, denom2, crossExchangeRate)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cer)
+	store.Set(types.GetCrossExchangeRateKey(cer.Denom1, cer.Denom2), bz)
+}
+
+// DeleteCrossExchangeRate deletes the consensus cross exchange rate of two denom asset to the store.
+func (k Keeper) DeleteCrossExchangeRate(ctx sdk.Context, cer types.CrossExchangeRate) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetCrossExchangeRateKey(cer.Denom1, cer.Denom2))
+}
+
+// IterateCrossExchangeRates iterates over Cross rates in the store
+func (k Keeper) IterateCrossExchangeRates(ctx sdk.Context, handler func(cer types.CrossExchangeRate) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.CrossExchangeRateKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+
+		var cer types.CrossExchangeRate
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &cer)
+		if handler(cer) {
+			break
+		}
+	}
+}
+
+// Iterate over oracle votes in the store
+func (k Keeper) iterateCrossExchangeRateWithPrefix(ctx sdk.Context, prefix []byte, handler func(cer types.CrossExchangeRate) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, append(types.CrossExchangeRateKey, prefix...))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var cer types.CrossExchangeRate
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &cer)
+		if handler(cer) {
+			break
+		}
+	}
+}
+
 //-----------------------------------
 // Oracle delegation logic
 

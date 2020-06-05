@@ -24,6 +24,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	}
 	oracleQueryCmd.AddCommand(client.GetCommands(
 		GetCmdQueryExchangeRates(cdc),
+		GetCmdQueryCrossExchangeRates(cdc),
 		GetCmdQueryVotes(cdc),
 		GetCmdQueryPrevotes(cdc),
 		GetCmdQueryActives(cdc),
@@ -87,6 +88,75 @@ $ terracli query oracle exchange-rates ukrw
 			cdc.MustUnmarshalJSON(res, &rates)
 			return cliCtx.PrintOutput(rates)
 
+		},
+	}
+	return cmd
+}
+
+// GetCmdQueryCrossExchangeRates implements the query rate command.
+func GetCmdQueryCrossExchangeRates(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cross-exchange-rates [denom1] [denom2]",
+		Args:  cobra.RangeArgs(0, 2),
+		Short: "Query the current cross exchange rate of Terra pair",
+		Long: strings.TrimSpace(`
+Query the current cross exchange rate of terra pair. 
+You can find the current list of active denoms by running
+
+$ terracli query oracle cross-exchange-rates 
+
+Or, can filter with only denom1 Or, denom1 denom2
+
+$ terracli query oracle cross-exchange-rates uusd ukrw
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			if len(args) == 0 {
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRates), nil)
+				if err != nil {
+					return err
+				}
+
+				var cers types.CrossExchangeRates
+				cdc.MustUnmarshalJSON(res, &cers)
+				return cliCtx.PrintOutput(cers)
+			} else if len(args) == 1 {
+				denom := args[0]
+				params := types.NewQueryCrossExchangeRatesWithDenomParams(denom)
+
+				bz, err := cliCtx.Codec.MarshalJSON(params)
+				if err != nil {
+					return err
+				}
+
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRatesWithDenom), bz)
+				if err != nil {
+					return err
+				}
+
+				var cers types.CrossExchangeRates
+				cdc.MustUnmarshalJSON(res, &cers)
+				return cliCtx.PrintOutput(cers)
+			} else {
+				denom1 := args[0]
+				denom2 := args[1]
+				params := types.NewQueryCrossExchangeRateParams(denom1, denom2)
+
+				bz, err := cliCtx.Codec.MarshalJSON(params)
+				if err != nil {
+					return err
+				}
+
+				res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCrossExchangeRate), bz)
+				if err != nil {
+					return err
+				}
+
+				var cer types.CrossExchangeRate
+				cdc.MustUnmarshalJSON(res, &cer)
+				return cliCtx.PrintOutput(cer)
+			}
 		},
 	}
 	return cmd

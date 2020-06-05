@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -10,9 +11,10 @@ type codeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "market"
 
-	CodeInvalidOfferCoin codeType = 1
-	CodeNoEffectivePrice codeType = 2
-	CodeRecursiveSwap    codeType = 3
+	CodeInvalidOfferCoin      codeType = 1
+	CodeNoEffectivePrice      codeType = 2
+	CodeRecursiveSwap         codeType = 3
+	CodeNoEffectiveCrossPrice codeType = 4
 )
 
 // ----------------------------------------
@@ -31,4 +33,9 @@ func ErrInvalidOfferCoin(codespace sdk.CodespaceType, rval sdk.Int) sdk.Error {
 // ErrRecursiveSwap called when Ask and Offer coin denominatioins are equal
 func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
 	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
+}
+
+// ErrNoEffectiveCrossPrice called when a price for the asset is not registered with the oracle
+func ErrNoEffectiveCrossPrice(codespace sdk.CodespaceType, denom1, denom2 string) sdk.Error {
+	return sdk.NewError(codespace, CodeNoEffectivePrice, fmt.Sprintf("No price registered with the oracle for asset denom pair %s, %s", denom1, denom2))
 }

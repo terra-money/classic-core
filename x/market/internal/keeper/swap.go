@@ -136,18 +136,35 @@ func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askD
 	if offerCoin.Denom == askDenom {
 		return offerCoin, nil
 	}
+	var retAmount sdk.Dec
+	// if Terra->Terra swap, get WeightedMedian from oracles
+	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
+		crossExchangeRate, err := k.oracleKeeper.GetCrossExchangeRateExported(ctx, offerCoin.Denom, askDenom)
+		if err != nil {
+			return sdk.DecCoin{}, err
+		}
+		if !crossExchangeRate.IsPositive() {
+			return sdk.DecCoin{}, types.ErrNoEffectiveCrossPrice(types.DefaultCodespace, offerCoin.Denom, askDenom)
+		}
+		if offerCoin.Denom > askDenom {
+			retAmount = offerCoin.Amount.Mul(crossExchangeRate)
+		} else {
+			retAmount = offerCoin.Amount.Quo(crossExchangeRate)
+		}
+	} else {
+		offerRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, offerCoin.Denom)
+		if err != nil {
+			return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+		}
 
-	offerRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, offerCoin.Denom)
-	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+		askRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, askDenom)
+		if err != nil {
+			return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
+		}
+
+		retAmount = offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	}
 
-	askRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, askDenom)
-	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
-	}
-
-	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	if retAmount.LTE(sdk.ZeroDec()) {
 		return sdk.DecCoin{}, types.ErrInvalidOfferCoin(types.DefaultCodespace, offerCoin.Amount.TruncateInt())
 	}

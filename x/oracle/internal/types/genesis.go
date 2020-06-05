@@ -11,6 +11,7 @@ type GenesisState struct {
 	Params                        Params                         `json:"params" yaml:"params"`
 	FeederDelegations             map[string]sdk.AccAddress      `json:"feeder_delegations" yaml:"feeder_delegations"`
 	ExchangeRates                 map[string]sdk.Dec             `json:"exchange_rates" yaml:"exchange_rates"`
+	CrossExchangeRates            CrossExchangeRates             `json:"cross_exchange_rates" yaml:"cross_exchange_rates"`
 	ExchangeRatePrevotes          []ExchangeRatePrevote          `json:"exchange_rate_prevotes" yaml:"exchange_rate_prevotes"`
 	ExchangeRateVotes             []ExchangeRateVote             `json:"exchange_rate_votes" yaml:"exchange_rate_votes"`
 	MissCounters                  map[string]int64               `json:"miss_counters" yaml:"miss_counters"`
@@ -22,7 +23,7 @@ type GenesisState struct {
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(
 	params Params, exchangeRatePrevotes []ExchangeRatePrevote,
-	exchangeRateVotes []ExchangeRateVote, rates map[string]sdk.Dec,
+	exchangeRateVotes []ExchangeRateVote, rates map[string]sdk.Dec, cers CrossExchangeRates,
 	feederDelegations map[string]sdk.AccAddress, missCounters map[string]int64,
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
@@ -34,6 +35,7 @@ func NewGenesisState(
 		ExchangeRatePrevotes:          exchangeRatePrevotes,
 		ExchangeRateVotes:             exchangeRateVotes,
 		ExchangeRates:                 rates,
+		CrossExchangeRates:            cers,
 		FeederDelegations:             feederDelegations,
 		MissCounters:                  missCounters,
 		AggregateExchangeRatePrevotes: aggregateExchangeRatePrevotes,
@@ -49,6 +51,7 @@ func DefaultGenesisState() GenesisState {
 		ExchangeRatePrevotes:          []ExchangeRatePrevote{},
 		ExchangeRateVotes:             []ExchangeRateVote{},
 		ExchangeRates:                 make(map[string]sdk.Dec),
+		CrossExchangeRates:            CrossExchangeRates{},
 		FeederDelegations:             make(map[string]sdk.AccAddress),
 		MissCounters:                  make(map[string]int64),
 		AggregateExchangeRatePrevotes: []AggregateExchangeRatePrevote{},

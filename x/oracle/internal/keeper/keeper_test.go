@@ -471,3 +471,63 @@ func TestTobinTaxGetSet(t *testing.T) {
 		require.Error(t, err)
 	}
 }
+
+func TestCrossExchangeRate(t *testing.T) {
+	input := CreateTestInput(t)
+
+	crossExchangeRateKrwUsd := sdk.NewDecWithPrec(250, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	crossExchangeRateKrwSrd := sdk.NewDecWithPrec(1000, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	crossExchangeRateSrdUsd := sdk.NewDecWithPrec(100, int64(OracleDecPrecision)).MulInt64(core.MicroUnit)
+	cerKrwUsd := types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroUSDDenom, crossExchangeRateKrwUsd)
+	cerKrwSrd := types.NewCrossExchangeRate(core.MicroKRWDenom, core.MicroSDRDenom, crossExchangeRateKrwSrd)
+	cerSrdUsd := types.NewCrossExchangeRate(core.MicroSDRDenom, core.MicroUSDDenom, crossExchangeRateSrdUsd)
+
+	// Set & get rates
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cerKrwUsd)
+	rate, err := input.OracleKeeper.GetCrossExchangeRate(input.Ctx, core.MicroKRWDenom, core.MicroUSDDenom)
+	require.NoError(t, err)
+	require.Equal(t, rate.CrossExchangeRate, crossExchangeRateKrwUsd)
+
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cerKrwSrd)
+	rate, err = input.OracleKeeper.GetCrossExchangeRate(input.Ctx, core.MicroKRWDenom, core.MicroSDRDenom)
+	require.NoError(t, err)
+	require.Equal(t, rate.CrossExchangeRate, crossExchangeRateKrwSrd)
+
+	input.OracleKeeper.SetCrossExchangeRate(input.Ctx, cerSrdUsd)
+	rate, err = input.OracleKeeper.GetCrossExchangeRate(input.Ctx, core.MicroSDRDenom, core.MicroUSDDenom)
+	require.NoError(t, err)
+	require.Equal(t, rate.CrossExchangeRate, crossExchangeRateSrdUsd)
+
+	// denom1, 2 deterministic ordering
+	require.Equal(t,core.MicroSDRDenom, rate.Denom1)
+	require.Equal(t, core.MicroUSDDenom, rate.Denom2)
+	rate, err = input.OracleKeeper.GetCrossExchangeRate(input.Ctx, core.MicroUSDDenom, core.MicroSDRDenom)
+	require.NoError(t, err)
+	require.Equal(t, rate.CrossExchangeRate, crossExchangeRateSrdUsd)
+	require.Equal(t,core.MicroSDRDenom, rate.Denom1)
+	require.Equal(t, core.MicroUSDDenom, rate.Denom2)
+
+	var cers types.CrossExchangeRates
+	var cersAfterDelete types.CrossExchangeRates
+
+	// Iterating
+	input.OracleKeeper.IterateCrossExchangeRates(input.Ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		cers = append(cers, cer)
+		return false
+	})
+	require.Equal(t,3, len(cers))
+
+	// Prefix Iterating, Delete
+	input.OracleKeeper.iterateCrossExchangeRateWithPrefix(input.Ctx, []byte(core.MicroKRWDenom+"_"), func(cer types.CrossExchangeRate) (stop bool) {
+		require.Equal(t, cer.Denom1, core.MicroKRWDenom)
+		input.OracleKeeper.DeleteCrossExchangeRate(input.Ctx, cer)
+		return false
+	})
+
+	input.OracleKeeper.IterateCrossExchangeRates(input.Ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		cersAfterDelete = append(cersAfterDelete, cer)
+		return false
+	})
+	require.Equal(t,1, len(cersAfterDelete))
+	require.Equal(t, cerSrdUsd, cersAfterDelete[0])
+}

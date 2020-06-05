@@ -32,18 +32,24 @@ var (
 		secp256k1.GenPrivKey().PubKey(),
 		secp256k1.GenPrivKey().PubKey(),
 		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
 	}
 
 	Addrs = []sdk.AccAddress{
 		sdk.AccAddress(PubKeys[0].Address()),
 		sdk.AccAddress(PubKeys[1].Address()),
 		sdk.AccAddress(PubKeys[2].Address()),
+		sdk.AccAddress(PubKeys[3].Address()),
+		sdk.AccAddress(PubKeys[4].Address()),
 	}
 
 	ValAddrs = []sdk.ValAddress{
 		sdk.ValAddress(PubKeys[0].Address()),
 		sdk.ValAddress(PubKeys[1].Address()),
 		sdk.ValAddress(PubKeys[2].Address()),
+		sdk.ValAddress(PubKeys[3].Address()),
+		sdk.ValAddress(PubKeys[4].Address()),
 	}
 
 	InitTokens = sdk.TokensFromConsensusPower(200)

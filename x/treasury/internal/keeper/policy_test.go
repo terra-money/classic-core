@@ -91,6 +91,7 @@ func TestUpdateTaxCap(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdrPrice)
 	krwPrice := sdk.NewDecWithPrec(153412, 2)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, krwPrice)
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroSDRDenom, krwPrice.Quo(sdrPrice))
 	input.TreasuryKeeper.UpdateTaxCap(input.Ctx)
 
 	krwCap := input.TreasuryKeeper.GetTaxCap(input.Ctx, core.MicroKRWDenom)

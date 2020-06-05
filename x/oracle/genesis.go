@@ -2,6 +2,7 @@ package oracle
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
 // InitGenesis initialize default parameters
@@ -107,6 +108,12 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
+	var cers types.CrossExchangeRates
+	keeper.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		cers = append(cers, cer)
+		return false
+	})
+
 	missCounters := make(map[string]int64)
 	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter int64) (stop bool) {
 		missCounters[operator.String()] = missCounter
@@ -131,5 +138,5 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, tobinTaxes)
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, cers, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, tobinTaxes)
 }

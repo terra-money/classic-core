@@ -231,7 +231,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx))
+	tallyMedian, ballotWinner := Tally(ballot, input.OracleKeeper.RewardBand(input.Ctx))
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
@@ -241,7 +241,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	input, h := setup(t)
 
 	// all the keeper.Addrs vote for the block ... not last period block yet, so tally fails
-	for i := range keeper.Addrs {
+	for i := range keeper.Addrs[:3] {
 		makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomExchangeRate, i)
 	}
 

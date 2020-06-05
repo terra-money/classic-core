@@ -48,6 +48,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
+	// Clear all cross exchange rates
+	k.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
+		k.DeleteCrossExchangeRate(ctx, cer)
+		return false
+	})
+
 	// Organize votes to ballot by denom
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
@@ -63,13 +69,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
-		if !ballotIsPassing(ctx, ballot, k) {
+		if !k.BallotIsPassing(ctx, ballot) {
 			delete(voteTargets, denom)
 			continue
 		}
 
 		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
+		ballotMedian, ballotWinningClaims := Tally(ballot, params.RewardBand)
 
 		// Set the exchange rate
 		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
@@ -98,6 +104,18 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		)
 	}
 
+	crossExchangeRates := k.TallyCrossRate(ctx, voteMap, voteTargets)
+	for _, cer := range crossExchangeRates {
+		k.SetCrossExchangeRate(ctx, cer)
+		// Emit event for cross exchange rate
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(types.EventTypeCrossExchangeRateUpdate,
+				sdk.NewAttribute(types.AttributeKeyDenom1, cer.Denom1),
+				sdk.NewAttribute(types.AttributeKeyDenom2, cer.Denom2),
+				sdk.NewAttribute(types.AttributeKeyCrossExchangeRate, cer.CrossExchangeRate.String()),
+			),
+		)
+	}
 	//---------------------------
 	// Do miss counting & slashing
 	voteTargetsLen := len(voteTargets)

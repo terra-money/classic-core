@@ -38,14 +38,15 @@ const (
 // - 0x08<denom_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
-	PrevoteKey          = []byte{0x01} // prefix for each key to a prevote
-	VoteKey             = []byte{0x02} // prefix for each key to a vote
-	ExchangeRateKey     = []byte{0x03} // prefix for each key to a rate
-	FeederDelegationKey = []byte{0x04} // prefix for each key to a feeder delegation
-	MissCounterKey      = []byte{0x05} // prefix for each key to a miss counter
-	AggregatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
-	AggregateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
-	TobinTaxKey         = []byte{0x08} // prefix for each key to a tobin tax
+	PrevoteKey           = []byte{0x01} // prefix for each key to a prevote
+	VoteKey              = []byte{0x02} // prefix for each key to a vote
+	ExchangeRateKey      = []byte{0x03} // prefix for each key to a rate
+	FeederDelegationKey  = []byte{0x04} // prefix for each key to a feeder delegation
+	MissCounterKey       = []byte{0x05} // prefix for each key to a miss counter
+	AggregatePrevoteKey  = []byte{0x06} // prefix for each key to a aggregate prevote
+	AggregateVoteKey     = []byte{0x07} // prefix for each key to a aggregate vote
+	TobinTaxKey          = []byte{0x08} // prefix for each key to a tobin tax
+	CrossExchangeRateKey = []byte{0x09} // prefix for each key to a cross exchange rate of terra <-> terra
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -61,6 +62,14 @@ func GetVoteKey(denom string, v sdk.ValAddress) []byte {
 // GetExchangeRateKey - stored by *denom*
 func GetExchangeRateKey(denom string) []byte {
 	return append(ExchangeRateKey, []byte(denom)...)
+}
+
+// GeCrosstExchangeRateKey - stored by *denom1_denom2* (by DenomPair)
+//func GetCrossExchangeRateKey(cer CrossExchangeRate) []byte {
+//	return append(CrossExchangeRateKey, []byte(cer.DenomPair())...)
+//}
+func GetCrossExchangeRateKey(denom1, denom2 string) []byte {
+	return append(CrossExchangeRateKey, []byte(denom1+"_"+denom2)...)
 }
 
 // GetFeederDelegationKey - stored by *Validator* address
