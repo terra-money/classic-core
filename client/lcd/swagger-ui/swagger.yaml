@@ -2318,6 +2318,75 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/denoms/{denom}/cross_exchange_rates:
+    get:
+      summary: Get the current effective cross exchange rate filtered by denom
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom1
+          description: The coin denom to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: current cross exchange rate for pair of denom
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/CrossExchangeRate"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/denoms/{denom1}/{denom2}/cross_exchange_rate:
+    get:
+      summary: Get the current effective cross exchange rate for a pair of denom1_denom2
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom1
+          description: The coin denom1 of a pair to get
+          required: true
+          type: string
+        - in: path
+          name: denom2
+          description: The coin denom2 of a pair to get
+          required: true
+          type: string
+      responses:
+        200:
+          description: current cross exchange rate for a pair of denom1_denom2
+          schema:
+            $ref: "#/definitions/CrossExchangeRate"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/denoms/cross_exchange_rates:
+    get:
+      summary: Get all activated cross exchange rates
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/CrossExchangeRate"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/denoms/actives:
     get:
       summary: Get all activated denoms
@@ -3476,6 +3545,18 @@ definitions:
           $ref: "#/definitions/DecCoin"
       voter:
         $ref: "#/definitions/ValidatorAddress"
+  CrossExchangeRate:
+    type: object
+    properties:
+      denom1:
+        type: string
+        example: "ukrw"
+      denom2:
+        type: string
+        example: "uusd"
+      exchange_rate:
+        type: number
+        example: "1688.1291"
   OracleParams:
     type: object
     properties:
