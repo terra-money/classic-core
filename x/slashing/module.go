@@ -2,6 +2,7 @@ package slashing
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -12,13 +13,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/terra-project/core/x/slashing/internal/types"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule           = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleSimulation = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the slashing module.
@@ -70,10 +74,10 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, stakingKeeper types.StakingKeeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper, stakingKeeper stakingkeeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic:  AppModuleBasic{},
-		cosmosAppModule: NewCosmosAppModule(keeper, stakingKeeper),
+		cosmosAppModule: NewCosmosAppModule(keeper, accountKeeper, stakingKeeper),
 	}
 }
 
@@ -122,4 +126,33 @@ func (am AppModule) BeginBlock(ctx sdk.Context, rbb abci.RequestBeginBlock) {
 // EndBlock returns the end blocker for the slashing module.
 func (am AppModule) EndBlock(ctx sdk.Context, rbb abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return am.cosmosAppModule.EndBlock(ctx, rbb)
+}
+
+//____________________________________________________________________________
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the auth module
+func (am AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	am.cosmosAppModule.GenerateGenesisState(simState)
+}
+
+// ProposalContents doesn't return any content functions for governance proposals.
+func (am AppModule) ProposalContents(simState module.SimulationState) []sim.WeightedProposalContent {
+	return am.cosmosAppModule.ProposalContents(simState)
+}
+
+// RandomizedParams creates randomized auth param changes for the simulator.
+func (am AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+	return am.cosmosAppModule.RandomizedParams(r)
+}
+
+// RegisterStoreDecoder registers a decoder for auth module's types
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	am.cosmosAppModule.RegisterStoreDecoder(sdr)
+}
+
+// WeightedOperations doesn't return any auth module operation.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+	return am.cosmosAppModule.WeightedOperations(simState)
 }

@@ -3,27 +3,23 @@ package params
 
 import (
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 const (
-	StoreKey             = params.StoreKey
-	TStoreKey            = params.TStoreKey
-	TestParamStore       = params.TestParamStore
-	DefaultCodespace     = params.DefaultCodespace
-	CodeUnknownSubspace  = params.CodeUnknownSubspace
-	CodeSettingParameter = params.CodeSettingParameter
-	CodeEmptyData        = params.CodeEmptyData
-	ModuleName           = params.ModuleName
-	RouterKey            = params.RouterKey
-	ProposalTypeChange   = params.ProposalTypeChange
+	StoreKey         = params.StoreKey
+	TStoreKey        = params.TStoreKey
+	ModuleNam        = params.ModuleName
+	RouterKey        = params.RouterKey
+	ProposalTeChange = params.ProposalTypeChange
 )
 
 var (
 	// functions aliases
+	NewParamSetPair               = params.NewParamSetPair
 	NewSubspace                   = params.NewSubspace
 	NewKeyTable                   = params.NewKeyTable
-	DefaultTestComponents         = params.DefaultTestComponents
+	NewKeeper                     = params.NewKeeper
+	NewParamChangeProposalHandler = params.NewParamChangeProposalHandler
 	ErrUnknownSubspace            = params.ErrUnknownSubspace
 	ErrSettingParameter           = params.ErrSettingParameter
 	ErrEmptyChanges               = params.ErrEmptyChanges
@@ -32,13 +28,11 @@ var (
 	ErrEmptyValue                 = params.ErrEmptyValue
 	NewParameterChangeProposal    = params.NewParameterChangeProposal
 	NewParamChange                = params.NewParamChange
-	NewParamChangeWithSubkey      = params.NewParamChangeWithSubkey
 	ValidateChanges               = params.ValidateChanges
-	NewKeeper                     = params.NewKeeper
-	NewParamChangeProposalHandler = params.NewParamChangeProposalHandler
 
 	// variables aliases
-	CosmosModuleCdc = types.ModuleCdc
+	CosmosModuleCdc    = params.ModuleCdc
+	NewCosmosAppModule = params.NewAppModule
 )
 
 type (
@@ -52,4 +46,5 @@ type (
 	ParamChange             = params.ParamChange
 	Keeper                  = params.Keeper
 	CosmosAppModuleBasic    = params.AppModuleBasic
+	CosmosAppModule         = params.AppModule
 )

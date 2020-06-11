@@ -23,10 +23,10 @@ func TestRewardBallotWinners(t *testing.T) {
 	ctx := input.Ctx
 
 	// Validator created
-	got := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
-	require.True(t, got.IsOK())
+	_, err := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	require.Equal(
@@ -51,7 +51,7 @@ func TestRewardBallotWinners(t *testing.T) {
 	// Prepare reward pool
 	givingAmt := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 30000000))
 	acc := input.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
-	err := acc.SetCoins(givingAmt)
+	err = acc.SetCoins(givingAmt)
 	require.NoError(t, err)
 	input.SupplyKeeper.SetModuleAccount(ctx, acc)
 

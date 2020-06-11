@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -28,7 +29,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	oracleQueryCmd.AddCommand(client.GetCommands(
+	oracleQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdQueryTaxRate(cdc),
 		GetCmdQueryTaxCap(cdc),
 		GetCmdQueryRewardWeight(cdc),

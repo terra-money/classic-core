@@ -1,20 +1,36 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestParams_Validate(t *testing.T) {
-	params := DefaultParams()
-	require.NoError(t, params.Validate())
+func TestParamsEqual(t *testing.T) {
+	p1 := DefaultParams()
+	err := p1.ValidateBasic()
+	require.NoError(t, err)
 
-	params = DefaultParams()
-	params.BasePool = sdk.NewDec(-1)
-	require.Error(t, params.Validate())
+	// invalid baes pool
+	p1.BasePool = sdk.NewDec(-1)
+	err = p1.ValidateBasic()
+	require.Error(t, err)
 
-	params = DefaultParams()
-	params.MinStabilitySpread = sdk.NewDec(-1)
-	require.Error(t, params.Validate())
+	// invalid pool recovery period
+	p2 := DefaultParams()
+	p2.PoolRecoveryPeriod = 0
+	err = p2.ValidateBasic()
+	require.Error(t, err)
+
+	// invalid min spread
+	p3 := DefaultParams()
+	p3.MinStabilitySpread = sdk.NewDecWithPrec(-1, 2)
+	err = p3.ValidateBasic()
+	require.Error(t, err)
+
+	p4 := DefaultParams()
+	require.NotNil(t, p4.ParamSetPairs())
+	require.NotNil(t, p4.String())
 }

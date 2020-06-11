@@ -18,9 +18,9 @@ endif
 GOPATH ?= $(shell $(GO) env GOPATH)
 GITHUBDIR := $(GOPATH)$(FS)src$(FS)github.com
 
-###
-# Functions
-###
+###############################################################################
+###                                Functions                                ###
+###############################################################################
 
 go_get = $(if $(findstring Windows_NT,$(OS)),\
 IF NOT EXIST $(GITHUBDIR)$(FS)$(1)$(FS) ( mkdir $(GITHUBDIR)$(FS)$(1) ) else (cd .) &\
@@ -34,21 +34,18 @@ cd $(GITHUBDIR)$(FS)$(1)$(FS)$(2) && git fetch origin && git checkout -q $(3)
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(shell cd $(shell dirname $(mkfile_path)); pwd)
 
-###
-# tools
-###
+###############################################################################
+###                                 Tools                                   ###
+###############################################################################
 
 TOOLS_DESTDIR  ?= $(GOPATH)/bin
 
-GOLANGCI_LINT = $(TOOLS_DESTDIR)/golangci-lint
 STATIK        = $(TOOLS_DESTDIR)/statik
 RUNSIM        = $(TOOLS_DESTDIR)/runsim
 
 all: tools
 
-tools: tools-stamp
-tools-stamp: $(RUNSIM)
-	touch $@
+tools: statik runsim
 
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
@@ -70,12 +67,13 @@ $(STATIK):
 # go.{mod, sum} files.
 # 
 # ref: https://github.com/golang/go/issues/30515
+runsim: $(RUNSIM)
 $(RUNSIM):
 	@echo "Installing runsim..."
 	@(cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
 
 tools-clean:
-	rm -f $(STATIK) $(GOLANGCI_LINT) $(RUNSIM)
+	rm -f $(STATIK) $(RUNSIM)
 	rm -f tools-stamp
 
-.PHONY: all tools tools-clean
+.PHONY: all tools tools-clean golangci-lint

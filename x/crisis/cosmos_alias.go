@@ -6,15 +6,13 @@ import (
 )
 
 const (
-	DefaultCodespace  = crisis.DefaultCodespace
-	CodeInvalidInput  = crisis.CodeInvalidInput
 	ModuleName        = crisis.ModuleName
 	DefaultParamspace = crisis.DefaultParamspace
 )
 
 var (
 	// functions aliases
-	ErrNilSender          = crisis.ErrNilSender
+	ErrNoSender           = crisis.ErrNoSender
 	ErrUnknownInvariant   = crisis.ErrUnknownInvariant
 	NewGenesisState       = crisis.NewGenesisState
 	DefaultGenesisState   = crisis.DefaultGenesisState

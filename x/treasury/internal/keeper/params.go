@@ -2,14 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/terra-project/core/x/treasury/internal/types"
 )
-
-// ParamKeyTable returns ParamTable for treasury module
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable().RegisterParamSet(&types.Params{})
-}
 
 // TaxPolicy defines constraints for TaxRate
 func (k Keeper) TaxPolicy(ctx sdk.Context) (res types.PolicyConstraints) {

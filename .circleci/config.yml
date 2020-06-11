@@ -221,10 +221,7 @@ jobs:
             sudo mv go /usr/local
             popd
             set -x
-            make tools
-            make build-linux
-            make build-docker-terradnode
-            make localnet-start
+            make clean build-docker-terradnode localnet-start
             ./contrib/localnet-blocks-test.sh 40 5 10 localhost
 
   macos-ci:
@@ -306,17 +303,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             sudo apt-get install -y ruby
-            bash -x ./contrib/gitian-build.sh all
-            for os in darwin linux windows; do
-              cp gitian-build-${os}/result/terra-${os}-res.yml .
-              rm -rf gitian-build-${os}/
-            done
+            bash -x ./contrib/gitian-build.sh multi
+            cp gitian-build-multi/result/terra-multi-res.yml .
+            rm -rf gitian-build-multi/
       - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-darwin-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-linux-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-windows-res.yml
+          path: /go/src/github.com/terra-project/core/terra-multi-res.yml
 
 workflows:
   version: 2

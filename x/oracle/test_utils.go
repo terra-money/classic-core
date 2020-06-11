@@ -33,12 +33,12 @@ func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Validator created
-	got := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.PubKeys[0], stakingAmt))
-	require.True(t, got.IsOK())
-	got = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.PubKeys[1], stakingAmt))
-	require.True(t, got.IsOK())
-	got = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.PubKeys[2], stakingAmt))
-	require.True(t, got.IsOK())
+	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.PubKeys[0], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.PubKeys[1], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.PubKeys[2], stakingAmt))
+	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	return input, h

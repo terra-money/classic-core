@@ -10,12 +10,15 @@ coverage:
     changes: false
 
 comment:
-  layout: "header, diff"
+  layout: "reach, diff, files"
   behavior: default  # update if exists else create new
 
 ignore:
-  - "docs"
   - "*.md"
   - "*.rst"
+  - "cmd/"
+  - "contrib/"
+  - "docs/"
+  - "networks/"
   - "**/cli"
   - "**/rest"

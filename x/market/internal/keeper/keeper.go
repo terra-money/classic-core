@@ -20,33 +20,35 @@ type Keeper struct {
 
 	oracleKeeper types.OracleKeeper
 	SupplyKeeper types.SupplyKeeper
-
-	// codespace
-	codespace sdk.CodespaceType
 }
 
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	paramspace params.Subspace, oracleKeeper types.OracleKeeper,
-	supplyKeeper types.SupplyKeeper, codespace sdk.CodespaceType) Keeper {
+	supplyKeeper types.SupplyKeeper) Keeper {
+
+	// ensure oracle module account is set
+	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
+
+	// set KeyTable if it has not already been set
+	if !paramspace.HasKeyTable() {
+		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		cdc:          cdc,
 		storeKey:     storeKey,
-		paramSpace:   paramspace.WithKeyTable(ParamKeyTable()),
+		paramSpace:   paramspace,
 		oracleKeeper: oracleKeeper,
 		SupplyKeeper: supplyKeeper,
-		codespace:    codespace,
 	}
 }
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// Codespace returns a codespace of keeper
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
 }
 
 // GetTerraPoolDelta returns the gap between the TerraPool and the BasePool

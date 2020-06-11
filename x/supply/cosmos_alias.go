@@ -34,8 +34,7 @@ var (
 	NewCosmosAppModule    = supply.NewAppModule
 
 	// variable aliases
-	DefaultCodespace = supply.DefaultCodespace
-	CosmosModuleCdc  = supply.ModuleCdc
+	CosmosModuleCdc = supply.ModuleCdc
 )
 
 type (

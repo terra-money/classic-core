@@ -25,11 +25,9 @@ fi
 ##
 export TERRADHOME="/terrad/node${ID}/terrad"
 
-if [ -d "`dirname ${TERRADHOME}/${LOG}`" ]; then
-  "$BINARY" --home "$TERRADHOME" "$@" | tee "${TERRADHOME}/${LOG}"
+if [ -d "$(dirname "${TERRADHOME}"/"${LOG}")" ]; then
+  "${BINARY}" --home "${TERRADHOME}" "$@" | tee "${TERRADHOME}/${LOG}"
 else
-  "$BINARY" --home "$TERRADHOME" "$@"
+  "${BINARY}" --home "${TERRADHOME}" "$@"
 fi
-
-chmod 777 -R /terrad
 

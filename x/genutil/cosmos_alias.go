@@ -14,16 +14,25 @@ var (
 	NewCosmosAppModule           = genutil.NewAppModule
 	InitGenesis                  = genutil.InitGenesis
 	InitializeNodeValidatorFiles = genutil.InitializeNodeValidatorFiles
+	NewGenesisState              = genutil.NewGenesisState
+	NewGenesisStateFromStdTx     = genutil.NewGenesisStateFromStdTx
 	NewInitConfig                = genutil.NewInitConfig
-	ExportGenesisFileWithTime    = genutil.ExportGenesisFileWithTime
+	GetGenesisStateFromAppState  = genutil.GetGenesisStateFromAppState
+	SetGenesisStateInAppState    = genutil.SetGenesisStateInAppState
+	GenesisStateFromGenDoc       = genutil.GenesisStateFromGenDoc
 	GenesisStateFromGenFile      = genutil.GenesisStateFromGenFile
-	GenAppStateFromConfig        = genutil.GenAppStateFromConfig
+	ValidateGenesis              = genutil.ValidateGenesis
 	ExportGenesisFile            = genutil.ExportGenesisFile
 	CosmosModuleCdc              = genutil.ModuleCdc
 )
 
 type (
-	GenesisState         = genutil.GenesisState
+	GenesisState      = genutil.GenesisState
+	AppMap            = genutil.AppMap
+	MigrationCallback = genutil.MigrationCallback
+	MigrationMap      = genutil.MigrationMap
+	InitConfig        = genutil.InitConfig
+
 	CosmosAppModule      = genutil.AppModule
 	CosmosAppModuleBasic = genutil.AppModuleBasic
 )
