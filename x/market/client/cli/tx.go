@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"bufio"
 	"strings"
 
 	"github.com/terra-project/core/x/market/internal/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -25,7 +27,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	marketTxCmd.AddCommand(client.PostCommands(
+	marketTxCmd.AddCommand(flags.PostCommands(
 		GetSwapCmd(cdc),
 	)...)
 
@@ -44,8 +46,9 @@ Swap the offer-coin to the ask-denom currency at the oracle's effective exchange
 $ terracli market swap "1000ukrw" "uusd"
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			offerCoinStr := args[0]
 			offerCoin, err := sdk.ParseCoin(offerCoinStr)

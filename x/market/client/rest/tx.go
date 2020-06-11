@@ -29,15 +29,11 @@ func submitSwapHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SwapReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-			err := sdk.ErrUnknownRequest("malformed request")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		req.BaseReq = req.BaseReq.Sanitize()
 		if !req.BaseReq.ValidateBasic(w) {
-			err := sdk.ErrUnknownRequest("malformed request")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 

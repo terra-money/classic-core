@@ -2,14 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
-
-// ParamKeyTable for staking module
-func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable().RegisterParamSet(&types.Params{})
-}
 
 // VotePeriod returns the number of blocks during which voting takes place.
 func (k Keeper) VotePeriod(ctx sdk.Context) (res int64) {

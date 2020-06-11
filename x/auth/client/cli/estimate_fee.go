@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
@@ -33,10 +33,10 @@ $ terracli tx estimate-fee [file] --gas-adjustment 1.4 --gas-prices 0.015uluna
 				return err
 			}
 
-			gasAdjustment := viper.GetFloat64(client.FlagGasAdjustment)
+			gasAdjustment := viper.GetFloat64(flags.FlagGasAdjustment)
 
 			var gasPrices sdk.DecCoins
-			gasPricesStr := viper.GetString(client.FlagGasPrices)
+			gasPricesStr := viper.GetString(flags.FlagGasPrices)
 			if len(gasPricesStr) != 0 {
 				gasPrices, err = sdk.ParseDecCoins(gasPricesStr)
 				if err != nil {
@@ -55,10 +55,10 @@ $ terracli tx estimate-fee [file] --gas-adjustment 1.4 --gas-prices 0.015uluna
 		},
 	}
 
-	cmd = client.GetCommands(cmd)[0]
+	cmd = flags.GetCommands(cmd)[0]
 
-	cmd.Flags().Float64(client.FlagGasAdjustment, client.DefaultGasAdjustment, "adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored ")
-	cmd.Flags().String(client.FlagGasPrices, "", "Gas prices to determine the transaction fee (e.g. 10uluna)")
+	cmd.Flags().Float64(flags.FlagGasAdjustment, flags.DefaultGasAdjustment, "adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored ")
+	cmd.Flags().String(flags.FlagGasPrices, "", "Gas prices to determine the transaction fee (e.g. 10uluna)")
 	// cmd.MarkFlagRequired(client.FlagGasAdjustment)
 
 	return cmd

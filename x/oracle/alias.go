@@ -11,21 +11,6 @@ import (
 )
 
 const (
-	DefaultCodespace                = types.DefaultCodespace
-	CodeUnknownDenom                = types.CodeUnknownDenom
-	CodeInvalidExchangeRate         = types.CodeInvalidExchangeRate
-	CodeVoterNotValidator           = types.CodeVoterNotValidator
-	CodeInvalidVote                 = types.CodeInvalidVote
-	CodeNoVotingPermission          = types.CodeNoVotingPermission
-	CodeInvalidHashLength           = types.CodeInvalidHashLength
-	CodeInvalidPrevote              = types.CodeInvalidPrevote
-	CodeVerificationFailed          = types.CodeVerificationFailed
-	CodeNotRevealPeriod             = types.CodeNotRevealPeriod
-	CodeInvalidSaltLength           = types.CodeInvalidSaltLength
-	CodeInvalidMsgFormat            = types.CodeInvalidMsgFormat
-	CodeNoAggregatePrevote          = types.CodeNoAggregatePrevote
-	CodeNoAggregateVote             = types.CodeNoAggregateVote
-	CodeNoTobinTax                  = types.CodeNoTobinTax
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	RouterKey                       = types.RouterKey
@@ -54,18 +39,6 @@ var (
 	NewVoteForTally                    = types.NewVoteForTally
 	NewClaim                           = types.NewClaim
 	RegisterCodec                      = types.RegisterCodec
-	ErrInvalidHashLength               = types.ErrInvalidHashLength
-	ErrUnknownDenomination             = types.ErrUnknownDenomination
-	ErrInvalidExchangeRate             = types.ErrInvalidExchangeRate
-	ErrVerificationFailed              = types.ErrVerificationFailed
-	ErrNoPrevote                       = types.ErrNoPrevote
-	ErrNoVote                          = types.ErrNoVote
-	ErrNoVotingPermission              = types.ErrNoVotingPermission
-	ErrInvalidRevealPeriod             = types.ErrInvalidRevealPeriod
-	ErrInvalidSaltLength               = types.ErrInvalidSaltLength
-	ErrNoAggregatePrevote              = types.ErrNoAggregatePrevote
-	ErrNoAggregateVote                 = types.ErrNoAggregateVote
-	ErrNoTobinTax                      = types.ErrNoTobinTax
 	NewGenesisState                    = types.NewGenesisState
 	DefaultGenesisState                = types.DefaultGenesisState
 	ValidateGenesis                    = types.ValidateGenesis
@@ -88,6 +61,7 @@ var (
 	NewMsgAggregateExchangeRatePrevote = types.NewMsgAggregateExchangeRatePrevote
 	NewMsgAggregateExchangeRateVote    = types.NewMsgAggregateExchangeRateVote
 	DefaultParams                      = types.DefaultParams
+	ParamKeyTable                      = types.ParamKeyTable
 	NewQueryExchangeRateParams         = types.NewQueryExchangeRateParams
 	NewQueryPrevotesParams             = types.NewQueryPrevotesParams
 	NewQueryVotesParams                = types.NewQueryVotesParams
@@ -102,11 +76,23 @@ var (
 	ParseExchangeRateTuples            = types.ParseExchangeRateTuples
 	NewAggregateExchangeRateVote       = types.NewAggregateExchangeRateVote
 	NewKeeper                          = keeper.NewKeeper
-	ParamKeyTable                      = keeper.ParamKeyTable
 	NewQuerier                         = keeper.NewQuerier
 
 	// variable aliases
 	ModuleCdc                             = types.ModuleCdc
+	ErrUnknowDenom                        = types.ErrUnknowDenom
+	ErrInvalidExchangeRate                = types.ErrInvalidExchangeRate
+	ErrNoPrevote                          = types.ErrNoPrevote
+	ErrNoVote                             = types.ErrNoVote
+	ErrNoVotingPermission                 = types.ErrNoVotingPermission
+	ErrInvalidHash                        = types.ErrInvalidHash
+	ErrInvalidHashLength                  = types.ErrInvalidHashLength
+	ErrVerificationFailed                 = types.ErrVerificationFailed
+	ErrRevealPeriodMissMatch              = types.ErrRevealPeriodMissMatch
+	ErrInvalidSaltLength                  = types.ErrInvalidSaltLength
+	ErrNoAggregatePrevote                 = types.ErrNoAggregatePrevote
+	ErrNoAggregateVote                    = types.ErrNoAggregateVote
+	ErrNoTobinTax                         = types.ErrNoTobinTax
 	PrevoteKey                            = types.PrevoteKey
 	VoteKey                               = types.VoteKey
 	ExchangeRateKey                       = types.ExchangeRateKey

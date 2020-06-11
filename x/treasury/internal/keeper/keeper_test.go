@@ -75,7 +75,7 @@ func TestTaxProceeds(t *testing.T) {
 		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, proceeds)
 		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, proceeds)
 
-		require.Equal(t, proceeds.Add(proceeds).Add(proceeds), input.TreasuryKeeper.PeekEpochTaxProceeds(input.Ctx))
+		require.Equal(t, proceeds.Add(proceeds...).Add(proceeds...), input.TreasuryKeeper.PeekEpochTaxProceeds(input.Ctx))
 
 		input.TreasuryKeeper.SetEpochTaxProceeds(input.Ctx, sdk.Coins{})
 		require.Equal(t, sdk.Coins{}, input.TreasuryKeeper.PeekEpochTaxProceeds(input.Ctx))

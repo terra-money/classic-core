@@ -247,7 +247,7 @@ func TestParams(t *testing.T) {
 
 	// Test custom params setting
 	votePeriod := int64(10)
-	voteThreshold := sdk.NewDecWithPrec(1, 10)
+	voteThreshold := sdk.NewDecWithPrec(33, 2)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
 	rewardDistributionWindow := int64(10000000000000)
 	slashFraction := sdk.NewDecWithPrec(1, 2)

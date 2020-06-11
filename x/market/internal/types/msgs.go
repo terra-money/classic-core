@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // ensure Msg interface compliance at compile time
@@ -47,17 +48,17 @@ func (msg MsgSwap) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic Implements Msg
-func (msg MsgSwap) ValidateBasic() sdk.Error {
+func (msg MsgSwap) ValidateBasic() error {
 	if len(msg.Trader) == 0 {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Trader.String())
+		return sdkerrors.ErrInvalidAddress
 	}
 
 	if msg.OfferCoin.Amount.LTE(sdk.ZeroInt()) || msg.OfferCoin.Amount.BigInt().BitLen() > 100 {
-		return ErrInvalidOfferCoin(DefaultCodespace, msg.OfferCoin.Amount)
+		return sdkerrors.Wrap(ErrInvalidOfferCoin, msg.OfferCoin.Amount.String())
 	}
 
 	if msg.OfferCoin.Denom == msg.AskDenom {
-		return ErrRecursiveSwap(DefaultCodespace, msg.AskDenom)
+		return sdkerrors.Wrap(ErrRecursiveSwap, msg.AskDenom)
 	}
 
 	return nil

@@ -7,15 +7,6 @@ import (
 
 const (
 	DefaultParamspace                  = staking.DefaultParamspace
-	DefaultCodespace                   = staking.DefaultCodespace
-	CodeInvalidValidator               = staking.CodeInvalidValidator
-	CodeInvalidDelegation              = staking.CodeInvalidDelegation
-	CodeInvalidInput                   = staking.CodeInvalidInput
-	CodeValidatorJailed                = staking.CodeValidatorJailed
-	CodeInvalidAddress                 = staking.CodeInvalidAddress
-	CodeUnauthorized                   = staking.CodeUnauthorized
-	CodeInternal                       = staking.CodeInternal
-	CodeUnknownRequest                 = staking.CodeUnknownRequest
 	ModuleName                         = staking.ModuleName
 	StoreKey                           = staking.StoreKey
 	TStoreKey                          = staking.TStoreKey
@@ -78,7 +69,7 @@ var (
 	NewDelegationResp                  = staking.NewDelegationResp
 	NewRedelegationResponse            = staking.NewRedelegationResponse
 	NewRedelegationEntryResponse       = staking.NewRedelegationEntryResponse
-	ErrNilValidatorAddr                = staking.ErrNilValidatorAddr
+	ErrEmptyValidatorAddr              = staking.ErrEmptyValidatorAddr
 	ErrBadValidatorAddr                = staking.ErrBadValidatorAddr
 	ErrNoValidatorFound                = staking.ErrNoValidatorFound
 	ErrValidatorOwnerExists            = staking.ErrValidatorOwnerExists
@@ -86,7 +77,6 @@ var (
 	ErrValidatorPubKeyTypeNotSupported = staking.ErrValidatorPubKeyTypeNotSupported
 	ErrValidatorJailed                 = staking.ErrValidatorJailed
 	ErrBadRemoveValidator              = staking.ErrBadRemoveValidator
-	ErrDescriptionLength               = staking.ErrDescriptionLength
 	ErrCommissionNegative              = staking.ErrCommissionNegative
 	ErrCommissionHuge                  = staking.ErrCommissionHuge
 	ErrCommissionGTMaxRate             = staking.ErrCommissionGTMaxRate
@@ -97,7 +87,7 @@ var (
 	ErrSelfDelegationBelowMinimum      = staking.ErrSelfDelegationBelowMinimum
 	ErrMinSelfDelegationInvalid        = staking.ErrMinSelfDelegationInvalid
 	ErrMinSelfDelegationDecreased      = staking.ErrMinSelfDelegationDecreased
-	ErrNilDelegatorAddr                = staking.ErrNilDelegatorAddr
+	ErrEmptyDelegatorAddr              = staking.ErrEmptyDelegatorAddr
 	ErrBadDenom                        = staking.ErrBadDenom
 	ErrBadDelegationAddr               = staking.ErrBadDelegationAddr
 	ErrBadDelegationAmount             = staking.ErrBadDelegationAmount
@@ -115,14 +105,15 @@ var (
 	ErrBadRedelegationAddr             = staking.ErrBadRedelegationAddr
 	ErrNoRedelegation                  = staking.ErrNoRedelegation
 	ErrSelfRedelegation                = staking.ErrSelfRedelegation
-	ErrVerySmallRedelegation           = staking.ErrVerySmallRedelegation
+	ErrTinyRedelegationAmount          = staking.ErrTinyRedelegationAmount
 	ErrBadRedelegationDst              = staking.ErrBadRedelegationDst
 	ErrTransitiveRedelegation          = staking.ErrTransitiveRedelegation
 	ErrMaxRedelegationEntries          = staking.ErrMaxRedelegationEntries
 	ErrDelegatorShareExRateInvalid     = staking.ErrDelegatorShareExRateInvalid
 	ErrBothShareMsgsGiven              = staking.ErrBothShareMsgsGiven
 	ErrNeitherShareMsgsGiven           = staking.ErrNeitherShareMsgsGiven
-	ErrMissingSignature                = staking.ErrMissingSignature
+	ErrInvalidHistoricalInfo           = staking.ErrInvalidHistoricalInfo
+	ErrNoHistoricalInfo                = staking.ErrNoHistoricalInfo
 	NewGenesisState                    = staking.NewGenesisState
 	DefaultGenesisState                = staking.DefaultGenesisState
 	NewMultiStakingHooks               = staking.NewMultiStakingHooks
@@ -166,6 +157,7 @@ var (
 	NewQueryBondsParams                = staking.NewQueryBondsParams
 	NewQueryRedelegationParams         = staking.NewQueryRedelegationParams
 	NewQueryValidatorsParams           = staking.NewQueryValidatorsParams
+	NewQueryHistoricalInfoParams       = staking.NewQueryHistoricalInfoParams
 	NewValidator                       = staking.NewValidator
 	MustMarshalValidator               = staking.MustMarshalValidator
 	MustUnmarshalValidator             = staking.MustUnmarshalValidator
@@ -215,7 +207,6 @@ type (
 	RedelegationResponse      = staking.RedelegationResponse
 	RedelegationEntryResponse = staking.RedelegationEntryResponse
 	RedelegationResponses     = staking.RedelegationResponses
-	CodeType                  = staking.CodeType
 	GenesisState              = staking.GenesisState
 	LastValidatorPower        = staking.LastValidatorPower
 	MultiStakingHooks         = staking.MultiStakingHooks

@@ -59,7 +59,7 @@ func DefaultGenesisState() GenesisState {
 
 // ValidateGenesis validates the oracle genesis parameters
 func ValidateGenesis(data GenesisState) error {
-	return data.Params.Validate()
+	return data.Params.ValidateBasic()
 }
 
 // Equal checks whether 2 GenesisState structs are equivalent.

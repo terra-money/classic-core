@@ -3,9 +3,12 @@ package types
 import (
 	"fmt"
 
+	"gopkg.in/yaml.v2"
+
 	core "github.com/terra-project/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 )
 
@@ -72,24 +75,67 @@ func DefaultParams() Params {
 	}
 }
 
-// Validate params
-func (params Params) Validate() error {
-	if params.TaxPolicy.RateMax.LT(params.TaxPolicy.RateMin) {
+// ParamKeyTable returns the parameter key table.
+func ParamKeyTable() params.KeyTable {
+	return params.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+// String implements fmt.Stringer interface
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}
+
+// ValidateBasic performs basic validation on treasury parameters.
+func (p Params) ValidateBasic() error {
+	if p.TaxPolicy.RateMax.LT(p.TaxPolicy.RateMin) {
 		return fmt.Errorf("treasury TaxPolicy.RateMax %s must be greater than TaxPolicy.RateMin %s",
-			params.TaxPolicy.RateMax, params.TaxPolicy.RateMin)
+			p.TaxPolicy.RateMax, p.TaxPolicy.RateMin)
 	}
 
-	if params.TaxPolicy.RateMin.IsNegative() {
-		return fmt.Errorf("treasury parameter TaxPolicy.RateMin must be >= 0, is %s", params.TaxPolicy.RateMin)
+	if p.TaxPolicy.RateMin.IsNegative() {
+		return fmt.Errorf("treasury parameter TaxPolicy.RateMin must be zero or positive: %s", p.TaxPolicy.RateMin)
 	}
 
-	if params.RewardPolicy.RateMax.LT(params.RewardPolicy.RateMin) {
+	if !p.TaxPolicy.Cap.IsValid() {
+		return fmt.Errorf("treasury parameter TaxPolicy.Cap is invalid")
+	}
+
+	if p.TaxPolicy.ChangeRateMax.IsNegative() {
+		return fmt.Errorf("treasury parameter TaxPolicy.ChangeRateMax must be positive: %s", p.TaxPolicy.ChangeRateMax)
+	}
+
+	if p.RewardPolicy.RateMax.LT(p.RewardPolicy.RateMin) {
 		return fmt.Errorf("treasury RewardPolicy.RateMax %s must be greater than RewardPolicy.RateMin %s",
-			params.RewardPolicy.RateMax, params.RewardPolicy.RateMin)
+			p.RewardPolicy.RateMax, p.RewardPolicy.RateMin)
 	}
 
-	if params.RewardPolicy.RateMin.IsNegative() {
-		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be >= 0, is %s", params.RewardPolicy.RateMin)
+	if p.RewardPolicy.RateMin.IsNegative() {
+		return fmt.Errorf("treasury parameter RewardPolicy.RateMin must be positive: %s", p.RewardPolicy.RateMin)
+	}
+
+	if p.RewardPolicy.ChangeRateMax.IsNegative() {
+		return fmt.Errorf("treasury parameter RewardPolicy.ChangeRateMax must be positive: %s", p.RewardPolicy.ChangeRateMax)
+	}
+
+	if p.SeigniorageBurdenTarget.IsNegative() {
+		return fmt.Errorf("treasury parameter SeigniorageBurdenTarget must be positive: %s", p.SeigniorageBurdenTarget)
+	}
+
+	if p.MiningIncrement.IsNegative() {
+		return fmt.Errorf("treasury parameter MiningIncrement must be positive: %s", p.MiningIncrement)
+	}
+
+	if p.WindowShort < 0 {
+		return fmt.Errorf("treasury parameter WindowShort must be positive: %d", p.WindowShort)
+	}
+
+	if p.WindowLong <= p.WindowShort {
+		return fmt.Errorf("treasury parameter WindowLong must be bigger than WindowShort: (%d, %d)", p.WindowLong, p.WindowShort)
+	}
+
+	if p.WindowProbation < 0 {
+		return fmt.Errorf("treasury parameter WindowProbation must be positive: %d", p.WindowProbation)
 	}
 
 	return nil
@@ -98,29 +144,125 @@ func (params Params) Validate() error {
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // pairs of treasury module's parameters.
 // nolint
-func (params *Params) ParamSetPairs() subspace.ParamSetPairs {
-	return subspace.ParamSetPairs{
-		{Key: ParamStoreKeyTaxPolicy, Value: &params.TaxPolicy},
-		{Key: ParamStoreKeyRewardPolicy, Value: &params.RewardPolicy},
-		{Key: ParamStoreKeySeigniorageBurdenTarget, Value: &params.SeigniorageBurdenTarget},
-		{Key: ParamStoreKeyMiningIncrement, Value: &params.MiningIncrement},
-		{Key: ParamStoreKeyWindowShort, Value: &params.WindowShort},
-		{Key: ParamStoreKeyWindowLong, Value: &params.WindowLong},
-		{Key: ParamStoreKeyWindowProbation, Value: &params.WindowProbation},
+func (p *Params) ParamSetPairs() params.ParamSetPairs {
+	return params.ParamSetPairs{
+		params.NewParamSetPair(ParamStoreKeyTaxPolicy, &p.TaxPolicy, validateTaxPolicy),
+		params.NewParamSetPair(ParamStoreKeyRewardPolicy, &p.RewardPolicy, validateRewardPolicy),
+		params.NewParamSetPair(ParamStoreKeySeigniorageBurdenTarget, &p.SeigniorageBurdenTarget, validateSeigniorageBurdenTarget),
+		params.NewParamSetPair(ParamStoreKeyMiningIncrement, &p.MiningIncrement, validateMiningIncrement),
+		params.NewParamSetPair(ParamStoreKeyWindowShort, &p.WindowShort, validateWindowShort),
+		params.NewParamSetPair(ParamStoreKeyWindowLong, &p.WindowLong, validateWindowLong),
+		params.NewParamSetPair(ParamStoreKeyWindowProbation, &p.WindowProbation, validateWindowProbation),
 	}
 }
 
-// String implements fmt.Stringer interface
-func (params Params) String() string {
-	return fmt.Sprintf(`Treasury Params:
-  Tax Policy        : { %s } 
-  Reward Policy     : { %s }
+func validateTaxPolicy(i interface{}) error {
+	v, ok := i.(PolicyConstraints)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
 
-  SeigniorageBurdenTarget : %s
-  MiningIncrement         : %s
+	if v.RateMin.IsNegative() {
+		return fmt.Errorf("rate min must be positive: %s", v)
+	}
 
-  WindowShort        : %d
-  WindowLong         : %d
-  `, params.TaxPolicy, params.RewardPolicy, params.SeigniorageBurdenTarget,
-		params.MiningIncrement, params.WindowShort, params.WindowLong)
+	if v.RateMax.LT(v.RateMin) {
+		return fmt.Errorf("rate max must be bigger than rate min: %s", v)
+	}
+
+	if !v.Cap.IsValid() {
+		return fmt.Errorf("cap is invalid: %s", v)
+	}
+
+	if v.ChangeRateMax.IsNegative() {
+		return fmt.Errorf("max change rate must be positive: %s", v)
+	}
+
+	return nil
+}
+
+func validateRewardPolicy(i interface{}) error {
+	v, ok := i.(PolicyConstraints)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.RateMin.IsNegative() {
+		return fmt.Errorf("rate min must be positive: %s", v)
+	}
+
+	if v.RateMax.LT(v.RateMin) {
+		return fmt.Errorf("rate max must be bigger than rate min: %s", v)
+	}
+
+	if v.ChangeRateMax.IsNegative() {
+		return fmt.Errorf("max change rate must be positive: %s", v)
+	}
+
+	return nil
+}
+
+func validateSeigniorageBurdenTarget(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("seigniorage burden target must be positive: %s", v)
+	}
+
+	return nil
+}
+
+func validateMiningIncrement(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("mining increment must be positive: %s", v)
+	}
+
+	return nil
+}
+
+func validateWindowShort(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("window short must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateWindowLong(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("window long must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateWindowProbation(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("window probation must be positive: %d", v)
+	}
+
+	return nil
 }

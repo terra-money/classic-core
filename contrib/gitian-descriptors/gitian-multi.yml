@@ -1,0 +1,122 @@
+---
+name: "terra-multi"
+enable_cache: true
+distro: "ubuntu"
+suites:
+- "bionic"
+architectures:
+- "amd64"
+packages:
+- "bsdmainutils"
+- "build-essential"
+- "ca-certificates"
+- "curl"
+- "debhelper"
+- "dpkg-dev"
+- "devscripts"
+- "fakeroot"
+- "git"
+- "golang-any"
+- "xxd"
+- "quilt"
+remotes:
+- "url": "https://github.com/terra-project/core.git"
+  "dir": "core"
+files:
+- "go1.13.7.linux-amd64.tar.gz"
+script: |
+set -e -o pipefail
+
+GO_SRC_RELEASE=go1.13.7.linux-amd64
+GO_SRC_TARBALL="${GO_SRC_RELEASE}.tar.gz"
+# Compile go and configure the environment
+export TAR_OPTIONS="--mtime="$REFERENCE_DATE\\\ $REFERENCE_TIME""
+export BUILD_DIR=`pwd`
+tar xf "${GO_SRC_TARBALL}"
+rm -f "${GO_SRC_TARBALL}"
+[ -d go/ ]
+
+export GOROOT=${BUILD_DIR}/go
+export GOPATH=${BUILD_DIR}/gopath
+mkdir -p ${GOPATH}/bin
+
+export PATH_orig=${PATH}
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+
+declare -A OS_ARCHS
+OS_ARCHS[linux]='386 amd64 arm arm64'
+OS_ARCHS[darwin]='386 amd64'
+OS_ARCHS[windows]='386 amd64'
+
+export GO111MODULE=on
+
+# Make release tarball
+pushd terra
+VERSION=$(git describe --tags | sed 's/^v//')
+COMMIT=$(git log -1 --format='%H')
+DISTNAME=terra-${VERSION}
+git archive --format tar.gz --prefix ${DISTNAME}/ -o ${DISTNAME}.tar.gz HEAD
+SOURCEDIST=`pwd`/`echo terra-*.tar.gz`
+popd
+
+# Correct tar file order
+mkdir -p temp
+pushd temp
+tar xf $SOURCEDIST
+rm $SOURCEDIST
+find terra-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > $SOURCEDIST
+popd
+
+# Prepare GOPATH and install deps
+distsrc=${GOPATH}/src/github.com/terra-project/core
+mkdir -p ${distsrc}
+pushd ${distsrc}
+tar --strip-components=1 -xf $SOURCEDIST
+go mod download
+popd
+
+# Configure LDFLAGS for reproducible builds
+LDFLAGS="-buildid=${VERSION} -s -w \
+-X github.com/cosmos/cosmos-sdk/version.Name=terra \
+-X github.com/cosmos/cosmos-sdk/version.ServerName=terrad \
+-X github.com/cosmos/cosmos-sdk/version.ClientName=terracli \
+-X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} \
+-X github.com/cosmos/cosmos-sdk/version.Commit=${COMMIT} \
+-X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger"
+
+# Build
+
+# Extract release tarball and build
+for os in "${!OS_ARCHS[@]}"; do
+exe_file_extension=''
+if [ ${os} = windows ]; then
+exe_file_extension='.exe'
+fi
+
+for arch in ${OS_ARCHS[$os]} ; do
+INSTALLPATH=`pwd`/installed/
+mkdir -p ${INSTALLPATH}
+
+# Build terra tool suite
+pushd ${distsrc}
+for prog in terracli terrad; do
+GOOS=${os} GOARCH=${arch} GOROOT_FINAL=${GOROOT} go build -a \
+-trimpath \
+-mod=readonly -tags "netgo ledger" \
+-ldflags="${LDFLAGS}" \
+-o ${INSTALLPATH}/${DISTNAME}-${os}-${arch}-${prog}${exe_file_extension} ./cmd/${prog}
+
+done
+popd # ${distsrc}
+
+cp ${INSTALLPATH}/* ${OUTDIR}/
+  done
+
+  unset exe_file_extension
+
+done
+
+rm -rf ${distsrc}
+
+mkdir -p $OUTDIR/src
+mv $SOURCEDIST $OUTDIR/src

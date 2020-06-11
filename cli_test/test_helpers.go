@@ -12,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/stretchr/testify/require"
 
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -32,6 +30,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	authutils "github.com/terra-project/core/x/auth/client/utils"
 )
 
@@ -140,6 +139,8 @@ func InitFixtures(t *testing.T) (f *Fixtures) {
 	// reset test state
 	f.UnsafeResetAll()
 
+	f.CLIConfig("keyring-backend", "test")
+
 	// ensure keystore has foo and bar keys
 	f.KeysDelete(keyFoo)
 	f.KeysDelete(keyBar)
@@ -166,9 +167,15 @@ func InitFixtures(t *testing.T) (f *Fixtures) {
 	f.AddGenesisAccount(f.KeyAddress(keyFoo), startCoins)
 	f.AddGenesisAccount(
 		f.KeyAddress(keyVesting), startCoins,
-		fmt.Sprintf("--vesting-amount=%s", vestingCoins),
-		fmt.Sprintf("--vesting-start-time=%d", time.Now().UTC().UnixNano()),
-		fmt.Sprintf("--vesting-end-time=%d", time.Now().Add(60*time.Second).UTC().UnixNano()),
+		fmt.Sprintf("%s|%d|%d|%s,%s|%d|%d|%s",
+			feeDenom,
+			time.Now().UTC().Unix(),
+			time.Now().Add(time.Second*60).UTC().Unix(),
+			sdk.NewDecWithPrec(5, 1),
+			feeDenom,
+			time.Now().Add(time.Second*120).UTC().Unix(),
+			time.Now().Add(time.Second*180).UTC().Unix(),
+			sdk.NewDecWithPrec(5, 1)),
 	)
 
 	f.GenTx(keyFoo)
@@ -205,7 +212,7 @@ func (f *Fixtures) UnsafeResetAll(flags ...string) {
 // NOTE: TDInit sets the ChainID for the Fixtures instance
 func (f *Fixtures) TDInit(moniker string, flags ...string) {
 	cmd := fmt.Sprintf("%s init -o --home=%s %s", f.TerradBinary, f.TerradHome, moniker)
-	_, stderr := tests.ExecuteT(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	_, stderr := tests.ExecuteT(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 
 	var chainID string
 	var initRes map[string]json.RawMessage
@@ -221,20 +228,20 @@ func (f *Fixtures) TDInit(moniker string, flags ...string) {
 
 // AddGenesisAccount is terrad add-genesis-account
 func (f *Fixtures) AddGenesisAccount(address sdk.AccAddress, coins sdk.Coins, flags ...string) {
-	cmd := fmt.Sprintf("%s add-genesis-account %s %s --home=%s", f.TerradBinary, address, coins, f.TerradHome)
+	cmd := fmt.Sprintf("%s add-genesis-account %s %s --home=%s --keyring-backend=test", f.TerradBinary, address, coins, f.TerradHome)
 	executeWriteCheckErr(f.T, addFlags(cmd, flags))
 }
 
 // GenTx is terrad gentx
 func (f *Fixtures) GenTx(name string, flags ...string) {
-	cmd := fmt.Sprintf("%s gentx --name=%s --home=%s --home-client=%s --amount 100000000uluna", f.TerradBinary, name, f.TerradHome, f.TerracliHome)
-	executeWriteCheckErr(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s gentx --name=%s --home=%s --home-client=%s --amount 100000000uluna --keyring-backend=test", f.TerradBinary, name, f.TerradHome, f.TerracliHome)
+	executeWriteCheckErr(f.T, addFlags(cmd, flags))
 }
 
 // CollectGenTxs is terrad collect-gentxs
 func (f *Fixtures) CollectGenTxs(flags ...string) {
 	cmd := fmt.Sprintf("%s collect-gentxs --home=%s", f.TerradBinary, f.TerradHome)
-	executeWriteCheckErr(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	executeWriteCheckErr(f.T, addFlags(cmd, flags))
 }
 
 // TDStart runs terrad start with the appropriate flags and returns a process
@@ -266,31 +273,31 @@ func (f *Fixtures) ValidateGenesis() {
 
 // KeysDelete is terracli keys delete
 func (f *Fixtures) KeysDelete(name string, flags ...string) {
-	cmd := fmt.Sprintf("%s keys delete --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
+	cmd := fmt.Sprintf("%s keys delete --keyring-backend=test --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
 	executeWrite(f.T, addFlags(cmd, append(append(flags, "-y"), "-f")))
 }
 
 // KeysAdd is terracli keys add
 func (f *Fixtures) KeysAdd(name string, flags ...string) {
-	cmd := fmt.Sprintf("%s keys add --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
-	executeWriteCheckErr(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s keys add --keyring-backend=test --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
+	executeWriteCheckErr(f.T, addFlags(cmd, flags))
 }
 
 // KeysAddRecover prepares terracli keys add --recover
 func (f *Fixtures) KeysAddRecover(name, mnemonic string, flags ...string) (exitSuccess bool, stdout, stderr string) {
-	cmd := fmt.Sprintf("%s keys add --home=%s --recover %s", f.TerracliBinary, f.TerracliHome, name)
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass, mnemonic)
+	cmd := fmt.Sprintf("%s keys add --keyring-backend=test --home=%s --recover %s", f.TerracliBinary, f.TerracliHome, name)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), mnemonic)
 }
 
 // KeysAddRecoverHDPath prepares terracli keys add --recover --account --index
 func (f *Fixtures) KeysAddRecoverHDPath(name, mnemonic string, account uint32, index uint32, flags ...string) {
-	cmd := fmt.Sprintf("%s keys add --home=%s --recover %s --account %d --index %d", f.TerracliBinary, f.TerracliHome, name, account, index)
-	executeWriteCheckErr(f.T, addFlags(cmd, flags), client.DefaultKeyPass, mnemonic)
+	cmd := fmt.Sprintf("%s keys add --keyring-backend=test --home=%s --recover %s --account %d --index %d", f.TerracliBinary, f.TerracliHome, name, account, index)
+	executeWriteCheckErr(f.T, addFlags(cmd, flags), mnemonic)
 }
 
 // KeysShow is terracli keys show
 func (f *Fixtures) KeysShow(name string, flags ...string) keys.KeyOutput {
-	cmd := fmt.Sprintf("%s keys show --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
+	cmd := fmt.Sprintf("%s keys show --keyring-backend=test --home=%s %s", f.TerracliBinary, f.TerracliHome, name)
 	out, _ := tests.ExecuteT(f.T, addFlags(cmd, flags), "")
 	var ko keys.KeyOutput
 	err := clientkeys.UnmarshalJSON([]byte(out), &ko)
@@ -320,33 +327,33 @@ func (f *Fixtures) CLIConfig(key, value string, flags ...string) {
 
 // TxSend is terracli tx send
 func (f *Fixtures) TxSend(from string, to sdk.AccAddress, amount sdk.Coin, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx send %s %s %s %v", f.TerracliBinary, from, to, amount, f.Flags())
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s tx send --keyring-backend=test %s %s %s %v", f.TerracliBinary, from, to, amount, f.Flags())
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxSign is terracli tx sign
 func (f *Fixtures) TxSign(signer, fileName string, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx sign %v --from=%s %v", f.TerracliBinary, f.Flags(), signer, fileName)
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s tx sign %v --keyring-backend=test --from=%s %v", f.TerracliBinary, f.Flags(), signer, fileName)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxBroadcast is terracli tx broadcast
 func (f *Fixtures) TxBroadcast(fileName string, flags ...string) (bool, string, string) {
 	cmd := fmt.Sprintf("%s tx broadcast %v %v", f.TerracliBinary, f.Flags(), fileName)
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxEncode is terracli tx encode
 func (f *Fixtures) TxEncode(fileName string, flags ...string) (bool, string, string) {
 	cmd := fmt.Sprintf("%s tx encode %v %v", f.TerracliBinary, f.Flags(), fileName)
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxMultisign is terracli tx multisign
 func (f *Fixtures) TxMultisign(fileName, name string, signaturesFiles []string,
 	flags ...string) (bool, string, string) {
 
-	cmd := fmt.Sprintf("%s tx multisign %v %s %s %s", f.TerracliBinary, f.Flags(),
+	cmd := fmt.Sprintf("%s tx multisign --keyring-backend=test %v %s %s %s", f.TerracliBinary, f.Flags(),
 		fileName, name, strings.Join(signaturesFiles, " "),
 	)
 	return executeWriteRetStdStreams(f.T, cmd)
@@ -363,17 +370,18 @@ func (f *Fixtures) TxEstimateFee(fileName string, flags ...string) (bool, string
 
 // TxStakingCreateValidator is terracli tx staking create-validator
 func (f *Fixtures) TxStakingCreateValidator(from, consPubKey string, amount sdk.Coin, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx staking create-validator %v --from=%s --pubkey=%s", f.TerracliBinary, f.Flags(), from, consPubKey)
+	cmd := fmt.Sprintf("%s tx staking create-validator %v --keyring-backend=test --from=%s"+
+		" --pubkey=%s", f.TerracliBinary, f.Flags(), from, consPubKey)
 	cmd += fmt.Sprintf(" --amount=%v --moniker=%v --commission-rate=%v", amount, from, "0.05")
 	cmd += fmt.Sprintf(" --commission-max-rate=%v --commission-max-change-rate=%v", "0.20", "0.10")
 	cmd += fmt.Sprintf(" --min-self-delegation=%v", "1")
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxStakingUnbond is terracli tx staking unbond
 func (f *Fixtures) TxStakingUnbond(from, shares string, validator sdk.ValAddress, flags ...string) bool {
-	cmd := fmt.Sprintf("%s tx staking unbond %s %v --from=%s %v", f.TerracliBinary, validator, shares, from, f.Flags())
-	return executeWrite(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s tx staking unbond %s %v --keyring-backend=test --from=%s %v", f.TerracliBinary, validator, shares, from, f.Flags())
+	return executeWrite(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 //___________________________________________________________________________________
@@ -381,21 +389,21 @@ func (f *Fixtures) TxStakingUnbond(from, shares string, validator sdk.ValAddress
 
 // TxGovSubmitProposal is terracli tx gov submit-proposal
 func (f *Fixtures) TxGovSubmitProposal(from, typ, title, description string, deposit sdk.Coin, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx gov submit-proposal %v --from=%s --type=%s", f.TerracliBinary, f.Flags(), from, typ)
+	cmd := fmt.Sprintf("%s tx gov submit-proposal %v --keyring-backend=test --from=%s --type=%s", f.TerracliBinary, f.Flags(), from, typ)
 	cmd += fmt.Sprintf(" --title=%s --description=%s --deposit=%s", title, description, deposit)
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxGovDeposit is terracli tx gov deposit
 func (f *Fixtures) TxGovDeposit(proposalID int, from string, amount sdk.Coin, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx gov deposit %d %s --from=%s %v", f.TerracliBinary, proposalID, amount, from, f.Flags())
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s tx gov deposit %d %s --keyring-backend=test --from=%s %v", f.TerracliBinary, proposalID, amount, from, f.Flags())
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxGovVote is terracli tx gov vote
 func (f *Fixtures) TxGovVote(proposalID int, option gov.VoteOption, from string, flags ...string) (bool, string, string) {
-	cmd := fmt.Sprintf("%s tx gov vote %d %s --from=%s %v", f.TerracliBinary, proposalID, option, from, f.Flags())
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	cmd := fmt.Sprintf("%s tx gov vote %d %s --keyring-backend=test --from=%s %v", f.TerracliBinary, proposalID, option, from, f.Flags())
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxGovSubmitParamChangeProposal executes a CLI parameter change proposal
@@ -405,11 +413,11 @@ func (f *Fixtures) TxGovSubmitParamChangeProposal(
 ) (bool, string, string) {
 
 	cmd := fmt.Sprintf(
-		"%s tx gov submit-proposal param-change %s --from=%s %v",
+		"%s tx gov submit-proposal param-change %s --keyring-backend=test --from=%s %v",
 		f.TerracliBinary, proposalPath, from, f.Flags(),
 	)
 
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 // TxGovSubmitCommunityPoolSpendProposal executes a CLI community pool spend proposal
@@ -419,11 +427,11 @@ func (f *Fixtures) TxGovSubmitCommunityPoolSpendProposal(
 ) (bool, string, string) {
 
 	cmd := fmt.Sprintf(
-		"%s tx gov submit-proposal community-pool-spend %s --from=%s %v",
+		"%s tx gov submit-proposal community-pool-spend %s --keyring-backend=test --from=%s %v",
 		f.TerracliBinary, proposalPath, from, f.Flags(),
 	)
 
-	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), client.DefaultKeyPass)
+	return executeWriteRetStdStreams(f.T, addFlags(cmd, flags), clientkeys.DefaultKeyPass)
 }
 
 //___________________________________________________________________________________
@@ -564,7 +572,7 @@ func (f *Fixtures) QueryGovParamTallying() gov.TallyParams {
 func (f *Fixtures) QueryGovProposals(flags ...string) gov.Proposals {
 	cmd := fmt.Sprintf("%s query gov proposals %v", f.TerracliBinary, f.Flags())
 	stdout, stderr := tests.ExecuteT(f.T, addFlags(cmd, flags), "")
-	if strings.Contains(stderr, "No matching proposals found") {
+	if strings.Contains(stderr, "no matching proposals found") {
 		return gov.Proposals{}
 	}
 	require.Empty(f.T, stderr)
@@ -699,6 +707,25 @@ func (f *Fixtures) QueryTotalSupplyOf(denom string, flags ...string) sdk.Int {
 }
 
 //___________________________________________________________________________________
+// query evidence
+
+type Params struct {
+	MaxEvidenceAge time.Duration `json:"max_evidence_age" yaml:"max_evidence_age"`
+}
+
+// QueryEvidenceParams is terracli query evidence params
+func (f *Fixtures) QueryEvidenceParams() Params {
+	cmd := fmt.Sprintf("%s query evidence params %s", f.TerracliBinary, f.Flags())
+	res, errStr := tests.ExecuteT(f.T, cmd, "")
+	require.Empty(f.T, errStr)
+	cdc := app.MakeCodec()
+	var params Params
+	err := cdc.UnmarshalJSON([]byte(res), &params)
+	require.NoError(f.T, err)
+	return params
+}
+
+//___________________________________________________________________________________
 // executors
 
 func executeWriteCheckErr(t *testing.T, cmdStr string, writes ...string) {
@@ -766,6 +793,7 @@ func WriteToNewTempFile(t *testing.T, s string) *os.File {
 	return fp
 }
 
+//nolint:deadcode,unused
 func marshalStdTx(t *testing.T, stdTx authtypes.StdTx) []byte {
 	cdc := app.MakeCodec()
 	bz, err := cdc.MarshalBinaryBare(stdTx)
@@ -773,12 +801,14 @@ func marshalStdTx(t *testing.T, stdTx authtypes.StdTx) []byte {
 	return bz
 }
 
+//nolint:deadcode,unused
 func unmarshalStdTx(t *testing.T, s string) (stdTx authtypes.StdTx) {
 	cdc := app.MakeCodec()
 	require.Nil(t, cdc.UnmarshalJSON([]byte(s), &stdTx))
 	return
 }
 
+//nolint:deadcode,unused
 func unmarshalEstimateFeeResult(t *testing.T, s string) (result authutils.EstimateFeeResp) {
 	cdc := app.MakeCodec()
 	require.Nil(t, cdc.UnmarshalJSON([]byte(s), &result))
