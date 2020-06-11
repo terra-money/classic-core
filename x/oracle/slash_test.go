@@ -22,13 +22,38 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	SlashAndResetMissCounters(input.Ctx, input.OracleKeeper)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
-	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
+	validator, _ := input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, stakingAmt, validator.GetBondedTokens())
 
 	// Case 2, slash
 	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], votePeriodsPerWindow-minValidVotes+1)
 	SlashAndResetMissCounters(input.Ctx, input.OracleKeeper)
-	validator = input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
+	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, stakingAmt.Sub(slashFraction.MulInt(stakingAmt).TruncateInt()), validator.GetBondedTokens())
 	require.True(t, validator.IsJailed())
+
+	// Case 3, slash unbonded validator
+	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
+	validator.Status = sdk.Unbonded
+	validator.Jailed = false
+	validator.Tokens = stakingAmt
+	input.StakingKeeper.SetValidator(input.Ctx, validator)
+
+	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], votePeriodsPerWindow-minValidVotes+1)
+	SlashAndResetMissCounters(input.Ctx, input.OracleKeeper)
+	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
+	require.Equal(t, stakingAmt, validator.Tokens)
+	require.False(t, validator.IsJailed())
+
+	// Case 4, slash jailed validator
+	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
+	validator.Status = sdk.Bonded
+	validator.Jailed = true
+	validator.Tokens = stakingAmt
+	input.StakingKeeper.SetValidator(input.Ctx, validator)
+
+	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], votePeriodsPerWindow-minValidVotes+1)
+	SlashAndResetMissCounters(input.Ctx, input.OracleKeeper)
+	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
+	require.Equal(t, stakingAmt, validator.Tokens)
 }

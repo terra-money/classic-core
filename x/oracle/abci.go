@@ -114,7 +114,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	// Do slash who did miss voting over threshold and
 	// reset miss counters of all validators at the last block of slash window
-	if core.IsPeriodLastBlock(ctx, params.VotePeriod*params.SlashWindow) {
+	if core.IsPeriodLastBlock(ctx, params.SlashWindow) {
 		SlashAndResetMissCounters(ctx, k)
 	}
 
