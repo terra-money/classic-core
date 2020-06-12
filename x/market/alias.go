@@ -11,18 +11,14 @@ import (
 )
 
 const (
-	DefaultCodespace     = types.DefaultCodespace
-	CodeInsufficientSwap = types.CodeInvalidOfferCoin
-	CodeNoEffectivePrice = types.CodeNoEffectivePrice
-	CodeRecursiveSwap    = types.CodeRecursiveSwap
-	ModuleName           = types.ModuleName
-	StoreKey             = types.StoreKey
-	RouterKey            = types.RouterKey
-	QuerierRoute         = types.QuerierRoute
-	DefaultParamspace    = types.DefaultParamspace
-	QuerySwap            = types.QuerySwap
-	QueryTerraPoolDelta  = types.QueryTerraPoolDelta
-	QueryParameters      = types.QueryParameters
+	ModuleName          = types.ModuleName
+	StoreKey            = types.StoreKey
+	RouterKey           = types.RouterKey
+	QuerierRoute        = types.QuerierRoute
+	DefaultParamspace   = types.DefaultParamspace
+	QuerySwap           = types.QuerySwap
+	QueryTerraPoolDelta = types.QueryTerraPoolDelta
+	QueryParameters     = types.QueryParameters
 )
 
 var (
@@ -37,8 +33,8 @@ var (
 	NewMsgSwap          = types.NewMsgSwap
 	DefaultParams       = types.DefaultParams
 	NewQuerySwapParams  = types.NewQuerySwapParams
+	ParamKeyTable       = types.ParamKeyTable
 	NewKeeper           = keeper.NewKeeper
-	ParamKeyTable       = keeper.ParamKeyTable
 	NewQuerier          = keeper.NewQuerier
 
 	// variable aliases

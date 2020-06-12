@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
@@ -83,7 +82,7 @@ func ComputeFeesWithStdTx(
 		return nil, 0, err
 	}
 
-	fees = fees.Add(taxes)
+	fees = fees.Add(taxes...)
 
 	if !gasPrices.IsZero() {
 		glDec := sdk.NewDec(int64(gas))
@@ -96,7 +95,7 @@ func ComputeFeesWithStdTx(
 			gasFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
 		}
 
-		fees = fees.Add(gasFees.Sort())
+		fees = fees.Add(gasFees.Sort()...)
 	}
 
 	return
@@ -121,23 +120,20 @@ func ComputeFees(
 	req ComputeReqParams) (fees sdk.Coins, gas uint64, err error) {
 
 	gasPrices := req.GasPrices
-	gasAdj, err := ParseFloat64(req.GasAdjustment, client.DefaultGasAdjustment)
+	gasAdj, err := ParseFloat64(req.GasAdjustment, flags.DefaultGasAdjustment)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if req.Gas == "0" {
-		req.Gas = client.GasFlagAuto
+		req.Gas = flags.GasFlagAuto
 	}
 
-	sim, gas, err := client.ParseGas(req.Gas)
+	sim, gas, err := flags.ParseGas(req.Gas)
 	txBldr := auth.NewTxBuilder(
-		utils.GetTxEncoder(cliCtx.Codec), req.AccountNumber, req.Sequence, client.DefaultGasLimit, gasAdj,
+		utils.GetTxEncoder(cliCtx.Codec), req.AccountNumber, req.Sequence, flags.DefaultGasLimit, gasAdj,
 		sim, req.ChainID, req.Memo, sdk.Coins{}, req.GasPrices,
 	)
-
-	kb, _ := keys.NewKeyBaseFromHomeFlag()
-	txBldr = txBldr.WithKeybase(kb)
 
 	if sim {
 		txBldr, err = utils.EnrichWithGas(txBldr, cliCtx, req.Msgs)
@@ -154,7 +150,7 @@ func ComputeFees(
 		return nil, 0, err
 	}
 
-	fees = fees.Add(taxes)
+	fees = fees.Add(taxes...)
 
 	if !gasPrices.IsZero() {
 		glDec := sdk.NewDec(int64(gas))
@@ -167,7 +163,7 @@ func ComputeFees(
 			gasFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
 		}
 
-		fees = fees.Add(gasFees.Sort())
+		fees = fees.Add(gasFees.Sort()...)
 	}
 
 	return
@@ -188,7 +184,7 @@ func filterMsgAndComputeTax(cliCtx context.CLIContext, msgs []sdk.Msg) (taxes sd
 				return nil, err
 			}
 
-			taxes = taxes.Add(tax)
+			taxes = taxes.Add(tax...)
 
 		case bank.MsgMultiSend:
 			for _, input := range msg.Inputs {
@@ -197,7 +193,7 @@ func filterMsgAndComputeTax(cliCtx context.CLIContext, msgs []sdk.Msg) (taxes sd
 					return nil, err
 				}
 
-				taxes = taxes.Add(tax)
+				taxes = taxes.Add(tax...)
 			}
 		}
 	}
@@ -230,7 +226,7 @@ func computeTax(cliCtx context.CLIContext, taxRate sdk.Dec, principal sdk.Coins)
 			continue
 		}
 
-		taxes = taxes.Add(sdk.NewCoins(sdk.NewCoin(coin.Denom, taxDue)))
+		taxes = taxes.Add(sdk.NewCoin(coin.Denom, taxDue))
 	}
 
 	return

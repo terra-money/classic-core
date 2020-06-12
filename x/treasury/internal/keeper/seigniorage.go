@@ -49,6 +49,6 @@ func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 
 	// Update distribution community pool
 	feePool := k.distrKeeper.GetFeePool(ctx)
-	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoins(leftCoins))
+	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(leftCoins...)...)
 	k.distrKeeper.SetFeePool(ctx, feePool)
 }

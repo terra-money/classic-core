@@ -7,19 +7,20 @@ import (
 
 // SupplyKeeper defines expected supply keeper
 type SupplyKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
 	GetModuleAccount(ctx sdk.Context, moduleName string) supplyexported.ModuleAccountI
 	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
-	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) sdk.Error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) sdk.Error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) sdk.Error
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 
-	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) sdk.Error
-	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) sdk.Error
+	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
+	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 }
 
 // OracleKeeper defines expected oracle keeper
 type OracleKeeper interface {
-	GetLunaExchangeRate(ctx sdk.Context, denom string) (price sdk.Dec, err sdk.Error)
-	GetCrossExchangeRateExported(ctx sdk.Context, denom1, denom2 string) (crossExchangeRate sdk.Dec, err sdk.Error)
-	GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, err sdk.Error)
+	GetLunaExchangeRate(ctx sdk.Context, denom string) (price sdk.Dec, err error)
+	GetCrossExchangeRateExported(ctx sdk.Context, denom1, denom2 string) (crossExchangeRate sdk.Dec, err error)
+	GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, err error)
 }

@@ -1,53 +1,51 @@
 package market
 
 import (
-	"reflect"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/terra-project/core/x/market/internal/types"
 )
 
 // NewHandler creates a new handler for all market type messages.
 func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
 		case MsgSwap:
 			return handleMsgSwap(ctx, k, msg)
 		default:
-			errMsg := "Unrecognized market Msg type: " + reflect.TypeOf(msg).Name()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
 		}
 	}
 }
 
 // handleMsgSwap handles the logic of a MsgSwap
-func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
+func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) (*sdk.Result, error) {
 
 	// Can't swap to the same coin
 	if ms.OfferCoin.Denom == ms.AskDenom {
-		return ErrRecursiveSwap(DefaultCodespace, ms.AskDenom).Result()
+		return nil, sdkerrors.Wrap(ErrRecursiveSwap, ms.AskDenom)
 	}
 
 	// Compute exchange rates between the ask and offer
 	swapCoin, spread, swapErr := k.ComputeSwap(ctx, ms.OfferCoin, ms.AskDenom)
 	if swapErr != nil {
-		return swapErr.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "ComputeSwap failed: %s", swapErr.Error())
 	}
 
 	// Update pool delta
 	deltaUpdateErr := k.ApplySwapToPool(ctx, ms.OfferCoin, swapCoin)
 	if deltaUpdateErr != nil {
-		return deltaUpdateErr.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "ApplySwapToPool failed: %s", deltaUpdateErr.Error())
 	}
 
 	// Send offer coins to module account
 	offerCoins := sdk.NewCoins(ms.OfferCoin)
 	err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ms.Trader, ModuleName, offerCoins)
 	if err != nil {
-		return err.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "SendCoinsFromAccountToModule failed: %s", err.Error())
 	}
 
 	// Charge a spread if applicable; distributed to vote winners in the oracle module
@@ -65,7 +63,7 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	// Burn offered coins and subtract from the trader's account
 	burnErr := k.SupplyKeeper.BurnCoins(ctx, ModuleName, offerCoins)
 	if burnErr != nil {
-		return burnErr.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "BurnCoins failed: %s", burnErr.Error())
 	}
 
 	// Mint asked coins and credit Trader's account
@@ -74,12 +72,12 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 	swapCoins := sdk.NewCoins(retCoin)
 	mintErr := k.SupplyKeeper.MintCoins(ctx, ModuleName, swapCoins)
 	if mintErr != nil {
-		return mintErr.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "MintCoins failed: %s", mintErr.Error())
 	}
 
 	sendErr := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, ms.Trader, swapCoins)
 	if sendErr != nil {
-		return sendErr.Result()
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "SendCoinsFromModuleToAccount failed: %s", sendErr.Error())
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -96,5 +94,5 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }

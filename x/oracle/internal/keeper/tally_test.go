@@ -21,11 +21,10 @@ func TestTallyCrossRate(t *testing.T) {
 	ctx := input.Ctx
 
 	// Validator created
-	var got sdk.Result
 	valiCount := 5
 	for i := 0; i < valiCount; i++ {
-		got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[i], PubKeys[i], amt))
-		require.True(t, got.IsOK())
+		_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[i], PubKeys[i], amt))
+		require.NoError(t, err)
 	}
 	staking.EndBlocker(ctx, input.StakingKeeper)
 

@@ -1,8 +1,8 @@
 package types
 
 import (
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"gopkg.in/yaml.v2"
 	"strings"
 )
 
@@ -14,10 +14,8 @@ type Denom struct {
 
 // String implements fmt.Stringer interface
 func (d Denom) String() string {
-	return fmt.Sprintf(`
-Name:           %s
-TobinTax:       %s
-`, d.Name, d.TobinTax)
+	out, _ := yaml.Marshal(d)
+	return string(out)
 }
 
 // DenomList is array of Denom

@@ -89,7 +89,7 @@ func ValidateGenesis(data GenesisState) error {
 		return fmt.Errorf("TSLs must have same length with epoch of cumulated_height %d", data.CumulatedHeight)
 	}
 
-	return data.Params.Validate()
+	return data.Params.ValidateBasic()
 }
 
 // Equal checks whether 2 GenesisState structs are equivalent.

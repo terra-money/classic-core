@@ -3,8 +3,8 @@ package keeper
 import (
 	"testing"
 
-	core "github.com/terra-project/core/types"
 	"github.com/stretchr/testify/require"
+	core "github.com/terra-project/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

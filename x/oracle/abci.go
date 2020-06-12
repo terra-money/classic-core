@@ -75,7 +75,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		}
 
 		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := Tally(ballot, params.RewardBand)
+		ballotMedian, ballotWinningClaims := k.Tally(ballot, params.RewardBand)
 
 		// Set the exchange rate
 		k.SetLunaExchangeRate(ctx, denom, ballotMedian)

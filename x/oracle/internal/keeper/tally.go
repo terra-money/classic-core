@@ -17,7 +17,7 @@ func (k Keeper) BallotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot
 
 // Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec) (weightedMedian sdk.Dec, ballotWinners []types.Claim) {
+func (k Keeper) Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec) (weightedMedian sdk.Dec, ballotWinners []types.Claim) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}

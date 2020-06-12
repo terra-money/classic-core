@@ -22,9 +22,10 @@ type DistributionKeeper interface {
 
 // SupplyKeeper is expected keeper for supply module
 type SupplyKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
 	GetModuleAccount(ctx sdk.Context, moduleName string) supplyexported.ModuleAccountI
 	SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
 	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
 	SetSupply(ctx sdk.Context, supply supplyexported.SupplyI)
-	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) sdk.Error
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 }

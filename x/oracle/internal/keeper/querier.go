@@ -4,6 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/terra-project/core/x/oracle/internal/types"
@@ -11,7 +13,7 @@ import (
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 		case types.QueryExchangeRate:
 			return queryExchangeRate(ctx, req, keeper)
@@ -46,32 +48,32 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case types.QueryTobinTaxes:
 			return queryTobinTaxes(ctx, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown oracle query endpoint")
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
 		}
 	}
 }
 
-func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryExchangeRateParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	rate, err := keeper.GetLunaExchangeRate(ctx, params.Denom)
 	if err != nil {
-		return nil, types.ErrUnknownDenomination(types.DefaultCodespace, params.Denom)
+		return nil, sdkerrors.Wrap(types.ErrUnknowDenom, params.Denom)
 	}
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, rate)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var rates sdk.DecCoins
 
 	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
@@ -81,13 +83,13 @@ func queryExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryCrossExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryCrossExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var rates types.CrossExchangeRates
 
 	keeper.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
@@ -97,18 +99,18 @@ func queryCrossExchangeRates(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error)
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryCrossExchangeRatesWithDenom(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryCrossExchangeRatesWithDenom(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var rates types.CrossExchangeRates
 	var params types.QueryCrossExchangeRatesWithDenomParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	keeper.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
@@ -120,32 +122,32 @@ func queryCrossExchangeRatesWithDenom(ctx sdk.Context, req abci.RequestQuery, ke
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, rates)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryCrossExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryCrossExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryCrossExchangeRateParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	cer, err := keeper.GetCrossExchangeRate(ctx, params.Denom1, params.Denom2)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, err
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, cer)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryActives(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryActives(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	denoms := []string{}
 
 	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
@@ -155,17 +157,17 @@ func queryActives(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryVotesParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	filteredVotes := types.ExchangeRateVotes{}
@@ -197,16 +199,16 @@ func queryVotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredVotes)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryPrevotesParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	filteredPrevotes := types.ExchangeRatePrevotes{}
@@ -238,118 +240,118 @@ func queryPrevotes(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, filteredPrevotes)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryParameters(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryParameters(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetParams(ctx))
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryFeederDelegation(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryFeederDelegationParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	delegate := keeper.GetOracleDelegate(ctx, params.Validator)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, delegate)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryMissCounter(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryMissCounter(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryMissCounterParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	missCounter := keeper.GetMissCounter(ctx, params.Validator)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, missCounter)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryAggregatePrevote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryAggregatePrevote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryAggregatePrevoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	aggregateExchangeRatePrevote, err := keeper.GetAggregateExchangeRatePrevote(ctx, params.Validator)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, err
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRatePrevote)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryAggregateVote(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryAggregateVoteParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	aggregateExchangeRateVote, err := keeper.GetAggregateExchangeRateVote(ctx, params.Validator)
 	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
+		return nil, err
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, aggregateExchangeRateVote)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
-func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryVoteTargets(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	voteTargets := keeper.GetVoteTargets(ctx)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, voteTargets)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryTobinTax(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryTobinTax(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params types.QueryTobinTaxParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	tobinTax, err := keeper.GetTobinTax(ctx, params.Denom)
 	if err != nil {
-		return nil, types.ErrUnknownDenomination(types.DefaultCodespace, params.Denom)
+		return nil, err
 	}
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, tobinTax)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err2.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil
 }
 
-func queryTobinTaxes(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
+func queryTobinTaxes(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var denoms types.DenomList
 
 	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
@@ -359,7 +361,7 @@ func queryTobinTaxes(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, denoms)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return bz, nil

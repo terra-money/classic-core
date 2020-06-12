@@ -102,8 +102,6 @@ update-swagger-docs: statik
     else \
     	echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
-.PHONY: update-swagger-docs
-
 
 ########################################
 ### Tools & dependencies
@@ -124,8 +122,12 @@ draw-deps:
 clean:
 	rm -rf snapcraft-local.yaml build/
 
-distclean: clean
-	rm -rf vendor/
+distclean:
+	rm -rf \
+    gitian-build-darwin/ \
+    gitian-build-linux/ \
+    gitian-build-windows/ \
+    .gitian-builder-cache/
 
 ########################################
 ### Testing
@@ -144,7 +146,7 @@ test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
 test-build: build
-	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags=cli_test -v
+	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags='cli_test skipsecretserviceintegrationtests' -v
 
 
 lint: golangci-lint
@@ -168,8 +170,9 @@ build-docker-terradnode:
 	$(MAKE) -C networks/local
 
 # Run a 4-node testnet locally
-localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
+
+localnet-start: build-linux localnet-stop
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 
 # Stop testnet
@@ -179,7 +182,7 @@ localnet-stop:
 # include simulations
 include sims.mk
 
-.PHONY: all build-linux install install-debug \
-	go-mod-cache draw-deps clean build \
+.PHONY: all build-linux install install-debug format lint \
+	go-mod-cache draw-deps distclean build update-swagger-docs \
 	setup-transactions setup-contract-tests-data start-terra run-lcd-contract-tests contract-tests \
 	test test-all test-build test-cover test-unit test-race

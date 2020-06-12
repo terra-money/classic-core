@@ -1,41 +1,13 @@
 package types
 
 import (
-	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-type codeType = sdk.CodeType
-
-// market error codes
-const (
-	DefaultCodespace sdk.CodespaceType = "market"
-
-	CodeInvalidOfferCoin      codeType = 1
-	CodeNoEffectivePrice      codeType = 2
-	CodeRecursiveSwap         codeType = 3
-	CodeNoEffectiveCrossPrice codeType = 4
+// Market errors
+var (
+	ErrNoEffectivePrice      = sdkerrors.Register(ModuleName, 1, "no price registered with oracle")
+	ErrInvalidOfferCoin      = sdkerrors.Register(ModuleName, 2, "invalid offer coin")
+	ErrRecursiveSwap         = sdkerrors.Register(ModuleName, 3, "recursive swap")
+	ErrNoEffectiveCrossPrice = sdkerrors.Register(ModuleName, 4, "no price registered with the oracle for denom pair")
 )
-
-// ----------------------------------------
-// Error constructors
-
-// ErrNoEffectivePrice called when a price for the asset is not registered with the oracle
-func ErrNoEffectivePrice(codespace sdk.CodespaceType, denom string) sdk.Error {
-	return sdk.NewError(codespace, CodeNoEffectivePrice, "No price registered with the oracle for asset: "+denom)
-}
-
-// ErrInvalidOfferCoin called when not enough or too huge coins are being requested for a swap
-func ErrInvalidOfferCoin(codespace sdk.CodespaceType, rval sdk.Int) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidOfferCoin, "Invalid offer coin for a swap: "+rval.String())
-}
-
-// ErrRecursiveSwap called when Ask and Offer coin denominatioins are equal
-func ErrRecursiveSwap(codespace sdk.CodespaceType, denom string) sdk.Error {
-	return sdk.NewError(codespace, CodeRecursiveSwap, "Can't swap tokens with the same denomination: "+denom)
-}
-
-// ErrNoEffectiveCrossPrice called when a price for the asset is not registered with the oracle
-func ErrNoEffectiveCrossPrice(codespace sdk.CodespaceType, denom1, denom2 string) sdk.Error {
-	return sdk.NewError(codespace, CodeNoEffectivePrice, fmt.Sprintf("No price registered with the oracle for asset denom pair %s, %s", denom1, denom2))
-}

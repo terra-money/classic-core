@@ -22,12 +22,12 @@ func TestOrganize(t *testing.T) {
 	ctx := input.Ctx
 
 	// Validator created
-	got := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
-	require.True(t, got.IsOK())
+	_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
+	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
@@ -70,12 +70,12 @@ func TestOrganizeAggregate(t *testing.T) {
 	ctx := input.Ctx
 
 	// Validator created
-	got := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
-	require.True(t, got.IsOK())
+	_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
+	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
@@ -118,12 +118,12 @@ func TestDuplicateVote(t *testing.T) {
 	ctx := input.Ctx
 
 	// Validator created
-	got := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
-	require.True(t, got.IsOK())
-	got = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
-	require.True(t, got.IsOK())
+	_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], PubKeys[0], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], PubKeys[1], amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], PubKeys[2], amt))
+	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{

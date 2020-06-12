@@ -2,8 +2,12 @@ package types
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"strconv"
+
 	"github.com/tendermint/tendermint/crypto/tmhash"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // ensure Msg interface compliance at compile time
@@ -56,22 +60,22 @@ func (msg MsgExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgExchangeRatePrevote) ValidateBasic() sdk.Error {
+func (msg MsgExchangeRatePrevote) ValidateBasic() error {
 
 	if len(msg.Hash) != tmhash.TruncatedSize {
-		return ErrInvalidHashLength(DefaultCodespace, len(msg.Hash))
+		return ErrInvalidHashLength
 	}
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknownDenomination(DefaultCodespace, "")
+		return ErrUnknowDenom
 	}
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid feeder address")
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid validator address")
 	}
 
 	return nil
@@ -127,27 +131,27 @@ func (msg MsgExchangeRateVote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgExchangeRateVote) ValidateBasic() sdk.Error {
+func (msg MsgExchangeRateVote) ValidateBasic() error {
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknownDenomination(DefaultCodespace, "")
+		return ErrUnknowDenom
 	}
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid feeder address")
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid validator address")
 	}
 
 	// Check overflow bit length
 	if msg.ExchangeRate.BitLen() > 100+sdk.DecimalPrecisionBits {
-		return ErrInvalidExchangeRate(DefaultCodespace, msg.ExchangeRate)
+		return sdkerrors.Wrap(ErrInvalidExchangeRate, msg.ExchangeRate.String())
 	}
 
-	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
-		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+	if l := len(msg.Salt); l > 4 || l < 1 {
+		return sdkerrors.Wrap(ErrInvalidSaltLength, strconv.FormatInt(int64(l), 10))
 	}
 
 	return nil
@@ -156,11 +160,11 @@ func (msg MsgExchangeRateVote) ValidateBasic() sdk.Error {
 // String implements fmt.Stringer interface
 func (msg MsgExchangeRateVote) String() string {
 	return fmt.Sprintf(`MsgExchangeRateVote
-	exchangerate:      %s,
-	salt:       %s,
-	feeder:     %s, 
-	validator:  %s, 
-	denom:      %s`,
+	exchange_rate:      %s,
+	salt:               %s,
+	feeder:             %s, 
+	validator:          %s, 
+	denom:              %s`,
 		msg.ExchangeRate, msg.Salt, msg.Feeder, msg.Validator, msg.Denom)
 }
 
@@ -195,13 +199,13 @@ func (msg MsgDelegateFeedConsent) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgDelegateFeedConsent) ValidateBasic() sdk.Error {
+func (msg MsgDelegateFeedConsent) ValidateBasic() error {
 	if msg.Operator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid validator address")
 	}
 
 	if msg.Delegate.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Operator.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid delegate address")
 	}
 
 	return nil
@@ -211,7 +215,7 @@ func (msg MsgDelegateFeedConsent) ValidateBasic() sdk.Error {
 func (msg MsgDelegateFeedConsent) String() string {
 	return fmt.Sprintf(`MsgDelegateFeedConsent
 	operator:    %s, 
-	delegate:   %s`,
+	delegate:    %s`,
 		msg.Operator, msg.Delegate)
 }
 
@@ -250,18 +254,18 @@ func (msg MsgAggregateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic Implements sdk.Msg
-func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() sdk.Error {
+func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() error {
 
 	if len(msg.Hash) != tmhash.TruncatedSize {
-		return ErrInvalidHashLength(DefaultCodespace, len(msg.Hash))
+		return ErrInvalidHashLength
 	}
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid feeder address")
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid validator address")
 	}
 
 	return nil
@@ -311,36 +315,36 @@ func (msg MsgAggregateExchangeRateVote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgAggregateExchangeRateVote) ValidateBasic() sdk.Error {
+func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 
 	if msg.Feeder.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid feeder address")
 	}
 
 	if msg.Validator.Empty() {
-		return sdk.ErrInvalidAddress("Invalid address: " + msg.Feeder.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "must give valid validator address")
 	}
 
 	if l := len(msg.ExchangeRates); l == 0 {
-		return sdk.ErrUnknownRequest("must provide at least one oracle exchange rate")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "must provide at least one oracle exchange rate")
 	} else if l > 4096 {
-		return sdk.ErrInternal("exchange rates string can not exceed 512 character")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exchange rates string can not exceed 4096 characters")
 	}
 
 	exchangeRateTuples, err := ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return sdk.ErrInvalidCoins(err.Error())
+		return sdkerrors.Wrap(err, "failed to parse exchange rates string")
 	}
 
 	for _, tuple := range exchangeRateTuples {
 		// Check overflow bit length
 		if tuple.ExchangeRate.BitLen() > 100+sdk.DecimalPrecisionBits {
-			return ErrInvalidExchangeRate(DefaultCodespace, tuple.ExchangeRate)
+			return sdkerrors.Wrap(ErrInvalidExchangeRate, "overflow")
 		}
 	}
 
 	if len(msg.Salt) > 4 || len(msg.Salt) < 1 {
-		return ErrInvalidSaltLength(DefaultCodespace, len(msg.Salt))
+		return sdkerrors.Wrap(ErrInvalidSaltLength, "salt length must be [1, 4]")
 	}
 
 	return nil
