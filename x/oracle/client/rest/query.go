@@ -126,7 +126,7 @@ func queryExchangeRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFun
 		}
 
 		vars := mux.Vars(r)
-		denom := vars[RestDenom1]
+		denom := vars[RestDenom]
 
 		params := types.NewQueryExchangeRateParams(denom)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
