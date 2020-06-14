@@ -13,5 +13,6 @@ var (
 	RegisterCodec = types.RegisterCodec
 
 	// variable aliases
-	ModuleCdc = types.ModuleCdc
+	ModuleCdc      = types.ModuleCdc
+	BurnModuleName = types.BurnModuleName
 )

@@ -86,6 +86,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil, // just added to enable align fee
+		bank.BurnModuleName:       {supply.Burner},
 		market.ModuleName:         {supply.Minter, supply.Burner},
 		oracle.ModuleName:         nil,
 		distr.ModuleName:          nil,
@@ -97,7 +98,8 @@ var (
 
 	// module accounts that are allowed to receive tokens
 	allowedReceivingModAcc = map[string]bool{
-		oracle.ModuleName: true,
+		oracle.ModuleName:   true,
+		bank.BurnModuleName: true,
 	}
 )
 
@@ -255,7 +257,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm = module.NewManager(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
-		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
+		bank.NewAppModule(app.bankKeeper, app.accountKeeper, app.supplyKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
@@ -290,7 +292,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// fuzz test simulation
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(app.accountKeeper),
-		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
+		bank.NewAppModule(app.bankKeeper, app.accountKeeper, app.supplyKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
