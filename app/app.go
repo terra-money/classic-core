@@ -43,7 +43,9 @@ import (
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
+	marketwasm "github.com/terra-project/core/x/market/wasm"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
+	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
 )
 
 const appName = "TerraApp"
@@ -227,16 +229,19 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// create wasm keeper with msg parser & querier
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName],
-		app.accountKeeper, app.bankKeeper, app.supplyKeeper, app.treasuryKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfig)
+		app.accountKeeper, app.bankKeeper, app.supplyKeeper, app.treasuryKeeper, bApp.Router(), wasm.DefaultFeatures, wasmConfig)
 	app.wasmKeeper.RegisterMsgParsers(map[string]wasm.WasmMsgParserInterface{
 		wasm.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
 		wasm.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
+		wasm.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
 		wasm.WasmMsgParserRouteWasm:    wasm.NewWasmMsgParser(),
 	})
 	app.wasmKeeper.RegisterQueriers(map[string]wasm.WasmQuerierInterface{
-		wasm.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(app.bankKeeper),
-		wasm.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(app.stakingKeeper),
-		wasm.WasmQueryRouteWasm:    wasm.NewWasmQuerier(app.wasmKeeper),
+		wasm.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.bankKeeper),
+		wasm.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.stakingKeeper),
+		wasm.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.marketKeeper),
+		wasm.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.treasuryKeeper),
+		wasm.WasmQueryRouteWasm:     wasm.NewWasmQuerier(app.wasmKeeper),
 	})
 
 	// register the proposal types

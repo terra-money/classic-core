@@ -72,8 +72,8 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 		router:         router,
 		queryGasLimit:  wasmConfig.ContractQueryGasLimit,
 		cacheSize:      wasmConfig.CacheSize,
-		msgParser:      types.NewMsgParser(),
-		querier:        types.NewQuerier(),
+		msgParser:      types.NewModuleMsgParser(),
+		querier:        types.NewModuleQuerier(),
 	}
 }
 

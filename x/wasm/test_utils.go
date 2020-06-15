@@ -20,6 +20,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/terra-project/core/x/auth"
+	"github.com/terra-project/core/x/wasm/internal/keeper"
 )
 
 var (
@@ -49,7 +50,7 @@ func setupTest(t *testing.T) (testData, func()) {
 	require.NoError(t, err)
 	viper.Set(flags.FlagHome, tempDir)
 
-	input := CreateTestInput(t)
+	input := keeper.CreateTestInput(t)
 	data := testData{
 		module:     NewAppModule(input.WasmKeeper, input.AccKeeper),
 		ctx:        input.Ctx,

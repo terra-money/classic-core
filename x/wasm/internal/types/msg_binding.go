@@ -32,8 +32,8 @@ type WasmCustomMsg struct {
 // MsgParser - holds multiple module msg parsers
 type MsgParser map[string]WasmMsgParserInterface
 
-// NewMsgParser returns wasm msg parser
-func NewMsgParser() MsgParser {
+// NewModuleMsgParser returns wasm msg parser
+func NewModuleMsgParser() MsgParser {
 	return make(MsgParser)
 }
 
