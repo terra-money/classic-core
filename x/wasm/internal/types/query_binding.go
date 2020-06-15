@@ -21,8 +21,8 @@ type Querier struct {
 	Queriers map[string]WasmQuerierInterface
 }
 
-// NewQuerier return wasm querier
-func NewQuerier() Querier {
+// NewModuleQuerier return wasm querier
+func NewModuleQuerier() Querier {
 	return Querier{
 		Queriers: make(map[string]WasmQuerierInterface),
 	}
