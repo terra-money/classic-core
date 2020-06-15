@@ -44,11 +44,11 @@ func TestMsgSwapSend(t *testing.T) {
 	overflowOfferAmt, _ := sdk.NewIntFromString("100000000000000000000000000000000000000000000000000000000")
 
 	tests := []struct {
-		trader     sdk.AccAddress
-		receiver   sdk.AccAddress
-		offerCoin  sdk.Coin
-		askDenom   string
-		expectPass bool
+		fromAddress sdk.AccAddress
+		toAddress   sdk.AccAddress
+		offerCoin   sdk.Coin
+		askDenom    string
+		expectPass  bool
 	}{
 		{addrs[0], addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, true},
 		{addrs[0], sdk.AccAddress{}, sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, false},
@@ -59,7 +59,7 @@ func TestMsgSwapSend(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgSwapSend(tc.trader, tc.receiver, tc.offerCoin, tc.askDenom)
+		msg := NewMsgSwapSend(tc.fromAddress, tc.toAddress, tc.offerCoin, tc.askDenom)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

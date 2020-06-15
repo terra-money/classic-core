@@ -35,11 +35,13 @@ type MakerHandleMsg struct {
 }
 
 type buyPayload struct {
-	Limit uint64 `json:"limit,omitempty"`
+	Limit     uint64 `json:"limit,omitempty"`
+	Recipient string `json:"recipient,omitempty"`
 }
 
 type sellPayload struct {
-	Limit uint64 `json:"limit,omitempty"`
+	Limit     uint64 `json:"limit,omitempty"`
+	Recipient string `json:"recipient,omitempty"`
 }
 
 type sendPayload struct {
@@ -249,6 +251,37 @@ func TestBuyMsg(t *testing.T) {
 	bob := createFakeFundedAccount(ctx, accKeeper, sdk.NewCoins(offerCoin))
 	_, err = keeper.ExecuteContract(ctx, makerAddr, bob, bz, sdk.NewCoins(offerCoin))
 	require.Error(t, err)
+}
+
+func TestBuyAndSendMsg(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	input, creatorAddr, makerAddr, offerCoin := setupMakerContract(t)
+
+	ctx, keeper, accKeeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.TreasuryKeeper
+	treasuryKeeper.SetTaxRate(ctx, sdk.ZeroDec())
+
+	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
+
+	// buy without limit
+	buyMsg := MakerHandleMsg{
+		Buy: &buyPayload{
+			Recipient: creatorAddr.String(),
+		},
+	}
+
+	bz, err := json.Marshal(&buyMsg)
+
+	// normal buy
+	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
+	require.NoError(t, err)
+
+	checkAccount(t, ctx, accKeeper, creatorAddr, expectedRetCoins)
+	checkAccount(t, ctx, accKeeper, makerAddr, sdk.Coins{})
 }
 
 func TestSellMsg(t *testing.T) {

@@ -24,16 +24,17 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgSwapSend(ctx sdk.Context, k Keeper, mss MsgSwapSend) (*sdk.Result, error) {
-	return handleSwapRequest(ctx, k, mss.OfferCoin, mss.AskDenom, mss.Trader, mss.Receiver)
+	return handleSwapRequest(ctx, k, mss.FromAddress, mss.ToAddress, mss.OfferCoin, mss.AskDenom)
 }
 
 func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) (*sdk.Result, error) {
-	return handleSwapRequest(ctx, k, ms.OfferCoin, ms.AskDenom, ms.Trader, ms.Trader)
+	return handleSwapRequest(ctx, k, ms.Trader, ms.Trader, ms.OfferCoin, ms.AskDenom)
 }
 
 // handleMsgSwap handles the logic of a MsgSwap
-func handleSwapRequest(ctx sdk.Context, k Keeper, offerCoin sdk.Coin,
-	askDenom string, trader sdk.AccAddress, receiver sdk.AccAddress) (*sdk.Result, error) {
+func handleSwapRequest(ctx sdk.Context, k Keeper,
+	trader sdk.AccAddress, receiver sdk.AccAddress,
+	offerCoin sdk.Coin, askDenom string) (*sdk.Result, error) {
 	// Can't swap to the same coin
 	if offerCoin.Denom == askDenom {
 		return nil, ErrRecursiveSwap

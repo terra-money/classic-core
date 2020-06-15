@@ -75,18 +75,18 @@ func (msg MsgSwap) String() string {
 
 // MsgSwapSend contains a swap request
 type MsgSwapSend struct {
-	Trader    sdk.AccAddress `json:"trader" yaml:"trader"`         // Address of the trader
-	Receiver  sdk.AccAddress `json:"receiver" yaml:"receiver"`     // Address of the receiver
-	OfferCoin sdk.Coin       `json:"offer_coin" yaml:"offer_coin"` // Coin being offered
-	AskDenom  string         `json:"ask_denom" yaml:"ask_denom"`   // Denom of the coin to swap to
+	FromAddress sdk.AccAddress `json:"from_address" yaml:"from_address"` // Address of the offer coin payer
+	ToAddress   sdk.AccAddress `json:"to_address" yaml:"to_address"`     // Address of the recipient
+	OfferCoin   sdk.Coin       `json:"offer_coin" yaml:"offer_coin"`     // Coin being offered
+	AskDenom    string         `json:"ask_denom" yaml:"ask_denom"`       // Denom of the coin to swap to
 }
 
-func NewMsgSwapSend(traderAddress sdk.AccAddress, receiverAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) MsgSwapSend {
+func NewMsgSwapSend(fromAddress sdk.AccAddress, toAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) MsgSwapSend {
 	return MsgSwapSend{
-		Trader:    traderAddress,
-		Receiver:  receiverAddress,
-		OfferCoin: offerCoin,
-		AskDenom:  askCoin,
+		FromAddress: fromAddress,
+		ToAddress:   toAddress,
+		OfferCoin:   offerCoin,
+		AskDenom:    askCoin,
 	}
 }
 
@@ -103,16 +103,16 @@ func (msg MsgSwapSend) GetSignBytes() []byte {
 
 // GetSigners Implements Msg
 func (msg MsgSwapSend) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Trader}
+	return []sdk.AccAddress{msg.FromAddress}
 }
 
 // ValidateBasic Implements Msg
 func (msg MsgSwapSend) ValidateBasic() error {
-	if len(msg.Trader) == 0 {
+	if len(msg.FromAddress) == 0 {
 		return sdkerrors.ErrInvalidAddress
 	}
 
-	if len(msg.Receiver) == 0 {
+	if len(msg.ToAddress) == 0 {
 		return sdkerrors.ErrInvalidAddress
 	}
 
@@ -130,9 +130,9 @@ func (msg MsgSwapSend) ValidateBasic() error {
 // String implements fmt.Stringer interface
 func (msg MsgSwapSend) String() string {
 	return fmt.Sprintf(`MsgSwapSend
-	trader:    %s,
-	receiver:  %s, 
+	fromAddress:    %s,
+	toAddress:  %s, 
 	offer:     %s, 
 	ask:       %s`,
-		msg.Trader, msg.Receiver, msg.OfferCoin, msg.AskDenom)
+		msg.FromAddress, msg.ToAddress, msg.OfferCoin, msg.AskDenom)
 }

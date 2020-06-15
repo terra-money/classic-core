@@ -58,7 +58,7 @@ func TestSwapMsg(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSwapMsgWithReceiver(t *testing.T) {
+func TestSwapSendMsg(t *testing.T) {
 	input, h := setup(t)
 
 	amt := sdk.NewInt(10)
@@ -68,8 +68,8 @@ func TestSwapMsgWithReceiver(t *testing.T) {
 
 	expectedAmt := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
 
-	swapMsg := NewMsgSwapWithReceiver(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
-	_, err = h(input.Ctx, swapMsg)
+	swapSendMsg := NewMsgSwapSend(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
+	_, err = h(input.Ctx, swapSendMsg)
 	require.NoError(t, err)
 
 	acc := input.Acckeeper.GetAccount(input.Ctx, keeper.Addrs[1])
