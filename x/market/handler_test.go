@@ -57,3 +57,21 @@ func TestSwapMsg(t *testing.T) {
 	_, err = h(input.Ctx, swapMsg)
 	require.NoError(t, err)
 }
+
+func TestSwapMsgWithReceiver(t *testing.T) {
+	input, h := setup(t)
+
+	amt := sdk.NewInt(10)
+	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
+	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroSDRDenom)
+	require.NoError(t, err)
+
+	expectedAmt := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
+
+	swapMsg := NewMsgSwapWithReceiver(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
+	_, err = h(input.Ctx, swapMsg)
+	require.NoError(t, err)
+
+	acc := input.Acckeeper.GetAccount(input.Ctx, keeper.Addrs[1])
+	require.Equal(t, expectedAmt, acc.GetCoins().AmountOf(core.MicroSDRDenom))
+}

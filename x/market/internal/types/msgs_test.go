@@ -37,3 +37,33 @@ func TestMsgSwap(t *testing.T) {
 		}
 	}
 }
+
+func TestMsgSwapSend(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(1, sdk.Coins{})
+
+	overflowOfferAmt, _ := sdk.NewIntFromString("100000000000000000000000000000000000000000000000000000000")
+
+	tests := []struct {
+		trader     sdk.AccAddress
+		receiver   sdk.AccAddress
+		offerCoin  sdk.Coin
+		askDenom   string
+		expectPass bool
+	}{
+		{addrs[0], addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, true},
+		{addrs[0], sdk.AccAddress{}, sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, false},
+		{sdk.AccAddress{}, addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroSDRDenom, false},
+		{addrs[0], addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt()), core.MicroSDRDenom, false},
+		{addrs[0], addrs[0], sdk.NewCoin(core.MicroLunaDenom, overflowOfferAmt), core.MicroSDRDenom, false},
+		{addrs[0], addrs[0], sdk.NewCoin(core.MicroLunaDenom, sdk.OneInt()), core.MicroLunaDenom, false},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgSwapSend(tc.trader, tc.receiver, tc.offerCoin, tc.askDenom)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}

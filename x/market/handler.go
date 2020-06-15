@@ -15,37 +15,48 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgSwap:
 			return handleMsgSwap(ctx, k, msg)
+		case MsgSwapSend:
+			return handleMsgSwapSend(ctx, k, msg)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized distribution message type: %T", msg)
 		}
 	}
 }
 
-// handleMsgSwap handles the logic of a MsgSwap
-func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) (*sdk.Result, error) {
+func handleMsgSwapSend(ctx sdk.Context, k Keeper, mss MsgSwapSend) (*sdk.Result, error) {
+	return handleSwapRequest(ctx, k, mss.OfferCoin, mss.AskDenom, mss.Trader, mss.Receiver)
+}
 
+func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) (*sdk.Result, error) {
+	return handleSwapRequest(ctx, k, ms.OfferCoin, ms.AskDenom, ms.Trader, ms.Trader)
+}
+
+// handleMsgSwap handles the logic of a MsgSwap
+func handleSwapRequest(ctx sdk.Context, k Keeper, offerCoin sdk.Coin,
+	askDenom string, trader sdk.AccAddress, receiver sdk.AccAddress) (*sdk.Result, error) {
 	// Can't swap to the same coin
-	if ms.OfferCoin.Denom == ms.AskDenom {
-		return nil, sdkerrors.Wrap(ErrRecursiveSwap, ms.AskDenom)
+	if offerCoin.Denom == askDenom {
+		return nil, ErrRecursiveSwap
 	}
 
 	// Compute exchange rates between the ask and offer
-	swapCoin, spread, swapErr := k.ComputeSwap(ctx, ms.OfferCoin, ms.AskDenom)
-	if swapErr != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "ComputeSwap failed: %s", swapErr.Error())
+	swapCoin, spread, err := k.ComputeSwap(ctx, offerCoin, askDenom)
+
+	if err != nil {
+		return nil, err
 	}
 
 	// Update pool delta
-	deltaUpdateErr := k.ApplySwapToPool(ctx, ms.OfferCoin, swapCoin)
+	deltaUpdateErr := k.ApplySwapToPool(ctx, offerCoin, swapCoin)
 	if deltaUpdateErr != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "ApplySwapToPool failed: %s", deltaUpdateErr.Error())
+		return nil, deltaUpdateErr
 	}
 
 	// Send offer coins to module account
-	offerCoins := sdk.NewCoins(ms.OfferCoin)
-	err := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ms.Trader, ModuleName, offerCoins)
+	offerCoins := sdk.NewCoins(offerCoin)
+	err = k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, trader, ModuleName, offerCoins)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "SendCoinsFromAccountToModule failed: %s", err.Error())
+		return nil, err
 	}
 
 	// Charge a spread if applicable; distributed to vote winners in the oracle module
@@ -61,30 +72,30 @@ func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) (*sdk.Result, error) {
 	}
 
 	// Burn offered coins and subtract from the trader's account
-	burnErr := k.SupplyKeeper.BurnCoins(ctx, ModuleName, offerCoins)
-	if burnErr != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "BurnCoins failed: %s", burnErr.Error())
+	err = k.SupplyKeeper.BurnCoins(ctx, ModuleName, offerCoins)
+	if err != nil {
+		return nil, err
 	}
 
 	// Mint asked coins and credit Trader's account
 	retCoin, decimalCoin := swapCoin.TruncateDecimal()
 	swapFee = swapFee.Add(decimalCoin) // add truncated decimalCoin to swapFee
 	swapCoins := sdk.NewCoins(retCoin)
-	mintErr := k.SupplyKeeper.MintCoins(ctx, ModuleName, swapCoins)
-	if mintErr != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "MintCoins failed: %s", mintErr.Error())
+	err = k.SupplyKeeper.MintCoins(ctx, ModuleName, swapCoins)
+	if err != nil {
+		return nil, err
 	}
 
-	sendErr := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, ms.Trader, swapCoins)
-	if sendErr != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPanic, "SendCoinsFromModuleToAccount failed: %s", sendErr.Error())
+	err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, receiver, swapCoins)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventSwap,
-			sdk.NewAttribute(types.AttributeKeyOffer, ms.OfferCoin.String()),
-			sdk.NewAttribute(types.AttributeKeyTrader, ms.Trader.String()),
+			sdk.NewAttribute(types.AttributeKeyOffer, offerCoin.String()),
+			sdk.NewAttribute(types.AttributeKeyTrader, trader.String()),
 			sdk.NewAttribute(types.AttributeKeySwapCoin, retCoin.String()),
 			sdk.NewAttribute(types.AttributeKeySwapFee, swapFee.String()),
 		),
