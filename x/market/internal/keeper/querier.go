@@ -33,28 +33,11 @@ func querySwap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, e
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	if params.AskDenom == params.OfferCoin.Denom {
-		return nil, sdkerrors.Wrap(types.ErrRecursiveSwap, params.AskDenom)
-	}
-
-	if params.OfferCoin.Amount.BigInt().BitLen() > 100 {
-		return nil, sdkerrors.Wrap(types.ErrInvalidOfferCoin, params.OfferCoin.String())
-	}
-
-	swapCoin, spread, err := keeper.ComputeSwap(ctx, params.OfferCoin, params.AskDenom)
+	retCoin, err := QuerySwap(ctx, params, keeper)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrPanic, err.Error())
+		return nil, err
 	}
 
-	if spread.IsPositive() {
-		swapFeeAmt := spread.Mul(swapCoin.Amount)
-		if swapFeeAmt.IsPositive() {
-			swapFee := sdk.NewDecCoinFromDec(swapCoin.Denom, swapFeeAmt)
-			swapCoin = swapCoin.Sub(swapFee)
-		}
-	}
-
-	retCoin, _ := swapCoin.TruncateDecimal()
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, retCoin)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())

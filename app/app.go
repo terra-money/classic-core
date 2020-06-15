@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/terra-project/core/x/wasm"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -38,6 +40,10 @@ import (
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/upgrade"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
+
+	bankwasm "github.com/terra-project/core/x/bank/wasm"
+	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 )
 
 const appName = "TerraApp"
@@ -74,6 +80,7 @@ var (
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -139,6 +146,7 @@ type TerraApp struct {
 	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
 	treasuryKeeper treasury.Keeper
+	wasmKeeper     wasm.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -149,7 +157,8 @@ type TerraApp struct {
 
 // NewTerraApp returns a reference to an initialized TerraApp.
 func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
+	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, wasmConfig *wasmconfig.Config,
+	baseAppOptions ...func(*bam.BaseApp)) *TerraApp {
 
 	cdc := MakeCodec()
 
@@ -161,7 +170,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, oracle.StoreKey,
-		market.StoreKey, treasury.StoreKey, upgrade.StoreKey, evidence.StoreKey,
+		market.StoreKey, treasury.StoreKey, upgrade.StoreKey,
+		evidence.StoreKey, wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -187,6 +197,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.subspaces[oracle.ModuleName] = app.paramsKeeper.Subspace(oracle.DefaultParamspace)
 	app.subspaces[market.ModuleName] = app.paramsKeeper.Subspace(market.DefaultParamspace)
 	app.subspaces[treasury.ModuleName] = app.paramsKeeper.Subspace(treasury.DefaultParamspace)
+	app.subspaces[wasm.ModuleName] = app.paramsKeeper.Subspace(wasm.DefaultParamspace)
 
 	// add keepers
 	app.accountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount)
@@ -213,6 +224,20 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.subspaces[evidence.ModuleName], &app.stakingKeeper, app.slashingKeeper)
 	evidenceKeeper.SetRouter(evidenceRouter)
 	app.evidenceKeeper = *evidenceKeeper
+
+	// create wasm keeper with msg parser & querier
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName],
+		app.accountKeeper, app.bankKeeper, app.supplyKeeper, app.treasuryKeeper, bApp.Router(), wasm.FeatureStaking, wasmConfig)
+	app.wasmKeeper.RegisterMsgParsers(map[string]wasm.WasmMsgParserInterface{
+		wasm.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
+		wasm.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
+		wasm.WasmMsgParserRouteWasm:    wasm.NewWasmMsgParser(),
+	})
+	app.wasmKeeper.RegisterQueriers(map[string]wasm.WasmQuerierInterface{
+		wasm.WasmQueryRouteBank:    bankwasm.NewWasmQuerier(app.bankKeeper),
+		wasm.WasmQueryRouteStaking: stakingwasm.NewWasmQuerier(app.stakingKeeper),
+		wasm.WasmQueryRouteWasm:    wasm.NewWasmQuerier(app.wasmKeeper),
+	})
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
@@ -244,6 +269,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
+		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -258,7 +284,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm.SetOrderInitGenesis(auth.ModuleName, distr.ModuleName,
 		staking.ModuleName, bank.ModuleName, slashing.ModuleName,
 		gov.ModuleName, supply.ModuleName, oracle.ModuleName, treasury.ModuleName,
-		market.ModuleName, crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
+		market.ModuleName, wasm.ModuleName, crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
@@ -276,6 +302,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
+		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -376,6 +403,11 @@ func (app *TerraApp) GetSubspace(moduleName string) params.Subspace {
 // SimulationManager implements the SimulationApp interface
 func (app *TerraApp) SimulationManager() *module.SimulationManager {
 	return app.sm
+}
+
+// GetTreasuryKeeper is test purpose function to return treasury keeper
+func (app *TerraApp) GetTreasuryKeeper() treasury.Keeper {
+	return app.treasuryKeeper
 }
 
 // GetMaccPerms returns a copy of the module account permissions

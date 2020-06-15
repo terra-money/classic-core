@@ -18,6 +18,7 @@ import (
 	tm "github.com/tendermint/tendermint/types"
 
 	"github.com/terra-project/core/app"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -92,7 +93,7 @@ func replayTxs(rootDir string) error {
 	fmt.Fprintln(os.Stderr, "Creating application")
 	tapp := app.NewTerraApp(
 		ctx.Logger, appDB, traceStoreWriter, true, uint(1), map[int64]bool{},
-		baseapp.SetPruning(store.PruneEverything), // nothing
+		wasmconfig.DefaultConfig(), baseapp.SetPruning(store.PruneEverything), // nothing
 	)
 
 	// Genesis
