@@ -31,6 +31,7 @@ var (
 	DefaultGenesisState = types.DefaultGenesisState
 	ValidateGenesis     = types.ValidateGenesis
 	NewMsgSwap          = types.NewMsgSwap
+	NewMsgSwapSend      = types.NewMsgSwapSend
 	DefaultParams       = types.DefaultParams
 	NewQuerySwapParams  = types.NewQuerySwapParams
 	ParamKeyTable       = types.ParamKeyTable
@@ -53,6 +54,7 @@ type (
 	OracleKeeper    = types.OracleKeeper
 	GenesisState    = types.GenesisState
 	MsgSwap         = types.MsgSwap
+	MsgSwapSend     = types.MsgSwapSend
 	Params          = types.Params
 	QuerySwapParams = types.QuerySwapParams
 	Keeper          = keeper.Keeper
