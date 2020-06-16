@@ -44,13 +44,13 @@ func submitSwapHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		receiver := req.Receiver
-		if receiver.Empty() {
-			receiver = fromAddress
+		toAddress := req.Receiver
+		if toAddress.Empty() {
+			toAddress = fromAddress
 		}
 
 		// create the message
-		msg := types.NewMsgSwapSend(fromAddress, receiver, req.OfferCoin, req.AskDenom)
+		msg := types.NewMsgSwapSend(fromAddress, toAddress, req.OfferCoin, req.AskDenom)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

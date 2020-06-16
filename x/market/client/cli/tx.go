@@ -64,16 +64,16 @@ $ terracli market swap "1000ukrw" "uusd" "terra1..."
 			askDenom := args[1]
 			fromAddress := cliCtx.GetFromAddress()
 
-			receiverAddress := fromAddress
+			toAddress := fromAddress
 			if len(args) == 3 {
-				receiverAddress, err = sdk.AccAddressFromBech32(args[2])
+				toAddress, err = sdk.AccAddressFromBech32(args[2])
 				if err != nil {
 					return err
 				}
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSwapSend(fromAddress, receiverAddress, offerCoin, askDenom)
+			msg := types.NewMsgSwapSend(fromAddress, toAddress, offerCoin, askDenom)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
