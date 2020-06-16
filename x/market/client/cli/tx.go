@@ -38,7 +38,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // GetSwapCmd will create and send a MsgSwap
 func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "swap [offer-coin] [ask-denom] [receiver]",
+		Use:   "swap [offer-coin] [ask-denom] [to-address]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Atomically swap currencies at their target exchange rate",
 		Long: strings.TrimSpace(`
@@ -46,7 +46,7 @@ Swap the offer-coin to the ask-denom currency at the oracle's effective exchange
 
 $ terracli market swap "1000ukrw" "uusd"
 
-The fund receiver can be specfied. A default receiver is trader.
+The fund to-address can be specfied. A default to-address is trader.
 
 $ terracli market swap "1000ukrw" "uusd" "terra1..."
 `),

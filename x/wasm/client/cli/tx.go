@@ -181,7 +181,7 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute [contract_addr_bech32] [json_encoded_args] [coins]",
+		Use:   "execute [contract-addr-bech32] [json-encoded-args] [coins]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
