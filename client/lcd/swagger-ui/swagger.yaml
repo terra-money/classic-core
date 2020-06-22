@@ -2777,6 +2777,20 @@ paths:
           description: OK
           schema:
             type: string
+  /wasm/parameters:
+    get:
+      summary: Get wasm module params
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/WasmParams"
+        404:
+          description: Not Found
 definitions:
   CheckTxResult:
     type: object
@@ -3696,14 +3710,29 @@ definitions:
       window_probation:
         type: integer
         example: "12"
-      oracle_share:
+  WasmParams:
+    type: object
+    properties:
+      max_contract_size:
         type: number
-        format: float
-        example: "0.1"
-      budget_share:
+        format: integer
+        example: "1000000"
+        description: "allowed max contract bytes size"
+      max_contract_gas:
         type: number
-        format: float
-        example: "0.9"
+        format: integer
+        example: "1000000"
+        description: "allowed max gas usages per each contract execution"
+      max_contract_msg_size:
+        type: number
+        format: integer
+        example: "1000000"
+        description: "allowed max contract exe msg bytes size"
+      gas_multiplier:
+        type: number
+        format: integer
+        example: "100"
+        example: "defines how many cosmwasm gas points = 1 sdk gas point"
   MultiSignPubKey:
     type: object
     properties:

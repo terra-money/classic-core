@@ -20,6 +20,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -166,5 +167,23 @@ func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, model)
+	}
+}
+
+func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
