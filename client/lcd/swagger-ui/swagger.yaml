@@ -2742,6 +2742,7 @@ paths:
           description: json formatted query msg
           required: true
           type: string
+          example: "{}"
       produces:
         - application/json
       responses:
@@ -3732,7 +3733,7 @@ definitions:
         type: number
         format: integer
         example: "100"
-        example: "defines how many cosmwasm gas points = 1 sdk gas point"
+        description: "defines how many cosmwasm gas points = 1 sdk gas point"
   MultiSignPubKey:
     type: object
     properties:
@@ -3823,7 +3824,10 @@ definitions:
           $ref: "#/definitions/Coin"
       init_msg:
         type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+        description: json formatted string
+        required: true
+        example: "{}"
+
   ExecuteContractReq:
     type: object
     properties:
@@ -3835,4 +3839,6 @@ definitions:
           $ref: "#/definitions/Coin"
       exec_msg:
         type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+        description: json formatted string
+        required: true
+        example: "{}"

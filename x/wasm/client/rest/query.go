@@ -35,14 +35,14 @@ func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		codeID, err := strconv.ParseUint(codeIDStr, 10, 64)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		params := types.NewQueryCodeIDParams(codeID)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetCodeInfo)
@@ -68,14 +68,14 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		params := types.NewQueryContractAddressParams(addr)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -104,7 +104,7 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 

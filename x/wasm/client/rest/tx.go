@@ -33,13 +33,13 @@ type storeCodeReq struct {
 type instantiateContractReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
 	InitCoins sdk.Coins    `json:"init_coins" yaml:"init_coins"`
-	InitMsg   []byte       `json:"init_msg" yaml:"init_msg"`
+	InitMsg   string       `json:"init_msg" yaml:"init_msg"`
 }
 
 type executeContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-	ExecMsg []byte       `json:"exec_msg" yaml:"exec_msg"`
 	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
+	ExecMsg string       `json:"exec_msg" yaml:"exec_msg"`
 }
 
 func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -125,7 +125,7 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			Sender:    fromAddr,
 			CodeID:    codeID,
 			InitCoins: req.InitCoins,
-			InitMsg:   req.InitMsg,
+			InitMsg:   []byte(req.InitMsg),
 		}
 
 		err = msg.ValidateBasic()
@@ -190,8 +190,8 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := types.MsgExecuteContract{
 			Sender:   fromAddr,
 			Contract: contractAddress,
-			Msg:      req.ExecMsg,
 			Coins:    req.Amount,
+			Msg:      []byte(req.ExecMsg),
 		}
 
 		err = msg.ValidateBasic()
