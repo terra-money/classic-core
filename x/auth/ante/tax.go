@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	core "github.com/terra-project/core/types"
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
@@ -125,6 +126,8 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs []sdk.Msg) 
 		case wasmexported.MsgExecuteContract:
 			taxes = taxes.Add(computeTax(ctx, tk, msg.Coins)...)
 
+		case msgauthexported.MsgExecAuthorized:
+			taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, msg.Msgs)...)
 		}
 	}
 

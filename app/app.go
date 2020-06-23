@@ -4,8 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/terra-project/core/x/wasm"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -33,6 +31,7 @@ import (
 	"github.com/terra-project/core/x/genutil"
 	"github.com/terra-project/core/x/gov"
 	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/msgauth"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/params"
 	"github.com/terra-project/core/x/slashing"
@@ -40,6 +39,7 @@ import (
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/upgrade"
+	"github.com/terra-project/core/x/wasm"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
@@ -149,6 +149,7 @@ type TerraApp struct {
 	marketKeeper   market.Keeper
 	treasuryKeeper treasury.Keeper
 	wasmKeeper     wasm.Keeper
+	msgauthKeeper  msgauth.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -173,7 +174,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, oracle.StoreKey,
 		market.StoreKey, treasury.StoreKey, upgrade.StoreKey,
-		evidence.StoreKey, wasm.StoreKey,
+		evidence.StoreKey, wasm.StoreKey, msgauth.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -219,6 +220,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], app.subspaces[treasury.ModuleName],
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
+	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router())
 
 	// register the evidence router
 	evidenceRouter := evidence.NewRouter()
@@ -275,6 +277,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
