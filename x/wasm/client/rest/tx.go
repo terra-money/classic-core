@@ -78,6 +78,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		// build and sign the transaction, then broadcast to Tendermint
 		msg := types.MsgStoreCode{
 			Sender:       fromAddr,
@@ -114,8 +115,14 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		msg := types.MsgInstantiateContract{
-			Sender:    cliCtx.GetFromAddress(),
+			Sender:    fromAddr,
 			CodeID:    codeID,
 			InitCoins: req.InitCoins,
 			InitMsg:   req.InitMsg,
@@ -174,8 +181,14 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		msg := types.MsgExecuteContract{
-			Sender:   cliCtx.GetFromAddress(),
+			Sender:   fromAddr,
 			Contract: contractAddress,
 			Msg:      req.ExecMsg,
 			Coins:    req.Amount,
