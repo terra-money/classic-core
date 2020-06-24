@@ -1943,7 +1943,7 @@ paths:
               $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /distribution/params:
+  /distribution/parameters:
     get:
       summary: Fee distribution parameters
       tags:
