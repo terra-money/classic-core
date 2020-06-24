@@ -32,7 +32,8 @@ func makeTestCodec() *codec.Codec {
 
 	return cdc
 }
-func SetupTestInput() (sdk.Context, auth.AccountKeeper, params.Keeper, bank.BaseKeeper, Keeper, baseapp.Router) {
+
+func SetupTestInput() (sdk.Context, auth.AccountKeeper, params.Keeper, bank.BaseKeeper, Keeper, sdk.Router) {
 	db := dbm.NewMemDB()
 
 	cdc := codec.New()
@@ -64,10 +65,10 @@ func SetupTestInput() (sdk.Context, auth.AccountKeeper, params.Keeper, bank.Base
 	bankKeeper := bank.NewBaseKeeper(authKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), blacklistedAddrs)
 	bankKeeper.SetSendEnabled(ctx, true)
 
-	router := *baseapp.NewRouter()
+	router := baseapp.NewRouter()
 	router.AddRoute("bank", bank.NewHandler(bankKeeper))
 
-	authorizationKeeper := NewKeeper(cdc, keyAuthorization, router)
+	authorizationKeeper := NewKeeper(cdc, keyAuthorization, router, bank.MsgSend{}.Type(), "swap")
 	authKeeper.SetParams(ctx, auth.DefaultParams())
 
 	return ctx, authKeeper, paramsKeeper, bankKeeper, authorizationKeeper, router

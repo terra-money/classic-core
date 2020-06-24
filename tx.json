@@ -1,0 +1,1 @@
+{"type":"core/StdTx","value":{"msg":[{"type":"staking/MsgDelegate","value":{"delegator_address":"terra1qfqa2eu9wp272ha93lj4yhcenrc6ymng079nu8","validator_address":"terravaloper1qfqa2eu9wp272ha93lj4yhcenrc6ymng03fwv5","amount":{"denom":"uluna","amount":"1000000"}}}],"fee":{"amount":[],"gas":"200000"},"signatures":null,"memo":""}}

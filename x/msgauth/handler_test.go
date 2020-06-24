@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -33,7 +32,7 @@ type TestSuite struct {
 	paramsKeeper  params.Keeper
 	bankKeeper    bank.Keeper
 	keeper        Keeper
-	router        baseapp.Router
+	router        sdk.Router
 	handler       sdk.Handler
 }
 
@@ -44,23 +43,44 @@ func (s *TestSuite) SetupTest() {
 
 func (s *TestSuite) TestGrant() {
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
-	cap := types.SendAuthorization{SpendLimit: coins}
-	expiration := time.Now().Add(time.Hour)
-	msg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, cap, expiration)
+
+	// send authorization
+	sendAuth := types.SendAuthorization{SpendLimit: coins}
+	msg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, sendAuth, time.Hour)
 
 	_, err := s.handler(s.ctx, msg)
 	s.Require().NoError(err)
 
-	resCap, resExpiration := s.keeper.GetAuthorization(s.ctx, granteeAddr, granterAddr, bank.MsgSend{}.Type())
-	s.Require().Equal(cap, resCap)
-	s.Require().Equal(expiration.Unix(), resExpiration)
+	grant, found := s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, sendAuth.MsgType())
+	s.Require().True(found)
+	s.Require().Equal(sendAuth, grant.Authorization)
+	s.Require().Equal(s.ctx.BlockTime().Add(time.Hour), grant.Expiration)
+
+	// generic authorization
+	genericAuth := types.NewGenericAuthorization("swap")
+	msg = types.NewMsgGrantAuthorization(granterAddr, granteeAddr, genericAuth, time.Hour)
+
+	_, err = s.handler(s.ctx, msg)
+	s.Require().NoError(err)
+
+	grant, found = s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, "swap")
+	s.Require().True(found)
+	s.Require().Equal(genericAuth, grant.Authorization)
+	s.Require().Equal(s.ctx.BlockTime().Add(time.Hour), grant.Expiration)
+
+	// test not allowed to grant
+	genericAuth = types.NewGenericAuthorization("now allowed msg")
+	msg = types.NewMsgGrantAuthorization(granterAddr, granteeAddr, genericAuth, time.Hour)
+
+	_, err = s.handler(s.ctx, msg)
+	s.Require().Error(err)
 }
 
 func (s *TestSuite) TestRevoke() {
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
 	grantMsg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, types.SendAuthorization{
 		SpendLimit: coins,
-	}, time.Now().Add(time.Hour))
+	}, time.Hour)
 
 	_, err := s.handler(s.ctx, grantMsg)
 	s.Require().NoError(err)
@@ -69,9 +89,8 @@ func (s *TestSuite) TestRevoke() {
 	_, err = s.handler(s.ctx, revokeMsg)
 	s.Require().NoError(err)
 
-	res, expiration := s.keeper.GetAuthorization(s.ctx, granteeAddr, granterAddr, bank.MsgSend{}.Type())
-	s.Require().Nil(res)
-	s.Require().Equal(int64(0), expiration)
+	_, found := s.keeper.GetGrant(s.ctx, granteeAddr, granterAddr, bank.MsgSend{}.Type())
+	s.Require().False(found)
 }
 
 func (s *TestSuite) TestExecute() {
@@ -80,7 +99,7 @@ func (s *TestSuite) TestExecute() {
 
 	grantMsg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, types.SendAuthorization{
 		SpendLimit: coins,
-	}, time.Now().Add(time.Hour))
+	}, time.Hour)
 
 	_, err := s.handler(s.ctx, grantMsg)
 	s.Require().NoError(err)

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,63 +12,85 @@ import (
 )
 
 type Keeper struct {
-	cdc      *codec.Codec
-	storeKey sdk.StoreKey
-	router   baseapp.Router
+	cdc             *codec.Codec
+	storeKey        sdk.StoreKey
+	router          sdk.Router
+	allowedMsgTypes []string
 }
 
 // NewKeeper constructs a message authorisation Keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, router baseapp.Router) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, router sdk.Router, allowedMsgTypes ...string) Keeper {
 	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		router:   router,
+		cdc:             cdc,
+		storeKey:        storeKey,
+		router:          router,
+		allowedMsgTypes: allowedMsgTypes,
 	}
 }
 
-func (k Keeper) getAuthorizationGrant(ctx sdk.Context, actor []byte) (grant types.AuthorizationGrant, found bool) {
+// IsGrantable returns the flag that the given msg type is grantable or not
+func (k Keeper) IsGrantable(msgType string) bool {
+	for _, mt := range k.allowedMsgTypes {
+		if mt == msgType {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetGrant returns grant beteen granter and grantee for the given msg type
+func (k Keeper) GetGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, msgType string) (grant types.AuthorizationGrant, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(actor)
+	bz := store.Get(types.GetGrantKey(granterAddr, granteeAddr, msgType))
 	if bz == nil {
 		return grant, false
 	}
+
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &grant)
 	return grant, true
 }
 
-func (k Keeper) update(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress, updated types.Authorization) {
-	actor := types.GetAuthorizationKey(grantee, granter, updated.MsgType())
-	grant, found := k.getAuthorizationGrant(ctx, actor)
-	if !found {
-		return
-	}
-	grant.Authorization = updated
+// GetGrants returns all the grants between granter and grantee
+func (k Keeper) GetGrants(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress) (grants []types.AuthorizationGrant) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(actor, k.cdc.MustMarshalBinaryLengthPrefixed(grant))
+	iter := sdk.KVStorePrefixIterator(store, types.GetGrantKey(granterAddr, granteeAddr, ""))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var authorizationGrant types.AuthorizationGrant
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &authorizationGrant)
+		grants = append(grants, authorizationGrant)
+	}
+
+	return grants
 }
 
 // DispatchActions attempts to execute the provided messages via authorization
 // grants from the message signer to the grantee.
-func (k Keeper) DispatchActions(ctx sdk.Context, grantee sdk.AccAddress, msgs []sdk.Msg) error {
+func (k Keeper) DispatchActions(ctx sdk.Context, granteeAddr sdk.AccAddress, msgs []sdk.Msg) error {
 	for _, msg := range msgs {
 		signers := msg.GetSigners()
 		if len(signers) != 1 {
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "authorization can be given to msg with only one signer")
 		}
-		granter := signers[0]
-		if !bytes.Equal(granter, grantee) {
-			authorization, _ := k.GetAuthorization(ctx, grantee, granter, msg.Type())
-			if authorization == nil {
+		granterAddr := signers[0]
+		if !bytes.Equal(granterAddr, granteeAddr) {
+			grant, found := k.GetGrant(ctx, granterAddr, granteeAddr, msg.Type())
+			if !found {
 				return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "authorization not found")
 			}
-			allow, updated, del := authorization.Accept(msg, ctx.BlockHeader())
+
+			allow, updated, del := grant.Authorization.Accept(msg, ctx.BlockHeader())
 			if !allow {
 				return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "authorization not found")
 			}
+
 			if del {
-				k.Revoke(ctx, grantee, granter, msg.Type())
+				k.RevokeGrant(ctx, granterAddr, granteeAddr, msg.Type())
+				k.RevokeFromGrantQueue(ctx, granterAddr, granteeAddr, msg.Type(), grant.Expiration)
 			} else if updated != nil {
-				k.update(ctx, grantee, granter, updated)
+				grant.Authorization = updated
+				k.SetGrant(ctx, granterAddr, granteeAddr, grant)
 			}
 		}
 
@@ -89,57 +110,109 @@ func (k Keeper) DispatchActions(ctx sdk.Context, grantee sdk.AccAddress, msgs []
 	return nil
 }
 
-// Grant method grants the provided authorization to the grantee on the granter's account with the provided expiration
+// SetGrant method grants the provided authorization to the grantee on the granter's account with the provided expiration
 // time. If there is an existing authorization grant for the same `sdk.Msg` type, this grant
 // overwrites that.
-func (k Keeper) Grant(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress, authorization types.Authorization, expiration time.Time) {
+func (k Keeper) SetGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, grant types.AuthorizationGrant) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(types.AuthorizationGrant{Authorization: authorization, Expiration: expiration.Unix()})
-	actor := types.GetAuthorizationKey(grantee, granter, authorization.MsgType())
-	store.Set(actor, bz)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(grant)
+	store.Set(types.GetGrantKey(granterAddr, granteeAddr, grant.Authorization.MsgType()), bz)
 }
 
 // Revoke method revokes any authorization for the provided message type granted to the grantee by the granter.
-func (k Keeper) Revoke(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress, msgType string) error {
+func (k Keeper) RevokeGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, msgType string) {
 	store := ctx.KVStore(k.storeKey)
-	actor := types.GetAuthorizationKey(grantee, granter, msgType)
-	_, found := k.getAuthorizationGrant(ctx, actor)
-	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "authorization not found")
-	}
-	store.Delete(actor)
-
-	return nil
+	store.Delete(types.GetGrantKey(granterAddr, granteeAddr, msgType))
 }
 
-// GetAuthorization Returns any `Authorization` (or `nil`), with the expiration time,
-// granted to the grantee by the granter for the provided msg type.
-func (k Keeper) GetAuthorization(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress, msgType string) (cap types.Authorization, expiration int64) {
-	grant, found := k.getAuthorizationGrant(ctx, types.GetAuthorizationKey(grantee, granter, msgType))
-	if !found {
-		return nil, 0
-	}
-
-	if grant.Expiration != 0 && grant.Expiration < (ctx.BlockHeader().Time.Unix()) {
-		k.Revoke(ctx, grantee, granter, msgType)
-		return nil, 0
-	}
-
-	return grant.Authorization, grant.Expiration
-}
-
-// IterateAuthorization iterates over all authorization grants
-func (k Keeper) IterateAuthorization(ctx sdk.Context,
-	handler func(grantee sdk.AccAddress, granter sdk.AccAddress, authorizationGrant types.AuthorizationGrant) bool) {
+// IterateGrants iterates over all authorization grants
+func (k Keeper) IterateGrants(ctx sdk.Context,
+	handler func(granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, grant types.AuthorizationGrant) bool) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.AuthorizationKey)
+	iter := sdk.KVStorePrefixIterator(store, types.GrantKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var authorizationGrant types.AuthorizationGrant
-		granteeAddr, granterAddr := types.ExtractAddressesFromAuthorizationKey(iter.Key())
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &authorizationGrant)
-		if handler(granteeAddr, granterAddr, authorizationGrant) {
+		var grant types.AuthorizationGrant
+		granterAddr, granteeAddr := types.ExtractAddressesFromGrantKey(iter.Key())
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &grant)
+		if handler(granterAddr, granteeAddr, grant) {
 			break
 		}
 	}
+}
+
+// grant queue timeslice operations
+
+// gets a specific grant queue timeslice. A timeslice is a slice of GGMPair
+// corresponding to grants that expire at a certain time.
+func (k Keeper) GetGrantQueueTimeSlice(ctx sdk.Context, timestamp time.Time) (ggmParis []types.GGMPair) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetGrantTimeKey(timestamp))
+	if bz == nil {
+		return []types.GGMPair{}
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &ggmParis)
+	return ggmParis
+}
+
+// Sets a specific grant queue timeslice.
+func (k Keeper) SetGrantQueueTimeSlice(ctx sdk.Context, timestamp time.Time, keys []types.GGMPair) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(keys)
+	store.Set(types.GetGrantTimeKey(timestamp), bz)
+}
+
+// Insert an grant to the appropriate timeslice in the grant queue
+func (k Keeper) InsertGrantQueue(ctx sdk.Context, granterAddr,
+	granteeAddr sdk.AccAddress, msgType string, completionTime time.Time) {
+
+	timeSlice := k.GetGrantQueueTimeSlice(ctx, completionTime)
+	ggmPair := types.GGMPair{GranterAddress: granterAddr, GranteeAddress: granteeAddr, MsgType: msgType}
+	if len(timeSlice) == 0 {
+		k.SetGrantQueueTimeSlice(ctx, completionTime, []types.GGMPair{ggmPair})
+	} else {
+		timeSlice = append(timeSlice, ggmPair)
+		k.SetGrantQueueTimeSlice(ctx, completionTime, timeSlice)
+	}
+}
+
+func (k Keeper) RevokeFromGrantQueue(ctx sdk.Context, granterAddr,
+	granteeAddr sdk.AccAddress, msgType string, completionTime time.Time) {
+	timeSlice := k.GetGrantQueueTimeSlice(ctx, completionTime)
+	for idx, ggmPair := range timeSlice {
+		if ggmPair.GranterAddress.Equals(granterAddr) &&
+			ggmPair.GranteeAddress.Equals(granteeAddr) &&
+			ggmPair.MsgType == msgType {
+
+			lastIdx := len(timeSlice) - 1
+			timeSlice[idx] = timeSlice[lastIdx]
+			timeSlice = timeSlice[:lastIdx]
+
+			k.SetGrantQueueTimeSlice(ctx, completionTime, timeSlice)
+			return
+		}
+	}
+}
+
+// Returns all the grant queue timeslices from time 0 until endTime
+func (k Keeper) GrantQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
+	store := ctx.KVStore(k.storeKey)
+	return store.Iterator(types.GrantQueueKey,
+		sdk.InclusiveEndBytes(types.GetGrantTimeKey(endTime)))
+}
+
+// Returns a concatenated list of all the timeslices inclusively previous to
+// current block time, and deletes the timeslices from the queue
+func (k Keeper) DequeueAllMatureGrantQueue(ctx sdk.Context) (matureGrants []types.GGMPair) {
+	store := ctx.KVStore(k.storeKey)
+	// gets an iterator for all timeslices from time 0 until the current Blockheader time
+	grantTimesliceIterator := k.GrantQueueIterator(ctx, ctx.BlockHeader().Time)
+	for ; grantTimesliceIterator.Valid(); grantTimesliceIterator.Next() {
+		timeslice := []types.GGMPair{}
+		value := grantTimesliceIterator.Value()
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(value, &timeslice)
+		matureGrants = append(matureGrants, timeslice...)
+		store.Delete(grantTimesliceIterator.Key())
+	}
+	return matureGrants
 }

@@ -13,6 +13,11 @@ type SendAuthorization struct {
 	SpendLimit sdk.Coins `json:"spend_limit"`
 }
 
+// NewSendAuthorization return new SendAhtorization instance
+func NewSendAuthorization(spendLimit sdk.Coins) SendAuthorization {
+	return SendAuthorization{SpendLimit: spendLimit}
+}
+
 func (authorization SendAuthorization) MsgType() string {
 	return bank.MsgSend{}.Type()
 }

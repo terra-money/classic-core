@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,27 +11,23 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/terra-project/core/x/bank"
 	"github.com/terra-project/core/x/msgauth/internal/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/msgauth/grant", grantHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/msgauth/revoke", revokeHandler(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}", RestGranter, RestGrantee, RestMsgType), grantHandler(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}/revoke", RestGranter, RestGrantee, RestMsgType), revokeHandler(cliCtx)).Methods("POST")
 }
 
 type GrantRequest struct {
-	BaseReq       rest.BaseReq        `json:"base_req" yaml:"base_req"`
-	Granter       sdk.AccAddress      `json:"granter"`
-	Grantee       sdk.AccAddress      `json:"grantee"`
-	Authorization types.Authorization `json:"authorization"`
-	Expiration    time.Time           `json:"expiration"`
+	BaseReq rest.BaseReq  `json:"base_req" yaml:"base_req"`
+	Limit   string        `json:"limit,omitempty"`
+	Period  time.Duration `json:"period"`
 }
 
 type RevokeRequest struct {
-	BaseReq              rest.BaseReq   `json:"base_req" yaml:"base_req"`
-	Granter              sdk.AccAddress `json:"granter"`
-	Grantee              sdk.AccAddress `json:"grantee"`
-	AuthorizationMsgType string         `json:"authorization_msg_type"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 }
 
 func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -46,7 +43,24 @@ func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgGrantAuthorization(req.Granter, req.Grantee, req.Authorization, req.Expiration)
+		vars := mux.Vars(r)
+		granter := vars[RestGranter]
+		grantee := vars[RestGrantee]
+		msgType := vars[RestMsgType]
+
+		var authorization types.Authorization
+		if msgType == (bank.MsgSend{}.Type()) {
+			limit, err := sdk.ParseCoins(args[2])
+			if err != nil {
+				return err
+			}
+
+			authorization = types.NewSendAuthorization(limit)
+		} else {
+			authorization = types.NewGenericAuthorization(msgType)
+		}
+
+		msg := types.NewMsgGrantAuthorization(granter, grantee, authorization, req.Period)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -69,7 +83,12 @@ func revokeHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgRevokeAuthorization(req.Granter, req.Grantee, req.AuthorizationMsgType)
+		vars := mux.Vars(r)
+		granter := vars[RestGranter]
+		grantee := vars[RestGrantee]
+		msgType := vars[RestMsgType]
+
+		msg := types.NewMsgRevokeAuthorization(granter, grantee, msgType)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

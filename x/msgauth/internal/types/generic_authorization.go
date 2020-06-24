@@ -6,16 +6,23 @@ import (
 )
 
 // GenericAuthorization grants the permission to execute any transaction of the provided
-// sdk.Msg type without restrictions
+// msg type without restrictions
 type GenericAuthorization struct {
-	// MsgType is the type of Msg this capability grant allows
-	Message sdk.Msg
+	// GrantMsgType is the type of Msg this capability grant allows
+	GrantMsgType string
 }
 
-func (cap GenericAuthorization) MsgType() string {
-	return cap.Message.Type()
+// NewGenericAuthorization returns new GenericAuthorization instantce
+func NewGenericAuthorization(msgType string) GenericAuthorization {
+	return GenericAuthorization{GrantMsgType: msgType}
 }
 
-func (cap GenericAuthorization) Accept(msg sdk.Msg, block abci.Header) (allow bool, updated Authorization, delete bool) {
-	return true, cap, false
+// MsgType implement Authorization
+func (ga GenericAuthorization) MsgType() string {
+	return ga.GrantMsgType
+}
+
+// Accept implement Authorization
+func (ga GenericAuthorization) Accept(msg sdk.Msg, block abci.Header) (allow bool, updated Authorization, delete bool) {
+	return true, ga, false
 }

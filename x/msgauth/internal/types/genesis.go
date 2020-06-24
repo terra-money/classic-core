@@ -2,7 +2,8 @@ package types
 
 import (
 	"bytes"
-	
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -10,8 +11,8 @@ import (
 type AuthorizationEntry struct {
 	Granter       sdk.AccAddress `json:"granter" yaml:"granter"`
 	Grantee       sdk.AccAddress `json:"grantee" yaml:"grantee"`
-	Authorization Authorization `json:"authorization" yaml:"authorization"`
-	Expiration int64 `json:"expiration" yaml:"expiration"`
+	Authorization Authorization  `json:"authorization" yaml:"authorization"`
+	Expiration    time.Time      `json:"expiration" yaml:"expiration"`
 }
 
 // GenesisState is the struct representation of the export genesis
@@ -24,6 +25,11 @@ func NewGenesisState(entries []AuthorizationEntry) GenesisState {
 	return GenesisState{
 		AuthorizationEntries: entries,
 	}
+}
+
+// ValidateGenesis check the given genesis state has no integrity issues
+func ValidateGenesis(data GenesisState) error {
+	return nil
 }
 
 // DefaultGenesisState gets raw genesis raw message for testing

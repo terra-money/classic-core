@@ -23,7 +23,14 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgGrantAuthorization(ctx sdk.Context, msg MsgGrantAuthorization, k Keeper) (*sdk.Result, error) {
-	k.Grant(ctx, msg.Grantee, msg.Granter, msg.Authorization, msg.Expiration)
+	expiration := ctx.BlockTime().Add(msg.Period)
+
+	if !k.IsGrantable(msg.Authorization.MsgType()) {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidMsgType, "Msg %s is not allowed to grant", msg.Authorization.MsgType())
+	}
+
+	k.SetGrant(ctx, msg.Granter, msg.Grantee, NewAuthorizationGrant(msg.Authorization, expiration))
+	k.InsertGrantQueue(ctx, msg.Granter, msg.Grantee, msg.Authorization.MsgType(), expiration)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -39,10 +46,13 @@ func handleMsgGrantAuthorization(ctx sdk.Context, msg MsgGrantAuthorization, k K
 }
 
 func handleMsgRevokeAuthorization(ctx sdk.Context, msg MsgRevokeAuthorization, k Keeper) (*sdk.Result, error) {
-	err := k.Revoke(ctx, msg.Grantee, msg.Granter, msg.AuthorizationMsgType)
-	if err != nil {
-		return nil, err
+	grant, found := k.GetGrant(ctx, msg.Granter, msg.Grantee, msg.AuthorizationMsgType)
+	if !found {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "grant is not found")
 	}
+
+	k.RevokeGrant(ctx, msg.Granter, msg.Grantee, msg.AuthorizationMsgType)
+	k.RevokeFromGrantQueue(ctx, msg.Granter, msg.Grantee, msg.AuthorizationMsgType, grant.Expiration)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

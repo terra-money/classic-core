@@ -8,21 +8,21 @@ import (
 )
 
 // MsgGrantAuthorization grants the provided authorization to the grantee on the granter's
-// account with the provided expiration time.
+// account during the provided period time.
 type MsgGrantAuthorization struct {
 	Granter       sdk.AccAddress `json:"granter"`
 	Grantee       sdk.AccAddress `json:"grantee"`
 	Authorization Authorization  `json:"authorization"`
-	// Expiration specifies the expiration time of the grant
-	Expiration time.Time `json:"expiration"`
+	Period        time.Duration  `json:"period"`
 }
 
-func NewMsgGrantAuthorization(granter sdk.AccAddress, grantee sdk.AccAddress, authorization Authorization, expiration time.Time) MsgGrantAuthorization {
+// NewMsgGrantAuthorization returns new MsgGrantAuthorization instance
+func NewMsgGrantAuthorization(granter sdk.AccAddress, grantee sdk.AccAddress, authorization Authorization, period time.Duration) MsgGrantAuthorization {
 	return MsgGrantAuthorization{
 		Granter:       granter,
 		Grantee:       grantee,
 		Authorization: authorization,
-		Expiration:    expiration,
+		Period:        period,
 	}
 }
 
@@ -45,8 +45,9 @@ func (msg MsgGrantAuthorization) ValidateBasic() error {
 	if msg.Grantee.Empty() {
 		return sdkerrors.Wrap(ErrInvalidGranter, "missing grantee address")
 	}
-	if msg.Expiration.Unix() < time.Now().Unix() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "Time can't be in the past")
+
+	if msg.Period <= 0 {
+		return ErrInvalidPeriod
 	}
 
 	return nil
@@ -115,8 +116,7 @@ func (msg MsgExecAuthorized) GetSigners() []sdk.AccAddress {
 }
 
 func (msg MsgExecAuthorized) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 func (msg MsgExecAuthorized) ValidateBasic() error {

@@ -31,6 +31,8 @@ tags:
     description: Treasury modules APIs
   - name: Wasm
     description: Wasm modules APIs
+  - name: MsgAuth
+    description: MsgAuth modules APIs
   - name: version
   - name: Misc
     description: Query app version
@@ -2777,6 +2779,8 @@ paths:
           description: OK
           schema:
             type: string
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants:
+
 definitions:
   CheckTxResult:
     type: object

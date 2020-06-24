@@ -83,6 +83,7 @@ var (
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		msgauth.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -220,7 +221,12 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], app.subspaces[treasury.ModuleName],
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
-	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router())
+
+	// TODO - add MsgSwapSend after merging PR
+	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router(),
+		bank.MsgSend{}.Type(),
+		market.MsgSwap{}.Type(),
+	)
 
 	// register the evidence router
 	evidenceRouter := evidence.NewRouter()
@@ -284,7 +290,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, distr.ModuleName, slashing.ModuleName, evidence.ModuleName)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName,
+		treasury.ModuleName, msgauth.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
 	// treasury must occur after supply so that initial issuance is properly
@@ -292,7 +299,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm.SetOrderInitGenesis(auth.ModuleName, distr.ModuleName,
 		staking.ModuleName, bank.ModuleName, slashing.ModuleName,
 		gov.ModuleName, supply.ModuleName, oracle.ModuleName, treasury.ModuleName,
-		market.ModuleName, wasm.ModuleName, crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
+		market.ModuleName, wasm.ModuleName, msgauth.ModuleName,
+		crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())

@@ -1,15 +1,19 @@
 package msgauth
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis register all exported authorization entries
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
-	for _, entry := data.AuthorizationEntries {
-		keeper.Grant(ctx, entry.Grantee, entry.Granter, entry.Authorization, entry.Expiration)
+	for _, entry := range data.AuthorizationEntries {
+		keeper.SetGrant(ctx, entry.Granter, entry.Grantee, AuthorizationGrant{
+			Authorization: entry.Authorization,
+			Expiration:    entry.Expiration,
+		})
+
+		keeper.InsertGrantQueue(ctx, entry.Granter, entry.Grantee,
+			entry.Authorization.MsgType(), entry.Expiration)
 	}
 }
 
@@ -18,12 +22,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	var entries []AuthorizationEntry
-	keeper.IterateAuthorization(ctx, func(grantee, granter sdk.AccAddress, authorizationGrant AuthorizationGrant) bool {
-		append(entries, AuthorizationEntry{
-			Granter: granter,
-			Grantee: grantee,
-			Expiration: authorizationGrant.Expiration,
-			Authorization: authorizationGrant.Authorization,
+	keeper.IterateGrants(ctx, func(granter, grantee sdk.AccAddress, grant AuthorizationGrant) bool {
+		entries = append(entries, AuthorizationEntry{
+			Granter:       granter,
+			Grantee:       grantee,
+			Expiration:    grant.Expiration,
+			Authorization: grant.Authorization,
 		})
 		return false
 	})

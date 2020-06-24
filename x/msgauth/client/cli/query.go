@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -25,20 +26,24 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	authorizationQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdQueryAuthorization(queryRoute, cdc),
+		GetCmdQueryGrant(queryRoute, cdc),
+		GetCmdQueryGrants(queryRoute, cdc),
 	)...)
 
 	return authorizationQueryCmd
 }
 
-// GetCmdQueryAuthorization implements the query authorizations command.
-func GetCmdQueryAuthorization(storeName string, cdc *codec.Codec) *cobra.Command {
-	//TODO update description
+// GetCmdQueryGrant implements the query grant command.
+func GetCmdQueryGrant(storeName string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "authorization",
+		Use:   "grant [granter-addr] [grantee-addr] [msg-type]",
 		Args:  cobra.ExactArgs(3),
-		Short: "query authorization for a granter-grantee pair",
-		Long:  "query authorization for a granter-grantee pair",
+		Short: "Query grant entry about a specific msg type between a granter-grantee pair",
+		Long: strings.TrimSpace(`
+Query grant entry about a specific msg type between a granter-grantee pair,
+
+$ terracli query msgauth grant terra... terra... send
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -54,22 +59,70 @@ func GetCmdQueryAuthorization(storeName string, cdc *codec.Codec) *cobra.Command
 
 			msgAuthorized := args[2]
 
-			res, _, err := cliCtx.QueryStore(types.GetAuthorizationKey(granteeAddr, granterAddr, msgAuthorized), storeName)
+			params := types.NewQueryGrantParams(granterAddr, granteeAddr, msgAuthorized)
+			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			if len(res) == 0 {
-				return fmt.Errorf("no authorization found for given address pair ")
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrant), bz)
+			if err != nil {
+				return err
 			}
 
 			var grant types.AuthorizationGrant
-			err = cdc.UnmarshalBinaryBare(res, &grant)
+			err = cdc.UnmarshalJSON(res, &grant)
 			if err != nil {
 				return err
 			}
 
 			return cliCtx.PrintOutput(grant)
+		},
+	}
+}
+
+// GetCmdQueryGrants implements the query grants command.
+func GetCmdQueryGrants(storeName string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "grants [granter-addr] [grantee-addr]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query grant entries between a granter-grantee pair",
+		Long: strings.TrimSpace(`
+Query grant entries between a granter-grantee pair,
+
+$ terracli query msgauth grant terra... terra... send
+		`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			granterAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			granteeAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryGrantsParams(granterAddr, granteeAddr)
+			bz, err := cliCtx.Codec.MarshalJSON(params)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrants), bz)
+			if err != nil {
+				return err
+			}
+
+			var grants []types.AuthorizationGrant
+			err = cdc.UnmarshalJSON(res, &grants)
+			if err != nil {
+				return err
+			}
+
+			return cliCtx.PrintOutput(grants)
 		},
 	}
 }

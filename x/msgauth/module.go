@@ -2,6 +2,7 @@ package msgauth
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -84,34 +85,43 @@ func (AppModule) QuerierRoute() string { return QuerierRoute }
 /// NewQuerierHandler registers a query handler to respond to the module-specific queries
 func (am AppModule) NewQuerierHandler() sdk.Querier {
 	//return NewQuerier(am.keeper)
-	return nil
+	return NewQuerier(am.keeper)
 }
 
 // InitGenesis is ignored, no sense in serializing future upgrades
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+	var genesisState GenesisState
+	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.keeper, genesisState)
+	return nil
 }
 
 // DefaultGenesis is an empty object
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return []byte("{}")
+	gs := DefaultGenesisState()
+	return ModuleCdc.MustMarshalJSON(gs)
 }
 
 // ValidateGenesis is always successful, as we ignore the value
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
-	return nil
+	var data GenesisState
+	if err := ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", ModuleName, err)
+	}
+
+	return ValidateGenesis(data)
 }
 
 // ExportGenesis is always empty, as InitGenesis does nothing either
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
-	return am.DefaultGenesis()
+	gs := ExportGenesis(ctx, am.keeper)
+	return ModuleCdc.MustMarshalJSON(gs)
 }
 
-func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-
-}
+func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
 
 // EndBlock does nothing
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+	EndBlocker(ctx, am.keeper)
+	return nil
 }
