@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	core "github.com/terra-project/core/types"
 
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 	"github.com/terra-project/core/x/treasury"
 )
 
@@ -195,6 +196,14 @@ func filterMsgAndComputeTax(cliCtx context.CLIContext, msgs []sdk.Msg) (taxes sd
 
 				taxes = taxes.Add(tax...)
 			}
+
+		case msgauthexported.MsgExecAuthorized:
+			tax, err := filterMsgAndComputeTax(cliCtx, msg.Msgs)
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
 		}
 	}
 

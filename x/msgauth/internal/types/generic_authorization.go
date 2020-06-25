@@ -9,7 +9,7 @@ import (
 // msg type without restrictions
 type GenericAuthorization struct {
 	// GrantMsgType is the type of Msg this capability grant allows
-	GrantMsgType string
+	GrantMsgType string `json:"grant_msg_type"`
 }
 
 // NewGenericAuthorization returns new GenericAuthorization instantce

@@ -3,12 +3,12 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/bank"
-	"github.com/terra-project/core/x/market"
 )
 
+// ModuleCdc defines internal Module Codec
 var ModuleCdc = codec.New()
 
+// RegisterCodec concretes types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgGrantAuthorization{}, "msgauth/MsgGrantAuthorization", nil)
 	cdc.RegisterConcrete(MsgRevokeAuthorization{}, "msgauth/MsgRevokeAuthorization", nil)
@@ -19,10 +19,15 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*Authorization)(nil), nil)
 }
 
+// RegisterMsgAuthTypeCodec registers an external msg type defined
+// in another module for the internal ModuleCdc. This allows the MsgExecAuthorized
+// to be correctly Amino encoded and decoded.
+func RegisterMsgAuthTypeCodec(o interface{}, name string) {
+	ModuleCdc.RegisterConcrete(o, name, nil)
+}
+
 // Need interface to register codec for other module
 func init() {
 	sdk.RegisterCodec(ModuleCdc)
-	bank.RegisterCodec(ModuleCdc)
-	market.RegisterCodec(ModuleCdc)
 	RegisterCodec(ModuleCdc)
 }

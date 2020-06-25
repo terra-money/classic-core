@@ -39,7 +39,7 @@ func (k Keeper) IsGrantable(msgType string) bool {
 	return false
 }
 
-// GetGrant returns grant beteen granter and grantee for the given msg type
+// GetGrant returns grant between granter and grantee for the given msg type
 func (k Keeper) GetGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, msgType string) (grant types.AuthorizationGrant, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetGrantKey(granterAddr, granteeAddr, msgType))

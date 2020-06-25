@@ -2780,7 +2780,154 @@ paths:
           schema:
             type: string
   /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants:
-
+    get:
+      summary: Get all grants between the granter and the grantee
+      tags:
+        - MsgAuth
+      parameters:
+        - in: path
+          name: granterAddress
+          description: granter address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          description: grantee address you want to lookup
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: grant informations (one of GenericGrantInfo and SendGrantInfo)
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                GenericGrantInfo:
+                    $ref: "#/definitions/GenericGrantInfo"
+                SendGrantInfo:
+                    $ref: "#/definitions/SendGrantInfo"
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}:
+    post:
+      summary: Grant msg execute permission to grantee address
+      tags:
+        - MsgAuth
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: granterAddress
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          required: true
+          type: string
+        - in: body
+          name: grant request body
+          schema:
+            $ref: "#/definitions/GrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get grant about a specific msg type between the granter and the grantee
+      tags:
+        - MsgAuth
+      parameters:
+        - in: path
+          name: granterAddress
+          description: granter address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          description: grantee address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          description: msg type you want to lookup
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: grant information (one of GenericGrantInfo and SendGrantInfo)
+          schema:
+            type: object
+            properties:
+              GenericGrantInfo:
+                  $ref: "#/definitions/GenericGrantInfo"
+              SendGrantInfo:
+                  $ref: "#/definitions/SendGrantInfo"
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}/revoke:
+    post:
+      summary: Revoke grant from grantee address
+      tags:
+        - MsgAuth
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: granterAddress
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          required: true
+          type: string
+        - in: body
+          name: revoke request body
+          schema:
+            $ref: "#/definitions/RevokeGrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /msgauth/execute:
+    post:
+      summary: Execute msgs from grantee address
+      tags:
+        - MsgAuth
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: revoke request body
+          schema:
+            $ref: "#/definitions/ExecuteGrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
 definitions:
   CheckTxResult:
     type: object
@@ -3811,3 +3958,79 @@ definitions:
       exec_msg:
         type: string
         example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  GenericAuthorization:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "msgauth/GenericAuthorization"
+      value:
+        type: object
+        properties:
+          msg_type:
+            type: string
+            example: "send"
+  SendAuthorization:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "msgauth/SendAuthorization"
+      value:
+        type: object
+        properties:
+          spend_limit:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+  GenericGrantInfo:
+    type: object
+    properties:
+      autorization:
+        $ref: "#/definitions/GenericAuthorization"
+      expiration:
+        type: string
+        example: "2021-06-24T09:33:20.012999Z"
+  SendGrantInfo:
+    type: object
+    properties:
+      autorization:
+        $ref: "#/definitions/SendAuthorization"
+      expiration:
+        type: string
+        example: "2021-06-24T09:33:20.012999Z"
+  GrantReq:
+    type: object
+    required:
+      - base_req
+      - period
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      period:
+        type: string
+        description: "nano second of time duration"
+        example: "3600000000000"
+      limit:
+        type: string
+        description: "required when grant MsgType == send"
+        example: "1000000ukrw,1000000uluna"
+  RevokeGrantReq:
+    type: object
+    required:
+      - base_req
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+  ExecuteGrantReq:
+    type: object
+    required:
+      - base_req
+      - msgs
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      msgs:
+        type: array
+        items:
+          $ref: "#/definitions/Msg"

@@ -1,3 +1,4 @@
+// nolint
 package exported
 
 import (
@@ -23,6 +24,8 @@ type Keeper interface {
 	// granted to the grantee by the granter for the provided msg type.
 	GetAuthorizationGrant(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress, msgType sdk.Msg) (grant types.AuthorizationGrant, found bool)
 }
+
+var RegisterMsgAuthTypeCodec = types.RegisterMsgAuthTypeCodec
 
 type (
 	MsgGrantAuthorization  = types.MsgGrantAuthorization

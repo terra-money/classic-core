@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
+	feeutils "github.com/terra-project/core/x/auth/client/utils"
 	"github.com/terra-project/core/x/msgauth/internal/types"
 )
 
@@ -105,12 +107,12 @@ func GetCmdRevokeAuthorization(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke [grantee_address] [msg_type]",
 		Short: "Revoke authorization",
-		Long:  strings.TrimSpace(`
+		Long: strings.TrimSpace(`
 Revoke authorization from an address for a msg type,
 
 $ terracli terra... send --from [granter]
-`,
-		Args:  cobra.ExactArgs(2),
+`),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
@@ -139,14 +141,14 @@ func GetCmdSendAs(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-as [granter] [tx_json] --from [grantee]",
 		Short: "Execute tx on behalf of granter account",
-		Long:  strings.TrimSpace(`
+		Long: strings.TrimSpace(`
 Execute tx on behalf of granter account,
 
 $ terracli terra... ./tx.json --from [grantee]
 
 tx.json should be format of StdTx
 `),
-		Args:  cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
@@ -169,6 +171,28 @@ tx.json should be format of StdTx
 
 			if err := msg.ValidateBasic(); err != nil {
 				return err
+			}
+
+			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
+				// extimate tax and gas
+				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+					Memo:          txBldr.Memo(),
+					ChainID:       txBldr.ChainID(),
+					AccountNumber: txBldr.AccountNumber(),
+					Sequence:      txBldr.Sequence(),
+					GasPrices:     txBldr.GasPrices(),
+					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
+					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
+					Msgs:          []sdk.Msg{msg},
+				})
+
+				if err != nil {
+					return err
+				}
+
+				// override gas and fees
+				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
+					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
 			}
 
 			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
