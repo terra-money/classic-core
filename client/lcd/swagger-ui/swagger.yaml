@@ -4012,9 +4012,10 @@ definitions:
         description: "nano second of time duration"
         example: "3600000000000"
       limit:
-        type: string
-        description: "required when grant MsgType == send"
-        example: "1000000ukrw,1000000uluna"
+        type: array        
+        items:
+          $ref: "#/definitions/Coin"
+        description: "required when grant MsgType == send"  
   RevokeGrantReq:
     type: object
     required:

@@ -13,9 +13,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/bank"
 	"github.com/terra-project/core/x/msgauth/internal/types"
 )
 
@@ -29,7 +29,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type GrantRequest struct {
 	BaseReq rest.BaseReq  `json:"base_req" yaml:"base_req"`
 	Period  time.Duration `json:"period"`
-	Limit   string        `json:"limit,omitempty"`
+	Limit   sdk.Coins     `json:"limit,omitempty"`
 }
 
 // RevokeRequest defines the properties of a revoke request's body.
@@ -75,13 +75,7 @@ func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var authorization types.Authorization
 		if msgType == (bank.MsgSend{}.Type()) {
-			limit, err := sdk.ParseCoins(req.Limit)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-
-			authorization = types.NewSendAuthorization(limit)
+			authorization = types.NewSendAuthorization(req.Limit)
 		} else {
 			authorization = types.NewGenericAuthorization(msgType)
 		}
