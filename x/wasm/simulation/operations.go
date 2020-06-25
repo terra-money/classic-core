@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/terra-project/core/x/wasm/internal/keeper"
@@ -30,7 +31,8 @@ const (
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simulation.AppParams, cdc *codec.Codec, ak authkeeper.AccountKeeper, k keeper.Keeper,
+	appParams simulation.AppParams, cdc *codec.Codec,
+	ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper,
 ) simulation.WeightedOperations {
 	var weightMsgStoreCode int
 	var weightMsgInstantiateContract int
@@ -64,7 +66,7 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightMsgExecuteContract,
-			SimulateMsgExecuteContract(ak, k),
+			SimulateMsgExecuteContract(ak, bk, k),
 		),
 	}
 }
@@ -84,6 +86,11 @@ func SimulateMsgStoreCode(ak authkeeper.AccountKeeper, k keeper.Keeper) simulati
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		_, err := k.GetCodeInfo(ctx, 1)
+		if err == nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, nil
+		}
+
 		if testContract == nil {
 			loadContract()
 		}
@@ -122,11 +129,6 @@ type initMsg struct {
 	Beneficiary string `json:"beneficiary"`
 }
 
-var (
-	bob  sdk.AccAddress
-	fred sdk.AccAddress
-)
-
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
@@ -139,27 +141,19 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
-		simAccount, _ := simulation.RandomAcc(r, accs)
 
-		account := ak.GetAccount(ctx, simAccount.Address)
+		bobAcc, _ := simulation.RandomAcc(r, accs)
+		fredAcc, _ := simulation.RandomAcc(r, accs)
+
+		account := ak.GetAccount(ctx, fredAcc.Address)
 		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
 		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		if bob.Empty() {
-			bobAcc, _ := simulation.RandomAcc(r, accs)
-			bob = bobAcc.Address
-		}
-
-		if fred.Empty() {
-			fredAcc, _ := simulation.RandomAcc(r, accs)
-			fred = fredAcc.Address
-		}
-
 		initMsg := initMsg{
-			Verifier:    fred.String(),
-			Beneficiary: bob.String(),
+			Verifier:    fredAcc.Address.String(),
+			Beneficiary: bobAcc.Address.String(),
 		}
 
 		initMsgBz, err := json.Marshal(initMsg)
@@ -172,7 +166,7 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
-		msg := types.NewMsgInstantiateContract(simAccount.Address, 1, initMsgBz, nil)
+		msg := types.NewMsgInstantiateContract(fredAcc.Address, 1, initMsgBz, nil)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -181,7 +175,7 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 			chainID,
 			[]uint64{account.GetAccountNumber()},
 			[]uint64{account.GetSequence()},
-			simAccount.PrivKey,
+			fredAcc.PrivKey,
 		)
 
 		_, _, err = app.Deliver(tx)
@@ -198,30 +192,32 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 }
 
 // nolint: funlen
-func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper) simulation.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
-		if fred.Empty() {
+		if !bk.GetSendEnabled(ctx) {
+			return simulation.NoOpMsg(types.ModuleName), nil, nil
+		}
+
+		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
+		info, err := k.GetContractInfo(ctx, contractAddr)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
 		// should fred execute the msg
-		simAccount, _ := simulation.FindAccount(accs, fred)
-		account := ak.GetAccount(ctx, fred)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		simAccount, _ := simulation.FindAccount(accs, info.Creator)
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendableCoins := account.SpendableCoins(ctx.BlockTime())
+		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
-		_, err = k.GetContractInfo(ctx, contractAddr)
-		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
-		}
+		spendableCoins = spendableCoins.Sub(fees)
 
-		msg := types.NewMsgExecuteContract(fred, contractAddr, []byte(`{"release": {}}`), nil)
-
+		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), simulation.RandSubsetCoins(r, spendableCoins))
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
 			fees,

@@ -221,7 +221,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], app.subspaces[treasury.ModuleName],
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
-
 	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router(),
 		bank.MsgSend{}.Type(),
 		market.MsgSwap{}.Type(),
@@ -281,8 +280,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
-		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
-		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper),
+		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper, app.bankKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -317,8 +316,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		market.NewAppModule(app.marketKeeper, app.accountKeeper, app.oracleKeeper),
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
-		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
-		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper),
+		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper, app.bankKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()

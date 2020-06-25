@@ -28,7 +28,7 @@ const (
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simulation.AppParams, cdc *codec.Codec, ak authkeeper.AccountKeeper, k keeper.Keeper,
+	appParams simulation.AppParams, cdc *codec.Codec, ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper,
 ) simulation.WeightedOperations {
 
 	var (
@@ -66,7 +66,7 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightExecAuthorized,
-			SimulateMsgExecuteAuthorized(ak, k),
+			SimulateMsgExecuteAuthorized(ak, bk, k),
 		),
 	}
 }
@@ -117,14 +117,23 @@ func SimulateMsgRevokeAuthorization(ak authkeeper.AccountKeeper, k keeper.Keeper
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
 
-		granter, _ := simulation.RandomAcc(r, accs)
-		grantee, _ := simulation.RandomAcc(r, accs)
-		_, found := k.GetGrant(ctx, granter.Address, grantee.Address, types.SendAuthorization{}.MsgType())
+		hasGrant := false
+		var targetGrant types.AuthorizationGrant
+		var granterAddr sdk.AccAddress
+		var granteeAddr sdk.AccAddress
+		k.IterateGrants(ctx, func(granter, grantee sdk.AccAddress, grant types.AuthorizationGrant) bool {
+			targetGrant = grant
+			granterAddr = granter
+			granteeAddr = grantee
+			hasGrant = true
+			return true
+		})
 
-		if !found {
+		if !hasGrant {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
+		granter, _ := simulation.FindAccount(accs, granterAddr)
 		account := ak.GetAccount(ctx, granter.Address)
 
 		spendableCoins := account.SpendableCoins(ctx.BlockTime())
@@ -133,7 +142,7 @@ func SimulateMsgRevokeAuthorization(ak authkeeper.AccountKeeper, k keeper.Keeper
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgRevokeAuthorization(granter.Address, grantee.Address, types.SendAuthorization{}.MsgType())
+		msg := types.NewMsgRevokeAuthorization(granterAddr, granteeAddr, targetGrant.Authorization.MsgType())
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -152,36 +161,54 @@ func SimulateMsgRevokeAuthorization(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 // SimulateMsgExecuteAuthorized generates a MsgExecuteAuthorized with random values.
 // nolint: funlen
-func SimulateMsgExecuteAuthorized(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgExecuteAuthorized(ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper) simulation.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
 	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
-
-		granter, _ := simulation.RandomAcc(r, accs)
-		grantee, _ := simulation.RandomAcc(r, accs)
-		grant, found := k.GetGrant(ctx, granter.Address, grantee.Address, types.SendAuthorization{}.MsgType())
-
-		if !found {
+		if !bk.GetSendEnabled(ctx) {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
-		account := ak.GetAccount(ctx, grantee.Address)
+		hasGrant := false
+		var targetGrant types.AuthorizationGrant
+		var granterAddr sdk.AccAddress
+		var granteeAddr sdk.AccAddress
+		k.IterateGrants(ctx, func(granter, grantee sdk.AccAddress, grant types.AuthorizationGrant) bool {
+			targetGrant = grant
+			granterAddr = granter
+			granteeAddr = grantee
+			hasGrant = true
+			return true
+		})
 
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+		if !hasGrant {
+			return simulation.NoOpMsg(types.ModuleName), nil, nil
+		}
+
+		grantee, _ := simulation.FindAccount(accs, granteeAddr)
+		granterAccount := ak.GetAccount(ctx, granterAddr)
+		granteeAccount := ak.GetAccount(ctx, granteeAddr)
+
+		granterSpendableCoins := granterAccount.SpendableCoins(ctx.BlockTime())
+		if granterSpendableCoins.Empty() {
+			return simulation.NoOpMsg(types.ModuleName), nil, nil
+		}
+
+		granteeSpendableCoins := granteeAccount.SpendableCoins(ctx.BlockTime())
+		fees, err := simulation.RandomFees(r, ctx, granteeSpendableCoins)
 		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgExecAuthorized(grantee.Address, []sdk.Msg{
-			bank.NewMsgSend(
-				granter.Address,
-				grantee.Address,
-				simulation.RandSubsetCoins(r, spendableCoins.Sub(fees)),
-			),
-		})
+		execMsg := bank.NewMsgSend(
+			granterAddr,
+			granteeAddr,
+			simulation.RandSubsetCoins(r, granterSpendableCoins),
+		)
 
-		allow, _, _ := grant.Authorization.Accept(msg, ctx.BlockHeader())
+		msg := types.NewMsgExecAuthorized(grantee.Address, []sdk.Msg{execMsg})
+
+		allow, _, _ := targetGrant.Authorization.Accept(execMsg, ctx.BlockHeader())
 		if !allow {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
@@ -191,8 +218,8 @@ func SimulateMsgExecuteAuthorized(ak authkeeper.AccountKeeper, k keeper.Keeper) 
 			fees,
 			helpers.DefaultGenTxGas,
 			chainID,
-			[]uint64{account.GetAccountNumber()},
-			[]uint64{account.GetSequence()},
+			[]uint64{granteeAccount.GetAccountNumber()},
+			[]uint64{granteeAccount.GetSequence()},
 			grantee.PrivKey,
 		)
 

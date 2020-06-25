@@ -14,9 +14,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/msgauth/client/cli"
 	"github.com/terra-project/core/x/msgauth/client/rest"
 	"github.com/terra-project/core/x/msgauth/simulation"
@@ -66,14 +67,16 @@ type AppModule struct {
 	AppModuleBasic
 	keeper        Keeper
 	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, accountKeeper auth.AccountKeeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -161,6 +164,6 @@ func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
 	return simulation.WeightedOperations(
 		simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.keeper,
+		am.accountKeeper, am.bankKeeper, am.keeper,
 	)
 }

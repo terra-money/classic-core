@@ -59,7 +59,7 @@ type TestInput struct {
 	Ctx            sdk.Context
 	Cdc            *codec.Codec
 	AccKeeper      auth.AccountKeeper
-	BankKeepe      bank.Keeper
+	BankKeeper     bank.Keeper
 	SupplyKeeper   supply.Keeper
 	StakingKeeper  staking.Keeper
 	DistrKeeper    distr.Keeper
