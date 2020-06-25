@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market"
+	marketexported "github.com/terra-project/core/x/market/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
@@ -120,7 +120,7 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs []sdk.Msg) 
 				taxes = taxes.Add(computeTax(ctx, tk, input.Coins)...)
 			}
 
-		case market.MsgSwapSend:
+		case marketexported.MsgSwapSend:
 			taxes = taxes.Add(computeTax(ctx, tk, sdk.NewCoins(msg.OfferCoin))...)
 
 		case wasmexported.MsgInstantiateContract:
