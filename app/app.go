@@ -222,7 +222,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
 
-	// TODO - add MsgSwapSend after merging PR
 	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router(),
 		bank.MsgSend{}.Type(),
 		market.MsgSwap{}.Type(),
