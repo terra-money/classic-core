@@ -56,6 +56,7 @@ var (
 type TestInput struct {
 	Ctx          sdk.Context
 	Cdc          *codec.Codec
+	Acckeeper    auth.AccountKeeper
 	OracleKeeper oracle.Keeper
 	SupplyKeeper supply.Keeper
 	MarketKeeper Keeper
@@ -174,5 +175,5 @@ func CreateTestInput(t *testing.T) TestInput {
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs))))))
 	supplyKeeper.SetSupply(ctx, supply)
 
-	return TestInput{ctx, cdc, oracleKeeper, supplyKeeper, keeper}
+	return TestInput{ctx, cdc, accountKeeper, oracleKeeper, supplyKeeper, keeper}
 }

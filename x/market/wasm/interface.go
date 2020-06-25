@@ -31,7 +31,8 @@ func (WasmMsgParser) Parse(_ sdk.AccAddress, _ wasmTypes.CosmosMsg) ([]sdk.Msg, 
 
 // CosmosMsg only contains swap msg
 type CosmosMsg struct {
-	Swap types.MsgSwap `json:"swap"`
+	Swap     *types.MsgSwap     `json:"swap,omitempty"`
+	SwapSend *types.MsgSwapSend `json:"swap_send,omitempty"`
 }
 
 // ParseCustom implements custom parser
@@ -42,7 +43,13 @@ func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessa
 		return nil, sdkerrors.Wrap(err, "failed to parse market custom msg")
 	}
 
-	return []sdk.Msg{sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
+	if sdkMsg.Swap != nil {
+		return []sdk.Msg{*sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
+	} else if sdkMsg.SwapSend != nil {
+		return []sdk.Msg{*sdkMsg.SwapSend}, sdkMsg.SwapSend.ValidateBasic()
+	}
+
+	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Market")
 }
 
 // WasmQuerier - staking query interface for wasm contract

@@ -44,7 +44,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // GetCmdExchangeRatePrevote will create a exchangeRatePrevote tx and sign it with the given key.
 func GetCmdExchangeRatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prevote [salt] [exchange_rate] [validator]",
+		Use:   "prevote [salt] [exchange-rate] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle prevote for the exchange rate of Luna",
 		Long: strings.TrimSpace(`
@@ -106,7 +106,7 @@ $ terracli tx oracle prevote 1234 8888.0ukrw terravaloper1...
 // GetCmdExchangeRateVote will create a exchangeRateVote tx and sign it with the given key.
 func GetCmdExchangeRateVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote [salt] [exchange_rate] [validator]",
+		Use:   "vote [salt] [exchange-rate] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle vote for the exchange_rate of Luna",
 		Long: strings.TrimSpace(`
@@ -210,7 +210,7 @@ where "terra1..." is the address you want to delegate your voting rights to.
 // GetCmdAggregateExchangeRatePrevote will create a aggregateExchangeRatePrevote tx and sign it with the given key.
 func GetCmdAggregateExchangeRatePrevote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "aggregate-prevote [salt] [exchange_rates] [validator]",
+		Use:   "aggregate-prevote [salt] [exchange-rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle aggregate prevote for the exchange rates of Luna",
 		Long: strings.TrimSpace(`
@@ -271,7 +271,7 @@ $ terracli tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terrav
 // GetCmdAggregateExchangeRateVote will create a aggregateExchangeRateVote tx and sign it with the given key.
 func GetCmdAggregateExchangeRateVote(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "aggregate-vote [salt] [exchange_rates] [validator]",
+		Use:   "aggregate-vote [salt] [exchange-rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
 		Short: "Submit an oracle aggregate vote for the exchange_rates of Luna",
 		Long: strings.TrimSpace(`

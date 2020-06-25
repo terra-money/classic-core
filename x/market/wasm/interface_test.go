@@ -47,6 +47,25 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"simple swap send": {
+			sender: addrs[0],
+			input: wasmTypes.CosmosMsg{
+				Custom: []byte(
+					fmt.Sprintf(
+						`{"swap_send": {"from_address": "%s", "to_address": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
+						addrs[0], addrs[1], core.MicroLunaDenom, core.MicroSDRDenom,
+					),
+				),
+			},
+			output: []sdk.Msg{
+				types.MsgSwapSend{
+					FromAddress: addrs[0],
+					ToAddress:   addrs[1],
+					OfferCoin:   sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
+					AskDenom:    core.MicroSDRDenom,
+				},
+			},
+		},
 		"invalid swap amount": {
 			sender: addrs[0],
 			input: wasmTypes.CosmosMsg{
