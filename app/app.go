@@ -282,7 +282,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
-		msgauth.NewAppModule(app.msgauthKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -318,6 +318,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()

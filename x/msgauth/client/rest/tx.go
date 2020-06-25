@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	feeutils "github.com/terra-project/core/x/auth/client/utils"
 	"github.com/terra-project/core/x/msgauth/internal/types"
@@ -74,7 +73,7 @@ func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var authorization types.Authorization
-		if msgType == (bank.MsgSend{}.Type()) {
+		if msgType == (types.SendAuthorization{}.MsgType()) {
 			authorization = types.NewSendAuthorization(req.Limit)
 		} else {
 			authorization = types.NewGenericAuthorization(msgType)

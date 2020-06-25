@@ -17,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	feeutils "github.com/terra-project/core/x/auth/client/utils"
 	"github.com/terra-project/core/x/msgauth/internal/types"
@@ -75,7 +74,7 @@ $ terracli tx msgauth grant terra... swap --from [granter]
 			msgType := args[1]
 
 			var authorization types.Authorization
-			if msgType == (bank.MsgSend{}.Type()) {
+			if msgType == (types.SendAuthorization{}.MsgType()) {
 				limit, err := sdk.ParseCoins(args[2])
 				if err != nil {
 					return err

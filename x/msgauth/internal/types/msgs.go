@@ -45,6 +45,9 @@ func (msg MsgGrantAuthorization) ValidateBasic() error {
 	if msg.Grantee.Empty() {
 		return sdkerrors.Wrap(ErrInvalidGranter, "missing grantee address")
 	}
+	if msg.Granter.Equals(msg.Grantee) {
+		return sdkerrors.Wrap(ErrInvalidGrantee, "grantee == granter")
+	}
 
 	if msg.Period <= 0 {
 		return ErrInvalidPeriod

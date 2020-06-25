@@ -3,17 +3,23 @@ package msgauth
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+
+	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/msgauth/client/cli"
 	"github.com/terra-project/core/x/msgauth/client/rest"
+	"github.com/terra-project/core/x/msgauth/simulation"
 )
 
 // module codec
@@ -58,14 +64,16 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // AppModule implements the sdk.AppModule interface
 type AppModule struct {
 	AppModuleBasic
-	keeper Keeper
+	keeper        Keeper
+	accountKeeper auth.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper auth.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
+		accountKeeper:  accountKeeper,
 	}
 }
 
@@ -124,4 +132,35 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
 	return nil
+}
+
+//____________________________________________________________________________
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the distribution module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {}
+
+// ProposalContents returns all the distribution content functions used to
+// simulate governance proposals.
+func (am AppModule) ProposalContents(_ module.SimulationState) []sim.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized distribution param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+	return nil
+}
+
+// RegisterStoreDecoder registers a decoder for distribution module's types
+func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[StoreKey] = simulation.DecodeStore
+}
+
+// WeightedOperations returns the all the gov module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc,
+		am.accountKeeper, am.keeper,
+	)
 }

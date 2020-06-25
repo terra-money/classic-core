@@ -24,6 +24,7 @@ const (
 // Items are stored with the following key: values
 //
 // - 0x01<accAddress_Bytes><accAddress_Bytes><msgType_Bytes>: Grant
+// - 0x02<timestamp_Bytes>: []GGMPair
 var (
 	// Keys for store prefixes
 	GrantKey      = []byte{0x01} // prefix for each key to a prevote

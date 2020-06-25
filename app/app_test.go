@@ -22,6 +22,7 @@ func TestTerraExport(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasmtest")
 	require.NoError(t, err)
 	viper.Set(flags.FlagHome, tempDir)
+	defer os.RemoveAll(tempDir)
 
 	db := dbm.NewMemDB()
 	tapp := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, wasmconfig.DefaultConfig())
@@ -60,6 +61,7 @@ func TestBlackListedAddrs(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasmtest")
 	require.NoError(t, err)
 	viper.Set(flags.FlagHome, tempDir)
+	defer os.RemoveAll(tempDir)
 
 	db := dbm.NewMemDB()
 	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, wasmconfig.DefaultConfig())
