@@ -40,7 +40,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 	binary.LittleEndian.PutUint64(lastInstanceIDbz, 456)
 
 	codeInfo := types.NewCodeInfo([]byte{1, 2, 3}, creatorAddr)
-	contractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, []byte{4, 5, 6})
+	contractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, []byte{4, 5, 6}, true)
 	contractStore := []byte{7, 8, 9}
 
 	kvPairs := tmkv.Pairs{

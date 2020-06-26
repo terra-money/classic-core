@@ -143,10 +143,11 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgInstantiateContract{
-				Sender:    fromAddr,
-				CodeID:    codeID,
-				InitCoins: coins,
-				InitMsg:   initMsgBz,
+				Owner:      fromAddr,
+				CodeID:     codeID,
+				InitCoins:  coins,
+				InitMsg:    initMsgBz,
+				Migratable: true,
 			}
 
 			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
@@ -218,10 +219,10 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
-				Sender:   fromAddr,
-				Contract: contractAddr,
-				Coins:    coins,
-				Msg:      execMsgBz,
+				Sender:     fromAddr,
+				Contract:   contractAddr,
+				Coins:      coins,
+				ExecuteMsg: execMsgBz,
 			}
 
 			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {

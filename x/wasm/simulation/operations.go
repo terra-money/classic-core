@@ -172,7 +172,7 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
-		msg := types.NewMsgInstantiateContract(simAccount.Address, 1, initMsgBz, nil)
+		msg := types.NewMsgInstantiateContract(simAccount.Address, 1, initMsgBz, nil, true)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},

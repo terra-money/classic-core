@@ -40,7 +40,7 @@ type testData struct {
 func loadContracts() {
 	testContract = mustLoad("./internal/keeper/testdata/contract.wasm")
 	maskContract = mustLoad("./internal/keeper/testdata/mask.wasm")
-	oldEscrowContract = mustLoad("./testdata/escrow.wasm")
+	oldEscrowContract = mustLoad("./testdata/escrow_0.7.wasm")
 }
 
 // Returns a cleanup function, which must be defered on

@@ -70,20 +70,20 @@ func TestMaskReflectContractSend(t *testing.T) {
 	// upload mask code
 	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
 	require.NoError(t, err)
-	maskID, err := keeper.StoreCode(ctx, creator, maskCode, true)
+	maskID, err := keeper.StoreCode(ctx, creator, maskCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), maskID)
 
 	// upload hackatom escrow code
 	escrowCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
-	escrowID, err := keeper.StoreCode(ctx, creator, escrowCode, true)
+	escrowID, err := keeper.StoreCode(ctx, creator, escrowCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), escrowID)
 
 	// creator instantiates a contract and gives it tokens
 	maskStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	maskAddr, err := keeper.InstantiateContract(ctx, maskID, creator, []byte("{}"), maskStart)
+	maskAddr, err := keeper.InstantiateContract(ctx, maskID, creator, []byte("{}"), maskStart, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, maskAddr)
 
@@ -95,7 +95,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 	escrowStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 25000))
-	escrowAddr, err := keeper.InstantiateContract(ctx, escrowID, creator, initMsgBz, escrowStart)
+	escrowAddr, err := keeper.InstantiateContract(ctx, escrowID, creator, initMsgBz, escrowStart, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, escrowAddr)
 
@@ -165,13 +165,13 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	// upload code
 	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
 	require.NoError(t, err)
-	codeID, err := keeper.StoreCode(ctx, creator, maskCode, true)
+	codeID, err := keeper.StoreCode(ctx, creator, maskCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart)
+	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -269,13 +269,13 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	// upload code
 	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
 	require.NoError(t, err)
-	codeID, err := keeper.StoreCode(ctx, creator, maskCode, true)
+	codeID, err := keeper.StoreCode(ctx, creator, maskCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart)
+	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 

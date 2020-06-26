@@ -94,7 +94,7 @@ func TestInstantiateMaker(t *testing.T) {
 	// upload staking derivates code
 	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
-	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode, true)
+	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), makerID)
 
@@ -105,12 +105,12 @@ func TestInstantiateMaker(t *testing.T) {
 	}
 
 	initBz, err := json.Marshal(&initMsg)
-	makerAddr, err := keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil)
+	makerAddr, err := keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
 
 	// invalid init msg
-	_, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, []byte{}, nil)
+	_, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, []byte{}, nil, true)
 	require.Error(t, err)
 }
 
@@ -374,7 +374,7 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	// upload staking derivates code
 	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
-	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode, true)
+	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), makerID)
 
@@ -384,7 +384,7 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	}
 
 	initBz, err := json.Marshal(&initMsg)
-	makerAddr, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil)
+	makerAddr, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
 

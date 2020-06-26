@@ -37,10 +37,10 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.Cosmos
 		}
 
 		sdkMsg := types.MsgExecuteContract{
-			Sender:   contractAddr,
-			Contract: destContractAddr,
-			Msg:      msg.Execute.Msg,
-			Coins:    coins,
+			Sender:     contractAddr,
+			Contract:   destContractAddr,
+			ExecuteMsg: msg.Execute.Msg,
+			Coins:      coins,
 		}
 		return []sdk.Msg{sdkMsg}, nil
 	}
@@ -52,7 +52,7 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.Cosmos
 		}
 
 		sdkMsg := types.MsgInstantiateContract{
-			Sender:    contractAddr,
+			Owner:     contractAddr,
 			CodeID:    msg.Instantiate.CodeID,
 			InitMsg:   msg.Instantiate.Msg,
 			InitCoins: coins,

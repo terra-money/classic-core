@@ -47,7 +47,7 @@ func TestContractInfo(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	expected := types.NewContractInfo(codeID, contractAddr, creatorAddr, initMsgBz)
+	expected := types.NewContractInfo(codeID, contractAddr, creatorAddr, initMsgBz, true)
 	keeper.SetContractInfo(ctx, contractAddr, expected)
 
 	as, err := keeper.GetContractInfo(ctx, contractAddr)

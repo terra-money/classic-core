@@ -51,6 +51,11 @@ func (q Querier) WithCtx(ctx sdk.Context) Querier {
 	return q
 }
 
+// GasConsumed consume gas in the current context
+func (q Querier) GasConsumed() uint64 {
+	return q.Ctx.GasMeter().GasConsumed()
+}
+
 // Query - interface for wasmTypes.Querier
 func (q Querier) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	switch {

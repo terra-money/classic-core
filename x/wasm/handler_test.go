@@ -77,6 +77,8 @@ func TestHandleStore(t *testing.T) {
 	}
 }
 func TestHandleInstantiate(t *testing.T) {
+	loadContracts()
+
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
@@ -89,7 +91,7 @@ func TestHandleInstantiate(t *testing.T) {
 		Sender:       creator,
 		WASMByteCode: testContract,
 	}
-	_, err := h(data.ctx, msg)
+	_, err := h(data.ctx, &msg)
 	require.NoError(t, err)
 
 	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
@@ -109,10 +111,11 @@ func TestHandleInstantiate(t *testing.T) {
 
 	// create with no balance is also legal
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: nil,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  nil,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -133,7 +136,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	iter := data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
@@ -184,10 +187,11 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: deposit,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  deposit,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -208,7 +212,7 @@ func TestHandleExecute(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	// ensure bob doesn't exist
@@ -227,10 +231,10 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, deposit, contractAcct.GetCoins())
 
 	execCmd := MsgExecuteContract{
-		Sender:   fred,
-		Contract: contractAddr,
-		Msg:      []byte(`{"release":{}}`),
-		Coins:    topUp,
+		Sender:     fred,
+		Contract:   contractAddr,
+		ExecuteMsg: []byte(`{"release":{}}`),
+		Coins:      topUp,
 	}
 	_, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
@@ -294,10 +298,11 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: deposit,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  deposit,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -319,7 +324,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	handleMsg := map[string]interface{}{
@@ -330,10 +335,10 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.NoError(t, err)
 
 	execCmd := MsgExecuteContract{
-		Sender:   fred,
-		Contract: contractAddr,
-		Msg:      handleMsgBz,
-		Coins:    topUp,
+		Sender:     fred,
+		Contract:   contractAddr,
+		ExecuteMsg: handleMsgBz,
+		Coins:      topUp,
 	}
 
 	res, err = h(data.ctx, execCmd)
