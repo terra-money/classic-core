@@ -87,7 +87,7 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
@@ -123,7 +123,7 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
