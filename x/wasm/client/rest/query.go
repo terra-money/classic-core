@@ -16,10 +16,10 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 

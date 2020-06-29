@@ -2640,7 +2640,7 @@ paths:
           description: Bad request
         500:
           description: Internal Server Error
-  /wasm/code/{codeID}:
+  /wasm/codes/{codeID}:
     post:
       summary: Instantiate wasm contract message
       tags:
@@ -2683,7 +2683,7 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/CodeInfo"
-  /wasm/contract/{contractAddress}:
+  /wasm/contracts/{contractAddress}:
     post:
       summary: Execute wasm contract message
       tags:
@@ -2726,7 +2726,7 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/ContractInfo"
-  /wasm/contract/{contractAddress}/store:
+  /wasm/contracts/{contractAddress}/store:
     get:
       summary: Get stored information with query msg
       tags:
@@ -2750,7 +2750,7 @@ paths:
           description: OK
           schema:
             type: string
-  /wasm/contract/{contractAddress}/store/raw:
+  /wasm/contracts/{contractAddress}/store/raw:
     get:
       summary: Get stored information with store key
       tags:
