@@ -200,7 +200,7 @@ func (msg MsgMigrateContract) Route() string {
 
 // Type implements sdk.Msg
 func (msg MsgMigrateContract) Type() string {
-	return "migrate"
+	return "migrate_contract"
 }
 
 // ValidateBasic implements sdk.Msg
@@ -257,7 +257,7 @@ func (msg MsgUpdateContractOwner) Route() string {
 
 // Type implements sdk.Msg
 func (msg MsgUpdateContractOwner) Type() string {
-	return "set_contract_owner"
+	return "update_contract_owner"
 }
 
 // ValidateBasic implements sdk.Msg
