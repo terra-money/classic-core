@@ -48,12 +48,10 @@ var (
 	NewSendAuthorization         = types.NewSendAuthorization
 
 	// variable aliases
-	ModuleCdc         = types.ModuleCdc
-	ErrInvalidGranter = types.ErrInvalidGranter
-	ErrInvalidGrantee = types.ErrInvalidGrantee
-	ErrInvalidPeriod  = types.ErrInvalidPeriod
-	GrantKey          = types.GrantKey
-	GrantQueueKey     = types.GrantQueueKey
+	ModuleCdc        = types.ModuleCdc
+	ErrInvalidPeriod = types.ErrInvalidPeriod
+	GrantKey         = types.GrantKey
+	GrantQueueKey    = types.GrantQueueKey
 )
 
 type (

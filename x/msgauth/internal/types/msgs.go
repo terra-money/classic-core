@@ -40,13 +40,13 @@ func (msg MsgGrantAuthorization) GetSignBytes() []byte {
 
 func (msg MsgGrantAuthorization) ValidateBasic() error {
 	if msg.Granter.Empty() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "missing granter address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing granter address")
 	}
 	if msg.Grantee.Empty() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "missing grantee address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing grantee address")
 	}
 	if msg.Granter.Equals(msg.Grantee) {
-		return sdkerrors.Wrap(ErrInvalidGrantee, "grantee == granter")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "can not be grantee == granter")
 	}
 
 	if msg.Period <= 0 {
@@ -88,10 +88,10 @@ func (msg MsgRevokeAuthorization) GetSignBytes() []byte {
 
 func (msg MsgRevokeAuthorization) ValidateBasic() error {
 	if msg.Granter.Empty() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "missing granter address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing granter address")
 	}
 	if msg.Grantee.Empty() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "missing grantee address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing grantee address")
 	}
 	return nil
 }
@@ -124,7 +124,7 @@ func (msg MsgExecAuthorized) GetSignBytes() []byte {
 
 func (msg MsgExecAuthorized) ValidateBasic() error {
 	if msg.Grantee.Empty() {
-		return sdkerrors.Wrap(ErrInvalidGranter, "missing grantee address")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing grantee address")
 	}
 	return nil
 }
