@@ -90,7 +90,7 @@ func GetCmdQueryGrants(storeName string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query grant entries between a granter-grantee pair,
 
-$ terracli query msgauth grant terra... terra... send
+$ terracli query msgauth grant terra... terra...
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
