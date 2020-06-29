@@ -6,11 +6,11 @@ import (
 
 // RegisterCodec registers the wasm types and interface
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/StoreCode", nil)
-	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/InstantiateContract", nil)
-	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/ExecuteContract", nil)
-	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/MigrateContract", nil)
-	cdc.RegisterConcrete(&MsgUpdateContractOwner{}, "wasm/UpdateContractOwner", nil)
+	cdc.RegisterConcrete(MsgStoreCode{}, "wasm/StoreCode", nil)
+	cdc.RegisterConcrete(MsgInstantiateContract{}, "wasm/InstantiateContract", nil)
+	cdc.RegisterConcrete(MsgExecuteContract{}, "wasm/ExecuteContract", nil)
+	cdc.RegisterConcrete(MsgMigrateContract{}, "wasm/MigrateContract", nil)
+	cdc.RegisterConcrete(MsgUpdateContractOwner{}, "wasm/UpdateContractOwner", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

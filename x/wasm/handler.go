@@ -15,21 +15,15 @@ func NewHandler(k Keeper) sdk.Handler {
 
 		switch msg := msg.(type) {
 		case MsgStoreCode:
-			return handleStoreCode(ctx, k, &msg)
-		case *MsgStoreCode:
 			return handleStoreCode(ctx, k, msg)
 		case MsgInstantiateContract:
-			return handleInstantiate(ctx, k, &msg)
-		case *MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
 		case MsgExecuteContract:
-			return handleExecute(ctx, k, &msg)
-		case *MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
 		case MsgMigrateContract:
-			return handleMigrate(ctx, k, &msg)
-		case *MsgMigrateContract:
 			return handleMigrate(ctx, k, msg)
+		case MsgUpdateContractOwner:
+			return handleUpdateContractOwner(ctx, k, msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm message type: %T", msg)
@@ -37,7 +31,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
+func handleStoreCode(ctx sdk.Context, k Keeper, msg MsgStoreCode) (*sdk.Result, error) {
 	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode)
 	if err != nil {
 		return nil, err
@@ -60,7 +54,7 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) (*sdk.Result, error) {
 	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Owner, msg.InitMsg, msg.InitCoins, msg.Migratable)
 	if err != nil {
 		return nil, err
@@ -82,7 +76,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 	)}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k Keeper, msg MsgExecuteContract) (*sdk.Result, error) {
 	data, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.ExecuteMsg, msg.Coins)
 	if err != nil {
 		return nil, err
@@ -98,7 +92,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 	), Data: data}, nil
 }
 
-func handleMigrate(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {
+func handleMigrate(ctx sdk.Context, k Keeper, msg MsgMigrateContract) (*sdk.Result, error) {
 	data, err := k.MigrateContract(ctx, msg.Contract, msg.Owner, msg.NewCodeID, msg.MigrateMsg)
 	if err != nil {
 		return nil, err
@@ -114,7 +108,7 @@ func handleMigrate(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Res
 	), Data: data}, nil
 }
 
-func handleUpdateContractOwner(ctx sdk.Context, k Keeper, msg *MsgUpdateContractOwner) (*sdk.Result, error) {
+func handleUpdateContractOwner(ctx sdk.Context, k Keeper, msg MsgUpdateContractOwner) (*sdk.Result, error) {
 	contractInfo, err := k.GetContractInfo(ctx, msg.Contract)
 	if err != nil {
 		return nil, err

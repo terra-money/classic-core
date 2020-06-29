@@ -2726,6 +2726,58 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/ContractInfo"
+  /wasm/contract/{contractAddress}/migrate:
+    post:
+      summary: Migrate wasm contract to new code base
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to migrate
+          required: true
+          type: string
+        - in: body
+          name: migrate contract request body
+          schema:
+            $ref: "#/definitions/MigrateContractReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /wasm/contract/{contractAddress}/owner:
+    post:
+      summary: Update wasm contract owner to new address
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to update owner
+          required: true
+          type: string
+        - in: body
+          name: update contract owner request body
+          schema:
+            $ref: "#/definitions/UpdateContractOwnerReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
   /wasm/contract/{contractAddress}/store:
     get:
       summary: Get stored information with query msg
@@ -3807,3 +3859,22 @@ definitions:
       exec_msg:
         type: string
         example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  MigrateContractReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      new_code_id:
+        type: number
+        format: integer
+        example: 10
+      migrate_msg:
+        type: string
+        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  UpdateContractOwnerReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      new_owner:
+        $ref: "#/definitions/Address"

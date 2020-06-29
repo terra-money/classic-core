@@ -17,9 +17,11 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/wasm/code/", storeCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/code", storeCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/migrate", RestContractAddress), migrateContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/owner", RestContractAddress), updateOwnerContractHandlerFn(cliCtx)).Methods("POST")
 }
 
 // limit max bytes read to prevent gzip bombs
@@ -31,15 +33,27 @@ type storeCodeReq struct {
 }
 
 type instantiateContractReq struct {
-	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
-	InitCoins sdk.Coins    `json:"init_coins" yaml:"init_coins"`
-	InitMsg   []byte       `json:"init_msg" yaml:"init_msg"`
+	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
+	InitCoins  sdk.Coins    `json:"init_coins" yaml:"init_coins"`
+	InitMsg    []byte       `json:"init_msg" yaml:"init_msg"`
+	Migratable bool         `json:"migratable" yaml:"migratable"`
 }
 
 type executeContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 	ExecMsg []byte       `json:"exec_msg" yaml:"exec_msg"`
 	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
+}
+
+type migrateContractReq struct {
+	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
+	MigrateMsg []byte       `json:"migrate_msg" yaml:"migrate_msg"`
+	NewCodeID  uint64       `json:"new_code_id" yaml:"new_code_id"`
+}
+
+type updateContractOwnerReq struct {
+	BaseReq  rest.BaseReq   `json:"base_req" yaml:"base_req"`
+	NewOwner sdk.AccAddress `json:"new_owner" yaml:"new_owner"`
 }
 
 func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -55,20 +69,20 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var err error
-		wasm := req.WasmBytes
-		if len(wasm) > maxSize {
+		wasmBytes := req.WasmBytes
+		if len(wasmBytes) > maxSize {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
 			return
 		}
 
 		// gzip the wasm file
-		if wasmUtils.IsWasm(wasm) {
-			wasm, err = wasmUtils.GzipIt(wasm)
+		if wasmUtils.IsWasm(wasmBytes) {
+			wasmBytes, err = wasmUtils.GzipIt(wasmBytes)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-		} else if !wasmUtils.IsGzip(wasm) {
+		} else if !wasmUtils.IsGzip(wasmBytes) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid input file, use wasm binary or zip")
 			return
 		}
@@ -79,13 +93,8 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		// build and sign the transaction, then broadcast to Tendermint
-		msg := types.MsgStoreCode{
-			Sender:       fromAddr,
-			WASMByteCode: wasm,
-		}
-
-		err = msg.ValidateBasic()
-		if err != nil {
+		msg := types.NewMsgStoreCode(fromAddr, wasmBytes)
+		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -114,16 +123,8 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgInstantiateContract{
-			Owner:      cliCtx.GetFromAddress(),
-			CodeID:     codeID,
-			InitCoins:  req.InitCoins,
-			InitMsg:    req.InitMsg,
-			Migratable: true,
-		}
-
-		err = msg.ValidateBasic()
-		if err != nil {
+		msg := types.NewMsgInstantiateContract(cliCtx.GetFromAddress(), codeID, req.InitMsg, req.InitCoins, req.Migratable)
+		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -175,15 +176,8 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgExecuteContract{
-			Sender:     cliCtx.GetFromAddress(),
-			Contract:   contractAddress,
-			ExecuteMsg: req.ExecMsg,
-			Coins:      req.Amount,
-		}
-
-		err = msg.ValidateBasic()
-		if err != nil {
+		msg := types.NewMsgExecuteContract(cliCtx.GetFromAddress(), contractAddress, req.ExecMsg, req.Amount)
+		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -209,6 +203,66 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			req.BaseReq.Gas = strconv.FormatUint(gas, 10)
 			req.BaseReq.Fees = fees
 			req.BaseReq.GasPrices = sdk.DecCoins{}
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req migrateContractReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+		vars := mux.Vars(r)
+		contractAddr := vars[RestContractAddress]
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgMigrateContract(cliCtx.GetFromAddress(), contractAddress, req.NewCodeID, req.MigrateMsg)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func updateOwnerContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req updateContractOwnerReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+		vars := mux.Vars(r)
+		contractAddr := vars[RestContractAddress]
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgUpdateContractOwner(cliCtx.GetFromAddress(), req.NewOwner, contractAddress)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})

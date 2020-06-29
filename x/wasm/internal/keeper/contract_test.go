@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -596,9 +595,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	res, err := keeper.MigrateContract(ctx, contractAddr, creator, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	dataBz, err := base64.StdEncoding.DecodeString(string(res))
-	require.NoError(t, err)
-	assert.Equal(t, "burnt 1 keys", string(dataBz))
+	assert.Equal(t, "burnt 1 keys", string(res))
 	type dict map[string]interface{}
 	expEvents := []dict{
 		{
