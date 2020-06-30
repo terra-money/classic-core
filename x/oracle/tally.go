@@ -46,5 +46,5 @@ func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k Keeper)
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 	ballotPower := sdk.NewInt(ballot.Power())
-	return ballotPower.GTE(thresholdVotes)
+	return !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
 }
