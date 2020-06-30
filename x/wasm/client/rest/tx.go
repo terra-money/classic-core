@@ -18,8 +18,8 @@ import (
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/code/", storeCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
 }
 
 // limit max bytes read to prevent gzip bombs
