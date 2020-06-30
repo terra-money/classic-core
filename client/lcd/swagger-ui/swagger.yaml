@@ -3897,7 +3897,7 @@ definitions:
           $ref: "#/definitions/Coin"
       exec_msg:
         type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+        example: "{}"
   MigrateContractReq:
     type: object
     properties:
@@ -3909,7 +3909,7 @@ definitions:
         example: 10
       migrate_msg:
         type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+        example: "{}"
   UpdateContractOwnerReq:
     type: object
     properties:
