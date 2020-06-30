@@ -2742,7 +2742,7 @@ paths:
           description: json formatted query msg
           required: true
           type: string
-          example: "{}"
+          x-example: "{}"
       produces:
         - application/json
       responses:
@@ -3825,7 +3825,6 @@ definitions:
       init_msg:
         type: string
         description: json formatted string
-        required: true
         example: "{}"
 
   ExecuteContractReq:
@@ -3840,5 +3839,4 @@ definitions:
       exec_msg:
         type: string
         description: json formatted string
-        required: true
         example: "{}"
