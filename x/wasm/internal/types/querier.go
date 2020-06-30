@@ -9,6 +9,7 @@ const (
 	QueryGetContractInfo = "contractInfo"
 	QueryRawStore        = "rawStore"
 	QueryContractStore   = "contractStore"
+	QueryParameters      = "parameters"
 )
 
 // QueryCodeIDParams defines the params for the following queries:

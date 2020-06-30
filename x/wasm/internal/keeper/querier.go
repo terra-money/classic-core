@@ -24,6 +24,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryRawStore(ctx, req, keeper)
 		case types.QueryContractStore:
 			return queryContractStore(ctx, req, keeper)
+		case types.QueryParameters:
+			return queryParameters(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint: %s", types.ModuleName, path[0])
 		}
@@ -109,4 +111,12 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 	}
 
 	return keeper.queryToContract(ctx, params.ContractAddress, params.Msg)
+}
+
+func queryParameters(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetParams(ctx))
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return bz, nil
 }

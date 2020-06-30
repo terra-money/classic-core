@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -126,6 +128,9 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 			}
 
 			initMsgBz := []byte(args[1])
+			if !json.Valid(initMsgBz) {
+				return errors.New("msg must be a json string format")
+			}
 
 			// limit the input size
 			if initMsgLen := uint64(len(initMsgBz)); initMsgLen > types.EnforcedMaxContractMsgSize {
@@ -201,6 +206,9 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			execMsgBz := []byte(args[1])
+			if !json.Valid(execMsgBz) {
+				return errors.New("msg must be a json string format")
+			}
 
 			// limit the input size
 			if execMsgLen := uint64(len(execMsgBz)); execMsgLen > types.EnforcedMaxContractMsgSize {
