@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -170,7 +171,12 @@ func GetCmdGetContractStore(queryRoute string, cdc *codec.Codec) *cobra.Command 
 			}
 
 			msg := args[1]
-			params := types.NewQueryContractParams(addr, []byte(msg))
+			msgBz := []byte(msg)
+			if !json.Valid(msgBz) {
+				return errors.New("msg must be a json string format")
+			}
+
+			params := types.NewQueryContractParams(addr, msgBz)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err

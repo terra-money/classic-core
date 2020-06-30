@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -101,6 +102,11 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		vars := mux.Vars(r)
 		contractAddrStr := vars[RestContractAddress]
 		queryMsg := r.URL.Query().Get("query_msg")
+		queryMsgBz := []byte(queryMsg)
+		if !json.Valid(queryMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
@@ -108,7 +114,7 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		params := types.NewQueryContractParams(addr, []byte(queryMsg))
+		params := types.NewQueryContractParams(addr, queryMsgBz)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -21,9 +22,6 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
 }
-
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
 
 type storeCodeReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
@@ -56,7 +54,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var err error
 		wasm := req.WasmBytes
-		if len(wasm) > maxSize {
+		if wasmLen := uint64(len(wasm)); wasmLen > types.EnforcedMaxContractSize {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
 			return
 		}
@@ -121,11 +119,25 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		initMsgBz := []byte(req.InitMsg)
+		if !json.Valid(initMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if initMsgLen := uint64(len(initMsgBz)); initMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("init msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, initMsgLen))
+			return
+		}
+
 		msg := types.MsgInstantiateContract{
 			Sender:    fromAddr,
 			CodeID:    codeID,
 			InitCoins: req.InitCoins,
-			InitMsg:   []byte(req.InitMsg),
+			InitMsg:   initMsgBz,
 		}
 
 		err = msg.ValidateBasic()
@@ -187,11 +199,25 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		execMsgBz := []byte(req.ExecMsg)
+		if !json.Valid(execMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if execMsgLen := uint64(len(execMsgBz)); execMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("exec msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, execMsgLen))
+			return
+		}
+
 		msg := types.MsgExecuteContract{
 			Sender:   fromAddr,
 			Contract: contractAddress,
 			Coins:    req.Amount,
-			Msg:      []byte(req.ExecMsg),
+			Msg:      execMsgBz,
 		}
 
 		err = msg.ValidateBasic()
