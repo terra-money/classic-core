@@ -2619,7 +2619,7 @@ paths:
             $ref: "#/definitions/TreasuryParams"
         404:
           description: Not Found
-  /wasm/code:
+  /wasm/codes:
     post:
       summary: Generate wasm store code message
       tags:
