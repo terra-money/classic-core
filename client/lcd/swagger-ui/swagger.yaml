@@ -2619,7 +2619,7 @@ paths:
             $ref: "#/definitions/TreasuryParams"
         404:
           description: Not Found
-  /wasm/code:
+  /wasm/codes:
     post:
       summary: Generate wasm store code message
       tags:
@@ -2640,7 +2640,7 @@ paths:
           description: Bad request
         500:
           description: Internal Server Error
-  /wasm/code/{codeID}:
+  /wasm/codes/{codeID}:
     post:
       summary: Instantiate wasm contract message
       tags:
@@ -2683,7 +2683,7 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/CodeInfo"
-  /wasm/contract/{contractAddress}:
+  /wasm/contracts/{contractAddress}:
     post:
       summary: Execute wasm contract message
       tags:
@@ -2726,7 +2726,7 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/ContractInfo"
-  /wasm/contract/{contractAddress}/migrate:
+  /wasm/contracts/{contractAddress}/migrate:
     post:
       summary: Migrate wasm contract to new code base
       tags:
@@ -2752,7 +2752,7 @@ paths:
           description: Bad request
         500:
           description: Internal Server Error
-  /wasm/contract/{contractAddress}/owner:
+  /wasm/contracts/{contractAddress}/owner:
     post:
       summary: Update wasm contract owner to new address
       tags:
@@ -2778,7 +2778,7 @@ paths:
           description: Bad request
         500:
           description: Internal Server Error
-  /wasm/contract/{contractAddress}/store:
+  /wasm/contracts/{contractAddress}/store:
     get:
       summary: Get stored information with query msg
       tags:
@@ -2794,6 +2794,7 @@ paths:
           description: json formatted query msg
           required: true
           type: string
+          x-example: "{}"
       produces:
         - application/json
       responses:
@@ -2801,7 +2802,7 @@ paths:
           description: OK
           schema:
             type: string
-  /wasm/contract/{contractAddress}/store/raw:
+  /wasm/contracts/{contractAddress}/store/raw:
     get:
       summary: Get stored information with store key
       tags:
@@ -2829,6 +2830,20 @@ paths:
           description: OK
           schema:
             type: string
+  /wasm/parameters:
+    get:
+      summary: Get wasm module params
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/WasmParams"
+        404:
+          description: Not Found
 definitions:
   CheckTxResult:
     type: object
@@ -3552,6 +3567,10 @@ definitions:
         $ref: "#/definitions/BaseLazyGradedVestingAccount"
   SwapReq:
     type: object
+    required:
+      - base_req
+      - offer_coin
+      - ask_denom
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
@@ -3559,7 +3578,11 @@ definitions:
         $ref: "#/definitions/Coin"
       ask_denom:
         type: string
-        example: uluna
+        example: "uluna"
+      receiver:
+        type: string
+        description: "the `receiver` field can be skipped when the receiver is trader"
+        example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
   MarketParams:
     type: object
     properties:
@@ -3748,14 +3771,29 @@ definitions:
       window_probation:
         type: integer
         example: "12"
-      oracle_share:
+  WasmParams:
+    type: object
+    properties:
+      max_contract_size:
         type: number
-        format: float
-        example: "0.1"
-      budget_share:
+        format: integer
+        example: "1000000"
+        description: "allowed max contract bytes size"
+      max_contract_gas:
         type: number
-        format: float
-        example: "0.9"
+        format: integer
+        example: "1000000"
+        description: "allowed max gas usages per each contract execution"
+      max_contract_msg_size:
+        type: number
+        format: integer
+        example: "1000000"
+        description: "allowed max contract exe msg bytes size"
+      gas_multiplier:
+        type: number
+        format: integer
+        example: "100"
+        description: "defines how many cosmwasm gas points = 1 sdk gas point"
   MultiSignPubKey:
     type: object
     properties:
@@ -3846,7 +3884,8 @@ definitions:
           $ref: "#/definitions/Coin"
       init_msg:
         type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+        description: json formatted string
+        example: "{}"
   ExecuteContractReq:
     type: object
     properties:
@@ -3878,3 +3917,5 @@ definitions:
         $ref: "#/definitions/BaseReq"
       new_owner:
         $ref: "#/definitions/Address"
+        description: json formatted string
+        example: "{}"

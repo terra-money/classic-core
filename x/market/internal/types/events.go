@@ -7,6 +7,7 @@ const (
 
 	AttributeKeyOffer    = "offer"
 	AttributeKeyTrader   = "trader"
+	AttributeKeyReceiver = "receiver"
 	AttributeKeySwapCoin = "swap_coin"
 	AttributeKeySwapFee  = "swap_fee"
 

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -35,6 +36,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		GetCmdGetContractInfo(queryRoute, cdc),
 		GetCmdGetContractStore(queryRoute, cdc),
 		GetCmdGetRawStore(queryRoute, cdc),
+		GetCmdQueryParams(queryRoute, cdc),
 	)...)
 	return queryCmd
 }
@@ -169,7 +171,12 @@ func GetCmdGetContractStore(queryRoute string, cdc *codec.Codec) *cobra.Command 
 			}
 
 			msg := args[1]
-			params := types.NewQueryContractParams(addr, []byte(msg))
+			msgBz := []byte(msg)
+			if !json.Valid(msgBz) {
+				return errors.New("msg must be a json string format")
+			}
+
+			params := types.NewQueryContractParams(addr, msgBz)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
@@ -230,4 +237,27 @@ func GetCmdGetRawStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(model)
 		},
 	}
+}
+
+// GetCmdQueryParams implements the query params command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current wasm params",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters), nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(res, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
+
+	return cmd
 }

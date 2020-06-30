@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -17,15 +18,12 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/wasm/code", storeCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/codes", storeCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/migrate", RestContractAddress), migrateContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/owner", RestContractAddress), updateOwnerContractHandlerFn(cliCtx)).Methods("POST")
 }
-
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
 
 type storeCodeReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
@@ -35,19 +33,19 @@ type storeCodeReq struct {
 type instantiateContractReq struct {
 	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
 	InitCoins  sdk.Coins    `json:"init_coins" yaml:"init_coins"`
-	InitMsg    []byte       `json:"init_msg" yaml:"init_msg"`
+	InitMsg    string       `json:"init_msg" yaml:"init_msg"`
 	Migratable bool         `json:"migratable" yaml:"migratable"`
 }
 
 type executeContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-	ExecMsg []byte       `json:"exec_msg" yaml:"exec_msg"`
 	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
+	ExecMsg string       `json:"exec_msg" yaml:"exec_msg"`
 }
 
 type migrateContractReq struct {
 	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
-	MigrateMsg []byte       `json:"migrate_msg" yaml:"migrate_msg"`
+	MigrateMsg string       `json:"migrate_msg" yaml:"migrate_msg"`
 	NewCodeID  uint64       `json:"new_code_id" yaml:"new_code_id"`
 }
 
@@ -70,7 +68,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var err error
 		wasmBytes := req.WasmBytes
-		if len(wasmBytes) > maxSize {
+		if wasmBytesLen := uint64(len(wasmBytes)); wasmBytesLen > types.EnforcedMaxContractSize {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
 			return
 		}
@@ -92,6 +90,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		// build and sign the transaction, then broadcast to Tendermint
 		msg := types.NewMsgStoreCode(fromAddr, wasmBytes)
 		if err = msg.ValidateBasic(); err != nil {
@@ -123,10 +122,29 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgInstantiateContract(cliCtx.GetFromAddress(), codeID, req.InitMsg, req.InitCoins, req.Migratable)
-		if err = msg.ValidateBasic(); err != nil {
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		initMsgBz := []byte(req.InitMsg)
+		if !json.Valid(initMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if initMsgLen := uint64(len(initMsgBz)); initMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("init msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, initMsgLen))
+			return
+		}
+
+		msg := types.NewMsgInstantiateContract(fromAddr, codeID, initMsgBz, req.InitCoins, req.Migratable)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
 
 		if req.BaseReq.Fees.IsZero() {
@@ -176,7 +194,27 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgExecuteContract(cliCtx.GetFromAddress(), contractAddress, req.ExecMsg, req.Amount)
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		execMsgBz := []byte(req.ExecMsg)
+		if !json.Valid(execMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if execMsgLen := uint64(len(execMsgBz)); execMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("exec msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, execMsgLen))
+			return
+		}
+
+		msg := types.NewMsgExecuteContract(fromAddr, contractAddress, execMsgBz, req.Amount)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -229,7 +267,27 @@ func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgMigrateContract(cliCtx.GetFromAddress(), contractAddress, req.NewCodeID, req.MigrateMsg)
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		migrateMsgBz := []byte(req.MigrateMsg)
+		if !json.Valid(migrateMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if migrateMsgLen := uint64(len(migrateMsgBz)); migrateMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("migrate msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, migrateMsgLen))
+			return
+		}
+
+		msg := types.NewMsgMigrateContract(fromAddr, contractAddress, req.NewCodeID, migrateMsgBz)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -259,7 +317,13 @@ func updateOwnerContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgUpdateContractOwner(cliCtx.GetFromAddress(), req.NewOwner, contractAddress)
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgUpdateContractOwner(fromAddr, req.NewOwner, contractAddress)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
