@@ -15,17 +15,15 @@ func NewHandler(k Keeper) sdk.Handler {
 
 		switch msg := msg.(type) {
 		case MsgStoreCode:
-			return handleStoreCode(ctx, k, &msg)
-		case *MsgStoreCode:
 			return handleStoreCode(ctx, k, msg)
 		case MsgInstantiateContract:
-			return handleInstantiate(ctx, k, &msg)
-		case *MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
 		case MsgExecuteContract:
-			return handleExecute(ctx, k, &msg)
-		case *MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
+		case MsgMigrateContract:
+			return handleMigrate(ctx, k, msg)
+		case MsgUpdateContractOwner:
+			return handleUpdateContractOwner(ctx, k, msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm message type: %T", msg)
@@ -33,8 +31,8 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
-	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode, true)
+func handleStoreCode(ctx sdk.Context, k Keeper, msg MsgStoreCode) (*sdk.Result, error) {
+	codeID, err := k.StoreCode(ctx, msg.Sender, msg.WASMByteCode)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +54,13 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (*sdk.Result, error) {
-	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Sender, msg.InitMsg, msg.InitCoins)
+func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) (*sdk.Result, error) {
+	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Owner, msg.InitMsg, msg.InitCoins, msg.Migratable)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(
+	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
 		sdk.Events{
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
@@ -70,21 +68,58 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 			),
 			sdk.NewEvent(
 				types.EventTypeInstantiateContract,
-				sdk.NewAttribute(types.AttributeKeySender, msg.Sender.String()),
+				sdk.NewAttribute(types.AttributeKeyOwner, msg.Owner.String()),
 				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 				sdk.NewAttribute(types.AttributeKeyContractAddress, contractAddr.String()),
 			),
 		},
-	)
-
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	)}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Result, error) {
-	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.Msg, msg.Coins)
+func handleExecute(ctx sdk.Context, k Keeper, msg MsgExecuteContract) (*sdk.Result, error) {
+	data, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.ExecuteMsg, msg.Coins)
 	if err != nil {
 		return nil, err
 	}
+
+	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
+		sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			),
+		},
+	), Data: data}, nil
+}
+
+func handleMigrate(ctx sdk.Context, k Keeper, msg MsgMigrateContract) (*sdk.Result, error) {
+	data, err := k.MigrateContract(ctx, msg.Contract, msg.Owner, msg.NewCodeID, msg.MigrateMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
+		sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			),
+		},
+	), Data: data}, nil
+}
+
+func handleUpdateContractOwner(ctx sdk.Context, k Keeper, msg MsgUpdateContractOwner) (*sdk.Result, error) {
+	contractInfo, err := k.GetContractInfo(ctx, msg.Contract)
+	if err != nil {
+		return nil, err
+	}
+
+	if !contractInfo.Owner.Equals(msg.Owner) {
+		return nil, sdkerrors.ErrUnauthorized
+	}
+
+	contractInfo.Owner = msg.NewOwner
+	k.SetContractInfo(ctx, msg.Contract, contractInfo)
 
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
@@ -92,11 +127,15 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			),
+			sdk.NewEvent(
+				types.EventTypeStoreCode,
+				sdk.NewAttribute(types.AttributeKeyOwner, msg.NewOwner.String()),
+				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract.String()),
+			),
 		},
 	)
 
-	res.Events = res.Events.AppendEvents(ctx.EventManager().Events())
-	return &res, nil
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 // filterMessageEvents returns the same events with all of type == EventTypeMessage removed.

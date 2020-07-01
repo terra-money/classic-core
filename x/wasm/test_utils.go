@@ -40,7 +40,7 @@ type testData struct {
 func loadContracts() {
 	testContract = mustLoad("./internal/keeper/testdata/contract.wasm")
 	maskContract = mustLoad("./internal/keeper/testdata/mask.wasm")
-	oldEscrowContract = mustLoad("./testdata/escrow.wasm")
+	oldEscrowContract = mustLoad("./testdata/escrow_0.7.wasm")
 }
 
 // Returns a cleanup function, which must be defered on
@@ -52,7 +52,7 @@ func setupTest(t *testing.T) (testData, func()) {
 
 	input := keeper.CreateTestInput(t)
 	data := testData{
-		module:     NewAppModule(input.WasmKeeper, input.AccKeeper),
+		module:     NewAppModule(input.WasmKeeper, input.AccKeeper, input.BankKeeper),
 		ctx:        input.Ctx,
 		acctKeeper: input.AccKeeper,
 		keeper:     input.WasmKeeper,

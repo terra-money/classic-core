@@ -16,4 +16,6 @@ var (
 	ErrInvalidMsg          = sdkerrors.Register(ModuleName, 8, "invalid Msg from the contract")
 	ErrNoRegisteredQuerier = sdkerrors.Register(ModuleName, 9, "failed to find querier for route")
 	ErrNoRegisteredParser  = sdkerrors.Register(ModuleName, 10, "failed to find parser for route")
+	ErrMigrationFailed     = sdkerrors.Register(ModuleName, 11, "migrate wasm contract failed")
+	ErrNotMigratable       = sdkerrors.Register(ModuleName, 12, "the contract is not migratable ")
 )

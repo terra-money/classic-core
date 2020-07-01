@@ -11,8 +11,8 @@ import (
 )
 
 // StoreCode uploads and compiles a WASM contract bytecode, returning a short identifier for the stored code
-func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, checkSize bool) (codeID uint64, err error) {
-	if checkSize && uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
 		return 0, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 
@@ -41,7 +41,7 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 }
 
 // InstantiateContract creates an instance of a WASM contract
-func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (contractAddress sdk.AccAddress, err error) {
+func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins, migratable bool) (contractAddress sdk.AccAddress, err error) {
 	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "init msg size is too huge")
 	}
@@ -92,13 +92,18 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 
 	// instantiate wasm contract
 	gas := k.gasForContract(ctx)
-	res, err2 := k.wasmer.Instantiate(codeInfo.CodeHash.Bytes(), apiParams, initMsg, contractStore, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
-	if err2 != nil {
-		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err2.Error())
+	res, gasUsed, err := k.wasmer.Instantiate(codeInfo.CodeHash.Bytes(), apiParams, initMsg, contractStore, cosmwasmAPI, k.querier.WithCtx(ctx), ctx.GasMeter(), gas)
+
+	// consume gas before raise error
+	k.consumeGas(ctx, gasUsed)
+	if err != nil {
+		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		return
 	}
 
-	k.consumeGas(ctx, res.GasUsed)
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
@@ -106,7 +111,7 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 	}
 
 	// persist contractInfo
-	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg)
+	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg, migratable)
 
 	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
@@ -115,44 +120,96 @@ func (k Keeper) InstantiateContract(ctx sdk.Context, codeID uint64, creator sdk.
 }
 
 // ExecuteContract executes the contract instance
-func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, exeMsg []byte, coins sdk.Coins) (sdk.Result, error) {
+func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, exeMsg []byte, coins sdk.Coins) ([]byte, error) {
 	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
 	}
 
-	codeInfo, storePrefix, sdkerr := k.getContractDetails(ctx, contractAddress)
-	if sdkerr != nil {
-		return sdk.Result{}, sdkerr
+	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
+	if err != nil {
+		return nil, err
 	}
 
 	// add more funds
 	if !coins.IsZero() {
-		sdkerr = k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
-		if sdkerr != nil {
-			return sdk.Result{}, sdkerr
+		err = k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
 
 	gas := k.gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash.Bytes(), apiParams, exeMsg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), gas)
+	res, gasUsed, err := k.wasmer.Execute(codeInfo.CodeHash.Bytes(), apiParams, exeMsg, storePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), ctx.GasMeter(), gas)
+
+	k.consumeGas(ctx, gasUsed)
 	if err != nil {
-		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
-		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
-		// this contract died due to gas limit in Storage
-		k.consumeGas(ctx, k.GasMultiplier(ctx))
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
 
-	k.consumeGas(ctx, res.GasUsed)
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
-	sdkerr = k.dispatchMessages(ctx, contractAddress, res.Messages)
-	if sdkerr != nil {
-		return sdk.Result{}, sdkerr
+	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
+	if err != nil {
+		return nil, err
 	}
 
-	return types.ParseResult(res, contractAddress), nil
+	return []byte(res.Data), nil
+}
+
+// MigrateContract allows to upgrade a contract to a new code with data migration.
+func (k Keeper) MigrateContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, migrateMsg []byte) ([]byte, error) {
+	if uint64(len(migrateMsg)) > k.MaxContractMsgSize(ctx) {
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "migrate msg size is too huge")
+	}
+
+	contractInfo, err := k.GetContractInfo(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	if !contractInfo.Migratable {
+		return nil, types.ErrNotMigratable
+	}
+
+	if !contractInfo.Owner.Equals(caller) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+	}
+
+	newCodeInfo, err := k.GetCodeInfo(ctx, newCodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	var noDeposit sdk.Coins
+	params := types.NewWasmAPIParams(ctx, caller, noDeposit, contractAddress)
+
+	// prepare necessary meta data
+	prefixStoreKey := types.GetContractStoreKey(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	gas := k.gasForContract(ctx)
+
+	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash.Bytes(), params, migrateMsg, &prefixStore, cosmwasmAPI, k.querier.WithCtx(ctx), ctx.GasMeter(), gas)
+
+	k.consumeGas(ctx, gasUsed)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
+
+	contractInfo.CodeID = newCodeID
+	k.SetContractInfo(ctx, contractAddress, contractInfo)
+
+	if err := k.dispatchMessages(ctx, contractAddress, res.Messages); err != nil {
+		return nil, sdkerrors.Wrap(err, "dispatch")
+	}
+
+	return []byte(res.Data), nil
 }
 
 func (k Keeper) gasForContract(ctx sdk.Context) uint64 {
@@ -207,12 +264,13 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, qu
 		return nil, err
 	}
 
-	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash.Bytes(), queryMsg, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), k.gasForContract(ctx))
+	queryResult, gasUsed, err := k.wasmer.Query(codeInfo.CodeHash.Bytes(), queryMsg, contractStorePrefix, cosmwasmAPI, k.querier.WithCtx(ctx), ctx.GasMeter(), k.gasForContract(ctx))
+
+	k.consumeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, err
 	}
 
-	k.consumeGas(ctx, gasUsed)
 	return queryResult, nil
 }
 
