@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/terra-project/core/x/market/internal/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,6 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/spf13/cobra"
+
+	feeutils "github.com/terra-project/core/x/auth/client/utils"
+	"github.com/terra-project/core/x/market/internal/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -46,7 +47,7 @@ Swap the offer-coin to the ask-denom currency at the oracle's effective exchange
 
 $ terracli market swap "1000ukrw" "uusd"
 
-The fund to-address can be specfied. A default to-address is trader.
+The to-address can be specfied. A default to-address is trader.
 
 $ terracli market swap "1000ukrw" "uusd" "terra1..."
 `),
@@ -64,23 +65,45 @@ $ terracli market swap "1000ukrw" "uusd" "terra1..."
 			askDenom := args[1]
 			fromAddress := cliCtx.GetFromAddress()
 
-			toAddress := fromAddress
+			var msg sdk.Msg
 			if len(args) == 3 {
-				toAddress, err = sdk.AccAddressFromBech32(args[2])
+				toAddress, err := sdk.AccAddressFromBech32(args[2])
 				if err != nil {
 					return err
 				}
+
+				msg = types.NewMsgSwapSend(fromAddress, toAddress, offerCoin, askDenom)
+				if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
+					// extimate tax and gas
+					fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
+						Memo:          txBldr.Memo(),
+						ChainID:       txBldr.ChainID(),
+						AccountNumber: txBldr.AccountNumber(),
+						Sequence:      txBldr.Sequence(),
+						GasPrices:     txBldr.GasPrices(),
+						Gas:           fmt.Sprintf("%d", txBldr.Gas()),
+						GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
+						Msgs:          []sdk.Msg{msg},
+					})
+
+					if err != nil {
+						return err
+					}
+
+					// override gas and fees
+					txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
+						gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+				}
+			} else {
+				msg = types.NewMsgSwap(fromAddress, offerCoin, askDenom)
 			}
 
-			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSwapSend(fromAddress, toAddress, offerCoin, askDenom)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(msg)
-
+			// build and sign the transaction, then broadcast to Tendermint
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

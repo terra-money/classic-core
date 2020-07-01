@@ -13,8 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	core "github.com/terra-project/core/types"
 
+	marketexported "github.com/terra-project/core/x/market/exported"
 	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
-	"github.com/terra-project/core/x/treasury"
+	treasuryexported "github.com/terra-project/core/x/treasury/exported"
+	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
 type (
@@ -204,6 +206,30 @@ func filterMsgAndComputeTax(cliCtx context.CLIContext, msgs []sdk.Msg) (taxes sd
 			}
 
 			taxes = taxes.Add(tax...)
+
+		case marketexported.MsgSwapSend:
+			tax, err := computeTax(cliCtx, taxRate, sdk.NewCoins(msg.OfferCoin))
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
+
+		case wasmexported.MsgInstantiateContract:
+			tax, err := computeTax(cliCtx, taxRate, msg.InitCoins)
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
+
+		case wasmexported.MsgExecuteContract:
+			tax, err := computeTax(cliCtx, taxRate, msg.Coins)
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
 		}
 	}
 
@@ -244,7 +270,7 @@ func computeTax(cliCtx context.CLIContext, taxRate sdk.Dec, principal sdk.Coins)
 func queryTaxRate(cliCtx context.CLIContext) (sdk.Dec, error) {
 
 	// Query tax-rate
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryTaxRate), nil)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasuryexported.QuerierRoute, treasuryexported.QueryTaxRate), nil)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -257,9 +283,9 @@ func queryTaxRate(cliCtx context.CLIContext) (sdk.Dec, error) {
 func queryTaxCap(cliCtx context.CLIContext, denom string) (sdk.Int, error) {
 	// Query tax-cap
 
-	params := treasury.NewQueryTaxCapParams(denom)
+	params := treasuryexported.NewQueryTaxCapParams(denom)
 	bz := cliCtx.Codec.MustMarshalJSON(params)
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasury.QuerierRoute, treasury.QueryTaxCap), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasuryexported.QuerierRoute, treasuryexported.QueryTaxCap), bz)
 	if err != nil {
 		return sdk.Int{}, err
 	}

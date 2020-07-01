@@ -3651,6 +3651,10 @@ definitions:
         $ref: "#/definitions/BaseLazyGradedVestingAccount"
   SwapReq:
     type: object
+    required:
+      - base_req
+      - offer_coin
+      - ask_denom
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
@@ -3658,7 +3662,11 @@ definitions:
         $ref: "#/definitions/Coin"
       ask_denom:
         type: string
-        example: uluna
+        example: "uluna"
+      receiver:
+        type: string
+        description: "the `receiver` field can be skipped when the receiver is trader"
+        example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
   MarketParams:
     type: object
     properties:
