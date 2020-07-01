@@ -1,4 +1,4 @@
-cp ---
+---
 swagger: "2.0"
 info:
   version: "3.0"
@@ -31,11 +31,8 @@ tags:
     description: Treasury modules APIs
   - name: Wasm
     description: Wasm modules APIs
-  - name: MsgAuth
-    description: MsgAuth modules APIs
-  - name: version
-  - name: Misc
-    description: Query app version
+  - name: Authorization
+    description: Authorization modules APIs
 schemes:
   - https
 host: lcd.terra.dev
@@ -2798,7 +2795,7 @@ paths:
     get:
       summary: Get all grants between the granter and the grantee
       tags:
-        - MsgAuth
+        - Authorization
       parameters:
         - in: path
           name: granterAddress
@@ -2828,7 +2825,7 @@ paths:
     post:
       summary: Grant msg execute permission to grantee address
       tags:
-        - MsgAuth
+        - Authorization
       produces:
         - application/json
       parameters:
@@ -2860,7 +2857,7 @@ paths:
     get:
       summary: Get grant about a specific msg type between the granter and the grantee
       tags:
-        - MsgAuth
+        - Authorization
       parameters:
         - in: path
           name: granterAddress
@@ -2893,7 +2890,7 @@ paths:
     post:
       summary: Revoke grant from grantee address
       tags:
-        - MsgAuth
+        - Authorization
       produces:
         - application/json
       parameters:
@@ -2926,7 +2923,7 @@ paths:
     post:
       summary: Execute msgs from grantee address
       tags:
-        - MsgAuth
+        - Authorization
       produces:
         - application/json
       parameters:
