@@ -92,3 +92,17 @@ func TestQueryContractState(t *testing.T) {
 	_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.Error(t, err)
 }
+
+func TestQueryParams(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+
+	var params types.Params
+
+	res, errRes := queryParameters(input.Ctx, input.WasmKeeper)
+	require.NoError(t, errRes)
+
+	err := cdc.UnmarshalJSON(res, &params)
+	require.NoError(t, err)
+	require.Equal(t, input.WasmKeeper.GetParams(input.Ctx), params)
+}

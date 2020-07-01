@@ -5,11 +5,11 @@ package types
 const (
 	EventSwap = "swap"
 
-	AttributeKeyOffer    = "offer"
-	AttributeKeyTrader   = "trader"
-	AttributeKeyReceiver = "receiver"
-	AttributeKeySwapCoin = "swap_coin"
-	AttributeKeySwapFee  = "swap_fee"
+	AttributeKeyOffer     = "offer"
+	AttributeKeyTrader    = "trader"
+	AttributeKeyRecipient = "recipient"
+	AttributeKeySwapCoin  = "swap_coin"
+	AttributeKeySwapFee   = "swap_fee"
 
 	AttributeValueCategory = ModuleName
 )

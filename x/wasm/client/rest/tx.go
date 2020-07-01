@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -17,13 +18,10 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/wasm/code/", storeCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/codes", storeCodeHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), instantiateContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(cliCtx)).Methods("POST")
 }
-
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
 
 type storeCodeReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
@@ -33,13 +31,13 @@ type storeCodeReq struct {
 type instantiateContractReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
 	InitCoins sdk.Coins    `json:"init_coins" yaml:"init_coins"`
-	InitMsg   []byte       `json:"init_msg" yaml:"init_msg"`
+	InitMsg   string       `json:"init_msg" yaml:"init_msg"`
 }
 
 type executeContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-	ExecMsg []byte       `json:"exec_msg" yaml:"exec_msg"`
 	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
+	ExecMsg string       `json:"exec_msg" yaml:"exec_msg"`
 }
 
 func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -56,7 +54,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		var err error
 		wasm := req.WasmBytes
-		if len(wasm) > maxSize {
+		if wasmLen := uint64(len(wasm)); wasmLen > types.EnforcedMaxContractSize {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
 			return
 		}
@@ -78,6 +76,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		// build and sign the transaction, then broadcast to Tendermint
 		msg := types.MsgStoreCode{
 			Sender:       fromAddr,
@@ -114,11 +113,31 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		initMsgBz := []byte(req.InitMsg)
+		if !json.Valid(initMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if initMsgLen := uint64(len(initMsgBz)); initMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("init msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, initMsgLen))
+			return
+		}
+
 		msg := types.MsgInstantiateContract{
-			Sender:    cliCtx.GetFromAddress(),
+			Sender:    fromAddr,
 			CodeID:    codeID,
 			InitCoins: req.InitCoins,
-			InitMsg:   req.InitMsg,
+			InitMsg:   initMsgBz,
 		}
 
 		err = msg.ValidateBasic()
@@ -174,11 +193,31 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		execMsgBz := []byte(req.ExecMsg)
+		if !json.Valid(execMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
+			return
+		}
+
+		// limit the input size
+		if execMsgLen := uint64(len(execMsgBz)); execMsgLen > types.EnforcedMaxContractMsgSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest,
+				fmt.Sprintf("exec msg size exceeds the max size hard-cap (allowed:%d, actual: %d)",
+					types.EnforcedMaxContractMsgSize, execMsgLen))
+			return
+		}
+
 		msg := types.MsgExecuteContract{
-			Sender:   cliCtx.GetFromAddress(),
+			Sender:   fromAddr,
 			Contract: contractAddress,
-			Msg:      req.ExecMsg,
 			Coins:    req.Amount,
+			Msg:      execMsgBz,
 		}
 
 		err = msg.ValidateBasic()

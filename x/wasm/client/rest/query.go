@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,10 +17,11 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(fmt.Sprintf("/wasm/code/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -34,14 +36,14 @@ func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		codeID, err := strconv.ParseUint(codeIDStr, 10, 64)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		params := types.NewQueryCodeIDParams(codeID)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetCodeInfo)
@@ -67,14 +69,14 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		params := types.NewQueryContractAddressParams(addr)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -86,7 +88,7 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
@@ -100,14 +102,19 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		vars := mux.Vars(r)
 		contractAddrStr := vars[RestContractAddress]
 		queryMsg := r.URL.Query().Get("query_msg")
-
-		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		queryMsgBz := []byte(queryMsg)
+		if !json.Valid(queryMsgBz) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
 			return
 		}
 
-		params := types.NewQueryContractParams(addr, []byte(queryMsg))
+		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := types.NewQueryContractParams(addr, queryMsgBz)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -122,7 +129,7 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
@@ -166,5 +173,23 @@ func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, model)
+	}
+}
+
+func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
