@@ -42,25 +42,11 @@ func handleSwapRequest(ctx sdk.Context, k Keeper,
 
 	// Compute exchange rates between the ask and offer
 	swapCoin, spread, err := k.ComputeSwap(ctx, offerCoin, askDenom)
-
 	if err != nil {
 		return nil, err
 	}
 
-	// Update pool delta
-	deltaUpdateErr := k.ApplySwapToPool(ctx, offerCoin, swapCoin)
-	if deltaUpdateErr != nil {
-		return nil, deltaUpdateErr
-	}
-
-	// Send offer coins to module account
-	offerCoins := sdk.NewCoins(offerCoin)
-	err = k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, trader, ModuleName, offerCoins)
-	if err != nil {
-		return nil, err
-	}
-
-	// Charge a spread if applicable; distributed to vote winners in the oracle module
+	// Charge a spread if applicable; the spread is burned
 	var swapFee sdk.DecCoin
 	if spread.IsPositive() {
 		swapFeeAmt := spread.Mul(swapCoin.Amount)
@@ -70,6 +56,19 @@ func handleSwapRequest(ctx sdk.Context, k Keeper,
 		}
 	} else {
 		swapFee = sdk.NewDecCoin(swapCoin.Denom, sdk.ZeroInt())
+	}
+
+	// Update pool delta
+	err = k.ApplySwapToPool(ctx, offerCoin, swapCoin)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send offer coins to module account
+	offerCoins := sdk.NewCoins(offerCoin)
+	err = k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, trader, ModuleName, offerCoins)
+	if err != nil {
+		return nil, err
 	}
 
 	// Burn offered coins and subtract from the trader's account
