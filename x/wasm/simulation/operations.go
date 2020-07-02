@@ -241,6 +241,7 @@ func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, bk bank.Keeper, k k
 		}
 
 		spendableCoins = spendableCoins.Sub(fees)
+		spendableCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, spendableCoins.AmountOf(sdk.DefaultBondDenom)))
 
 		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), simulation.RandSubsetCoins(r, spendableCoins))
 		tx := helpers.GenTx(
