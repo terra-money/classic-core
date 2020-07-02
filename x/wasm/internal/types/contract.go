@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -48,33 +47,38 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
-	CodeID  uint64           `json:"code_id"`
-	Address sdk.AccAddress   `json:"address"`
-	Creator sdk.AccAddress   `json:"creator"`
-	InitMsg core.Base64Bytes `json:"init_msg"`
+	Address    sdk.AccAddress   `json:"address"`
+	Owner      sdk.AccAddress   `json:"owner"`
+	CodeID     uint64           `json:"code_id"`
+	InitMsg    core.Base64Bytes `json:"init_msg"`
+	Migratable bool             `json:"migratable"`
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, address sdk.AccAddress, creator sdk.AccAddress, initMsg []byte) ContractInfo {
+func NewContractInfo(codeID uint64, address, owner sdk.AccAddress, initMsg []byte, migratable bool) ContractInfo {
 	return ContractInfo{
-		CodeID:  codeID,
-		Address: address,
-		Creator: creator,
-		InitMsg: initMsg,
+		Address:    address,
+		CodeID:     codeID,
+		Owner:      owner,
+		InitMsg:    initMsg,
+		Migratable: migratable,
 	}
 }
 
 // String implements fmt.Stringer interface
 func (ci ContractInfo) String() string {
 	return fmt.Sprintf(`ContractInfo
+	Address:    %s,
 	CodeID:     %d, 
-	Creator:    %s,
-	InitMsg:    %s`,
-		ci.CodeID, ci.Creator, hex.EncodeToString(ci.InitMsg))
+	Owner:      %s,
+	InitMsg:    %s,
+	Migratable  %v,
+	`,
+		ci.Address, ci.CodeID, ci.Owner, ci.InitMsg, ci.Migratable)
 }
 
 // NewWasmAPIParams initializes params for a contract instance
-func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
+func NewWasmAPIParams(ctx sdk.Context, sender sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
 	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  uint64(ctx.BlockHeight()),
@@ -82,7 +86,7 @@ func NewWasmAPIParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Sender:    wasmTypes.CanonicalAddress(creator),
+			Sender:    wasmTypes.CanonicalAddress(sender),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{

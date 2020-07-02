@@ -38,7 +38,7 @@ func TestQueryContractState(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode, true)
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -49,7 +49,7 @@ func TestQueryContractState(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit)
+	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
 	require.NoError(t, err)
 
 	contractModel := []types.Model{

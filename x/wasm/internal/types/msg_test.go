@@ -51,7 +51,7 @@ func TestMsgInstantiateCode(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgInstantiateContract(tc.creator, tc.codeID, tc.initMsg, tc.initCoins)
+		msg := NewMsgInstantiateContract(tc.creator, tc.codeID, tc.initMsg, tc.initCoins, true)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -60,7 +60,7 @@ func TestMsgInstantiateCode(t *testing.T) {
 	}
 }
 
-func TestMsgExecuteCode(t *testing.T) {
+func TestMsgExecuteContract(t *testing.T) {
 	_, addrs, _, _ := mock.CreateGenAccounts(2, sdk.Coins{})
 
 	tests := []struct {
@@ -79,6 +79,58 @@ func TestMsgExecuteCode(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgExecuteContract(tc.sender, tc.contract, tc.msg, tc.coins)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgMigrateContract(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(2, sdk.Coins{})
+
+	tests := []struct {
+		owner      sdk.AccAddress
+		contract   sdk.AccAddress
+		codeID     uint64
+		msg        core.Base64Bytes
+		expectPass bool
+	}{
+		{sdk.AccAddress{}, addrs[1], 1, []byte{}, false},
+		{addrs[0], sdk.AccAddress{}, 1, []byte{}, false},
+		{addrs[0], addrs[1], 0, []byte{}, false},
+		{addrs[0], addrs[1], 1, make([]byte, EnforcedMaxContractMsgSize+1), false},
+		{addrs[0], addrs[1], 1, []byte{}, true},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgMigrateContract(tc.owner, tc.contract, tc.codeID, tc.msg)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgUpdateContractOwner(t *testing.T) {
+	_, addrs, _, _ := mock.CreateGenAccounts(3, sdk.Coins{})
+
+	tests := []struct {
+		owner      sdk.AccAddress
+		newOwner   sdk.AccAddress
+		contract   sdk.AccAddress
+		expectPass bool
+	}{
+		{sdk.AccAddress{}, addrs[1], addrs[2], false},
+		{addrs[0], sdk.AccAddress{}, addrs[2], false},
+		{addrs[0], addrs[1], sdk.AccAddress{}, false},
+		{addrs[0], addrs[1], addrs[2], true},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgUpdateContractOwner(tc.owner, tc.newOwner, tc.contract)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

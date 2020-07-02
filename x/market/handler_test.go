@@ -30,6 +30,10 @@ func TestMarketFilters(t *testing.T) {
 func TestSwapMsg(t *testing.T) {
 	input, h := setup(t)
 
+	params := input.MarketKeeper.GetParams(input.Ctx)
+	params.MinStabilitySpread = sdk.ZeroDec()
+	input.MarketKeeper.SetParams(input.Ctx, params)
+
 	beforeTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 
 	amt := sdk.NewInt(10)
@@ -40,8 +44,16 @@ func TestSwapMsg(t *testing.T) {
 
 	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	diff := beforeTerraPoolDelta.Sub(afterTerraPoolDelta)
+
+	// calculate estimation
+	basePool := input.MarketKeeper.GetParams(input.Ctx).BasePool
 	price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
-	require.Equal(t, price.MulInt(amt), diff.Abs())
+	cp := basePool.Mul(basePool)
+
+	terraPool := basePool.Add(beforeTerraPoolDelta)
+	lunaPool := cp.Quo(terraPool)
+	estmiatedDiff := terraPool.Sub(cp.Quo(lunaPool.Add(price.MulInt(amt))))
+	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 
 	// invalid recursive swap
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)

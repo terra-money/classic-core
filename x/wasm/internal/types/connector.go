@@ -12,27 +12,23 @@ import (
 // DefaultFeatures - Cosmwasm feature
 const DefaultFeatures = "staking,terra"
 
-// ParseResult converts wasm result to sdk.Result
-func ParseResult(wasmResult *wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
-	var events []sdk.Event
-	if len(wasmResult.Log) > 0 {
-		// we always tag with the contract address issuing this event
-		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddress, contractAddr.String())}
-		for _, l := range wasmResult.Log {
-			// and reserve the contract_address key for our use (not contract)
-			if l.Key != AttributeKeyContractAddress {
-				attr := sdk.NewAttribute(l.Key, l.Value)
-				attrs = append(attrs, attr)
-			}
+// ParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
+func ParseEvents(logs []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk.Events {
+	if len(logs) == 0 {
+		return nil
+	}
+
+	// we always tag with the contract address issuing this event
+	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddress, contractAddr.String())}
+	for _, l := range logs {
+		// and reserve the contract_address key for our use (not contract)
+		if l.Key != AttributeKeyContractAddress {
+			attr := sdk.NewAttribute(l.Key, l.Value)
+			attrs = append(attrs, attr)
 		}
-
-		events = []sdk.Event{sdk.NewEvent(EventTypeExecuteContract, attrs...)}
 	}
 
-	return sdk.Result{
-		Data:   []byte(wasmResult.Data),
-		Events: events,
-	}
+	return sdk.Events{sdk.NewEvent(EventTypeFromContract, attrs...)}
 }
 
 // ParseToCoin converts wasm coin to sdk.Coin

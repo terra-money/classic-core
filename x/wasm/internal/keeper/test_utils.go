@@ -307,7 +307,7 @@ func TestHandler(k Keeper) sdk.Handler {
 }
 
 func handleInstantiate(ctx sdk.Context, k Keeper, msg types.MsgInstantiateContract) (*sdk.Result, error) {
-	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Sender, msg.InitMsg, msg.InitCoins)
+	contractAddr, err := k.InstantiateContract(ctx, msg.CodeID, msg.Owner, msg.InitMsg, msg.InitCoins, msg.Migratable)
 	if err != nil {
 		return nil, err
 	}
@@ -319,11 +319,13 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg types.MsgInstantiateContra
 }
 
 func handleExecute(ctx sdk.Context, k Keeper, msg types.MsgExecuteContract) (*sdk.Result, error) {
-	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.Msg, msg.Coins)
+	res, err := k.ExecuteContract(ctx, msg.Contract, msg.Sender, msg.ExecuteMsg, msg.Coins)
 	if err != nil {
 		return nil, err
 	}
 
-	res.Events = ctx.EventManager().Events()
-	return &res, nil
+	return &sdk.Result{
+		Data:   res,
+		Events: ctx.EventManager().Events(),
+	}, nil
 }

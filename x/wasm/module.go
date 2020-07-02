@@ -78,8 +78,8 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 	keeper        Keeper
-	bankKeeper    bank.Keeper
 	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
 }
 
 // NewAppModule creates a new AppModule object

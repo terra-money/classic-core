@@ -26,8 +26,8 @@ type StakingInitMsg struct {
 	Decimals  uint8          `json:"decimals"`
 	Validator sdk.ValAddress `json:"validator"`
 	ExitTax   sdk.Dec        `json:"exit_tax"`
-	// MinWithdrawl is uint128 encoded as a string (use sdk.Int?)
-	MinWithdrawl string `json:"min_withdrawl"`
+	// MinWithdrawal is uint128 encoded as a string (use sdk.Int?)
+	MinWithdrawal string `json:"min_withdrawal"`
 }
 
 // StakingHandleMsg is used to encode handle messages
@@ -84,8 +84,8 @@ type InvestmentResponse struct {
 	Owner        sdk.AccAddress `json:"owner"`
 	Validator    sdk.ValAddress `json:"validator"`
 	ExitTax      sdk.Dec        `json:"exit_tax"`
-	// MinWithdrawl is uint128 encoded as a string (use sdk.Int?)
-	MinWithdrawl string `json:"min_withdrawl"`
+	// MinWithdrawal is uint128 encoded as a string (use sdk.Int?)
+	MinWithdrawal string `json:"min_withdrawal"`
 }
 
 func TestInitializeStaking(t *testing.T) {
@@ -109,23 +109,23 @@ func TestInitializeStaking(t *testing.T) {
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode, true)
+	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
 	// register to a valid address
 	initMsg := StakingInitMsg{
-		Name:         "Staking Derivatives",
-		Symbol:       "DRV",
-		Decimals:     0,
-		Validator:    valAddr,
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Staking Derivatives",
+		Symbol:        "DRV",
+		Decimals:      0,
+		Validator:     valAddr,
+		ExitTax:       sdk.MustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil)
+	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -135,17 +135,17 @@ func TestInitializeStaking(t *testing.T) {
 	// try to register with a validator not on the list and it fails
 	_, _, bob := keyPubAddr()
 	badInitMsg := StakingInitMsg{
-		Name:         "Missing Validator",
-		Symbol:       "MISS",
-		Decimals:     0,
-		Validator:    sdk.ValAddress(bob),
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Missing Validator",
+		Symbol:        "MISS",
+		Decimals:      0,
+		Validator:     sdk.ValAddress(bob),
+		ExitTax:       sdk.MustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, badBz, nil)
+	_, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, badBz, nil, true)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -177,23 +177,23 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode, true)
+	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
 	// register to a valid address
 	initMsg := StakingInitMsg{
-		Name:         "Staking Derivatives",
-		Symbol:       "DRV",
-		Decimals:     0,
-		Validator:    valAddr,
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
-		MinWithdrawl: "100",
+		Name:          "Staking Derivatives",
+		Symbol:        "DRV",
+		Decimals:      0,
+		Validator:     valAddr,
+		ExitTax:       sdk.MustNewDecFromStr("0.10"),
+		MinWithdrawal: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil)
+	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 

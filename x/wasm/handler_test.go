@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,6 +78,8 @@ func TestHandleStore(t *testing.T) {
 	}
 }
 func TestHandleInstantiate(t *testing.T) {
+	loadContracts()
+
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
@@ -109,10 +112,11 @@ func TestHandleInstantiate(t *testing.T) {
 
 	// create with no balance is also legal
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: nil,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  nil,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -133,7 +137,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	iter := data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
@@ -184,10 +188,11 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: deposit,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  deposit,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -208,7 +213,7 @@ func TestHandleExecute(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	// ensure bob doesn't exist
@@ -227,10 +232,10 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, deposit, contractAcct.GetCoins())
 
 	execCmd := MsgExecuteContract{
-		Sender:   fred,
-		Contract: contractAddr,
-		Msg:      []byte(`{"release":{}}`),
-		Coins:    topUp,
+		Sender:     fred,
+		Contract:   contractAddr,
+		ExecuteMsg: []byte(`{"release":{}}`),
+		Coins:      topUp,
 	}
 	_, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
@@ -294,10 +299,11 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: deposit,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  deposit,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -319,7 +325,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	handleMsg := map[string]interface{}{
@@ -330,10 +336,10 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.NoError(t, err)
 
 	execCmd := MsgExecuteContract{
-		Sender:   fred,
-		Contract: contractAddr,
-		Msg:      handleMsgBz,
-		Coins:    topUp,
+		Sender:     fred,
+		Contract:   contractAddr,
+		ExecuteMsg: handleMsgBz,
+		Coins:      topUp,
 	}
 
 	res, err = h(data.ctx, execCmd)
@@ -349,4 +355,159 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
+}
+
+func TestHandleMigrate(t *testing.T) {
+	loadContracts()
+
+	data, cleanup := setupTest(t)
+	defer cleanup()
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
+	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+
+	h := data.module.NewHandler()
+
+	storeMsg := MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+	}
+
+	// store two same code
+	_, err := h(data.ctx, storeMsg)
+	require.NoError(t, err)
+	res, err := h(data.ctx, storeMsg)
+	require.NoError(t, err)
+
+	var newCodeID uint64
+	for _, event := range res.Events {
+		if event.Type == types.EventTypeStoreCode {
+			for _, attr := range event.Attributes {
+				if string(attr.GetKey()) == types.AttributeKeyCodeID {
+					newCodeID, err = strconv.ParseUint(string(attr.GetValue()), 10, 64)
+					require.NoError(t, err)
+					break
+				}
+			}
+		}
+	}
+
+	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	require.NoError(t, sdkErr)
+	require.Equal(t, testContract, bytecode)
+
+	_, _, bob := keyPubAddr()
+	initData := map[string]interface{}{
+		"verifier":    fred.String(),
+		"beneficiary": bob.String(),
+	}
+	initDataBz, err := json.Marshal(initData)
+	require.NoError(t, err)
+
+	initMsg := MsgInstantiateContract{
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initDataBz,
+		InitCoins:  deposit,
+		Migratable: true,
+	}
+	res, err = h(data.ctx, initMsg)
+	require.NoError(t, err)
+
+	// Retrieve contract address from events
+	var contractAddr sdk.AccAddress
+	for _, event := range res.Events {
+		if event.Type == types.EventTypeInstantiateContract {
+			for _, attr := range event.Attributes {
+				if string(attr.GetKey()) == types.AttributeKeyContractAddress {
+					contractAddr, err = sdk.AccAddressFromBech32(string(attr.GetValue()))
+					require.NoError(t, err)
+					break
+				}
+			}
+		}
+	}
+
+	require.False(t, contractAddr.Empty())
+
+	migData := map[string]interface{}{
+		"verifier": creator.String(),
+	}
+	migDataBz, err := json.Marshal(migData)
+	require.NoError(t, err)
+
+	migrateMsg := NewMsgMigrateContract(creator, contractAddr, newCodeID, migDataBz)
+	_, err = h(data.ctx, migrateMsg)
+	require.NoError(t, err)
+
+	cInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
+	require.NoError(t, err)
+	assert.Equal(t, newCodeID, cInfo.CodeID)
+}
+
+func TestHandleUpdateOwner(t *testing.T) {
+	loadContracts()
+
+	data, cleanup := setupTest(t)
+	defer cleanup()
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
+	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+
+	h := data.module.NewHandler()
+
+	storeMsg := MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+	}
+
+	// store two same code
+	_, err := h(data.ctx, storeMsg)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initData := map[string]interface{}{
+		"verifier":    fred.String(),
+		"beneficiary": bob.String(),
+	}
+	initDataBz, err := json.Marshal(initData)
+	require.NoError(t, err)
+
+	initMsg := MsgInstantiateContract{
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initDataBz,
+		InitCoins:  deposit,
+		Migratable: true,
+	}
+	res, err := h(data.ctx, initMsg)
+	require.NoError(t, err)
+
+	// Retrieve contract address from events
+	var contractAddr sdk.AccAddress
+	for _, event := range res.Events {
+		if event.Type == types.EventTypeInstantiateContract {
+			for _, attr := range event.Attributes {
+				if string(attr.GetKey()) == types.AttributeKeyContractAddress {
+					contractAddr, err = sdk.AccAddressFromBech32(string(attr.GetValue()))
+					require.NoError(t, err)
+					break
+				}
+			}
+		}
+	}
+
+	require.False(t, contractAddr.Empty())
+
+	updateOwnerMsg := NewMsgUpdateContractOwner(creator, fred, contractAddr)
+	_, err = h(data.ctx, updateOwnerMsg)
+	require.NoError(t, err)
+
+	cInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
+	require.NoError(t, err)
+	require.Equal(t, fred, cInfo.Owner)
 }

@@ -204,7 +204,7 @@ func TestEnsureMempoolFeesInstantiateContract(t *testing.T) {
 
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
-	msgs := []sdk.Msg{wasm.NewMsgInstantiateContract(addr1, 0, []byte{}, sendCoins)}
+	msgs := []sdk.Msg{wasm.NewMsgInstantiateContract(addr1, 0, []byte{}, sendCoins, true)}
 
 	fee := auth.NewStdFee(100000, sdk.NewCoins())
 	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)

@@ -53,10 +53,11 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
-		CodeID:    1,
-		InitMsg:   initMsgBz,
-		InitCoins: deposit,
+		Owner:      creator,
+		CodeID:     1,
+		InitMsg:    initMsgBz,
+		InitCoins:  deposit,
+		Migratable: true,
 	}
 	res, err := h(data.ctx, initCmd)
 	require.NoError(t, err)
@@ -80,10 +81,10 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, sdkErr)
 
 	execCmd := MsgExecuteContract{
-		Sender:   fred,
-		Contract: contractAddr,
-		Msg:      []byte(`{"release":{}}`),
-		Coins:    topUp,
+		Sender:     fred,
+		Contract:   contractAddr,
+		ExecuteMsg: []byte(`{"release":{}}`),
+		Coins:      topUp,
 	}
 	_, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
@@ -93,7 +94,7 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
-	expectedContractInfo := NewContractInfo(1, contractAddr, creator, initMsgBz)
+	expectedContractInfo := NewContractInfo(1, contractAddr, creator, initMsgBz, true)
 	contractInfo, sdkErr := data.keeper.GetContractInfo(data.ctx, contractAddr)
 	require.NoError(t, sdkErr)
 	require.Equal(t, expectedContractInfo, contractInfo)
