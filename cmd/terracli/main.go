@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,21 +32,15 @@ import (
 	tbankcmd "github.com/terra-project/core/x/bank/client/cli"
 )
 
+// flagOldHDPath is to specify the command will use old hd path
+const flagOldHDPath = "old-hd-path"
+
 func main() {
 	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
 
 	// Instantiate the codec for the command line application
 	cdc := app.MakeCodec()
-
-	// Read in the configuration file for the sdk
-	config := sdk.GetConfig()
-	config.SetCoinType(core.CoinType)
-	config.SetFullFundraiserPath(core.FullFundraiserPath)
-	config.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
-	config.Seal()
 
 	// TODO: setup keybase, viper object, etc. to be passed into
 	// the below functions and eliminate global vars, like we do
@@ -58,6 +52,7 @@ func main() {
 	}
 
 	// Add --chain-id to persistent flags and mark it required
+	rootCmd.PersistentFlags().Bool(flagOldHDPath, false, "Flag to specify the command uses old HD path")
 	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
@@ -177,6 +172,23 @@ func registerRoutes(rs *lcd.RestServer) {
 }
 
 func initConfig(cmd *cobra.Command) error {
+	oldHDPath, err := cmd.PersistentFlags().GetBool(flagOldHDPath)
+	if err != nil {
+		return err
+	}
+
+	// Read in the configuration file for the sdk
+	config := sdk.GetConfig()
+	if !oldHDPath {
+		config.SetCoinType(core.CoinType)
+		config.SetFullFundraiserPath(core.FullFundraiserPath)
+	}
+
+	config.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
+	config.Seal()
+
 	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
 	if err != nil {
 		return err
