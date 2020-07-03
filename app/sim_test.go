@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
@@ -272,6 +273,10 @@ func TestAppStateDeterminism(t *testing.T) {
 		config.Seed = rand.Int63()
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
+			tempDir, err := ioutil.TempDir("", "wasmtest")
+			require.NoError(t, err)
+			viper.Set(flags.FlagHome, tempDir)
+
 			var logger log.Logger
 			if simapp.FlagVerboseValue {
 				logger = log.TestingLogger()
@@ -288,7 +293,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 			)
 
-			_, _, err := simulation.SimulateFromSeed(
+			_, _, err = simulation.SimulateFromSeed(
 				t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 				simapp.SimulationOperations(app, app.Codec(), config),
 				app.ModuleAccountAddrs(), config,
@@ -308,6 +313,8 @@ func TestAppStateDeterminism(t *testing.T) {
 					"non-determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 				)
 			}
+
+			os.RemoveAll(tempDir)
 		}
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/terra-project/core/x/wasm"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -33,6 +31,7 @@ import (
 	"github.com/terra-project/core/x/genutil"
 	"github.com/terra-project/core/x/gov"
 	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/msgauth"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/params"
 	"github.com/terra-project/core/x/slashing"
@@ -40,6 +39,7 @@ import (
 	"github.com/terra-project/core/x/supply"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/upgrade"
+	"github.com/terra-project/core/x/wasm"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
@@ -83,6 +83,7 @@ var (
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		msgauth.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -149,6 +150,7 @@ type TerraApp struct {
 	marketKeeper   market.Keeper
 	treasuryKeeper treasury.Keeper
 	wasmKeeper     wasm.Keeper
+	msgauthKeeper  msgauth.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -173,7 +175,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, oracle.StoreKey,
 		market.StoreKey, treasury.StoreKey, upgrade.StoreKey,
-		evidence.StoreKey, wasm.StoreKey,
+		evidence.StoreKey, wasm.StoreKey, msgauth.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -219,6 +221,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], app.subspaces[treasury.ModuleName],
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
+	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router(),
+		bank.MsgSend{}.Type(),
+		market.MsgSwap{}.Type(),
+	)
 
 	// register the evidence router
 	evidenceRouter := evidence.NewRouter()
@@ -275,13 +281,15 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper, app.bankKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, distr.ModuleName, slashing.ModuleName, evidence.ModuleName)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName, treasury.ModuleName, staking.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName,
+		treasury.ModuleName, msgauth.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
 	// treasury must occur after supply so that initial issuance is properly
@@ -289,7 +297,8 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.mm.SetOrderInitGenesis(auth.ModuleName, distr.ModuleName,
 		staking.ModuleName, bank.ModuleName, slashing.ModuleName,
 		gov.ModuleName, supply.ModuleName, oracle.ModuleName, treasury.ModuleName,
-		market.ModuleName, wasm.ModuleName, crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
+		market.ModuleName, wasm.ModuleName, msgauth.ModuleName,
+		crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
@@ -308,6 +317,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		oracle.NewAppModule(app.oracleKeeper, app.accountKeeper),
 		treasury.NewAppModule(app.treasuryKeeper),
 		wasm.NewAppModule(app.wasmKeeper, app.accountKeeper, app.bankKeeper),
+		msgauth.NewAppModule(app.msgauthKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()

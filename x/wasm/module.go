@@ -13,9 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/terra-project/core/x/auth"
+
 	"github.com/terra-project/core/x/wasm/client/cli"
 	"github.com/terra-project/core/x/wasm/client/rest"
 	"github.com/terra-project/core/x/wasm/simulation"

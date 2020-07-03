@@ -14,6 +14,7 @@ import (
 	core "github.com/terra-project/core/types"
 
 	marketexported "github.com/terra-project/core/x/market/exported"
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 	treasuryexported "github.com/terra-project/core/x/treasury/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
@@ -197,6 +198,14 @@ func filterMsgAndComputeTax(cliCtx context.CLIContext, msgs []sdk.Msg) (taxes sd
 
 				taxes = taxes.Add(tax...)
 			}
+
+		case msgauthexported.MsgExecAuthorized:
+			tax, err := filterMsgAndComputeTax(cliCtx, msg.Msgs)
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
 
 		case marketexported.MsgSwapSend:
 			tax, err := computeTax(cliCtx, taxRate, sdk.NewCoins(msg.OfferCoin))
