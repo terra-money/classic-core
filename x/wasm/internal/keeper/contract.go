@@ -156,7 +156,7 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		return nil, err
 	}
 
-	return []byte(res.Data), nil
+	return res.Data, nil
 }
 
 // MigrateContract allows to upgrade a contract to a new code with data migration.
@@ -209,7 +209,7 @@ func (k Keeper) MigrateContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	return []byte(res.Data), nil
+	return res.Data, nil
 }
 
 func (k Keeper) gasForContract(ctx sdk.Context) uint64 {
