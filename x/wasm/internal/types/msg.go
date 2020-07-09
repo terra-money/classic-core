@@ -92,7 +92,7 @@ func (msg MsgInstantiateContract) Type() string {
 // ValidateBasic implements sdk.Msg
 func (msg MsgInstantiateContract) ValidateBasic() error {
 	if msg.Owner.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing sender")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "missing owner")
 	}
 
 	if !msg.InitCoins.IsValid() {
