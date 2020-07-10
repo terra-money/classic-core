@@ -9,8 +9,10 @@ import (
 
 // RegisterCodec registers concrete types on codec
 func RegisterCodec(cdc *codec.Codec) {
+	// NOTE: type and message name inconsistency
 	cdc.RegisterConcrete(distrtypes.MsgWithdrawDelegatorReward{}, "distribution/MsgWithdrawDelegationReward", nil)
 	cdc.RegisterConcrete(distrtypes.MsgWithdrawValidatorCommission{}, "distribution/MsgWithdrawValidatorCommission", nil)
+	// NOTE: type and message name inconsistency
 	cdc.RegisterConcrete(distrtypes.MsgSetWithdrawAddress{}, "distribution/MsgModifyWithdrawAddress", nil)
 	cdc.RegisterConcrete(distrtypes.MsgFundCommunityPool{}, "distribution/MsgFundCommunityPool", nil)
 	cdc.RegisterConcrete(distrtypes.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal", nil)
