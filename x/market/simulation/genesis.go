@@ -15,11 +15,9 @@ import (
 
 // Simulation parameter constants
 const (
-	basePoolKey             = "base_pool"
-	poolRecoveryPeriodKey   = "pool_recovery_period"
-	minStabilitySpreadKey   = "min_spread"
-	tobinTaxKey             = "tobin_tax"
-	illiquidTobinTaxRateKey = "illiquid_tobin_tax_rate"
+	basePoolKey           = "base_pool"
+	poolRecoveryPeriodKey = "pool_recovery_period"
+	minStabilitySpreadKey = "min_spread"
 )
 
 // GenBasePool randomized BasePool
@@ -34,16 +32,6 @@ func GenPoolRecoveryPeriod(r *rand.Rand) int64 {
 
 // GenMinSpread randomized MinSpread
 func GenMinSpread(r *rand.Rand) sdk.Dec {
-	return sdk.NewDecWithPrec(1, 2).Add(sdk.NewDecWithPrec(int64(r.Intn(100)), 3))
-}
-
-// GenTobinTax randomized TobinTax
-func GenTobinTax(r *rand.Rand) sdk.Dec {
-	return sdk.NewDecWithPrec(1, 3).Add(sdk.NewDecWithPrec(int64(r.Intn(100)), 3))
-}
-
-// GenIlliquidTobinTaxRate randomized IlliquidTobinTaxRate
-func GenIlliquidTobinTaxRate(r *rand.Rand) sdk.Dec {
 	return sdk.NewDecWithPrec(1, 2).Add(sdk.NewDecWithPrec(int64(r.Intn(100)), 3))
 }
 
@@ -66,18 +54,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, minStabilitySpreadKey, &minStabilitySpread, simState.Rand,
 		func(r *rand.Rand) { minStabilitySpread = GenMinSpread(r) },
-	)
-
-	var tobinTax sdk.Dec
-	simState.AppParams.GetOrGenerate(
-		simState.Cdc, tobinTaxKey, &tobinTax, simState.Rand,
-		func(r *rand.Rand) { tobinTax = GenTobinTax(r) },
-	)
-
-	var illiquidTobinTaxRate sdk.Dec
-	simState.AppParams.GetOrGenerate(
-		simState.Cdc, illiquidTobinTaxRateKey, &illiquidTobinTaxRate, simState.Rand,
-		func(r *rand.Rand) { illiquidTobinTaxRate = GenIlliquidTobinTaxRate(r) },
 	)
 
 	marketGenesis := types.NewGenesisState(

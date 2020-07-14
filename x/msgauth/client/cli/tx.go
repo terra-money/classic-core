@@ -109,7 +109,7 @@ func GetCmdRevokeAuthorization(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Revoke authorization from an address for a msg type,
 
-$ terracli terra... send --from [granter]
+$ terracli msgauth revoke terra... send --from [granter]
 `),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -143,7 +143,7 @@ func GetCmdSendAs(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Execute tx on behalf of granter account,
 
-$ terracli terra... ./tx.json --from [grantee]
+$ terracli msgauth send-as terra... ./tx.json --from [grantee]
 
 tx.json should be format of StdTx
 `),

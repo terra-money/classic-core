@@ -4095,7 +4095,7 @@ definitions:
   GenericGrantInfo:
     type: object
     properties:
-      autorization:
+      authorization:
         $ref: "#/definitions/GenericAuthorization"
       expiration:
         type: string
@@ -4103,7 +4103,7 @@ definitions:
   SendGrantInfo:
     type: object
     properties:
-      autorization:
+      authorization:
         $ref: "#/definitions/SendAuthorization"
       expiration:
         type: string
