@@ -72,11 +72,23 @@ Read the [Changelog](./CHANGELOG.md) for major release updates
 
 - [LocalTerra](https://www.github.com/terra-project/LocalTerra)
 
-## Active Networks
+## Networks
 
-- Mainnet Columbus-3 is online. [The launch repo](https://github.com/terra-project/launch) contains snapshot of the launch as well as network updates.
+| Chain ID       | Description        | Public Node (LCD)             |
+| -------------- | ------------------ | ----------------------------- |
+| `columbus-3`   | Mainnet            | https://lcd.terra.dev         |
+| `soju-0014`    | Columbus-3 Testnet | https://soju-lcd.terra.dev    |
+| `tequila-0001` | Columbus-4 Testnet | https://tequila-lcd.terra.dev |
 
-- Public testnet Soju-0013 is online. [Our networks repo](https://github.com/terra-project/networks) contains latest configuration files for the testnet. [The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnet.
+[The Faucet](https://faucet.terra.money) can be used to get free tokens for the testnets.
+
+### Joining the mainnet
+
+[The mainnet repo](https://github.com/terra-project/mainnet) contains snapshot of the launch as well as network updates.
+
+### Joining a testnet
+
+[Our networks repo](https://github.com/terra-project/testnet) contains latest configuration files for the testnet.
 
 ### Ecosystem
 
