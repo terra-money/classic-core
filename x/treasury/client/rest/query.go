@@ -18,6 +18,7 @@ func registerQueryRoute(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/treasury/tax_proceeds", queryTaxProceedsHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/treasury/seigniorage_proceeds", querySeigniorageProceedsHandlerFunction(cliCtx)).Methods("GET")
 	r.HandleFunc("/treasury/parameters", queryParametersHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/treasury/indicators", queryParametersHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryTaxRateHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
@@ -124,6 +125,24 @@ func queryParametersHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryIndicatorsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIndicators), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
