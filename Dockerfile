@@ -20,3 +20,5 @@ WORKDIR /root
 COPY --from=build /go/bin/terrad /usr/local/bin/terrad
 COPY --from=build /go/bin/terracli /usr/local/bin/terracli
 COPY --from=build /lib/libgo_cosmwasm.so /lib/libgo_cosmwasm.so
+
+CMD [ "terrad", "--help" ]
