@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 const custom = "custom"
@@ -125,6 +126,23 @@ func getQueriedParameters(t *testing.T, ctx sdk.Context, cdc *codec.Codec, queri
 	return params
 }
 
+func getQueriedIndicators(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) types.IndicatorQueryResonse {
+	query := abci.RequestQuery{
+		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryIndicators}, "/"),
+		Data: []byte{},
+	}
+
+	bz, err := querier(ctx, []string{types.QueryIndicators}, query)
+	require.Nil(t, err)
+	require.NotNil(t, bz)
+
+	var indicators types.IndicatorQueryResonse
+	err2 := cdc.UnmarshalJSON(bz, &indicators)
+	require.Nil(t, err2)
+
+	return indicators
+}
+
 func TestQueryParams(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.TreasuryKeeper)
@@ -205,4 +223,43 @@ func TestQuerySeigniorageProceeds(t *testing.T) {
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.Ctx, input.Cdc, querier, input.TreasuryKeeper.GetEpoch(input.Ctx))
 
 	require.Equal(t, targetSeigniorage, queriedSeigniorageProceeds)
+}
+
+func TestQueryIndicators(t *testing.T) {
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.TreasuryKeeper)
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	stakingAmt := sdk.TokensFromConsensusPower(1)
+	addr, val := ValAddrs[0], PubKeys[0]
+	addr1, val1 := ValAddrs[1], PubKeys[1]
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, stakingAmt))
+	require.NoError(t, err)
+
+	staking.EndBlocker(input.Ctx.WithBlockHeight(core.BlocksPerWeek-1), input.StakingKeeper)
+
+	proceedsAmt := sdk.NewInt(1000000000000)
+	taxProceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, proceedsAmt))
+	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
+
+	targetIndicators := types.IndicatorQueryResonse{
+		TRLYear:  proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
+		TRLMonth: proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
+	}
+
+	queriedIndicators := getQueriedIndicators(t, input.Ctx, input.Cdc, querier)
+	require.Equal(t, targetIndicators, queriedIndicators)
+
+	// Update indicators
+	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
+
+	// Record same tax proceeds to get same trl
+	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
+
+	// Change context to next epoch
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek)
+	queriedIndicators = getQueriedIndicators(t, input.Ctx, input.Cdc, querier)
+	require.Equal(t, targetIndicators, queriedIndicators)
 }

@@ -1,5 +1,11 @@
 package types
 
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // query endpoints supported by the auth Querier
 const (
 	QueryTaxRate             = "taxRate"
@@ -8,6 +14,7 @@ const (
 	QuerySeigniorageProceeds = "seigniorageProceeds"
 	QueryTaxProceeds         = "taxProceeds"
 	QueryParameters          = "parameters"
+	QueryIndicators          = "indicators"
 )
 
 // QueryTaxCapParams for query
@@ -21,4 +28,19 @@ func NewQueryTaxCapParams(denom string) QueryTaxCapParams {
 	return QueryTaxCapParams{
 		Denom: denom,
 	}
+}
+
+// IndicatorQueryResonse query response body
+type IndicatorQueryResonse struct {
+	TRLYear  sdk.Dec `json:"trl_year"`
+	TRLMonth sdk.Dec `json:"trl_month"`
+}
+
+// String implements fmt.Stringer interface
+func (res IndicatorQueryResonse) String() string {
+	return fmt.Sprintf(`Treasury Params:
+  TRL Year      : %s 
+  TRL Month     : %s
+
+  `, res.TRLYear, res.TRLMonth)
 }
