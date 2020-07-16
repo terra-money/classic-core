@@ -24,6 +24,10 @@ import (
 	_ "github.com/terra-project/core/client/lcd/statik"
 )
 
+// FlagPublic will restrict some query endpoint for
+// the query requests without height option
+const FlagPublic = "public"
+
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux     *mux.Router
@@ -98,6 +102,7 @@ func ServeCommand(cdc *codec.Codec, registerRoutesFn func(*RestServer)) *cobra.C
 		},
 	}
 
+	cmd.Flags().Bool(FlagPublic, false, "Restrict public query request without height option")
 	return flags.RegisterRestServerFlags(cmd)
 }
 
