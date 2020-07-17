@@ -41,11 +41,11 @@ Full-node software implementing the Terra protocol<br/><br/>
 
 ## What is Terra?
 
-**[The Terra Protocol](https://terra.money)** provides fundamental infrastructure and financial primitives for a decentralized economy, powered by consensus formed over native staking token Luna.
+**[Terra](https://terra.money)** is a blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
 
-With such features as WebAssembly smart contracts, price oracles, on-chain swaps, stablecoins tracking world currencies, community governance and automated monetary and fiscal policy, the Terra blockchain acts as its own autonomous sovereign economy driven by its users, and provides all the necessary incentive mechanics and plumbing to power modern DeFi applications.
+The Terra blockchain is secured through distributed consensus over native staked asset Luna, and supports the issuance of price-tracking stablecoins (TerraKRW, TerraUSD, etc.) that are pegged to major world currencies. Smart contracts on Terra run on WebAssembly and can take advantage of core modules like on-chain swaps, price oracle, and staking rewards to power modern DeFi apps. Through fiscal policy managed by community governance, Terra is a democratized economy regulated by its users.
 
-**Terra Core** is the reference implementation of the Terra Protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
+**Terra Core** is the reference implementation of the Terra protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
 
 ## Installation
 
@@ -204,7 +204,7 @@ For the moment, this guide has only been tested against RPM-based Linux distribu
 ### Increase Maximum Open Files
 
 `terrad` can open more than 1024 files (which is default maximum) concurrently.
-You wil want to increase this limit.
+You will want to increase this limit.
 
 Modify `/etc/security/limits.conf` to raise the `nofile` capability.
 
