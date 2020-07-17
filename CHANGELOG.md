@@ -1,3 +1,46 @@
+## 0.4.0
+
+### Improvements
+
+#### [\#357](https://github.com/terra-project/core/pull/357) Bump CosmWasm to v0.9.x
+#### [\#352](https://github.com/terra-project/core/pull/352) MsgAuthorization module to allow subkey feature
+#### [\#349](https://github.com/terra-project/core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
+#### [\#348](https://github.com/terra-project/core/pull/348) MsgSwapSend to allow sending all swap coin
+#### [\#347](https://github.com/terra-project/core/pull/347) CosmWasm custom msg & querier handler
+#### [\#343](https://github.com/terra-project/core/pull/343) Burn Address
+#### [\#335](https://github.com/terra-project/core/pull/335) CosmWasm integration
+#### [\#325](https://github.com/terra-project/core/pull/325) New oracle msgs for vote process optimization
+#### [\#324](https://github.com/terra-project/core/pull/324) Update to emit events at proposal handler 
+#### [\#323](https://github.com/terra-project/core/pull/323) Bump SDK version to v0.38.x
+
+### Bug Fixes
+#### [\#360](https://github.com/terra-project/core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
+#### [\#336](https://github.com/terra-project/core/pull/336) Allow zero tobin tax rate
+
+## 0.3.6
+
+### Improvements
+#### [99581ba](https://github.com/terra-project/core/commit/99581baf89a838cf09a25d47adc2fd2cc97ab4a2) Ledger update(custom ledger library) & Bump SDK to v0.37.13
+
+## 0.3.5
+
+### Improvements
+#### [654b5cb](https://github.com/terra-project/core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11 
+
+### Bug Fixes
+#### [7a3d01c](https://github.com/terra-project/core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
+
+## 0.3.4
+
+### Improvements
+#### [\#338](https://github.com/terra-project/core/pull/338) Bump SDK to v0.37.9 for Tendermint security patch
+
+## 0.3.3
+
+### Improvements
+#### [\#319](https://github.com/terra-project/core/pull/319) Bump SDK to v0.37.6
+#### [\#321](https://github.com/terra-project/core/pull/321) Revert to distribute zero oracle rewards
+
 ## 0.3.2
 
 ### Improvements
