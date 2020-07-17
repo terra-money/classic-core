@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-Full-node sofware implementing the Terra protocol<br/><br/>
+Full-node software implementing the Terra protocol<br/><br/>
 
 <a href="https://circleci.com/gh/terra-project/core/tree/develop">
     <img src="https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d">
