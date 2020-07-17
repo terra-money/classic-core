@@ -272,9 +272,9 @@ jobs:
           if [ -z "${TERRAD_VERSION}" ]; then
             docker build .
           else
-            docker build -t terraproject/core:$TERRAD_VERSION .
+            docker build -t terramoney/core:$TERRAD_VERSION .
             docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-            docker push terraproject/core:$TERRAD_VERSION
+            docker push terramoney/core:$TERRAD_VERSION
           fi
 
   docker-tagged:
@@ -286,9 +286,9 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: |
-          docker build -t terraproject/core:$CIRCLE_TAG .
+          docker build -t terramoney/core:$CIRCLE_TAG .
           docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-          docker push terraproject/core:$CIRCLE_TAG
+          docker push terramoney/core:$CIRCLE_TAG
 
   reproducible-builds:
     executor: golang

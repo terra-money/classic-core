@@ -1,9 +1,3 @@
-#FROM alpine:3.10.2
-#
-#RUN apk update && \
-#    apk upgrade && \
-#    apk --no-cache add curl jq file
-
 # Changed from Alpine to Ubuntu because the keyring PR is linking to libc
 # Alpine uses muslc instead of libc
 
@@ -21,4 +15,3 @@ CMD ["start"]
 STOPSIGNAL SIGTERM
 
 COPY wrapper.sh /usr/bin/wrapper.sh
-COPY libgo_cosmwasm.so /usr/lib/x86_64-linux-gnu/libgo_cosmwasm.so

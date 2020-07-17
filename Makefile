@@ -79,18 +79,13 @@ else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/terracli ./cmd/terracli
 endif
 
-build-linux: go.sum
-ifeq ($(OS),Windows_NT)
-	$(error Windows is not supported)
-else
-  ifeq ($(UNAME_S),Darwin)
-		$(info You need to install cross compiler and register path)
-		$(info http://crossgcc.rts-software.org/doku.php?id=compiling_for_linux)
-		LEDGER_ENABLED=false CC=x86_64-pc-linux-gcc GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(MAKE) build
-  else
-		LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
-  endif
-endif
+build-linux:
+	mkdir -p ./build
+	docker build --tag terramoney/core ./
+	docker create --name temp terramoney/core:latest
+	docker cp temp:/usr/local/bin/terrad ./build/
+	docker cp temp:/usr/local/bin/terracli ./build/
+	docker rm temp
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
@@ -178,14 +173,12 @@ benchmark:
 ########################################
 ### Local validator nodes using docker and docker-compose
 build-docker-terradnode: build-linux
-	cp `ls $(GOPATH)/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*/api/libgo_cosmwasm.so | sort -V | tail -n 1` ./networks/local/core/libgo_cosmwasm.so
 	$(MAKE) -C networks/local
-	@rm -f ./networks/local/core/libgo_cosmwasm.so
 
 # Run a 4-node testnet locally
 
 localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terramoney/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 
 # Stop testnet
