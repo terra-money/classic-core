@@ -1,7 +1,7 @@
 # Simple usage with a mounted data directory:
-# > docker build -t terra .
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad init
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad start
+# > docker build -t terramoney/core .
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terramoney/core terrad init
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terramoney/core terrad start
 FROM cosmwasm/go-ext-builder:0.8.2-alpine AS rust-builder
 
 RUN apk add git
