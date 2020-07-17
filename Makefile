@@ -80,6 +80,7 @@ else
 endif
 
 build-linux:
+	mkdir -p ./build
 	docker build --tag terramoney/core ./
 	docker create --name temp terramoney/core:latest
 	docker cp temp:/usr/local/bin/terrad ./build/
