@@ -82,8 +82,8 @@ endif
 build-linux:
 	docker build --tag terramoney/core ./
 	docker create --name temp terramoney/core:latest
-	docker cp temp:/usr/bin/terrad ./build/
-	docker cp temp:/usr/bin/terracli ./build/
+	docker cp temp:/usr/local/bin/terrad ./build/
+	docker cp temp:/usr/local/bin/terracli ./build/
 	docker rm temp
 
 build-contract-tests-hooks:
