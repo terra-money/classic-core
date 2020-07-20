@@ -52,8 +52,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 		tmkv.Pair{Key: types.ExchangeRateKey, Value: cdc.MustMarshalBinaryLengthPrefixed(exchangeRate)},
 		tmkv.Pair{Key: types.FeederDelegationKey, Value: cdc.MustMarshalBinaryLengthPrefixed(feederAddr)},
 		tmkv.Pair{Key: types.MissCounterKey, Value: cdc.MustMarshalBinaryLengthPrefixed(missCounter)},
-		tmkv.Pair{Key: types.AggregatePrevoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregatePrevote)},
-		tmkv.Pair{Key: types.AggregateVoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregateVote)},
+		tmkv.Pair{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregatePrevote)},
+		tmkv.Pair{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshalBinaryLengthPrefixed(aggregateVote)},
 		tmkv.Pair{Key: types.TobinTaxKey, Value: cdc.MustMarshalBinaryLengthPrefixed(tobinTax)},
 		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
 	}

@@ -5,8 +5,10 @@ package types
 const (
 	EventTypeStoreCode           = "store_code"
 	EventTypeInstantiateContract = "instantiate_contract"
-	EventTypeFromContract        = "from_contract"
+	EventTypeExecuteContract     = "execute_contract"
+	EventTypeMigrateContract     = "migrate_contract"
 	EventTypeUpdateContractOwner = "update_contract_owner"
+	EventTypeFromContract        = "from_contract"
 
 	AttributeKeySender          = "sender"
 	AttributeKeyCodeID          = "code_id"

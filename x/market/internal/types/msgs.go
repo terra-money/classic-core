@@ -10,6 +10,7 @@ import (
 // ensure Msg interface compliance at compile time
 var (
 	_ sdk.Msg = &MsgSwap{}
+	_ sdk.Msg = &MsgSwapSend{}
 )
 
 //--------------------------------------------------------
@@ -94,7 +95,7 @@ func NewMsgSwapSend(fromAddress sdk.AccAddress, toAddress sdk.AccAddress, offerC
 func (msg MsgSwapSend) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
-func (msg MsgSwapSend) Type() string { return "swap" }
+func (msg MsgSwapSend) Type() string { return "swapsend" }
 
 // GetSignBytes Implements Msg
 func (msg MsgSwapSend) GetSignBytes() []byte {
@@ -131,8 +132,8 @@ func (msg MsgSwapSend) ValidateBasic() error {
 func (msg MsgSwapSend) String() string {
 	return fmt.Sprintf(`MsgSwapSend
 	fromAddress:    %s,
-	toAddress:  %s, 
-	offer:     %s, 
-	ask:       %s`,
+	toAddress:      %s, 
+	offer:          %s, 
+	ask:            %s`,
 		msg.FromAddress, msg.ToAddress, msg.OfferCoin, msg.AskDenom)
 }

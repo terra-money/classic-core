@@ -70,7 +70,7 @@ func (p TaxRateUpdateProposal) String() string {
 	b.WriteString(fmt.Sprintf(`Community Pool Spend Proposal:
   Title:        %s
   Description:  %s
-	TaxRate:      %s
+  TaxRate:      %s
 `, p.Title, p.Description, p.TaxRate))
 	return b.String()
 }
@@ -119,7 +119,7 @@ func (p RewardWeightUpdateProposal) String() string {
 	b.WriteString(fmt.Sprintf(`Community Pool Spend Proposal:
   Title:        %s
   Description:  %s
-	RewardWeight:      %s
+  RewardWeight: %s
 `, p.Title, p.Description, p.RewardWeight))
 	return b.String()
 }

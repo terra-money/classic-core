@@ -40,13 +40,13 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg MsgStoreCode) (*sdk.Result, 
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			),
-			sdk.NewEvent(
 				types.EventTypeStoreCode,
 				sdk.NewAttribute(types.AttributeKeySender, msg.Sender.String()),
 				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			),
 		},
 	)
@@ -63,14 +63,14 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) (*
 	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
 		sdk.Events{
 			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			),
-			sdk.NewEvent(
 				types.EventTypeInstantiateContract,
 				sdk.NewAttribute(types.AttributeKeyOwner, msg.Owner.String()),
 				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 				sdk.NewAttribute(types.AttributeKeyContractAddress, contractAddr.String()),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			),
 		},
 	)}, nil
@@ -84,6 +84,11 @@ func handleExecute(ctx sdk.Context, k Keeper, msg MsgExecuteContract) (*sdk.Resu
 
 	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
 		sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeExecuteContract,
+				sdk.NewAttribute(types.AttributeKeySender, msg.Sender.String()),
+				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract.String()),
+			),
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
@@ -100,6 +105,11 @@ func handleMigrate(ctx sdk.Context, k Keeper, msg MsgMigrateContract) (*sdk.Resu
 
 	return &sdk.Result{Events: filterMessageEvents(ctx.EventManager()).AppendEvents(
 		sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeMigrateContract,
+				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.NewCodeID)),
+				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract.String()),
+			),
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
@@ -124,13 +134,13 @@ func handleUpdateContractOwner(ctx sdk.Context, k Keeper, msg MsgUpdateContractO
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			),
-			sdk.NewEvent(
-				types.EventTypeStoreCode,
+				types.EventTypeUpdateContractOwner,
 				sdk.NewAttribute(types.AttributeKeyOwner, msg.NewOwner.String()),
 				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract.String()),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			),
 		},
 	)

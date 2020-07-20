@@ -98,8 +98,8 @@ var (
 	ExchangeRateKey                       = types.ExchangeRateKey
 	FeederDelegationKey                   = types.FeederDelegationKey
 	MissCounterKey                        = types.MissCounterKey
-	AggregatePrevoteKey                   = types.AggregatePrevoteKey
-	AggregateVoteKey                      = types.AggregateVoteKey
+	AggregateExchangeRatePrevoteKey       = types.AggregateExchangeRatePrevoteKey
+	AggregateExchangeRateVoteKey          = types.AggregateExchangeRateVoteKey
 	TobinTaxKey                           = types.TobinTaxKey
 	ParamStoreKeyVotePeriod               = types.ParamStoreKeyVotePeriod
 	ParamStoreKeyVoteThreshold            = types.ParamStoreKeyVoteThreshold

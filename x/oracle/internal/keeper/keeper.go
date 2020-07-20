@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -335,7 +336,7 @@ func (k Keeper) DeleteAggregateExchangeRatePrevote(ctx sdk.Context, aggregatePre
 // IterateAggregateExchangeRatePrevotes iterates rate over prevotes in the store
 func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.AggregatePrevoteKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRatePrevoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var aggregatePrevote types.AggregateExchangeRatePrevote
@@ -377,7 +378,7 @@ func (k Keeper) DeleteAggregateExchangeRateVote(ctx sdk.Context, aggregateVote t
 // IterateAggregateExchangeRateVotes iterates rate over prevotes in the store
 func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(aggregateVote types.AggregateExchangeRateVote) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.AggregateVoteKey)
+	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRateVoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var aggregateVote types.AggregateExchangeRateVote
