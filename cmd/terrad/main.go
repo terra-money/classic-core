@@ -91,13 +91,18 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 		skipUpgradeHeights[int64(h)] = true
 	}
 
+	pruningOpts, err := server.GetPruningOptionsFromFlags()
+	if err != nil {
+		panic(err)
+	}
+
 	return app.NewTerraApp(
 		logger, db, traceStore, true, invCheckPeriod, skipUpgradeHeights,
 		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
 			ContractQueryGasLimit: viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
 			CacheSize:             viper.GetUint64(wasmconfig.FlagCacheSize),
 		}},
-		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
+		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
 		baseapp.SetHaltTime(viper.GetUint64(server.FlagHaltTime)),
