@@ -610,6 +610,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			"Type": "transfer",
 			"Attr": []dict{
 				{"recipient": myPayoutAddr},
+				{"sender": contractAddr},
 				{"amount": "100000" + core.MicroLunaDenom},
 			},
 		},
