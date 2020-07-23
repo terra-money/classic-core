@@ -3516,16 +3516,12 @@ definitions:
     properties:
       delegator_address:
         type: string
-        example: "terra1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0tmam9"
       validator_address:
         type: string
-        "example": "terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk"
       shares:
         type: string
-        example: "1000000"
       balance:
-        type: string
-        example: "1000000"
+        $ref: "#/definitions/Coin"
   UnbondingDelegation:
     type: object
     properties:
