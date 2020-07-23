@@ -15,7 +15,7 @@ LunaPool := (BasePool * BasePool) / TerraPool
 
 > Note that the all pool holds decimal unit of `usdr` amount, so delta is also `usdr` unit.
 
-- TerraPoolDelta: `0x00 -> amino(TerraPoolDelta)`
+- TerraPoolDelta: `0x01 -> amino(TerraPoolDelta)`
 
 ```go
 type TerraPoolDelta sdk.Dec // the gap between the TerraPool and the BasePool
