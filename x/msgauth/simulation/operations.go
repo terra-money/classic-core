@@ -4,6 +4,7 @@ package simulation
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -224,6 +225,14 @@ func SimulateMsgExecuteAuthorized(ak authkeeper.AccountKeeper, bk bank.Keeper, k
 		)
 
 		_, _, err = app.Deliver(tx)
-		return simulation.NewOperationMsg(msg, true, ""), nil, err
+		if err != nil {
+			if strings.Contains(err.Error(), "insufficient fee") {
+				return simulation.NoOpMsg(types.ModuleName), nil, nil
+			}
+
+			return simulation.NoOpMsg(types.ModuleName), nil, err
+		}
+
+		return simulation.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
