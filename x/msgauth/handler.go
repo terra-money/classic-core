@@ -32,15 +32,18 @@ func handleMsgGrantAuthorization(ctx sdk.Context, msg MsgGrantAuthorization, k K
 	k.SetGrant(ctx, msg.Granter, msg.Grantee, NewAuthorizationGrant(msg.Authorization, expiration))
 	k.InsertGrantQueue(ctx, msg.Granter, msg.Grantee, msg.Authorization.MsgType(), expiration)
 
-	ctx.EventManager().EmitEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventGrantAuthorization,
 			sdk.NewAttribute(types.AttributeKeyGrantType, msg.Authorization.MsgType()),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyGranterAddress, msg.Granter.String()),
 			sdk.NewAttribute(types.AttributeKeyGranteeAddress, msg.Grantee.String()),
 		),
-	)
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
 
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
@@ -54,15 +57,18 @@ func handleMsgRevokeAuthorization(ctx sdk.Context, msg MsgRevokeAuthorization, k
 	k.RevokeGrant(ctx, msg.Granter, msg.Grantee, msg.AuthorizationMsgType)
 	k.RevokeFromGrantQueue(ctx, msg.Granter, msg.Grantee, msg.AuthorizationMsgType, grant.Expiration)
 
-	ctx.EventManager().EmitEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventRevokeAuthorization,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyGrantType, msg.AuthorizationMsgType),
 			sdk.NewAttribute(types.AttributeKeyGranterAddress, msg.Granter.String()),
 			sdk.NewAttribute(types.AttributeKeyGranteeAddress, msg.Grantee.String()),
 		),
-	)
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
 
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
@@ -72,6 +78,17 @@ func handleMsgExecAuthorized(ctx sdk.Context, msg MsgExecAuthorized, k Keeper) (
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventExecuteAuthorization,
+			sdk.NewAttribute(types.AttributeKeyGranteeAddress, msg.Grantee.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
 
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }

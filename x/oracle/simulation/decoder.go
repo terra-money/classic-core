@@ -39,12 +39,12 @@ func DecodeStore(cdc *codec.Codec, kvA, kvB tmkv.Pair) string {
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &counterA)
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &counterB)
 		return fmt.Sprintf("%v\n%v", counterA, counterB)
-	case bytes.Equal(kvA.Key[:1], types.AggregatePrevoteKey):
+	case bytes.Equal(kvA.Key[:1], types.AggregateExchangeRatePrevoteKey):
 		var prevoteA, prevoteB types.AggregateExchangeRatePrevote
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &prevoteA)
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &prevoteB)
 		return fmt.Sprintf("%v\n%v", prevoteA, prevoteB)
-	case bytes.Equal(kvA.Key[:1], types.AggregateVoteKey):
+	case bytes.Equal(kvA.Key[:1], types.AggregateExchangeRateVoteKey):
 		var voteA, voteB types.AggregateExchangeRateVote
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &voteA)
 		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &voteB)

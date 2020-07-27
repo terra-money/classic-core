@@ -2,11 +2,11 @@ package types
 
 // msgauth module events
 const (
-	EventGrantAuthorization   = "grant-authorization"
-	EventRevokeAuthorization  = "revoke-authorization"
-	EventExecuteAuthorization = "execute-authorization"
+	EventGrantAuthorization   = "grant_authorization"
+	EventRevokeAuthorization  = "revoke_authorization"
+	EventExecuteAuthorization = "execute_authorization"
 
-	AttributeKeyGrantType      = "grant-type"
+	AttributeKeyGrantType      = "grant_type"
 	AttributeKeyGranteeAddress = "grantee"
 	AttributeKeyGranterAddress = "granter"
 
