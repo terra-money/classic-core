@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-	"github.com/tendermint/tendermint/crypto"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -182,63 +180,6 @@ func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
 	}
 
 	return string(bz), err
-}
-
-// MarshalJSON returns the JSON representation of a LazyGradedVestingAccount.
-func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
-	alias := vestingAccountPretty{
-		Address:          lgva.Address,
-		Coins:            lgva.Coins,
-		AccountNumber:    lgva.AccountNumber,
-		Sequence:         lgva.Sequence,
-		OriginalVesting:  lgva.OriginalVesting,
-		DelegatedFree:    lgva.DelegatedFree,
-		DelegatedVesting: lgva.DelegatedVesting,
-		EndTime:          lgva.EndTime,
-	}
-
-	if lgva.PubKey != nil {
-		pks, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeAccPub, lgva.GetPubKey())
-		if err != nil {
-			return nil, err
-		}
-
-		alias.PubKey = pks
-	}
-
-	return json.Marshal(alias)
-}
-
-// UnmarshalJSON unmarshals raw JSON bytes into a ContinuousVestingAccount.
-func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
-	var alias vestingAccountPretty
-	if err := json.Unmarshal(bz, &alias); err != nil {
-		return err
-	}
-
-	var (
-		pk  crypto.PubKey
-		err error
-	)
-
-	if alias.PubKey != "" {
-		pk, err = sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeAccPub, alias.PubKey)
-		if err != nil {
-			return err
-		}
-	}
-
-	lgva.BaseVestingAccount = &vesttypes.BaseVestingAccount{
-		BaseAccount:      authtypes.NewBaseAccount(alias.Address, alias.Coins, pk, alias.AccountNumber, alias.Sequence),
-		OriginalVesting:  alias.OriginalVesting,
-		DelegatedFree:    alias.DelegatedFree,
-		DelegatedVesting: alias.DelegatedVesting,
-		EndTime:          alias.EndTime,
-	}
-
-	lgva.VestingSchedules = alias.VestingSchedules
-
-	return nil
 }
 
 // spendableCoins returns all the spendable coins for a vesting account given a
