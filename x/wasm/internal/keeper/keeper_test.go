@@ -20,7 +20,7 @@ func TestCodeInfo(t *testing.T) {
 
 	codeID := uint64(1)
 	creatorAddr := addrFromUint64(codeID)
-	expected := types.NewCodeInfo([]byte{1, 2, 3}, creatorAddr)
+	expected := types.NewCodeInfo(codeID, []byte{1, 2, 3}, creatorAddr)
 	keeper.SetCodeInfo(ctx, 1, expected)
 
 	as, err := keeper.GetCodeInfo(ctx, codeID)

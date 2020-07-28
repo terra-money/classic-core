@@ -13,9 +13,9 @@ const DefaultParamspace = ModuleName
 
 // Max params for static check
 const (
-	EnforcedMaxContractSize    = uint64(500 * 1024)  // 500KB
-	EnforcedMaxContractGas     = uint64(900_000_000) // 900,000,000
-	EnforcedMaxContractMsgSize = uint64(10 * 1024)   // 10KB
+	EnforcedMaxContractSize    = uint64(500 * 1024)     // 500KB
+	EnforcedMaxContractGas     = uint64(10_000_000_000) // 10,000,000,000
+	EnforcedMaxContractMsgSize = uint64(10 * 1024)      // 10KB
 )
 
 // Parameter keys
@@ -24,17 +24,22 @@ var (
 	ParamStoreKeyMaxContractGas     = []byte("maxcontractgas")
 	ParamStoreKeyMaxContractMsgSize = []byte("maxcontractmsgsize")
 	ParamStoreKeyGasMultiplier      = []byte("gasmultiplier")
+	ParamStoreKeyCompileCostPerByte = []byte("compilecostperbyte")
+	ParamStoreKeyInstanceCost       = []byte("instancecost")
+	ParamStoreKeyHumanizeCost       = []byte("humanizecost")
+	ParamStoreKeyCanonicalizeCost   = []byte("canonicalizecost")
 )
 
 // Default parameter values
 const (
 	DefaultMaxContractSize    = EnforcedMaxContractSize // 500 KB
-	DefaultMaxContractGas     = EnforcedMaxContractGas  // 900,000,000
+	DefaultMaxContractGas     = EnforcedMaxContractGas  // 10,000,000,000
 	DefaultMaxContractMsgSize = uint64(1 * 1024)        // 1KB
-	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
-	// A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
-	// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
-	DefaultGasMultiplier = uint64(100)
+	DefaultGasMultiplier      = uint64(100)             // Please note that all gas prices returned to the wasmer engine should have this multiplied
+	DefaultCompileCostPerByte = uint64(2)               // sdk gas cost per bytes
+	DefaultInstanceCost       = uint64(40_000)          // sdk gas cost for executing wasmer engine
+	DefaultHumanizeCost       = uint64(5)               // sdk gas cost to convert canonical address to human address
+	DefaultCanonicalizeCost   = uint64(4)               // sdk gas cost to convert human address to canonical address
 )
 
 var _ params.ParamSet = &Params{}
@@ -45,6 +50,10 @@ type Params struct {
 	MaxContractGas     uint64 `json:"max_contract_gas" yaml:"max_contract_gas"`           // allowed max gas usages per each contract execution
 	MaxContractMsgSize uint64 `json:"max_contract_msg_size" yaml:"max_contract_msg_size"` // allowed max contract exe msg bytes size
 	GasMultiplier      uint64 `json:"gas_multiplier" yaml:"gas_multiplier"`               // defines how many cosmwasm gas points = 1 sdk gas point
+	CompileCostPerByte uint64 `json:"compile_cost_per_byte" yaml:"compile_cost_per_byte"` // defines how much SDK gas we charge *per byte* for compiling WASM code.
+	InstanceCost       uint64 `json:"instance_cost" yaml:"instance_cost"`                 // defines how much SDK gas we charge each time we load a WASM instance.
+	HumanizeCost       uint64 `json:"humanize_cost" yaml:"humanize_cost"`                 // defines how much SDK gas we charge each time we humanize address
+	CanonicalizeCost   uint64 `json:"canonicalize_cost" yaml:"canonicalize_cost"`         // defines how much SDK gas we charge each time we canonicalize address
 }
 
 // DefaultParams creates default treasury module parameters
@@ -54,6 +63,10 @@ func DefaultParams() Params {
 		MaxContractGas:     DefaultMaxContractGas,
 		MaxContractMsgSize: DefaultMaxContractMsgSize,
 		GasMultiplier:      DefaultGasMultiplier,
+		CompileCostPerByte: DefaultCompileCostPerByte,
+		InstanceCost:       DefaultInstanceCost,
+		HumanizeCost:       DefaultHumanizeCost,
+		CanonicalizeCost:   DefaultCanonicalizeCost,
 	}
 }
 
@@ -66,6 +79,10 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(ParamStoreKeyMaxContractGas, &p.MaxContractGas, validateMaxContractGas),
 		params.NewParamSetPair(ParamStoreKeyMaxContractMsgSize, &p.MaxContractMsgSize, validateMaxContractMsgSize),
 		params.NewParamSetPair(ParamStoreKeyGasMultiplier, &p.GasMultiplier, validateGasMultiplier),
+		params.NewParamSetPair(ParamStoreKeyCompileCostPerByte, &p.CompileCostPerByte, validateCompileCostPerByte),
+		params.NewParamSetPair(ParamStoreKeyInstanceCost, &p.InstanceCost, validateInstanceCost),
+		params.NewParamSetPair(ParamStoreKeyHumanizeCost, &p.HumanizeCost, validateHumanizeCost),
+		params.NewParamSetPair(ParamStoreKeyCanonicalizeCost, &p.CanonicalizeCost, validateCanonicalizeCost),
 	}
 }
 
@@ -148,6 +165,42 @@ func validateMaxContractMsgSize(i interface{}) error {
 
 	if v > EnforcedMaxContractMsgSize {
 		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than 10KB", v)
+	}
+
+	return nil
+}
+
+func validateCompileCostPerByte(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+func validateInstanceCost(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+func validateHumanizeCost(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+func validateCanonicalizeCost(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

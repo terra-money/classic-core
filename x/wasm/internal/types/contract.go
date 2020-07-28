@@ -25,6 +25,7 @@ func (m Model) String() string {
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
+	CodeID   uint64           `json:"code_id"`
 	CodeHash core.Base64Bytes `json:"code_hash"`
 	Creator  sdk.AccAddress   `json:"creator"`
 }
@@ -32,14 +33,16 @@ type CodeInfo struct {
 // String implements fmt.Stringer interface
 func (ci CodeInfo) String() string {
 	return fmt.Sprintf(`CodeInfo
+	CodeID:      %d,
 	CodeHash:    %s, 
 	Creator:     %s`,
-		ci.CodeHash, ci.Creator)
+		ci.CodeID, ci.CodeHash, ci.Creator)
 }
 
 // NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
+func NewCodeInfo(codeID uint64, codeHash []byte, creator sdk.AccAddress) CodeInfo {
 	return CodeInfo{
+		CodeID:   codeID,
 		CodeHash: codeHash,
 		Creator:  creator,
 	}
@@ -86,11 +89,11 @@ func NewWasmAPIParams(ctx sdk.Context, sender sdk.AccAddress, deposit sdk.Coins,
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Sender:    wasmTypes.CanonicalAddress(sender),
+			Sender:    sender.String(),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAddr),
+			Address: contractAddr.String(),
 		},
 	}
 }

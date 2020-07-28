@@ -29,6 +29,30 @@ func (k Keeper) GasMultiplier(ctx sdk.Context) (res uint64) {
 	return
 }
 
+// CompileCostPerByte defines how much SDK gas we charge *per byte* for compiling WASM code.
+func (k Keeper) CompileCostPerByte(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyCompileCostPerByte, &res)
+	return
+}
+
+// InstanceCost defines how much SDK gas we charge each time we load a WASM instance.
+func (k Keeper) InstanceCost(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyInstanceCost, &res)
+	return
+}
+
+// HumanizeCost defines how much SDK gas we charge each time we humanize adress.
+func (k Keeper) HumanizeCost(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyInstanceCost, &res)
+	return
+}
+
+// CanonicalizeCost defines how much SDK gas we charge each time we canonicalize adress.
+func (k Keeper) CanonicalizeCost(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyInstanceCost, &res)
+	return
+}
+
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)

@@ -7,18 +7,57 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func humanAddress(canon []byte) (string, error) {
-	if len(canon) != sdk.AddrLen {
-		return "", fmt.Errorf("Expected %d byte address", sdk.AddrLen)
+func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
+	return cosmwasm.GoAPI{
+		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
+			if len(canon) != sdk.AddrLen {
+				return "", 0, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
+			}
+			return sdk.AccAddress(canon).String(), k.HumanizeCost(ctx) * k.GasMultiplier(ctx), nil
+		},
+		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {
+			addr, err := sdk.AccAddressFromBech32(human)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			return addr, k.CanonicalizeCost(ctx) * k.GasMultiplier(ctx), nil
+		},
 	}
-	return sdk.AccAddress(canon).String(), nil
 }
 
-func canonicalAddress(human string) ([]byte, error) {
-	return sdk.AccAddressFromBech32(human)
+// wasmGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
+type wasmGasMeter struct {
+	originalMeter sdk.GasMeter
+	gasMultiplier uint64
 }
 
-var cosmwasmAPI = cosmwasm.GoAPI{
-	HumanAddress:     humanAddress,
-	CanonicalAddress: canonicalAddress,
+var _ cosmwasm.GasMeter = wasmGasMeter{}
+
+func (m wasmGasMeter) GasConsumed() sdk.Gas {
+	return m.originalMeter.GasConsumed() * m.gasMultiplier
+}
+
+// return gas meter interface for wasm gas meter
+func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
+	return wasmGasMeter{
+		originalMeter: ctx.GasMeter(),
+		gasMultiplier: k.GasMultiplier(ctx),
+	}
+}
+
+// return remaining gas in wasm gas unit
+func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
+	meter := ctx.GasMeter()
+	remaining := (meter.Limit() - meter.GasConsumed()) * k.GasMultiplier(ctx)
+	if remaining > k.MaxContractGas(ctx) {
+		return k.MaxContractGas(ctx)
+	}
+	return remaining
+}
+
+// converts contract gas usage to sdk gas and consumes it
+func (k Keeper) consumeGas(ctx sdk.Context, gas uint64, descriptor string) {
+	consumed := gas / k.GasMultiplier(ctx)
+	ctx.GasMeter().ConsumeGas(consumed, descriptor)
 }

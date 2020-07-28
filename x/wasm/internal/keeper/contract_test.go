@@ -237,7 +237,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.True(t, gasAfter-gasBefore > 0)
+	require.True(t, gasAfter-gasBefore > keeper.InstanceCost(ctx))
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -380,7 +380,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
-	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "wasm contract"}, func() {
+	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "Contract Execution"}, func() {
 		_, _ = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
 	})
 }
