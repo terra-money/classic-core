@@ -2622,6 +2622,27 @@ paths:
             $ref: "#/definitions/TreasuryParams"
         404:
           description: Not Found
+  /treasury/indicators:
+    get:
+      summary: Get the current treasury indicators
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Ok
+          schema:
+            properties:
+              trl_year:
+                type: string
+                description: "Tax Rewards per staked Luna over a year of rolling average"
+                example: "0.000407428004800011"
+              trl_month:
+                type: string
+                description: "Tax Rewards per staked Luna over a month of rolling average"
+                example: "0.000366833881714302"
+
   /wasm/codes:
     post:
       summary: Generate wasm store code message
