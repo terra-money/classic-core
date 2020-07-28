@@ -14,7 +14,7 @@ import (
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetLastCodeID(ctx, 0)
+	keeper.SetLastCodeID(ctx, data.LastCodeID)
 	keeper.SetLastInstanceID(ctx, data.LastInstanceID)
 
 	for _, code := range data.Codes {
@@ -23,7 +23,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			panic(err)
 		}
 
-		if bytes.Equal(codeHash, code.CodeInfo.CodeHash) {
+		if !bytes.Equal(codeHash, code.CodeInfo.CodeHash.Bytes()) {
 			panic("CodeHash is not same")
 		}
 
@@ -33,10 +33,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	for _, contract := range data.Contracts {
 		keeper.SetContractInfo(ctx, contract.ContractInfo.Address, contract.ContractInfo)
 		keeper.SetContractStore(ctx, contract.ContractInfo.Address, contract.ContractStore)
-	}
-
-	if lastCodeID, err := keeper.GetLastCodeID(ctx); err != nil || lastCodeID != data.LastCodeID {
-		panic("last code id is differ from the genesis")
 	}
 }
 

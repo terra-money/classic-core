@@ -49,11 +49,12 @@ func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
 // return remaining gas in wasm gas unit
 func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
-	remaining := (meter.Limit() - meter.GasConsumed()) * k.GasMultiplier(ctx)
-	if remaining > k.MaxContractGas(ctx) {
-		return k.MaxContractGas(ctx)
+
+	remaining := (meter.Limit() - meter.GasConsumed())
+	if maxGas := k.MaxContractGas(ctx); remaining > maxGas {
+		remaining = maxGas
 	}
-	return remaining
+	return remaining * k.GasMultiplier(ctx)
 }
 
 // converts contract gas usage to sdk gas and consumes it

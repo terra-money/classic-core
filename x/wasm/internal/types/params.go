@@ -13,9 +13,9 @@ const DefaultParamspace = ModuleName
 
 // Max params for static check
 const (
-	EnforcedMaxContractSize    = uint64(500 * 1024)     // 500KB
-	EnforcedMaxContractGas     = uint64(10_000_000_000) // 10,000,000,000
-	EnforcedMaxContractMsgSize = uint64(10 * 1024)      // 10KB
+	EnforcedMaxContractSize    = uint64(500 * 1024)  // 500KB
+	EnforcedMaxContractGas     = uint64(100_000_000) // 100,000,000
+	EnforcedMaxContractMsgSize = uint64(10 * 1024)   // 10KB
 )
 
 // Parameter keys
@@ -33,7 +33,7 @@ var (
 // Default parameter values
 const (
 	DefaultMaxContractSize    = EnforcedMaxContractSize // 500 KB
-	DefaultMaxContractGas     = EnforcedMaxContractGas  // 10,000,000,000
+	DefaultMaxContractGas     = EnforcedMaxContractGas  // 100,000,000
 	DefaultMaxContractMsgSize = uint64(1 * 1024)        // 1KB
 	DefaultGasMultiplier      = uint64(100)             // Please note that all gas prices returned to the wasmer engine should have this multiplied
 	DefaultCompileCostPerByte = uint64(2)               // sdk gas cost per bytes
@@ -100,7 +100,7 @@ func (p Params) String() string {
 // Validate params
 func (p Params) Validate() error {
 	if p.MaxContractSize > EnforcedMaxContractSize {
-		return fmt.Errorf("max contract byte size %d must be equal or smaller than 500KB", p.MaxContractSize)
+		return fmt.Errorf("max contract byte size %d must be equal or smaller than %d", p.MaxContractSize, EnforcedMaxContractSize)
 	}
 
 	if p.GasMultiplier <= 0 {
@@ -108,11 +108,11 @@ func (p Params) Validate() error {
 	}
 
 	if p.MaxContractGas > EnforcedMaxContractGas {
-		return fmt.Errorf("max contract gas %d must be equal or smaller than 900,000,000 (enforced in rust)", p.MaxContractGas)
+		return fmt.Errorf("max contract gas %d must be equal or smaller than %d", p.MaxContractGas, EnforcedMaxContractGas)
 	}
 
 	if p.MaxContractMsgSize > EnforcedMaxContractMsgSize {
-		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than 10KB", p.MaxContractMsgSize)
+		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than %d", p.MaxContractMsgSize, EnforcedMaxContractMsgSize)
 	}
 
 	return nil
@@ -125,7 +125,7 @@ func validateMaxContractSize(i interface{}) error {
 	}
 
 	if v > EnforcedMaxContractSize {
-		return fmt.Errorf("max contract byte size %d must be equal or smaller than 500KB", v)
+		return fmt.Errorf("max contract byte size %d must be equal or smaller than %d", v, EnforcedMaxContractSize)
 	}
 
 	return nil
@@ -151,7 +151,7 @@ func validateMaxContractGas(i interface{}) error {
 	}
 
 	if v > EnforcedMaxContractGas {
-		return fmt.Errorf("max contract gas %d must be equal or smaller than 900,000,000 (enforced in rust)", v)
+		return fmt.Errorf("max contract gas %d must be equal or smaller than %d", v, EnforcedMaxContractGas)
 	}
 
 	return nil
@@ -164,7 +164,7 @@ func validateMaxContractMsgSize(i interface{}) error {
 	}
 
 	if v > EnforcedMaxContractMsgSize {
-		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than 10KB", v)
+		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than %d", v, EnforcedMaxContractMsgSize)
 	}
 
 	return nil
