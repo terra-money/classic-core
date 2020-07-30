@@ -3461,13 +3461,13 @@ definitions:
   TallyResult:
     type: object
     properties:
-      yes:
+      'yes':
         type: string
         example: "0.0000000000"
       abstain:
         type: string
         example: "0.0000000000"
-      no:
+      'no':
         type: string
         example: "0.0000000000"
       no_with_veto:
