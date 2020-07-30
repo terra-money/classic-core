@@ -3,13 +3,19 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/treasury"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/spf13/viper"
+	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-project/core/x/treasury"
+	"github.com/terra-project/core/x/wasm"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -65,7 +71,8 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
+	viper.Set(flags.FlagHome, dir)
+	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
 	// run randomized simulation
@@ -97,7 +104,8 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
+	viper.Set(flags.FlagHome, dir)
+	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
 	// Run randomized simulation
@@ -131,7 +139,8 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
+	viper.Set(flags.FlagHome, dir)
+	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", newApp.Name())
 
 	var genesisState simapp.GenesisState
@@ -159,6 +168,7 @@ func TestAppImportExport(t *testing.T) {
 		{app.keys[oracle.StoreKey], newApp.keys[oracle.StoreKey], [][]byte{}},
 		{app.keys[market.StoreKey], newApp.keys[market.StoreKey], [][]byte{}},
 		{app.keys[treasury.StoreKey], newApp.keys[treasury.StoreKey], [][]byte{}},
+		{app.keys[wasm.StoreKey], newApp.keys[wasm.StoreKey], [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {
@@ -185,7 +195,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
+	viper.Set(flags.FlagHome, dir)
+	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", app.Name())
 
 	// Run randomized simulation
@@ -224,7 +235,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, fauxMerkleModeOpt)
+	viper.Set(flags.FlagHome, dir)
+	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
 	require.Equal(t, "TerraApp", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
@@ -261,6 +273,10 @@ func TestAppStateDeterminism(t *testing.T) {
 		config.Seed = rand.Int63()
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
+			tempDir, err := ioutil.TempDir("", "wasmtest")
+			require.NoError(t, err)
+			viper.Set(flags.FlagHome, tempDir)
+
 			var logger log.Logger
 			if simapp.FlagVerboseValue {
 				logger = log.TestingLogger()
@@ -270,14 +286,14 @@ func TestAppStateDeterminism(t *testing.T) {
 
 			db := dbm.NewMemDB()
 
-			app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, interBlockCacheOpt())
+			app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
 				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 			)
 
-			_, _, err := simulation.SimulateFromSeed(
+			_, _, err = simulation.SimulateFromSeed(
 				t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 				simapp.SimulationOperations(app, app.Codec(), config),
 				app.ModuleAccountAddrs(), config,
@@ -297,6 +313,8 @@ func TestAppStateDeterminism(t *testing.T) {
 					"non-determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 				)
 			}
+
+			os.RemoveAll(tempDir)
 		}
 	}
 }

@@ -1,9 +1,3 @@
-#FROM alpine:3.10.2
-#
-#RUN apk update && \
-#    apk upgrade && \
-#    apk --no-cache add curl jq file
-
 # Changed from Alpine to Ubuntu because the keyring PR is linking to libc
 # Alpine uses muslc instead of libc
 

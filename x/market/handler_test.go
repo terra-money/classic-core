@@ -30,6 +30,10 @@ func TestMarketFilters(t *testing.T) {
 func TestSwapMsg(t *testing.T) {
 	input, h := setup(t)
 
+	params := input.MarketKeeper.GetParams(input.Ctx)
+	params.MinStabilitySpread = sdk.ZeroDec()
+	input.MarketKeeper.SetParams(input.Ctx, params)
+
 	beforeTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 
 	amt := sdk.NewInt(10)
@@ -40,8 +44,16 @@ func TestSwapMsg(t *testing.T) {
 
 	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	diff := beforeTerraPoolDelta.Sub(afterTerraPoolDelta)
+
+	// calculate estimation
+	basePool := input.MarketKeeper.GetParams(input.Ctx).BasePool
 	price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
-	require.Equal(t, price.MulInt(amt), diff.Abs())
+	cp := basePool.Mul(basePool)
+
+	terraPool := basePool.Add(beforeTerraPoolDelta)
+	lunaPool := cp.Quo(terraPool)
+	estmiatedDiff := terraPool.Sub(cp.Quo(lunaPool.Add(price.MulInt(amt))))
+	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 
 	// invalid recursive swap
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
@@ -56,4 +68,22 @@ func TestSwapMsg(t *testing.T) {
 	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
 	_, err = h(input.Ctx, swapMsg)
 	require.NoError(t, err)
+}
+
+func TestSwapSendMsg(t *testing.T) {
+	input, h := setup(t)
+
+	amt := sdk.NewInt(10)
+	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
+	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroSDRDenom)
+	require.NoError(t, err)
+
+	expectedAmt := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
+
+	swapSendMsg := NewMsgSwapSend(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
+	_, err = h(input.Ctx, swapSendMsg)
+	require.NoError(t, err)
+
+	acc := input.Acckeeper.GetAccount(input.Ctx, keeper.Addrs[1])
+	require.Equal(t, expectedAmt, acc.GetCoins().AmountOf(core.MicroSDRDenom))
 }

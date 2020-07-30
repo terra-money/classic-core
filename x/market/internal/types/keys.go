@@ -20,5 +20,5 @@ const (
 // - 0x01: sdk.Dec
 var (
 	//Keys for store prefixed
-	TerraPoolDeltaKey = []byte{0x02} // key for Terra pool delta which gap between TerraPool from BasePool
+	TerraPoolDeltaKey = []byte{0x01} // key for Terra pool delta which gap between TerraPool from BasePool
 )

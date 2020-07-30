@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
-	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
+	tmrpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -23,6 +23,10 @@ import (
 	// unnamed import of statik for swagger UI support
 	_ "github.com/terra-project/core/client/lcd/statik"
 )
+
+// FlagPublic will restrict some query endpoint for
+// the query requests without height option
+const FlagPublic = "public"
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
@@ -54,12 +58,12 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 		rs.log.Error("error closing listener", "err", err)
 	})
 
-	cfg := rpcserver.DefaultConfig()
+	cfg := tmrpcserver.DefaultConfig()
 	cfg.MaxOpenConnections = maxOpen
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
-	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
+	rs.listener, err = tmrpcserver.Listen(listenAddr, cfg)
 	if err != nil {
 		return
 	}
@@ -70,7 +74,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 		),
 	)
 
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.log, cfg)
+	return tmrpcserver.Serve(rs.listener, rs.Mux, rs.log, cfg)
 }
 
 // ServeCommand will start the application REST service as a blocking process. It
@@ -98,6 +102,7 @@ func ServeCommand(cdc *codec.Codec, registerRoutesFn func(*RestServer)) *cobra.C
 		},
 	}
 
+	cmd.Flags().Bool(FlagPublic, false, "Restrict public query request without height option")
 	return flags.RegisterRestServerFlags(cmd)
 }
 

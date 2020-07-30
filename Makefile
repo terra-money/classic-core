@@ -6,6 +6,9 @@ COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 CORE_PACK := $(shell go list -m github.com/terra-project/core | sed  's/ /\@/g')
+ifneq ($(OS),Windows_NT)
+  UNAME_S = $(shell uname -s)
+endif
 
 export GO111MODULE = on
 
@@ -21,7 +24,6 @@ ifeq ($(LEDGER_ENABLED),true)
       build_tags += ledger
     endif
   else
-    UNAME_S = $(shell uname -s)
     ifeq ($(UNAME_S),OpenBSD)
       $(warning OpenBSD detected, disabling ledger support (https://github.com/cosmos/cosmos-sdk/issues/1988))
     else
@@ -77,8 +79,13 @@ else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/terracli ./cmd/terracli
 endif
 
-build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
+build-linux:
+	mkdir -p ./build
+	docker build --tag terramoney/core ./
+	docker create --name temp terramoney/core:latest
+	docker cp temp:/usr/local/bin/terrad ./build/
+	docker cp temp:/usr/local/bin/terracli ./build/
+	docker rm temp
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
@@ -165,14 +172,13 @@ benchmark:
 
 ########################################
 ### Local validator nodes using docker and docker-compose
-
-build-docker-terradnode:
+build-docker-terradnode: build-linux
 	$(MAKE) -C networks/local
 
 # Run a 4-node testnet locally
 
-localnet-start: build-linux localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terraproject/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
+localnet-start: localnet-stop
+	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terramoney/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 
 # Stop testnet

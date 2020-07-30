@@ -60,7 +60,7 @@ func GenMinValidPerWindow(r *rand.Rand) sdk.Dec {
 	return sdk.ZeroDec().Add(sdk.NewDecWithPrec(int64(r.Intn(500)), 3))
 }
 
-// RandomizedGenState generates a random GenesisState for gov
+// RandomizedGenState generates a random GenesisState for oracle
 func RandomizedGenState(simState *module.SimulationState) {
 
 	var votePeriod int64

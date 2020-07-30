@@ -2,12 +2,15 @@ package ante
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury"
+	marketexported "github.com/terra-project/core/x/market/exported"
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
+	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
 // FeeTx defines the interface to be implemented by Tx to use the FeeDecorators
@@ -26,15 +29,17 @@ type FeeTx interface {
 // If fee is high enough or not CheckTx, then call next AnteHandler
 // CONTRACT: Tx must implement FeeTx to use MempoolFeeDecorator
 type TaxFeeDecorator struct {
-	treasuryKeeper treasury.Keeper
+	treasuryKeeper TreasuryKeeper
 }
 
-func NewTaxFeeDecorator(treasuryKeeper treasury.Keeper) TaxFeeDecorator {
+// NewTaxFeeDecorator returns new tax fee decorator instance
+func NewTaxFeeDecorator(treasuryKeeper TreasuryKeeper) TaxFeeDecorator {
 	return TaxFeeDecorator{
 		treasuryKeeper: treasuryKeeper,
 	}
 }
 
+// AnteHandle handles msg tax fee checking
 func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(FeeTx)
 	if !ok {
@@ -46,7 +51,7 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	if !simulate {
 		// Compute taxes
-		taxes := filterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs())
+		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs())
 
 		// Mempool fee validation
 		if ctx.IsCheckTx() {
@@ -103,8 +108,8 @@ func EnsureSufficientMempoolFees(ctx sdk.Context, gas uint64, feeCoins sdk.Coins
 	return nil
 }
 
-// filterMsgAndComputeTax computes the stability tax on MsgSend and MsgMultiSend.
-func filterMsgAndComputeTax(ctx sdk.Context, tk treasury.Keeper, msgs []sdk.Msg) sdk.Coins {
+// FilterMsgAndComputeTax computes the stability tax on MsgSend and MsgMultiSend.
+func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs []sdk.Msg) sdk.Coins {
 	taxes := sdk.Coins{}
 	for _, msg := range msgs {
 		switch msg := msg.(type) {
@@ -115,6 +120,18 @@ func filterMsgAndComputeTax(ctx sdk.Context, tk treasury.Keeper, msgs []sdk.Msg)
 			for _, input := range msg.Inputs {
 				taxes = taxes.Add(computeTax(ctx, tk, input.Coins)...)
 			}
+
+		case marketexported.MsgSwapSend:
+			taxes = taxes.Add(computeTax(ctx, tk, sdk.NewCoins(msg.OfferCoin))...)
+
+		case wasmexported.MsgInstantiateContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.InitCoins)...)
+
+		case wasmexported.MsgExecuteContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Coins)...)
+
+		case msgauthexported.MsgExecAuthorized:
+			taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, msg.Msgs)...)
 		}
 	}
 
@@ -122,7 +139,7 @@ func filterMsgAndComputeTax(ctx sdk.Context, tk treasury.Keeper, msgs []sdk.Msg)
 }
 
 // computes the stability tax according to tax-rate and tax-cap
-func computeTax(ctx sdk.Context, tk treasury.Keeper, principal sdk.Coins) sdk.Coins {
+func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coins {
 	taxRate := tk.GetTaxRate(ctx)
 	if taxRate.Equal(sdk.ZeroDec()) {
 		return sdk.Coins{}

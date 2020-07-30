@@ -38,15 +38,15 @@ const (
 // - 0x08<denom_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
-	PrevoteKey           = []byte{0x01} // prefix for each key to a prevote
-	VoteKey              = []byte{0x02} // prefix for each key to a vote
-	ExchangeRateKey      = []byte{0x03} // prefix for each key to a rate
-	FeederDelegationKey  = []byte{0x04} // prefix for each key to a feeder delegation
-	MissCounterKey       = []byte{0x05} // prefix for each key to a miss counter
-	AggregatePrevoteKey  = []byte{0x06} // prefix for each key to a aggregate prevote
-	AggregateVoteKey     = []byte{0x07} // prefix for each key to a aggregate vote
-	TobinTaxKey          = []byte{0x08} // prefix for each key to a tobin tax
-	CrossExchangeRateKey = []byte{0x09} // prefix for each key to a cross exchange rate of terra <-> terra
+	PrevoteKey                      = []byte{0x01} // prefix for each key to a prevote
+	VoteKey                         = []byte{0x02} // prefix for each key to a vote
+	ExchangeRateKey                 = []byte{0x03} // prefix for each key to a rate
+	FeederDelegationKey             = []byte{0x04} // prefix for each key to a feeder delegation
+	MissCounterKey                  = []byte{0x05} // prefix for each key to a miss counter
+	AggregateExchangeRatePrevoteKey = []byte{0x06} // prefix for each key to a aggregate prevote
+	AggregateExchangeRateVoteKey    = []byte{0x07} // prefix for each key to a aggregate vote
+	TobinTaxKey                     = []byte{0x08} // prefix for each key to a tobin tax
+	CrossExchangeRateKey            = []byte{0x09} // prefix for each key to a cross exchange rate of terra <-> terra
 )
 
 // GetExchangeRatePrevoteKey - stored by *Validator* address and denom
@@ -82,14 +82,14 @@ func GetMissCounterKey(v sdk.ValAddress) []byte {
 	return append(MissCounterKey, v.Bytes()...)
 }
 
-// GetAggregatePrevoteKey - stored by *Validator* address
+// GetAggregateExchangeRatePrevoteKey - stored by *Validator* address
 func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
-	return append(AggregatePrevoteKey, v.Bytes()...)
+	return append(AggregateExchangeRatePrevoteKey, v.Bytes()...)
 }
 
-// GetAggregateVoteKey - stored by *Validator* address
+// GetAggregateExchangeRateVoteKey - stored by *Validator* address
 func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
-	return append(AggregateVoteKey, v.Bytes()...)
+	return append(AggregateExchangeRateVoteKey, v.Bytes()...)
 }
 
 // GetTobinTaxKey - stored by *denom* bytes

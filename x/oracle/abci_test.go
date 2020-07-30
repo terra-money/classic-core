@@ -575,6 +575,19 @@ func TestVoteTargets(t *testing.T) {
 	require.True(t, sdk.ZeroDec().Equal(tobinTax))
 }
 
+func TestAbstainWithSmallStakingPower(t *testing.T) {
+	input, h := setup_with_small_voting_power(t)
+
+	// clear tobin tax to reset vote targets
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, DefaultTobinTax)
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, sdk.ZeroDec(), 0)
+
+	EndBlocker(input.Ctx, input.OracleKeeper)
+	_, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
+	require.Error(t, err)
+}
+
 func makePrevoteAndVote(t *testing.T, input keeper.TestInput, h sdk.Handler, height int64, denom string, rate sdk.Dec, idx int) {
 	// Account 1, SDR
 	salt := "1"

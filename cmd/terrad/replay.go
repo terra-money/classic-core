@@ -18,10 +18,11 @@ import (
 	tm "github.com/tendermint/tendermint/types"
 
 	"github.com/terra-project/core/app"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -92,7 +93,7 @@ func replayTxs(rootDir string) error {
 	fmt.Fprintln(os.Stderr, "Creating application")
 	tapp := app.NewTerraApp(
 		ctx.Logger, appDB, traceStoreWriter, true, uint(1), map[int64]bool{},
-		baseapp.SetPruning(store.PruneEverything), // nothing
+		wasmconfig.DefaultConfig(), baseapp.SetPruning(storetypes.PruneEverything), // nothing
 	)
 
 	// Genesis
@@ -175,7 +176,7 @@ func replayTxs(rootDir string) error {
 
 		t2 := time.Now()
 
-		state, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
+		state, _, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
 		if err != nil {
 			return err
 		}
