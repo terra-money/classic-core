@@ -5,6 +5,8 @@ import (
 
 	cosmwasm "github.com/CosmWasm/go-cosmwasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
@@ -13,7 +15,7 @@ func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
 			if len(canon) != sdk.AddrLen {
 				return "", 0, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
 			}
-			return sdk.AccAddress(canon).String(), k.HumanizeCost(ctx) * k.GasMultiplier(ctx), nil
+			return sdk.AccAddress(canon).String(), types.HumanizeCost * types.GasMultiplier, nil
 		},
 		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {
 			addr, err := sdk.AccAddressFromBech32(human)
@@ -21,7 +23,7 @@ func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
 				return nil, 0, err
 			}
 
-			return addr, k.CanonicalizeCost(ctx) * k.GasMultiplier(ctx), nil
+			return addr, types.CanonicalizeCost * types.GasMultiplier, nil
 		},
 	}
 }
@@ -42,7 +44,7 @@ func (m wasmGasMeter) GasConsumed() sdk.Gas {
 func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
 	return wasmGasMeter{
 		originalMeter: ctx.GasMeter(),
-		gasMultiplier: k.GasMultiplier(ctx),
+		gasMultiplier: types.GasMultiplier,
 	}
 }
 
@@ -54,11 +56,11 @@ func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
 	if maxGas := k.MaxContractGas(ctx); remaining > maxGas {
 		remaining = maxGas
 	}
-	return remaining * k.GasMultiplier(ctx)
+	return remaining * types.GasMultiplier
 }
 
 // converts contract gas usage to sdk gas and consumes it
 func (k Keeper) consumeGas(ctx sdk.Context, gas uint64, descriptor string) {
-	consumed := gas / k.GasMultiplier(ctx)
+	consumed := gas / types.GasMultiplier
 	ctx.GasMeter().ConsumeGas(consumed, descriptor)
 }

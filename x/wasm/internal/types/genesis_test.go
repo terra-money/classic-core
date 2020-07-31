@@ -22,10 +22,6 @@ func TestGenesisValidation(t *testing.T) {
 	require.Error(t, ValidateGenesis(genState))
 
 	genState = DefaultGenesisState()
-	genState.Params.GasMultiplier = 0
-	require.Error(t, ValidateGenesis(genState))
-
-	genState = DefaultGenesisState()
 	genState.Codes = []Code{{}, {}}
 	genState.LastCodeID = 2
 	require.NoError(t, ValidateGenesis(genState))

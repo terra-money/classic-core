@@ -237,7 +237,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.True(t, gasAfter-gasBefore > keeper.InstanceCost(ctx))
+	require.True(t, gasAfter-gasBefore > types.InstanceCost)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -421,7 +421,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 	// ensure we get an out of gas panic
-	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
+	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "Contract Execution"}, func() {
 		_, err = keeper.ExecuteContract(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
 	})
 }

@@ -57,11 +57,22 @@ func (q Querier) GasConsumed() uint64 {
 }
 
 // Query - interface for wasmTypes.Querier
-func (q Querier) Query(request wasmTypes.QueryRequest) ([]byte, error) {
+func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte, error) {
+	// set a limit for a ctx
+	// gasLimit passed from the go-cosmwasm part, so need to divide it with gas multiplier
+	ctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(gasLimit / GasMultiplier))
+
+	// make sure we charge the higher level context even on panic
+	defer func() {
+		q.Ctx.GasMeter().ConsumeGas(ctx.GasMeter().GasConsumed(), "contract sub-query")
+	}()
+
+	// do the query
+
 	switch {
 	case request.Bank != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteBank]; ok {
-			return querier.Query(q.Ctx, request)
+			return querier.Query(ctx, request)
 		} else {
 			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 		}
@@ -73,19 +84,19 @@ func (q Querier) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 		}
 
 		if querier, ok := q.Queriers[customQuery.Route]; ok {
-			return querier.QueryCustom(q.Ctx, customQuery.QueryData)
+			return querier.QueryCustom(ctx, customQuery.QueryData)
 		} else {
 			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 		}
 	case request.Staking != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteStaking]; ok {
-			return querier.Query(q.Ctx, request)
+			return querier.Query(ctx, request)
 		} else {
 			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
 		}
 	case request.Wasm != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteWasm]; ok {
-			return querier.Query(q.Ctx, request)
+			return querier.Query(ctx, request)
 		} else {
 			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 		}

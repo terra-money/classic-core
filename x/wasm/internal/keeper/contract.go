@@ -22,7 +22,7 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 	}
 
 	// consume gas for compile cost
-	ctx.GasMeter().ConsumeGas(k.CompileCostPerByte(ctx)*uint64(len(wasmCode)), "Compiling WASM Bytes Cost")
+	ctx.GasMeter().ConsumeGas(types.CompileCostPerByte*uint64(len(wasmCode)), "Compiling WASM Bytes Cost")
 
 	codeHash, err = k.wasmer.Create(wasmCode)
 	if err != nil {
@@ -61,7 +61,7 @@ func (k Keeper) InstantiateContract(
 	initMsg []byte,
 	deposit sdk.Coins,
 	migratable bool) (contractAddress sdk.AccAddress, err error) {
-	ctx.GasMeter().ConsumeGas(k.InstanceCost(ctx), "Loading CosmWasm module: init")
+	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: init")
 
 	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "init msg size is too huge")
@@ -151,7 +151,7 @@ func (k Keeper) InstantiateContract(
 
 // ExecuteContract executes the contract instance
 func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, exeMsg []byte, coins sdk.Coins) ([]byte, error) {
-	ctx.GasMeter().ConsumeGas(k.InstanceCost(ctx), "Loading CosmWasm module: execute")
+	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: execute")
 
 	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
@@ -200,7 +200,7 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 
 // MigrateContract allows to upgrade a contract to a new code with data migration.
 func (k Keeper) MigrateContract(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, migrateMsg []byte) ([]byte, error) {
-	ctx.GasMeter().ConsumeGas(k.InstanceCost(ctx), "Loading CosmWasm module: migrate")
+	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: migrate")
 
 	if uint64(len(migrateMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "migrate msg size is too huge")
@@ -291,8 +291,7 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 }
 
 func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, queryMsg []byte) ([]byte, error) {
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
-	ctx.GasMeter().ConsumeGas(k.InstanceCost(ctx), "Loading CosmWasm module: query")
+	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: query")
 
 	codeInfo, contractStorePrefix, err := k.getContractDetails(ctx, contractAddr)
 	if err != nil {

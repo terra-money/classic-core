@@ -104,6 +104,9 @@ func queryRawStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 }
 
 func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	// external query gas limit must be specified here
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(keeper.queryGasLimit))
+
 	var params types.QueryContractParams
 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
