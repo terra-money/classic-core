@@ -195,13 +195,4 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	// clear all market pools
 	app.marketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
-
-	/* Handle treasury state. */
-
-	// clear all indicators
-	app.treasuryKeeper.ClearTRs(ctx)
-	app.treasuryKeeper.ClearSRs(ctx)
-	app.treasuryKeeper.ClearTSLs(ctx)
-
-	app.treasuryKeeper.RecordEpochInitialIssuance(ctx)
 }
