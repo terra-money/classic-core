@@ -5,7 +5,7 @@ import json
 import sys
 
 
-def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_time):
+def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_time, defalut_halt_height):
     parser = argparse.ArgumentParser(description=prog_desc)
     parser.add_argument(
         'exported_genesis',
@@ -15,6 +15,8 @@ def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_ti
     parser.add_argument('--chain-id', type=str, default=default_chain_id)
     parser.add_argument('--genesis-time', type=str,
                         default=default_genesis_time)
+    parser.add_argument('--halt-height', type=str,
+                        default=defalut_halt_height)
     return parser
 
 
@@ -94,6 +96,36 @@ def process_raw_genesis(genesis, parsed_args):
 
     del genesis['app_state']['slashing']['params']['max_evidence_age']
 
+    # Market Module Migration
+    tobin_taxes = {}
+    for item in genesis['app_state']['market']['params']['illiquid_tobin_tax_list']:
+        tobin_taxes[item['denom']] = item['tax_rate']
+
+    default_tobin_tax = genesis['app_state']['market']['params']['tobin_tax']
+    del genesis['app_state']['market']['params']['tobin_tax']
+    del genesis['app_state']['market']['params']['illiquid_tobin_tax_list']
+
+    # Oracle Module Migration
+    genesis['app_state']['oracle']['aggregate_exchange_rate_prevotes'] = []
+    genesis['app_state']['oracle']['aggregate_exchange_rate_votes'] = []
+    genesis['app_state']['oracle']['tobin_taxes'] = {}
+
+    whitelist = []
+    for item in genesis['app_state']['oracle']['params']['whitelist']:
+        tobin_tax = default_tobin_tax
+        if item in tobin_taxes:
+            tobin_tax = tobin_taxes[item]
+
+        whitelist.append({
+            'name': item,
+            'tobin_tax': tobin_tax,
+        })
+
+    genesis['app_state']['oracle']['params']['whitelist'] = whitelist
+
+    # Treasury Module Migration
+    genesis['app_state']['treasury']['cumulated_height'] = parsed_args.halt_height
+
     # Migrate Tendermint Consensus Param
     genesis['consensus_params']['evidence'] = {
         'max_age_num_blocks': genesis['consensus_params']['evidence']['max_age'],
@@ -113,5 +145,6 @@ if __name__ == '__main__':
         prog_desc='Convert genesis.json for columbus-4',
         default_chain_id='columbus-4',
         default_genesis_time='2020-08-01T15:00:00Z',
+        defalut_halt_height='3050000',
     )
     main(parser, process_raw_genesis)
