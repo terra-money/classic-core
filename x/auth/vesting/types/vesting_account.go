@@ -220,7 +220,7 @@ func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
 	return codec.Cdc.MarshalJSON(alias)
 }
 
-// UnmarshalJSON unmarshals raw JSON bytes into a ContinuousVestingAccount.
+// UnmarshalJSON unmarshals raw JSON bytes into a LazyGradedVestingAccount.
 func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
 	var alias vestingAccountJSON
 	if err := codec.Cdc.UnmarshalJSON(bz, &alias); err != nil {

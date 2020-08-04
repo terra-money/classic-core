@@ -4,8 +4,9 @@ package simulation
 
 import (
 	"fmt"
-	core "github.com/terra-project/core/types"
 	"math/rand"
+
+	core "github.com/terra-project/core/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -111,7 +112,7 @@ func RandomGenesisAccounts(simState *module.SimulationState) (genesisAccs export
 			var lazySchedules vestingtypes.LazySchedules
 
 			// Make sure scheduleNum is even number
-			scheduleNum := 1 + int64(simState.Rand.Intn(100))
+			scheduleNum := 1 + int64(simState.Rand.Intn(10))
 			if scheduleNum%2 != 0 {
 				scheduleNum++
 			}

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -376,4 +378,57 @@ func TestGenesisAccountValidate(t *testing.T) {
 			require.Equal(t, tt.expErr, err)
 		})
 	}
+}
+
+func TestBaseVestingAccountJSON(t *testing.T) {
+	pubkey := secp256k1.GenPrivKey().PubKey()
+	addr := sdk.AccAddress(pubkey.Address())
+	coins := sdk.NewCoins(sdk.NewInt64Coin("test", 5))
+	baseAcc := authtypes.NewBaseAccount(addr, coins, pubkey, 10, 50)
+
+	acc, err := authvesttypes.NewBaseVestingAccount(baseAcc, coins, time.Now().Unix())
+	require.NoError(t, err)
+
+	bz, err := json.Marshal(acc)
+	require.NoError(t, err)
+
+	bz1, err := acc.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, string(bz1), string(bz))
+
+	var a authvesttypes.BaseVestingAccount
+	require.NoError(t, json.Unmarshal(bz, &a))
+	require.Equal(t, acc.String(), a.String())
+}
+
+func TestLazyGradedVestingAccountJSON(t *testing.T) {
+	now := tmtime.Now()
+	endTime := now.Add(24 * time.Hour)
+
+	pubkey := secp256k1.GenPrivKey().PubKey()
+	addr := sdk.AccAddress(pubkey.Address())
+	coins := sdk.NewCoins(sdk.NewInt64Coin("test", 5))
+	baseAcc := authtypes.NewBaseAccount(addr, coins, pubkey, 10, 50)
+
+	baseVesting, err := authvesttypes.NewBaseVestingAccount(baseAcc, coins, now.Unix())
+	acc := NewLazyGradedVestingAccountRaw(baseVesting, VestingSchedules{
+		NewVestingSchedule(feeDenom, []LazySchedule{
+			NewLazySchedule(now.Unix(), endTime.Unix(), sdk.NewDec(1)),
+		}),
+		NewVestingSchedule(stakeDenom, []LazySchedule{
+			NewLazySchedule(now.Unix(), endTime.Unix(), sdk.NewDec(1)),
+		}),
+	})
+	require.NoError(t, err)
+
+	bz, err := codec.Cdc.MarshalJSON(acc)
+	require.NoError(t, err)
+
+	bz1, err := acc.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, string(bz1), string(bz))
+
+	var a LazyGradedVestingAccount
+	require.NoError(t, codec.Cdc.UnmarshalJSON(bz, &a))
+	require.Equal(t, acc.String(), a.String())
 }
