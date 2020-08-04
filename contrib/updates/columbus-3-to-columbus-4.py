@@ -36,31 +36,26 @@ def process_raw_genesis(genesis, parsed_args):
     accs = []
     for acc in genesis['app_state']['accounts']:
         accType = 'core/Account'
-        if acc['module_name']:
-            # Module Acc
-            accType = 'supply/ModuleAccount'
-            del acc['delegated_free']
-            del acc['delegated_vesting']
-            del acc['end_time']
-            del acc['original_vesting']
-            del acc['start_time']
-            del acc['vesting_schedules']
-        elif acc['vesting_schedules']:
+        if acc['vesting_schedules']:
             # Vesting Acc
             accType = 'core/LazyGradedVestingAccount'
-            del acc['module_name']
-            del acc['module_permissions']
-            del acc['start_time']
         else:
+            if acc['module_name']:
+                # Module Acc
+                accType = 'supply/ModuleAccount'
+                acc['name'] = acc['module_name']
+                acc['permissions'] = acc['module_permissions']
+
             # Normal Acc
             del acc['delegated_free']
             del acc['delegated_vesting']
             del acc['end_time']
             del acc['original_vesting']
-            del acc['start_time']
             del acc['vesting_schedules']
-            del acc['module_name']
-            del acc['module_permissions']
+
+        del acc['start_time']
+        del acc['module_name']
+        del acc['module_permissions']
 
         accs.append({
             'type': accType,
