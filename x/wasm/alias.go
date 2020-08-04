@@ -28,7 +28,6 @@ const (
 	DefaultMaxContractSize     = types.DefaultMaxContractSize
 	DefaultMaxContractGas      = types.DefaultMaxContractGas
 	DefaultMaxContractMsgSize  = types.DefaultMaxContractMsgSize
-	DefaultGasMultiplier       = types.DefaultGasMultiplier
 	QueryGetByteCode           = types.QueryGetByteCode
 	QueryGetCodeInfo           = types.QueryGetCodeInfo
 	QueryGetContractInfo       = types.QueryGetContractInfo
@@ -99,7 +98,6 @@ var (
 	ParamStoreKeyMaxContractSize    = types.ParamStoreKeyMaxContractSize
 	ParamStoreKeyMaxContractGas     = types.ParamStoreKeyMaxContractGas
 	ParamStoreKeyMaxContractMsgSize = types.ParamStoreKeyMaxContractMsgSize
-	ParamStoreKeyGasMultiplier      = types.ParamStoreKeyGasMultiplier
 )
 
 type (

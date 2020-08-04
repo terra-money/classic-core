@@ -23,12 +23,6 @@ func (k Keeper) MaxContractMsgSize(ctx sdk.Context) (res uint64) {
 	return
 }
 
-// GasMultiplier defines how many cosmwasm gas points = 1 sdk gas point
-func (k Keeper) GasMultiplier(ctx sdk.Context) (res uint64) {
-	k.paramSpace.Get(ctx, types.ParamStoreKeyGasMultiplier, &res)
-	return
-}
-
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)

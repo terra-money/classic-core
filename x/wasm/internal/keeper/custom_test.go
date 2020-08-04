@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -349,8 +348,6 @@ func TestSendMsg(t *testing.T) {
 	if expectedTaxAmount.GT(taxCap) {
 		expectedTaxAmount = taxCap
 	}
-
-	fmt.Println(expectedTaxAmount, sdk.NewCoins(offerCoin.Sub(sdk.NewCoin(offerCoin.Denom, expectedTaxAmount))))
 
 	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
 	require.NoError(t, err)

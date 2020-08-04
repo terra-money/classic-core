@@ -68,7 +68,7 @@ func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.R
 	return nil, nil
 }
 
-// WasmQuerier - staking query interface for wasm contract
+// WasmQuerier - wasm query interface for wasm contract
 type WasmQuerier struct {
 	keeper Keeper
 }
