@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -420,7 +421,7 @@ func TestLazyGradedVestingAccountJSON(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	bz, err := json.Marshal(acc)
+	bz, err := codec.Cdc.MarshalJSON(acc)
 	require.NoError(t, err)
 
 	bz1, err := acc.MarshalJSON()
@@ -428,6 +429,6 @@ func TestLazyGradedVestingAccountJSON(t *testing.T) {
 	require.Equal(t, string(bz1), string(bz))
 
 	var a LazyGradedVestingAccount
-	require.NoError(t, json.Unmarshal(bz, &a))
+	require.NoError(t, codec.Cdc.UnmarshalJSON(bz, &a))
 	require.Equal(t, acc.String(), a.String())
 }
