@@ -5,7 +5,8 @@ import json
 import sys
 
 
-def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_time, defalut_halt_height):
+def init_default_argument_parser(prog_desc, default_chain_id,
+                                 default_genesis_time, defalut_halt_height, default_pretty):
     parser = argparse.ArgumentParser(description=prog_desc)
     parser.add_argument(
         'exported_genesis',
@@ -17,6 +18,8 @@ def init_default_argument_parser(prog_desc, default_chain_id, default_genesis_ti
                         default=default_genesis_time)
     parser.add_argument('--halt-height', type=str,
                         default=defalut_halt_height)
+    parser.add_argument('--pretty', type=bool,
+                        default=default_pretty)
     return parser
 
 
@@ -28,7 +31,11 @@ def main(argument_parser, process_genesis_func):
     genesis = json.loads(args.exported_genesis.read())
     genesis = process_genesis_func(genesis=genesis, parsed_args=args,)
 
-    raw_genesis = json.dumps(genesis, indent=4, sort_keys=True)
+    if args.pretty:
+        raw_genesis = json.dumps(genesis, indent=4, sort_keys=True)
+    else:
+        raw_genesis = json.dumps(genesis, indent=None, sort_keys=False, separators=(',', ':'))
+
     print(raw_genesis)
 
 
@@ -146,5 +153,6 @@ if __name__ == '__main__':
         default_chain_id='columbus-4',
         default_genesis_time='2020-08-01T15:00:00Z',
         defalut_halt_height='3050000',
+        default_pretty=False
     )
     main(parser, process_raw_genesis)
