@@ -1,25 +1,42 @@
 package types
 
 import (
-	"encoding/json"
-	"github.com/tendermint/tendermint/crypto"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 	vesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/tendermint/tendermint/crypto"
 
 	customauthtypes "github.com/terra-project/core/x/auth/internal/types"
 
 	"gopkg.in/yaml.v2"
 )
 
-type vestingAccountPretty struct {
+// for pretty purpose
+type vestingAccountYAML struct {
 	Address          sdk.AccAddress `json:"address" yaml:"address"`
 	Coins            sdk.Coins      `json:"coins" yaml:"coins"`
 	PubKey           string         `json:"public_key" yaml:"public_key"`
+	AccountNumber    uint64         `json:"account_number" yaml:"account_number"`
+	Sequence         uint64         `json:"sequence" yaml:"sequence"`
+	OriginalVesting  sdk.Coins      `json:"original_vesting" yaml:"original_vesting"`
+	DelegatedFree    sdk.Coins      `json:"delegated_free" yaml:"delegated_free"`
+	DelegatedVesting sdk.Coins      `json:"delegated_vesting" yaml:"delegated_vesting"`
+	EndTime          int64          `json:"end_time" yaml:"end_time"`
+
+	// custom fields based on concrete vesting type which can be omitted
+	VestingSchedules VestingSchedules `json:"vesting_schedules,omitempty" yaml:"vesting_schedules,omitempty"`
+}
+
+// To prevent stack overflow
+type vestingAccountJSON struct {
+	Address          sdk.AccAddress `json:"address" yaml:"address"`
+	Coins            sdk.Coins      `json:"coins" yaml:"coins"`
+	PubKey           crypto.PubKey  `json:"public_key" yaml:"public_key"`
 	AccountNumber    uint64         `json:"account_number" yaml:"account_number"`
 	Sequence         uint64         `json:"sequence" yaml:"sequence"`
 	OriginalVesting  sdk.Coins      `json:"original_vesting" yaml:"original_vesting"`
@@ -156,7 +173,7 @@ func (lgva LazyGradedVestingAccount) String() string {
 
 // MarshalYAML returns the YAML representation of a LazyGradedVestingAccount.
 func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
-	alias := vestingAccountPretty{
+	alias := vestingAccountYAML{
 		Address:          lgva.Address,
 		Coins:            lgva.Coins,
 		AccountNumber:    lgva.AccountNumber,
@@ -165,6 +182,7 @@ func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
 		DelegatedFree:    lgva.DelegatedFree,
 		DelegatedVesting: lgva.DelegatedVesting,
 		EndTime:          lgva.EndTime,
+		VestingSchedules: lgva.VestingSchedules,
 	}
 
 	if lgva.PubKey != nil {
@@ -186,50 +204,31 @@ func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
 
 // MarshalJSON returns the JSON representation of a LazyGradedVestingAccount.
 func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
-	alias := vestingAccountPretty{
+	alias := vestingAccountJSON{
 		Address:          lgva.Address,
 		Coins:            lgva.Coins,
+		PubKey:           lgva.GetPubKey(),
 		AccountNumber:    lgva.AccountNumber,
 		Sequence:         lgva.Sequence,
 		OriginalVesting:  lgva.OriginalVesting,
 		DelegatedFree:    lgva.DelegatedFree,
 		DelegatedVesting: lgva.DelegatedVesting,
 		EndTime:          lgva.EndTime,
+		VestingSchedules: lgva.VestingSchedules,
 	}
 
-	if lgva.PubKey != nil {
-		pks, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeAccPub, lgva.GetPubKey())
-		if err != nil {
-			return nil, err
-		}
-
-		alias.PubKey = pks
-	}
-
-	return json.Marshal(alias)
+	return codec.Cdc.MarshalJSON(alias)
 }
 
-// UnmarshalJSON unmarshals raw JSON bytes into a ContinuousVestingAccount.
+// UnmarshalJSON unmarshals raw JSON bytes into a LazyGradedVestingAccount.
 func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
-	var alias vestingAccountPretty
-	if err := json.Unmarshal(bz, &alias); err != nil {
+	var alias vestingAccountJSON
+	if err := codec.Cdc.UnmarshalJSON(bz, &alias); err != nil {
 		return err
 	}
 
-	var (
-		pk  crypto.PubKey
-		err error
-	)
-
-	if alias.PubKey != "" {
-		pk, err = sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeAccPub, alias.PubKey)
-		if err != nil {
-			return err
-		}
-	}
-
 	lgva.BaseVestingAccount = &vesttypes.BaseVestingAccount{
-		BaseAccount:      authtypes.NewBaseAccount(alias.Address, alias.Coins, pk, alias.AccountNumber, alias.Sequence),
+		BaseAccount:      authtypes.NewBaseAccount(alias.Address, alias.Coins, alias.PubKey, alias.AccountNumber, alias.Sequence),
 		OriginalVesting:  alias.OriginalVesting,
 		DelegatedFree:    alias.DelegatedFree,
 		DelegatedVesting: alias.DelegatedVesting,
