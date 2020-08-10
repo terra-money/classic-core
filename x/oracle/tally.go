@@ -40,6 +40,23 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec) (we
 	return
 }
 
+func handleBallotWinner(ballotWinningClaims []types.Claim, validVotesCounterMap map[string]int, winnerMap map[string]types.Claim) {
+	// Collect claims of ballot winners
+	for _, ballotWinningClaim := range ballotWinningClaims {
+
+		// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
+		key := string(ballotWinningClaim.Recipient)
+
+		// Update claim
+		prevClaim := winnerMap[key]
+		prevClaim.Weight += ballotWinningClaim.Weight
+		winnerMap[key] = prevClaim
+
+		// Increase valid votes counter
+		validVotesCounterMap[key]++
+	}
+}
+
 // ballot for the asset is passing the threshold amount of voting power
 func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k Keeper) bool {
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx))

@@ -19,6 +19,8 @@ var (
 
 	randomExchangeRate        = sdk.NewDec(1700)
 	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
+	krwRandomExchangeRate     = sdk.NewDecWithPrec(1000000000, int64(6)).MulInt64(core.MicroUnit)
+	uswRandomExchangeRate     = sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(core.MicroUnit)
 )
 
 func setup_with_small_voting_power(t *testing.T) (keeper.TestInput, sdk.Handler) {

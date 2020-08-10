@@ -196,6 +196,17 @@ func (k Keeper) SetLunaExchangeRate(ctx sdk.Context, denom string, exchangeRate 
 	store.Set(types.GetExchangeRateKey(denom), bz)
 }
 
+// SetLunaExchangeRate with Emit ABCI event
+func (k Keeper) SetLunaExchangeRateWithEvent(ctx sdk.Context, denom string, exchangeRate sdk.Dec) {
+	k.SetLunaExchangeRate(ctx, denom, exchangeRate)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+			sdk.NewAttribute(types.AttributeKeyDenom, denom),
+			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
+		),
+	)
+}
+
 // DeleteLunaExchangeRate deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) DeleteLunaExchangeRate(ctx sdk.Context, denom string) {
 	store := ctx.KVStore(k.storeKey)
