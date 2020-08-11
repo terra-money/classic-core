@@ -3,7 +3,7 @@ module github.com/terra-project/core
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.10.0
+	github.com/CosmWasm/go-cosmwasm v0.0.0
 	github.com/cosmos/cosmos-sdk v0.39.0
 	github.com/gorilla/mux v1.7.3
 	github.com/otiai10/copy v1.0.2
@@ -24,3 +24,5 @@ require (
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
+
+replace github.com/CosmWasm/go-cosmwasm => github.com/terra-project/go-cosmwasm v0.10.0-terra
