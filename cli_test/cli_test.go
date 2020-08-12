@@ -475,6 +475,7 @@ func TestTerraCLIQuerySupply(t *testing.T) {
 	totalSupply := f.QueryTotalSupply()
 	totalSupplyOf := f.QueryTotalSupplyOf(fooDenom)
 
+	fmt.Println(totalCoins, totalSupply)
 	require.Equal(t, totalCoins, totalSupply)
 	require.True(sdk.IntEq(t, totalCoins.AmountOf(fooDenom), totalSupplyOf))
 

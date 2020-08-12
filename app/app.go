@@ -31,6 +31,7 @@ import (
 	"github.com/terra-project/core/x/genutil"
 	"github.com/terra-project/core/x/gov"
 	"github.com/terra-project/core/x/market"
+	"github.com/terra-project/core/x/mint"
 	"github.com/terra-project/core/x/msgauth"
 	"github.com/terra-project/core/x/oracle"
 	"github.com/terra-project/core/x/params"
@@ -65,6 +66,7 @@ var (
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
+		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			paramsclient.ProposalHandler,
@@ -90,6 +92,7 @@ var (
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil, // just added to enable align fee
 		bank.BurnModuleName:       {supply.Burner},
+		mint.ModuleName:           {supply.Minter},
 		market.ModuleName:         {supply.Minter, supply.Burner},
 		oracle.ModuleName:         nil,
 		distr.ModuleName:          nil,
@@ -148,6 +151,7 @@ type TerraApp struct {
 	evidenceKeeper evidence.Keeper
 	oracleKeeper   oracle.Keeper
 	marketKeeper   market.Keeper
+	mintKeeper     mint.Keeper
 	treasuryKeeper treasury.Keeper
 	wasmKeeper     wasm.Keeper
 	msgauthKeeper  msgauth.Keeper
@@ -174,8 +178,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, oracle.StoreKey,
-		market.StoreKey, treasury.StoreKey, upgrade.StoreKey,
-		evidence.StoreKey, wasm.StoreKey, msgauth.StoreKey,
+		market.StoreKey, mint.StoreKey, treasury.StoreKey,
+		upgrade.StoreKey, evidence.StoreKey, wasm.StoreKey,
+		msgauth.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -200,8 +205,9 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
 	app.subspaces[oracle.ModuleName] = app.paramsKeeper.Subspace(oracle.DefaultParamspace)
 	app.subspaces[market.ModuleName] = app.paramsKeeper.Subspace(market.DefaultParamspace)
-	app.subspaces[treasury.ModuleName] = app.paramsKeeper.Subspace(treasury.DefaultParamspace)
+	app.subspaces[mint.ModuleName] = app.paramsKeeper.Subspace(mint.DefaultParamspace)
 	app.subspaces[wasm.ModuleName] = app.paramsKeeper.Subspace(wasm.DefaultParamspace)
+	app.subspaces[treasury.ModuleName] = app.paramsKeeper.Subspace(treasury.DefaultParamspace)
 
 	// add keepers
 	app.accountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount)
@@ -218,6 +224,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		&stakingKeeper, app.supplyKeeper, distr.ModuleName)
 	app.marketKeeper = market.NewKeeper(app.cdc, keys[market.StoreKey], app.subspaces[market.ModuleName],
 		app.oracleKeeper, app.supplyKeeper)
+	app.mintKeeper = mint.NewKeeper(app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper, app.supplyKeeper, auth.FeeCollectorName)
 	app.treasuryKeeper = treasury.NewKeeper(app.cdc, keys[treasury.StoreKey], app.subspaces[treasury.ModuleName],
 		app.supplyKeeper, app.marketKeeper, &stakingKeeper, app.distrKeeper,
 		oracle.ModuleName, distr.ModuleName)
@@ -273,6 +280,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
+		mint.NewAppModule(app.mintKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
@@ -287,7 +295,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
-	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, distr.ModuleName, slashing.ModuleName, evidence.ModuleName)
+	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, mint.ModuleName, distr.ModuleName, slashing.ModuleName, evidence.ModuleName)
 	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName,
 		treasury.ModuleName, msgauth.ModuleName, staking.ModuleName)
 
@@ -296,9 +304,10 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(auth.ModuleName, distr.ModuleName,
 		staking.ModuleName, bank.ModuleName, slashing.ModuleName,
-		gov.ModuleName, supply.ModuleName, oracle.ModuleName, treasury.ModuleName,
-		market.ModuleName, wasm.ModuleName, msgauth.ModuleName,
-		crisis.ModuleName, genutil.ModuleName, evidence.ModuleName)
+		gov.ModuleName, mint.ModuleName, supply.ModuleName,
+		oracle.ModuleName, treasury.ModuleName, market.ModuleName,
+		wasm.ModuleName, msgauth.ModuleName, crisis.ModuleName,
+		genutil.ModuleName, evidence.ModuleName)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
@@ -309,6 +318,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper, app.supplyKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
+		mint.NewAppModule(app.mintKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
