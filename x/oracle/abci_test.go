@@ -241,7 +241,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	input, h := setup(t)
 
 	// all the keeper.Addrs vote for the block ... not last period block yet, so tally fails
-	for i := range keeper.Addrs {
+	for i := range keeper.Addrs[:2] {
 		makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomExchangeRate, i)
 	}
 
@@ -333,10 +333,10 @@ func TestOracleRewardBand(t *testing.T) {
 
 }
 
-// TODO: fix for cross rate based exchange rate algorithm
 func TestOracleMultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
+	// SDR and KRW have the same voting power, but KRW has been chosen as referenceTerra by alphabetical order.
 	// Account 1, SDR
 	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomExchangeRate, 0)
 
@@ -348,8 +348,6 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	// Account 3, KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, randomExchangeRate, 2)
-
-	// SDR and KRW have the same voting power, but KRW has been chosen as referenceTerra by alphabetical order.
 
 	rewardAmt := sdk.NewInt(100000000)
 	moduleAcc := input.SupplyKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), ModuleName)
@@ -374,23 +372,22 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	require.Equal(t, expectedRewardAmt3, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-
-func TestOracleCrossRate(t *testing.T) {
+func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
-	// Account 1, USD
-	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, uswRandomExchangeRate, 0)
 
-	// Account 1, KRW
+	krwRandomExchangeRate := sdk.NewDecWithPrec(1000000000, int64(6)).MulInt64(core.MicroUnit)
+	uswRandomExchangeRate := sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(core.MicroUnit)
+
+	// KRW has been chosen as referenceTerra by highest voting power
+	// Account 1, USD, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, uswRandomExchangeRate, 0)
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwRandomExchangeRate, 0)
 
-
-	// Account 2, USD
+	// Account 2, USD, KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, uswRandomExchangeRate, 1)
-
-	// Account 2, KRW
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwRandomExchangeRate, 1)
 
-	// Account 3, KRW
+	// Account 3, KRW, SDR
 	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwRandomExchangeRate, 2)
 	makePrevoteAndVote(t, input, h, 0, core.MicroSDRDenom, randomExchangeRate, 2)
 
@@ -406,7 +403,6 @@ func TestOracleCrossRate(t *testing.T) {
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).QuoInt64(rewardDistributedWindow).TruncateInt()
 	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).QuoInt64(rewardDistributedWindow).TruncateInt()
-	//expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(4)).QuoInt64(rewardDistributedWindow).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -415,7 +411,68 @@ func TestOracleCrossRate(t *testing.T) {
 	require.Equal(t, expectedRewardAmt2, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-// TODO: add test for cross rate based exchange rate algorithm
+func TestOracleExchangeRateVal5(t *testing.T) {
+	input, h := setupVal5(t)
+
+	krwExchangeRate := sdk.NewDecWithPrec(505000, int64(6)).MulInt64(core.MicroUnit)
+	krwExchangeRateWithErr := sdk.NewDecWithPrec(500000, int64(6)).MulInt64(core.MicroUnit)
+	usdExchangeRate := sdk.NewDecWithPrec(505, int64(6)).MulInt64(core.MicroUnit)
+	usdExchangeRateWithErr := sdk.NewDecWithPrec(500, int64(6)).MulInt64(core.MicroUnit)
+
+	// KRW has been chosen as referenceTerra by highest voting power
+	// Account 1, KRW, USD
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwExchangeRate, 0)
+	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, usdExchangeRate, 0)
+
+	// Account 2, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwExchangeRate, 1)
+
+	// Account 3, KRW
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwExchangeRate, 2)
+
+	// Account 4, KRW, USD
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwExchangeRateWithErr, 3)
+	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, usdExchangeRateWithErr, 3)
+
+	// Account 5, KRW, USD
+	makePrevoteAndVote(t, input, h, 0, core.MicroKRWDenom, krwExchangeRateWithErr, 4)
+	makePrevoteAndVote(t, input, h, 0, core.MicroUSDDenom, usdExchangeRateWithErr, 4)
+
+	rewardAmt := sdk.NewInt(100000000)
+	moduleAcc := input.SupplyKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), ModuleName)
+	err := moduleAcc.SetCoins(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
+	require.NoError(t, err)
+
+	input.SupplyKeeper.SetModuleAccount(input.Ctx.WithBlockHeight(1), moduleAcc)
+
+	EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
+
+	krw, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
+	require.NoError(t, err)
+	usd, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroUSDDenom)
+	require.NoError(t, err)
+
+	// legacy version case
+	require.NotEqual(t, usdExchangeRateWithErr, usd)
+
+	// new version case
+	require.Equal(t, krwExchangeRate, krw)
+	require.Equal(t, usdExchangeRate, usd)
+
+	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(rewardDistributedWindow).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).QuoInt64(rewardDistributedWindow).TruncateInt()
+	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
+	require.Equal(t, expectedRewardAmt, rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
+	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
+	require.Equal(t, expectedRewardAmt2, rewards1.AmountOf(core.MicroLunaDenom).TruncateInt())
+	rewards2 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
+	require.Equal(t, expectedRewardAmt2, rewards2.AmountOf(core.MicroLunaDenom).TruncateInt())
+	rewards3 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[3])
+	require.Equal(t, expectedRewardAmt, rewards3.AmountOf(core.MicroLunaDenom).TruncateInt())
+	rewards4 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[4])
+	require.Equal(t, expectedRewardAmt, rewards4.AmountOf(core.MicroLunaDenom).TruncateInt())
+}
 
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := setup(t)

@@ -53,8 +53,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
-	LargestBallotPower := int64(0)
 	var referenceTerra string
+	LargestBallotPower := int64(0)
 	voteMapRT := make(map[string]sdk.Dec)
 
 	// choose Reference Terra with the highest voter turnout
@@ -99,8 +99,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		// Set the exchange rate, emit ABCI event
 		k.SetLunaExchangeRateWithEvent(ctx, referenceTerra, ballotMedianRT)
 
-		// Handle Ballot Winner for Reference Terra
-		handleBallotWinner(ballotWinningClaimsRT, validVotesCounterMap, winnerMap)
+		// Update winnerMap, validVotesCounterMap using ballotWinningClaims of Reference Terra ballot
+		updateWinnerMap(ballotWinningClaimsRT, validVotesCounterMap, winnerMap)
 
 		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 		for denom, ballot := range voteMap {
@@ -118,8 +118,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			// Get weighted median of cross exchange rates
 			cerMedian, ballotWinningClaims := tally(ctx, cerBallot, params.RewardBand)
 
-			// Handle Ballot Winner using cross exchange rate for not reference Terra
-			handleBallotWinner(ballotWinningClaims, validVotesCounterMap, winnerMap)
+			// Update winnerMap, validVotesCounterMap using ballotWinningClaims of cross exchange rate ballot
+			updateWinnerMap(ballotWinningClaims, validVotesCounterMap, winnerMap)
 
 			// Transform into the original form uluna/stablecoin
 			exchangeRateByRT := ballotMedianRT.Quo(cerMedian)

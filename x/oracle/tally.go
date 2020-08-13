@@ -40,7 +40,7 @@ func tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec) (we
 	return
 }
 
-func handleBallotWinner(ballotWinningClaims []types.Claim, validVotesCounterMap map[string]int, winnerMap map[string]types.Claim) {
+func updateWinnerMap(ballotWinningClaims []types.Claim, validVotesCounterMap map[string]int, winnerMap map[string]types.Claim) {
 	// Collect claims of ballot winners
 	for _, ballotWinningClaim := range ballotWinningClaims {
 
