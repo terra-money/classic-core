@@ -26,6 +26,18 @@ func NewVoteForTally(vote ExchangeRateVote, power int64) VoteForTally {
 // ExchangeRateBallot is a convinience wrapper around a ExchangeRateVote slice
 type ExchangeRateBallot []VoteForTally
 
+// ToMap return organized exchange rate map by validator
+func (pb ExchangeRateBallot) ToMap() map[string]sdk.Dec {
+	exchangeRateMap := make(map[string]sdk.Dec)
+	for _, vote := range pb {
+		if vote.ExchangeRate.IsPositive() {
+			exchangeRateMap[string(vote.Voter)] = vote.ExchangeRate
+		}
+	}
+
+	return exchangeRateMap
+}
+
 // Power returns the total amount of voting power in the ballot
 func (pb ExchangeRateBallot) Power() int64 {
 	totalPower := int64(0)

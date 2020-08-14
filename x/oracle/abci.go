@@ -53,81 +53,46 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
-	var referenceTerra string
-	LargestBallotPower := int64(0)
-	voteMapRT := make(map[string]sdk.Dec)
-
-	// choose Reference Terra with the highest voter turnout
-	// If the voting power of the two denominations is the same, select reference Terra in alphabetical order.
-	for denom, ballot := range voteMap {
-		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
-		// and remove it from voteMap for iteration efficiency
-		if _, exists := voteTargets[denom]; !exists {
-			delete(voteMap, denom)
-			continue
-		}
-		ballotPower := ballot.Power()
-
-		// If the ballot is not passed, remove it from the voteTargets array
-		// to prevent slashing validators who did valid vote.
-		if !ballotIsPassing(ctx, ballot, k) {
-			delete(voteTargets, denom)
-			delete(voteMap, denom)
-			continue
-		}
-
-		if ballotPower > LargestBallotPower || LargestBallotPower == 0 {
-			referenceTerra = denom
-			LargestBallotPower = ballotPower
-		} else if LargestBallotPower == ballotPower && referenceTerra > denom {
-			referenceTerra = denom
-		}
-	}
-
-	if referenceTerra != "" {
+	if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
 		// make voteMap of Reference Terra to calculate cross exchange rates
-		ballotRT, _ := voteMap[referenceTerra]
-		for _, vote := range ballotRT {
-			if vote.ExchangeRate.IsPositive() {
-				voteMapRT[string(vote.Voter)] = vote.ExchangeRate
-			}
-		}
-
-		// Get weighted median exchange rates of Reference Terra, and faithful respondants
-		ballotMedianRT, ballotWinningClaimsRT := tally(ctx, ballotRT, params.RewardBand)
-
-		// Set the exchange rate, emit ABCI event
-		k.SetLunaExchangeRateWithEvent(ctx, referenceTerra, ballotMedianRT)
-
-		// Update winnerMap, validVotesCounterMap using ballotWinningClaims of Reference Terra ballot
-		updateWinnerMap(ballotWinningClaimsRT, validVotesCounterMap, winnerMap)
+		ballotRT := voteMap[referenceTerra]
+		voteMapRT := ballotRT.ToMap()
+		exchangeRateRT := ballotRT.WeightedMedian()
 
 		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 		for denom, ballot := range voteMap {
-			if denom == referenceTerra {
-				continue
-			}
-			// Ballot based cross exchange rates
-			var cerBallot types.ExchangeRateBallot
-			for _, vote := range ballot {
-				if exchangeRateRT, ok := voteMapRT[string(vote.Voter)]; ok {
-					vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
-					cerBallot = append(cerBallot, vote)
+
+			// Convert ballot to cross exchange rates
+			if denom != referenceTerra {
+				for i := range ballot {
+					vote := &ballot[i]
+
+					if exchangeRateRT, ok := voteMapRT[string(vote.Voter)]; ok && vote.ExchangeRate.IsPositive() {
+						vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
+					} else {
+						// If we can't get reference terra exhcnage rate, we just convert the vote as abstain vote
+						vote.ExchangeRate = sdk.ZeroDec()
+						vote.Power = 0
+					}
 				}
 			}
+
 			// Get weighted median of cross exchange rates
-			cerMedian, ballotWinningClaims := tally(ctx, cerBallot, params.RewardBand)
+			exchangeRate, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
 
 			// Update winnerMap, validVotesCounterMap using ballotWinningClaims of cross exchange rate ballot
 			updateWinnerMap(ballotWinningClaims, validVotesCounterMap, winnerMap)
 
 			// Transform into the original form uluna/stablecoin
-			exchangeRateByRT := ballotMedianRT.Quo(cerMedian)
+			if denom != referenceTerra {
+				exchangeRate = exchangeRateRT.Quo(exchangeRate)
+			}
 
 			// Set the exchange rate, emit ABCI event
-			k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRateByRT)
+			k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRate)
 		}
 	}
+
 	//---------------------------
 	// Do miss counting & slashing
 	voteTargetsLen := len(voteTargets)
