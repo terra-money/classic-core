@@ -29,6 +29,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
@@ -167,6 +168,7 @@ func TestAppImportExport(t *testing.T) {
 		{app.keys[gov.StoreKey], newApp.keys[gov.StoreKey], [][]byte{}},
 		{app.keys[oracle.StoreKey], newApp.keys[oracle.StoreKey], [][]byte{}},
 		{app.keys[market.StoreKey], newApp.keys[market.StoreKey], [][]byte{}},
+		{app.keys[mint.StoreKey], newApp.keys[mint.StoreKey], [][]byte{}},
 		{app.keys[treasury.StoreKey], newApp.keys[treasury.StoreKey], [][]byte{}},
 		{app.keys[wasm.StoreKey], newApp.keys[wasm.StoreKey], [][]byte{}},
 	}
