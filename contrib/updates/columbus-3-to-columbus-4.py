@@ -34,7 +34,8 @@ def main(argument_parser, process_genesis_func):
     if args.pretty:
         raw_genesis = json.dumps(genesis, indent=4, sort_keys=True)
     else:
-        raw_genesis = json.dumps(genesis, indent=None, sort_keys=False, separators=(',', ':'))
+        raw_genesis = json.dumps(genesis, indent=None,
+                                 sort_keys=False, separators=(',', ':'))
 
     print(raw_genesis)
 
@@ -138,6 +139,41 @@ def process_raw_genesis(genesis, parsed_args):
         'max_age_num_blocks': genesis['consensus_params']['evidence']['max_age'],
         # 2 days, should we increase it; https://github.com/tendermint/tendermint/issues/2565
         'max_age_duration': '172800000000000',
+    }
+
+    # Mint module
+    genesis['app_state']['mint'] = {
+        'minter': {
+            'inflation': '0.0',
+            'annual_provisions': '0.0',
+        },
+        'params': {
+            'mint_denom': 'uluna',
+            'inflation_rate_change': '0.0',
+            'inflation_max': '0.0',
+            'inflation_min': '0.0',
+            'goal_bonded': '0.67',
+            # uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
+            'blocks_per_year': '6311520',
+        }
+    }
+
+    # MsgAuth module
+    genesis['app_state']['msgauth'] = {
+        'authorization_entries': []
+    }
+
+    # Wasm module
+    genesis['app_state']['wasm'] = {
+        'codes': [],
+        'contracts': [],
+        'last_code_id': '0',
+        'last_instance_id': '0',
+        'params': {
+            "max_contract_gas": "100000000",
+            "max_contract_msg_size": "10240",   # 10KB
+            "max_contract_size": "512000"       # 500KB
+        }
     }
 
     # Set new chain ID and genesis start time
