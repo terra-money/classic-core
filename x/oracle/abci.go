@@ -64,17 +64,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 			// Convert ballot to cross exchange rates
 			if denom != referenceTerra {
-				for i := range ballot {
-					vote := &ballot[i]
-
-					if exchangeRateRT, ok := voteMapRT[string(vote.Voter)]; ok && vote.ExchangeRate.IsPositive() {
-						vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
-					} else {
-						// If we can't get reference terra exhcnage rate, we just convert the vote as abstain vote
-						vote.ExchangeRate = sdk.ZeroDec()
-						vote.Power = 0
-					}
-				}
+				ballot = ballot.ToCrossRate(voteMapRT)
 			}
 
 			// Get weighted median of cross exchange rates
