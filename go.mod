@@ -3,7 +3,7 @@ module github.com/terra-project/core
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.0.0
+	github.com/CosmWasm/go-cosmwasm v0.10.1
 	github.com/cosmos/cosmos-sdk v0.39.1
 	github.com/gorilla/mux v1.7.4
 	github.com/otiai10/copy v1.0.2
