@@ -213,10 +213,11 @@ func GetCmdGetRawStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			key := args[1]
 			subkey := ""
 			if len(args) == 3 {
+				key = utils.EncodeKey(key)
 				subkey = args[2]
 			}
 
-			keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
+			keyBz := append(key, []byte(subkey)...)
 			params := types.NewQueryRawStoreParams(addr, keyBz)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {
