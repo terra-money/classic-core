@@ -212,12 +212,16 @@ func GetCmdGetRawStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			// need to extend key with prefix of its length
 			key := args[1]
 			subkey := ""
+
+			var keyBz []byte
 			if len(args) == 3 {
-				key = utils.EncodeKey(key)
+				keyBz = utils.EncodeKey(key)
 				subkey = args[2]
+			} else {
+				keyBz = []byte(key)
 			}
 
-			keyBz := append(key, []byte(subkey)...)
+			keyBz = append(keyBz, []byte(subkey)...)
 			params := types.NewQueryRawStoreParams(addr, keyBz)
 			bz, err := cliCtx.Codec.MarshalJSON(params)
 			if err != nil {

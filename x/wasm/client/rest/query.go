@@ -151,12 +151,14 @@ func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var keyBz []byte
 		if len(subkey) != 0 {
-			key = utils.EncodeKey(key)
-			subkey = args[2]
+			keyBz = utils.EncodeKey(key)
+		} else {
+			keyBz = []byte(key)
 		}
 
-		keyBz := append(key, []byte(subkey)...)
+		keyBz = append(keyBz, []byte(subkey)...)
 		params := types.NewQueryRawStoreParams(addr, keyBz)
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
