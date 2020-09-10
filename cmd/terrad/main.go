@@ -141,6 +141,8 @@ func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string)
 
 		rootDir := viper.GetString(flags.FlagHome)
 
+		// load application DBDir and set wasm DBDir
+		wasmconfig.DBDir = filepath.Base(context.Config.DBDir()) + "/wasm"
 		wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
 		if _, err := os.Stat(wasmConfigFilePath); os.IsNotExist(err) {
 			wasmConf, _ := wasmconfig.ParseConfig()
