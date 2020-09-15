@@ -22,7 +22,7 @@ COPY . .
 COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN BUILD_TAGS=muslc make build
+RUN BUILD_TAGS=muslc make update-swagger-docs build
 
 
 FROM alpine:3
