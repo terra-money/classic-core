@@ -125,13 +125,18 @@ func (k Keeper) InstantiateContract(
 
 	// consume gas before raise error
 	k.consumeGas(ctx, gasUsed, "Contract init")
-
 	if err != nil {
 		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		return
 	}
 
-	// emit all events from this contract itself
+	// Must store contract info first, so last part can use it
+	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg, migratable)
+
+	k.SetLastInstanceID(ctx, instanceID)
+	k.SetContractInfo(ctx, contractAddress, contractInfo)
+
+	// emit all events from the contract
 	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
@@ -139,12 +144,6 @@ func (k Keeper) InstantiateContract(
 	if err != nil {
 		return
 	}
-
-	// persist contractInfo
-	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg, migratable)
-
-	k.SetLastInstanceID(ctx, instanceID)
-	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
 	return contractAddress, nil
 }
