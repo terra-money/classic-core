@@ -627,8 +627,8 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			},
 		},
 	}
-	expJsonEvts := string(mustMarshal(t, expEvents))
-	assert.JSONEq(t, expJsonEvts, prettyEvents(t, ctx.EventManager().Events()))
+	expJSONEvts := string(mustMarshal(t, expEvents))
+	assert.JSONEq(t, expJSONEvts, prettyEvents(t, ctx.EventManager().Events()))
 
 	// all persistent data cleared
 	m := keeper.queryToStore(ctx, contractAddr, []byte("config"))
