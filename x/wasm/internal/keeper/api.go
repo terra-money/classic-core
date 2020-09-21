@@ -52,6 +52,11 @@ func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
 func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
 
+	// avoid integer overflow
+	if meter.IsOutOfGas() {
+		return 0
+	}
+
 	remaining := (meter.Limit() - meter.GasConsumed())
 	if maxGas := k.MaxContractGas(ctx); remaining > maxGas {
 		remaining = maxGas

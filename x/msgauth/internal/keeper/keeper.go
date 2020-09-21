@@ -11,6 +11,7 @@ import (
 	"github.com/terra-project/core/x/msgauth/internal/types"
 )
 
+// Keeper of the msgauth store
 type Keeper struct {
 	cdc             *codec.Codec
 	storeKey        sdk.StoreKey
@@ -119,7 +120,7 @@ func (k Keeper) SetGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAdd
 	store.Set(types.GetGrantKey(granterAddr, granteeAddr, grant.Authorization.MsgType()), bz)
 }
 
-// Revoke method revokes any authorization for the provided message type granted to the grantee by the granter.
+// RevokeGrant removes method revokes any authorization for the provided message type granted to the grantee by the granter.
 func (k Keeper) RevokeGrant(ctx sdk.Context, granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, msgType string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetGrantKey(granterAddr, granteeAddr, msgType))
@@ -143,26 +144,26 @@ func (k Keeper) IterateGrants(ctx sdk.Context,
 
 // grant queue timeslice operations
 
-// gets a specific grant queue timeslice. A timeslice is a slice of GGMPair
+// GetGrantQueueTimeSlice gets a specific grant queue timeslice. A timeslice is a slice of GGMPair
 // corresponding to grants that expire at a certain time.
-func (k Keeper) GetGrantQueueTimeSlice(ctx sdk.Context, timestamp time.Time) (ggmParis []types.GGMPair) {
+func (k Keeper) GetGrantQueueTimeSlice(ctx sdk.Context, timestamp time.Time) (ggmPairs []types.GGMPair) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetGrantTimeKey(timestamp))
 	if bz == nil {
 		return []types.GGMPair{}
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &ggmParis)
-	return ggmParis
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &ggmPairs)
+	return ggmPairs
 }
 
-// Sets a specific grant queue timeslice.
+// SetGrantQueueTimeSlice sets a specific grant queue timeslice.
 func (k Keeper) SetGrantQueueTimeSlice(ctx sdk.Context, timestamp time.Time, keys []types.GGMPair) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(keys)
 	store.Set(types.GetGrantTimeKey(timestamp), bz)
 }
 
-// Insert an grant to the appropriate timeslice in the grant queue
+// InsertGrantQueue inserts an grant to the appropriate timeslice in the grant queue
 func (k Keeper) InsertGrantQueue(ctx sdk.Context, granterAddr,
 	granteeAddr sdk.AccAddress, msgType string, completionTime time.Time) {
 
@@ -176,6 +177,7 @@ func (k Keeper) InsertGrantQueue(ctx sdk.Context, granterAddr,
 	}
 }
 
+// RevokeFromGrantQueue removes grant data from the timeslice queue
 func (k Keeper) RevokeFromGrantQueue(ctx sdk.Context, granterAddr,
 	granteeAddr sdk.AccAddress, msgType string, completionTime time.Time) {
 	timeSlice := k.GetGrantQueueTimeSlice(ctx, completionTime)
@@ -194,14 +196,14 @@ func (k Keeper) RevokeFromGrantQueue(ctx sdk.Context, granterAddr,
 	}
 }
 
-// Returns all the grant queue timeslices from time 0 until endTime
+// GrantQueueIterator returns all the grant queue timeslices from time 0 until endTime
 func (k Keeper) GrantQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	store := ctx.KVStore(k.storeKey)
 	return store.Iterator(types.GrantQueueKey,
 		sdk.InclusiveEndBytes(types.GetGrantTimeKey(endTime)))
 }
 
-// Returns a concatenated list of all the timeslices inclusively previous to
+// DequeueAllMatureGrantQueue returns a concatenated list of all the timeslices inclusively previous to
 // current block time, and deletes the timeslices from the queue
 func (k Keeper) DequeueAllMatureGrantQueue(ctx sdk.Context) (matureGrants []types.GGMPair) {
 	store := ctx.KVStore(k.storeKey)

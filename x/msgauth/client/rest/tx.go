@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -22,24 +21,6 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}", RestGranter, RestGrantee, RestMsgType), grantHandler(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}/revoke", RestGranter, RestGrantee, RestMsgType), revokeHandler(cliCtx)).Methods("POST")
 	r.HandleFunc("/msgauth/execute", executeHandler(cliCtx)).Methods("POST")
-}
-
-// GrantRequest defines the properties of a grant request's body.
-type GrantRequest struct {
-	BaseReq rest.BaseReq  `json:"base_req" yaml:"base_req"`
-	Period  time.Duration `json:"period"`
-	Limit   sdk.Coins     `json:"limit,omitempty"`
-}
-
-// RevokeRequest defines the properties of a revoke request's body.
-type RevokeRequest struct {
-	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-}
-
-// ExecuteRequest defines the properties of a execute request's body.
-type ExecuteRequest struct {
-	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-	Msgs    []sdk.Msg    `json:"msgs" yaml:"msgs"`
 }
 
 func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
