@@ -53,49 +53,34 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
-	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	for denom, ballot := range voteMap {
+	if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
+		// make voteMap of Reference Terra to calculate cross exchange rates
+		ballotRT := voteMap[referenceTerra]
+		voteMapRT := ballotRT.ToMap()
+		exchangeRateRT := ballotRT.WeightedMedian()
 
-		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
-		if _, exists := voteTargets[denom]; !exists {
-			continue
+		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+		for denom, ballot := range voteMap {
+
+			// Convert ballot to cross exchange rates
+			if denom != referenceTerra {
+				ballot = ballot.ToCrossRate(voteMapRT)
+			}
+
+			// Get weighted median of cross exchange rates
+			exchangeRate, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
+
+			// Update winnerMap, validVotesCounterMap using ballotWinningClaims of cross exchange rate ballot
+			updateWinnerMap(ballotWinningClaims, validVotesCounterMap, winnerMap)
+
+			// Transform into the original form uluna/stablecoin
+			if denom != referenceTerra {
+				exchangeRate = exchangeRateRT.Quo(exchangeRate)
+			}
+
+			// Set the exchange rate, emit ABCI event
+			k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRate)
 		}
-
-		// If the ballot is not passed, remove it from the voteTargets array
-		// to prevent slashing validators who did valid vote.
-		if !ballotIsPassing(ctx, ballot, k) {
-			delete(voteTargets, denom)
-			continue
-		}
-
-		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
-
-		// Set the exchange rate
-		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
-
-		// Collect claims of ballot winners
-		for _, ballotWinningClaim := range ballotWinningClaims {
-
-			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
-			key := string(ballotWinningClaim.Recipient)
-
-			// Update claim
-			prevClaim := winnerMap[key]
-			prevClaim.Weight += ballotWinningClaim.Weight
-			winnerMap[key] = prevClaim
-
-			// Increase valid votes counter
-			validVotesCounterMap[key]++
-		}
-
-		// Emit abci events
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
-			),
-		)
 	}
 
 	//---------------------------

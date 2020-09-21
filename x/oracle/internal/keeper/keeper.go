@@ -196,6 +196,17 @@ func (k Keeper) SetLunaExchangeRate(ctx sdk.Context, denom string, exchangeRate 
 	store.Set(types.GetExchangeRateKey(denom), bz)
 }
 
+// SetLunaExchangeRateWithEvent sets the consensus exchange rate of Luna denominated in the denom asset to the store with ABCI event
+func (k Keeper) SetLunaExchangeRateWithEvent(ctx sdk.Context, denom string, exchangeRate sdk.Dec) {
+	k.SetLunaExchangeRate(ctx, denom, exchangeRate)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+			sdk.NewAttribute(types.AttributeKeyDenom, denom),
+			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
+		),
+	)
+}
+
 // DeleteLunaExchangeRate deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) DeleteLunaExchangeRate(ctx sdk.Context, denom string) {
 	store := ctx.KVStore(k.storeKey)
@@ -389,12 +400,6 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 	}
 }
 
-// HashAggregateExchangeRateVote
-func (k Keeper) HashAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetAggregateExchangeRateVoteKey(voter))
-}
-
 // GetTobinTax return tobin tax for the denom
 func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, err error) {
 	store := ctx.KVStore(k.storeKey)
@@ -402,9 +407,9 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (tobinTax sdk.Dec, er
 	if bz == nil {
 		err = sdkerrors.Wrap(types.ErrNoTobinTax, denom)
 		return
-	} else {
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &tobinTax)
 	}
+
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &tobinTax)
 
 	return
 }
@@ -416,7 +421,7 @@ func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
 	store.Set(types.GetTobinTaxKey(denom), bz)
 }
 
-// IterateTobinTaxs iterates rate over tobin taxes in the store
+// IterateTobinTaxes iterates rate over tobin taxes in the store
 func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, tobinTax sdk.Dec) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)

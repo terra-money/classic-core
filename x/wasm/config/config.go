@@ -1,5 +1,6 @@
 package config
 
+// config default values
 const (
 	defaultLRUCacheSize          = uint64(0)
 	defaultContractQueryGasLimit = uint64(3000000)
@@ -10,6 +11,9 @@ const (
 	FlagContractQueryGasLimit = "contract-query-gas-limit"
 	FlagCacheSize             = "lru-size"
 )
+
+// DBDir used to store wasm data to
+var DBDir = "data/wasm"
 
 // BaseConfig is the extra config required for wasm
 type BaseConfig struct {

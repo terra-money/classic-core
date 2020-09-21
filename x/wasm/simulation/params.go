@@ -30,10 +30,5 @@ func ParamChanges(r *rand.Rand) []simulation.ParamChange {
 				return fmt.Sprintf("\"%d\"", GenMaxContractMsgSize(r))
 			},
 		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyGasMultiplier),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", GenGasMultiplier(r))
-			},
-		),
 	}
 }

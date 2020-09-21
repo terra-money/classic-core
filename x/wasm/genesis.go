@@ -14,31 +14,25 @@ import (
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetLastCodeID(ctx, 0)
+	keeper.SetLastCodeID(ctx, data.LastCodeID)
 	keeper.SetLastInstanceID(ctx, data.LastInstanceID)
 
 	for _, code := range data.Codes {
-		newCodeID, err := keeper.StoreCode(ctx, code.CodeInfo.Creator, code.CodesBytes)
-		if err != nil {
-			panic(err)
-		}
-		newInfo, err := keeper.GetCodeInfo(ctx, newCodeID)
+		codeHash, err := keeper.CompileCode(ctx, code.CodesBytes)
 		if err != nil {
 			panic(err)
 		}
 
-		if !bytes.Equal(code.CodeInfo.CodeHash, newInfo.CodeHash) {
-			panic("code hashes not same")
+		if !bytes.Equal(codeHash, code.CodeInfo.CodeHash.Bytes()) {
+			panic("CodeHash is not same")
 		}
+
+		keeper.SetCodeInfo(ctx, code.CodeInfo.CodeID, code.CodeInfo)
 	}
 
 	for _, contract := range data.Contracts {
 		keeper.SetContractInfo(ctx, contract.ContractInfo.Address, contract.ContractInfo)
 		keeper.SetContractStore(ctx, contract.ContractInfo.Address, contract.ContractStore)
-	}
-
-	if lastCodeID, err := keeper.GetLastCodeID(ctx); err != nil || lastCodeID != data.LastCodeID {
-		panic("last code id is differ from the genesis")
 	}
 }
 

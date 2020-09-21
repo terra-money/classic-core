@@ -21,6 +21,8 @@ tags:
     description: Slashing module APIs
   - name: Distribution
     description: Fee distribution module APIs
+  - name: Mint
+    description: Minting module APIs
   - name: Supply
     description: Supply module APIs
   - name: Market
@@ -1964,6 +1966,60 @@ paths:
                 type: string
               community_tax:
                 type: string
+        500:
+          description: Internal Server Error
+  /minting/parameters:
+    get:
+      summary: Minting module parameters
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              mint_denom:
+                type: string
+              inflation_rate_change:
+                type: string
+              inflation_max:
+                type: string
+              inflation_min:
+                type: string
+              goal_bonded:
+                type: string
+              blocks_per_year:
+                type: string
+        500:
+          description: Internal Server Error
+  /minting/inflation:
+    get:
+      summary: Current minting inflation value
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+        500:
+          description: Internal Server Error
+  /minting/annual-provisions:
+    get:
+      summary: Current minting annual provisions value
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
         500:
           description: Internal Server Error
   /supply/total:

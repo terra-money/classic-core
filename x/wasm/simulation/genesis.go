@@ -26,7 +26,7 @@ func GenMaxContractSize(r *rand.Rand) uint64 {
 
 // GenMaxContractGas randomized MaxContractGas
 func GenMaxContractGas(r *rand.Rand) uint64 {
-	return uint64(100_000_000 + r.Intn(500_000_000))
+	return uint64(10_000_000 + r.Intn(90_000_000))
 }
 
 // GenMaxContractMsgSize randomized MaxContractMsgSize
@@ -71,7 +71,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 			MaxContractSize:    maxContractSize,
 			MaxContractGas:     maxContractGas,
 			MaxContractMsgSize: maxContractMsgSize,
-			GasMultiplier:      gasMultiplier,
 		},
 		0,
 		0,
