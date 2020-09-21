@@ -17,6 +17,12 @@ func (k Keeper) MaxContractGas(ctx sdk.Context) (res uint64) {
 	return
 }
 
+// GasMultiplier defines a factor to convert wamser gas to sdk gas
+func (k Keeper) GasMultiplier(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.ParamStoreKeyGasMultiplier, &res)
+	return
+}
+
 // MaxContractMsgSize defines maximum bytes size of a contract
 func (k Keeper) MaxContractMsgSize(ctx sdk.Context) (res uint64) {
 	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxContractMsgSize, &res)

@@ -23,6 +23,7 @@ var (
 	ParamStoreKeyMaxContractSize    = []byte("maxcontractsize")
 	ParamStoreKeyMaxContractGas     = []byte("maxcontractgas")
 	ParamStoreKeyMaxContractMsgSize = []byte("maxcontractmsgsize")
+	ParamStoreKeyGasMultiplier      = []byte("gasmultiplier")
 )
 
 // Default parameter values
@@ -30,10 +31,11 @@ const (
 	DefaultMaxContractSize    = EnforcedMaxContractSize // 500 KB
 	DefaultMaxContractGas     = EnforcedMaxContractGas  // 100,000,000
 	DefaultMaxContractMsgSize = uint64(1 * 1024)        // 1KB
+	DefaultGasMultiplier      = uint64(100)             // Please note that all gas prices returned to the wasmer engine should have this multiplied
 )
 
+// Constant gas meter params
 const (
-	GasMultiplier      = uint64(100)    // Please note that all gas prices returned to the wasmer engine should have this multiplied
 	CompileCostPerByte = uint64(2)      // sdk gas cost per bytes
 	InstanceCost       = uint64(40_000) // sdk gas cost for executing wasmer engine
 	HumanizeCost       = uint64(5)      // sdk gas cost to convert canonical address to human address
@@ -47,6 +49,7 @@ type Params struct {
 	MaxContractSize    uint64 `json:"max_contract_size" yaml:"max_contract_size"`         // allowed max contract bytes size
 	MaxContractGas     uint64 `json:"max_contract_gas" yaml:"max_contract_gas"`           // allowed max gas usages per each contract execution
 	MaxContractMsgSize uint64 `json:"max_contract_msg_size" yaml:"max_contract_msg_size"` // allowed max contract exe msg bytes size
+	GasMultiplier      uint64 `json:"gas_multipler" yaml:"gas_multipler"`                 // a gas conversion factor between wasmer and sdk
 }
 
 // DefaultParams creates default treasury module parameters
@@ -55,6 +58,7 @@ func DefaultParams() Params {
 		MaxContractSize:    DefaultMaxContractSize,
 		MaxContractGas:     DefaultMaxContractGas,
 		MaxContractMsgSize: DefaultMaxContractMsgSize,
+		GasMultiplier:      DefaultGasMultiplier,
 	}
 }
 
@@ -66,6 +70,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(ParamStoreKeyMaxContractSize, &p.MaxContractSize, validateMaxContractSize),
 		params.NewParamSetPair(ParamStoreKeyMaxContractGas, &p.MaxContractGas, validateMaxContractGas),
 		params.NewParamSetPair(ParamStoreKeyMaxContractMsgSize, &p.MaxContractMsgSize, validateMaxContractMsgSize),
+		params.NewParamSetPair(ParamStoreKeyGasMultiplier, &p.GasMultiplier, validateGasMultiplier),
 	}
 }
 
@@ -131,6 +136,15 @@ func validateMaxContractMsgSize(i interface{}) error {
 
 	if v > EnforcedMaxContractMsgSize {
 		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than %d", v, EnforcedMaxContractMsgSize)
+	}
+
+	return nil
+}
+
+func validateGasMultiplier(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

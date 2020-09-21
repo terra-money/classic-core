@@ -376,7 +376,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling
-	var gasLimit uint64 = 400_000
+	var gasLimit uint64 = 410_000
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 

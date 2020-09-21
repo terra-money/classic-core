@@ -17,8 +17,8 @@ type WasmQuerierInterface interface {
 
 // Querier - wasm query handler
 type Querier struct {
-	Ctx      sdk.Context
-	Queriers map[string]WasmQuerierInterface
+	WasmContext WasmContext
+	Queriers    map[string]WasmQuerierInterface
 }
 
 // NewModuleQuerier return wasm querier
@@ -46,25 +46,25 @@ const (
 )
 
 // WithCtx returns new querier with context
-func (q Querier) WithCtx(ctx sdk.Context) Querier {
-	q.Ctx = ctx
+func (q Querier) WithCtx(ctx WasmContext) Querier {
+	q.WasmContext = ctx
 	return q
 }
 
 // GasConsumed consume gas in the current context
 func (q Querier) GasConsumed() uint64 {
-	return q.Ctx.GasMeter().GasConsumed()
+	return q.WasmContext.Ctx.GasMeter().GasConsumed()
 }
 
 // Query - interface for wasmTypes.Querier
 func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte, error) {
 	// set a limit for a ctx
 	// gasLimit passed from the go-cosmwasm part, so need to divide it with gas multiplier
-	ctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(gasLimit / GasMultiplier))
+	ctx := q.WasmContext.Ctx.WithGasMeter(sdk.NewGasMeter(gasLimit / q.WasmContext.GasMultiplier))
 
 	// make sure we charge the higher level context even on panic
 	defer func() {
-		q.Ctx.GasMeter().ConsumeGas(ctx.GasMeter().GasConsumed(), "contract sub-query")
+		q.WasmContext.Ctx.GasMeter().ConsumeGas(ctx.GasMeter().GasConsumed(), "contract sub-query")
 	}()
 
 	// do the query
@@ -73,9 +73,9 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 	case request.Bank != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteBank]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 	case request.Custom != nil:
 		var customQuery WasmCustomQuery
 		err := json.Unmarshal(request.Custom, &customQuery)
@@ -85,21 +85,21 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 
 		if querier, ok := q.Queriers[customQuery.Route]; ok {
 			return querier.QueryCustom(ctx, customQuery.QueryData)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 	case request.Staking != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteStaking]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
 	case request.Wasm != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteWasm]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 	}
 
 	return nil, wasmTypes.Unknown{}

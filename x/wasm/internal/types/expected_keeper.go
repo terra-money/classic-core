@@ -18,7 +18,7 @@ type BankKeeper interface {
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
-// Treasurykeeper for tax charging & recording
+// TreasuryKeeper for tax charging & recording
 type TreasuryKeeper interface {
 	RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins)
 	GetTaxRate(ctx sdk.Context) (taxRate sdk.Dec)

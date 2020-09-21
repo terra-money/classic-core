@@ -102,7 +102,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 }
 
 func TestGasCostOnQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 2_693 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
+	GasNoWork := types.InstanceCost + 3_708 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
 	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_708 // this is a little shy of 50k gas - to keep an eye on the limit
 
@@ -190,7 +190,7 @@ func TestGasCostOnQuery(t *testing.T) {
 }
 
 func TestGasOnExternalQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 2_693 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
+	GasNoWork := types.InstanceCost + 3_708 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
 	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_708 // this is a little shy of 50k gas - to keep an eye on the limit
 
@@ -273,7 +273,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	// This attack would allow us to use far more than the provided gas before
 	// eventually hitting an OutOfGas panic.
 
-	GasNoWork := types.InstanceCost + 2_693 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
+	GasNoWork := types.InstanceCost + 3_708 /* Contract Loading Cost */ + 1_432 /* No Op Cost*/
 	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
 
 	GasWork2k := GasNoWork + 230_623

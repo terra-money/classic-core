@@ -5,17 +5,16 @@ import (
 
 	cosmwasm "github.com/CosmWasm/go-cosmwasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
-func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
+func (k Keeper) getCosmwamAPI(wasmCtx types.WasmContext) cosmwasm.GoAPI {
 	return cosmwasm.GoAPI{
 		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
 			if len(canon) != sdk.AddrLen {
 				return "", 0, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
 			}
-			return sdk.AccAddress(canon).String(), types.HumanizeCost * types.GasMultiplier, nil
+			return sdk.AccAddress(canon).String(), types.HumanizeCost * wasmCtx.GasMultiplier, nil
 		},
 		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {
 			addr, err := sdk.AccAddressFromBech32(human)
@@ -23,7 +22,7 @@ func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {
 				return nil, 0, err
 			}
 
-			return addr, types.CanonicalizeCost * types.GasMultiplier, nil
+			return addr, types.CanonicalizeCost * wasmCtx.GasMultiplier, nil
 		},
 	}
 }
@@ -41,26 +40,26 @@ func (m wasmGasMeter) GasConsumed() sdk.Gas {
 }
 
 // return gas meter interface for wasm gas meter
-func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
+func (k Keeper) getGasMeter(wasmCtx types.WasmContext) wasmGasMeter {
 	return wasmGasMeter{
-		originalMeter: ctx.GasMeter(),
-		gasMultiplier: types.GasMultiplier,
+		originalMeter: wasmCtx.Ctx.GasMeter(),
+		gasMultiplier: wasmCtx.GasMultiplier,
 	}
 }
 
 // return remaining gas in wasm gas unit
-func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
-	meter := ctx.GasMeter()
+func (k Keeper) getGasRemaining(wasmCtx types.WasmContext) uint64 {
+	meter := wasmCtx.Ctx.GasMeter()
 
 	remaining := (meter.Limit() - meter.GasConsumed())
-	if maxGas := k.MaxContractGas(ctx); remaining > maxGas {
+	if maxGas := k.MaxContractGas(wasmCtx.Ctx); remaining > maxGas {
 		remaining = maxGas
 	}
-	return remaining * types.GasMultiplier
+	return remaining * wasmCtx.GasMultiplier
 }
 
 // converts contract gas usage to sdk gas and consumes it
-func (k Keeper) consumeGas(ctx sdk.Context, gas uint64, descriptor string) {
-	consumed := gas / types.GasMultiplier
-	ctx.GasMeter().ConsumeGas(consumed, descriptor)
+func (k Keeper) consumeGas(wasmCtx types.WasmContext, gas uint64, descriptor string) {
+	consumed := gas / wasmCtx.GasMultiplier
+	wasmCtx.Ctx.GasMeter().ConsumeGas(consumed, descriptor)
 }

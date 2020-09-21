@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,9 @@ import (
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system
 func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, err error) {
-	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+	params := k.GetParams(ctx)
+
+	if uint64(len(wasmCode)) > params.MaxContractSize {
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 
@@ -62,7 +65,6 @@ func (k Keeper) InstantiateContract(
 	deposit sdk.Coins,
 	migratable bool) (contractAddress sdk.AccAddress, err error) {
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: init")
-
 	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "init msg size is too huge")
 	}
@@ -112,19 +114,20 @@ func (k Keeper) InstantiateContract(
 	contractStore := prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
 
 	// instantiate wasm contract
+	wasmCtx := types.NewWasmContext(ctx, k.GasMultiplier(ctx))
 	res, gasUsed, err := k.wasmer.Instantiate(
 		codeInfo.CodeHash.Bytes(),
 		apiParams,
 		initMsg,
 		contractStore,
-		k.getCosmwamAPI(ctx),
-		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getCosmwamAPI(wasmCtx),
+		k.querier.WithCtx(wasmCtx),
+		k.getGasMeter(wasmCtx),
+		k.getGasRemaining(wasmCtx),
 	)
 
 	// consume gas before raise error
-	k.consumeGas(ctx, gasUsed, "Contract init")
+	k.consumeGas(wasmCtx, gasUsed, "Contract init")
 	if err != nil {
 		err = sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		return
@@ -169,19 +172,21 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		}
 	}
 
+	wasmCtx := types.NewWasmContext(ctx, k.GasMultiplier(ctx))
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
+	fmt.Println("SIBONG", ctx.GasMeter().GasConsumed())
 	res, gasUsed, err := k.wasmer.Execute(
 		codeInfo.CodeHash.Bytes(),
 		apiParams,
 		exeMsg,
 		storePrefix,
-		k.getCosmwamAPI(ctx),
-		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getCosmwamAPI(wasmCtx),
+		k.querier.WithCtx(wasmCtx),
+		k.getGasMeter(wasmCtx),
+		k.getGasRemaining(wasmCtx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Execution")
+	k.consumeGas(wasmCtx, gasUsed, "Contract Execution")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
@@ -224,24 +229,25 @@ func (k Keeper) MigrateContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	}
 
 	var noDeposit sdk.Coins
-	params := types.NewWasmAPIParams(ctx, caller, noDeposit, contractAddress)
+	apiParams := types.NewWasmAPIParams(ctx, caller, noDeposit, contractAddress)
 
 	// prepare necessary meta data
 	prefixStoreKey := types.GetContractStoreKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
+	wasmCtx := types.NewWasmContext(ctx, k.GasMultiplier(ctx))
 	res, gasUsed, err := k.wasmer.Migrate(
 		newCodeInfo.CodeHash.Bytes(),
-		params,
+		apiParams,
 		migrateMsg,
 		&prefixStore,
-		k.getCosmwamAPI(ctx),
-		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getCosmwamAPI(wasmCtx),
+		k.querier.WithCtx(wasmCtx),
+		k.getGasMeter(wasmCtx),
+		k.getGasRemaining(wasmCtx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Migration")
+	k.consumeGas(wasmCtx, gasUsed, "Contract Migration")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
@@ -297,17 +303,18 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, qu
 		return nil, err
 	}
 
+	wasmCtx := types.NewWasmContext(ctx, k.GasMultiplier(ctx))
 	queryResult, gasUsed, err := k.wasmer.Query(
 		codeInfo.CodeHash.Bytes(),
 		queryMsg,
 		contractStorePrefix,
-		k.getCosmwamAPI(ctx),
-		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getCosmwamAPI(wasmCtx),
+		k.querier.WithCtx(wasmCtx),
+		k.getGasMeter(wasmCtx),
+		k.getGasRemaining(wasmCtx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Query")
+	k.consumeGas(wasmCtx, gasUsed, "Contract Query")
 	if err != nil {
 		return nil, err
 	}

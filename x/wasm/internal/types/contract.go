@@ -109,3 +109,17 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 	}
 	return wasmCoins
 }
+
+// WasmContext is context binding struct with commonly used gas multiplier in WASM module
+type WasmContext struct {
+	Ctx           sdk.Context
+	GasMultiplier uint64
+}
+
+// NewWasmContext create new WasmContext
+func NewWasmContext(ctx sdk.Context, gasMultiplier uint64) WasmContext {
+	return WasmContext{
+		Ctx:           ctx,
+		GasMultiplier: gasMultiplier,
+	}
+}
