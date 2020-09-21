@@ -21,4 +21,8 @@ func TestParams(t *testing.T) {
 	params = DefaultParams()
 	params.MaxContractSize = EnforcedMaxContractSize + 1
 	require.Error(t, params.Validate())
+
+	params = DefaultParams()
+	params.GasMultiplier = 0
+	require.Error(t, params.Validate())
 }

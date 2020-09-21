@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -174,7 +173,6 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 
 	wasmCtx := types.NewWasmContext(ctx, k.GasMultiplier(ctx))
 	apiParams := types.NewWasmAPIParams(ctx, caller, coins, contractAddress)
-	fmt.Println("SIBONG", ctx.GasMeter().GasConsumed())
 	res, gasUsed, err := k.wasmer.Execute(
 		codeInfo.CodeHash.Bytes(),
 		apiParams,

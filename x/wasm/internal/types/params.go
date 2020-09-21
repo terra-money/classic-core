@@ -49,7 +49,7 @@ type Params struct {
 	MaxContractSize    uint64 `json:"max_contract_size" yaml:"max_contract_size"`         // allowed max contract bytes size
 	MaxContractGas     uint64 `json:"max_contract_gas" yaml:"max_contract_gas"`           // allowed max gas usages per each contract execution
 	MaxContractMsgSize uint64 `json:"max_contract_msg_size" yaml:"max_contract_msg_size"` // allowed max contract exe msg bytes size
-	GasMultiplier      uint64 `json:"gas_multipler" yaml:"gas_multipler"`                 // a gas conversion factor between wasmer and sdk
+	GasMultiplier      uint64 `json:"gas_multiplier" yaml:"gas_multiplier"`               // a gas conversion factor between wasmer and sdk
 }
 
 // DefaultParams creates default treasury module parameters
@@ -99,6 +99,10 @@ func (p Params) Validate() error {
 		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than %d", p.MaxContractMsgSize, EnforcedMaxContractMsgSize)
 	}
 
+	if p.GasMultiplier == 0 {
+		return fmt.Errorf("gas multiplier must be greater than zero")
+	}
+
 	return nil
 }
 
@@ -142,9 +146,13 @@ func validateMaxContractMsgSize(i interface{}) error {
 }
 
 func validateGasMultiplier(i interface{}) error {
-	_, ok := i.(uint64)
+	v, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("gas multiplier must be greater than zero")
 	}
 
 	return nil
