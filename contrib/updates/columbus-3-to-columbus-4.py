@@ -137,7 +137,6 @@ def process_raw_genesis(genesis, parsed_args):
     # Migrate Tendermint Consensus Param
     genesis['consensus_params']['evidence'] = {
         'max_age_num_blocks': genesis['consensus_params']['evidence']['max_age'],
-        # 2 days, should we increase it; https://github.com/tendermint/tendermint/issues/2565
         'max_age_duration': '172800000000000',
     }
 
@@ -172,7 +171,8 @@ def process_raw_genesis(genesis, parsed_args):
         'params': {
             "max_contract_gas": "100000000",
             "max_contract_msg_size": "10240",   # 10KB
-            "max_contract_size": "512000"       # 500KB
+            "max_contract_size": "512000",       # 500KB
+            "gas_multiplier": "100"
         }
     }
 
@@ -187,8 +187,8 @@ if __name__ == '__main__':
     parser = init_default_argument_parser(
         prog_desc='Convert genesis.json for columbus-4',
         default_chain_id='columbus-4',
-        default_genesis_time='2020-08-01T15:00:00Z',
-        defalut_halt_height='3050000',
+        default_genesis_time='2020-10-03T18:00:00Z',
+        defalut_halt_height='3820000',
         default_pretty=False
     )
     main(parser, process_raw_genesis)
