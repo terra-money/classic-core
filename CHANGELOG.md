@@ -1,28 +1,30 @@
 ## 0.4.0
 
 [Cosmos-SDK v0.38 Release Notes](https://github.com/cosmos/cosmos-sdk/wiki/v0.38-Release-Notes)
-
-[Cosmos-SDK v0.39 Release Notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.39.0)
-
+[Cosmos-SDK v0.39.0 Release Notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.39.0)
+[Cosmos-SDK v0.39.1 Release Notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.39.1)
 [Cosmos-SDK Breaking Changes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.38.0)
 
 ### Improvements
 
-#### [\#374](https://github.com/terra-project/core/pull/374) Bump SDK version to v0.39 and CosmWasm to v0.9.4
-#### [\#357](https://github.com/terra-project/core/pull/357) Bump CosmWasm to v0.9
-#### [\#352](https://github.com/terra-project/core/pull/352) MsgAuthorization module to allow subkey feature
-#### [\#349](https://github.com/terra-project/core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
-#### [\#348](https://github.com/terra-project/core/pull/348) MsgSwapSend to allow sending all swap coin
-#### [\#347](https://github.com/terra-project/core/pull/347) CosmWasm custom msg & querier handler
-#### [\#343](https://github.com/terra-project/core/pull/343) Burn Address
-#### [\#335](https://github.com/terra-project/core/pull/335) CosmWasm integration
-#### [\#325](https://github.com/terra-project/core/pull/325) New oracle msgs for vote process optimization
-#### [\#324](https://github.com/terra-project/core/pull/324) Update to emit events at proposal handler 
-#### [\#323](https://github.com/terra-project/core/pull/323) Bump SDK version to v0.38.x
+* [\#405](https://github.com/terra-project/core/pull/405) CosmWasm oracle exchange rates query interface
+* [\#388](https://github.com/terra-project/core/pull/388) Bump CosmWasm to v0.10.1
+* [\#383](https://github.com/terra-project/core/pull/383) Bump SDK version to v0.39.1
+* [\#374](https://github.com/terra-project/core/pull/374) Bump SDK version to v0.39 and CosmWasm to v0.9.4
+* [\#357](https://github.com/terra-project/core/pull/357) Bump CosmWasm to v0.9
+* [\#352](https://github.com/terra-project/core/pull/352) MsgAuthorization module to allow subkey feature
+* [\#349](https://github.com/terra-project/core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
+* [\#348](https://github.com/terra-project/core/pull/348) MsgSwapSend to allow sending all swap coin
+* [\#347](https://github.com/terra-project/core/pull/347) CosmWasm custom msg & querier handler
+* [\#343](https://github.com/terra-project/core/pull/343) Burn Address
+* [\#335](https://github.com/terra-project/core/pull/335) CosmWasm integration
+* [\#325](https://github.com/terra-project/core/pull/325) New oracle msgs for vote process optimization
+* [\#324](https://github.com/terra-project/core/pull/324) Update to emit events at proposal handler 
+* [\#323](https://github.com/terra-project/core/pull/323) Bump SDK version to v0.38.x
 
 ### Bug Fixes
-#### [\#360](https://github.com/terra-project/core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
-#### [\#336](https://github.com/terra-project/core/pull/336) Allow zero tobin tax rate
+* [\#360](https://github.com/terra-project/core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
+* [\#336](https://github.com/terra-project/core/pull/336) Allow zero tobin tax rate
 
 ### Breaking Changes
 
@@ -47,6 +49,10 @@ The former two options dictate how many recent versions are kept on disk and the
 respectively, and the latter defines the height interval in which versions are deleted in a batch. 
 
 **The operator, who wants to upgrade the node from v0.3 to v0.4, must change pruning option in `app.toml` to one of above options.**
+
+#### API Changes
+* The `block_meta` field has been removed from `/blocks/{block_height}` becasuse it was redandunt data with `block_header`.
+* The `whitelist` of`/oracle/parameters` response has been changed from `[]string` to `[]{ name: string; tobin_tax: string; }`
 
 ## 0.3.6
 
