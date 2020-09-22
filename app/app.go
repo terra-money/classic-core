@@ -45,6 +45,7 @@ import (
 
 	bankwasm "github.com/terra-project/core/x/bank/wasm"
 	marketwasm "github.com/terra-project/core/x/market/wasm"
+	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
 )
@@ -253,6 +254,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		wasm.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.bankKeeper),
 		wasm.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.stakingKeeper),
 		wasm.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.marketKeeper),
+		wasm.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.oracleKeeper),
 		wasm.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.treasuryKeeper),
 		wasm.WasmQueryRouteWasm:     wasm.NewWasmQuerier(app.wasmKeeper),
 	})
