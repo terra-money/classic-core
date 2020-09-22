@@ -38,10 +38,7 @@ func TestQueryTaxRate(t *testing.T) {
 
 	var taxRateResponse TaxRateQueryResponse
 	require.NoError(t, json.Unmarshal(res, &taxRateResponse))
-
-	taxRateRes, err := sdk.NewDecFromStr(taxRateResponse.Rate)
-	require.NoError(t, err)
-	require.Equal(t, rate, taxRateRes)
+	require.Equal(t, rate.String(), taxRateResponse.Rate)
 }
 
 func TestQueryTaxCap(t *testing.T) {
@@ -71,8 +68,5 @@ func TestQueryTaxCap(t *testing.T) {
 
 	var taxCapResponse TaxCapQueryResponse
 	require.NoError(t, json.Unmarshal(res, &taxCapResponse))
-
-	taxCapRes, ok := sdk.NewIntFromString(taxCapResponse.Cap)
-	require.True(t, ok)
-	require.Equal(t, cap, taxCapRes)
+	require.Equal(t, cap.String(), taxCapResponse.Cap)
 }

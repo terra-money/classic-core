@@ -15,7 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury"
+	marketwasm "github.com/terra-project/core/x/market/wasm"
+	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
 	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
@@ -76,6 +77,32 @@ type treasuryQueryWrapper struct {
 	QueryData treasurywasm.CosmosQuery `json:"query_data"`
 }
 
+// Binding query messages
+type bindingsTesterSwapQueryMsg struct {
+	Swap swapQueryMsg `json:"swap"`
+}
+type bindingsTesterTaxRateQueryMsg struct {
+	TaxRate taxRateQueryMsg `json:"tax_rate"`
+}
+type bindingsTesterTaxCapQueryMsg struct {
+	TaxCap taxCapQueryMsg `json:"tax_cap"`
+}
+type bindingsTesterExchangeRatesQueryMsg struct {
+	ExchangeRates exchangeRatesQueryMsg `json:"exchange_rates"`
+}
+type swapQueryMsg struct {
+	OfferCoin wasmTypes.Coin `json:"offer_coin"`
+	AskDenom  string         `json:"ask_denom"`
+}
+type taxRateQueryMsg struct{}
+type taxCapQueryMsg struct {
+	Denom string `json:"denom"`
+}
+type exchangeRatesQueryMsg struct {
+	BaseDenom   string   `json:"base_denom"`
+	QuoteDenoms []string `json:"quote_denoms"`
+}
+
 func TestInstantiateMaker(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -119,37 +146,36 @@ func TestMarketQuerier(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	input, _, makerAddr, offerCoin := setupMakerContract(t)
+	input, _, testerAddr, offerCoin := setupBindingsTesterContract(t)
 
-	ctx, keeper := input.Ctx, input.WasmKeeper
+	ctx, keeper, marketKeeper := input.Ctx, input.WasmKeeper, input.MarketKeeper
 
-	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
-	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
-
-	// querier test
-	swapQueryMsg := MakerQueryMsg{
-		Simulate: simulateQuery{
-			OfferCoin: types.EncodeSdkCoin(offerCoin),
+	swapQueryMsg := bindingsTesterSwapQueryMsg{
+		Swap: swapQueryMsg{
+			OfferCoin: wasmTypes.Coin{
+				Denom:  core.MicroSDRDenom,
+				Amount: offerCoin.Amount.String(),
+			},
+			AskDenom: core.MicroLunaDenom,
 		},
 	}
+
+	retCoin, spread, err := marketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	retAmount := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
 
 	bz, err := json.Marshal(swapQueryMsg)
 	require.NoError(t, err)
 
-	res, err := keeper.queryToContract(ctx, makerAddr, bz)
+	res, err := keeper.queryToContract(ctx, testerAddr, bz)
 	require.NoError(t, err)
 
-	var simulRes simulateResponse
-	err = json.Unmarshal(res, &simulRes)
+	var swapResponse marketwasm.SwapQueryResponse
+	err = json.Unmarshal(res, &swapResponse)
 	require.NoError(t, err)
-
-	sellCoin, err := types.ParseToCoin(simulRes.SellCoin)
-	require.NoError(t, err)
-	require.Equal(t, offerCoin, sellCoin)
-
-	buyCoin, err := types.ParseToCoin(simulRes.BuyCoin)
-	require.NoError(t, err)
-	require.Equal(t, expectedRetCoins[0], buyCoin)
+	require.Equal(t, wasmTypes.Coin{
+		Denom:  core.MicroLunaDenom,
+		Amount: retAmount.String(),
+	}, swapResponse.Receive)
 }
 
 func TestTreasuryQuerier(t *testing.T) {
@@ -158,65 +184,82 @@ func TestTreasuryQuerier(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	input, _, makerAddr, _ := setupMakerContract(t)
-
+	input, _, testerAddr, _ := setupBindingsTesterContract(t)
 	ctx, keeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.TreasuryKeeper
 
-	expectedTaxRate := treasuryKeeper.GetTaxRate(ctx)
-	expectedTaxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
-
-	// querier test
-	taxRateQueryMsg := MakerTreasuryQuerymsg{
-		Reflect: treasuryQueryMsg{
-			TerraQueryWrapper: treasuryQueryWrapper{
-				Route: types.WasmQueryRouteTreasury,
-				QueryData: treasurywasm.CosmosQuery{
-					TaxRate: &struct{}{},
-				},
-			},
-		},
+	taxRate := treasuryKeeper.GetTaxRate(ctx)
+	taxRateQueryMsg := bindingsTesterTaxRateQueryMsg{
+		TaxRate: taxRateQueryMsg{},
 	}
 
 	bz, err := json.Marshal(taxRateQueryMsg)
 	require.NoError(t, err)
 
-	res, err := keeper.queryToContract(ctx, makerAddr, bz)
+	res, err := keeper.queryToContract(ctx, testerAddr, bz)
 	require.NoError(t, err)
 
-	var taxRateRes treasurywasm.TaxRateQueryResponse
-	err = json.Unmarshal(res, &taxRateRes)
+	var taxRateResponse treasurywasm.TaxRateQueryResponse
+	err = json.Unmarshal(res, &taxRateResponse)
 	require.NoError(t, err)
 
-	taxRate, err := sdk.NewDecFromStr(taxRateRes.Rate)
+	taxRateDec, err := sdk.NewDecFromStr(taxRateResponse.Rate)
 	require.NoError(t, err)
-	require.Equal(t, expectedTaxRate, taxRate)
+	require.Equal(t, taxRate, taxRateDec)
 
-	taxCapQueryMsg := MakerTreasuryQuerymsg{
-		Reflect: treasuryQueryMsg{
-			TerraQueryWrapper: treasuryQueryWrapper{
-				Route: types.WasmQueryRouteTreasury,
-				QueryData: treasurywasm.CosmosQuery{
-					TaxCap: &treasury.QueryTaxCapParams{
-						Denom: core.MicroSDRDenom,
-					},
-				},
-			},
+	taxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
+	taxCapQueryMsg := bindingsTesterTaxCapQueryMsg{
+		TaxCap: taxCapQueryMsg{
+			Denom: core.MicroSDRDenom,
 		},
 	}
 
 	bz, err = json.Marshal(taxCapQueryMsg)
 	require.NoError(t, err)
 
-	res, err = keeper.queryToContract(ctx, makerAddr, bz)
+	res, err = keeper.queryToContract(ctx, testerAddr, bz)
 	require.NoError(t, err)
 
-	var taxCapRes treasurywasm.TaxCapQueryResponse
-	err = json.Unmarshal(res, &taxCapRes)
+	var taxCapResponse treasurywasm.TaxCapQueryResponse
+	err = json.Unmarshal(res, &taxCapResponse)
+	require.NoError(t, err)
+	require.Equal(t, taxCap.String(), taxCapResponse.Cap)
+}
+
+func TestExchangeRatesQuerier(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	input, _, testerAddr, _ := setupBindingsTesterContract(t)
+
+	ctx, keeper, oracleKeeper := input.Ctx, input.WasmKeeper, input.OracleKeeper
+
+	exchangeRateQueryMsg := bindingsTesterExchangeRatesQueryMsg{
+		ExchangeRates: exchangeRatesQueryMsg{
+			BaseDenom: core.MicroKRWDenom,
+			QuoteDenoms: []string{
+				core.MicroLunaDenom,
+			},
+		},
+	}
+
+	KRWExchangeRate, err := oracleKeeper.GetLunaExchangeRate(ctx, core.MicroKRWDenom)
 	require.NoError(t, err)
 
-	taxCap, ok := sdk.NewIntFromString(taxCapRes.Cap)
-	require.True(t, ok)
-	require.Equal(t, expectedTaxCap, taxCap)
+	bz, err := json.Marshal(exchangeRateQueryMsg)
+	require.NoError(t, err)
+
+	res, err := keeper.queryToContract(ctx, testerAddr, bz)
+	require.NoError(t, err)
+
+	var exchangeRateResponse oraclewasm.ExchangeRatesQueryResponse
+	err = json.Unmarshal(res, &exchangeRateResponse)
+	require.NoError(t, err)
+
+	exchangeRateDec, err := sdk.NewDecFromStr(exchangeRateResponse.ExchangeRates[0].ExchangeRate)
+	require.NoError(t, err)
+	require.Equal(t, KRWExchangeRate, exchangeRateDec)
 }
 
 func TestBuyMsg(t *testing.T) {
@@ -384,6 +427,39 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	makerAddr, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
+
+	return
+}
+
+func setupBindingsTesterContract(t *testing.T) (input TestInput, creatorAddr, bindingsTesterAddr sdk.AccAddress, initCoin sdk.Coin) {
+	input = CreateTestInput(t)
+
+	ctx, keeper, accKeeper, oracleKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.OracleKeeper
+
+	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
+	lunaPriceInUSD := sdk.NewDecWithPrec(15, 1)
+	lunaPriceInKRW := sdk.NewDec(1300)
+	oracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
+	oracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, lunaPriceInUSD)
+	oracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, lunaPriceInKRW)
+
+	swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
+	initCoin = sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)
+
+	creatorAddr = createFakeFundedAccount(ctx, accKeeper, sdk.NewCoins(initCoin))
+
+	// upload staking derivates code
+	bindingsTCode, err := ioutil.ReadFile("./testdata/bindings_tester.wasm")
+	require.NoError(t, err)
+	bindingsTesterID, err := keeper.StoreCode(ctx, creatorAddr, bindingsTCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), bindingsTesterID)
+
+	type EmptyStruct struct{}
+	initBz, err := json.Marshal(&EmptyStruct{})
+	bindingsTesterAddr, err = keeper.InstantiateContract(input.Ctx, bindingsTesterID, creatorAddr, initBz, nil, true)
+	require.NoError(t, err)
+	require.NotEmpty(t, bindingsTesterAddr)
 
 	return
 }

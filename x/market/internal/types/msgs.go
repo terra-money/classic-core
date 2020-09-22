@@ -50,7 +50,7 @@ func (msg MsgSwap) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements Msg
 func (msg MsgSwap) ValidateBasic() error {
-	if len(msg.Trader) == 0 {
+	if msg.Trader.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
 
@@ -82,6 +82,7 @@ type MsgSwapSend struct {
 	AskDenom    string         `json:"ask_denom" yaml:"ask_denom"`       // Denom of the coin to swap to
 }
 
+// NewMsgSwapSend conducts market swap and send all the result coins to recipient
 func NewMsgSwapSend(fromAddress sdk.AccAddress, toAddress sdk.AccAddress, offerCoin sdk.Coin, askCoin string) MsgSwapSend {
 	return MsgSwapSend{
 		FromAddress: fromAddress,
@@ -109,11 +110,11 @@ func (msg MsgSwapSend) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements Msg
 func (msg MsgSwapSend) ValidateBasic() error {
-	if len(msg.FromAddress) == 0 {
+	if msg.FromAddress.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
 
-	if len(msg.ToAddress) == 0 {
+	if msg.ToAddress.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
 

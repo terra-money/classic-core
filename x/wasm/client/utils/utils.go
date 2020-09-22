@@ -40,9 +40,9 @@ func GzipIt(input []byte) ([]byte, error) {
 
 //EncodeKey encode given key with prefix of key's length
 func EncodeKey(key string) []byte {
-	keyBz := make([]byte, 2, 2+len(key))
-
 	keyLength := uint64(len(key))
+	keyBz := make([]byte, 2, 2+keyLength)
+
 	bz := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bz, keyLength)
 
