@@ -36,6 +36,7 @@ const (
 	WasmQueryRouteBank         = types.WasmQueryRouteBank
 	WasmQueryRouteStaking      = types.WasmQueryRouteStaking
 	WasmQueryRouteMarket       = types.WasmQueryRouteMarket
+	WasmQueryRouteOracle       = types.WasmQueryRouteOracle
 	WasmQueryRouteTreasury     = types.WasmQueryRouteTreasury
 	WasmQueryRouteWasm         = types.WasmQueryRouteWasm
 )

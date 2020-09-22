@@ -30,6 +30,7 @@ import (
 	"github.com/terra-project/core/x/market"
 	marketwasm "github.com/terra-project/core/x/market/wasm"
 	"github.com/terra-project/core/x/oracle"
+	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
 	stakingwasm "github.com/terra-project/core/x/staking/wasm"
 	"github.com/terra-project/core/x/treasury"
 	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
@@ -236,6 +237,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(marketKeeper),
 		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
 		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
+		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
 	})
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
