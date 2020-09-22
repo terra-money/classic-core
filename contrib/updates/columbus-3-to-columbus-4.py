@@ -171,8 +171,7 @@ def process_raw_genesis(genesis, parsed_args):
         'params': {
             "max_contract_gas": "100000000",
             "max_contract_msg_size": "10240",   # 10KB
-            "max_contract_size": "512000",       # 500KB
-            "gas_multiplier": "100"
+            "max_contract_size": "512000"       # 500KB
         }
     }
 
