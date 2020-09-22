@@ -232,6 +232,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.msgauthKeeper = msgauth.NewKeeper(app.cdc, keys[msgauth.StoreKey], bApp.Router(),
 		bank.MsgSend{}.Type(),
 		market.MsgSwap{}.Type(),
+		gov.MsgVote{}.Type(),
 	)
 
 	// register the evidence router
