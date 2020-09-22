@@ -3,6 +3,8 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 )
 
 // ModuleCdc defines module codec
@@ -30,4 +32,6 @@ func RegisterProposalTypeCodec(o interface{}, name string) {
 // TODO determine a good place to seal this codec
 func init() {
 	RegisterCodec(ModuleCdc)
+
+	msgauthexported.RegisterMsgAuthTypeCodec(gov.MsgVote{}, "gov/MsgVote")
 }
