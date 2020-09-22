@@ -8,6 +8,7 @@
 
 ### Improvements
 
+* [\#407](https://github.com/terra-project/core/pull/407) Allow `gov/MsgVote` to be grantable
 * [\#405](https://github.com/terra-project/core/pull/405) CosmWasm oracle exchange rates query interface
 * [\#388](https://github.com/terra-project/core/pull/388) Bump CosmWasm to v0.10.1
 * [\#383](https://github.com/terra-project/core/pull/383) Bump SDK version to v0.39.1
