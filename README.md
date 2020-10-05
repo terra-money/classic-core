@@ -63,7 +63,7 @@ We recommend the following for running Terra Core:
 
 #### Step 1. Install Golang
 
-Go v1.13.1 or higher is required for Terra Core.
+Go v1.14+ or higher is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
@@ -145,9 +145,9 @@ Installing Terra Core will also include the **`terracli`** entrypoint into your 
 
 | Chain ID       | Description        | Public Node (LCD)             |
 | -------------- | ------------------ | ----------------------------- |
-| `columbus-3`   | Mainnet            | https://lcd.terra.dev         |
+| `columbus-4`   | Mainnet            | https://lcd.terra.dev         |
 | `soju-0014`    | Columbus-3 Testnet | https://soju-lcd.terra.dev    |
-| `tequila-0001` | Columbus-4 Testnet | https://tequila-lcd.terra.dev |
+| `tequila-0004` | Columbus-4 Testnet | https://tequila-lcd.terra.dev |
 
 ### Running a Local Testnet
 
