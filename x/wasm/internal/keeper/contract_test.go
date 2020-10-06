@@ -592,6 +592,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	}{Payout: myPayoutAddr}
 	migMsgBz, err := json.Marshal(migMsg)
 	require.NoError(t, err)
+	keeper.loggingWhitelist[contractAddr.String()] = true
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	res, err := keeper.MigrateContract(ctx, contractAddr, creator, burnerContractID, migMsgBz)
 	require.NoError(t, err)
