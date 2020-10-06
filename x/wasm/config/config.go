@@ -1,15 +1,16 @@
 package config
 
+import "strings"
+
 // config default values
 const (
-	defaultLRUCacheSize          = uint64(0)
 	defaultContractQueryGasLimit = uint64(3000000)
 )
 
 // config flags for wasm module
 const (
-	FlagContractQueryGasLimit = "contract-query-gas-limit"
-	FlagCacheSize             = "lru-size"
+	FlagContractQueryGasLimit    = "contract-query-gas-limit"
+	FlagContractLoggingWhitelist = "contract-logging-whitelist"
 )
 
 // DBDir used to store wasm data to
@@ -22,25 +23,48 @@ type BaseConfig struct {
 	// so we need to restrict the max usage to prevent DoS attack
 	ContractQueryGasLimit uint64 `mapstructure:"contract-query-gas-limit"`
 
-	// Storing instances in the LRU will have no effect on
-	// the results (still deterministic), but should lower
-	// execution time at the cost of increased memory usage.
-	// We cannot pick universal parameters for this, so
-	// we should allow node operators to set it.
-	CacheSize uint64 `mapstructure:"lru-size"`
+	// Only The logs from the contracts, which are listed in
+	// this array or instantiated from the address in this array,
+	// are stored in the local storage. To keep all logs,
+	// a node operator can set "*" (not recommended).
+	ContractLoggingWhitelist string `mapstructure:"contract-logging-whitelist"`
 }
 
 // Config defines the server's top level configuration
 type Config struct {
 	BaseConfig `mapstructure:",squash"`
+	loggingAll bool
 }
 
 // DefaultConfig returns the default settings for WasmConfig
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: BaseConfig{
-			ContractQueryGasLimit: defaultContractQueryGasLimit,
-			CacheSize:             defaultLRUCacheSize,
+			ContractQueryGasLimit:    defaultContractQueryGasLimit,
+			ContractLoggingWhitelist: "",
 		},
+		loggingAll: false,
 	}
+}
+
+// LoggingAll return whitelist config is set to "*"
+func (config Config) LoggingAll() bool {
+	return config.loggingAll
+}
+
+// WhitelistToMap return logging whitelist map
+func (config *Config) WhitelistToMap() (loggingWhitelist map[string]bool) {
+	loggingWhitelist = make(map[string]bool)
+
+	if config.ContractLoggingWhitelist != "*" {
+		for _, addr := range strings.Split(config.ContractLoggingWhitelist, ",") {
+			loggingWhitelist[addr] = true
+		}
+
+		config.loggingAll = false
+	} else {
+		config.loggingAll = true
+	}
+
+	return
 }

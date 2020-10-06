@@ -136,9 +136,20 @@ func (k Keeper) InstantiateContract(
 	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
-	// emit all events from the contract
-	events := types.ParseEvents(res.Log, contractAddress)
-	ctx.EventManager().EmitEvents(events)
+	// check contract creator address is in whitelist
+	if _, ok := k.loggingWhitelist[creator.String()]; ok || k.wasmConfig.LoggingAll() {
+		events := types.ParseEvents(res.Log, contractAddress)
+		ctx.EventManager().EmitEvents(events)
+		if ok && !ctx.IsCheckTx() && !ctx.IsReCheckTx() {
+			// If a contract is created from whitelist,
+			// add the contract to whitelist.
+			// It can be canceled due to transaction failure,
+			// but it is tiny cost so ignore that case.
+			contractAddr := contractAddress.String()
+			k.loggingWhitelist[contractAddr] = true
+			k.wasmConfig.ContractLoggingWhitelist += "," + contractAddr
+		}
+	}
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
@@ -186,8 +197,11 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
 
-	events := types.ParseEvents(res.Log, contractAddress)
-	ctx.EventManager().EmitEvents(events)
+	// emit all events from the contract in the logging whitelist
+	if _, ok := k.loggingWhitelist[contractAddress.String()]; k.wasmConfig.LoggingAll() || ok {
+		events := types.ParseEvents(res.Log, contractAddress)
+		ctx.EventManager().EmitEvents(events)
+	}
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
@@ -246,9 +260,11 @@ func (k Keeper) MigrateContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Log, contractAddress)
-	ctx.EventManager().EmitEvents(events)
+	// emit all events from the contract in the logging whitelist
+	if _, ok := k.loggingWhitelist[contractAddress.String()]; k.wasmConfig.LoggingAll() || ok {
+		events := types.ParseEvents(res.Log, contractAddress)
+		ctx.EventManager().EmitEvents(events)
+	}
 
 	contractInfo.CodeID = newCodeID
 	k.SetContractInfo(ctx, contractAddress, contractInfo)

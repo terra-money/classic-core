@@ -19,6 +19,7 @@ require (
 	github.com/tendermint/tendermint v0.33.7
 	github.com/tendermint/tm-db v0.5.1
 	gopkg.in/yaml.v2 v2.3.0
+	github.com/fsnotify/fsnotify v1.4.7
 )
 
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra

@@ -99,8 +99,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	return app.NewTerraApp(
 		logger, db, traceStore, true, invCheckPeriod, skipUpgradeHeights,
 		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
-			ContractQueryGasLimit: viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
-			CacheSize:             viper.GetUint64(wasmconfig.FlagCacheSize),
+			ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
+			ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
 		}},
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
