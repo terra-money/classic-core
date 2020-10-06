@@ -91,7 +91,7 @@ func (k Keeper) GetConfig() *config.Config {
 // UpdateConfig override wasm config to new config
 func (k Keeper) UpdateConfig(config *config.Config) {
 	k.wasmConfig.BaseConfig = config.BaseConfig
-	k.wasmConfig.WhitelistToMap()
+	k.loggingWhitelist = k.wasmConfig.WhitelistToMap()
 }
 
 // GetLastCodeID return last code ID

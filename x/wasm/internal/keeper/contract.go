@@ -144,7 +144,7 @@ func (k Keeper) InstantiateContract(
 			// If a contract is created from whitelist,
 			// add the contract to whitelist.
 			// It can be canceled due to transaction failure,
-			// but it is tiny cost so ignore that case.
+			// but that is tiny cost so ignore that case.
 			contractAddr := contractAddress.String()
 			k.loggingWhitelist[contractAddr] = true
 			k.wasmConfig.ContractLoggingWhitelist += "," + contractAddr
