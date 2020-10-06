@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	"github.com/spf13/viper"
@@ -90,8 +91,15 @@ func (k Keeper) GetConfig() *config.Config {
 
 // UpdateConfig override wasm config to new config
 func (k Keeper) UpdateConfig(config *config.Config) {
-	k.wasmConfig.BaseConfig = config.BaseConfig
-	k.loggingWhitelist = k.wasmConfig.WhitelistToMap()
+	k.wasmConfig.BaseConfig.ContractQueryGasLimit = config.BaseConfig.ContractQueryGasLimit
+
+	// add new whitelist items
+	for _, item := range strings.Split(config.BaseConfig.ContractLoggingWhitelist, ",") {
+		if _, ok := k.loggingWhitelist[item]; !ok {
+			k.loggingWhitelist[item] = true
+			k.wasmConfig.BaseConfig.ContractLoggingWhitelist += "," + item
+		}
+	}
 }
 
 // GetLastCodeID return last code ID
