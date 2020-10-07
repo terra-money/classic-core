@@ -383,7 +383,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		if !wasmConfig.LoggingAll() && wasmConfig.ContractLoggingWhitelist != "" {
 			rootDir := viper.GetString(flags.FlagHome)
 			wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
-			wasmconfig.WriteConfigFile(wasmConfigFilePath, app.wasmKeeper.GetConfig())
+			wasmconfig.WriteConfigFile(wasmConfigFilePath, wasmConfig)
 		}
 	})
 
