@@ -379,9 +379,12 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	// update wasm config
 	tmos.TrapSignal(logger, func() {
-		rootDir := viper.GetString(flags.FlagHome)
-		wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
-		wasmconfig.WriteConfigFile(wasmConfigFilePath, app.wasmKeeper.GetConfig())
+		wasmConfig = app.wasmKeeper.GetConfig()
+		if !wasmConfig.LoggingAll() && wasmConfig.ContractLoggingWhitelist != "" {
+			rootDir := viper.GetString(flags.FlagHome)
+			wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
+			wasmconfig.WriteConfigFile(wasmConfigFilePath, app.wasmKeeper.GetConfig())
+		}
 	})
 
 	return app
