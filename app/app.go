@@ -359,33 +359,34 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 
 	/////////////////////
 	// watch wasm config
-	viper.SetConfigName("wasm")
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		err := viper.MergeInConfig()
-		if err != nil {
-			logger.Error("Failed to fetch updated wasm config", err)
-			return
-		}
+	rootDir := viper.GetString(flags.FlagHome)
+	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
 
-		// load wasm config dynamically
-		app.wasmKeeper.UpdateConfig(&wasmconfig.Config{
-			BaseConfig: wasmconfig.BaseConfig{
-				ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
-				ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
-			},
+	_, err := os.Stat(wasmConfigFilePath)
+	if !os.IsNotExist(err) {
+		viper.SetConfigName("wasm")
+		viper.WatchConfig()
+		viper.OnConfigChange(func(e fsnotify.Event) {
+			err := viper.MergeInConfig()
+			if err != nil {
+				logger.Error("Failed to fetch updated wasm config", err)
+				return
+			}
+
+			// load wasm config dynamically
+			app.wasmKeeper.UpdateConfig(&wasmconfig.Config{
+				BaseConfig: wasmconfig.BaseConfig{
+					ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
+					ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
+				},
+			})
 		})
-	})
 
-	// update wasm config
-	tmos.TrapSignal(logger, func() {
-		wasmConfig = app.wasmKeeper.GetConfig()
-		if !wasmConfig.LoggingAll() && wasmConfig.ContractLoggingWhitelist != "" {
-			rootDir := viper.GetString(flags.FlagHome)
-			wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
-			wasmconfig.WriteConfigFile(wasmConfigFilePath, wasmConfig)
-		}
-	})
+		// update wasm config
+		tmos.TrapSignal(logger, func() {
+			wasmconfig.WriteConfigFile(wasmConfigFilePath, app.wasmKeeper.GetConfig())
+		})
+	}
 
 	return app
 }
