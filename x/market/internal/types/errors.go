@@ -6,7 +6,7 @@ import (
 
 // Market errors
 var (
-	ErrNoEffectivePrice = sdkerrors.Register(ModuleName, 1, "no price registered with oracle")
 	ErrInvalidOfferCoin = sdkerrors.Register(ModuleName, 2, "invalid offer coin")
 	ErrRecursiveSwap    = sdkerrors.Register(ModuleName, 3, "recursive swap")
+	ErrNoEffectivePrice = sdkerrors.Register(ModuleName, 4, "no price registered with oracle")
 )
