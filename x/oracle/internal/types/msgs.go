@@ -333,7 +333,7 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 
 	exchangeRateTuples, err := ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return sdkerrors.Wrap(err, "failed to parse exchange rates string")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to parse exchange rates string cause:"+err.Error())
 	}
 
 	for _, tuple := range exchangeRateTuples {
