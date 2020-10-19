@@ -18,11 +18,10 @@ const defaultConfigTemplate = `# This is a TOML config file.
 # so we need to restrict the max usage to prevent DoS attack
 contract-query-gas-limit = "{{ .BaseConfig.ContractQueryGasLimit }}"
 
-# Storing instances in the LRU will have no effect on the results 
-# (still deterministic), but should lower execution time at 
-# the cost of increased memory usage. We cannot pick universal 
-# parameters for this, so we should allow node operators to set it.
-lru-size = "{{ .BaseConfig.CacheSize }}"
+# Only The logs from the contracts listed in this array
+# are stored in the local storage. To keep all logs,
+# a node operator can set "*" (not recommended).
+contract-logging-whitelist = "{{ .BaseConfig.ContractLoggingWhitelist }}"
 `
 
 var configTemplate *template.Template

@@ -91,8 +91,6 @@ func handleSwapRequest(ctx sdk.Context, k Keeper,
 		return nil, err
 	}
 
-	// Ignore other events
-	ctx = ctx.WithEventManager(sdk.NewEventManager())
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventSwap,

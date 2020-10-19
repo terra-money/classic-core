@@ -38,8 +38,9 @@ type Keeper struct {
 	querier   types.Querier
 	msgParser types.MsgParser
 
-	queryGasLimit uint64
-	cacheSize     uint64
+	// WASM config values
+	wasmConfig       *config.Config
+	loggingWhitelist map[string]bool
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -61,25 +62,33 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey,
 	}
 
 	return Keeper{
-		storeKey:       storeKey,
-		cdc:            cdc,
-		paramSpace:     paramspace,
-		wasmer:         *wasmer,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		supplyKeeper:   supplyKeeper,
-		treasuryKeeper: treasuryKeeper,
-		router:         router,
-		queryGasLimit:  wasmConfig.ContractQueryGasLimit,
-		cacheSize:      wasmConfig.CacheSize,
-		msgParser:      types.NewModuleMsgParser(),
-		querier:        types.NewModuleQuerier(),
+		storeKey:         storeKey,
+		cdc:              cdc,
+		paramSpace:       paramspace,
+		wasmer:           *wasmer,
+		accountKeeper:    accountKeeper,
+		bankKeeper:       bankKeeper,
+		supplyKeeper:     supplyKeeper,
+		treasuryKeeper:   treasuryKeeper,
+		router:           router,
+		wasmConfig:       wasmConfig,
+		loggingWhitelist: wasmConfig.WhitelistToMap(),
+		msgParser:        types.NewModuleMsgParser(),
+		querier:          types.NewModuleQuerier(),
 	}
 }
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// StoreConfig store wasm config to local config file
+func (k Keeper) StoreConfig() {
+	rootDir := viper.GetString(flags.FlagHome)
+	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
+
+	config.WriteConfigFile(wasmConfigFilePath, k.wasmConfig)
 }
 
 // GetLastCodeID return last code ID

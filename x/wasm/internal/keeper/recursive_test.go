@@ -160,7 +160,7 @@ func TestGasCostOnQuery(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			// external limit has no effect (we get a panic if this is enforced)
-			keeper.queryGasLimit = 1000
+			keeper.wasmConfig.ContractQueryGasLimit = 1000
 
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
@@ -239,7 +239,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			// set the external gas limit (normally from config file)
-			keeper.queryGasLimit = tc.gasLimit
+			keeper.wasmConfig.ContractQueryGasLimit = tc.gasLimit
 			querier := NewQuerier(keeper)
 
 			recurse := tc.msg
