@@ -148,6 +148,9 @@ func (k Keeper) InstantiateContract(
 			contractAddr := contractAddress.String()
 			k.loggingWhitelist[contractAddr] = true
 			k.wasmConfig.ContractLoggingWhitelist += "," + contractAddr
+
+			// store updated config to local wasm.toml
+			k.StoreConfig()
 		}
 	}
 

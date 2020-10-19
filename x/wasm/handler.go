@@ -71,6 +71,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) (*
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 			),
 		},
 	)}, nil
@@ -92,6 +93,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg MsgExecuteContract) (*sdk.Resu
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
 			),
 		},
 	), Data: data}, nil
@@ -113,6 +115,7 @@ func handleMigrate(ctx sdk.Context, k Keeper, msg MsgMigrateContract) (*sdk.Resu
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 			),
 		},
 	), Data: data}, nil

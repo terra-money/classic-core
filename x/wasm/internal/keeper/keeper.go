@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	"github.com/spf13/viper"
@@ -84,22 +83,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetConfig returns latest wasm config
-func (k Keeper) GetConfig() *config.Config {
-	return k.wasmConfig
-}
+// StoreConfig store wasm config to local config file
+func (k Keeper) StoreConfig() {
+	rootDir := viper.GetString(flags.FlagHome)
+	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
 
-// UpdateConfig override wasm config to new config
-func (k Keeper) UpdateConfig(config *config.Config) {
-	k.wasmConfig.BaseConfig.ContractQueryGasLimit = config.BaseConfig.ContractQueryGasLimit
-
-	// add new whitelist items
-	for _, item := range strings.Split(config.BaseConfig.ContractLoggingWhitelist, ",") {
-		if _, ok := k.loggingWhitelist[item]; !ok {
-			k.loggingWhitelist[item] = true
-			k.wasmConfig.BaseConfig.ContractLoggingWhitelist += "," + item
-		}
-	}
+	config.WriteConfigFile(wasmConfigFilePath, k.wasmConfig)
 }
 
 // GetLastCodeID return last code ID

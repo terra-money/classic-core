@@ -3,10 +3,6 @@ package app
 import (
 	"io"
 	"os"
-	"path/filepath"
-
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -14,7 +10,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -355,37 +350,6 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 		if err != nil {
 			tmos.Exit(err.Error())
 		}
-	}
-
-	/////////////////////
-	// watch wasm config
-	rootDir := viper.GetString(flags.FlagHome)
-	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
-
-	_, err := os.Stat(wasmConfigFilePath)
-	if !os.IsNotExist(err) {
-		viper.SetConfigName("wasm")
-		viper.WatchConfig()
-		viper.OnConfigChange(func(e fsnotify.Event) {
-			err := viper.MergeInConfig()
-			if err != nil {
-				logger.Error("Failed to fetch updated wasm config", err)
-				return
-			}
-
-			// load wasm config dynamically
-			app.wasmKeeper.UpdateConfig(&wasmconfig.Config{
-				BaseConfig: wasmconfig.BaseConfig{
-					ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
-					ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
-				},
-			})
-		})
-
-		// update wasm config
-		tmos.TrapSignal(logger, func() {
-			wasmconfig.WriteConfigFile(wasmConfigFilePath, app.wasmKeeper.GetConfig())
-		})
 	}
 
 	return app
