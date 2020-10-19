@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.1
 	github.com/cosmos/cosmos-sdk v0.39.1
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gorilla/mux v1.7.4
 	github.com/otiai10/copy v1.0.2
 	github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776 // indirect
@@ -19,7 +20,6 @@ require (
 	github.com/tendermint/tendermint v0.33.7
 	github.com/tendermint/tm-db v0.5.1
 	gopkg.in/yaml.v2 v2.3.0
-	github.com/fsnotify/fsnotify v1.4.7
 )
 
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
