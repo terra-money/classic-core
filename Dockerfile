@@ -1,4 +1,4 @@
-FROM cosmwasm/go-ext-builder:0.8.2-alpine AS rust-builder
+FROM cosmwasm/go-ext-builder:0001-alpine AS rust-builder
 
 WORKDIR /go/src/github.com/terra-project/core
 
@@ -12,7 +12,7 @@ RUN apk add --no-cache git \
     && mv ${GO_WASM_DIR}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
 
 
-FROM cosmwasm/go-ext-builder:0.8.2-alpine AS go-builder
+FROM cosmwasm/go-ext-builder:0001-alpine AS go-builder
 
 WORKDIR /go/src/github.com/terra-project/core
 
