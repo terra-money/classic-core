@@ -9,6 +9,7 @@ import (
 
 // Oracle Errors
 var (
+	ErrUnknowDenom           = sdkerrors.Register(ModuleName, 1, "unknown denom")
 	ErrInvalidExchangeRate   = sdkerrors.Register(ModuleName, 2, "invalid exchange rate")
 	ErrNoPrevote             = sdkerrors.Register(ModuleName, 3, "no prevote")
 	ErrNoVote                = sdkerrors.Register(ModuleName, 4, "no vote")
@@ -21,5 +22,4 @@ var (
 	ErrNoAggregatePrevote    = sdkerrors.Register(ModuleName, 11, "no aggregate prevote")
 	ErrNoAggregateVote       = sdkerrors.Register(ModuleName, 12, "no aggregate vote")
 	ErrNoTobinTax            = sdkerrors.Register(ModuleName, 13, "no tobin tax")
-	ErrUnknowDenom           = sdkerrors.Register(ModuleName, 14, "unknown denom")
 )
