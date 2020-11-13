@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.1
-	github.com/cosmos/cosmos-sdk v0.39.1
+	github.com/cosmos/cosmos-sdk v0.39.2-rc1
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/otiai10/copy v1.0.2
@@ -17,8 +17,9 @@ require (
 	github.com/spf13/viper v1.6.3
 	github.com/stretchr/testify v1.6.1
 	github.com/tendermint/go-amino v0.15.1
-	github.com/tendermint/tendermint v0.33.7
+	github.com/tendermint/tendermint v0.33.8
 	github.com/tendermint/tm-db v0.5.1
+	google.golang.org/grpc v1.30.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
 
