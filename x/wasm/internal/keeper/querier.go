@@ -103,17 +103,26 @@ func queryRawStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 	return res, nil
 }
 
-func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (bz []byte, err error) {
 	// external query gas limit must be specified here
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(keeper.wasmConfig.ContractQueryGasLimit))
 
 	var params types.QueryContractParams
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	err = types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	return keeper.queryToContract(ctx, params.ContractAddress, params.Msg)
+	// recover from out-of-gas panic
+	defer func() {
+		if r := recover(); r != nil {
+			err = sdkerrors.ErrOutOfGas
+		}
+	}()
+
+	bz, err = keeper.queryToContract(ctx, params.ContractAddress, params.Msg)
+
+	return
 }
 
 func queryParameters(ctx sdk.Context, keeper Keeper) ([]byte, error) {
