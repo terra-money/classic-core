@@ -74,9 +74,9 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 	case request.Bank != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteBank]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 	case request.Custom != nil:
 		var customQuery WasmCustomQuery
 		err := json.Unmarshal(request.Custom, &customQuery)
@@ -86,9 +86,9 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 
 		if querier, ok := q.Queriers[customQuery.Route]; ok {
 			return querier.QueryCustom(ctx, customQuery.QueryData)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 	case request.Staking != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteStaking]; ok {
 			if ctx.ChainID() == "columbus-4" && ctx.BlockHeight() < 1200000 ||
@@ -115,9 +115,9 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 	case request.Wasm != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteWasm]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 	}
 
 	return nil, wasmTypes.Unknown{}
