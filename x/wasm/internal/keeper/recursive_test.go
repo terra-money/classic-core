@@ -254,7 +254,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 			if tc.expectPanic {
 				_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 				require.Error(t, err)
-				require.Equal(t, err, sdkerror.ErrOutOfGas)
+				require.Contains(t, err.Error(), sdkerror.ErrOutOfGas.Error())
 			} else {
 				// otherwise, make sure we get a good success
 				_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})

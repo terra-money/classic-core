@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"runtime/debug"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -116,7 +119,26 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (
 	// recover from out-of-gas panic
 	defer func() {
 		if r := recover(); r != nil {
-			err = sdkerrors.ErrOutOfGas
+			switch rType := r.(type) {
+			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us
+			// to keep the stracktrace.
+			case sdk.ErrorOutOfGas:
+				err = sdkerrors.Wrap(
+					sdkerrors.ErrOutOfGas, fmt.Sprintf(
+						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
+						rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
+					),
+				)
+
+			default:
+				err = sdkerrors.Wrap(
+					sdkerrors.ErrPanic, fmt.Sprintf(
+						"recovered: %v\nstack:\n%v", r, string(debug.Stack()),
+					),
+				)
+			}
+
+			bz = nil
 		}
 	}()
 
