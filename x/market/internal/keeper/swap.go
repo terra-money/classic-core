@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
@@ -141,11 +143,19 @@ func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askD
 
 	offerRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, offerCoin.Denom)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return sdk.DecCoin{}, errors.New("no effective price")
+		}
+
 		return sdk.DecCoin{}, sdkerrors.Wrap(types.ErrNoEffectivePrice, offerCoin.Denom)
 	}
 
 	askRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, askDenom)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return sdk.DecCoin{}, errors.New("no effective price")
+		}
+
 		return sdk.DecCoin{}, sdkerrors.Wrap(types.ErrNoEffectivePrice, askDenom)
 	}
 

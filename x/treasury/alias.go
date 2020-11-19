@@ -29,7 +29,6 @@ const (
 var (
 	// functions aliases
 	RegisterCodec                 = types.RegisterCodec
-	ErrInvalidEpoch               = types.ErrInvalidEpoch
 	NewGenesisState               = types.NewGenesisState
 	DefaultGenesisState           = types.DefaultGenesisState
 	ValidateGenesis               = types.ValidateGenesis

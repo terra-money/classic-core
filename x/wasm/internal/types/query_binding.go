@@ -7,6 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	core "github.com/terra-project/core/types"
 )
 
 // WasmQuerierInterface - query registration interface for other modules
@@ -91,19 +93,7 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 	case request.Staking != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteStaking]; ok {
-			if ctx.ChainID() == "columbus-4" && ctx.BlockHeight() < 1200000 ||
-				ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() < 1350000 {
-				// Expected time:
-				// MAINNET
-				// Fri Jan 01 2021 18:00:00 GMT+0900 (KST)
-				// Fri Jan 01 2021 09:00:00 GMT+0000 (UTC)
-				// Fri Jan 01 2021 01:00:00 GMT-0800 (PST)
-				//
-				// TEQUILA
-				// Fri Nov 27 2020 12:00:00 GMT+0900 (KST)
-				// Fri Nov 27 2020 03:00:00 GMT+0000 (UTC)
-				// Fri Nov 26 2020 19:00:00 GMT-0800 (KST)
-
+			if core.IsWaitingForSoftfork(ctx, 1) {
 				panic("NOT SUPPORTED UNTIL SOFTFORK TIME")
 			}
 

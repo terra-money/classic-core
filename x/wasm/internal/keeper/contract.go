@@ -2,22 +2,32 @@ package keeper
 
 import (
 	"encoding/binary"
+	"errors"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto"
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system
 func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, err error) {
 	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, errors.New("contract size is too huge")
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 
 	wasmCode, err = k.uncompress(ctx, wasmCode)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, err
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
@@ -26,6 +36,10 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 
 	codeHash, err = k.wasmer.Create(wasmCode)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, err
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 

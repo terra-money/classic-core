@@ -683,7 +683,7 @@ func TestVoteTargets(t *testing.T) {
 }
 
 func TestAbstainWithSmallStakingPower(t *testing.T) {
-	input, h := setup_with_small_voting_power(t)
+	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
