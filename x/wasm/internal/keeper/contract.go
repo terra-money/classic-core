@@ -180,7 +180,11 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: execute")
 
 	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+		}
+
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, "execute msg size is too huge")
 	}
 
 	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
