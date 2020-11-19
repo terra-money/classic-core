@@ -6,6 +6,7 @@ import (
 
 // Wasm Errors
 var (
+	ErrInternal            = sdkerrors.Register(ModuleName, 1, "internal error")
 	ErrAccountExists       = sdkerrors.Register(ModuleName, 2, "contract account already exists")
 	ErrInstantiateFailed   = sdkerrors.Register(ModuleName, 3, "instantiate wasm contract failed")
 	ErrExecuteFailed       = sdkerrors.Register(ModuleName, 4, "execute wasm contract failed")

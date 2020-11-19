@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,7 +40,7 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 	// check the denom is in the vote target
 	if !keeper.IsVoteTarget(ctx, msg.Denom) {
 		if core.IsWaitingForSoftfork(ctx, 1) {
-			return nil, errors.New("unknown denom")
+			return nil, sdkerrors.Wrap(ErrInternal, "unknown denom")
 		}
 
 		return nil, sdkerrors.Wrap(ErrUnknownDenom, msg.Denom)
@@ -232,7 +231,7 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgA
 	for _, tuple := range exchangeRateTuples {
 		if !keeper.IsVoteTarget(ctx, tuple.Denom) {
 			if core.IsWaitingForSoftfork(ctx, 1) {
-				return nil, errors.New("unknown denom")
+				return nil, sdkerrors.Wrap(ErrInternal, "unknown denom")
 			}
 
 			return nil, sdkerrors.Wrap(ErrUnknownDenom, tuple.Denom)

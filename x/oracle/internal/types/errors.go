@@ -9,6 +9,7 @@ import (
 
 // Oracle Errors
 var (
+	ErrInternal              = sdkerrors.Register(ModuleName, 1, "internal error")
 	ErrInvalidExchangeRate   = sdkerrors.Register(ModuleName, 2, "invalid exchange rate")
 	ErrNoPrevote             = sdkerrors.Register(ModuleName, 3, "no prevote")
 	ErrNoVote                = sdkerrors.Register(ModuleName, 4, "no vote")

@@ -136,8 +136,7 @@ func (msg MsgExchangeRateVote) GetSigners() []sdk.AccAddress {
 func (msg MsgExchangeRateVote) ValidateBasic() error {
 
 	if len(msg.Denom) == 0 {
-		// TODO update error to registered one
-		return errors.New("invalid denom length")
+		return sdkerrors.Wrap(ErrInternal, "invalid denom length")
 	}
 
 	if msg.Feeder.Empty() {
