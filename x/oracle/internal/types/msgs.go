@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -68,8 +67,7 @@ func (msg MsgExchangeRatePrevote) ValidateBasic() error {
 	}
 
 	if len(msg.Denom) == 0 {
-		// TODO update error to registered one
-		return errors.New("invalid denom length")
+		return sdkerrors.Wrap(ErrInternal, "invalid denom length")
 	}
 
 	if msg.Feeder.Empty() {

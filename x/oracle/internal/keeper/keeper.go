@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -185,7 +184,7 @@ func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate
 	b := store.Get(types.GetExchangeRateKey(denom))
 	if b == nil {
 		if core.IsWaitingForSoftfork(ctx, 1) {
-			return sdk.ZeroDec(), errors.New("unknown denom")
+			return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrInternal, "unknown denom")
 		}
 
 		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownDenom, denom)

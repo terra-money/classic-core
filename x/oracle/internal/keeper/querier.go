@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"errors"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,7 +58,7 @@ func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	rate, err := keeper.GetLunaExchangeRate(ctx, params.Denom)
 	if err != nil {
 		if core.IsWaitingForSoftfork(ctx, 1) {
-			return nil, errors.New("unknown denom")
+			return nil, sdkerrors.Wrap(types.ErrInternal, "unknown denom")
 		}
 
 		return nil, sdkerrors.Wrap(types.ErrUnknownDenom, params.Denom)
