@@ -1,18 +1,85 @@
-## v0.3.4
+## 0.4.0
+
+### Release Notes
+- [Cosmos-SDK v0.38 Release Notes](https://github.com/cosmos/cosmos-sdk/wiki/v0.38-Release-Notes)
+- [Cosmos-SDK v0.39.0 Release Notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.39.0)
+- [Cosmos-SDK v0.39.1 Release Notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.39.1)
+- [Cosmos-SDK Breaking Changes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.38.0)
 
 ### Improvements
 
- * (sdk) Bump SDK version to [v0.37.9](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.9).
+* [\#407](https://github.com/terra-project/core/pull/407) Allow `gov/MsgVote` to be grantable
+* [\#405](https://github.com/terra-project/core/pull/405) CosmWasm oracle exchange rates query interface
+* [\#388](https://github.com/terra-project/core/pull/388) Bump CosmWasm to v0.10.1
+* [\#383](https://github.com/terra-project/core/pull/383) Bump SDK version to v0.39.1
+* [\#374](https://github.com/terra-project/core/pull/374) Bump SDK version to v0.39 and CosmWasm to v0.9.4
+* [\#357](https://github.com/terra-project/core/pull/357) Bump CosmWasm to v0.9
+* [\#352](https://github.com/terra-project/core/pull/352) MsgAuthorization module to allow subkey feature
+* [\#349](https://github.com/terra-project/core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
+* [\#348](https://github.com/terra-project/core/pull/348) MsgSwapSend to allow sending all swap coin
+* [\#347](https://github.com/terra-project/core/pull/347) CosmWasm custom msg & querier handler
+* [\#343](https://github.com/terra-project/core/pull/343) Burn Address
+* [\#335](https://github.com/terra-project/core/pull/335) CosmWasm integration
+* [\#325](https://github.com/terra-project/core/pull/325) New oracle msgs for vote process optimization
+* [\#324](https://github.com/terra-project/core/pull/324) Update to emit events at proposal handler 
+* [\#323](https://github.com/terra-project/core/pull/323) Bump SDK version to v0.38.x
 
+### Bug Fixes
+* [\#360](https://github.com/terra-project/core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
+* [\#336](https://github.com/terra-project/core/pull/336) Allow zero tobin tax rate
+
+### Breaking Changes
+
+#### Keys Migration
+Any existing keys that were managed via Keybase in prior versions must be migrated. To migrate keys, execute the following:
+```
+$ terracli keys migrate [--home] [--keyring-backend]
+```
+
+The above command will provide a prompt for each existing key and ask if you wish for it to be skipped or not. If the key is not to be skipped, you must provide the correct passphrase for it to be migrated successfully.
+
+#### Pruning Configuration
+
+The operator can now set the pruning options by passing a pruning configuration via command line option or `app.toml`. The pruning flag supports the following
+options: `default`, `everything`, `nothing`, `custom` - see the [PR](https://github.com/cosmos/cosmos-sdk/pull/6475) for further details. If the operator chooses `custom`, they may want to provide either of the granular pruning values:
+
+- `pruning-keep-recent`
+- `pruning-keep-every`
+- `pruning-interval`
+
+The former two options dictate how many recent versions are kept on disk and the offset of what versions are kept after that
+respectively, and the latter defines the height interval in which versions are deleted in a batch. 
+
+**The operator, who wants to upgrade the node from v0.3 to v0.4, must change pruning option in `app.toml` to one of above options.**
+
+#### API Changes
+* The `block_meta` field has been removed from `/blocks/{block_height}` becasuse it was redandunt data with `block_header`.
+* The `whitelist` of`/oracle/parameters` response has been changed from `[]string` to `[]{ name: string; tobin_tax: string; }`
+
+## 0.3.6
+
+### Improvements
+#### [99581ba](https://github.com/terra-project/core/commit/99581baf89a838cf09a25d47adc2fd2cc97ab4a2) Ledger update(custom ledger library) & Bump SDK to v0.37.13
+
+## 0.3.5
+
+### Improvements
+#### [654b5cb](https://github.com/terra-project/core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11 
+
+### Bug Fixes
+#### [7a3d01c](https://github.com/terra-project/core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
+
+## 0.3.4
+
+### Improvements
+#### [\#338](https://github.com/terra-project/core/pull/338) Bump SDK to v0.37.9 for Tendermint security patch
 
 ## 0.3.3
 
 ### Improvements
-* [\#319](https://github.com/terra-project/core/pull/319) Bump SDK version to [v0.37.6]((https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.6))
+#### [\#319](https://github.com/terra-project/core/pull/319) Bump SDK to v0.37.6
+#### [\#321](https://github.com/terra-project/core/pull/321) Revert to distribute zero oracle rewards
 
-### Bug Fixes
- * [\#321](https://github.com/terra-project/core/pull/321) revert to distribute zero oracle reward (#321)
- 
 ## 0.3.2
 
 ### Improvements

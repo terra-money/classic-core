@@ -3,6 +3,8 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+
+	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 )
 
 // ModuleCdc defines module codec
@@ -18,7 +20,6 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(gov.MsgVote{}, "gov/MsgVote", nil)
 
 	cdc.RegisterConcrete(gov.TextProposal{}, "gov/TextProposal", nil)
-	cdc.RegisterConcrete(gov.SoftwareUpgradeProposal{}, "gov/SoftwareUpgradeProposal", nil)
 }
 
 // RegisterProposalTypeCodec registers an external proposal content type defined
@@ -31,4 +32,6 @@ func RegisterProposalTypeCodec(o interface{}, name string) {
 // TODO determine a good place to seal this codec
 func init() {
 	RegisterCodec(ModuleCdc)
+
+	msgauthexported.RegisterMsgAuthTypeCodec(gov.MsgVote{}, "gov/MsgVote")
 }

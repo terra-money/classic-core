@@ -94,26 +94,26 @@ type MockValidator struct {
 
 var _ exported.ValidatorI = MockValidator{}
 
-func (MockValidator) IsJailed() bool                                      { return false }
-func (MockValidator) GetMoniker() string                                  { return "" }
-func (MockValidator) GetStatus() sdk.BondStatus                           { return sdk.Bonded }
-func (MockValidator) IsBonded() bool                                      { return true }
-func (MockValidator) IsUnbonded() bool                                    { return false }
-func (MockValidator) IsUnbonding() bool                                   { return false }
-func (v MockValidator) GetOperator() sdk.ValAddress                       { return v.operator }
-func (MockValidator) GetConsPubKey() crypto.PubKey                        { return nil }
-func (MockValidator) GetConsAddr() sdk.ConsAddress                        { return nil }
-func (v MockValidator) GetTokens() sdk.Int                                { return sdk.TokensFromConsensusPower(v.power) }
-func (v MockValidator) GetBondedTokens() sdk.Int                          { return sdk.TokensFromConsensusPower(v.power) }
-func (v MockValidator) GetConsensusPower() int64                          { return v.power }
-func (v MockValidator) GetCommission() sdk.Dec                            { return sdk.ZeroDec() }
-func (v MockValidator) GetMinSelfDelegation() sdk.Int                     { return sdk.OneInt() }
-func (v MockValidator) GetDelegatorShares() sdk.Dec                       { return sdk.NewDec(v.power) }
-func (v MockValidator) TokensFromShares(sdk.Dec) sdk.Dec                  { return sdk.ZeroDec() }
-func (v MockValidator) TokensFromSharesTruncated(sdk.Dec) sdk.Dec         { return sdk.ZeroDec() }
-func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec           { return sdk.ZeroDec() }
-func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, sdk.Error) { return sdk.ZeroDec(), nil }
-func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, sdk.Error) {
+func (MockValidator) IsJailed() bool                                  { return false }
+func (MockValidator) GetMoniker() string                              { return "" }
+func (MockValidator) GetStatus() sdk.BondStatus                       { return sdk.Bonded }
+func (MockValidator) IsBonded() bool                                  { return true }
+func (MockValidator) IsUnbonded() bool                                { return false }
+func (MockValidator) IsUnbonding() bool                               { return false }
+func (v MockValidator) GetOperator() sdk.ValAddress                   { return v.operator }
+func (MockValidator) GetConsPubKey() crypto.PubKey                    { return nil }
+func (MockValidator) GetConsAddr() sdk.ConsAddress                    { return nil }
+func (v MockValidator) GetTokens() sdk.Int                            { return sdk.TokensFromConsensusPower(v.power) }
+func (v MockValidator) GetBondedTokens() sdk.Int                      { return sdk.TokensFromConsensusPower(v.power) }
+func (v MockValidator) GetConsensusPower() int64                      { return v.power }
+func (v MockValidator) GetCommission() sdk.Dec                        { return sdk.ZeroDec() }
+func (v MockValidator) GetMinSelfDelegation() sdk.Int                 { return sdk.OneInt() }
+func (v MockValidator) GetDelegatorShares() sdk.Dec                   { return sdk.NewDec(v.power) }
+func (v MockValidator) TokensFromShares(sdk.Dec) sdk.Dec              { return sdk.ZeroDec() }
+func (v MockValidator) TokensFromSharesTruncated(sdk.Dec) sdk.Dec     { return sdk.ZeroDec() }
+func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec       { return sdk.ZeroDec() }
+func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, error) { return sdk.ZeroDec(), nil }
+func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, error) {
 	return sdk.ZeroDec(), nil
 }
 func (v MockValidator) SetPower(power int64) { v.power = power }

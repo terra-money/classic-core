@@ -32,18 +32,24 @@ var (
 		secp256k1.GenPrivKey().PubKey(),
 		secp256k1.GenPrivKey().PubKey(),
 		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
 	}
 
 	Addrs = []sdk.AccAddress{
 		sdk.AccAddress(PubKeys[0].Address()),
 		sdk.AccAddress(PubKeys[1].Address()),
 		sdk.AccAddress(PubKeys[2].Address()),
+		sdk.AccAddress(PubKeys[3].Address()),
+		sdk.AccAddress(PubKeys[4].Address()),
 	}
 
 	ValAddrs = []sdk.ValAddress{
 		sdk.ValAddress(PubKeys[0].Address()),
 		sdk.ValAddress(PubKeys[1].Address()),
 		sdk.ValAddress(PubKeys[2].Address()),
+		sdk.ValAddress(PubKeys[3].Address()),
+		sdk.ValAddress(PubKeys[4].Address()),
 	}
 
 	InitTokens = sdk.TokensFromConsensusPower(200)
@@ -86,7 +92,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 
@@ -100,7 +105,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 
@@ -114,9 +118,9 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.ModuleName:          true,
 	}
 
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, params.DefaultCodespace)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accountKeeper := auth.NewAccountKeeper(cdc, keyAcc, paramsKeeper.Subspace(auth.DefaultParamspace), auth.ProtoBaseAccount)
-	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), bank.DefaultCodespace, blackListAddrs)
+	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), blackListAddrs)
 
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:     nil,
@@ -132,21 +136,21 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	stakingKeeper := staking.NewKeeper(
 		cdc,
-		keyStaking, tKeyStaking,
+		keyStaking,
 		supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
-		staking.DefaultCodespace,
 	)
 
 	distrKeeper := distr.NewKeeper(
 		cdc,
 		keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
-		stakingKeeper, supplyKeeper,
-		distr.DefaultCodespace, auth.FeeCollectorName, blackListAddrs)
+		stakingKeeper, supplyKeeper, auth.FeeCollectorName, blackListAddrs)
 
 	distrKeeper.SetFeePool(ctx, distr.InitialFeePool())
-	distrKeeper.SetCommunityTax(ctx, sdk.NewDecWithPrec(2, 2))
-	distrKeeper.SetBaseProposerReward(ctx, sdk.NewDecWithPrec(1, 2))
-	distrKeeper.SetBonusProposerReward(ctx, sdk.NewDecWithPrec(4, 2))
+	distrParams := distr.DefaultParams()
+	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
+	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
+	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)
+	distrKeeper.SetParams(ctx, distrParams)
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
 	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
@@ -171,10 +175,14 @@ func CreateTestInput(t *testing.T) TestInput {
 		require.NoError(t, err)
 	}
 
-	keeper := NewKeeper(cdc, keyOracle, paramsKeeper.Subspace(types.DefaultParamspace), distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName, types.DefaultCodespace)
+	keeper := NewKeeper(cdc, keyOracle, paramsKeeper.Subspace(types.DefaultParamspace), distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName)
 
 	defaults := types.DefaultParams()
 	keeper.SetParams(ctx, defaults)
+
+	for _, denom := range defaults.Whitelist {
+		keeper.SetTobinTax(ctx, denom.Name, denom.TobinTax)
+	}
 
 	stakingKeeper.SetHooks(staking.NewMultiStakingHooks(distrKeeper.Hooks()))
 
@@ -187,9 +195,4 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey crypto.PubKey, amt
 		address, pubKey, sdk.NewCoin(core.MicroLunaDenom, amt),
 		staking.Description{}, commission, sdk.OneInt(),
 	)
-}
-
-func NewTestMsgDelegate(delAddr sdk.AccAddress, valAddr sdk.ValAddress, delAmount sdk.Int) staking.MsgDelegate {
-	amount := sdk.NewCoin(core.MicroLunaDenom, delAmount)
-	return staking.NewMsgDelegate(delAddr, valAddr, amount)
 }

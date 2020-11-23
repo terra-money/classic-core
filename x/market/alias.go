@@ -11,18 +11,14 @@ import (
 )
 
 const (
-	DefaultCodespace     = types.DefaultCodespace
-	CodeInsufficientSwap = types.CodeInvalidOfferCoin
-	CodeNoEffectivePrice = types.CodeNoEffectivePrice
-	CodeRecursiveSwap    = types.CodeRecursiveSwap
-	ModuleName           = types.ModuleName
-	StoreKey             = types.StoreKey
-	RouterKey            = types.RouterKey
-	QuerierRoute         = types.QuerierRoute
-	DefaultParamspace    = types.DefaultParamspace
-	QuerySwap            = types.QuerySwap
-	QueryTerraPoolDelta  = types.QueryTerraPoolDelta
-	QueryParameters      = types.QueryParameters
+	ModuleName          = types.ModuleName
+	StoreKey            = types.StoreKey
+	RouterKey           = types.RouterKey
+	QuerierRoute        = types.QuerierRoute
+	DefaultParamspace   = types.DefaultParamspace
+	QuerySwap           = types.QuerySwap
+	QueryTerraPoolDelta = types.QueryTerraPoolDelta
+	QueryParameters     = types.QueryParameters
 )
 
 var (
@@ -35,24 +31,22 @@ var (
 	DefaultGenesisState = types.DefaultGenesisState
 	ValidateGenesis     = types.ValidateGenesis
 	NewMsgSwap          = types.NewMsgSwap
+	NewMsgSwapSend      = types.NewMsgSwapSend
 	DefaultParams       = types.DefaultParams
 	NewQuerySwapParams  = types.NewQuerySwapParams
+	ParamKeyTable       = types.ParamKeyTable
 	NewKeeper           = keeper.NewKeeper
-	ParamKeyTable       = keeper.ParamKeyTable
 	NewQuerier          = keeper.NewQuerier
 
 	// variable aliases
-	ModuleCdc                         = types.ModuleCdc
-	TerraPoolDeltaKey                 = types.TerraPoolDeltaKey
-	ParamStoreKeyBasePool             = types.ParamStoreKeyBasePool
-	ParamStoreKeyPoolRecoveryPeriod   = types.ParamStoreKeyPoolRecoveryPeriod
-	ParamStoreKeyMinSpread            = types.ParamStoreKeyMinSpread
-	ParmaStoreKeyTobinTax             = types.ParmaStoreKeyTobinTax
-	ParmaStoreKeyIlliquidTobinTaxList = types.ParmaStoreKeyIlliquidTobinTaxList
-	DefaultBasePool                   = types.DefaultBasePool
-	DefaultPoolRecoveryPeriod         = types.DefaultPoolRecoveryPeriod
-	DefaultMinSpread                  = types.DefaultMinSpread
-	DefaultTobinTax                   = types.DefaultTobinTax
+	ModuleCdc                       = types.ModuleCdc
+	TerraPoolDeltaKey               = types.TerraPoolDeltaKey
+	ParamStoreKeyBasePool           = types.ParamStoreKeyBasePool
+	ParamStoreKeyPoolRecoveryPeriod = types.ParamStoreKeyPoolRecoveryPeriod
+	ParamStoreKeyMinSpread          = types.ParamStoreKeyMinStabilitySpread
+	DefaultBasePool                 = types.DefaultBasePool
+	DefaultPoolRecoveryPeriod       = types.DefaultPoolRecoveryPeriod
+	DefaultMinSpread                = types.DefaultMinStabilitySpread
 )
 
 type (
@@ -60,6 +54,7 @@ type (
 	OracleKeeper    = types.OracleKeeper
 	GenesisState    = types.GenesisState
 	MsgSwap         = types.MsgSwap
+	MsgSwapSend     = types.MsgSwapSend
 	Params          = types.Params
 	QuerySwapParams = types.QuerySwapParams
 	Keeper          = keeper.Keeper

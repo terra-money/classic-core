@@ -21,6 +21,8 @@ tags:
     description: Slashing module APIs
   - name: Distribution
     description: Fee distribution module APIs
+  - name: Mint
+    description: Minting module APIs
   - name: Supply
     description: Supply module APIs
   - name: Market
@@ -29,9 +31,10 @@ tags:
     description: Get price and voting modules APIs
   - name: Treasury
     description: Treasury modules APIs
-  - name: version
-  - name: Misc
-    description: Query app version
+  - name: Wasm
+    description: Wasm modules APIs
+  - name: Authorization
+    description: Authorization modules APIs
 schemes:
   - https
 host: lcd.terra.dev
@@ -272,6 +275,10 @@ paths:
           description: Maximum number of items per page
           type: integer
           x-example: 1
+        - in: query
+          name: tx.height
+          description: "Tx height range option. It should be integer or query string(GTE, GT, LTE, LT): `GET /txs?tx.height=\"GTE3,LT10\"` or `GET /txs?tx.height=100`\nIn case using query string, the range can not exceed 100"
+          x-example: 100
       responses:
         200:
           description: All txs matching the provided events
@@ -1941,7 +1948,7 @@ paths:
               $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /distribution/params:
+  /distribution/parameters:
     get:
       summary: Fee distribution parameters
       tags:
@@ -1959,6 +1966,60 @@ paths:
                 type: string
               community_tax:
                 type: string
+        500:
+          description: Internal Server Error
+  /minting/parameters:
+    get:
+      summary: Minting module parameters
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            properties:
+              mint_denom:
+                type: string
+              inflation_rate_change:
+                type: string
+              inflation_max:
+                type: string
+              inflation_min:
+                type: string
+              goal_bonded:
+                type: string
+              blocks_per_year:
+                type: string
+        500:
+          description: Internal Server Error
+  /minting/inflation:
+    get:
+      summary: Current minting inflation value
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+        500:
+          description: Internal Server Error
+  /minting/annual-provisions:
+    get:
+      summary: Current minting annual provisions value
+      tags:
+        - Mint
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
         500:
           description: Internal Server Error
   /supply/total:
@@ -2179,7 +2240,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/{denom}/prevotes:
     post:
-      summary: Generate oracle exchange rate prevote message containing hash of an vote
+      summary: Generate oracle exchange rate prevote message containing a hash of a vote
       tags:
         - Oracle
       produces:
@@ -2408,6 +2469,100 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+  /oracle/voters/{validator}/aggregate_prevote:
+    post:
+      summary: Generate oracle aggregate exchange rate prevote message containing a hash
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+        - in: body
+          name: Aggregate Prevote request body
+          schema:
+            $ref: "#/definitions/AggregatePrevoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get the currently outstanding aggregate exchange rate oracle prevote of a validator
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/AggregateExchangeRatePrevote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /oracle/voters/{validator}/aggregate_vote:
+    post:
+      summary: Generate oracle aggregate exchange rate vote message containing exchange rates and salt to prove the aggregate prevote
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+        - in: body
+          name: Aggregate Vote request body
+          schema:
+            $ref: "#/definitions/AggregateVoteReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get the currently outstanding aggregate exchange rate oracle vote of a validator
+      tags:
+        - Oracle
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: validator
+          description: oracle operator
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/AggregateExchangeRateVote"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /oracle/parameters:
     get:
       summary: Get oracle params
@@ -2523,6 +2678,401 @@ paths:
             $ref: "#/definitions/TreasuryParams"
         404:
           description: Not Found
+  /treasury/indicators:
+    get:
+      summary: Get the current treasury indicators
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Ok
+          schema:
+            properties:
+              trl_year:
+                type: string
+                description: "Tax Rewards per staked Luna over a year of rolling average"
+                example: "0.000407428004800011"
+              trl_month:
+                type: string
+                description: "Tax Rewards per staked Luna over a month of rolling average"
+                example: "0.000366833881714302"
+
+  /wasm/codes:
+    post:
+      summary: Generate wasm store code message
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: store code request body
+          schema:
+            $ref: "#/definitions/StoreCodeReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /wasm/codes/{codeID}:
+    post:
+      summary: Instantiate wasm contract message
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: codeID
+          description: code ID you want to instantiate
+          required: true
+          type: number
+        - in: body
+          name: instantiate contract request body
+          schema:
+            $ref: "#/definitions/InstantiateContractReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get code info of the code ID
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: codeID
+          description: code ID you want to instantiate
+          required: true
+          type: number
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/CodeInfo"
+  /wasm/contracts/{contractAddress}:
+    post:
+      summary: Execute wasm contract message
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to execute
+          required: true
+          type: string
+        - in: body
+          name: execute contract request body
+          schema:
+            $ref: "#/definitions/ExecuteContractReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get contract info of the contract Address
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to execute
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/ContractInfo"
+  /wasm/contracts/{contractAddress}/migrate:
+    post:
+      summary: Migrate wasm contract to new code base
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to migrate
+          required: true
+          type: string
+        - in: body
+          name: migrate contract request body
+          schema:
+            $ref: "#/definitions/MigrateContractReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /wasm/contracts/{contractAddress}/owner:
+    post:
+      summary: Update wasm contract owner to new address
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to update owner
+          required: true
+          type: string
+        - in: body
+          name: update contract owner request body
+          schema:
+            $ref: "#/definitions/UpdateContractOwnerReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /wasm/contracts/{contractAddress}/store:
+    get:
+      summary: Get stored information with query msg
+      tags:
+        - Wasm
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to lookup
+          required: true
+          type: string
+        - in: query
+          name: query_msg
+          description: json formatted query msg
+          required: true
+          type: string
+          x-example: "{}"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+  /wasm/contracts/{contractAddress}/store/raw:
+    get:
+      summary: Get stored information with store key
+      tags:
+        - Wasm
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to lookup
+          required: true
+          type: string
+        - in: query
+          name: key
+          description: raw key you want to query
+          required: true
+          type: string
+        - in: query
+          name: subkey
+          description: raw subkey attached to the key
+          required: false
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+  /wasm/parameters:
+    get:
+      summary: Get wasm module params
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/WasmParams"
+        404:
+          description: Not Found
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants:
+    get:
+      summary: Get all grants between the granter and the grantee
+      tags:
+        - Authorization
+      parameters:
+        - in: path
+          name: granterAddress
+          description: granter address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          description: grantee address you want to lookup
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: grant informations (one of GenericGrantInfo and SendGrantInfo)
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                GenericGrantInfo:
+                    $ref: "#/definitions/GenericGrantInfo"
+                SendGrantInfo:
+                    $ref: "#/definitions/SendGrantInfo"
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}:
+    post:
+      summary: Grant msg execute permission to grantee address
+      tags:
+        - Authorization
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: granterAddress
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          required: true
+          type: string
+        - in: body
+          name: grant request body
+          schema:
+            $ref: "#/definitions/GrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+    get:
+      summary: Get grant about a specific msg type between the granter and the grantee
+      tags:
+        - Authorization
+      parameters:
+        - in: path
+          name: granterAddress
+          description: granter address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          description: grantee address you want to lookup
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          description: msg type you want to lookup
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: grant information (one of GenericGrantInfo and SendGrantInfo)
+          schema:
+            type: object
+            properties:
+              GenericGrantInfo:
+                  $ref: "#/definitions/GenericGrantInfo"
+              SendGrantInfo:
+                  $ref: "#/definitions/SendGrantInfo"
+  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}/revoke:
+    post:
+      summary: Revoke grant from grantee address
+      tags:
+        - Authorization
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: granterAddress
+          required: true
+          type: string
+        - in: path
+          name: granteeAddress
+          required: true
+          type: string
+        - in: path
+          name: msgType
+          required: true
+          type: string
+        - in: body
+          name: revoke request body
+          schema:
+            $ref: "#/definitions/RevokeGrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /msgauth/execute:
+    post:
+      summary: Execute msgs from grantee address
+      tags:
+        - Authorization
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: revoke request body
+          schema:
+            $ref: "#/definitions/ExecuteGrantReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
 definitions:
   CheckTxResult:
     type: object
@@ -2967,13 +3517,13 @@ definitions:
   TallyResult:
     type: object
     properties:
-      yes:
+      'yes':
         type: string
         example: "0.0000000000"
       abstain:
         type: string
         example: "0.0000000000"
-      no:
+      'no':
         type: string
         example: "0.0000000000"
       no_with_veto:
@@ -3047,16 +3597,12 @@ definitions:
     properties:
       delegator_address:
         type: string
-        example: "terra1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0tmam9"
       validator_address:
         type: string
-        "example": "terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk"
       shares:
         type: string
-        example: "1000000"
       balance:
-        type: string
-        example: "1000000"
+        $ref: "#/definitions/Coin"
   UnbondingDelegation:
     type: object
     properties:
@@ -3246,6 +3792,10 @@ definitions:
         $ref: "#/definitions/BaseLazyGradedVestingAccount"
   SwapReq:
     type: object
+    required:
+      - base_req
+      - offer_coin
+      - ask_denom
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
@@ -3253,7 +3803,11 @@ definitions:
         $ref: "#/definitions/Coin"
       ask_denom:
         type: string
-        example: uluna
+        example: "uluna"
+      receiver:
+        type: string
+        description: "the `receiver` field can be skipped when the receiver is trader"
+        example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
   MarketParams:
     type: object
     properties:
@@ -3274,11 +3828,11 @@ definitions:
       exchange_rate:
         type: number
         example: "1000.0"
-        description: "exchange rate of Luna in denom currency is to make provte hash; this field is required to submit prevote in case absense of hash"
+        description: "exchange rate of Luna in denom currency is to make prevote hash; this field is required to submit prevote in case absence of hash"
       salt:
         type: string
         example: "abcd"
-        description: "salt is to make prevote hash; this field is required to submit prevote in case  absense of hash"
+        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
       hash:
         type: string
         example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
@@ -3300,6 +3854,36 @@ definitions:
         description: "proof salt was used to make prevote hash; initial prevote does not require this field"
       validator:
         $ref: "#/definitions/ValidatorAddress"
+  AggregatePrevoteReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      exchange_rates:
+        type: string
+        example: "1000.0ukrw,1.2uusd,0.99usdr"
+        description: "exchange rates of Luna in denom currencies are to make aggregate prevote hash; this field is required to submit prevote in case absence of hash"
+      salt:
+        type: string
+        example: "abcd"
+        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
+        description: "hex string; hash of next vote; empty == skip prevote"
+  AggregateVoteReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      exchange_rates:
+        type: string
+        example: "1000.0ukrw,1.2uusd,0.99usdr"
+        description: "proof exchange rates of Luna in denom currency were used to make aggregate prevote hash"
+      salt:
+        type: string
+        example: "abcd"
+        description: "proof salt was used to make prevote hash; initial prevote does not require this field"
   DelegateReq:
     type: object
     properties:
@@ -3332,6 +3916,26 @@ definitions:
       submit_block:
         type: number
         example: "1"
+  AggregateExchangeRatePrevote:
+    type: object
+    properties:
+      hash:
+        type: string
+        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
+      voter:
+        $ref: "#/definitions/ValidatorAddress"
+      submit_block:
+        type: number
+        example: "1"
+  AggregateExchangeRateVote:
+    type: object
+    properties:
+      exchange_rates:
+        type: array
+        items:
+          $ref: "#/definitions/DecCoin"
+      voter:
+        $ref: "#/definitions/ValidatorAddress"
   OracleParams:
     type: object
     properties:
@@ -3392,14 +3996,29 @@ definitions:
       window_probation:
         type: integer
         example: "12"
-      oracle_share:
+  WasmParams:
+    type: object
+    properties:
+      max_contract_size:
         type: number
-        format: float
-        example: "0.1"
-      budget_share:
+        format: integer
+        example: "1000000"
+        description: "allowed max contract bytes size"
+      max_contract_gas:
         type: number
-        format: float
-        example: "0.9"
+        format: integer
+        example: "1000000"
+        description: "allowed max gas usages per each contract execution"
+      max_contract_msg_size:
+        type: number
+        format: integer
+        example: "1000000"
+        description: "allowed max contract exe msg bytes size"
+      gas_multiplier:
+        type: number
+        format: integer
+        example: "100"
+        description: "defines how many cosmwasm gas points = 1 sdk gas point"
   MultiSignPubKey:
     type: object
     properties:
@@ -3453,3 +4072,152 @@ definitions:
         type: number
         format: integer
         example: "10000"
+  CodeInfo:
+    type: object
+    properties:
+      code_hash:
+        type: string
+      creator:
+        type: string
+  ContractInfo:
+    type: object
+    properties:
+      code_id:
+        type: string
+      address:
+        type: string
+      creator:
+        type: string
+      init_msg:
+        type: string
+  StoreCodeReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      wasm_bytes:
+        type: string
+        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  InstantiateContractReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      init_coins:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      init_msg:
+        type: string
+        description: json formatted string
+        example: "{}"
+  ExecuteContractReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      coins:
+        type: array
+        items:
+          $ref: "#/definitions/Coin"
+      exec_msg:
+        type: string
+        example: "{}"
+  MigrateContractReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      new_code_id:
+        type: number
+        format: integer
+        example: 10
+      migrate_msg:
+        type: string
+        example: "{}"
+  UpdateContractOwnerReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      new_owner:
+        $ref: "#/definitions/Address"
+        description: json formatted string
+        example: "{}"
+  GenericAuthorization:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "msgauth/GenericAuthorization"
+      value:
+        type: object
+        properties:
+          msg_type:
+            type: string
+            example: "send"
+  SendAuthorization:
+    type: object
+    properties:
+      type:
+        type: string
+        example: "msgauth/SendAuthorization"
+      value:
+        type: object
+        properties:
+          spend_limit:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
+  GenericGrantInfo:
+    type: object
+    properties:
+      authorization:
+        $ref: "#/definitions/GenericAuthorization"
+      expiration:
+        type: string
+        example: "2021-06-24T09:33:20.012999Z"
+  SendGrantInfo:
+    type: object
+    properties:
+      authorization:
+        $ref: "#/definitions/SendAuthorization"
+      expiration:
+        type: string
+        example: "2021-06-24T09:33:20.012999Z"
+  GrantReq:
+    type: object
+    required:
+      - base_req
+      - period
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      period:
+        type: string
+        description: "nano second of time duration"
+        example: "3600000000000"
+      limit:
+        type: array        
+        items:
+          $ref: "#/definitions/Coin"
+        description: "required when grant MsgType == send"  
+  RevokeGrantReq:
+    type: object
+    required:
+      - base_req
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+  ExecuteGrantReq:
+    type: object
+    required:
+      - base_req
+      - msgs
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      msgs:
+        type: array
+        items:
+          $ref: "#/definitions/Msg"

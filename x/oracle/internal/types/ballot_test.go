@@ -17,6 +17,99 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func TestToMap(t *testing.T) {
+	tests := struct {
+		votes   []VoteForTally
+		isValid []bool
+	}{
+
+		[]VoteForTally{
+			{
+				ExchangeRateVote{
+					Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
+					Denom:        core.MicroKRWDenom,
+					ExchangeRate: sdk.NewDec(1600),
+				},
+				100,
+			},
+			{
+				ExchangeRateVote{
+					Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
+					Denom:        core.MicroKRWDenom,
+					ExchangeRate: sdk.ZeroDec(),
+				},
+				100,
+			},
+			{
+				ExchangeRateVote{
+					Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
+					Denom:        core.MicroKRWDenom,
+					ExchangeRate: sdk.NewDec(1500),
+				},
+				100,
+			},
+		},
+		[]bool{true, false, true},
+	}
+
+	pb := ExchangeRateBallot(tests.votes)
+	mapData := pb.ToMap()
+	for i, vote := range tests.votes {
+		exchangeRate, ok := mapData[string(vote.Voter)]
+		if tests.isValid[i] {
+			require.True(t, ok)
+			require.Equal(t, exchangeRate, vote.ExchangeRate)
+		} else {
+			require.False(t, ok)
+		}
+	}
+}
+
+func TestToCrossRate(t *testing.T) {
+	data := []struct {
+		base     sdk.Dec
+		quote    sdk.Dec
+		expected sdk.Dec
+	}{
+		{
+			base:     sdk.NewDec(1600),
+			quote:    sdk.NewDec(100),
+			expected: sdk.NewDec(16),
+		},
+		{
+			base:     sdk.NewDec(0),
+			quote:    sdk.NewDec(100),
+			expected: sdk.NewDec(16),
+		},
+		{
+			base:     sdk.NewDec(1600),
+			quote:    sdk.NewDec(0),
+			expected: sdk.NewDec(16),
+		},
+	}
+
+	pbBase := ExchangeRateBallot{}
+	pbQuote := ExchangeRateBallot{}
+	cb := ExchangeRateBallot{}
+	for _, data := range data {
+		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
+		if !data.base.IsZero() {
+			pbBase = append(pbBase, NewVoteForTally(NewExchangeRateVote(data.base, core.MicroKRWDenom, valAddr), 100))
+		}
+
+		pbQuote = append(pbQuote, NewVoteForTally(NewExchangeRateVote(data.quote, core.MicroKRWDenom, valAddr), 100))
+
+		if !data.base.IsZero() && !data.quote.IsZero() {
+			cb = append(cb, NewVoteForTally(NewExchangeRateVote(data.base.Quo(data.quote), core.MicroKRWDenom, valAddr), 100))
+		} else {
+			cb = append(cb, NewVoteForTally(NewExchangeRateVote(sdk.ZeroDec(), core.MicroKRWDenom, valAddr), 0))
+		}
+	}
+
+	baseMapBallot := pbBase.ToMap()
+	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
+}
+
 func TestSqrt(t *testing.T) {
 	num := sdk.NewDecWithPrec(144, 4)
 	floatNum, err := strconv.ParseFloat(num.String(), 64)
@@ -37,12 +130,12 @@ func TestPBPower(t *testing.T) {
 	ballotPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
-		power := sk.Validator(ctx, sdk.ValAddress(valAccAddrs[i])).GetConsensusPower()
+		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower()
 		vote := NewVoteForTally(
 			NewExchangeRateVote(
 				sdk.ZeroDec(),
 				core.MicroSDRDenom,
-				sdk.ValAddress(valAccAddrs[i]),
+				valAccAddrs[i],
 			),
 			power,
 		)
@@ -81,7 +174,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}{
 		{
 			// Supermajority one number
-			[]int64{1, 2, 10, 100000},
+			[]int64{2, 1, 10, 100000},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
 			sdk.NewDec(10),

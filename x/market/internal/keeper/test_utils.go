@@ -56,6 +56,7 @@ var (
 type TestInput struct {
 	Ctx          sdk.Context
 	Cdc          *codec.Codec
+	Acckeeper    auth.AccountKeeper
 	OracleKeeper oracle.Keeper
 	SupplyKeeper supply.Keeper
 	MarketKeeper Keeper
@@ -83,7 +84,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	tKeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracle.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	tKeyStaking := sdk.NewKVStoreKey(staking.TStoreKey)
 	keyDistr := sdk.NewKVStoreKey(distr.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(types.StoreKey)
@@ -98,7 +98,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
@@ -113,15 +112,16 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.ModuleName:          true,
 	}
 
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams, params.DefaultCodespace)
+	paramsKeeper := params.NewKeeper(cdc, keyParams, tKeyParams)
 	accountKeeper := auth.NewAccountKeeper(cdc, keyAcc, paramsKeeper.Subspace(auth.DefaultParamspace), auth.ProtoBaseAccount)
-	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), bank.DefaultCodespace, blackListAddrs)
+	bankKeeper := bank.NewBaseKeeper(accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), blackListAddrs)
 
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:     nil,
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		distr.ModuleName:          nil,
+		oracle.ModuleName:         nil,
 		types.ModuleName:          {supply.Burner, supply.Minter},
 	}
 
@@ -130,33 +130,29 @@ func CreateTestInput(t *testing.T) TestInput {
 	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
 
 	stakingKeeper := staking.NewKeeper(
-		cdc,
-		keyStaking, tKeyStaking,
-		supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace),
-		staking.DefaultCodespace,
+		cdc, keyStaking, supplyKeeper,
+		paramsKeeper.Subspace(staking.DefaultParamspace),
 	)
 
 	distrKeeper := distr.NewKeeper(
-		cdc,
-		keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
-		stakingKeeper, supplyKeeper, distr.DefaultCodespace,
-		auth.FeeCollectorName, blackListAddrs,
+		cdc, keyDistr, paramsKeeper.Subspace(distr.DefaultParamspace),
+		stakingKeeper, supplyKeeper, auth.FeeCollectorName, blackListAddrs,
 	)
 
 	oracleKeeper := oracle.NewKeeper(
 		cdc,
 		keyOracle, paramsKeeper.Subspace(oracle.DefaultParamspace),
 		distrKeeper, stakingKeeper, supplyKeeper, distr.ModuleName,
-		oracle.DefaultCodespace,
 	)
 
 	keeper := NewKeeper(
 		cdc,
 		keyMarket, paramsKeeper.Subspace(types.DefaultParamspace),
-		oracleKeeper, supplyKeeper, types.DefaultCodespace,
+		oracleKeeper, supplyKeeper,
 	)
 
 	keeper.SetParams(ctx, types.DefaultParams())
+	oracleKeeper.SetParams(ctx, oracle.DefaultParams())
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
 	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
@@ -179,5 +175,5 @@ func CreateTestInput(t *testing.T) TestInput {
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs))))))
 	supplyKeeper.SetSupply(ctx, supply)
 
-	return TestInput{ctx, cdc, oracleKeeper, supplyKeeper, keeper}
+	return TestInput{ctx, cdc, accountKeeper, oracleKeeper, supplyKeeper, keeper}
 }

@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	"github.com/terra-project/core/x/auth/client/utils"
@@ -29,7 +29,7 @@ func EstimateTxFeeRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		gasAdjustment, err := utils.ParseFloat64(req.GasAdjustment, client.DefaultGasAdjustment)
+		gasAdjustment, err := utils.ParseFloat64(req.GasAdjustment, flags.DefaultGasAdjustment)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

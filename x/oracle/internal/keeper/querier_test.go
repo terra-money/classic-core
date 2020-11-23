@@ -46,11 +46,11 @@ func TestQueryPrevotes(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	prevote1 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[0], 0)
+	prevote1 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroSDRDenom, ValAddrs[0], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote1)
-	prevote2 := types.NewExchangeRatePrevote("", core.MicroSDRDenom, ValAddrs[1], 0)
+	prevote2 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroSDRDenom, ValAddrs[1], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote2)
-	prevote3 := types.NewExchangeRatePrevote("", core.MicroLunaDenom, ValAddrs[2], 0)
+	prevote3 := types.NewExchangeRatePrevote(types.VoteHash{}, core.MicroLunaDenom, ValAddrs[2], 0)
 	input.OracleKeeper.AddExchangeRatePrevote(input.Ctx, prevote3)
 
 	// voter denom both query params
@@ -238,13 +238,13 @@ func TestQueryActives(t *testing.T) {
 	res, err := querier(input.Ctx, []string{types.QueryActives}, abci.RequestQuery{})
 	require.NoError(t, err)
 
-	targetDenoms := types.DenomList{
+	targetDenoms := []string{
 		core.MicroKRWDenom,
 		core.MicroSDRDenom,
 		core.MicroUSDDenom,
 	}
 
-	var denoms types.DenomList
+	var denoms []string
 	err2 := cdc.UnmarshalJSON(res, &denoms)
 	require.NoError(t, err2)
 	require.Equal(t, targetDenoms, denoms)
@@ -272,4 +272,179 @@ func TestQueryFeederDelegation(t *testing.T) {
 	var delegate sdk.AccAddress
 	cdc.UnmarshalJSON(res, &delegate)
 	require.Equal(t, Addrs[1], delegate)
+}
+
+func TestQueryAggregatePrevote(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote1)
+	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote2)
+	prevote3 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[2], 0)
+	input.OracleKeeper.AddAggregateExchangeRatePrevote(input.Ctx, prevote3)
+
+	// validator 0 address params
+	queryParams := types.NewQueryAggregatePrevoteParams(ValAddrs[0])
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryAggregatePrevote}, req)
+	require.NoError(t, err)
+
+	var prevote types.AggregateExchangeRatePrevote
+	err = cdc.UnmarshalJSON(res, &prevote)
+	require.NoError(t, err)
+	require.Equal(t, prevote1, prevote)
+
+	// validator 1 address params
+	queryParams = types.NewQueryAggregatePrevoteParams(ValAddrs[1])
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err = querier(input.Ctx, []string{types.QueryAggregatePrevote}, req)
+	require.NoError(t, err)
+
+	err = cdc.UnmarshalJSON(res, &prevote)
+	require.NoError(t, err)
+	require.Equal(t, prevote2, prevote)
+}
+
+func TestQueryAggregateVote(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[0])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote1)
+	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[1])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote2)
+	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{"", sdk.OneDec()}}, ValAddrs[2])
+	input.OracleKeeper.AddAggregateExchangeRateVote(input.Ctx, vote3)
+
+	// validator 0 address params
+	queryParams := types.NewQueryAggregateVoteParams(ValAddrs[0])
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryAggregateVote}, req)
+	require.NoError(t, err)
+
+	var vote types.AggregateExchangeRateVote
+	err = cdc.UnmarshalJSON(res, &vote)
+	require.NoError(t, err)
+	require.Equal(t, vote1, vote)
+
+	// validator 1 address params
+	queryParams = types.NewQueryAggregateVoteParams(ValAddrs[1])
+	bz, err = cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req = abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err = querier(input.Ctx, []string{types.QueryAggregateVote}, req)
+	require.NoError(t, err)
+
+	err = cdc.UnmarshalJSON(res, &vote)
+	require.NoError(t, err)
+	require.Equal(t, vote2, vote)
+}
+
+func TestQueryVoteTargets(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	// clear tobin taxes
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+
+	voteTargets := []string{"denom", "denom2", "denom3"}
+	for _, target := range voteTargets {
+		input.OracleKeeper.SetTobinTax(input.Ctx, target, sdk.OneDec())
+	}
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryVoteTargets}, req)
+	require.NoError(t, err)
+
+	var voteTargetsRes []string
+	err2 := cdc.UnmarshalJSON(res, &voteTargetsRes)
+	require.NoError(t, err2)
+	require.Equal(t, voteTargets, voteTargetsRes)
+}
+
+func TestQueryTobinTaxes(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	// clear tobin taxes
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+
+	tobinTaxes := types.DenomList{{core.MicroKRWDenom, sdk.OneDec()}, {core.MicroSDRDenom, sdk.NewDecWithPrec(123, 2)}}
+	for _, item := range tobinTaxes {
+		input.OracleKeeper.SetTobinTax(input.Ctx, item.Name, item.TobinTax)
+	}
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryTobinTaxes}, req)
+	require.NoError(t, err)
+
+	var tobinTaxesRes types.DenomList
+	err2 := cdc.UnmarshalJSON(res, &tobinTaxesRes)
+	require.NoError(t, err2)
+	require.Equal(t, tobinTaxes, tobinTaxesRes)
+}
+
+func TestQueryTobinTax(t *testing.T) {
+	cdc := codec.New()
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	denom := types.Denom{core.MicroKRWDenom, sdk.OneDec()}
+	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
+
+	queryParams := types.NewQueryTobinTaxParams(core.MicroKRWDenom)
+	bz, err := cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryTobinTax}, req)
+	require.NoError(t, err)
+
+	var tobinTaxRes sdk.Dec
+	cdc.UnmarshalJSON(res, &tobinTaxRes)
+	require.Equal(t, denom.TobinTax, tobinTaxRes)
 }

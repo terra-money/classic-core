@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	DefaultCodespace               = types.DefaultCodespace
-	CodeInvalidEpoch               = types.CodeInvalidEpoch
 	ModuleName                     = types.ModuleName
 	StoreKey                       = types.StoreKey
 	RouterKey                      = types.RouterKey
@@ -31,7 +29,6 @@ const (
 var (
 	// functions aliases
 	RegisterCodec                 = types.RegisterCodec
-	ErrInvalidEpoch               = types.ErrInvalidEpoch
 	NewGenesisState               = types.NewGenesisState
 	DefaultGenesisState           = types.DefaultGenesisState
 	ValidateGenesis               = types.ValidateGenesis
@@ -44,8 +41,8 @@ var (
 	NewTaxRateUpdateProposal      = types.NewTaxRateUpdateProposal
 	NewRewardWeightUpdateProposal = types.NewRewardWeightUpdateProposal
 	NewQueryTaxCapParams          = types.NewQueryTaxCapParams
+	ParamKeyTable                 = types.ParamKeyTable
 	NewKeeper                     = keeper.NewKeeper
-	ParamKeyTable                 = keeper.ParamKeyTable
 	NewQuerier                    = keeper.NewQuerier
 
 	// variable aliases
@@ -55,6 +52,7 @@ var (
 	TaxCapKey                            = types.TaxCapKey
 	TaxProceedsKey                       = types.TaxProceedsKey
 	EpochInitialIssuanceKey              = types.EpochInitialIssuanceKey
+	CumulatedHeightKey                   = types.CumulatedHeightKey
 	TRKey                                = types.TRKey
 	SRKey                                = types.SRKey
 	TSLKey                               = types.TSLKey

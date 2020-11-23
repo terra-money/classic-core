@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -28,7 +29,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	oracleQueryCmd.AddCommand(client.GetCommands(
+	oracleQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdQueryTaxRate(cdc),
 		GetCmdQueryTaxCap(cdc),
 		GetCmdQueryRewardWeight(cdc),
@@ -36,6 +37,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryTaxProceeds(cdc),
 		GetCmdQuerySeigniorageProceeds(cdc),
 		GetCmdQueryParams(cdc),
+		GetCmdQueryIndicators(cdc),
 	)...)
 
 	return oracleQueryCmd
@@ -201,6 +203,29 @@ func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 			var params types.Params
 			cdc.MustUnmarshalJSON(res, &params)
 			return cliCtx.PrintOutput(params)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryIndicators implements the query params command.
+func GetCmdQueryIndicators(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "indicators",
+		Args:  cobra.NoArgs,
+		Short: "Query the current Treasury indicators",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIndicators), nil)
+			if err != nil {
+				return err
+			}
+
+			var response types.IndicatorQueryResonse
+			cdc.MustUnmarshalJSON(res, &response)
+			return cliCtx.PrintOutput(response)
 		},
 	}
 

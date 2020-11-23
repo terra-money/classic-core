@@ -1,43 +1,35 @@
-# Simple usage with a mounted data directory:
-# > docker build -t terra .
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad init
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad start
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad init
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.terrad:/root/.terrad -v ~/.terracli:/root/.terracli terra terrad start
-FROM golang:alpine AS build-env
+FROM cosmwasm/go-ext-builder:0001-alpine AS rust-builder
 
-# Set up dependencies
-ENV PACKAGES make git libc-dev bash gcc linux-headers eudev-dev
+WORKDIR /go/src/github.com/terra-project/core
 
-# Set working directory for the build
-WORKDIR /go/src/terra
+COPY go.* /go/src/github.com/terra-project/core/
 
-# Add source files
+RUN apk add --no-cache git \
+    && go mod download github.com/CosmWasm/go-cosmwasm \
+    && export GO_WASM_DIR=$(go list -f "{{ .Dir }}" -m github.com/CosmWasm/go-cosmwasm) \
+    && cd ${GO_WASM_DIR} \
+    && cargo build --release --features backtraces --example muslc \
+    && mv ${GO_WASM_DIR}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
+
+
+FROM cosmwasm/go-ext-builder:0001-alpine AS go-builder
+
+WORKDIR /go/src/github.com/terra-project/core
+
+RUN apk add --no-cache git libusb-dev linux-headers
+
 COPY . .
+COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 
-# Install minimum necessary dependencies, build Cosmos SDK, remove packages
-RUN apk add --no-cache $PACKAGES && \
-    make tools && \
-    make go-mod-cache && \
-    make build-linux && \
-    make install
+# force it to use static lib (from above) not standard libgo_cosmwasm.so file
+RUN BUILD_TAGS=muslc make update-swagger-docs build
 
-# Final image
-FROM alpine:edge
 
-# Install ca-certificates
-RUN apk add --update ca-certificates rsync jq curl
+FROM alpine:3
 
-# Copy over binaries from the build-env
-COPY --from=build-env /go/bin/terrad /usr/bin/terrad
-COPY --from=build-env /go/bin/terracli /usr/bin/terracli
+WORKDIR /root
 
-# Create a terra group and a terra user
-RUN addgroup -S terra -g 54524 && adduser -S terra -u 54524 -h /home/terra -G terra
+COPY --from=go-builder /go/src/github.com/terra-project/core/build/terrad /usr/local/bin/terrad
+COPY --from=go-builder /go/src/github.com/terra-project/core/build/terracli /usr/local/bin/terracli
 
-# Tell docker that all future commands should run as the terra user
-USER terra
-WORKDIR /home/terra
-
-# Run terrad by default, omit entrypoint to ease using container with terracli
-CMD ["terrad"]
+CMD [ "terrad", "--help" ]

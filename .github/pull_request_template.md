@@ -6,7 +6,7 @@
 
 - [ ] Github issue OR spec proposal link
 - [ ] Wrote tests
-- [ ] Updated relevant documentation (docs/)
+- [ ] Updated API documentation (client/lcd/swagger-ui/swagger.yaml)
 - [ ] Added a relevant changelog entry: clog add [section] [stanza] [message]
 
 ----

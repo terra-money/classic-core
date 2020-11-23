@@ -2,17 +2,20 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/terra-project/core/x/gov"
 )
 
 // RegisterCodec registers concrete types on codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(distribution.MsgWithdrawDelegatorReward{}, "distribution/MsgWithdrawDelegationReward", nil)
-	cdc.RegisterConcrete(distribution.MsgWithdrawValidatorCommission{}, "distribution/MsgWithdrawValidatorCommission", nil)
-	cdc.RegisterConcrete(distribution.MsgSetWithdrawAddress{}, "distribution/MsgModifyWithdrawAddress", nil)
-	cdc.RegisterConcrete(distribution.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal", nil)
+	// NOTE: type and message name inconsistency
+	cdc.RegisterConcrete(distrtypes.MsgWithdrawDelegatorReward{}, "distribution/MsgWithdrawDelegationReward", nil)
+	cdc.RegisterConcrete(distrtypes.MsgWithdrawValidatorCommission{}, "distribution/MsgWithdrawValidatorCommission", nil)
+	// NOTE: type and message name inconsistency
+	cdc.RegisterConcrete(distrtypes.MsgSetWithdrawAddress{}, "distribution/MsgModifyWithdrawAddress", nil)
+	cdc.RegisterConcrete(distrtypes.MsgFundCommunityPool{}, "distribution/MsgFundCommunityPool", nil)
+	cdc.RegisterConcrete(distrtypes.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal", nil)
 }
 
 // ModuleCdc is generic sealed codec to be used throughout module
@@ -24,5 +27,5 @@ func init() {
 	codec.RegisterCrypto(ModuleCdc)
 	ModuleCdc.Seal()
 
-	gov.RegisterProposalTypeCodec(distribution.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal")
+	gov.RegisterProposalTypeCodec(distrtypes.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal")
 }

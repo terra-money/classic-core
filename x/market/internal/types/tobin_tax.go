@@ -1,7 +1,7 @@
 package types
 
 import (
-	"fmt"
+	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,21 +14,15 @@ type TobinTax struct {
 
 // String implements fmt.Stringer interface
 func (tt TobinTax) String() string {
-	return fmt.Sprintf(`TobinTax
-	Denom:      %s, 
-	TaxRate:    %s`,
-		tt.Denom, tt.TaxRate)
+	out, _ := yaml.Marshal(tt)
+	return string(out)
 }
 
 // TobinTaxList is convience wrapper to handle TobinTax array
 type TobinTaxList []TobinTax
 
 // String implements fmt.Stringer interface
-func (ttl TobinTaxList) String() (out string) {
-	out = ""
-	for _, tt := range ttl {
-		out += tt.String() + "\n"
-	}
-
-	return
+func (ttl TobinTaxList) String() string {
+	out, _ := yaml.Marshal(ttl)
+	return string(out)
 }

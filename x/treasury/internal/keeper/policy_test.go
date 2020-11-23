@@ -20,10 +20,10 @@ func TestUpdateTaxRate(t *testing.T) {
 	amt := sdk.TokensFromConsensusPower(1)
 	addr, val := ValAddrs[0], PubKeys[0]
 	addr1, val1 := ValAddrs[1], PubKeys[1]
-	res := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
-	require.True(t, res.IsOK())
-	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
-	require.True(t, res.IsOK())
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	windowLong := input.TreasuryKeeper.WindowLong(input.Ctx)
@@ -31,7 +31,7 @@ func TestUpdateTaxRate(t *testing.T) {
 
 	// zero reward tax proceeds
 	for i := int64(0); i < windowLong; i++ {
-		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerEpoch)
+		input.Ctx = input.Ctx.WithBlockHeight(i * core.BlocksPerWeek)
 
 		taxProceeds := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.ZeroInt()))
 		input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
@@ -52,10 +52,10 @@ func TestUpdateRewardWeight(t *testing.T) {
 	amt := sdk.TokensFromConsensusPower(1)
 	addr, val := ValAddrs[0], PubKeys[0]
 	addr1, val1 := ValAddrs[1], PubKeys[1]
-	res := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
-	require.True(t, res.IsOK())
-	res = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
-	require.True(t, res.IsOK())
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)

@@ -11,7 +11,7 @@ builds:
     main: cmd/terracli/main.go
     binary: terracli
     flags:
-      - -tags=netgo
+      - -tags="netgo ledger"
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
     gcflags:
@@ -22,20 +22,17 @@ builds:
       -X github.com/cosmos/cosmos-sdk/version.ClientName=terracli 
       -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}}
       -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-      -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo"
+      -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger"
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
     goos:
-      - windows
       - darwin
       - linux
     goarch:
       - amd64
     ignore:
       - goos: darwin
-        goarch: 386
-      - goos: windows
         goarch: 386
 
   -
@@ -43,7 +40,7 @@ builds:
     main: ./cmd/terrad
     binary: terrad
     flags:
-      - -tags=netgo
+      - -tags="netgo ledger"
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
     gcflags:
@@ -54,12 +51,11 @@ builds:
       -X github.com/cosmos/cosmos-sdk/version.ClientName=terracli 
       -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}}
       -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-      -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo"
+      -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger"
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
     goos:
-      - windows
       - darwin
       - linux
     goarch:
@@ -67,15 +63,12 @@ builds:
     ignore:
       - goos: darwin
         goarch: 386
-      - goos: windows
-        goarch: 386
 
 archives:
   -
     replacements:
       darwin: Darwin
       linux: Linux
-      windows: Windows
       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'

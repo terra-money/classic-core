@@ -1,6 +1,8 @@
 package treasury
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	core "github.com/terra-project/core/types"
 )
@@ -26,6 +28,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetTaxCap(ctx, denom, taxCap)
 	}
 
+	// store cumulated block height of past chains
+	keeper.SetCumulatedHeight(ctx, data.CumulatedHeight)
+
 	for epoch, TR := range data.TRs {
 		keeper.SetTR(ctx, int64(epoch), TR)
 	}
@@ -34,6 +39,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 	for epoch, TSL := range data.TSLs {
 		keeper.SetTSL(ctx, int64(epoch), TSL)
+	}
+
+	// check if the module account exists
+	moduleAcc := keeper.GetTreasuryAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 }
 
@@ -54,13 +65,15 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
+	cumulatedHeight := keeper.GetCumulatedHeight(ctx)
+
 	var TRs []sdk.Dec
 	var SRs []sdk.Dec
 	var TSLs []sdk.Int
 
-	curEpoch := core.GetEpoch(ctx)
+	curEpoch := keeper.GetEpoch(ctx)
 	for e := int64(0); e < curEpoch ||
-		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerEpoch)); e++ {
+		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerWeek)); e++ {
 
 		TRs = append(TRs, keeper.GetTR(ctx, e))
 		SRs = append(SRs, keeper.GetSR(ctx, e))
@@ -68,5 +81,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	}
 
 	return NewGenesisState(params, taxRate, rewardWeight,
-		taxCaps, taxProceeds, epochInitialIssuance, TRs, SRs, TSLs)
+		taxCaps, taxProceeds, epochInitialIssuance,
+		cumulatedHeight, TRs, SRs, TSLs)
 }

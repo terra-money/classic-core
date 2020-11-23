@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -55,8 +57,31 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 		keeper.SetMissCounter(ctx, operator, missCounter)
 	}
 
+	for _, aggregatePrevote := range data.AggregateExchangeRatePrevotes {
+		keeper.AddAggregateExchangeRatePrevote(ctx, aggregatePrevote)
+	}
+
+	for _, aggregateVote := range data.AggregateExchangeRateVotes {
+		keeper.AddAggregateExchangeRateVote(ctx, aggregateVote)
+	}
+
+	if len(data.TobinTaxes) > 0 {
+		for denom, tobinTax := range data.TobinTaxes {
+			keeper.SetTobinTax(ctx, denom, tobinTax)
+		}
+	} else {
+		for _, item := range data.Params.Whitelist {
+			keeper.SetTobinTax(ctx, item.Name, item.TobinTax)
+		}
+	}
+
 	keeper.SetParams(ctx, data.Params)
-	keeper.GetRewardPool(ctx)
+
+	// check if the module account exists
+	moduleAcc := keeper.GetOracleAccount(ctx)
+	if moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
+	}
 }
 
 // ExportGenesis writes the current store values
@@ -95,5 +120,23 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters)
+	var aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote
+	keeper.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote AggregateExchangeRatePrevote) (stop bool) {
+		aggregateExchangeRatePrevotes = append(aggregateExchangeRatePrevotes, aggregatePrevote)
+		return false
+	})
+
+	var aggregateExchangeRateVotes []AggregateExchangeRateVote
+	keeper.IterateAggregateExchangeRateVotes(ctx, func(aggregateVote AggregateExchangeRateVote) bool {
+		aggregateExchangeRateVotes = append(aggregateExchangeRateVotes, aggregateVote)
+		return false
+	})
+
+	tobinTaxes := make(map[string]sdk.Dec)
+	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+		tobinTaxes[denom] = tobinTax
+		return false
+	})
+
+	return NewGenesisState(params, exchangeRatePrevotes, exchangeRateVotes, rates, feederDelegations, missCounters, aggregateExchangeRatePrevotes, aggregateExchangeRateVotes, tobinTaxes)
 }

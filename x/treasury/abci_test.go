@@ -22,7 +22,7 @@ func TestEndBlockerIssuanceUpdate(t *testing.T) {
 	input.SupplyKeeper.SetModuleAccount(input.Ctx, bondedModuleAcc)
 
 	targetIssuance := sdk.NewInt(1000)
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch - 1)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek - 1)
 	supply := input.SupplyKeeper.GetSupply(input.Ctx)
 	supply = supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
 	input.SupplyKeeper.SetSupply(input.Ctx, supply)
@@ -45,7 +45,7 @@ func TestUpdate(t *testing.T) {
 
 	targetEpoch := windowProbation + 1
 	for epoch := int64(0); epoch < targetEpoch; epoch++ {
-		input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch*epoch - 1)
+		input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek*epoch - 1)
 		EndBlocker(input.Ctx, input.TreasuryKeeper)
 	}
 
@@ -53,7 +53,7 @@ func TestUpdate(t *testing.T) {
 	taxRate := input.TreasuryKeeper.GetTaxRate(input.Ctx)
 	rewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx)
 
-	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerEpoch*targetEpoch - 1)
+	input.Ctx = input.Ctx.WithBlockHeight(core.BlocksPerWeek*targetEpoch - 1)
 	EndBlocker(input.Ctx, input.TreasuryKeeper)
 
 	// zero tax proceeds will increase tax rate with change max amount

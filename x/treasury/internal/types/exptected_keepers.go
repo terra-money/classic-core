@@ -8,14 +8,16 @@ import (
 
 // SupplyKeeper expected supply keeper
 type SupplyKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) supplyexported.ModuleAccountI
 	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
-	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) sdk.Error
-	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) sdk.Error
+	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 }
 
 // MarketKeeper expected market keeper
 type MarketKeeper interface {
-	ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error)
+	ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, error)
 }
 
 // StakingKeeper expected keeper for staking module

@@ -78,7 +78,7 @@ func MultiSignRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			var pubkeys []crypto.PubKey
 			for _, bechPubkey := range req.Pubkey.PubKeys {
-				pubkey, err := sdk.GetAccPubKeyBech32(bechPubkey)
+				pubkey, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeAccPub, bechPubkey)
 				if err != nil {
 					rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					return

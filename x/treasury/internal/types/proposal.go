@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/terra-project/core/x/gov"
 )
 
@@ -18,6 +19,7 @@ const (
 
 // Assert TaxRateUpdateProposal implements govtypes.Content at compile-time
 var _ gov.Content = TaxRateUpdateProposal{}
+var _ gov.Content = RewardWeightUpdateProposal{}
 
 func init() {
 	gov.RegisterProposalType(ProposalTypeTaxRateUpdate)
@@ -49,14 +51,14 @@ func (TaxRateUpdateProposal) ProposalRoute() string { return RouterKey }
 func (p TaxRateUpdateProposal) ProposalType() string { return ProposalTypeTaxRateUpdate }
 
 // ValidateBasic runs basic stateless validity checks
-func (p TaxRateUpdateProposal) ValidateBasic() sdk.Error {
-	err := gov.ValidateAbstract(DefaultCodespace, p)
+func (p TaxRateUpdateProposal) ValidateBasic() error {
+	err := gov.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
 
 	if !p.TaxRate.IsPositive() || p.TaxRate.GT(sdk.OneDec()) {
-		return sdk.ErrInvalidCoins("Invalid tax-rate: " + p.TaxRate.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Invalid tax-rate: "+p.TaxRate.String())
 	}
 
 	return nil
@@ -68,7 +70,7 @@ func (p TaxRateUpdateProposal) String() string {
 	b.WriteString(fmt.Sprintf(`Community Pool Spend Proposal:
   Title:        %s
   Description:  %s
-	TaxRate:      %s
+  TaxRate:      %s
 `, p.Title, p.Description, p.TaxRate))
 	return b.String()
 }
@@ -98,14 +100,14 @@ func (RewardWeightUpdateProposal) ProposalRoute() string { return RouterKey }
 func (p RewardWeightUpdateProposal) ProposalType() string { return ProposalTypeRewardWeightUpdate }
 
 // ValidateBasic runs basic stateless validity checks
-func (p RewardWeightUpdateProposal) ValidateBasic() sdk.Error {
-	err := gov.ValidateAbstract(DefaultCodespace, p)
+func (p RewardWeightUpdateProposal) ValidateBasic() error {
+	err := gov.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
 
 	if !p.RewardWeight.IsPositive() || p.RewardWeight.GT(sdk.OneDec()) {
-		return sdk.ErrInvalidCoins("Invalid reward-weight: " + p.RewardWeight.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Invalid reward-weight: "+p.RewardWeight.String())
 	}
 
 	return nil
@@ -117,7 +119,7 @@ func (p RewardWeightUpdateProposal) String() string {
 	b.WriteString(fmt.Sprintf(`Community Pool Spend Proposal:
   Title:        %s
   Description:  %s
-	RewardWeight:      %s
+  RewardWeight: %s
 `, p.Title, p.Description, p.RewardWeight))
 	return b.String()
 }

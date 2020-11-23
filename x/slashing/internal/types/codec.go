@@ -5,9 +5,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 )
 
-// RegisterCodec registers concrete types on codec codec
+// RegisterCodec registers concrete types on codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(slashing.MsgUnjail{}, "cosmos/MsgUnjail", nil)
+	cdc.RegisterConcrete(slashing.MsgUnjail{}, "slashing/MsgUnjail", nil)
 }
 
 // ModuleCdc defines module codec

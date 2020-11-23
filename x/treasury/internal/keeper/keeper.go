@@ -20,7 +20,6 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 
 	paramSpace params.Subspace
-	codespace  sdk.CodespaceType
 
 	supplyKeeper  types.SupplyKeeper
 	marketKeeper  types.MarketKeeper
@@ -35,13 +34,22 @@ type Keeper struct {
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspace,
 	supplyKeeper types.SupplyKeeper, marketKeeper types.MarketKeeper,
 	stakingKeeper types.StakingKeeper, distrKeeper types.DistributionKeeper,
-	oracleModuleName string, distributionModuleName string, codespace sdk.CodespaceType) Keeper {
+	oracleModuleName string, distributionModuleName string) Keeper {
+
+	// ensure treasury module account is set
+	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
+
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
 
 	return Keeper{
 		cdc:                    cdc,
 		storeKey:               storeKey,
-		paramSpace:             paramSpace.WithKeyTable(ParamKeyTable()),
-		codespace:              codespace,
+		paramSpace:             paramSpace,
 		supplyKeeper:           supplyKeeper,
 		marketKeeper:           marketKeeper,
 		stakingKeeper:          stakingKeeper,
@@ -54,11 +62,6 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspa
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// Codespace returns the codespace
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
 }
 
 // GetTaxRate loads the tax rate
@@ -146,7 +149,7 @@ func (k Keeper) RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 	}
 
 	proceeds := k.PeekEpochTaxProceeds(ctx)
-	proceeds = proceeds.Add(delta)
+	proceeds = proceeds.Add(delta...)
 
 	k.SetEpochTaxProceeds(ctx, proceeds)
 }
@@ -217,6 +220,26 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
 	}
 
 	return epochSeigniorage
+}
+
+// GetCumulatedHeight returns last block height of past chain
+func (k Keeper) GetCumulatedHeight(ctx sdk.Context) (res int64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.CumulatedHeightKey)
+
+	if bz == nil {
+		res = 0
+	} else {
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
+	}
+	return
+}
+
+// SetCumulatedHeight sets cumulated block height of past chains
+func (k Keeper) SetCumulatedHeight(ctx sdk.Context, cumulatedHeight int64) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(cumulatedHeight)
+	store.Set(types.CumulatedHeightKey, b)
 }
 
 // GetTR returns the tax rewards for the epoch

@@ -11,17 +11,18 @@ import (
 	"github.com/spf13/cobra"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/proxy"
 	tmsm "github.com/tendermint/tendermint/state"
 	tmstore "github.com/tendermint/tendermint/store"
 	tm "github.com/tendermint/tendermint/types"
 
 	"github.com/terra-project/core/app"
+	wasmconfig "github.com/terra-project/core/x/wasm/config"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -43,8 +44,8 @@ func replayTxs(rootDir string) error {
 		fmt.Fprintln(os.Stderr, "Copying rootdir over")
 		oldRootDir := rootDir
 		rootDir = oldRootDir + "_replay"
-		if cmn.FileExists(rootDir) {
-			cmn.Exit(fmt.Sprintf("temporary copy dir %v already exists", rootDir))
+		if tmos.FileExists(rootDir) {
+			tmos.Exit(fmt.Sprintf("temporary copy dir %v already exists", rootDir))
 		}
 		if err := cpm.Copy(oldRootDir, rootDir); err != nil {
 			return err
@@ -90,9 +91,9 @@ func replayTxs(rootDir string) error {
 
 	// Application
 	fmt.Fprintln(os.Stderr, "Creating application")
-	myapp := app.NewTerraApp(
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1),
-		baseapp.SetPruning(store.PruneEverything), // nothing
+	tapp := app.NewTerraApp(
+		ctx.Logger, appDB, traceStoreWriter, true, uint(1), map[int64]bool{},
+		wasmconfig.DefaultConfig(), baseapp.SetPruning(storetypes.PruneEverything), // nothing
 	)
 
 	// Genesis
@@ -106,14 +107,17 @@ func replayTxs(rootDir string) error {
 		return err
 	}
 
-	cc := proxy.NewLocalClientCreator(myapp)
+	cc := proxy.NewLocalClientCreator(tapp)
 	proxyApp := proxy.NewAppConns(cc)
 	err = proxyApp.Start()
 	if err != nil {
 		return err
 	}
 	defer func() {
-		_ = proxyApp.Stop()
+		err = proxyApp.Stop()
+		if err != nil {
+			return
+		}
 	}()
 
 	state := tmsm.LoadState(tmDB)
@@ -172,7 +176,7 @@ func replayTxs(rootDir string) error {
 
 		t2 := time.Now()
 
-		state, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
+		state, _, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
 		if err != nil {
 			return err
 		}

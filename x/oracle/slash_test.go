@@ -14,7 +14,7 @@ import (
 func TestSlashAndResetMissCounters(t *testing.T) {
 	input, _ := setup(t)
 
-	votePeriodsPerWindow := input.OracleKeeper.SlashWindow(input.Ctx)
+	votePeriodsPerWindow := sdk.NewDec(input.OracleKeeper.SlashWindow(input.Ctx)).QuoInt64(input.OracleKeeper.VotePeriod(input.Ctx)).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).TruncateInt64()
 	// Case 1, no slash
