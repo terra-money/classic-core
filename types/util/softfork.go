@@ -19,3 +19,10 @@ func IsWaitingForSoftfork(ctx sdk.Context, _version uint8) bool {
 	return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() < 1200000) ||
 		(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() < 1350000)
 }
+
+// IsSoftforkHeight return whether current block
+// height is the targeted softfork height
+func IsSoftforkHeight(ctx sdk.Context, _version uint8) bool {
+	return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() == 1200000) ||
+		(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() == 1350000)
+}
