@@ -1,6 +1,8 @@
 package config
 
-import "strings"
+import (
+	"strings"
+)
 
 // config default values
 const (
@@ -58,10 +60,18 @@ func (config *Config) WhitelistToMap() (loggingWhitelist map[string]bool) {
 
 	if config.ContractLoggingWhitelist != "*" {
 		for _, addr := range strings.Split(config.ContractLoggingWhitelist, ",") {
-			loggingWhitelist[addr] = true
+			if len(addr) != 0 {
+				loggingWhitelist[addr] = true
+			}
+		}
+
+		var addrs []string
+		for addr := range loggingWhitelist {
+			addrs = append(addrs, addr)
 		}
 
 		config.loggingAll = false
+		config.ContractLoggingWhitelist = strings.Join(addrs, ",")
 	} else {
 		config.loggingAll = true
 	}

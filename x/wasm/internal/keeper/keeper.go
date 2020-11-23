@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
@@ -89,6 +90,14 @@ func (k Keeper) StoreConfig() {
 	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
 
 	config.WriteConfigFile(wasmConfigFilePath, k.wasmConfig)
+
+	loggingWhitelistInDataPath := filepath.Join(rootDir, filepath.Join(config.DBDir, ".logging-whitelist"))
+	f, err := os.OpenFile(loggingWhitelistInDataPath, os.O_RDWR|os.O_CREATE, 0666)
+	if err == nil {
+		defer f.Close()
+
+		f.WriteString("," + k.wasmConfig.ContractLoggingWhitelist)
+	}
 }
 
 // GetLastCodeID return last code ID

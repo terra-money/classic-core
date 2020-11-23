@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -100,7 +101,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 		logger, db, traceStore, true, invCheckPeriod, skipUpgradeHeights,
 		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
 			ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
-			ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
+			ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist) + loadLoggingWhitelistFromDataStore(),
 		}},
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
@@ -154,4 +155,20 @@ func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string)
 
 		return err
 	}
+}
+
+func loadLoggingWhitelistFromDataStore() string {
+	loggingWhitelistInDataPath := filepath.Join(
+		filepath.Join(viper.GetString(flags.FlagHome), wasmconfig.DBDir), ".logging-whitelist")
+	if _, err := os.Stat(loggingWhitelistInDataPath); err == nil {
+		configFile, err := os.Open(loggingWhitelistInDataPath)
+		if err == nil {
+			bz, err := ioutil.ReadAll(configFile)
+			if err == nil {
+				return string(bz)
+			}
+		}
+	}
+
+	return ""
 }
