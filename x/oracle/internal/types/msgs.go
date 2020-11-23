@@ -22,10 +22,10 @@ var (
 //-------------------------------------------------
 //-------------------------------------------------
 
-// Deprecated: normal prevote and vote will be deprecated after columbus-4
 // MsgExchangeRatePrevote - struct for prevoting on the ExchangeRateVote.
 // The purpose of prevote is to hide vote exchange rate with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange_rate}:{denom}:{voter}")
+// Deprecated: normal prevote and vote will be deprecated after columbus-4
 type MsgExchangeRatePrevote struct {
 	Hash      VoteHash       `json:"hash" yaml:"hash"`
 	Denom     string         `json:"denom" yaml:"denom"`
@@ -67,7 +67,7 @@ func (msg MsgExchangeRatePrevote) ValidateBasic() error {
 	}
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknowDenom
+		return sdkerrors.Wrap(ErrInternal, "invalid denom length")
 	}
 
 	if msg.Feeder.Empty() {
@@ -91,10 +91,10 @@ func (msg MsgExchangeRatePrevote) String() string {
 		msg.Hash, msg.Feeder, msg.Validator, msg.Denom)
 }
 
-// Deprecated: normal prevote and vote will be deprecated after columbus-4
 // MsgExchangeRateVote - struct for voting on the exchange rate of Luna denominated in various Terra assets.
 // For example, if the validator believes that the effective exchange rate of Luna in USD is 10.39, that's
 // what the exchange rate field would be, and if 1213.34 for KRW, same.
+// Deprecated: normal prevote and vote will be deprecated after columbus-4
 type MsgExchangeRateVote struct {
 	ExchangeRate sdk.Dec        `json:"exchange_rate" yaml:"exchange_rate"` // the effective rate of Luna in {Denom}
 	Salt         string         `json:"salt" yaml:"salt"`
@@ -134,7 +134,7 @@ func (msg MsgExchangeRateVote) GetSigners() []sdk.AccAddress {
 func (msg MsgExchangeRateVote) ValidateBasic() error {
 
 	if len(msg.Denom) == 0 {
-		return ErrUnknowDenom
+		return sdkerrors.Wrap(ErrInternal, "invalid denom length")
 	}
 
 	if msg.Feeder.Empty() {

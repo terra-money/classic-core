@@ -39,7 +39,9 @@ const (
 
 var (
 	// functions aliases
-	IsPeriodLastBlock = util.IsPeriodLastBlock
+	IsPeriodLastBlock    = util.IsPeriodLastBlock
+	IsWaitingForSoftfork = util.IsWaitingForSoftfork
+	IsSoftforkHeight     = util.IsSoftforkHeight
 )
 
 type (

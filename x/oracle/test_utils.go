@@ -21,7 +21,7 @@ var (
 	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
 )
 
-func setup_with_small_voting_power(t *testing.T) (keeper.TestInput, sdk.Handler) {
+func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input := keeper.CreateTestInput(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1

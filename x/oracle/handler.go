@@ -3,11 +3,11 @@ package oracle
 import (
 	"fmt"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
@@ -39,7 +39,11 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 
 	// check the denom is in the vote target
 	if !keeper.IsVoteTarget(ctx, msg.Denom) {
-		return nil, sdkerrors.Wrap(ErrUnknowDenom, msg.Denom)
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(ErrInternal, "unknown denom")
+		}
+
+		return nil, sdkerrors.Wrap(ErrUnknownDenom, msg.Denom)
 	}
 
 	if !msg.Feeder.Equals(msg.Validator) {
@@ -226,7 +230,11 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgA
 	// check all denoms are in the vote target
 	for _, tuple := range exchangeRateTuples {
 		if !keeper.IsVoteTarget(ctx, tuple.Denom) {
-			return nil, sdkerrors.Wrap(ErrUnknowDenom, tuple.Denom)
+			if core.IsWaitingForSoftfork(ctx, 1) {
+				return nil, sdkerrors.Wrap(ErrInternal, "unknown denom")
+			}
+
+			return nil, sdkerrors.Wrap(ErrUnknownDenom, tuple.Denom)
 		}
 	}
 

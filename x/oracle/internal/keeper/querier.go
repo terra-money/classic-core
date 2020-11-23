@@ -8,6 +8,7 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/internal/types"
 )
 
@@ -56,7 +57,11 @@ func queryExchangeRate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 
 	rate, err := keeper.GetLunaExchangeRate(ctx, params.Denom)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknowDenom, params.Denom)
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInternal, "unknown denom")
+		}
+
+		return nil, sdkerrors.Wrap(types.ErrUnknownDenom, params.Denom)
 	}
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, rate)

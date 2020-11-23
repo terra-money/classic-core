@@ -7,6 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	core "github.com/terra-project/core/types"
 )
 
 // WasmQuerierInterface - query registration interface for other modules
@@ -74,9 +76,9 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 	case request.Bank != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteBank]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteBank)
 	case request.Custom != nil:
 		var customQuery WasmCustomQuery
 		err := json.Unmarshal(request.Custom, &customQuery)
@@ -86,21 +88,26 @@ func (q Querier) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte,
 
 		if querier, ok := q.Queriers[customQuery.Route]; ok {
 			return querier.QueryCustom(ctx, customQuery.QueryData)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, customQuery.Route)
 	case request.Staking != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteStaking]; ok {
+			if core.IsWaitingForSoftfork(ctx, 1) {
+				panic("NOT SUPPORTED UNTIL SOFTFORK TIME")
+			}
+
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
+
 	case request.Wasm != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteWasm]; ok {
 			return querier.Query(ctx, request)
-		} else {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
 	}
 
 	return nil, wasmTypes.Unknown{}

@@ -183,7 +183,11 @@ func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (exchangeRate
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetExchangeRateKey(denom))
 	if b == nil {
-		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknowDenom, denom)
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrInternal, "unknown denom")
+		}
+
+		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownDenom, denom)
 	}
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &exchangeRate)
 	return

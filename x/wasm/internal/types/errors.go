@@ -6,7 +6,7 @@ import (
 
 // Wasm Errors
 var (
-	ErrStoreCodeFailed     = sdkerrors.Register(ModuleName, 1, "store wasm contract failed")
+	ErrInternal            = sdkerrors.Register(ModuleName, 1, "internal error")
 	ErrAccountExists       = sdkerrors.Register(ModuleName, 2, "contract account already exists")
 	ErrInstantiateFailed   = sdkerrors.Register(ModuleName, 3, "instantiate wasm contract failed")
 	ErrExecuteFailed       = sdkerrors.Register(ModuleName, 4, "execute wasm contract failed")
@@ -18,4 +18,5 @@ var (
 	ErrNoRegisteredParser  = sdkerrors.Register(ModuleName, 10, "failed to find parser for route")
 	ErrMigrationFailed     = sdkerrors.Register(ModuleName, 11, "migrate wasm contract failed")
 	ErrNotMigratable       = sdkerrors.Register(ModuleName, 12, "the contract is not migratable ")
+	ErrStoreCodeFailed     = sdkerrors.Register(ModuleName, 13, "store wasm contract failed")
 )

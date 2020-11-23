@@ -80,7 +80,8 @@ var (
 
 	// variable aliases
 	ModuleCdc                             = types.ModuleCdc
-	ErrUnknowDenom                        = types.ErrUnknowDenom
+	ErrInternal                           = types.ErrInternal
+	ErrUnknownDenom                       = types.ErrUnknownDenom
 	ErrInvalidExchangeRate                = types.ErrInvalidExchangeRate
 	ErrNoPrevote                          = types.ErrNoPrevote
 	ErrNoVote                             = types.ErrNoVote

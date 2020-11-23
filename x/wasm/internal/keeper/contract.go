@@ -7,17 +7,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto"
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system
 func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, err error) {
 	if uint64(len(wasmCode)) > k.MaxContractSize(ctx) {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInternal, "contract size is too huge")
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 
 	wasmCode, err = k.uncompress(ctx, wasmCode)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInternal, err.Error())
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
@@ -26,6 +35,10 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 
 	codeHash, err = k.wasmer.Create(wasmCode)
 	if err != nil {
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInternal, err.Error())
+		}
+
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
@@ -167,7 +180,11 @@ func (k Keeper) ExecuteContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: execute")
 
 	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+		if core.IsWaitingForSoftfork(ctx, 1) {
+			return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "execute msg size is too huge")
+		}
+
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, "execute msg size is too huge")
 	}
 
 	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
