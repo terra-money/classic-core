@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"runtime/debug"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -103,17 +106,45 @@ func queryRawStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 	return res, nil
 }
 
-func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryContractStore(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (bz []byte, err error) {
 	// external query gas limit must be specified here
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(keeper.wasmConfig.ContractQueryGasLimit))
 
 	var params types.QueryContractParams
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+	err = types.ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	return keeper.queryToContract(ctx, params.ContractAddress, params.Msg)
+	// recover from out-of-gas panic
+	defer func() {
+		if r := recover(); r != nil {
+			switch rType := r.(type) {
+			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us
+			// to keep the stracktrace.
+			case sdk.ErrorOutOfGas:
+				err = sdkerrors.Wrap(
+					sdkerrors.ErrOutOfGas, fmt.Sprintf(
+						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
+						rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
+					),
+				)
+
+			default:
+				err = sdkerrors.Wrap(
+					sdkerrors.ErrPanic, fmt.Sprintf(
+						"recovered: %v\nstack:\n%v", r, string(debug.Stack()),
+					),
+				)
+			}
+
+			bz = nil
+		}
+	}()
+
+	bz, err = keeper.queryToContract(ctx, params.ContractAddress, params.Msg)
+
+	return
 }
 
 func queryParameters(ctx sdk.Context, keeper Keeper) ([]byte, error) {
