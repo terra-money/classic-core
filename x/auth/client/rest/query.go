@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	genutilrest "github.com/cosmos/cosmos-sdk/x/genutil/client/rest"
 
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/types"
@@ -35,7 +34,10 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		heightStr := r.FormValue("height")
 		if heightStr != "" {
 			if height, err := strconv.ParseInt(heightStr, 10, 64); err == nil && height == 0 {
-				genutilrest.QueryGenesisTxs(cliCtx, w)
+				rest.WriteErrorResponse(
+					w, http.StatusBadRequest,
+					fmt.Sprintf("query genesis txs is not allowed for the public node"),
+				)
 				return
 			}
 		}
