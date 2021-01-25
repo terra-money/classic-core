@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +16,10 @@ import (
 	"github.com/terra-project/core/client/lcd"
 )
 
-// QueryTxsHandlerFn implements a REST handler that searches for transactions.
+// TxQueryMaxHeightRange maximum allowed height range for /txs query
+const TxQueryMaxHeightRange = 100
+
+// QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
 // Genesis transactions are returned if the height parameter is set to zero,
 // otherwise the transactions are searched for by events.
 func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -51,30 +53,12 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 		}
 
-		txHeightStr := r.FormValue(types.TxHeightKey)
-
 		// enforce tx.height query parameter
 		if isPublicOpen {
-			if txHeightStr == "" {
+			if err := validateTxHeightRange(r); err != nil {
 				rest.WriteErrorResponse(
 					w, http.StatusBadRequest,
-					fmt.Sprint("it is not allowed to query txs without tx.height option. please refer {URL}/swagger-ui"),
-				)
-				return
-			}
-		}
-
-		// parse tx.height query parameter
-		var txHeightEvents []string
-		if _, err := strconv.ParseInt(txHeightStr, 10, 64); len(txHeightStr) != 0 && err != nil {
-			// remove query parameter to prevent duplicated handling
-			delete(r.Form, types.TxHeightKey)
-
-			txHeightEvents, err = parseHeightRange(txHeightStr)
-			if err != nil {
-				rest.WriteErrorResponse(
-					w, http.StatusBadRequest,
-					fmt.Sprintf("failed to parse %s: %s", types.TxHeightKey, err.Error()),
+					err.Error(),
 				)
 				return
 			}
@@ -102,11 +86,6 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		//append tx height events
-		if txHeightEvents != nil && len(txHeightEvents) > 0 {
-			events = append(events, txHeightEvents...)
-		}
-
 		searchResult, err := utils.QueryTxsByEvents(cliCtx, events, page, limit)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -117,63 +96,36 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func parseHeightRange(txHeightStr string) (events []string, err error) {
-	queries := strings.Split(txHeightStr, ",")
-	if len(queries) != 2 {
-		err = fmt.Errorf("invalid tx.height options: %s", queries)
-		return
+func validateTxHeightRange(r *http.Request) error {
+	txHeightStr := r.FormValue(types.TxHeightKey)
+	txMinHeightStr := r.FormValue(rest.TxMinHeightKey)
+	txMaxHeightStr := r.FormValue(rest.TxMaxHeightKey)
+
+	if txHeightStr == "" && (txMinHeightStr == "" || txMaxHeightStr == "") {
+		return fmt.Errorf(
+			"it is not allowed to query txs without %s or (%s && %s) options. please refer {URL}/swagger-ui",
+			types.TxHeightKey, rest.TxMaxHeightKey, rest.TxMinHeightKey)
 	}
 
-	var upperBound int64
-	var lowerBound int64
-	for _, query := range queries {
-		switch {
-		case strings.HasPrefix(query, "GTE"):
-			if h, err2 := strconv.ParseInt(query[3:], 10, 64); err2 == nil {
-				lowerBound = h
-				events = append(events, fmt.Sprintf("%s>=%d", types.TxHeightKey, h))
-			} else {
-				err = fmt.Errorf("failed to parse integer: %s", query[3:])
-				return
-			}
-		case strings.HasPrefix(query, "GT"):
-			if h, err2 := strconv.ParseInt(query[2:], 10, 64); err2 == nil {
-				lowerBound = h + 1
-				events = append(events, fmt.Sprintf("%s>%d", types.TxHeightKey, h))
-			} else {
-				err = fmt.Errorf("failed to parse integer: %s", query[2:])
-				return
-			}
-		case strings.HasPrefix(query, "LTE"):
-			if h, err2 := strconv.ParseInt(query[3:], 10, 64); err2 == nil {
-				upperBound = h
-				events = append(events, fmt.Sprintf("%s<=%d", types.TxHeightKey, h))
-			} else {
-				err = fmt.Errorf("failed to parse integer: %s", query[3:])
-				return
-			}
-		case strings.HasPrefix(query, "LT"):
-			if h, err2 := strconv.ParseInt(query[2:], 10, 64); err2 == nil {
-				upperBound = h - 1
-				events = append(events, fmt.Sprintf("%s<%d", types.TxHeightKey, h))
-			} else {
-				err = fmt.Errorf("failed to parse integer: %s", query[2:])
-				return
-			}
-		default:
-			err = fmt.Errorf("invalid operator: %s", query)
-			return
+	if txMinHeightStr != "" && txMaxHeightStr != "" {
+		txMinHeight, err := strconv.ParseInt(txMinHeightStr, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		txMaxHeight, err := strconv.ParseInt(txMaxHeightStr, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		if txMaxHeight < txMinHeight {
+			return fmt.Errorf("%s must be bigger than %s", rest.TxMaxHeightKey, rest.TxMinHeightKey)
+		}
+
+		if txMaxHeight-txMinHeight > TxQueryMaxHeightRange {
+			return fmt.Errorf("tx height range must be smaller than %d", TxQueryMaxHeightRange)
 		}
 	}
 
-	boundDiff := upperBound - lowerBound
-	if boundDiff > 100 {
-		err = fmt.Errorf("max allowed tx.height range gap is 100: %d", boundDiff)
-		return
-	} else if boundDiff <= 0 {
-		err = fmt.Errorf("tx.height range gap should be positive: %d", boundDiff)
-		return
-	}
-
-	return
+	return nil
 }
