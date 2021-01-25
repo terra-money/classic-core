@@ -31,11 +31,22 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Check public node option
+		isPublicOpen := viper.GetBool(lcd.FlagPublic)
+
 		// if the height query param is set to zero, query for genesis transactions
 		heightStr := r.FormValue("height")
 		if heightStr != "" {
 			if height, err := strconv.ParseInt(heightStr, 10, 64); err == nil && height == 0 {
-				genutilrest.QueryGenesisTxs(cliCtx, w)
+				if isPublicOpen {
+					rest.WriteErrorResponse(
+						w, http.StatusBadRequest,
+						fmt.Sprintf("query genesis txs is not allowed for the public node"),
+					)
+				} else {
+					genutilrest.QueryGenesisTxs(cliCtx, w)
+				}
+
 				return
 			}
 		}
@@ -43,7 +54,6 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		txHeightStr := r.FormValue(types.TxHeightKey)
 
 		// enforce tx.height query parameter
-		isPublicOpen := viper.GetBool(lcd.FlagPublic)
 		if isPublicOpen {
 			if txHeightStr == "" {
 				rest.WriteErrorResponse(
