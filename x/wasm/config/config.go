@@ -58,7 +58,7 @@ func (config Config) LoggingAll() bool {
 func (config *Config) WhitelistToMap() (loggingWhitelist map[string]bool) {
 	loggingWhitelist = make(map[string]bool)
 
-	if config.ContractLoggingWhitelist != "*" {
+	if !strings.Contains(config.ContractLoggingWhitelist, "*") {
 		for _, addr := range strings.Split(config.ContractLoggingWhitelist, ",") {
 			if len(addr) != 0 {
 				loggingWhitelist[addr] = true
