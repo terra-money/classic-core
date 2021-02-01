@@ -268,6 +268,8 @@ jobs:
             TERRAD_VERSION="stable"
           elif [ "${CIRCLE_BRANCH}" = "develop" ]; then
             TERRAD_VERSION="develop"
+          elif [ "${CIRCLE_BRANCH}" = "docker" ]; then
+            TERRAD_VERSION="docker"
           fi
           if [ -z "${TERRAD_VERSION}" ]; then
             docker build .
