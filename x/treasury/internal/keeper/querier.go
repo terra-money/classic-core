@@ -107,7 +107,7 @@ func queryTaxCap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 }
 
 func queryTaxCaps(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var taxCaps []types.TaxCapsResponseItem
+	var taxCaps types.TaxCapsQueryResponse
 	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
 		taxCaps = append(taxCaps, types.TaxCapsResponseItem{
 			Denom:  denom,
@@ -116,9 +116,7 @@ func queryTaxCaps(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		return false
 	})
 
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, types.TaxCapsQueryResponse{
-		TaxCaps: taxCaps,
-	})
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCaps)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

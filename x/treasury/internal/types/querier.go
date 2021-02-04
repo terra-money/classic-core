@@ -38,9 +38,7 @@ type TaxCapsResponseItem struct {
 }
 
 // TaxCapsQueryResponse query response body of tax caps querier
-type TaxCapsQueryResponse struct {
-	TaxCaps []TaxCapsResponseItem `json:"tax_caps"`
-}
+type TaxCapsQueryResponse []TaxCapsResponseItem
 
 // IndicatorQueryResonse query response body
 type IndicatorQueryResonse struct {

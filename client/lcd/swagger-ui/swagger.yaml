@@ -2616,6 +2616,28 @@ paths:
             example: "100000"
         404:
           description: Not Found
+  /treasury/tax_caps:
+    get:
+      summary: Get tax cap of the denom
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: denom
+          description: Denom
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/TaxCap"
+        404:
+          description: Not Found
   /treasury/reward_weight:
     get:
       summary: Get current reward weight
@@ -4221,3 +4243,12 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Msg"
+  TaxCap:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: uluna
+      tax_cap:
+        type: string
+        example: "50"

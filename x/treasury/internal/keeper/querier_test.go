@@ -219,8 +219,8 @@ func TestQueryTaxCaps(t *testing.T) {
 	// Get a currency super random; should default to policy coin.
 	queriedTaxCaps := getQueriedTaxCaps(t, input.Ctx, input.Cdc, querier)
 
-	require.Equal(t, queriedTaxCaps, types.TaxCapsQueryResponse{
-		TaxCaps: []types.TaxCapsResponseItem{
+	require.Equal(t, queriedTaxCaps,
+		types.TaxCapsQueryResponse{
 			{
 				Denom:  "ukrw",
 				TaxCap: sdk.NewInt(1000000000),
@@ -235,7 +235,7 @@ func TestQueryTaxCaps(t *testing.T) {
 				TaxCap: sdk.NewInt(1200000),
 			},
 		},
-	})
+	)
 }
 
 func TestQueryTaxProceeds(t *testing.T) {
