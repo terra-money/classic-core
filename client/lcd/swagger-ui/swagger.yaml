@@ -2618,17 +2618,11 @@ paths:
           description: Not Found
   /treasury/tax_caps:
     get:
-      summary: Get tax cap of the denom
+      summary: Get tax caps for the all whitelisted denoms
       tags:
         - Treasury
       produces:
         - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: Denom
-          required: true
-          type: string
       responses:
         200:
           description: OK
