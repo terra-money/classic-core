@@ -10,6 +10,7 @@ import (
 const (
 	QueryTaxRate             = "taxRate"
 	QueryTaxCap              = "taxCap"
+	QueryTaxCaps             = "taxCaps"
 	QueryRewardWeight        = "rewardWeight"
 	QuerySeigniorageProceeds = "seigniorageProceeds"
 	QueryTaxProceeds         = "taxProceeds"
@@ -28,6 +29,17 @@ func NewQueryTaxCapParams(denom string) QueryTaxCapParams {
 	return QueryTaxCapParams{
 		Denom: denom,
 	}
+}
+
+// TaxCapsResponseItem query response item of tax caps querier
+type TaxCapsResponseItem struct {
+	Denom  string  `json:"denom"`
+	TaxCap sdk.Int `json:"tax_cap"`
+}
+
+// TaxCapsQueryResponse query response body of tax caps querier
+type TaxCapsQueryResponse struct {
+	TaxCaps []TaxCapsResponseItem `json:"tax_caps"`
 }
 
 // IndicatorQueryResonse query response body
