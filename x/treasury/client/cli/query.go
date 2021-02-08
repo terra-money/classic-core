@@ -32,6 +32,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	oracleQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdQueryTaxRate(cdc),
 		GetCmdQueryTaxCap(cdc),
+		GetCmdQueryTaxCaps(cdc),
 		GetCmdQueryRewardWeight(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryTaxProceeds(cdc),
