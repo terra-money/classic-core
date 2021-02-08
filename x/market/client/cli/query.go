@@ -43,7 +43,7 @@ func GetCmdQuerySwap(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Query a quote for how many coins can be received in a swap operation. Note; rates are dynamic and can quickly change.
 
-$ terracli query query swap 5000000uluna usdr
+$ terracli query swap 5000000uluna usdr
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
