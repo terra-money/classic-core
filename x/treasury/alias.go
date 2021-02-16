@@ -52,7 +52,7 @@ var (
 	TaxCapKey                            = types.TaxCapKey
 	TaxProceedsKey                       = types.TaxProceedsKey
 	EpochInitialIssuanceKey              = types.EpochInitialIssuanceKey
-	CumulatedHeightKey                   = types.CumulatedHeightKey
+	CumulativeHeightKey                  = types.CumulativeHeightKey
 	TRKey                                = types.TRKey
 	SRKey                                = types.SRKey
 	TSLKey                               = types.TSLKey

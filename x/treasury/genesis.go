@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	// store cumulated block height of past chains
-	keeper.SetCumulatedHeight(ctx, data.CumulatedHeight)
+	keeper.SetCumulativeHeight(ctx, data.CumulativeHeight)
 
 	for epoch, TR := range data.TRs {
 		keeper.SetTR(ctx, int64(epoch), TR)
@@ -65,7 +65,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 		return false
 	})
 
-	cumulatedHeight := keeper.GetCumulatedHeight(ctx)
+	cumulatedHeight := keeper.GetCumulativeHeight(ctx)
 
 	var TRs []sdk.Dec
 	var SRs []sdk.Dec
