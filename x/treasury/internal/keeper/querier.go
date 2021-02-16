@@ -47,8 +47,9 @@ func queryIndicators(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	taxRewards := sdk.NewDecCoinsFromCoins(keeper.PeekEpochTaxProceeds(ctx)...)
 	TR := keeper.alignCoins(ctx, taxRewards, core.MicroSDRDenom)
 
-	// Subtract remnant blocks of past chain
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() - (keeper.GetCumulatedHeight(ctx) % core.BlocksPerWeek))
+	// The BlockHeight variable of the current context could be set to negative,
+	// in which case the querier fetches indicators from epochs corresponding to negative block heights (from a previous chain version)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() - (keeper.GetCumulativeHeight(ctx) % core.BlocksPerWeek))
 
 	epoch := keeper.GetEpoch(ctx)
 	var res types.IndicatorQueryResonse

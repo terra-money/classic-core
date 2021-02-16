@@ -16,7 +16,7 @@ type GenesisState struct {
 	TaxCaps              map[string]sdk.Int `json:"tax_caps" yaml:"tax_caps"`
 	TaxProceed           sdk.Coins          `json:"tax_proceed" yaml:"tax_proceed"`
 	EpochInitialIssuance sdk.Coins          `json:"epoch_initial_issuance" yaml:"epoch_initial_issuance"`
-	CumulatedHeight      int64              `json:"cumulated_height" yaml:"cumulated_height"`
+	CumulativeHeight     int64              `json:"cumulated_height" yaml:"cumulated_height"`
 	TRs                  []sdk.Dec          `json:"TRs" yaml:"TRs"`
 	SRs                  []sdk.Dec          `json:"SRs" yaml:"SRs"`
 	TSLs                 []sdk.Int          `json:"TSLs" yaml:"TSLs"`
@@ -33,7 +33,7 @@ func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
 		TaxCaps:              taxCaps,
 		TaxProceed:           taxProceed,
 		EpochInitialIssuance: epochInitialIssuance,
-		CumulatedHeight:      cumulatedHeight,
+		CumulativeHeight:     cumulatedHeight,
 		TRs:                  TRs,
 		SRs:                  SRs,
 		TSLs:                 TSLs,
@@ -52,7 +52,7 @@ func DefaultGenesisState() GenesisState {
 		TRs:                  []sdk.Dec{},
 		SRs:                  []sdk.Dec{},
 		TSLs:                 []sdk.Int{},
-		CumulatedHeight:      0,
+		CumulativeHeight:     0,
 	}
 }
 
@@ -72,21 +72,21 @@ func ValidateGenesis(data GenesisState) error {
 		return fmt.Errorf("reward_weight must less than WeightMax(%s) and bigger than RateMin(%s)", data.Params.RewardPolicy.RateMax, data.Params.RewardPolicy.RateMin)
 	}
 
-	if data.CumulatedHeight < 0 {
+	if data.CumulativeHeight < 0 {
 		return fmt.Errorf("cumulated_height can't be negative")
 	}
 
-	curEpoch := int(getEpoch(data.CumulatedHeight))
+	curEpoch := int(getEpoch(data.CumulativeHeight))
 	if len(data.TRs) != curEpoch {
-		return fmt.Errorf("TRs must have same length with epoch of cumulated_height %d", data.CumulatedHeight)
+		return fmt.Errorf("TRs must have same length with epoch of cumulated_height %d", data.CumulativeHeight)
 	}
 
 	if len(data.SRs) != curEpoch {
-		return fmt.Errorf("SRs must have same length with epoch of cumulated_height %d", data.CumulatedHeight)
+		return fmt.Errorf("SRs must have same length with epoch of cumulated_height %d", data.CumulativeHeight)
 	}
 
 	if len(data.TSLs) != curEpoch {
-		return fmt.Errorf("TSLs must have same length with epoch of cumulated_height %d", data.CumulatedHeight)
+		return fmt.Errorf("TSLs must have same length with epoch of cumulated_height %d", data.CumulativeHeight)
 	}
 
 	return data.Params.ValidateBasic()
