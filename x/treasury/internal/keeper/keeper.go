@@ -314,7 +314,7 @@ func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) (res sdk.Int) {
 	bz := store.Get(types.GetTSLKey(epoch))
 
 	if bz == nil {
-		res = sdk.OneInt()
+		res = sdk.ZeroInt()
 	} else {
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &res)
 	}

@@ -157,7 +157,7 @@ func TestIndicatorGetterSetter(t *testing.T) {
 	for e := int64(0); e < 10; e++ {
 		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetTR(input.Ctx, e))
 		require.Equal(t, sdk.ZeroDec(), input.TreasuryKeeper.GetSR(input.Ctx, e))
-		require.Equal(t, sdk.OneInt(), input.TreasuryKeeper.GetTSL(input.Ctx, e))
+		require.Equal(t, sdk.ZeroInt(), input.TreasuryKeeper.GetTSL(input.Ctx, e))
 	}
 }
 
