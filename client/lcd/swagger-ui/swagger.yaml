@@ -263,7 +263,7 @@ paths:
         - in: query
           name: message.sender
           type: string
-          description: "transaction tags with sender: 'GET /txs?message.action=send&message.sender=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv'"
+          description: "transaction events with sender: 'GET /txs?message.action=send&message.sender=terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv'"
           x-example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
         - in: query
           name: page
@@ -277,7 +277,15 @@ paths:
           x-example: 1
         - in: query
           name: tx.height
-          description: "Tx height range option. It should be integer or query string(GTE, GT, LTE, LT): `GET /txs?tx.height=\"GTE3,LT10\"` or `GET /txs?tx.height=100`\nIn case using query string, the range can not exceed 100"
+          description: "transaction events with height: 'GET /txs?tx.height=10000'"
+          x-example: 100
+        - in: query
+          name: tx.minheight
+          description: "transaction events with height range option: 'GET /txs?tx.minheight=10000'"
+          x-example: 100
+        - in: query
+          name: tx.maxheight
+          description: "transaction events with height range option: 'GET /txs?tx.maxheight=10000'"
           x-example: 100
       responses:
         200:
@@ -2616,6 +2624,22 @@ paths:
             example: "100000"
         404:
           description: Not Found
+  /treasury/tax_caps:
+    get:
+      summary: Get tax caps for the all whitelisted denoms
+      tags:
+        - Treasury
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/TaxCap"
+        404:
+          description: Not Found
   /treasury/reward_weight:
     get:
       summary: Get current reward weight
@@ -4221,3 +4245,12 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Msg"
+  TaxCap:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: uluna
+      tax_cap:
+        type: string
+        example: "50"

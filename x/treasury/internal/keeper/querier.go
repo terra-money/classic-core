@@ -21,6 +21,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryTaxRate(ctx, keeper)
 		case types.QueryTaxCap:
 			return queryTaxCap(ctx, req, keeper)
+		case types.QueryTaxCaps:
+			return queryTaxCaps(ctx, keeper)
 		case types.QueryRewardWeight:
 			return queryRewardWeight(ctx, keeper)
 		case types.QuerySeigniorageProceeds:
@@ -44,6 +46,10 @@ func queryIndicators(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	// Compute Tax Rewards (TR)
 	taxRewards := sdk.NewDecCoinsFromCoins(keeper.PeekEpochTaxProceeds(ctx)...)
 	TR := keeper.alignCoins(ctx, taxRewards, core.MicroSDRDenom)
+
+	// The BlockHeight variable of the current context could be set to negative,
+	// in which case the querier fetches indicators from epochs corresponding to negative block heights (from a previous chain version)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() - (keeper.GetCumulativeHeight(ctx) % core.BlocksPerWeek))
 
 	epoch := keeper.GetEpoch(ctx)
 	var res types.IndicatorQueryResonse
@@ -97,6 +103,24 @@ func queryTaxCap(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	taxCap := keeper.GetTaxCap(ctx, params.Denom)
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCap)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryTaxCaps(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var taxCaps types.TaxCapsQueryResponse
+	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
+		taxCaps = append(taxCaps, types.TaxCapsResponseItem{
+			Denom:  denom,
+			TaxCap: taxCap,
+		})
+		return false
+	})
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, taxCaps)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

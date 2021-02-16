@@ -56,9 +56,9 @@ The Total Staked Luna $\lambda$ for the `epoch`.
 
 - TotalStakedLuna: `0x08<epoch_Bytes> -> amino(sdk.Int)`
 
-## CumulatedHeight
+## CumulativeHeight
 
 The cumulative height to keep the indicators on the hard fork.
 
-- CumulatedHeight: `0x09 -> amino(int64)`
+- CumulativeHeight: `0x09 -> amino(int64)`
 

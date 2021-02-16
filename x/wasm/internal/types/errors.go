@@ -19,4 +19,5 @@ var (
 	ErrMigrationFailed     = sdkerrors.Register(ModuleName, 11, "migrate wasm contract failed")
 	ErrNotMigratable       = sdkerrors.Register(ModuleName, 12, "the contract is not migratable ")
 	ErrStoreCodeFailed     = sdkerrors.Register(ModuleName, 13, "store wasm contract failed")
+	ErrContractQueryFailed = sdkerrors.Register(ModuleName, 14, "contract query failed")
 )

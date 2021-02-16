@@ -30,11 +30,11 @@ func TestGenesisValidation(t *testing.T) {
 	require.NoError(t, ValidateGenesis(genState))
 
 	// Error - cumulated_height range error
-	genState.CumulatedHeight = -1
+	genState.CumulativeHeight = -1
 	require.Error(t, ValidateGenesis(genState))
 
 	// Error - cumulated_height indicates 2 epoch, but stored TRs is smaller than 2
-	genState.CumulatedHeight = 2 * core.BlocksPerWeek
+	genState.CumulativeHeight = 2 * core.BlocksPerWeek
 	require.Error(t, ValidateGenesis(genState))
 
 	dummyDec := sdk.NewDec(10)

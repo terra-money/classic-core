@@ -32,6 +32,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	oracleQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdQueryTaxRate(cdc),
 		GetCmdQueryTaxCap(cdc),
+		GetCmdQueryTaxCaps(cdc),
 		GetCmdQueryRewardWeight(cdc),
 		GetCmdQueryParams(cdc),
 		GetCmdQueryTaxProceeds(cdc),
@@ -99,6 +100,35 @@ $ terracli query treasury tax-cap ukrw
 			var taxCap sdk.Dec
 			cdc.MustUnmarshalJSON(res, &taxCap)
 			return cliCtx.PrintOutput(taxCap)
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdQueryTaxCaps implements the query tax-caps command.
+func GetCmdQueryTaxCaps(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tax-caps",
+		Args:  cobra.NoArgs,
+		Short: "Query the current stability tax caps for all denom assets",
+		Long: strings.TrimSpace(`
+Query the current stability tax caps of the all denom assets. 
+The stability tax levied on a tx is at most tax cap, regardless of the size of the transaction. 
+
+$ terracli query treasury tax-caps
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxCaps), nil)
+			if err != nil {
+				return err
+			}
+
+			var taxCaps types.TaxCapsQueryResponse
+			cdc.MustUnmarshalJSON(res, &taxCaps)
+			return cliCtx.PrintOutput(taxCaps)
 		},
 	}
 
