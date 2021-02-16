@@ -8,7 +8,7 @@ import (
 
 // GetEpoch returns current epoch of (current block height + cumulated block height of past chains)
 func (k Keeper) GetEpoch(ctx sdk.Context) int64 {
-	return (k.GetCumulatedHeight(ctx) + ctx.BlockHeight()) / core.BlocksPerWeek
+	return (k.GetCumulativeHeight(ctx) + ctx.BlockHeight()) / core.BlocksPerWeek
 }
 
 //
@@ -68,7 +68,15 @@ func (k Keeper) UpdateIndicators(ctx sdk.Context) {
 
 // TRL returns Tax Rewards per Luna for the epoch
 func TRL(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
-	return k.GetTR(ctx, epoch).QuoInt(k.GetTSL(ctx, epoch))
+	tr := k.GetTR(ctx, epoch)
+	tsl := k.GetTSL(ctx, epoch)
+
+	// division by zero protection
+	if tr.IsZero() || tsl.IsZero() {
+		return sdk.ZeroDec()
+	}
+
+	return tr.QuoInt(tsl)
 }
 
 // SR returns Seigniorage Rewards for the epoch

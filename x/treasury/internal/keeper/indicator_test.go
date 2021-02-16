@@ -147,6 +147,11 @@ func TestLoadIndicatorByEpoch(t *testing.T) {
 		require.Equal(t, SRArr[epoch], SR(input.Ctx, epoch, input.TreasuryKeeper))
 		require.Equal(t, TRArr[epoch].Add(SRArr[epoch]), MR(input.Ctx, epoch, input.TreasuryKeeper))
 	}
+
+	// empty epoch load test
+	require.Equal(t, sdk.ZeroDec(), TRL(input.Ctx, 5, input.TreasuryKeeper))
+	require.Equal(t, sdk.ZeroDec(), SR(input.Ctx, 5, input.TreasuryKeeper))
+	require.Equal(t, sdk.ZeroDec(), MR(input.Ctx, 5, input.TreasuryKeeper))
 }
 
 func linearFn(_ sdk.Context, _ Keeper, epoch int64) sdk.Dec {
