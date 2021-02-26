@@ -29,4 +29,4 @@ replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.
 
 replace github.com/CosmWasm/go-cosmwasm => github.com/terra-project/go-cosmwasm v0.10.4
 
-replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.2-public.3
+replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.2-public.4
