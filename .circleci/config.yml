@@ -263,9 +263,9 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: |
-        docker build -t terramoney/core:$CIRCLE_TAG .
-        docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-        docker push terramoney/core:$CIRCLE_TAG
+          docker build -t terramoney/core:$CIRCLE_TAG .
+          docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
+          docker push terramoney/core:$CIRCLE_TAG
 
   docker-publish-branch:
     executor: golang
@@ -276,10 +276,10 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: |
-        BRANCH=$(echo "${CIRCLE_BRANCH}" | cut -d"/" -f2)
-        docker build -t terramoney/core:${BRANCH} .
-        docker login --password-stdin -u "${DOCKER_USER}" \<<<$DOCKER_PASS
-        docker push terramoney/core:${BRANCH}
+          BRANCH=$(echo "${CIRCLE_BRANCH}" | cut -d"/" -f2)
+          docker build -t terramoney/core:${BRANCH} .
+          docker login --password-stdin -u "${DOCKER_USER}" \<<<$DOCKER_PASS
+          docker push terramoney/core:${BRANCH}
 
   reproducible-builds:
     executor: golang
