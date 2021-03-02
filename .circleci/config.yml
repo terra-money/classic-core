@@ -254,30 +254,7 @@ jobs:
             source $BASH_ENV
             make test-sim-fast
 
-  docker-image:
-    executor: golang
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: |
-          TERRAD_VERSION=''
-          if [ "${CIRCLE_BRANCH}" = "master" ]; then
-            TERRAD_VERSION="stable"
-          elif [ "${CIRCLE_BRANCH}" = "develop" ]; then
-            TERRAD_VERSION="develop"
-          fi
-          if [ -z "${TERRAD_VERSION}" ]; then
-            docker build .
-          else
-            docker build -t terramoney/core:$TERRAD_VERSION .
-            docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
-            docker push terramoney/core:$TERRAD_VERSION
-          fi
-
-  docker-tagged:
+  docker-tag:
     executor: golang
     steps:
       - attach_workspace:
@@ -289,6 +266,20 @@ jobs:
           docker build -t terramoney/core:$CIRCLE_TAG .
           docker login --password-stdin -u $DOCKER_USER \<<<$DOCKER_PASS
           docker push terramoney/core:$CIRCLE_TAG
+
+  docker-publish-branch:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: |
+          BRANCH=$(echo "${CIRCLE_BRANCH}" | cut -d"/" -f2)
+          docker build -t terramoney/core:${BRANCH} .
+          docker login --password-stdin -u "${DOCKER_USER}" \<<<$DOCKER_PASS
+          docker push terramoney/core:${BRANCH}
 
   reproducible-builds:
     executor: golang
@@ -313,10 +304,7 @@ workflows:
   version: 2
   test-suite:
     jobs:
-      - docker-image:
-          requires:
-            - setup-dependencies
-      - docker-tagged:
+      - docker-tag:
           filters:
             tags:
               only:
@@ -324,6 +312,13 @@ workflows:
             branches:
               ignore:
                 - /.*/
+          requires:
+            - setup-dependencies
+      - docker-publish-branch:
+          filters:
+            branches:
+              only:
+                - /^publish\/.+/
           requires:
             - setup-dependencies
       - macos-ci:
@@ -377,10 +372,3 @@ workflows:
                 - master
           requires:
             - setup-dependencies
-      # - release:
-      #     # Only run this job on git tag pushes
-      #     filters:
-      #       branches:
-      #         ignore: /.*/
-      #       tags:
-      #         only: /v[0-9]+(\.[0-9]+)*(-.*)*/
