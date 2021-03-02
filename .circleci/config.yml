@@ -315,6 +315,7 @@ workflows:
           requires:
             - setup-dependencies
       - docker-publish-branch:
+          filters:
             branches:
               only:
                 - /^publish\/.+/
