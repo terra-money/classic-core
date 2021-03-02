@@ -319,8 +319,6 @@ workflows:
             branches:
               only:
                 - /^publish\/.+/
-          requires:
-            - setup-dependencies
       - macos-ci:
           filters:
             branches:
