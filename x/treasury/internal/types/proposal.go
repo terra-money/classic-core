@@ -83,8 +83,8 @@ type RewardWeightUpdateProposal struct {
 }
 
 // NewRewardWeightUpdateProposal creates an RewardWeightUpdateProposal.
-func NewRewardWeightUpdateProposal(title, description string, taxRate sdk.Dec) RewardWeightUpdateProposal {
-	return RewardWeightUpdateProposal{title, description, taxRate}
+func NewRewardWeightUpdateProposal(title, description string, RewardWeight sdk.Dec) RewardWeightUpdateProposal {
+	return RewardWeightUpdateProposal{title, description, RewardWeight}
 }
 
 // GetTitle returns the title of an RewardWeightUpdateProposal.

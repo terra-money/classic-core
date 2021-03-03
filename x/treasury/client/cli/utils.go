@@ -21,7 +21,7 @@ type (
 	RewardWeightUpdateProposalJSON struct {
 		Title        string    `json:"title" yaml:"title"`
 		Description  string    `json:"description" yaml:"description"`
-		RewardWeight sdk.Dec   `json:"tax_rate" yaml:"tax_rate"`
+		RewardWeight sdk.Dec   `json:"reward_weight" yaml:"reward_weight"`
 		Deposit      sdk.Coins `json:"deposit" yaml:"deposit"`
 	}
 )
