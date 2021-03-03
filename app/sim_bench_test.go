@@ -36,7 +36,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		b, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
+		app.BlacklistedAccAddrs(), config,
 	)
 
 	// export state and simParams before the simulation error is checked
@@ -75,7 +75,7 @@ func BenchmarkInvariants(b *testing.B) {
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		b, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
+		app.BlacklistedAccAddrs(), config,
 	)
 
 	// export state and simParams before the simulation error is checked

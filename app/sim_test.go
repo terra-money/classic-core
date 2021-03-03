@@ -80,7 +80,7 @@ func TestFullAppSimulation(t *testing.T) {
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
+		app.BlacklistedAccAddrs(), config,
 	)
 
 	// export state and simParams before the simulation error is checked
@@ -113,7 +113,7 @@ func TestAppImportExport(t *testing.T) {
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
+		app.BlacklistedAccAddrs(), config,
 	)
 
 	// export state and simParams before the simulation error is checked
@@ -205,7 +205,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
 		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
+		app.BlacklistedAccAddrs(), config,
 	)
 
 	// export state and simParams before the simulation error is checked
@@ -248,7 +248,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	_, _, err = simulation.SimulateFromSeed(
 		t, os.Stdout, newApp.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 		simapp.SimulationOperations(newApp, newApp.Codec(), config),
-		newApp.ModuleAccountAddrs(), config,
+		newApp.BlacklistedAccAddrs(), config,
 	)
 	require.NoError(t, err)
 }
@@ -298,7 +298,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			_, _, err = simulation.SimulateFromSeed(
 				t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
 				simapp.SimulationOperations(app, app.Codec(), config),
-				app.ModuleAccountAddrs(), config,
+				app.BlacklistedAccAddrs(), config,
 			)
 			require.NoError(t, err)
 
