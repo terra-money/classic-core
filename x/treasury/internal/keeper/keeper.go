@@ -222,10 +222,10 @@ func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
 	return epochSeigniorage
 }
 
-// GetCumulatedHeight returns last block height of past chain
-func (k Keeper) GetCumulatedHeight(ctx sdk.Context) (res int64) {
+// GetCumulativeHeight returns last block height of past chain
+func (k Keeper) GetCumulativeHeight(ctx sdk.Context) (res int64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CumulatedHeightKey)
+	bz := store.Get(types.CumulativeHeightKey)
 
 	if bz == nil {
 		res = 0
@@ -235,11 +235,11 @@ func (k Keeper) GetCumulatedHeight(ctx sdk.Context) (res int64) {
 	return
 }
 
-// SetCumulatedHeight sets cumulated block height of past chains
-func (k Keeper) SetCumulatedHeight(ctx sdk.Context, cumulatedHeight int64) {
+// SetCumulativeHeight sets cumulated block height of past chains
+func (k Keeper) SetCumulativeHeight(ctx sdk.Context, cumulatedHeight int64) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(cumulatedHeight)
-	store.Set(types.CumulatedHeightKey, b)
+	store.Set(types.CumulativeHeightKey, b)
 }
 
 // GetTR returns the tax rewards for the epoch
@@ -308,7 +308,7 @@ func (k Keeper) ClearSRs(ctx sdk.Context) {
 	}
 }
 
-// GetTSL returns the total saked luna for the epoch
+// GetTSL returns the total staked luna for the epoch
 func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) (res sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTSLKey(epoch))
@@ -322,7 +322,7 @@ func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) (res sdk.Int) {
 	return
 }
 
-// SetTSL stores the total saked luna for the epoch
+// SetTSL stores the total staked luna for the epoch
 func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, TSL sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -330,7 +330,7 @@ func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, TSL sdk.Int) {
 	store.Set(types.GetTSLKey(epoch), bz)
 }
 
-// ClearTSLs delete all the total saked luna from the store
+// ClearTSLs delete all the total staked luna from the store
 func (k Keeper) ClearTSLs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 

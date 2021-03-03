@@ -345,10 +345,10 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddr sdk.AccAddress, qu
 
 	k.consumeGas(ctx, gasUsed, "Contract Query")
 	if err != nil {
-		return nil, err
+		err = sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
 	}
 
-	return queryResult, nil
+	return queryResult, err
 }
 
 func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractStorePrefix prefix.Store, err error) {

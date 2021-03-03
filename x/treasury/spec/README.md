@@ -17,7 +17,7 @@ The Treasury module acts as the "central bank" of the Terra economy, measuring m
     - [TaxProceeds](02_state.md#TaxProceeds)
     - [EpochInitialIssuance](02_state.md#EpochInitialIssuance)
     - [Indicators](02_state.md#Indicators)
-    - [CumulatedHeight](02_state.md#CumulatedHeight)
+    - [CumulativeHeight](02_state.md#CumulativeHeight)
 3. **[EndBlock](03_end_block.md)**
     - [EndBlocker](03_end_block.md#EndBlocker)
     - [Functions](03_end_block.md#Functions)

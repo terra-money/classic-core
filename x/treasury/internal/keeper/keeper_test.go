@@ -127,13 +127,13 @@ func TestPeekEpochSeigniorage(t *testing.T) {
 	}
 }
 
-func TestCumulatedHeight(t *testing.T) {
+func TestCumulativeHeight(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// See that we can get and set reward weights
 	for i := int64(0); i < 10; i++ {
-		input.TreasuryKeeper.SetCumulatedHeight(input.Ctx, i*100)
-		require.Equal(t, i*100, input.TreasuryKeeper.GetCumulatedHeight(input.Ctx))
+		input.TreasuryKeeper.SetCumulativeHeight(input.Ctx, i*100)
+		require.Equal(t, i*100, input.TreasuryKeeper.GetCumulativeHeight(input.Ctx))
 	}
 }
 

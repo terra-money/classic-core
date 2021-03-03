@@ -58,6 +58,23 @@ func getQueriedTaxCap(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 	return response
 }
 
+func getQueriedTaxCaps(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) types.TaxCapsQueryResponse {
+	query := abci.RequestQuery{
+		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryTaxCaps}, "/"),
+		Data: nil,
+	}
+
+	bz, err := querier(ctx, []string{types.QueryTaxCaps}, query)
+	require.Nil(t, err)
+	require.NotNil(t, bz)
+
+	var response types.TaxCapsQueryResponse
+	err2 := cdc.UnmarshalJSON(bz, &response)
+	require.Nil(t, err2)
+
+	return response
+}
+
 func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, epoch int64) sdk.Dec {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryRewardWeight}, "/"),
@@ -189,6 +206,36 @@ func TestQueryTaxCap(t *testing.T) {
 	queriedTaxCap := getQueriedTaxCap(t, input.Ctx, input.Cdc, querier, "hello")
 
 	require.Equal(t, queriedTaxCap, params.TaxPolicy.Cap.Amount)
+}
+
+func TestQueryTaxCaps(t *testing.T) {
+	input := CreateTestInput(t)
+	querier := NewQuerier(input.TreasuryKeeper)
+
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, "ukrw", sdk.NewInt(1000000000))
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, "usdr", sdk.NewInt(1000000))
+	input.TreasuryKeeper.SetTaxCap(input.Ctx, "uusd", sdk.NewInt(1200000))
+
+	// Get a currency super random; should default to policy coin.
+	queriedTaxCaps := getQueriedTaxCaps(t, input.Ctx, input.Cdc, querier)
+
+	require.Equal(t, queriedTaxCaps,
+		types.TaxCapsQueryResponse{
+			{
+				Denom:  "ukrw",
+				TaxCap: sdk.NewInt(1000000000),
+			},
+			{
+				Denom:  "usdr",
+				TaxCap: sdk.NewInt(1000000),
+			},
+
+			{
+				Denom:  "uusd",
+				TaxCap: sdk.NewInt(1200000),
+			},
+		},
+	)
 }
 
 func TestQueryTaxProceeds(t *testing.T) {
