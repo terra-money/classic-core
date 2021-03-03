@@ -216,7 +216,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	app.supplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.accountKeeper, app.bankKeeper, maccPerms)
 	stakingKeeper := staking.NewKeeper(app.cdc, keys[staking.StoreKey], app.supplyKeeper, app.subspaces[staking.ModuleName])
 	app.distrKeeper = distr.NewKeeper(app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper,
-		app.supplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs())
+		app.supplyKeeper, auth.FeeCollectorName, app.BlacklistedAccAddrs())
 	app.slashingKeeper = slashing.NewKeeper(app.cdc, keys[slashing.StoreKey], &stakingKeeper,
 		app.subspaces[slashing.ModuleName])
 	app.crisisKeeper = crisis.NewKeeper(app.subspaces[crisis.ModuleName], invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
@@ -301,7 +301,7 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// CanWithdrawInvariant invariant.
 	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, mint.ModuleName, distr.ModuleName, slashing.ModuleName,
 		evidence.ModuleName, wasm.ModuleName)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName,
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, bank.BurnModuleName, oracle.ModuleName, gov.ModuleName, market.ModuleName,
 		treasury.ModuleName, msgauth.ModuleName, staking.ModuleName)
 
 	// genutils must occur after staking so that pools are properly
