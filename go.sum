@@ -453,8 +453,8 @@ github.com/tendermint/tm-db v0.5.1 h1:H9HDq8UEA7Eeg13kdYckkgwwkQLBnJGgX4PgLJRhie
 github.com/tendermint/tm-db v0.5.1/go.mod h1:g92zWjHpCYlEvQXvy9M168Su8V1IBEeawpXVVBaK4f4=
 github.com/terra-project/cosmos-sdk v0.39.2-public.4 h1:OddNwpMRI2RWfA/SjGL6ld4s/K1MN5BwmJwYU1hgcJs=
 github.com/terra-project/cosmos-sdk v0.39.2-public.4/go.mod h1:VNUluciWBFj2vkhpMcp8rYZL/kCw0FtNc7SseUjE1KM=
-github.com/terra-project/go-cosmwasm v0.10.4 h1:2UmueP0/LngjTYmFr7K3sJRA2cvtROxaPOC+i5ZM0oA=
-github.com/terra-project/go-cosmwasm v0.10.4/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
+github.com/terra-project/go-cosmwasm v0.10.5 h1:SIS28GRnEQfRRJKfWy21JLe4vkoWNlFpj+bL8CDb5/M=
+github.com/terra-project/go-cosmwasm v0.10.5/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
 github.com/terra-project/ledger-terra-go v0.11.1-terra h1:BnwRp8dyJMN5sROg8g6dXc5/Zoi44gd5c8Llf0Nobac=
 github.com/terra-project/ledger-terra-go v0.11.1-terra/go.mod h1:5fdyEuDNvsymbqag/EaaAeWAgyAebQe2VH38H+DnXnA=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
