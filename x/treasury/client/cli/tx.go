@@ -1,35 +1,27 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/types"
 )
 
 // GetCmdSubmitTaxRateUpdateProposal implements the command to submit a tax-rate-update proposal
-func GetCmdSubmitTaxRateUpdateProposal(cdc *codec.Codec) *cobra.Command {
+func GetCmdSubmitTaxRateUpdateProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-rate-update [proposal-file]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Submit a tax rate update proposal",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit a tax rate update proposal along with an initial deposit.
+		Long: `Submit a tax rate update proposal along with an initial deposit.
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx treasury submit-proposal tax-rate-update <path/to/proposal.json> --from=<key_or_address>
+$ terrad tx treasury submit-proposal tax-rate-update <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 
@@ -45,28 +37,35 @@ Where proposal.json contains:
   ]
 }
 `,
-				version.ClientName,
-			),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			proposal, err := ParseTaxRateUpdateProposalJSON(cdc, args[0])
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			from := cliCtx.GetFromAddress()
+			proposal, err := ParseTaxRateUpdateProposalWithDeposit(clientCtx.JSONMarshaler, args[0])
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
 			content := types.NewTaxRateUpdateProposal(proposal.Title, proposal.Description, proposal.TaxRate)
 
-			msg := gov.NewMsgSubmitProposal(content, proposal.Deposit, from)
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
+			if err != nil {
+				return err
+			}
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -74,17 +73,16 @@ Where proposal.json contains:
 }
 
 // GetCmdSubmitRewardWeightUpdateProposal implements the command to submit a reward-weight-update proposal
-func GetCmdSubmitRewardWeightUpdateProposal(cdc *codec.Codec) *cobra.Command {
+func GetCmdSubmitRewardWeightUpdateProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reward-weight-update [proposal-file]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Submit a reward weight update proposal",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit a reward weight update proposal along with an initial deposit.
+		Long: `Submit a reward weight update proposal along with an initial deposit.
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx treasury submit-proposal reward-weight-update <path/to/proposal.json> --from=<key_or_address>
+$ terrad tx treasury submit-proposal reward-weight-update <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 
@@ -100,28 +98,35 @@ Where proposal.json contains:
   ]
 }
 `,
-				version.ClientName,
-			),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			proposal, err := ParseRewardWeightUpdateProposalJSON(cdc, args[0])
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			from := cliCtx.GetFromAddress()
+			proposal, err := ParseRewardWeightUpdateProposalWithDeposit(clientCtx.JSONMarshaler, args[0])
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
 			content := types.NewRewardWeightUpdateProposal(proposal.Title, proposal.Description, proposal.RewardWeight)
 
-			msg := gov.NewMsgSubmitProposal(content, proposal.Deposit, from)
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
+			if err != nil {
+				return err
+			}
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

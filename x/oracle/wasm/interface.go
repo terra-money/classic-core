@@ -8,7 +8,7 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
-	"github.com/terra-project/core/x/oracle/internal/keeper"
+	"github.com/terra-project/core/x/oracle/keeper"
 	wasm "github.com/terra-project/core/x/wasm/exported"
 )
 
@@ -35,18 +35,18 @@ type ExchangeRateQueryParams struct {
 
 // CosmosQuery custom query interface for oracle querier
 type CosmosQuery struct {
-	ExchangeRates ExchangeRateQueryParams `json:"exchange_rates"`
+	ExchangeRates *ExchangeRateQueryParams `json:"exchange_rates,omitempty"`
 }
 
 // ExchangeRatesQueryResponseItem - exchange rates query response item
-type exchangeRateItem struct {
+type ExchangeRateItem struct {
 	ExchangeRate string `json:"exchange_rate"`
 	QuoteDenom   string `json:"quote_denom"`
 }
 
 // ExchangeRatesQueryResponse - exchange rates query response for wasm module
 type ExchangeRatesQueryResponse struct {
-	ExchangeRates []exchangeRateItem `json:"exchange_rates"`
+	ExchangeRates []ExchangeRateItem `json:"exchange_rates"`
 	BaseDenom     string             `json:"base_denom"`
 }
 
@@ -59,34 +59,38 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	// LUNA / BASE_DENOM
-	baseDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, params.ExchangeRates.BaseDenom)
-	if err != nil {
-		return nil, err
-	}
-
-	var items []exchangeRateItem
-	for _, quoteDenom := range params.ExchangeRates.QuoteDenoms {
-		quoteDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, quoteDenom)
+	if params.ExchangeRates != nil {
+		// LUNA / BASE_DENOM
+		baseDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, params.ExchangeRates.BaseDenom)
 		if err != nil {
 			return nil, err
 		}
 
-		// (BASE_DENOM / LUNA) / (DENOM / LUNA) = BASE_DENOM / QUOTE_DENOM
-		items = append(items, exchangeRateItem{
-			ExchangeRate: baseDenomExchangeRate.Quo(quoteDenomExchangeRate).String(),
-			QuoteDenom:   quoteDenom,
+		var items []ExchangeRateItem
+		for _, quoteDenom := range params.ExchangeRates.QuoteDenoms {
+			quoteDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, quoteDenom)
+			if err != nil {
+				return nil, err
+			}
+
+			// (BASE_DENOM / LUNA) / (DENOM / LUNA) = BASE_DENOM / QUOTE_DENOM
+			items = append(items, ExchangeRateItem{
+				ExchangeRate: baseDenomExchangeRate.Quo(quoteDenomExchangeRate).String(),
+				QuoteDenom:   quoteDenom,
+			})
+		}
+
+		bz, err := json.Marshal(ExchangeRatesQueryResponse{
+			BaseDenom:     params.ExchangeRates.BaseDenom,
+			ExchangeRates: items,
 		})
+
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		}
+
+		return bz, nil
 	}
 
-	bz, err := json.Marshal(ExchangeRatesQueryResponse{
-		BaseDenom:     params.ExchangeRates.BaseDenom,
-		ExchangeRates: items,
-	})
-
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return bz, nil
+	return nil, wasmTypes.UnsupportedRequest{Kind: "unknown Oracle variant"}
 }

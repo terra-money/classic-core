@@ -8,26 +8,27 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	feeutils "github.com/terra-project/core/custom/auth/client/utils"
+	"github.com/terra-project/core/x/msgauth/types"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}", RestGranter, RestGrantee, RestMsgType), grantHandler(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}/revoke", RestGranter, RestGrantee, RestMsgType), revokeHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/msgauth/execute", executeHandler(cliCtx)).Methods("POST")
+func registerTxRoutes(clientCtx client.Context, rtr *mux.Router) {
+	rtr.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}", RestGranter, RestGrantee, RestMsgType), grantHandler(clientCtx)).Methods("POST")
+	rtr.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}/revoke", RestGranter, RestGrantee, RestMsgType), revokeHandler(clientCtx)).Methods("POST")
+	rtr.HandleFunc("/msgauth/execute", executeHandler(clientCtx)).Methods("POST")
 }
 
-func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func grantHandler(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req GrantRequest
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 			return
 		}
 
@@ -53,16 +54,19 @@ func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var authorization types.Authorization
-		if msgType == (types.SendAuthorization{}.MsgType()) {
+		var authorization types.AuthorizationI
+		if msgType == (banktypes.TypeMsgSend) {
 			authorization = types.NewSendAuthorization(req.Limit)
 		} else {
 			authorization = types.NewGenericAuthorization(msgType)
 		}
 
-		msg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, authorization, req.Period)
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		msg, err := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, authorization, req.Period)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			return
 		}
 
@@ -77,15 +81,15 @@ func grantHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
 	}
 }
 
-func revokeHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func revokeHandler(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RevokeRequest
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 			return
 		}
 
@@ -112,8 +116,7 @@ func revokeHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		msg := types.NewMsgRevokeAuthorization(granterAddr, granteeAddr, msgType)
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			return
 		}
 
@@ -128,15 +131,15 @@ func revokeHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
 	}
 }
 
-func executeHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func executeHandler(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ExecuteRequest
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 			return
 		}
 
@@ -151,35 +154,27 @@ func executeHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgExecAuthorized(fromAddr, req.Msgs)
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		msg, err := types.NewMsgExecAuthorized(fromAddr, req.Msgs)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			return
 		}
 
 		if req.BaseReq.Fees.IsZero() {
-			fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-				Memo:          req.BaseReq.Memo,
-				ChainID:       req.BaseReq.ChainID,
-				AccountNumber: req.BaseReq.AccountNumber,
-				Sequence:      req.BaseReq.Sequence,
-				GasPrices:     req.BaseReq.GasPrices,
-				Gas:           req.BaseReq.Gas,
-				GasAdjustment: req.BaseReq.GasAdjustment,
-				Msgs:          []sdk.Msg{msg},
-			})
-
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
+			if rest.CheckBadRequestError(w, err) {
 				return
 			}
 
 			// override gas and fees
-			req.BaseReq.Gas = strconv.FormatUint(gas, 10)
-			req.BaseReq.Fees = fees
+			req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
+			req.BaseReq.Fees = stdFee.Amount
 			req.BaseReq.GasPrices = sdk.DecCoins{}
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
 	}
 }

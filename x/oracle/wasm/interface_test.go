@@ -1,4 +1,4 @@
-package wasm
+package wasm_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/keeper"
+	"github.com/terra-project/core/x/oracle/keeper"
+	"github.com/terra-project/core/x/oracle/wasm"
 )
 
 func TestQueryExchangeRates(t *testing.T) {
@@ -21,7 +22,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, USDExchangeRate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, SDRExchangeRate)
 
-	querier := NewWasmQuerier(input.OracleKeeper)
+	querier := wasm.NewWasmQuerier(input.OracleKeeper)
 	var err error
 
 	// empty data will occur error
@@ -29,12 +30,12 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.Error(t, err)
 
 	// not existing quote denom query
-	queryParams := ExchangeRateQueryParams{
+	queryParams := wasm.ExchangeRateQueryParams{
 		BaseDenom:   core.MicroLunaDenom,
 		QuoteDenoms: []string{core.MicroMNTDenom},
 	}
-	bz, err := json.Marshal(CosmosQuery{
-		ExchangeRates: queryParams,
+	bz, err := json.Marshal(wasm.CosmosQuery{
+		ExchangeRates: &queryParams,
 	})
 	require.NoError(t, err)
 
@@ -42,12 +43,12 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.Error(t, err)
 
 	// not existing base denom query
-	queryParams = ExchangeRateQueryParams{
+	queryParams = wasm.ExchangeRateQueryParams{
 		BaseDenom:   core.MicroCNYDenom,
 		QuoteDenoms: []string{core.MicroKRWDenom, core.MicroUSDDenom, core.MicroSDRDenom},
 	}
-	bz, err = json.Marshal(CosmosQuery{
-		ExchangeRates: queryParams,
+	bz, err = json.Marshal(wasm.CosmosQuery{
+		ExchangeRates: &queryParams,
 	})
 	require.NoError(t, err)
 
@@ -55,24 +56,24 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.Error(t, err)
 
 	// valid query luna exchange rates
-	queryParams = ExchangeRateQueryParams{
+	queryParams = wasm.ExchangeRateQueryParams{
 		BaseDenom:   core.MicroKRWDenom,
 		QuoteDenoms: []string{core.MicroLunaDenom, core.MicroUSDDenom, core.MicroSDRDenom},
 	}
-	bz, err = json.Marshal(CosmosQuery{
-		ExchangeRates: queryParams,
+	bz, err = json.Marshal(wasm.CosmosQuery{
+		ExchangeRates: &queryParams,
 	})
 	require.NoError(t, err)
 
 	res, err = querier.QueryCustom(input.Ctx, bz)
 	require.NoError(t, err)
 
-	var exchangeRatesResponse ExchangeRatesQueryResponse
+	var exchangeRatesResponse wasm.ExchangeRatesQueryResponse
 	err = json.Unmarshal(res, &exchangeRatesResponse)
 	require.NoError(t, err)
-	require.Equal(t, exchangeRatesResponse, ExchangeRatesQueryResponse{
+	require.Equal(t, exchangeRatesResponse, wasm.ExchangeRatesQueryResponse{
 		BaseDenom: core.MicroKRWDenom,
-		ExchangeRates: []exchangeRateItem{
+		ExchangeRates: []wasm.ExchangeRateItem{
 			{
 				ExchangeRate: KRWExchangeRate.String(),
 				QuoteDenom:   core.MicroLunaDenom,

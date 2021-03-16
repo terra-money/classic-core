@@ -1,16 +1,20 @@
 package oracle
 
 import (
-	"github.com/terra-project/core/x/oracle/internal/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/exported"
+	"time"
 
 	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/oracle/keeper"
+	"github.com/terra-project/core/x/oracle/types"
+
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) {
+func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+
 	params := k.GetParams(ctx)
 
 	// Not yet time for a tally
@@ -18,22 +22,24 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return
 	}
 
-	// Build valid votes counter and winner map over all validators in active set
-	validVotesCounterMap := make(map[string]int)
-	winnerMap := make(map[string]types.Claim)
-	k.StakingKeeper.IterateValidators(ctx, func(_ int64, validator exported.ValidatorI) bool {
+	// Build claim map over all validators in active set
+	validatorClaimMap := make(map[string]types.Claim)
 
-		// Exclude not bonded validator or jailed validators from tallying
-		if validator.IsBonded() && !validator.IsJailed() {
+	maxValidators := k.StakingKeeper.MaxValidators(ctx)
+	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	defer iterator.Close()
 
-			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
+	i := 0
+	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
+
+		// Exclude not bonded validator
+		if validator.IsBonded() {
 			valAddr := validator.GetOperator()
-			validVotesCounterMap[string(valAddr)] = 0
-			winnerMap[string(valAddr)] = types.NewClaim(0, valAddr)
+			validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(), 0, 0, valAddr)
+			i++
 		}
-
-		return false
-	})
+	}
 
 	// Denom-TobinTax map
 	voteTargets := make(map[string]sdk.Dec)
@@ -51,7 +57,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	// Organize votes to ballot by denom
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
-	voteMap := k.OrganizeBallotByDenom(ctx)
+	voteMap := k.OrganizeBallotByDenom(ctx, validatorClaimMap)
 
 	if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
 		// make voteMap of Reference Terra to calculate cross exchange rates
@@ -68,10 +74,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			}
 
 			// Get weighted median of cross exchange rates
-			exchangeRate, ballotWinningClaims := tally(ctx, ballot, params.RewardBand)
-
-			// Update winnerMap, validVotesCounterMap using ballotWinningClaims of cross exchange rate ballot
-			updateWinnerMap(ballotWinningClaims, validVotesCounterMap, winnerMap)
+			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
 
 			// Transform into the original form uluna/stablecoin
 			if denom != referenceTerra {
@@ -86,89 +89,30 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	//---------------------------
 	// Do miss counting & slashing
 	voteTargetsLen := len(voteTargets)
-	for operatorAddrByteStr, count := range validVotesCounterMap {
+	for _, claim := range validatorClaimMap {
 		// Skip abstain & valid voters
-		if count == voteTargetsLen {
+		if int(claim.WinCount) == voteTargetsLen {
 			continue
 		}
 
 		// Increase miss counter
-		operator := sdk.ValAddress(operatorAddrByteStr) // error never occur
-		k.SetMissCounter(ctx, operator, k.GetMissCounter(ctx, operator)+1)
+		k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)
 	}
 
 	// Do slash who did miss voting over threshold and
 	// reset miss counters of all validators at the last block of slash window
 	if core.IsPeriodLastBlock(ctx, params.SlashWindow) {
-		SlashAndResetMissCounters(ctx, k)
+		k.SlashAndResetMissCounters(ctx)
 	}
 
 	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, winnerMap)
+	k.RewardBallotWinners(ctx, validatorClaimMap)
 
 	// Clear the ballot
-	clearBallots(ctx, k, params.VotePeriod)
+	k.ClearBallots(ctx, params.VotePeriod)
 
 	// Update vote targets and tobin tax
-	applyWhitelist(ctx, k, params.Whitelist, voteTargets)
+	k.ApplyWhitelist(ctx, params.Whitelist, voteTargets)
 
 	return
-}
-
-// clearBallots clears all tallied prevotes and votes from the store
-func clearBallots(ctx sdk.Context, k Keeper, votePeriod int64) {
-	// Clear all prevotes
-	k.IterateExchangeRatePrevotes(ctx, func(prevote types.ExchangeRatePrevote) (stop bool) {
-		if ctx.BlockHeight() > prevote.SubmitBlock+votePeriod {
-			k.DeleteExchangeRatePrevote(ctx, prevote)
-		}
-
-		return false
-	})
-
-	// Clear all votes
-	k.IterateExchangeRateVotes(ctx, func(vote types.ExchangeRateVote) (stop bool) {
-		k.DeleteExchangeRateVote(ctx, vote)
-		return false
-	})
-
-	// Clear all aggregate prevotes
-	k.IterateAggregateExchangeRatePrevotes(ctx, func(aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool) {
-		if ctx.BlockHeight() > aggregatePrevote.SubmitBlock+votePeriod {
-			k.DeleteAggregateExchangeRatePrevote(ctx, aggregatePrevote)
-		}
-
-		return false
-	})
-
-	// Clear all aggregate votes
-	k.IterateAggregateExchangeRateVotes(ctx, func(vote types.AggregateExchangeRateVote) (stop bool) {
-		k.DeleteAggregateExchangeRateVote(ctx, vote)
-		return false
-	})
-}
-
-// applyWhitelist update vote target denom list and set tobin tax with params whitelist
-func applyWhitelist(ctx sdk.Context, k Keeper, whitelist types.DenomList, voteTargets map[string]sdk.Dec) {
-
-	// check is there any update in whitelist params
-	updateRequired := false
-	if len(voteTargets) != len(whitelist) {
-		updateRequired = true
-	} else {
-		for _, item := range whitelist {
-			if tobinTax, ok := voteTargets[item.Name]; !ok || !tobinTax.Equal(item.TobinTax) {
-				updateRequired = true
-				break
-			}
-		}
-	}
-
-	if updateRequired {
-		k.ClearTobinTaxes(ctx)
-
-		for _, item := range whitelist {
-			k.SetTobinTax(ctx, item.Name, item.TobinTax)
-		}
-	}
 }

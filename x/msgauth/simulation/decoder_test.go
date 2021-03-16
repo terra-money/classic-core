@@ -7,37 +7,36 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	tmkv "github.com/tendermint/tendermint/libs/kv"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-project/core/x/msgauth/keeper"
+	"github.com/terra-project/core/x/msgauth/types"
 )
 
-func makeTestCodec() (cdc *codec.Codec) {
-	cdc = codec.New()
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	types.RegisterCodec(cdc)
-	return
-}
-
 func TestDecodeMsgAuthStore(t *testing.T) {
-	cdc := makeTestCodec()
+	cdc := keeper.MakeTestCodec(t)
+	dec := NewDecodeStore(cdc)
 
-	grant := types.NewAuthorizationGrant(types.NewSendAuthorization(sdk.NewCoins(sdk.NewInt64Coin("foo", 123))), time.Now().UTC())
-	pairs := []types.GGMPair{
-		{
-			GranteeAddress: sdk.AccAddress{1, 2, 3},
-			GranterAddress: sdk.AccAddress{1, 2, 3},
-			MsgType:        "send",
+	grant, err := types.NewAuthorizationGrant(types.NewSendAuthorization(sdk.NewCoins(sdk.NewInt64Coin("foo", 123))), time.Now().UTC())
+	require.NoError(t, err)
+
+	pairs := types.GGMPairs{
+		Pairs: []types.GGMPair{
+			{
+				GranteeAddress: "abc",
+				GranterAddress: "cba",
+				MsgType:        "send",
+			},
 		},
 	}
 
-	kvPairs := tmkv.Pairs{
-		tmkv.Pair{Key: types.GrantKey, Value: cdc.MustMarshalBinaryLengthPrefixed(grant)},
-		tmkv.Pair{Key: types.GrantQueueKey, Value: cdc.MustMarshalBinaryLengthPrefixed(pairs)},
-		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
+	kvPairs := kv.Pairs{
+		Pairs: []kv.Pair{
+			{Key: types.GrantKey, Value: cdc.MustMarshalBinaryBare(&grant)},
+			{Key: types.GrantQueueKey, Value: cdc.MustMarshalBinaryBare(&pairs)},
+			{Key: []byte{0x99}, Value: []byte{0x99}},
+		},
 	}
 
 	tests := []struct {
@@ -54,9 +53,9 @@ func TestDecodeMsgAuthStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			switch i {
 			case len(tests) - 1:
-				require.Panics(t, func() { DecodeStore(cdc, kvPairs[i], kvPairs[i]) }, tt.name)
+				require.Panics(t, func() { dec(kvPairs.Pairs[i], kvPairs.Pairs[i]) }, tt.name)
 			default:
-				require.Equal(t, tt.expectedLog, DecodeStore(cdc, kvPairs[i], kvPairs[i]), tt.name)
+				require.Equal(t, tt.expectedLog, dec(kvPairs.Pairs[i], kvPairs.Pairs[i]), tt.name)
 			}
 		})
 	}

@@ -1,0 +1,53 @@
+package keeper
+
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/treasury/types"
+)
+
+// SettleSeigniorage computes seigniorage and distributes it to oracle and distribution(community-pool) account
+func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
+	// Mint seigniorage for oracle and community pool
+	seigniorageLunaAmt := k.PeekEpochSeigniorage(ctx)
+	if seigniorageLunaAmt.LTE(sdk.ZeroInt()) {
+		return
+	}
+
+	// Settle current epoch seigniorage
+	rewardWeight := k.GetRewardWeight(ctx)
+
+	// Align seigniorage to usdr
+	seigniorageDecCoin := sdk.NewDecCoin(core.MicroLunaDenom, seigniorageLunaAmt)
+
+	// Mint seigniorage
+	seigniorageCoin, _ := seigniorageDecCoin.TruncateDecimal()
+	seigniorageCoins := sdk.NewCoins(seigniorageCoin)
+	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, seigniorageCoins)
+	if err != nil {
+		panic(err)
+	}
+	seigniorageAmt := seigniorageCoin.Amount
+
+	// Send reward to oracle module
+	burnAmt := rewardWeight.MulInt(seigniorageAmt).TruncateInt()
+	burnCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, burnAmt))
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnCoins)
+	if err != nil {
+		panic(err)
+	}
+
+	// Send left to distribution module
+	leftAmt := seigniorageAmt.Sub(burnAmt)
+	leftCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, leftAmt))
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionModuleName, leftCoins)
+	if err != nil {
+		panic(err)
+	}
+
+	// Update distribution community pool
+	feePool := k.distrKeeper.GetFeePool(ctx)
+	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(leftCoins...)...)
+	k.distrKeeper.SetFeePool(ctx, feePool)
+}

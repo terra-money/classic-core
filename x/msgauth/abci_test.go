@@ -1,33 +1,35 @@
 package msgauth
 
 import (
+	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/stretchr/testify/require"
+
+	"github.com/terra-project/core/x/msgauth/keeper"
+	"github.com/terra-project/core/x/msgauth/types"
 )
 
-func init() {
-	_ = suite.Suite{}
-}
-
-func (s *TestSuite) TestMature() {
+func TestMature(t *testing.T) {
+	input := keeper.CreateTestInput(t)
+	h := NewHandler(input.AuthorizationKeeper)
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
 
 	// send authorization
-	sendAuth := types.SendAuthorization{SpendLimit: coins}
-	msg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, sendAuth, time.Hour)
+	sendAuth := types.NewSendAuthorization(coins)
+	msg, err := types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], sendAuth, time.Hour)
+	require.NoError(t, err)
 
-	_, err := s.handler(s.ctx, msg)
-	s.Require().NoError(err)
+	_, err = h(input.Ctx, msg)
+	require.NoError(t, err)
 
-	grant, found := s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, sendAuth.MsgType())
-	s.Require().True(found)
-	s.Require().Equal(sendAuth, grant.Authorization)
-	s.Require().Equal(s.ctx.BlockTime().Add(time.Hour), grant.Expiration)
+	grant, found := input.AuthorizationKeeper.GetGrant(input.Ctx, keeper.Addrs[0], keeper.Addrs[1], sendAuth.MsgType())
+	require.True(t, found)
+	require.Equal(t, sendAuth, grant.GetAuthorization())
+	require.Equal(t, input.Ctx.BlockTime().Add(time.Hour), grant.Expiration)
 
-	EndBlocker(s.ctx.WithBlockTime(s.ctx.BlockTime().Add(time.Hour)), s.keeper)
-	_, found = s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, sendAuth.MsgType())
-	s.Require().False(found)
+	EndBlocker(input.Ctx.WithBlockTime(input.Ctx.BlockTime().Add(time.Hour)), input.AuthorizationKeeper)
+	_, found = input.AuthorizationKeeper.GetGrant(input.Ctx, keeper.Addrs[0], keeper.Addrs[1], sendAuth.MsgType())
+	require.False(t, found)
 }

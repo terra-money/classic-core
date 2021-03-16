@@ -11,12 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle"
 
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-project/core/x/market/types"
 )
 
 // Simulation operation weights constants
@@ -26,7 +25,11 @@ const (
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simulation.AppParams, cdc *codec.Codec, ak authkeeper.AccountKeeper, ok oracle.Keeper,
+	appParams simtypes.AppParams,
+	cdc codec.JSONMarshaler,
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	ok types.OracleKeeper,
 ) simulation.WeightedOperations {
 	var weightMsgSwap int
 	appParams.GetOrGenerate(cdc, OpWeightMsgSwap, &weightMsgSwap, nil,
@@ -38,25 +41,28 @@ func WeightedOperations(
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgSwap,
-			SimulateMsgSwap(ak, ok),
+			SimulateMsgSwap(ak, bk, ok),
 		),
 	}
 }
 
 // SimulateMsgSwap generates a MsgSwap with random values.
 // nolint: funlen
-func SimulateMsgSwap(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulation.Operation {
+func SimulateMsgSwap(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	ok types.OracleKeeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 		account := ak.GetAccount(ctx, simAccount.Address)
 
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+		spendable := bk.SpendableCoins(ctx, simAccount.Address)
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwap, "unable to generate fees"), nil, err
 		}
 
 		var whitelist []string
@@ -69,10 +75,10 @@ func SimulateMsgSwap(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulation.O
 		var askDenom string
 		whitelistLen := len(whitelist)
 		if whitelistLen == 0 {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwap, "no avaliable exchange rates"), nil, nil
 		}
 
-		if randVal := simulation.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {
+		if randVal := simtypes.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {
 			offerDenom = core.MicroLunaDenom
 			askDenom = whitelist[randVal]
 		} else {
@@ -80,14 +86,16 @@ func SimulateMsgSwap(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulation.O
 			askDenom = core.MicroLunaDenom
 		}
 
-		amount := simulation.RandomAmount(r, spendableCoins.AmountOf(offerDenom).Sub(fees.AmountOf(offerDenom)))
+		amount := simtypes.RandomAmount(r, spendable.AmountOf(offerDenom).Sub(fees.AmountOf(offerDenom)))
 		if amount.Equal(sdk.ZeroInt()) {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwap, "not enough offer denom amount"), nil, nil
 		}
 
 		msg := types.NewMsgSwap(simAccount.Address, sdk.NewCoin(offerDenom, amount), askDenom)
 
-		tx := helpers.GenTx(
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -96,32 +104,38 @@ func SimulateMsgSwap(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulation.O
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
-
-		if err != nil && !strings.Contains(err.Error(), "no price registered") {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgSwapSend generates a MsgSwapSend with random values.
 // nolint: funlen
-func SimulateMsgSwapSend(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulation.Operation {
+func SimulateMsgSwapSend(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	ok types.OracleKeeper,
+) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
-		receiverAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		receiverAccount, _ := simtypes.RandomAcc(r, accs)
 		account := ak.GetAccount(ctx, simAccount.Address)
 
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+		spendable := bk.SpendableCoins(ctx, simAccount.Address)
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, "unable to generate fees"), nil, err
 		}
 
 		var whitelist []string
@@ -134,10 +148,10 @@ func SimulateMsgSwapSend(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulati
 		var askDenom string
 		whitelistLen := len(whitelist)
 		if whitelistLen == 0 {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, "no avaliable exchange rates"), nil, nil
 		}
 
-		if randVal := simulation.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {
+		if randVal := simtypes.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {
 			offerDenom = core.MicroLunaDenom
 			askDenom = whitelist[randVal]
 		} else {
@@ -145,14 +159,21 @@ func SimulateMsgSwapSend(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulati
 			askDenom = core.MicroLunaDenom
 		}
 
-		amount := simulation.RandomAmount(r, spendableCoins.AmountOf(offerDenom).Sub(fees.AmountOf(offerDenom)))
+		// Check send_enabled status of offer denom
+		if !bk.SendEnabledCoin(ctx, sdk.Coin{Denom: offerDenom, Amount: sdk.NewInt(1)}) {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, err.Error()), nil, nil
+		}
+
+		amount := simtypes.RandomAmount(r, spendable.AmountOf(offerDenom).Sub(fees.AmountOf(offerDenom)))
 		if amount.Equal(sdk.ZeroInt()) {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, "not enough offer denom amount"), nil, nil
 		}
 
 		msg := types.NewMsgSwapSend(simAccount.Address, receiverAccount.Address, sdk.NewCoin(offerDenom, amount), askDenom)
 
-		tx := helpers.GenTx(
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -161,13 +182,19 @@ func SimulateMsgSwapSend(ak authkeeper.AccountKeeper, ok oracle.Keeper) simulati
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
-
-		if err != nil && !strings.Contains(err.Error(), "no price registered") {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			if strings.Contains(err.Error(), "insufficient fee") {
+				return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "ignore tax error"), nil, nil
+			}
+
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }

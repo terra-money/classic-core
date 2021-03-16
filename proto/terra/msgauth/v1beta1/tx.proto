@@ -1,0 +1,69 @@
+syntax = "proto3";
+package terra.msgauth.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/any.proto";
+
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/terra-project/core/x/msgauth/types";
+
+// Msg defines the market Msg service.
+service Msg {
+  // GrantAuthorization defines a method for granting the provided
+  // authorization to the grantee on the granter's
+  // account during the provided period time.
+  rpc GrantAuthorization(MsgGrantAuthorization) returns (MsgGrantAuthorizationResponse);
+
+  // RevokeAuthorization defines a method for revoking any authorization
+  // with the provided sdk.Msg type on the granter's account with
+  // that has been granted to the grantee.
+  rpc RevokeAuthorization(MsgRevokeAuthorization) returns (MsgRevokeAuthorizationResponse);
+
+  // ExecAuthorized defines a method for revoking any authorization
+  // with the provided sdk.Msg type on the granter's account with
+  // that has been granted to the grantee.
+  rpc ExecAuthorized(MsgExecAuthorized) returns (MsgExecAuthorizedResponse);
+}
+
+// MsgGrantAuthorization represents a message to grant msg execute authorization
+message MsgGrantAuthorization {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string              granter       = 1 [(gogoproto.moretags) = "yaml:\"granter\""];
+  string              grantee       = 2 [(gogoproto.moretags) = "yaml:\"grantee\""];
+  google.protobuf.Any authorization = 3
+      [(gogoproto.moretags) = "yaml:\"authorization\"", (cosmos_proto.accepts_interface) = "AuthorizationI"];
+  google.protobuf.Duration period = 4
+      [(gogoproto.moretags) = "yaml:\"period\"", (gogoproto.nullable) = false, (gogoproto.stdduration) = true];
+}
+
+// MsgGrantAuthorizationResponse defines the Msg/GrantAuthorization response type.
+message MsgGrantAuthorizationResponse {}
+
+// MsgRevokeAuthorization represents a message to revoke a grant
+message MsgRevokeAuthorization {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string granter                = 1 [(gogoproto.moretags) = "yaml:\"granter\""];
+  string grantee                = 2 [(gogoproto.moretags) = "yaml:\"grantee\""];
+  string authorization_msg_type = 3 [(gogoproto.moretags) = "yaml:\"authorization_msg_type\""];
+}
+
+// MsgRevokeAuthorizationResponse defines the Msg/RevokeAuthorization response type.
+message MsgRevokeAuthorizationResponse {}
+
+// MsgExecAuthorized represents a message to execute granted msg
+message MsgExecAuthorized {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   grantee                  = 1 [(gogoproto.moretags) = "yaml:\"grantee\""];
+  repeated google.protobuf.Any msgs = 2 [(gogoproto.moretags) = "yaml:\"msgs\""];
+}
+
+// MsgExecAuthorizedResponse defines the Msg/ExecAuthorized response type.
+message MsgExecAuthorizedResponse {}

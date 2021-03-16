@@ -4,26 +4,25 @@ import (
 	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
-	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	// "github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-project/core/x/wasm/keeper"
+	"github.com/terra-project/core/x/wasm/types"
 )
 
 // InitGenesis sets wasm information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 	keeper.SetLastCodeID(ctx, data.LastCodeID)
 	keeper.SetLastInstanceID(ctx, data.LastInstanceID)
 
 	for _, code := range data.Codes {
-		codeHash, err := keeper.CompileCode(ctx, code.CodesBytes)
+		codeHash, err := keeper.CompileCode(ctx, code.CodeBytes)
 		if err != nil {
 			panic(err)
 		}
 
-		if !bytes.Equal(codeHash, code.CodeInfo.CodeHash.Bytes()) {
+		if !bytes.Equal(codeHash, code.CodeInfo.CodeHash) {
 			panic("CodeHash is not same")
 		}
 
@@ -31,13 +30,18 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	for _, contract := range data.Contracts {
-		keeper.SetContractInfo(ctx, contract.ContractInfo.Address, contract.ContractInfo)
-		keeper.SetContractStore(ctx, contract.ContractInfo.Address, contract.ContractStore)
+		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractInfo.Address)
+		if err != nil {
+			panic(err)
+		}
+
+		keeper.SetContractInfo(ctx, contractAddr, contract.ContractInfo)
+		keeper.SetContractStore(ctx, contractAddr, contract.ContractStore)
 	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
-func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
+func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	var codes []types.Code
 	var contracts []types.Contract
 
@@ -63,13 +67,18 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		}
 
 		codes = append(codes, types.Code{
-			CodeInfo:   codeInfo,
-			CodesBytes: bytecode,
+			CodeInfo:  codeInfo,
+			CodeBytes: bytecode,
 		})
 	}
 
 	keeper.IterateContractInfo(ctx, func(contract types.ContractInfo) bool {
-		contractStateIterator := keeper.GetContractStoreIterator(ctx, contract.Address)
+		contractAddr, err := sdk.AccAddressFromBech32(contract.Address)
+		if err != nil {
+			panic(err)
+		}
+
+		contractStateIterator := keeper.GetContractStoreIterator(ctx, contractAddr)
 		var models []types.Model
 		for ; contractStateIterator.Valid(); contractStateIterator.Next() {
 			m := types.Model{

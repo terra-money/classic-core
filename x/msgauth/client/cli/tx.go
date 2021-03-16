@@ -1,9 +1,6 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -11,22 +8,20 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	feeutils "github.com/terra-project/core/custom/auth/client/utils"
+	"github.com/terra-project/core/x/msgauth/types"
 )
 
 // FlagPeriod is flag to specify grant period
 const FlagPeriod = "period"
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	AuthorizationTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Msg authorization transactions subcommands",
@@ -36,16 +31,16 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	AuthorizationTxCmd.AddCommand(flags.PostCommands(
-		GetCmdGrantAuthorization(cdc),
-		GetCmdRevokeAuthorization(cdc),
-		GetCmdSendAs(cdc),
-	)...)
+	AuthorizationTxCmd.AddCommand(
+		GetCmdGrantAuthorization(),
+		GetCmdRevokeAuthorization(),
+		GetCmdSendAs(),
+	)
 
 	return AuthorizationTxCmd
 }
 
-func GetCmdGrantAuthorization(cdc *codec.Codec) *cobra.Command {
+func GetCmdGrantAuthorization() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "grant [grantee-address] [msg-type] [limit]",
 		Short: "Grant authorization of a specific msg type to an address",
@@ -61,11 +56,12 @@ $ terracli tx msgauth grant terra... swap --from [granter]
 				`),
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			granter := cliCtx.FromAddress
+			granter := clientCtx.FromAddress
 			grantee, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
@@ -73,9 +69,9 @@ $ terracli tx msgauth grant terra... swap --from [granter]
 
 			msgType := args[1]
 
-			var authorization types.Authorization
+			var authorization types.AuthorizationI
 			if msgType == (types.SendAuthorization{}.MsgType()) {
-				limit, err := sdk.ParseCoins(args[2])
+				limit, err := sdk.ParseCoinsNormalized(args[2])
 				if err != nil {
 					return err
 				}
@@ -87,22 +83,27 @@ $ terracli tx msgauth grant terra... swap --from [granter]
 
 			period := time.Duration(viper.GetInt64(FlagPeriod)) * time.Second
 
-			msg := types.NewMsgGrantAuthorization(granter, grantee, authorization, period)
+			msg, err := types.NewMsgGrantAuthorization(granter, grantee, authorization, period)
+			if err != nil {
+				return err
+			}
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return authclient.CompleteAndBroadcastTxCLI(txBldr, cliCtx, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 
 		},
 	}
 
 	cmd.Flags().Int64(FlagPeriod, int64(3600*24*365), "The second unit of time duration which the authorization is active for the user; Default is a year")
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
-func GetCmdRevokeAuthorization(cdc *codec.Codec) *cobra.Command {
+func GetCmdRevokeAuthorization() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke [grantee_address] [msg_type]",
 		Short: "Revoke authorization",
@@ -113,11 +114,12 @@ $ terracli msgauth revoke terra... send --from [granter]
 `),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			granter := cliCtx.FromAddress
+			granter := clientCtx.FromAddress
 			grantee, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
@@ -130,13 +132,15 @@ $ terracli msgauth revoke terra... send --from [granter]
 				return err
 			}
 
-			return authclient.CompleteAndBroadcastTxCLI(txBldr, cliCtx, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
-func GetCmdSendAs(cdc *codec.Codec) *cobra.Command {
+func GetCmdSendAs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-as [granter] [tx_json] --from [grantee]",
 		Short: "Execute tx on behalf of granter account",
@@ -149,53 +153,50 @@ tx.json should be format of StdTx
 `),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
-
-			grantee := cliCtx.FromAddress
-
-			var stdTx auth.StdTx
-			bz, err := ioutil.ReadFile(args[1])
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			err = cdc.UnmarshalJSON(bz, &stdTx)
+			// Generate transaction factory for gas simulation
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+
+			grantee := clientCtx.FromAddress
+
+			stdTx, err := authclient.ReadTxFromFile(clientCtx, args[1])
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgExecAuthorized(grantee, stdTx.Msgs)
+			msg, err := types.NewMsgExecAuthorized(grantee, stdTx.GetMsgs())
+			if err != nil {
+				return err
+			}
 
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
-				// extimate tax and gas
-				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-					Memo:          txBldr.Memo(),
-					ChainID:       txBldr.ChainID(),
-					AccountNumber: txBldr.AccountNumber(),
-					Sequence:      txBldr.Sequence(),
-					GasPrices:     txBldr.GasPrices(),
-					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
-					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
-					Msgs:          []sdk.Msg{msg},
-				})
+			if !clientCtx.GenerateOnly && txf.Fees().IsZero() {
+				// estimate tax and gas
+				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
 
 				if err != nil {
 					return err
 				}
 
 				// override gas and fees
-				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
-					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+				txf.WithFees(stdFee.Amount.String())
+				txf.WithGas(stdFee.Gas)
+				txf.WithSimulateAndExecute(false)
+				txf.WithGasPrices("")
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			// build and sign the transaction, then broadcast to Tendermint
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
+
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

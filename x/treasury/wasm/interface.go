@@ -8,8 +8,8 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/keeper"
+	"github.com/terra-project/core/x/treasury/types"
 	wasm "github.com/terra-project/core/x/wasm/exported"
 )
 

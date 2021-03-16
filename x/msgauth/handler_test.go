@@ -4,114 +4,87 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/terra-project/core/x/msgauth/internal/keeper"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-project/core/x/msgauth/keeper"
+	"github.com/terra-project/core/x/msgauth/types"
 )
 
-var (
-	granteePub    = ed25519.GenPrivKey().PubKey()
-	granterPub    = ed25519.GenPrivKey().PubKey()
-	recipientPub  = ed25519.GenPrivKey().PubKey()
-	granteeAddr   = sdk.AccAddress(granteePub.Address())
-	granterAddr   = sdk.AccAddress(granterPub.Address())
-	recipientAddr = sdk.AccAddress(recipientPub.Address())
-)
-
-type TestSuite struct {
-	suite.Suite
-	ctx           sdk.Context
-	accountKeeper auth.AccountKeeper
-	paramsKeeper  params.Keeper
-	bankKeeper    bank.Keeper
-	keeper        Keeper
-	router        sdk.Router
-	handler       sdk.Handler
-}
-
-func (s *TestSuite) SetupTest() {
-	s.ctx, s.accountKeeper, s.paramsKeeper, s.bankKeeper, s.keeper, s.router = keeper.SetupTestInput()
-	s.handler = NewHandler(s.keeper)
-}
-
-func (s *TestSuite) TestGrant() {
+func TestGrant(t *testing.T) {
+	input := keeper.CreateTestInput(t)
+	h := NewHandler(input.AuthorizationKeeper)
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
 
 	// send authorization
-	sendAuth := types.SendAuthorization{SpendLimit: coins}
-	msg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, sendAuth, time.Hour)
+	sendAuth := types.NewSendAuthorization(coins)
+	msg, err := types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], sendAuth, time.Hour)
 
-	_, err := s.handler(s.ctx, msg)
-	s.Require().NoError(err)
+	_, err = h(input.Ctx, msg)
+	require.NoError(t, err)
 
-	grant, found := s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, sendAuth.MsgType())
-	s.Require().True(found)
-	s.Require().Equal(sendAuth, grant.Authorization)
-	s.Require().Equal(s.ctx.BlockTime().Add(time.Hour), grant.Expiration)
+	grant, found := input.AuthorizationKeeper.GetGrant(input.Ctx, keeper.Addrs[0], keeper.Addrs[1], sendAuth.MsgType())
+	require.True(t, found)
+	require.Equal(t, sendAuth, grant.GetAuthorization())
+	require.Equal(t, input.Ctx.BlockTime().Add(time.Hour), grant.Expiration)
 
 	// generic authorization
 	genericAuth := types.NewGenericAuthorization("swap")
-	msg = types.NewMsgGrantAuthorization(granterAddr, granteeAddr, genericAuth, time.Hour)
+	msg, err = types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], genericAuth, time.Hour)
+	require.NoError(t, err)
 
-	_, err = s.handler(s.ctx, msg)
-	s.Require().NoError(err)
+	_, err = h(input.Ctx, msg)
+	require.NoError(t, err)
 
-	grant, found = s.keeper.GetGrant(s.ctx, granterAddr, granteeAddr, "swap")
-	s.Require().True(found)
-	s.Require().Equal(genericAuth, grant.Authorization)
-	s.Require().Equal(s.ctx.BlockTime().Add(time.Hour), grant.Expiration)
+	grant, found = input.AuthorizationKeeper.GetGrant(input.Ctx, keeper.Addrs[0], keeper.Addrs[1], "swap")
+	require.True(t, found)
+	require.Equal(t, genericAuth, grant.GetAuthorization())
+	require.Equal(t, input.Ctx.BlockTime().Add(time.Hour), grant.Expiration)
 
 	// test not allowed to grant
 	genericAuth = types.NewGenericAuthorization("now allowed msg")
-	msg = types.NewMsgGrantAuthorization(granterAddr, granteeAddr, genericAuth, time.Hour)
+	msg, err = types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], genericAuth, time.Hour)
+	require.NoError(t, err)
 
-	_, err = s.handler(s.ctx, msg)
-	s.Require().Error(err)
+	_, err = h(input.Ctx, msg)
+	require.Error(t, err)
 }
 
-func (s *TestSuite) TestRevoke() {
+func TestRevoke(t *testing.T) {
+	input := keeper.CreateTestInput(t)
+	h := NewHandler(input.AuthorizationKeeper)
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
-	grantMsg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, types.SendAuthorization{
-		SpendLimit: coins,
-	}, time.Hour)
+	grantMsg, err := types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], types.NewSendAuthorization(coins), time.Hour)
 
-	_, err := s.handler(s.ctx, grantMsg)
-	s.Require().NoError(err)
+	_, err = h(input.Ctx, grantMsg)
+	require.NoError(t, err)
 
-	revokeMsg := types.NewMsgRevokeAuthorization(granterAddr, granteeAddr, bank.MsgSend{}.Type())
-	_, err = s.handler(s.ctx, revokeMsg)
-	s.Require().NoError(err)
+	revokeMsg := types.NewMsgRevokeAuthorization(keeper.Addrs[0], keeper.Addrs[1], banktypes.TypeMsgSend)
+	_, err = h(input.Ctx, revokeMsg)
+	require.NoError(t, err)
 
-	_, found := s.keeper.GetGrant(s.ctx, granteeAddr, granterAddr, bank.MsgSend{}.Type())
-	s.Require().False(found)
+	_, found := input.AuthorizationKeeper.GetGrant(input.Ctx, keeper.Addrs[1], keeper.Addrs[0], banktypes.TypeMsgSend)
+	require.False(t, found)
 }
 
-func (s *TestSuite) TestExecute() {
+func TestExecute(t *testing.T) {
+	input := keeper.CreateTestInput(t)
+	h := NewHandler(input.AuthorizationKeeper)
 	coins := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1_000_000_000)))
-	s.bankKeeper.SetCoins(s.ctx, granterAddr, coins)
+	input.BankKeeper.SetBalances(input.Ctx, keeper.Addrs[0], coins)
 
-	grantMsg := types.NewMsgGrantAuthorization(granterAddr, granteeAddr, types.SendAuthorization{
-		SpendLimit: coins,
-	}, time.Hour)
+	grantMsg, err := types.NewMsgGrantAuthorization(keeper.Addrs[0], keeper.Addrs[1], types.NewSendAuthorization(coins), time.Hour)
+	require.NoError(t, err)
 
-	_, err := s.handler(s.ctx, grantMsg)
-	s.Require().NoError(err)
+	_, err = h(input.Ctx, grantMsg)
+	require.NoError(t, err)
 
-	execMsg := types.NewMsgExecAuthorized(granteeAddr, []sdk.Msg{
-		bank.NewMsgSend(granterAddr, granteeAddr, coins),
+	execMsg, err := types.NewMsgExecAuthorized(keeper.Addrs[1], []sdk.Msg{
+		banktypes.NewMsgSend(keeper.Addrs[0], keeper.Addrs[1], coins),
 	})
 
-	_, err = s.handler(s.ctx, execMsg)
-	s.Require().NoError(err)
-}
-
-func TestTestSuite(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	_, err = h(input.Ctx, execMsg)
+	require.NoError(t, err)
 }
