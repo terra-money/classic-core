@@ -1,18 +1,15 @@
 package cli
 
 import (
-	"fmt"
+	"context"
 	"strings"
 
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/types"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -21,7 +18,7 @@ const (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	oracleQueryCmd := &cobra.Command{
 		Use:                        "treasury",
 		Short:                      "Querying commands for the treasury module",
@@ -29,24 +26,24 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	oracleQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdQueryTaxRate(cdc),
-		GetCmdQueryTaxCap(cdc),
-		GetCmdQueryTaxCaps(cdc),
-		GetCmdQueryRewardWeight(cdc),
-		GetCmdQueryParams(cdc),
-		GetCmdQueryTaxProceeds(cdc),
-		GetCmdQuerySeigniorageProceeds(cdc),
-		GetCmdQueryParams(cdc),
-		GetCmdQueryIndicators(cdc),
-	)...)
+	oracleQueryCmd.AddCommand(
+		GetCmdQueryTaxRate(),
+		GetCmdQueryTaxCap(),
+		GetCmdQueryTaxCaps(),
+		GetCmdQueryRewardWeight(),
+		GetCmdQueryParams(),
+		GetCmdQueryTaxProceeds(),
+		GetCmdQuerySeigniorageProceeds(),
+		GetCmdQueryParams(),
+		GetCmdQueryIndicators(),
+	)
 
 	return oracleQueryCmd
 
 }
 
 // GetCmdQueryTaxRate implements the query tax-rate command.
-func GetCmdQueryTaxRate(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxRate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-rate",
 		Args:  cobra.NoArgs,
@@ -57,23 +54,27 @@ Query the stability tax rate of the current epoch.
 $ terracli query treasury tax-rate
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxRate), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.TaxRate(context.Background(), &types.QueryTaxRateRequest{})
 			if err != nil {
 				return err
 			}
 
-			var taxRate sdk.Dec
-			cdc.MustUnmarshalJSON(res, &taxRate)
-			return cliCtx.PrintOutput(taxRate)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQueryTaxCap implements the query taxcap command.
-func GetCmdQueryTaxCap(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxCap() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-cap [denom]",
 		Args:  cobra.ExactArgs(1),
@@ -85,29 +86,30 @@ The stability tax levied on a tx is at most tax cap, regardless of the size of t
 $ terracli query treasury tax-cap ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
 			denom := args[0]
-
-			params := types.NewQueryTaxCapParams(denom)
-			bz := cdc.MustMarshalJSON(params)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxCap), bz)
+			res, err := queryClient.TaxCap(context.Background(), &types.QueryTaxCapRequest{
+				Denom: denom,
+			})
 			if err != nil {
 				return err
 			}
 
-			var taxCap sdk.Dec
-			cdc.MustUnmarshalJSON(res, &taxCap)
-			return cliCtx.PrintOutput(taxCap)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQueryTaxCaps implements the query tax-caps command.
-func GetCmdQueryTaxCaps(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxCaps() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-caps",
 		Args:  cobra.NoArgs,
@@ -119,24 +121,27 @@ The stability tax levied on a tx is at most tax cap, regardless of the size of t
 $ terracli query treasury tax-caps
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxCaps), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var taxCaps types.TaxCapsQueryResponse
-			cdc.MustUnmarshalJSON(res, &taxCaps)
-			return cliCtx.PrintOutput(taxCaps)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.TaxCaps(context.Background(), &types.QueryTaxCapsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQueryRewardWeight implements the query reward-weight command.
-func GetCmdQueryRewardWeight(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryRewardWeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reward-weight",
 		Args:  cobra.NoArgs,
@@ -147,23 +152,27 @@ Query the reward rate of the current epoch.
 $ terracli query treasury reward-weight
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRewardWeight), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var rewardWeight sdk.Dec
-			cdc.MustUnmarshalJSON(res, &rewardWeight)
-			return cliCtx.PrintOutput(rewardWeight)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.RewardWeight(context.Background(), &types.QueryRewardWeightRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQueryTaxProceeds implements the query tax-proceeds command.
-func GetCmdQueryTaxProceeds(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryTaxProceeds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tax-proceeds",
 		Args:  cobra.NoArgs,
@@ -174,23 +183,27 @@ Query the tax proceeds corresponding to the current epoch. The return value will
 $ terracli query treasury tax-proceeds
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTaxProceeds), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var taxProceeds sdk.Coins
-			cdc.MustUnmarshalJSON(res, &taxProceeds)
-			return cliCtx.PrintOutput(taxProceeds)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.TaxProceeds(context.Background(), &types.QueryTaxProceedsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQuerySeigniorageProceeds implements the query seigniorage-proceeds command.
-func GetCmdQuerySeigniorageProceeds(cdc *codec.Codec) *cobra.Command {
+func GetCmdQuerySeigniorageProceeds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "seigniorage-proceeds",
 		Args:  cobra.NoArgs,
@@ -201,63 +214,71 @@ Query the seigniorage proceeds corresponding to the current epoch. The return va
 $ terracli query treasury seigniorage-proceeds
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySeigniorageProceeds), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var seigniorageProceeds sdk.Int
-			cdc.MustUnmarshalJSON(res, &seigniorageProceeds)
-			return cliCtx.PrintOutput(seigniorageProceeds)
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "params",
-		Args:  cobra.NoArgs,
-		Short: "Query the current Treasury parameters",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.SeigniorageProceeds(context.Background(), &types.QuerySeigniorageProceedsRequest{})
 			if err != nil {
 				return err
 			}
 
-			var params types.Params
-			cdc.MustUnmarshalJSON(res, &params)
-			return cliCtx.PrintOutput(params)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdQueryIndicators implements the query params command.
-func GetCmdQueryIndicators(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryIndicators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "indicators",
 		Args:  cobra.NoArgs,
 		Short: "Query the current Treasury indicators",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryIndicators), nil)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			var response types.IndicatorQueryResonse
-			cdc.MustUnmarshalJSON(res, &response)
-			return cliCtx.PrintOutput(response)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.Indicators(context.Background(), &types.QueryIndicatorsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryParams implements the query params command.
+func GetCmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current Treasury parameters",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

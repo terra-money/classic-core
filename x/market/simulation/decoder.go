@@ -4,22 +4,25 @@ import (
 	"bytes"
 	"fmt"
 
-	tmkv "github.com/tendermint/tendermint/libs/kv"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/cosmos/cosmos-sdk/types/kv"
+
+	"github.com/terra-project/core/x/market/types"
 )
 
-// DecodeStore unmarshals the KVPair's Value to the corresponding distribution type
-func DecodeStore(cdc *codec.Codec, kvA, kvB tmkv.Pair) string {
-	switch {
-	case bytes.Equal(kvA.Key[:1], types.TerraPoolDeltaKey):
-		var deltaA, deltaB sdk.Dec
-		cdc.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &deltaA)
-		cdc.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &deltaB)
-		return fmt.Sprintf("%v\n%v", deltaA, deltaB)
-	default:
-		panic(fmt.Sprintf("invalid market key prefix %X", kvA.Key[:1]))
+// NewDecodeStore returns a decoder function closure that unmarshals the KVPair's
+// Value to the corresponding market type.
+func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB kv.Pair) string {
+	return func(kvA, kvB kv.Pair) string {
+		switch {
+		case bytes.Equal(kvA.Key[:1], types.TerraPoolDeltaKey):
+			var deltaA, deltaB sdk.DecProto
+			cdc.MustUnmarshalBinaryBare(kvA.Value, &deltaA)
+			cdc.MustUnmarshalBinaryBare(kvB.Value, &deltaB)
+			return fmt.Sprintf("%v\n%v", deltaA, deltaB)
+		default:
+			panic(fmt.Sprintf("invalid market key prefix %X", kvA.Key[:1]))
+		}
 	}
 }

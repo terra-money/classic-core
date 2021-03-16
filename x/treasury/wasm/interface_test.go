@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/keeper"
+	"github.com/terra-project/core/x/treasury/types"
 )
 
 func TestQueryTaxRate(t *testing.T) {

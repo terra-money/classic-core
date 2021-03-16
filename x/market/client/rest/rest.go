@@ -1,15 +1,19 @@
 package rest
 
 import (
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
+
 	"github.com/gorilla/mux"
 )
 
-// RestDenom is the whildcard part of the request path
+// RestDenom is the wildcard part of the request path
 const RestDenom = "denom"
 
-// RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	registerTxRoutes(cliCtx, r)
+// RegisterRoutes registers market-related REST handlers to a router
+func RegisterRoutes(cliCtx client.Context, rtr *mux.Router) {
+	r := clientrest.WithHTTPDeprecationHeaders(rtr)
+
 	registerQueryRoutes(cliCtx, r)
+	registerTxHandlers(cliCtx, r)
 }

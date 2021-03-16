@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	tmkv "github.com/tendermint/tendermint/libs/kv"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-project/core/x/wasm/keeper"
+	"github.com/terra-project/core/x/wasm/types"
 )
 
 var (
@@ -23,16 +23,9 @@ var (
 	contractAddr = sdk.AccAddress(contractPk.Address())
 )
 
-func makeTestCodec() (cdc *codec.Codec) {
-	cdc = codec.New()
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	types.RegisterCodec(cdc)
-	return
-}
-
 func TestDecodeDistributionStore(t *testing.T) {
-	cdc := makeTestCodec()
+	cdc := keeper.MakeTestCodec(t)
+	dec := NewDecodeStore(cdc)
 
 	lastCodeIDbz := make([]byte, 8)
 	lastInstanceIDbz := make([]byte, 8)
@@ -43,13 +36,15 @@ func TestDecodeDistributionStore(t *testing.T) {
 	contractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, []byte{4, 5, 6}, true)
 	contractStore := []byte{7, 8, 9}
 
-	kvPairs := tmkv.Pairs{
-		tmkv.Pair{Key: types.LastCodeIDKey, Value: lastCodeIDbz},
-		tmkv.Pair{Key: types.LastInstanceIDKey, Value: lastInstanceIDbz},
-		tmkv.Pair{Key: types.CodeKey, Value: cdc.MustMarshalBinaryLengthPrefixed(codeInfo)},
-		tmkv.Pair{Key: types.ContractInfoKey, Value: cdc.MustMarshalBinaryLengthPrefixed(contractInfo)},
-		tmkv.Pair{Key: types.ContractStoreKey, Value: cdc.MustMarshalBinaryLengthPrefixed(contractStore)},
-		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
+	kvPairs := kv.Pairs{
+		Pairs: []kv.Pair{
+			{Key: types.LastCodeIDKey, Value: lastCodeIDbz},
+			{Key: types.LastInstanceIDKey, Value: lastInstanceIDbz},
+			{Key: types.CodeKey, Value: cdc.MustMarshalBinaryBare(&codeInfo)},
+			{Key: types.ContractInfoKey, Value: cdc.MustMarshalBinaryBare(&contractInfo)},
+			{Key: types.ContractStoreKey, Value: contractStore},
+			{Key: []byte{0x99}, Value: []byte{0x99}},
+		},
 	}
 
 	tests := []struct {
@@ -69,9 +64,9 @@ func TestDecodeDistributionStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			switch i {
 			case len(tests) - 1:
-				require.Panics(t, func() { DecodeStore(cdc, kvPairs[i], kvPairs[i]) }, tt.name)
+				require.Panics(t, func() { dec(kvPairs.Pairs[i], kvPairs.Pairs[i]) }, tt.name)
 			default:
-				require.Equal(t, tt.expectedLog, DecodeStore(cdc, kvPairs[i], kvPairs[i]), tt.name)
+				require.Equal(t, tt.expectedLog, dec(kvPairs.Pairs[i], kvPairs.Pairs[i]), tt.name)
 			}
 		})
 	}

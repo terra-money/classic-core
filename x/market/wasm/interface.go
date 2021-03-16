@@ -8,8 +8,8 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
-	"github.com/terra-project/core/x/market/internal/keeper"
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-project/core/x/market/keeper"
+	"github.com/terra-project/core/x/market/types"
 	wasm "github.com/terra-project/core/x/wasm/exported"
 )
 
@@ -44,9 +44,9 @@ func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessa
 	}
 
 	if sdkMsg.Swap != nil {
-		return []sdk.Msg{*sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
+		return []sdk.Msg{sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
 	} else if sdkMsg.SwapSend != nil {
-		return []sdk.Msg{*sdkMsg.SwapSend}, sdkMsg.SwapSend.ValidateBasic()
+		return []sdk.Msg{sdkMsg.SwapSend}, sdkMsg.SwapSend.ValidateBasic()
 	}
 
 	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Market")
@@ -67,7 +67,7 @@ func (WasmQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error
 
 // CosmosQuery only contains swap simulation
 type CosmosQuery struct {
-	Swap types.QuerySwapParams `json:"swap"`
+	Swap *types.QuerySwapParams `json:"swap,omitempty"`
 }
 
 // SwapQueryResponse - swap simulation query response for wasm module
@@ -84,15 +84,23 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	retCoin, err := keeper.QuerySwap(ctx, params.Swap, querier.keeper)
-	if err != nil {
-		return nil, err
+	q := keeper.NewQuerier(querier.keeper)
+	if params.Swap != nil {
+		res, err := q.Swap(sdk.WrapSDKContext(ctx), &types.QuerySwapRequest{
+			OfferCoin: params.Swap.OfferCoin,
+			AskDenom:  params.Swap.AskDenom,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		bz, err := json.Marshal(SwapQueryResponse{Receive: wasm.EncodeSdkCoin(res.ReturnCoin)})
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		}
+
+		return bz, err
 	}
 
-	bz, err := json.Marshal(SwapQueryResponse{Receive: wasm.EncodeSdkCoin(retCoin)})
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return bz, err
+	return nil, wasmTypes.UnsupportedRequest{Kind: "unknown Market variant"}
 }

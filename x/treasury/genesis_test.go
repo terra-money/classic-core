@@ -6,11 +6,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
+	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/treasury/keeper"
 )
 
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestInput(t)
+	input.Ctx = input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek) * 3)
+
 	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 	input.TreasuryKeeper.SetRewardWeight(input.Ctx, sdk.NewDec(1123))
 	input.TreasuryKeeper.SetTaxCap(input.Ctx, "foo", sdk.NewInt(1234))
@@ -25,10 +28,10 @@ func TestExportInitGenesis(t *testing.T) {
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(0), sdk.NewInt(123))
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(1), sdk.NewInt(345))
 	input.TreasuryKeeper.SetTSL(input.Ctx, int64(2), sdk.NewInt(567))
-	input.TreasuryKeeper.SetCumulativeHeight(input.Ctx, int64(123))
 	genesis := ExportGenesis(input.Ctx, input.TreasuryKeeper)
 
 	newInput := keeper.CreateTestInput(t)
+	newInput.Ctx = newInput.Ctx.WithBlockHeight(int64(core.BlocksPerWeek) * 3)
 	InitGenesis(newInput.Ctx, newInput.TreasuryKeeper, genesis)
 	newGenesis := ExportGenesis(newInput.Ctx, newInput.TreasuryKeeper)
 
@@ -39,6 +42,7 @@ func TestExportInitGenesis(t *testing.T) {
 	genesis.EpochInitialIssuance = sdk.Coins{}
 
 	newInput = keeper.CreateTestInput(t)
+	newInput.Ctx = newInput.Ctx.WithBlockHeight(int64(core.BlocksPerWeek) * 3)
 	InitGenesis(newInput.Ctx, newInput.TreasuryKeeper, genesis)
 	newGenesis = ExportGenesis(newInput.Ctx, newInput.TreasuryKeeper)
 

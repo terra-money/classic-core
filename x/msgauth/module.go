@@ -1,169 +1,194 @@
 package msgauth
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 
 	"github.com/gorilla/mux"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/terra-project/core/x/msgauth/client/cli"
 	"github.com/terra-project/core/x/msgauth/client/rest"
+	"github.com/terra-project/core/x/msgauth/keeper"
 	"github.com/terra-project/core/x/msgauth/simulation"
+	"github.com/terra-project/core/x/msgauth/types"
 )
-
-// module codec
-var moduleCdc = codec.New()
-
-func init() {
-	RegisterCodec(moduleCdc)
-}
 
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-type AppModuleBasic struct{}
+// AppModuleBasic defines the basic application module used by the msgauth module.
+type AppModuleBasic struct {
+	cdc codec.Marshaler
+}
 
 // Name returns the ModuleName
 func (AppModuleBasic) Name() string {
-	return ModuleName
+	return types.ModuleName
 }
 
-// RegisterCodec registers the msgauth types on the amino codec
-func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
-	RegisterCodec(cdc)
+// RegisterLegacyAminoCodec registers the module's types on the given LegacyAmino codec.
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterLegacyAminoCodec(cdc)
 }
 
-// RegisterRESTRoutes registers all REST query handlers
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, r *mux.Router) {
-	rest.RegisterRoutes(ctx, r)
+// RegisterInterfaces registers the module's interface types
+func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
-//GetQueryCmd returns the cli query commands for this module
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetQueryCmd(StoreKey, cdc)
+// DefaultGenesis returns default genesis state as raw bytes for the msgauth
+// module.
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// GetTxCmd returns the transaction commands for this module
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetTxCmd(StoreKey, cdc)
+// ValidateGenesis performs genesis state validation for the msgauth module.
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, config client.TxEncodingConfig, bz json.RawMessage) error {
+	var data types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+	}
+
+	return types.ValidateGenesis(&data)
+}
+
+// RegisterRESTRoutes registers the REST routes for the msgauth module.
+func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
+	rest.RegisterRoutes(clientCtx, rtr)
+}
+
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the oracle module.
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+}
+
+// GetTxCmd returns the root tx command for the oracle module.
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
+	return cli.GetTxCmd()
+}
+
+// GetQueryCmd returns no root query command for the oracle module.
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return cli.GetQueryCmd()
 }
 
 // AppModule implements the sdk.AppModule interface
 type AppModule struct {
 	AppModuleBasic
-	keeper        Keeper
-	accountKeeper auth.AccountKeeper
-	bankKeeper    bank.Keeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper) AppModule {
+func NewAppModule(
+	cdc codec.Marshaler,
+	keeper keeper.Keeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{},
+		AppModuleBasic: AppModuleBasic{cdc},
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
 	}
 }
 
-// RegisterInvariants does nothing, there are no invariants to enforce
+// Name returns the msgauth module's name.
+func (AppModule) Name() string { return types.ModuleName }
+
+// RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route is empty, as we do not handle Messages (just proposals)
-func (AppModule) Route() string { return RouterKey }
-
-func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper)
+// Route returns the message routing key for the msgauth module.
+func (am AppModule) Route() sdk.Route {
+	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
 }
 
-// QuerierRoute returns the route we respond to for abci queries
-func (AppModule) QuerierRoute() string { return QuerierRoute }
+// QuerierRoute returns the msgauth module's querier route name.
+func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
-/// NewQuerierHandler registers a query handler to respond to the module-specific queries
-func (am AppModule) NewQuerierHandler() sdk.Querier {
-	//return NewQuerier(am.keeper)
-	return NewQuerier(am.keeper)
+// LegacyQuerierHandler returns the msgauth module sdk.Querier.
+func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+	return keeper.NewLegacyQuerier(am.keeper, legacyQuerierCdc)
 }
 
-// InitGenesis is ignored, no sense in serializing future upgrades
-func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+// RegisterServices registers module services.
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	querier := keeper.NewQuerier(am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), querier)
+}
+
+// InitGenesis performs genesis initialization for the msgauth module. It returns
+// no validator updates.
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, data json.RawMessage) []abci.ValidatorUpdate {
+	var genesisState types.GenesisState
+	cdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.keeper, &genesisState)
+
 	return nil
 }
 
-// DefaultGenesis is an empty object
-func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	gs := DefaultGenesisState()
-	return ModuleCdc.MustMarshalJSON(gs)
-}
-
-// ValidateGenesis is always successful, as we ignore the value
-func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
-	var data GenesisState
-	if err := ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", ModuleName, err)
-	}
-
-	return ValidateGenesis(data)
-}
-
-// ExportGenesis is always empty, as InitGenesis does nothing either
-func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+// ExportGenesis returns the exported genesis state as raw bytes for the msgauth
+// module.
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
-	return ModuleCdc.MustMarshalJSON(gs)
+	return cdc.MustMarshalJSON(gs)
 }
 
-func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
+// BeginBlock returns the begin blocker for the msgauth module.
+func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
-// EndBlock does nothing
+// EndBlock returns the end blocker for the msgauth module.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
-	return nil
+	return []abci.ValidatorUpdate{}
 }
 
 //____________________________________________________________________________
 
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the distribution module.
+// GenerateGenesisState creates a randomized GenState of the msgauth module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {}
 
-// ProposalContents returns all the distribution content functions used to
+// ProposalContents returns all the msgauth content functions used to
 // simulate governance proposals.
-func (am AppModule) ProposalContents(_ module.SimulationState) []sim.WeightedProposalContent {
+func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
 	return nil
 }
 
-// RandomizedParams creates randomized distribution param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+// RandomizedParams creates randomized msgauth param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return nil
 }
 
-// RegisterStoreDecoder registers a decoder for distribution module's types
-func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
-	sdr[StoreKey] = simulation.DecodeStore
+// RegisterStoreDecoder registers a decoder for msgauth module's types
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
 
-// WeightedOperations returns the all the gov module operations with their respective weights.
-func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+// WeightedOperations returns the all the msgauth module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return simulation.WeightedOperations(
 		simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.bankKeeper, am.keeper,
+		am.accountKeeper, am.bankKeeper,
+		am.keeper,
 	)
 }

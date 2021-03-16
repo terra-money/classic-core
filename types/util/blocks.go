@@ -6,7 +6,7 @@ import (
 
 // nolint
 const (
-	BlocksPerMinute = int64(10)
+	BlocksPerMinute = uint64(10)
 	BlocksPerHour   = BlocksPerMinute * 60
 	BlocksPerDay    = BlocksPerHour * 24
 	BlocksPerWeek   = BlocksPerDay * 7
@@ -15,6 +15,6 @@ const (
 )
 
 // IsPeriodLastBlock returns true if we are at the last block of the period
-func IsPeriodLastBlock(ctx sdk.Context, blocksPerPeriod int64) bool {
-	return (ctx.BlockHeight()+1)%blocksPerPeriod == 0
+func IsPeriodLastBlock(ctx sdk.Context, blocksPerPeriod uint64) bool {
+	return ((uint64)(ctx.BlockHeight())+1)%blocksPerPeriod == 0
 }

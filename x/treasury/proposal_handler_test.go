@@ -6,11 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/keeper"
+	"github.com/terra-project/core/x/treasury/types"
 )
 
-func testTaxRateUpdateProposal(taxRate sdk.Dec) types.TaxRateUpdateProposal {
+func testTaxRateUpdateProposal(taxRate sdk.Dec) *types.TaxRateUpdateProposal {
 	return types.NewTaxRateUpdateProposal(
 		"Test",
 		"description",
@@ -18,7 +18,7 @@ func testTaxRateUpdateProposal(taxRate sdk.Dec) types.TaxRateUpdateProposal {
 	)
 }
 
-func testRewardWeightUpdateProposal(rewardWeight sdk.Dec) types.RewardWeightUpdateProposal {
+func testRewardWeightUpdateProposal(rewardWeight sdk.Dec) *types.RewardWeightUpdateProposal {
 	return types.NewRewardWeightUpdateProposal(
 		"Test",
 		"description",
@@ -31,8 +31,8 @@ func TestTaxRateUpdateProposalHandler(t *testing.T) {
 
 	taxRate := sdk.NewDecWithPrec(123, 5)
 	tp := testTaxRateUpdateProposal(taxRate)
-	hdlr := NewTreasuryPolicyUpdateHandler(input.TreasuryKeeper)
-	require.NoError(t, hdlr(input.Ctx, tp))
+	h := NewTreasuryPolicyUpdateHandler(input.TreasuryKeeper)
+	require.NoError(t, h(input.Ctx, tp))
 	require.Equal(t, taxRate, input.TreasuryKeeper.GetTaxRate(input.Ctx))
 }
 

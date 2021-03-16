@@ -15,9 +15,6 @@ ifeq ($(GO),)
   $(error could not find go. Is it in PATH? $(GO))
 endif
 
-GOPATH ?= $(shell $(GO) env GOPATH)
-GITHUBDIR := $(GOPATH)$(FS)src$(FS)github.com
-
 ###############################################################################
 ###                                Functions                                ###
 ###############################################################################
@@ -38,24 +35,31 @@ mkfile_dir := $(shell cd $(shell dirname $(mkfile_path)); pwd)
 ###                                 Tools                                   ###
 ###############################################################################
 
+PREFIX ?= /usr/local
+BIN ?= $(PREFIX)/bin
+UNAME_S ?= $(shell uname -s)
+UNAME_M ?= $(shell uname -m)
+
+GOPATH ?= $(shell $(GO) env GOPATH)
+GITHUBDIR := $(GOPATH)$(FS)src$(FS)github.com
+
+BUF_VERSION ?= 0.11.0
+
 TOOLS_DESTDIR  ?= $(GOPATH)/bin
+STATIK         = $(TOOLS_DESTDIR)/statik
+RUNSIM         = $(TOOLS_DESTDIR)/runsim
 
-STATIK        = $(TOOLS_DESTDIR)/statik
-RUNSIM        = $(TOOLS_DESTDIR)/runsim
-
-all: tools
-
-tools: statik runsim
-
-golangci-lint: $(GOLANGCI_LINT)
-$(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
-	@echo "Installing golangci-lint..."
-	@bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR)
+tools: tools-stamp
+tools-stamp: statik runsim
+	# Create dummy file to satisfy dependency and avoid
+	# rebuilding when this Makefile target is hit twice
+	# in a row.
+	touch $@
 
 # Install the runsim binary with a temporary workaround of entering an outside
 # directory as the "go get" command ignores the -mod option and will polute the
 # go.{mod, sum} files.
-# 
+#
 # ref: https://github.com/golang/go/issues/30515
 statik: $(STATIK)
 $(STATIK):
@@ -65,7 +69,7 @@ $(STATIK):
 # Install the runsim binary with a temporary workaround of entering an outside
 # directory as the "go get" command ignores the -mod option and will polute the
 # go.{mod, sum} files.
-# 
+#
 # ref: https://github.com/golang/go/issues/30515
 runsim: $(RUNSIM)
 $(RUNSIM):
@@ -76,4 +80,4 @@ tools-clean:
 	rm -f $(STATIK) $(RUNSIM)
 	rm -f tools-stamp
 
-.PHONY: all tools tools-clean golangci-lint
+.PHONY: tools-clean statik runsim

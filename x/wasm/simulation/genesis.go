@@ -3,12 +3,12 @@ package simulation
 // DONTCOVER
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-project/core/x/wasm/types"
 )
 
 // Simulation parameter constants
@@ -78,6 +78,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.Contract{},
 	)
 
-	fmt.Printf("Selected randomly generated wasm parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, wasmGenesis))
+	bz, err := json.MarshalIndent(&wasmGenesis.Params, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Selected randomly generated wasm parameters:\n%s\n", bz)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(wasmGenesis)
 }

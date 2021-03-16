@@ -25,7 +25,7 @@ COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 RUN BUILD_TAGS=muslc make update-swagger-docs build
 
 
-FROM alpine:3
+FROM alpine:3.12
 
 WORKDIR /root
 

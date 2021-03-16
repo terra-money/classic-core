@@ -4,66 +4,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-project/core/x/msgauth/types"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants", RestGranter, RestGrantee), queryGrantsHandlerFunction(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants/{%s}", RestGranter, RestGrantee, RestMsgType), queryGrantHandlerFunction(cliCtx)).Methods("GET")
+func registerQueryRoutes(clientCtx client.Context, rtr *mux.Router) {
+	rtr.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grants", RestGranter), queryAllGrantsHandlerFunction(clientCtx)).Methods("GET")
+	rtr.HandleFunc(fmt.Sprintf("/msgauth/granters/{%s}/grantees/{%s}/grants", RestGranter, RestGrantee), queryGrantsHandlerFunction(clientCtx)).Methods("GET")
 }
 
-func queryGrantHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
+func queryGrantsHandlerFunction(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		vars := mux.Vars(r)
-		granter := vars[RestGranter]
-		grantee := vars[RestGrantee]
-		msgType := vars[RestMsgType]
-
-		granterAddr, err := sdk.AccAddressFromBech32(granter)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		granteeAddr, err := sdk.AccAddressFromBech32(grantee)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		params := types.NewQueryGrantParams(granterAddr, granteeAddr, msgType)
-
-		bz, err := cliCtx.Codec.MarshalJSON(params)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrant), bz)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-func queryGrantsHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
@@ -86,19 +43,52 @@ func queryGrantsHandlerFunction(cliCtx context.CLIContext) http.HandlerFunc {
 
 		params := types.NewQueryGrantsParams(granterAddr, granteeAddr)
 
-		bz, err := cliCtx.Codec.MarshalJSON(params)
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrants), bz)
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
+	}
+}
+
+func queryAllGrantsHandlerFunction(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		granter := vars[RestGranter]
+
+		granterAddr, err := sdk.AccAddressFromBech32(granter)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		params := types.NewQueryAllGrantsParams(granterAddr)
+
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrants), bz)
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGrants), bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }

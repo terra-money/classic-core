@@ -5,8 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/terra-project/core/x/market/internal/keeper"
+	"github.com/terra-project/core/x/market/keeper"
 )
 
 func TestReplenishPools(t *testing.T) {
@@ -17,7 +16,7 @@ func TestReplenishPools(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		delta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
-		regressionAmt := delta.QuoInt64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
+		regressionAmt := delta.QuoInt64(int64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx)))
 
 		EndBlocker(input.Ctx, input.MarketKeeper)
 

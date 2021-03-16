@@ -5,8 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/terra-project/core/x/market/internal/keeper"
+	"github.com/terra-project/core/x/market/keeper"
 )
 
 func TestExportInitGenesis(t *testing.T) {

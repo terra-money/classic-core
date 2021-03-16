@@ -3,7 +3,7 @@ package rest
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
@@ -17,9 +17,9 @@ const (
 )
 
 // RegisterRoutes register routes for querier and tx broadcast
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	registerQueryRoutes(cliCtx, r)
-	registerTxRoutes(cliCtx, r)
+func RegisterRoutes(clientCtx client.Context, rtr *mux.Router) {
+	registerQueryRoutes(clientCtx, rtr)
+	registerTxRoutes(clientCtx, rtr)
 }
 
 // GrantRequest defines the properties of a grant request's body.

@@ -6,23 +6,24 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/keeper"
+	"github.com/terra-project/core/x/market/keeper"
+	"github.com/terra-project/core/x/market/types"
 )
 
 func TestMarketFilters(t *testing.T) {
 	input, h := setup(t)
 
 	// Case 1: non-oracle message being sent fails
-	bankMsg := bank.MsgSend{}
-	_, err := h(input.Ctx, bankMsg)
+	bankMsg := banktypes.MsgSend{}
+	_, err := h(input.Ctx, &bankMsg)
 	require.Error(t, err)
 
 	// Case 2: Normal MsgSwap submission goes through
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10))
-	prevoteMsg := NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
+	prevoteMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
 	_, err = h(input.Ctx, prevoteMsg)
 	require.NoError(t, err)
 }
@@ -38,7 +39,7 @@ func TestSwapMsg(t *testing.T) {
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
-	swapMsg := NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
+	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
 	_, err := h(input.Ctx, swapMsg)
 	require.NoError(t, err)
 
@@ -56,7 +57,7 @@ func TestSwapMsg(t *testing.T) {
 	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 
 	// invalid recursive swap
-	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
+	swapMsg = types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
 
 	_, err = h(input.Ctx, swapMsg)
 	require.Error(t, err)
@@ -65,7 +66,7 @@ func TestSwapMsg(t *testing.T) {
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, sdk.ZeroDec())
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, sdk.ZeroDec())
 	offerCoin = sdk.NewCoin(core.MicroSDRDenom, amt)
-	swapMsg = NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
+	swapMsg = types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
 	_, err = h(input.Ctx, swapMsg)
 	require.NoError(t, err)
 }
@@ -80,10 +81,10 @@ func TestSwapSendMsg(t *testing.T) {
 
 	expectedAmt := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
 
-	swapSendMsg := NewMsgSwapSend(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
+	swapSendMsg := types.NewMsgSwapSend(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
 	_, err = h(input.Ctx, swapSendMsg)
 	require.NoError(t, err)
 
-	acc := input.Acckeeper.GetAccount(input.Ctx, keeper.Addrs[1])
-	require.Equal(t, expectedAmt, acc.GetCoins().AmountOf(core.MicroSDRDenom))
+	balance := input.BankKeeper.GetBalance(input.Ctx, keeper.Addrs[1], core.MicroSDRDenom)
+	require.Equal(t, expectedAmt, balance.Amount)
 }

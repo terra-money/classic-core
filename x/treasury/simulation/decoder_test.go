@@ -6,25 +6,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	tmkv "github.com/tendermint/tendermint/libs/kv"
-
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/keeper"
+	"github.com/terra-project/core/x/treasury/types"
 )
 
-func makeTestCodec() (cdc *codec.Codec) {
-	cdc = codec.New()
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	types.RegisterCodec(cdc)
-	return
-}
-
 func TestDecodeDistributionStore(t *testing.T) {
-	cdc := makeTestCodec()
+	cdc := keeper.MakeTestCodec(t)
+	dec := NewDecodeStore(cdc)
 
 	taxRate := sdk.NewDecWithPrec(123, 2)
 	rewardWeight := sdk.NewDecWithPrec(532, 2)
@@ -36,16 +28,18 @@ func TestDecodeDistributionStore(t *testing.T) {
 	SR := sdk.NewDecWithPrec(43523, 4)
 	TSL := sdk.NewInt(1245213)
 
-	kvPairs := tmkv.Pairs{
-		tmkv.Pair{Key: types.TaxRateKey, Value: cdc.MustMarshalBinaryLengthPrefixed(taxRate)},
-		tmkv.Pair{Key: types.RewardWeightKey, Value: cdc.MustMarshalBinaryLengthPrefixed(rewardWeight)},
-		tmkv.Pair{Key: types.TaxCapKey, Value: cdc.MustMarshalBinaryLengthPrefixed(taxCap)},
-		tmkv.Pair{Key: types.TaxProceedsKey, Value: cdc.MustMarshalBinaryLengthPrefixed(taxProceeds)},
-		tmkv.Pair{Key: types.EpochInitialIssuanceKey, Value: cdc.MustMarshalBinaryLengthPrefixed(epochInitialIssuance)},
-		tmkv.Pair{Key: types.TRKey, Value: cdc.MustMarshalBinaryLengthPrefixed(TR)},
-		tmkv.Pair{Key: types.SRKey, Value: cdc.MustMarshalBinaryLengthPrefixed(SR)},
-		tmkv.Pair{Key: types.TSLKey, Value: cdc.MustMarshalBinaryLengthPrefixed(TSL)},
-		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
+	kvPairs := kv.Pairs{
+		Pairs: []kv.Pair{
+			{Key: types.TaxRateKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: taxRate})},
+			{Key: types.RewardWeightKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: rewardWeight})},
+			{Key: types.TaxCapKey, Value: cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: taxCap})},
+			{Key: types.TaxProceedsKey, Value: cdc.MustMarshalBinaryBare(&types.EpochTaxProceeds{TaxProceeds: taxProceeds})},
+			{Key: types.EpochInitialIssuanceKey, Value: cdc.MustMarshalBinaryBare(&types.EpochInitialIssuance{Issuance: epochInitialIssuance})},
+			{Key: types.TRKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: TR})},
+			{Key: types.SRKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: SR})},
+			{Key: types.TSLKey, Value: cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: TSL})},
+			{Key: []byte{0x99}, Value: []byte{0x99}},
+		},
 	}
 
 	tests := []struct {
@@ -68,9 +62,9 @@ func TestDecodeDistributionStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			switch i {
 			case len(tests) - 1:
-				require.Panics(t, func() { DecodeStore(cdc, kvPairs[i], kvPairs[i]) }, tt.name)
+				require.Panics(t, func() { dec(kvPairs.Pairs[i], kvPairs.Pairs[i]) }, tt.name)
 			default:
-				require.Equal(t, tt.expectedLog, DecodeStore(cdc, kvPairs[i], kvPairs[i]), tt.name)
+				require.Equal(t, tt.expectedLog, dec(kvPairs.Pairs[i], kvPairs.Pairs[i]), tt.name)
 			}
 		})
 	}

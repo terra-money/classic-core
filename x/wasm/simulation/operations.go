@@ -4,7 +4,6 @@ package simulation
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"strings"
@@ -15,13 +14,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/wasm/internal/keeper"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-project/core/x/wasm/keeper"
+	"github.com/terra-project/core/x/wasm/types"
 )
 
 const (
@@ -34,8 +33,11 @@ const (
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simulation.AppParams, cdc *codec.Codec,
-	ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper,
+	appParams simtypes.AppParams,
+	cdc codec.JSONMarshaler,
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper,
 ) simulation.WeightedOperations {
 	var weightMsgStoreCode int
 	var weightMsgInstantiateContract int
@@ -75,11 +77,11 @@ func WeightedOperations(
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgStoreCode,
-			SimulateMsgStoreCode(ak, k),
+			SimulateMsgStoreCode(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
-			SimulateMsgInstantiateContract(ak, k),
+			SimulateMsgInstantiateContract(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgExecuteContract,
@@ -87,11 +89,11 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightMsgMigrateContract,
-			SimulateMsgMigrateContract(ak, k),
+			SimulateMsgMigrateContract(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgUpdateContractOwner,
-			SimulateMsgUpdateContractOwner(ak, k),
+			SimulateMsgUpdateContractOwner(ak, bk, k),
 		),
 	}
 }
@@ -107,30 +109,35 @@ func mustLoad(path string) []byte {
 var testContract []byte
 
 // nolint: funlen
-func SimulateMsgStoreCode(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgStoreCode(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		_, err := k.GetCodeInfo(ctx, 2)
 		if err == nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgStoreCode, "code already registered"), nil, nil
 		}
 
 		if testContract == nil {
 			loadContract()
 		}
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		fees, err := simtypes.RandomFees(r, ctx, bk.SpendableCoins(ctx, simAccount.Address))
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgStoreCode, "unable to generate fee"), nil, nil
 		}
 
 		msg := types.NewMsgStoreCode(simAccount.Address, testContract)
 
-		tx := helpers.GenTx(
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -139,13 +146,16 @@ func SimulateMsgStoreCode(ak authkeeper.AccountKeeper, k keeper.Keeper) simulati
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
@@ -162,18 +172,18 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 }
 
 // nolint: funlen
-func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		bobAcc, _ := simulation.RandomAcc(r, accs)
-		fredAcc, _ := simulation.RandomAcc(r, accs)
+		bobAcc, _ := simtypes.RandomAcc(r, accs)
+		fredAcc, _ := simtypes.RandomAcc(r, accs)
 
 		account := ak.GetAccount(ctx, fredAcc.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		fees, err := simtypes.RandomFees(r, ctx, bk.SpendableCoins(ctx, fredAcc.Address))
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgInstantiateContract, "unable to generate fee"), nil, err
 		}
 
 		initMsg := initMsg{
@@ -183,17 +193,19 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		initMsgBz, err := json.Marshal(initMsg)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgInstantiateContract, "failed to marshal json"), nil, err
 		}
 
 		_, err = k.GetCodeInfo(ctx, 1)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgInstantiateContract, "code not exists yet"), nil, nil
 		}
 
-		msg := types.NewMsgInstantiateContract(fredAcc.Address, 1, initMsgBz, nil, simulation.RandIntBetween(r, 1, 2) == 1)
+		msg := types.NewMsgInstantiateContract(fredAcc.Address, 1, initMsgBz, nil, simtypes.RandIntBetween(r, 1, 2) == 1)
 
-		tx := helpers.GenTx(
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -202,49 +214,53 @@ func SimulateMsgInstantiateContract(ak authkeeper.AccountKeeper, k keeper.Keeper
 			[]uint64{account.GetSequence()},
 			fredAcc.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
 		if err != nil {
-			if strings.Contains(err.Error(), "insufficient fee") {
-				return simulation.NoOpMsg(types.ModuleName), nil, nil
-			}
-
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // nolint: funlen
-func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, bk bank.Keeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
-		if !bk.GetSendEnabled(ctx) {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
-		}
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
 		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 		info, err := k.GetContractInfo(ctx, contractAddr)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "contract not exists yet"), nil, nil
 		}
 
 		// should owner execute the msg
-		simAccount, _ := simulation.FindAccount(accs, info.Owner)
+		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
+		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "unable to generate fee"), nil, err
 		}
 
 		spendableCoins = spendableCoins.Sub(fees)
 		spendableCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, spendableCoins.AmountOf(sdk.DefaultBondDenom)))
 
-		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), simulation.RandSubsetCoins(r, spendableCoins))
-		tx := helpers.GenTx(
+		if err := bk.SendEnabledCoins(ctx, spendableCoins...); err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "send not enabled"), nil, nil
+		}
+
+		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), simtypes.RandSubsetCoins(r, spendableCoins))
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -253,29 +269,35 @@ func SimulateMsgExecuteContract(ak authkeeper.AccountKeeper, bk bank.Keeper, k k
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
 		if err != nil {
-			if strings.Contains(err.Error(), "insufficient fee") {
-				return simulation.NoOpMsg(types.ModuleName), nil, nil
-			}
-
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			if strings.Contains(err.Error(), "insufficient fee") {
+				return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "ignore tax error"), nil, nil
+			}
+
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // nolint: funlen
-func SimulateMsgMigrateContract(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgMigrateContract(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 		info, err := k.GetContractInfo(ctx, contractAddr)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "contract not exists yet"), nil, nil
 		}
 
 		targetCodeID := 1
@@ -285,26 +307,30 @@ func SimulateMsgMigrateContract(ak authkeeper.AccountKeeper, k keeper.Keeper) si
 		}
 
 		// should owner execute the msg
-		simAccount, _ := simulation.FindAccount(accs, info.Owner)
+		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
+		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+		spendableCoins := bk.SpendableCoins(ctx, ownerAddr)
+		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "unable to generate fee"), nil, err
 		}
 
 		spendableCoins = spendableCoins.Sub(fees)
 
 		migData := map[string]interface{}{
-			"verifier": info.Owner.String(),
+			"verifier": info.Owner,
 		}
 		migDataBz, err := json.Marshal(migData)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "unable to marshal json"), nil, err
 		}
 
 		msg := types.NewMsgMigrateContract(simAccount.Address, contractAddr, uint64(targetCodeID), migDataBz)
-		tx := helpers.GenTx(
+
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -313,39 +339,53 @@ func SimulateMsgMigrateContract(ak authkeeper.AccountKeeper, k keeper.Keeper) si
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
+		}
 
-		_, _, err = app.Deliver(tx)
-		return simulation.NewOperationMsg(msg, true, ""), nil, err
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // nolint: funlen
-func SimulateMsgUpdateContractOwner(ak authkeeper.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgUpdateContractOwner(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		contractAddr, _ := sdk.AccAddressFromBech32("cosmos1hqrdl6wstt8qzshwc6mrumpjk9338k0lr4dqxd")
 		info, err := k.GetContractInfo(ctx, contractAddr)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "contract not exists yet"), nil, nil
 		}
 
 		// should owner execute the msg
-		simAccount, _ := simulation.FindAccount(accs, info.Owner)
+		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
+		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
-		spendableCoins := account.SpendableCoins(ctx.BlockTime())
-		fees, err := simulation.RandomFees(r, ctx, spendableCoins)
+		spendableCoins := bk.SpendableCoins(ctx, ownerAddr)
+		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "unable to generate fee"), nil, err
 		}
 
-		newOwnerAccount, _ := simulation.RandomAcc(r, accs)
+		newOwnerAccount, _ := simtypes.RandomAcc(r, accs)
 		if simAccount.Address.Equals(newOwnerAccount.Address) {
-			return simulation.NoOpMsg(types.ModuleName), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "same account selected"), nil, nil
 		}
 
 		msg := types.NewMsgUpdateContractOwner(simAccount.Address, newOwnerAccount.Address, contractAddr)
-		tx := helpers.GenTx(
+
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
 			[]sdk.Msg{msg},
 			fees,
 			helpers.DefaultGenTxGas,
@@ -354,12 +394,15 @@ func SimulateMsgUpdateContractOwner(ak authkeeper.AccountKeeper, k keeper.Keeper
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
-		_, _, err = app.Deliver(tx)
 		if err != nil {
-			fmt.Println(err.Error())
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, err
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }

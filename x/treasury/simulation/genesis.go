@@ -3,15 +3,15 @@ package simulation
 // DONTCOVER
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-project/core/x/treasury/types"
 )
 
 // Simulation parameter constants
@@ -56,18 +56,18 @@ func GenMiningIncrement(r *rand.Rand) sdk.Dec {
 }
 
 // GenWindowShort randomized WindowShort
-func GenWindowShort(r *rand.Rand) int64 {
-	return int64(1 + r.Intn(12))
+func GenWindowShort(r *rand.Rand) uint64 {
+	return uint64(1 + r.Intn(12))
 }
 
 // GenWindowLong randomized WindowLong
-func GenWindowLong(r *rand.Rand) int64 {
-	return int64(12 + r.Intn(24))
+func GenWindowLong(r *rand.Rand) uint64 {
+	return uint64(12 + r.Intn(24))
 }
 
 // GenWindowProbation randomized WindowProbation
-func GenWindowProbation(r *rand.Rand) int64 {
-	return int64(1 + r.Intn(6))
+func GenWindowProbation(r *rand.Rand) uint64 {
+	return uint64(1 + r.Intn(6))
 }
 
 // RandomizedGenState generates a random GenesisState for gov
@@ -97,19 +97,19 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { miningIncrement = GenMiningIncrement(r) },
 	)
 
-	var windowShort int64
+	var windowShort uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, windowShortKey, &windowShort, simState.Rand,
 		func(r *rand.Rand) { windowShort = GenWindowShort(r) },
 	)
 
-	var windowLong int64
+	var windowLong uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, windowLongKey, &windowLong, simState.Rand,
 		func(r *rand.Rand) { windowLong = GenWindowLong(r) },
 	)
 
-	var windowProbation int64
+	var windowProbation uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, windowProbationKey, &windowProbation, simState.Rand,
 		func(r *rand.Rand) { windowProbation = GenWindowProbation(r) },
@@ -127,15 +127,17 @@ func RandomizedGenState(simState *module.SimulationState) {
 		},
 		taxPolicy.RateMin,
 		rewardPolicy.RateMin,
-		map[string]sdk.Int{},
+		[]types.TaxCap{},
 		sdk.Coins{},
 		sdk.Coins{},
-		0,
-		[]sdk.Dec{},
-		[]sdk.Dec{},
-		[]sdk.Int{},
+		[]types.EpochState{},
 	)
 
-	fmt.Printf("Selected randomly generated treasury parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, treasuryGenesis))
+	bz, err := json.MarshalIndent(&treasuryGenesis.Params, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Selected randomly generated market parameters:\n%s\n", bz)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(treasuryGenesis)
 }

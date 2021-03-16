@@ -1,7 +1,9 @@
 package rest
 
 import (
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
+
 	"github.com/gorilla/mux"
 )
 
@@ -12,7 +14,9 @@ const (
 )
 
 // RegisterRoutes registers oracle-related REST handlers to a router
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	resgisterTxRoute(cliCtx, r)
-	registerQueryRoute(cliCtx, r)
+func RegisterRoutes(clientCtx client.Context, rtr *mux.Router) {
+	r := clientrest.WithHTTPDeprecationHeaders(rtr)
+
+	registerQueryRoutes(clientCtx, r)
+	registerTxHandlers(clientCtx, r)
 }
