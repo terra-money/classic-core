@@ -21,7 +21,7 @@ type FeeTx interface {
 	FeePayer() sdk.AccAddress
 }
 
-// TaxDecorator will check if the transaction's fee is at least as large
+// TaxFeeDecorator will check if the transaction's fee is at least as large
 // as tax + the local validator's minimum gasFee (defined in validator config)
 // and record tax proceeds to treasury module to track tax proceeds.
 // If fee is too low, decorator returns error and tx is rejected from mempool.

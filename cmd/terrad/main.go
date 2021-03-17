@@ -29,6 +29,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"github.com/terra-project/core/x/auth"
+	coreante "github.com/terra-project/core/x/auth/ante"
 	"github.com/terra-project/core/x/staking"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
 )
@@ -74,6 +75,12 @@ func main() {
 	executor := cli.PrepareBaseCmd(rootCmd, "TE", app.DefaultNodeHome)
 	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, flagInvCheckPeriod,
 		0, "Assert registered invariants every N blocks")
+
+	// register tx gas hard cap flag
+	rootCmd.PersistentFlags().Uint64(coreante.FlagTxGasHardLimit, uint64(30000000),
+		"Transaction hard cap to prevent spamming attack")
+	viper.BindPFlag(coreante.FlagTxGasHardLimit, rootCmd.Flags().Lookup(coreante.FlagTxGasHardLimit))
+
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
