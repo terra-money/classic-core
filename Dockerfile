@@ -1,35 +1,31 @@
-FROM cosmwasm/go-ext-builder:0001-alpine AS rust-builder
+# docker build . -t cosmwasm/wasmd:latest
+# docker run --rm -it cosmwasm/wasmd:latest /bin/sh
+FROM golang:1.15-alpine3.12 AS go-builder
 
-WORKDIR /go/src/github.com/terra-project/core
+# this comes from standard alpine nightly file
+#  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
+# with some changes to support our toolchain, etc
+RUN set -eux; apk add --no-cache ca-certificates build-base;
 
-COPY go.* /go/src/github.com/terra-project/core/
+RUN apk add git
+# NOTE: add these to run with LEDGER_ENABLED=true
+# RUN apk add libusb-dev linux-headers
 
-RUN apk add --no-cache git \
-    && go mod download github.com/CosmWasm/go-cosmwasm \
-    && export GO_WASM_DIR=$(go list -f "{{ .Dir }}" -m github.com/CosmWasm/go-cosmwasm) \
-    && cd ${GO_WASM_DIR} \
-    && cargo build --release --features backtraces --example muslc \
-    && mv ${GO_WASM_DIR}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
+WORKDIR /code
+COPY . /code/
 
-
-FROM cosmwasm/go-ext-builder:0001-alpine AS go-builder
-
-WORKDIR /go/src/github.com/terra-project/core
-
-RUN apk add --no-cache git libusb-dev linux-headers
-
-COPY . .
-COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
+# See https://github.com/terra-project/go-cosmwasm/releases
+ADD https://github.com/terra-project/go-cosmwasm/releases/download/v0.10.4/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
+RUN sha256sum /lib/libgo_cosmwasm_muslc.a | grep 2aa7b034b9340fecaa928adf3e8c093893fd6a3986a569ce7cae7528845a0951
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN BUILD_TAGS=muslc make update-swagger-docs build
-
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make update-swagger-docs build
 
 FROM alpine:3
 
 WORKDIR /root
 
-COPY --from=go-builder /go/src/github.com/terra-project/core/build/terrad /usr/local/bin/terrad
-COPY --from=go-builder /go/src/github.com/terra-project/core/build/terracli /usr/local/bin/terracli
+COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
+COPY --from=go-builder /code/build/terracli /usr/local/bin/terracli
 
-CMD [ "terrad", "--help" ]
+CMD ["/usr/local/bin/terrad", "version"]
