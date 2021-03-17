@@ -13,7 +13,8 @@ import (
 func NewAnteHandler(ak keeper.AccountKeeper, supplyKeeper types.SupplyKeeper, treasuryKeeper TreasuryKeeper, sigGasConsumer cosmosante.SignatureVerificationGasConsumer) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		cosmosante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		NewTaxFeeDecorator(treasuryKeeper),    // mempool gas fee validation & record tax proceeds
+		NewSpammingPreventionDecorator(),
+		NewTaxFeeDecorator(treasuryKeeper), // mempool gas fee validation & record tax proceeds
 		cosmosante.NewValidateBasicDecorator(),
 		cosmosante.NewValidateMemoDecorator(ak),
 		cosmosante.NewConsumeGasForTxSizeDecorator(ak),
