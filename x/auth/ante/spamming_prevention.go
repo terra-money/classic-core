@@ -21,15 +21,17 @@ func NewSpammingPreventionDecorator() SpammingPreventionDecorator {
 
 // AnteHandle handles msg tax fee checking
 func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	feeTx, ok := tx.(FeeTx)
-	if !ok {
-		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-	}
+	if ctx.IsCheckTx() {
+		feeTx, ok := tx.(FeeTx)
+		if !ok {
+			return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+		}
 
-	gas := feeTx.GetGas()
-	gasHardLimit := viper.GetUint64(FlagTxGasHardLimit)
-	if gas > gasHardLimit {
-		return ctx, sdkerrors.Wrapf(sdkerrors.ErrOutOfGas, "Tx cannot spend more than %d gas", gasHardLimit)
+		gas := feeTx.GetGas()
+		gasHardLimit := viper.GetUint64(FlagTxGasHardLimit)
+		if gas > gasHardLimit {
+			return ctx, sdkerrors.Wrapf(sdkerrors.ErrOutOfGas, "Tx cannot spend more than %d gas", gasHardLimit)
+		}
 	}
 
 	return next(ctx, tx, simulate)
