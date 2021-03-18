@@ -21,7 +21,7 @@ RUN sha256sum /lib/libgo_cosmwasm_muslc.a | grep 2aa7b034b9340fecaa928adf3e8c093
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make update-swagger-docs build
 
-FROM alpine:3
+FROM alpine:3.12
 
 WORKDIR /root
 
