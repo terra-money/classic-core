@@ -46,17 +46,9 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 		return nil, sdkerrors.Wrap(ErrUnknownDenom, msg.Denom)
 	}
 
-	if !msg.Feeder.Equals(msg.Validator) {
-		delegate := keeper.GetOracleDelegate(ctx, msg.Validator)
-		if !delegate.Equals(msg.Feeder) {
-			return nil, sdkerrors.Wrap(ErrNoVotingPermission, msg.Feeder.String())
-		}
-	}
-
-	// Check that the given validator exists
-	val := keeper.StakingKeeper.Validator(ctx, msg.Validator)
-	if val == nil {
-		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, msg.Validator.String())
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
+	if err != nil {
+		return nil, err
 	}
 
 	prevote := NewExchangeRatePrevote(msg.Hash, msg.Denom, msg.Validator, ctx.BlockHeight())
@@ -80,17 +72,9 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 
 // handleMsgExchangeRateVote handles a MsgExchangeRateVote
 func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgExchangeRateVote) (*sdk.Result, error) {
-	if !msg.Feeder.Equals(msg.Validator) {
-		delegate := keeper.GetOracleDelegate(ctx, msg.Validator)
-		if !delegate.Equals(msg.Feeder) {
-			return nil, sdkerrors.Wrap(ErrNoVotingPermission, msg.Feeder.String())
-		}
-	}
-
-	// Check that the given validator exists
-	val := keeper.StakingKeeper.Validator(ctx, msg.Validator)
-	if val == nil {
-		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, msg.Validator.String())
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
+	if err != nil {
+		return nil, err
 	}
 
 	params := keeper.GetParams(ctx)
@@ -164,17 +148,9 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, msg MsgDelegat
 
 // handleMsgAggregateExchangeRatePrevote handles a MsgAggregateExchangeRatePrevote
 func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgAggregateExchangeRatePrevote) (*sdk.Result, error) {
-	if !msg.Feeder.Equals(msg.Validator) {
-		delegate := keeper.GetOracleDelegate(ctx, msg.Validator)
-		if !delegate.Equals(msg.Feeder) {
-			return nil, sdkerrors.Wrap(ErrNoVotingPermission, msg.Feeder.String())
-		}
-	}
-
-	// Check that the given validator exists
-	val := keeper.StakingKeeper.Validator(ctx, msg.Validator)
-	if val == nil {
-		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, msg.Validator.String())
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
+	if err != nil {
+		return nil, err
 	}
 
 	aggregatePrevote := NewAggregateExchangeRatePrevote(msg.Hash, msg.Validator, ctx.BlockHeight())
@@ -197,17 +173,9 @@ func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg M
 
 // handleMsgAggregateExchangeRateVote handles a MsgAggregateExchangeRateVote
 func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgAggregateExchangeRateVote) (*sdk.Result, error) {
-	if !msg.Feeder.Equals(msg.Validator) {
-		delegate := keeper.GetOracleDelegate(ctx, msg.Validator)
-		if !delegate.Equals(msg.Feeder) {
-			return nil, sdkerrors.Wrap(ErrNoVotingPermission, msg.Feeder.String())
-		}
-	}
-
-	// Check that the given validator exists
-	val := keeper.StakingKeeper.Validator(ctx, msg.Validator)
-	if val == nil {
-		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, msg.Validator.String())
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
+	if err != nil {
+		return nil, err
 	}
 
 	params := keeper.GetParams(ctx)
@@ -217,7 +185,7 @@ func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgA
 		return nil, sdkerrors.Wrap(ErrNoAggregatePrevote, msg.Validator.String())
 	}
 
-	// Check a msg is submitted porper period
+	// Check a msg is submitted proper period
 	if (ctx.BlockHeight()/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
 		return nil, ErrRevealPeriodMissMatch
 	}

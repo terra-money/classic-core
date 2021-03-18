@@ -10,6 +10,7 @@ import (
 	"github.com/terra-project/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 func TestPrevoteAddDelete(t *testing.T) {
@@ -470,4 +471,45 @@ func TestTobinTaxGetSet(t *testing.T) {
 		_, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
 		require.Error(t, err)
 	}
+}
+
+func TestValidateFeeder(t *testing.T) {
+	// initial setup
+	input := CreateTestInput(t)
+	addr, val := ValAddrs[0], PubKeys[0]
+	addr1, val1 := ValAddrs[1], PubKeys[1]
+	amt := sdk.TokensFromConsensusPower(100)
+	sh := staking.NewHandler(input.StakingKeeper)
+	ctx := input.Ctx
+
+	// Validator created
+	_, err := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
+	require.NoError(t, err)
+	_, err = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	require.NoError(t, err)
+	staking.EndBlocker(ctx, input.StakingKeeper)
+
+	require.Equal(
+		t, input.BankKeeper.GetCoins(ctx, sdk.AccAddress(addr)),
+		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
+	)
+	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr).GetBondedTokens())
+	require.Equal(
+		t, input.BankKeeper.GetCoins(ctx, sdk.AccAddress(addr1)),
+		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
+	)
+	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr1).GetBondedTokens())
+
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr), sdk.ValAddress(addr), true))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1), true))
+
+	// delegate works
+	input.OracleKeeper.SetOracleDelegate(input.Ctx, sdk.ValAddress(addr), sdk.AccAddress(addr1))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), true))
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(Addrs[2]), sdk.ValAddress(addr), true))
+
+	// only active validators can do oracle votes
+	input.StakingKeeper.SetLastValidatorPower(input.Ctx, sdk.ValAddress(addr), 0)
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), false))
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), true))
 }

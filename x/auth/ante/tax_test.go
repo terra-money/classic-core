@@ -24,6 +24,7 @@ import (
 	"github.com/terra-project/core/x/auth/ante"
 	"github.com/terra-project/core/x/bank"
 	"github.com/terra-project/core/x/msgauth"
+	oracleexported "github.com/terra-project/core/x/oracle/exported"
 	"github.com/terra-project/core/x/treasury"
 	"github.com/terra-project/core/x/wasm"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
@@ -301,4 +302,32 @@ func TestEnsureMempoolFeesExecAuthorized(t *testing.T) {
 	tx = types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
 	_, err = antehandler(ctx, tx, false)
 	require.Nil(t, err, "Decorator should not have errored on fee higher than local gasPrice + tax")
+}
+
+func TestEnsureNoMempoolFeesForOracleMessages(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasmtest")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	viper.Set(flags.FlagHome, tempDir)
+
+	// setup
+	tapp, ctx := createTestApp()
+
+	lowGasPrice := []sdk.DecCoin{{Denom: "uusd", Amount: sdk.NewDec(100)}}
+	ctx = ctx.WithMinGasPrices(lowGasPrice)
+
+	tk := tapp.GetTreasuryKeeper()
+	mtd := ante.NewTaxFeeDecorator(tk)
+	antehandler := sdk.ChainAnteDecorators(mtd)
+
+	// keys and addresses
+	priv1, _, _ := types.KeyTestPubAddr()
+	privs, accNums, seqs := []crypto.PrivKey{priv1}, []uint64{0}, []uint64{0}
+
+	msgs := []sdk.Msg{oracleexported.MsgAggregateExchangeRatePrevote{}, oracleexported.MsgAggregateExchangeRateVote{}}
+
+	fee := auth.NewStdFee(100000, sdk.NewCoins())
+	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
+	_, err = antehandler(ctx, tx, false)
+	require.NoError(t, err)
 }

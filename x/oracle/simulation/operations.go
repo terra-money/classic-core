@@ -89,7 +89,8 @@ func SimulateMsgExchangeRatePrevote(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, address)
-		if val == nil {
+		power := k.StakingKeeper.GetLastValidatorPower(ctx, address)
+		if val == nil || !val.IsBonded() || power == 0 {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
@@ -141,7 +142,8 @@ func SimulateMsgExchangeRateVote(ak authkeeper.AccountKeeper, k keeper.Keeper) s
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, address)
-		if val == nil {
+		power := k.StakingKeeper.GetLastValidatorPower(ctx, address)
+		if val == nil || !val.IsBonded() || power == 0 {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 
@@ -208,7 +210,8 @@ func SimulateMsgDelegateFeedConsent(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, valAddress)
-		if val == nil {
+		power := k.StakingKeeper.GetLastValidatorPower(ctx, valAddress)
+		if val == nil || !val.IsBonded() || power == 0 {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 

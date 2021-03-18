@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/internal/types"
@@ -449,4 +450,34 @@ func (k Keeper) ClearTobinTaxes(ctx sdk.Context) {
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
+}
+
+// ValidateFeeder return the given feeder is allowed to feed the message or not
+func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress, checkBonded bool) error {
+	if !feederAddr.Equals(validatorAddr) {
+		delegate := k.GetOracleDelegate(ctx, validatorAddr)
+		if !delegate.Equals(feederAddr) {
+			return sdkerrors.Wrap(types.ErrNoVotingPermission, feederAddr.String())
+		}
+	}
+
+	// Check that the given validator exists
+	val := k.StakingKeeper.Validator(ctx, validatorAddr)
+	if val == nil {
+		return sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
+	}
+
+	// only used in mempool check
+	// TODO - remove checkBonded flag at columbus-5
+	if checkBonded {
+		if !val.IsBonded() {
+			return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not bonded state", validatorAddr.String())
+		}
+
+		if k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddr) == 0 {
+			return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not active set", validatorAddr.String())
+		}
+	}
+
+	return nil
 }

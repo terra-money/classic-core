@@ -87,6 +87,12 @@ func (DummyStakingKeeper) IterateValidators(sdk.Context, func(index int64, valid
 func (DummyStakingKeeper) Jail(sdk.Context, sdk.ConsAddress) {
 }
 
+// GetLastValidatorPower nolint
+func (sk DummyStakingKeeper) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) (power int64) {
+	return sk.Validator(ctx, operator).GetConsensusPower()
+}
+
+// MockValidator nolint
 type MockValidator struct {
 	power    int64
 	operator sdk.ValAddress
