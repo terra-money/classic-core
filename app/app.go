@@ -446,11 +446,6 @@ func (app *TerraApp) GetTreasuryKeeper() treasury.Keeper {
 	return app.treasuryKeeper
 }
 
-// GetOracleKeeper is test purpose function to return oracle keeper
-func (app *TerraApp) GetOracleKeeper() oracle.Keeper {
-	return app.oracleKeeper
-}
-
 // GetMaccPerms returns a copy of the module account permissions
 func GetMaccPerms() map[string][]string {
 	dupMaccPerms := make(map[string][]string)
