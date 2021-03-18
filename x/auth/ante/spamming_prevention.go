@@ -28,6 +28,7 @@ func NewSpammingPreventionDecorator(oracleKeeper OracleKeeper) SpammingPreventio
 		oracleKeeper:     oracleKeeper,
 		oraclePrevoteMap: make(map[string]int64),
 		oracleVoteMap:    make(map[string]int64),
+		mu:               &sync.Mutex{},
 	}
 }
 
@@ -45,7 +46,7 @@ func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Tx cannot spend more than %d gas", gasHardLimit)
 		}
 
-		err := spd.checkOracleSpamming(ctx, feeTx.GetMsgs())
+		err := spd.CheckOracleSpamming(ctx, feeTx.GetMsgs())
 		if err != nil {
 			return ctx, err
 		}
@@ -54,7 +55,8 @@ func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 	return next(ctx, tx, simulate)
 }
 
-func (spd SpammingPreventionDecorator) checkOracleSpamming(ctx sdk.Context, msgs []sdk.Msg) error {
+// CheckOracleSpamming check whether the msgs are spamming purpose or not
+func (spd SpammingPreventionDecorator) CheckOracleSpamming(ctx sdk.Context, msgs []sdk.Msg) error {
 	spd.mu.Lock()
 	defer spd.mu.Unlock()
 

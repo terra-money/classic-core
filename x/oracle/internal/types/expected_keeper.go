@@ -13,6 +13,7 @@ type StakingKeeper interface {
 	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec)                    // slash the validator and delegators of the validator, specifying offence height, offence power, and slash fraction
 	Jail(sdk.Context, sdk.ConsAddress)                                            // jail a validator
 	IterateValidators(sdk.Context, func(index int64, validator stakingexported.ValidatorI) (stop bool))
+	GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) (power int64)
 }
 
 // DistributionKeeper is expected keeper for distribution module

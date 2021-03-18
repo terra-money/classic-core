@@ -7,13 +7,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/terra-project/core/x/auth"
 	"github.com/terra-project/core/x/auth/ante"
-	oracleexported "github.com/terra-project/core/x/oracle/exported"
+	"github.com/terra-project/core/x/oracle"
 )
 
 func TestOracleSpamming(t *testing.T) {
@@ -22,31 +21,60 @@ func TestOracleSpamming(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	viper.Set(flags.FlagHome, tempDir)
 
-	// setup
-	tapp, ctx := createTestApp()
+	_, ctx := createTestApp()
+	_, _, addr1 := types.KeyTestPubAddr()
+	_, _, addr2 := types.KeyTestPubAddr()
 
-	lowGasPrice := []sdk.DecCoin{}
-	ctx = ctx.WithMinGasPrices(lowGasPrice)
+	spd := ante.NewSpammingPreventionDecorator(dummyOracleKeeper{
+		feeders: map[string]string{
+			sdk.ValAddress(addr1).String(): addr1.String(),
+			sdk.ValAddress(addr2).String(): addr2.String(),
+		},
+	})
 
-	ok := tapp.GetOracleKeeper()
-	mtd := ante.NewSpammingPreventionDecorator(ok)
-	antehandler := sdk.ChainAnteDecorators(mtd)
+	// normal so ok
+	ctx = ctx.WithBlockHeight(100)
+	require.NoError(t, spd.CheckOracleSpamming(ctx, []sdk.Msg{
+		oracle.NewMsgAggregateExchangeRatePrevote(oracle.AggregateVoteHash{}, addr1, sdk.ValAddress(addr1)),
+		oracle.NewMsgAggregateExchangeRateVote("", "", addr1, sdk.ValAddress(addr1)),
+	}))
 
-	// keys and addresses
-	priv1, _, _ := types.KeyTestPubAddr()
-	privs, accNums, seqs := []crypto.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	// do it again is blocked
+	require.Error(t, spd.CheckOracleSpamming(ctx, []sdk.Msg{
+		oracle.NewMsgAggregateExchangeRatePrevote(oracle.AggregateVoteHash{}, addr1, sdk.ValAddress(addr1)),
+		oracle.NewMsgAggregateExchangeRateVote("", "", addr1, sdk.ValAddress(addr1)),
+	}))
 
-	msgs := []sdk.Msg{oracleexported.MsgAggregateExchangeRatePrevote{}, oracleexported.MsgAggregateExchangeRateVote{}}
+	// next block; can put oracle again
+	ctx = ctx.WithBlockHeight(101)
+	require.NoError(t, spd.CheckOracleSpamming(ctx, []sdk.Msg{
+		oracle.NewMsgAggregateExchangeRatePrevote(oracle.AggregateVoteHash{}, addr1, sdk.ValAddress(addr1)),
+		oracle.NewMsgAggregateExchangeRateVote("", "", addr1, sdk.ValAddress(addr1)),
+	}))
 
-	fee := auth.NewStdFee(100000, sdk.NewCoins())
-	tx := types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err = antehandler(ctx, tx, false)
-	require.Error(t, err)
+	// catch wrong feeder
+	ctx = ctx.WithBlockHeight(102)
+	require.Error(t, spd.CheckOracleSpamming(ctx, []sdk.Msg{
+		oracle.NewMsgAggregateExchangeRatePrevote(oracle.AggregateVoteHash{}, addr2, sdk.ValAddress(addr1)),
+		oracle.NewMsgAggregateExchangeRateVote("", "", addr1, sdk.ValAddress(addr1)),
+	}))
 
-	msgs = []sdk.Msg{oracleexported.MsgAggregateExchangeRatePrevote{}, oracleexported.MsgAggregateExchangeRateVote{}}
+	// catch wrong feeder
+	ctx = ctx.WithBlockHeight(103)
+	require.Error(t, spd.CheckOracleSpamming(ctx, []sdk.Msg{
+		oracle.NewMsgAggregateExchangeRatePrevote(oracle.AggregateVoteHash{}, addr1, sdk.ValAddress(addr1)),
+		oracle.NewMsgAggregateExchangeRateVote("", "", addr2, sdk.ValAddress(addr1)),
+	}))
+}
 
-	fee = auth.NewStdFee(100000, sdk.NewCoins())
-	tx = types.NewTestTx(ctx, msgs, privs, accNums, seqs, fee)
-	_, err = antehandler(ctx, tx, false)
-	require.Error(t, err)
+type dummyOracleKeeper struct {
+	feeders map[string]string
+}
+
+func (ok dummyOracleKeeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress, checkBonded bool) error {
+	if val, ok := ok.feeders[validatorAddr.String()]; ok && val == feederAddr.String() {
+		return nil
+	}
+
+	return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "cannot ensure feeder right")
 }

@@ -473,6 +473,10 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 		if !val.IsBonded() {
 			return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not bonded state", validatorAddr.String())
 		}
+
+		if k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddr) == 0 {
+			return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not active set", validatorAddr.String())
+		}
 	}
 
 	return nil
