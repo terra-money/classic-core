@@ -48,9 +48,11 @@ func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Tx cannot spend more than %d gas", gasHardLimit)
 		}
 
-		err := spd.CheckOracleSpamming(ctx, feeTx.GetMsgs())
-		if err != nil {
-			return ctx, err
+		if !simulate {
+			err := spd.CheckOracleSpamming(ctx, feeTx.GetMsgs())
+			if err != nil {
+				return ctx, err
+			}
 		}
 	}
 
@@ -92,7 +94,7 @@ func (spd SpammingPreventionDecorator) CheckOracleSpamming(ctx sdk.Context, msgs
 
 			valAddrStr := msg.Validator.String()
 			if lastSubmittedHeight, ok := spd.oracleVoteMap[valAddrStr]; ok && lastSubmittedHeight == curHeight {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "the validator has already been submitted prevote at the current height")
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "the validator has already been submitted vote at the current height")
 			}
 
 			spd.oracleVoteMap[valAddrStr] = curHeight
