@@ -313,7 +313,7 @@ func TestEnsureNoMempoolFeesForOracleMessages(t *testing.T) {
 	// setup
 	tapp, ctx := createTestApp()
 
-	lowGasPrice := []sdk.DecCoin{}
+	lowGasPrice := []sdk.DecCoin{{Denom: "uusd", Amount: sdk.NewDec(100)}}
 	ctx = ctx.WithMinGasPrices(lowGasPrice)
 
 	tk := tapp.GetTreasuryKeeper()
