@@ -468,7 +468,7 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 	}
 
 	// only used in mempool check
-	// TODO - remove checkBonded flag at next update
+	// TODO - remove checkBonded flag at columbus-5
 	if checkBonded {
 		if !val.IsBonded() {
 			return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not bonded state", validatorAddr.String())

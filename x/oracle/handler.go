@@ -46,7 +46,7 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 		return nil, sdkerrors.Wrap(ErrUnknownDenom, msg.Denom)
 	}
 
-	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, false)
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func handleMsgExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgExchang
 
 // handleMsgExchangeRateVote handles a MsgExchangeRateVote
 func handleMsgExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgExchangeRateVote) (*sdk.Result, error) {
-	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, false)
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func handleMsgDelegateFeedConsent(ctx sdk.Context, keeper Keeper, msg MsgDelegat
 
 // handleMsgAggregateExchangeRatePrevote handles a MsgAggregateExchangeRatePrevote
 func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg MsgAggregateExchangeRatePrevote) (*sdk.Result, error) {
-	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, false)
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func handleMsgAggregateExchangeRatePrevote(ctx sdk.Context, keeper Keeper, msg M
 
 // handleMsgAggregateExchangeRateVote handles a MsgAggregateExchangeRateVote
 func handleMsgAggregateExchangeRateVote(ctx sdk.Context, keeper Keeper, msg MsgAggregateExchangeRateVote) (*sdk.Result, error) {
-	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, false)
+	err := keeper.ValidateFeeder(ctx, msg.Feeder, msg.Validator, !core.IsWaitingForSoftfork(ctx, 3))
 	if err != nil {
 		return nil, err
 	}
