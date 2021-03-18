@@ -62,6 +62,12 @@ func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 		}
 	}
 
+	if !core.IsWaitingForSoftfork(ctx, 2) {
+		if gas > transactionGasHardCap {
+			return ctx, sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "Tx exceed max gas usage")
+		}
+	}
+
 	return next(ctx, tx, simulate)
 }
 

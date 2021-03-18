@@ -71,7 +71,6 @@ func TestOracleSpamming(t *testing.T) {
 }
 
 func TestEnsureSoftforkGasCheck(t *testing.T) {
-	// setup
 	tempDir, err := ioutil.TempDir("", "wasmtest")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
