@@ -1,7 +1,7 @@
 ## 0.4.5
 This release is a hotfix for two high-severity issues.
 
-[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
+[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
 
 ```
 $ git fetch --all --tags
