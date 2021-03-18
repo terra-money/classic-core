@@ -7,11 +7,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/viper"
 
+	core "github.com/terra-project/core/types"
 	oracleexported "github.com/terra-project/core/x/oracle/exported"
 )
 
 // FlagTxGasHardLimit defines the hard cap to prevent tx spamming attack
 const FlagTxGasHardLimit = "tx-gas-hard-limit"
+const transactionGasHardCap = 30000000
 
 // SpammingPreventionDecorator will check if the transaction's gas is smaller than
 // configured hard cap
@@ -34,13 +36,13 @@ func NewSpammingPreventionDecorator(oracleKeeper OracleKeeper) SpammingPreventio
 
 // AnteHandle handles msg tax fee checking
 func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if ctx.IsCheckTx() {
-		feeTx, ok := tx.(FeeTx)
-		if !ok {
-			return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-		}
+	feeTx, ok := tx.(FeeTx)
+	if !ok {
+		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
 
-		gas := feeTx.GetGas()
+	gas := feeTx.GetGas()
+	if ctx.IsCheckTx() {
 		gasHardLimit := viper.GetUint64(FlagTxGasHardLimit)
 		if gas > gasHardLimit {
 			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Tx cannot spend more than %d gas", gasHardLimit)
@@ -49,6 +51,12 @@ func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 		err := spd.CheckOracleSpamming(ctx, feeTx.GetMsgs())
 		if err != nil {
 			return ctx, err
+		}
+	}
+
+	if !core.IsWaitingForSoftfork(ctx, 2) {
+		if gas > transactionGasHardCap {
+			return ctx, sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "Tx exceed max allowed gas usage")
 		}
 	}
 
