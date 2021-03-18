@@ -10,6 +10,7 @@ import (
 	core "github.com/terra-project/core/types"
 	marketexported "github.com/terra-project/core/x/market/exported"
 	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
+	oracleexported "github.com/terra-project/core/x/oracle/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
@@ -54,7 +55,7 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs())
 
 		// Mempool fee validation
-		if ctx.IsCheckTx() {
+		if ctx.IsCheckTx() && !isOracleTx(ctx, feeTx.GetMsgs()) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
@@ -167,4 +168,19 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	}
 
 	return taxes
+}
+
+func isOracleTx(ctx sdk.Context, msgs []sdk.Msg) bool {
+	for _, msg := range msgs {
+		switch msg.(type) {
+		case oracleexported.MsgAggregateExchangeRatePrevote:
+			continue
+		case oracleexported.MsgAggregateExchangeRateVote:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
 }

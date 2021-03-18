@@ -344,7 +344,12 @@ func NewTerraApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(ante.NewAnteHandler(app.accountKeeper, app.supplyKeeper, app.treasuryKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetAnteHandler(ante.NewAnteHandler(
+		app.accountKeeper,
+		app.supplyKeeper,
+		app.oracleKeeper,
+		app.treasuryKeeper,
+		auth.DefaultSigVerificationGasConsumer))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -439,6 +444,11 @@ func (app *TerraApp) SimulationManager() *module.SimulationManager {
 // GetTreasuryKeeper is test purpose function to return treasury keeper
 func (app *TerraApp) GetTreasuryKeeper() treasury.Keeper {
 	return app.treasuryKeeper
+}
+
+// GetOracleKeeper is test purpose function to return oracle keeper
+func (app *TerraApp) GetOracleKeeper() oracle.Keeper {
+	return app.oracleKeeper
 }
 
 // GetMaccPerms returns a copy of the module account permissions
