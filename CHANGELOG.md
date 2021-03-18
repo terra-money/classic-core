@@ -1,3 +1,125 @@
+## 0.4.5
+This release is a hotfix for two high-severity issues.
+
+[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
+
+```
+$ git fetch --all --tags
+$ git checkout v0.4.5
+$ make install
+```
+
+### Upgrade Time
+
+#### Mainnet
+**Target Height**: 2,380,000
+
+```
+Tue Mar 30 2021 09:00:00 GMT+0000 (UTC)
+Tue Mar 30 2021 01:00:00 GMT-0800 (PST)
+Tue Mar 30 2021 18:00:00 GMT+0900 (KST)
+```
+
+#### Testnet
+**Target Height**: 3,150,000
+
+```
+Tue Mar 25 2021 09:00:00 GMT+0000 (UTC)
+Tue Mar 25 2021 01:00:00 GMT-0800 (PST)
+Tue Mar 25 2021 18:00:00 GMT+0900 (KST)
+```
+
+### Improvements
+* [\#463](https://github.com/terra-project/core/pull/463) Lower oracle feeder cost.
+* [\#462](https://github.com/terra-project/core/pull/462) Softfork to cap the max tx limit with ConsensusParam update.
+
+## 0.4.4
+
+### Bug Fixes
+* [\#461](https://github.com/terra-project/core/pull/461) Update Dockerfile script to use proper libgo_cosmwasm_musla.a file
+
+## 0.4.3
+
+### Improvements
+* [\#460](https://github.com/terra-project/core/pull/460) Add `tx-gas-hard-limit` flag to filter out tx with abnormally huge gas
+
+### Bug Fixes
+* [\#456](https://github.com/terra-project/core/pull/456) `RewardWeightUpdateProposal` CLI parse error
+* [\#454](https://github.com/terra-project/core/pull/454) `MsgSwapSend` rest interface parse error
+
+## 0.4.2
+
+### Release Note
+
+This release is a hotfix for two high-severity issues in the currently live Terra Core@0.4.1.
+* [\#440](https://github.com/terra-project/core/pull/440) go-cosmwasm iterator memory leak 
+* [\#445](https://github.com/terra-project/core/pull/445) treasury division by zero protection
+
+
+### How to Upgrade
+You can stop, update and restart terrad anytime before the upgrade time. 
+
+[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
+
+```
+$ git fetch --all --tags
+$ git checkout v0.4.2
+$ make install
+```
+
+### Upgrade Time
+**Target Height**: 1,915,199
+
+```
+Tue Feb 23 2021 02:27:50 GMT+0000 (UTC)
+Tue Feb 23 2021 11:27:50 GMT+0900 (KST)
+Mon Feb 22 2021 18:27:50 GMT-0800 (PST)
+```
+
+## 0.4.1
+
+### Release Notes
+**This upgrade contains softfork** 
+Please understand the details and apply it before the target height. 
+
+[Upgrade Details](https://agora.terra.money/t/terra-core-v0-4-1-soft-fork-upgrade-recommendation/262)
+[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
+
+### How to Upgrade
+It is softfork, so you can update terrad anytime before the upgrade time.
+```
+$ git fetch --all --tags
+$ git checkout v0.4.1
+$ make install
+```
+
+### Upgrade Time
+
+* **Target Height for `columbus-4`**: 1200000
+* **Target Height for `tequila-0004`**: 1350000
+
+```
+// MAINNET
+// Fri Jan 01 2021 18:00:00 GMT+0900 (KST)
+// Fri Jan 01 2021 09:00:00 GMT+0000 (UTC)
+// Fri Jan 01 2021 01:00:00 GMT-0800 (PST)
+//
+// TEQUILA
+// Fri Nov 27 2020 12:00:00 GMT+0900 (KST)
+// Fri Nov 27 2020 03:00:00 GMT+0000 (UTC)
+// Thu Nov 26 2020 19:00:00 GMT-0800 (PST)
+```
+
+### Improvements
+* [\#426](https://github.com/terra-project/core/pull/426) CosmWasm Cache Implementation (100x faster than before)
+* [\#413](https://github.com/terra-project/core/pull/413) CosmWasm Logging Whitelist
+
+### Bug Fixes
+* [\#427](https://github.com/terra-project/core/pull/427) CosmWasm Staking Query 
+
+### Param Changes
+* [\#433](https://github.com/terra-project/core/pull/433) Increase ExecuteMsgSize limit to 4096 from 1024
+
 ## 0.4.0
 
 ### Release Notes
