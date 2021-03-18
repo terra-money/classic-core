@@ -1,5 +1,5 @@
 ## 0.4.5
-This release is a hotfix for two high-severity issues in the currently live Terra Core@0.4.4.
+This release is a hotfix for two high-severity issues.
 
 [Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
 
