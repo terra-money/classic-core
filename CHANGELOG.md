@@ -1,5 +1,47 @@
+## 0.4.5
+This release is a hotfix for two high-severity issues in the currently live Terra Core@0.4.4.
 
-## 0.4.3 (Not Released)
+[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
+
+```
+$ git fetch --all --tags
+$ git checkout v0.4.5
+$ make install
+```
+
+### Upgrade Time
+
+#### Mainnet
+**Target Height**: 2,380,000
+
+```
+Tue Mar 30 2021 09:00:00 GMT+0000 (UTC)
+Tue Mar 30 2021 01:00:00 GMT-0800 (PST)
+Tue Mar 30 2021 18:00:00 GMT+0900 (KST)
+```
+
+#### Testnet
+**Target Height**: 3,150,000
+
+```
+Tue Mar 25 2021 09:00:00 GMT+0000 (UTC)
+Tue Mar 25 2021 01:00:00 GMT-0800 (PST)
+Tue Mar 25 2021 18:00:00 GMT+0900 (KST)
+```
+
+### Improvements
+* [\#463](https://github.com/terra-project/core/pull/463) Lower oracle feeder cost.
+* [\#462](https://github.com/terra-project/core/pull/462) Softfork to cap the max tx limit with ConsensusParam update.
+
+## 0.4.4
+
+### Bug Fixes
+* [\#461](https://github.com/terra-project/core/pull/461) Update Dockerfile script to use proper libgo_cosmwasm_musla.a file
+
+## 0.4.3
+
+### Improvements
+* [\#460](https://github.com/terra-project/core/pull/460) Add `tx-gas-hard-limit` flag to filter out tx with abnormally huge gas
 
 ### Bug Fixes
 * [\#456](https://github.com/terra-project/core/pull/456) `RewardWeightUpdateProposal` CLI parse error
