@@ -30,6 +30,20 @@ func IsWaitingForSoftfork(ctx sdk.Context, version uint8) bool {
 		// ASAP
 		return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() < 2380000) ||
 			(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() < 3052265)
+	} else if version == 3 {
+		// Expected time:
+		// MAINNET
+		// Tue Mar 30 2021 18:00:00 GMT+0900 (KST)
+		// Tue Mar 30 2021 09:00:00 GMT+0000 (UTC)
+		// Tue Mar 30 2021 01:00:00 GMT-0800 (PST)
+		//
+		// TEQUILA
+		// Tue Mar 25 2021 18:00:00 GMT+0900 (KST)
+		// Tue Mar 25 2021 09:00:00 GMT+0000 (UTC)
+		// Tue Mar 25 2021 01:00:00 GMT-0800 (PST)
+
+		return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() < 2380000) ||
+			(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() < 3150000)
 	}
 
 	return false
@@ -37,7 +51,17 @@ func IsWaitingForSoftfork(ctx sdk.Context, version uint8) bool {
 
 // IsSoftforkHeight return whether current block
 // height is the targeted softfork height
-func IsSoftforkHeight(ctx sdk.Context, _version uint8) bool {
-	return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() == 1200000) ||
-		(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() == 1350000)
+func IsSoftforkHeight(ctx sdk.Context, version uint8) bool {
+	if version == 1 {
+		return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() == 1200000) ||
+			(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() == 1350000)
+	} else if version == 2 {
+		return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() == 2380000) ||
+			(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() == 3052265)
+	} else if version == 3 {
+		return (ctx.ChainID() == "columbus-4" && ctx.BlockHeight() == 2380000) ||
+			(ctx.ChainID() == "tequila-0004" && ctx.BlockHeight() == 3150000)
+	}
+
+	return false
 }
