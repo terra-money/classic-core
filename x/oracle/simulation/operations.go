@@ -210,7 +210,7 @@ func SimulateMsgDelegateFeedConsent(ak authkeeper.AccountKeeper, k keeper.Keeper
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, valAddress)
-		power := k.StakingKeeper.GetLastValidatorPower(ctx, address)
+		power := k.StakingKeeper.GetLastValidatorPower(ctx, valAddress)
 		if val == nil || !val.IsBonded() || power == 0 {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
