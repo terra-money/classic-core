@@ -148,16 +148,16 @@
   
     - [Query](#terra.treasury.v1beta1.Query)
   
-- [terra/tx/service.proto](#terra/tx/service.proto)
+- [terra/tx/v1beta1/service.proto](#terra/tx/v1beta1/service.proto)
     - [ComputeTaxRequest](#terra.tx.v1beta1.ComputeTaxRequest)
     - [ComputeTaxResponse](#terra.tx.v1beta1.ComputeTaxResponse)
   
     - [Service](#terra.tx.v1beta1.Service)
   
 - [terra/vesting/v1beta1/vesting.proto](#terra/vesting/v1beta1/vesting.proto)
-    - [LazyGradedVestingAccount](#core.vesting.v1beta1.LazyGradedVestingAccount)
-    - [Schedule](#core.vesting.v1beta1.Schedule)
-    - [VestingSchedule](#core.vesting.v1beta1.VestingSchedule)
+    - [LazyGradedVestingAccount](#terra.vesting.v1beta1.LazyGradedVestingAccount)
+    - [Schedule](#terra.vesting.v1beta1.Schedule)
+    - [VestingSchedule](#terra.vesting.v1beta1.VestingSchedule)
   
 - [terra/wasm/v1beta1/wasm.proto](#terra/wasm/v1beta1/wasm.proto)
     - [CodeInfo](#terra.wasm.v1beta1.CodeInfo)
@@ -878,7 +878,7 @@ Denom - the object to hold configurations of each denom
 <a name="terra.oracle.v1beta1.ExchangeRateTuple"></a>
 
 ### ExchangeRateTuple
-
+ExchangeRateTuple - struct to store interpreted exchange rates data to store
 
 
 | Field | Type | Label | Description |
@@ -1410,7 +1410,7 @@ Query defines the gRPC querier service.
 | `AggregatePrevotes` | [QueryAggregatePrevotesRequest](#terra.oracle.v1beta1.QueryAggregatePrevotesRequest) | [QueryAggregatePrevotesResponse](#terra.oracle.v1beta1.QueryAggregatePrevotesResponse) | AggregatePrevotes returns aggregate prevotes of all validators | GET|/terra/oracle/v1beta1/validators/aggregate_prevotes|
 | `AggregateVote` | [QueryAggregateVoteRequest](#terra.oracle.v1beta1.QueryAggregateVoteRequest) | [QueryAggregateVoteResponse](#terra.oracle.v1beta1.QueryAggregateVoteResponse) | AggregateVote returns an aggregate vote of a validator | GET|/terra/oracle/v1beta1/valdiator/{validator_addr}/aggregate_vote|
 | `AggregateVotes` | [QueryAggregateVotesRequest](#terra.oracle.v1beta1.QueryAggregateVotesRequest) | [QueryAggregateVotesResponse](#terra.oracle.v1beta1.QueryAggregateVotesResponse) | AggregateVotes returns aggregate votes of all validators | GET|/terra/oracle/v1beta1/validators/aggregate_votes|
-| `Params` | [QueryParamsRequest](#terra.oracle.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.oracle.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/market/v1beta1/params|
+| `Params` | [QueryParamsRequest](#terra.oracle.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.oracle.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/oracle/v1beta1/params|
 
  <!-- end services -->
 
@@ -1591,7 +1591,7 @@ Params defines the parameters for the oracle module.
 <a name="terra.treasury.v1beta1.PolicyConstraints"></a>
 
 ### PolicyConstraints
-
+PolicyConstraints - defines policy constraints can be applied in tax & reward policies
 
 
 | Field | Type | Label | Description |
@@ -2035,10 +2035,10 @@ Query defines the gRPC querier service.
 
 
 
-<a name="terra/tx/service.proto"></a>
+<a name="terra/tx/v1beta1/service.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## terra/tx/service.proto
+## terra/tx/v1beta1/service.proto
 
 
 
@@ -2100,7 +2100,7 @@ Service defines a gRPC service for interacting with transactions.
 
 
 
-<a name="core.vesting.v1beta1.LazyGradedVestingAccount"></a>
+<a name="terra.vesting.v1beta1.LazyGradedVestingAccount"></a>
 
 ### LazyGradedVestingAccount
 LazyGradedVestingAccount implements the LazyGradedVestingAccount interface. It vests all
@@ -2110,17 +2110,17 @@ coins according to a predefined schedule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `base_vesting_account` | [cosmos.vesting.v1beta1.BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
-| `vesting_schedules` | [VestingSchedule](#core.vesting.v1beta1.VestingSchedule) | repeated |  |
+| `vesting_schedules` | [VestingSchedule](#terra.vesting.v1beta1.VestingSchedule) | repeated |  |
 
 
 
 
 
 
-<a name="core.vesting.v1beta1.Schedule"></a>
+<a name="terra.vesting.v1beta1.Schedule"></a>
 
 ### Schedule
-
+Schedule - represent single schedule data for a vesting schedule
 
 
 | Field | Type | Label | Description |
@@ -2134,16 +2134,16 @@ coins according to a predefined schedule.
 
 
 
-<a name="core.vesting.v1beta1.VestingSchedule"></a>
+<a name="terra.vesting.v1beta1.VestingSchedule"></a>
 
 ### VestingSchedule
-
+VestingSchedule defines vesting schedule for a denom
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `denom` | [string](#string) |  |  |
-| `schedules` | [Schedule](#core.vesting.v1beta1.Schedule) | repeated |  |
+| `schedules` | [Schedule](#terra.vesting.v1beta1.Schedule) | repeated |  |
 
 
 

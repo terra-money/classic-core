@@ -19,14 +19,13 @@ dist
 tools/bin/*
 examples/build/*
 docs/_build
-client/lcd/statik/statik.go
 tools-stamp
 
 # Data - ideally these don't exist
 examples/basecoin/app/data
 baseapp/data/*
 client/lcd/keys/*
-client/lcd/statik/statik.go
+client/docs/statik/statik.go
 remote/ansible/testnets
 mytestnet
 

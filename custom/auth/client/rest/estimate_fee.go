@@ -23,7 +23,7 @@ func EstimateTxFeeRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, req.Msg...)
+		stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, req.Msgs...)
 		if rest.CheckBadRequestError(w, err) {
 			return
 		}

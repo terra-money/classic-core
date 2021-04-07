@@ -103,6 +103,7 @@ func (m *Params) GetWindowProbation() uint64 {
 	return 0
 }
 
+// PolicyConstraints - defines policy constraints can be applied in tax & reward policies
 type PolicyConstraints struct {
 	RateMin       github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=rate_min,json=rateMin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"rate_min" yaml:"rate_min"`
 	RateMax       github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=rate_max,json=rateMax,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"rate_max" yaml:"rate_max"`

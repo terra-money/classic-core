@@ -28,6 +28,7 @@ message Params {
   uint64 window_probation = 7 [(gogoproto.moretags) = "yaml:\"window_probation\""];
 }
 
+// PolicyConstraints - defines policy constraints can be applied in tax & reward policies
 message PolicyConstraints {
   option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = false;

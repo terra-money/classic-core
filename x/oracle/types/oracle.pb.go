@@ -215,6 +215,7 @@ func (m *AggregateExchangeRateVote) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AggregateExchangeRateVote proto.InternalMessageInfo
 
+// ExchangeRateTuple - struct to store interpreted exchange rates data to store
 type ExchangeRateTuple struct {
 	Denom        string                                 `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty" yaml:"denom"`
 	ExchangeRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exchange_rate,json=exchangeRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchange_rate" yaml:"exchange_rate"`

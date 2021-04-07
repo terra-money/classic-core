@@ -116,12 +116,12 @@ install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 
 update-swagger-docs: statik
-	$(BINDIR)/statik -src=client/lcd/swagger-ui -dest=client/lcd -f -m
+	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
         echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
         exit 1;\
     else \
-    	echo "\033[92mSwagger docs are in sync\033[0m";\
+        echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
 
 .PHONY: build build-linux install update-swagger-docs
@@ -303,91 +303,7 @@ proto-lint:
 proto-check-breaking:
 	@$(DOCKER_BUF) check breaking --against-input $(HTTPS_GIT)#branch=master
 
-TM_URL              = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.8/proto/tendermint
-SDK_URL    		    = https://raw.githubusercontent.com/cosmos/cosmos-sdk/v0.42.3/proto/cosmos
-GOGO_PROTO_URL      = https://raw.githubusercontent.com/regen-network/protobuf/cosmos
-COSMOS_PROTO_URL    = https://raw.githubusercontent.com/regen-network/cosmos-proto/master
-CONFIO_URL          = https://raw.githubusercontent.com/confio/ics23/v0.6.3
-
-TM_CRYPTO_TYPES     = third_party/proto/tendermint/crypto
-TM_ABCI_TYPES       = third_party/proto/tendermint/abci
-TM_TYPES            = third_party/proto/tendermint/types
-TM_VERSION          = third_party/proto/tendermint/version
-TM_LIBS             = third_party/proto/tendermint/libs/bits
-TM_P2P              = third_party/proto/tendermint/p2p
-
-SDK_BASE            = third_party/proto/cosmos/base/v1beta1
-SDK_CRYPTO_MULTISIG = third_party/proto/cosmos/crypto/multisig/v1beta1
-SDK_TX              = third_party/proto/cosmos/tx/v1beta1
-SDK_TX_SIGNING      = third_party/proto/cosmos/tx/signing/v1beta1
-SDK_AUTH            = third_party/proto/cosmos/auth/v1beta1
-SDK_VESTING         = third_party/proto/cosmos/vesting/v1beta1
-
-GOGO_PROTO_TYPES    = third_party/proto/gogoproto
-COSMOS_PROTO_TYPES  = third_party/proto/cosmos_proto
-CONFIO_TYPES        = third_party/proto/confio
-
-proto-update-deps:
-	@mkdir -p $(GOGO_PROTO_TYPES)
-	@curl -sSL $(GOGO_PROTO_URL)/gogoproto/gogo.proto > $(GOGO_PROTO_TYPES)/gogo.proto
-
-	@mkdir -p $(COSMOS_PROTO_TYPES)
-	@curl -sSL $(COSMOS_PROTO_URL)/cosmos.proto > $(COSMOS_PROTO_TYPES)/cosmos.proto
-
-## Importing of tendermint protobuf definitions currently requires the
-## use of `sed` in order to build properly with cosmos-sdk's proto file layout
-## (which is the standard Buf.build FILE_LAYOUT)
-## Issue link: https://github.com/tendermint/tendermint/issues/5021
-	@mkdir -p $(TM_ABCI_TYPES)
-	@curl -sSL $(TM_URL)/abci/types.proto > $(TM_ABCI_TYPES)/types.proto
-
-	@mkdir -p $(TM_VERSION)
-	@curl -sSL $(TM_URL)/version/types.proto > $(TM_VERSION)/types.proto
-
-	@mkdir -p $(TM_TYPES)
-	@curl -sSL $(TM_URL)/types/types.proto > $(TM_TYPES)/types.proto
-	@curl -sSL $(TM_URL)/types/evidence.proto > $(TM_TYPES)/evidence.proto
-	@curl -sSL $(TM_URL)/types/params.proto > $(TM_TYPES)/params.proto
-	@curl -sSL $(TM_URL)/types/validator.proto > $(TM_TYPES)/validator.proto
-	@curl -sSL $(TM_URL)/types/block.proto > $(TM_TYPES)/block.proto
-
-	@mkdir -p $(TM_CRYPTO_TYPES)
-	@curl -sSL $(TM_URL)/crypto/proof.proto > $(TM_CRYPTO_TYPES)/proof.proto
-	@curl -sSL $(TM_URL)/crypto/keys.proto > $(TM_CRYPTO_TYPES)/keys.proto
-
-	@mkdir -p $(TM_LIBS)
-	@curl -sSL $(TM_URL)/libs/bits/types.proto > $(TM_LIBS)/types.proto
-
-	@mkdir -p $(TM_P2P)
-	@curl -sSL $(TM_URL)/p2p/types.proto > $(TM_P2P)/types.proto
-
-	@mkdir -p $(SDK_BASE)
-	@curl -sSL $(SDK_URL)/base/v1beta1/coin.proto > $(SDK_BASE)/coin.proto
-
-	@mkdir -p $(SDK_CRYPTO_MULTISIG)
-	@curl -sSL $(SDK_URL)/crypto/multisig/v1beta1/multisig.proto > $(SDK_CRYPTO_MULTISIG)/multisig.proto
-
-	@mkdir -p $(SDK_TX)
-	@curl -sSL $(SDK_URL)/tx/v1beta1/tx.proto > $(SDK_TX)/tx.proto
-	
-	@mkdir -p $(SDK_TX_SIGNING)
-	@curl -sSL $(SDK_URL)/tx/signing/v1beta1/signing.proto > $(SDK_TX_SIGNING)/signing.proto
-
-	@mkdir -p $(SDK_AUTH)
-	@curl -sSL $(SDK_URL)/auth/v1beta1/auth.proto > $(SDK_AUTH)/auth.proto
-	
-	@mkdir -p $(SDK_VESTING)
-	@curl -sSL $(SDK_URL)/vesting/v1beta1/vesting.proto > $(SDK_VESTING)/vesting.proto
-
-	@mkdir -p $(CONFIO_TYPES)
-	@curl -sSL $(CONFIO_URL)/proofs.proto > $(CONFIO_TYPES)/proofs.proto
-## insert go package option into proofs.proto file
-## Issue link: https://github.com/confio/ics23/issues/
-## on MacOS need to install gsed: https://formulae.brew.sh/formula/gnu-sed
-## also need to resolve conflict with ssed: PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
-	@sed -i '4ioption go_package = "github.com/confio/ics23/go";' $(CONFIO_TYPES)/proofs.proto
-
-.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps
+.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking 
 
 ###############################################################################
 ###                                Localnet                                 ###

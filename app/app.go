@@ -125,6 +125,9 @@ import (
 	marketwasm "github.com/terra-project/core/x/market/wasm"
 	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
 	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/terra-project/core/client/docs/statik"
 )
 
 const appName = "TerraApp"
