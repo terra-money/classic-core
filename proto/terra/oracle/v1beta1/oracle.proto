@@ -84,6 +84,7 @@ message AggregateExchangeRateVote {
   string voter = 2 [(gogoproto.moretags) = "yaml:\"voter\""];
 }
 
+// ExchangeRateTuple - struct to store interpreted exchange rates data to store
 message ExchangeRateTuple {
   option (gogoproto.equal)            = false;
   option (gogoproto.goproto_getters)  = false;

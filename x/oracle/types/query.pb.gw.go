@@ -1076,7 +1076,7 @@ var (
 
 	pattern_Query_AggregateVotes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "validators", "aggregate_votes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"terra", "market", "v1beta1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"terra", "oracle", "v1beta1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

@@ -20,8 +20,9 @@ lint:
   ignore:
     - tendermint
     - gogoproto
-    - cosmos
     - cosmos_proto
+    - cosmos
+    - ibc
     - google
     - confio
 breaking:
@@ -30,7 +31,8 @@ breaking:
   ignore:
     - tendermint
     - gogoproto
-    - cosmos
     - cosmos_proto
+    - cosmos
+    - ibc
     - google
     - confio

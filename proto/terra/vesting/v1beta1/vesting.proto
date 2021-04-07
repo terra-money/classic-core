@@ -1,5 +1,5 @@
 syntax = "proto3";
-package core.vesting.v1beta1;
+package terra.vesting.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/vesting/v1beta1/vesting.proto";
@@ -20,8 +20,9 @@ message LazyGradedVestingAccount {
   ];
 }
 
+// Schedule - represent single schedule data for a vesting schedule
 message Schedule {
-  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_getters) = false;
 
   int64  start_time = 1 [(gogoproto.moretags) = "yaml:\"start_time\""];
   int64  end_time   = 2 [(gogoproto.moretags) = "yaml:\"end_time\""];
@@ -32,8 +33,9 @@ message Schedule {
   ];
 }
 
+// VestingSchedule defines vesting schedule for a denom
 message VestingSchedule {
-  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_getters) = false;
 
   string            denom     = 1 [(gogoproto.moretags) = "yaml:\"start_time\""];
   repeated Schedule schedules = 2 [

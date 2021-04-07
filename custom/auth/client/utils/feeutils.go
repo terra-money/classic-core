@@ -25,7 +25,7 @@ type (
 	// EstimateFeeReq defines a tx fee estimation request.
 	EstimateFeeReq struct {
 		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-		Msg     []sdk.Msg    `json:"msgs" yaml:"msgs"`
+		Msgs    []sdk.Msg    `json:"msgs" yaml:"msgs"`
 	}
 
 	// EstimateFeeResp defines a tx fee estimation response

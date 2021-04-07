@@ -72,7 +72,7 @@ service Query {
 
   // Params queries all parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/terra/market/v1beta1/params";
+    option (google.api.http).get = "/terra/oracle/v1beta1/params";
   }
 }
 
