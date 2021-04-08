@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	NewQueryTaxCapParams = types.NewQueryTaxCapParams
+	NewQueryClient = types.NewQueryClient
+)
 
-	QuerierRoute = types.QuerierRoute
-	QueryTaxRate = types.QueryTaxRate
-	QueryTaxCap  = types.QueryTaxCap
+type (
+	QueryTaxRateRequest = types.QueryTaxRateRequest
+	QueryTaxCapRequest  = types.QueryTaxCapRequest
 )

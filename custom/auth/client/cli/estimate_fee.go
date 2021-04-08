@@ -44,10 +44,11 @@ $ terracli tx estimate-fee [file] --gas-adjustment 1.4 --gas-prices 0.015uluna
 			}
 
 			// override gas and fees
-			txf.WithFees(stdFee.Amount.String())
-			txf.WithGas(stdFee.Gas)
-			txf.WithSimulateAndExecute(false)
-			txf.WithGasPrices("")
+			txf = txf.
+				WithFees(stdFee.Amount.String()).
+				WithGas(stdFee.Gas).
+				WithSimulateAndExecute(false).
+				WithGasPrices("")
 
 			if err != nil {
 				return err

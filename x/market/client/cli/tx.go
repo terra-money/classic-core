@@ -85,10 +85,11 @@ $ terracli market swap "1000ukrw" "uusd" "terra1..."
 					}
 
 					// override gas and fees
-					txf.WithFees(stdFee.Amount.String())
-					txf.WithGas(stdFee.Gas)
-					txf.WithSimulateAndExecute(false)
-					txf.WithGasPrices("")
+					txf = txf.
+						WithFees(stdFee.Amount.String()).
+						WithGas(stdFee.Gas).
+						WithSimulateAndExecute(false).
+						WithGasPrices("")
 				}
 			} else {
 				msg = types.NewMsgSwap(fromAddress, offerCoin, askDenom)

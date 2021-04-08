@@ -171,10 +171,11 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				}
 
 				// override gas and fees
-				txf.WithFees(stdFee.Amount.String())
-				txf.WithGas(stdFee.Gas)
-				txf.WithSimulateAndExecute(false)
-				txf.WithGasPrices("")
+				txf = txf.
+					WithFees(stdFee.Amount.String()).
+					WithGas(stdFee.Gas).
+					WithSimulateAndExecute(false).
+					WithGasPrices("")
 			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
@@ -246,10 +247,11 @@ func ExecuteContractCmd() *cobra.Command {
 				}
 
 				// override gas and fees
-				txf.WithFees(stdFee.Amount.String())
-				txf.WithGas(stdFee.Gas)
-				txf.WithSimulateAndExecute(false)
-				txf.WithGasPrices("")
+				txf = txf.
+					WithFees(stdFee.Amount.String()).
+					WithGas(stdFee.Gas).
+					WithSimulateAndExecute(false).
+					WithGasPrices("")
 			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
