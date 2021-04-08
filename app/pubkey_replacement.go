@@ -6,15 +6,16 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/pkg/errors"
+	cryptocodec "github.com/tendermint/tendermint/crypto/encoding"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/pkg/errors"
-	cryptocodec "github.com/tendermint/tendermint/crypto/encoding"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type replacementConfigs []replacementConfig

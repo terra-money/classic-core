@@ -3,9 +3,10 @@ package market
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/x/market/keeper"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestExportInitGenesis(t *testing.T) {

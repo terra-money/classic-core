@@ -4,16 +4,18 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/spf13/pflag"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-	"github.com/spf13/pflag"
+
+	core "github.com/terra-project/core/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	core "github.com/terra-project/core/types"
 
 	marketexported "github.com/terra-project/core/x/market/exported"
 	msgauthexported "github.com/terra-project/core/x/msgauth/exported"

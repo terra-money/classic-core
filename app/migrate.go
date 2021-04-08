@@ -10,6 +10,11 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,10 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	ibccoretypes "github.com/cosmos/cosmos-sdk/x/ibc/core/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 const (

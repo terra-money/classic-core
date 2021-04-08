@@ -96,6 +96,7 @@ import (
 	customdistr "github.com/terra-project/core/custom/distribution"
 	customevidence "github.com/terra-project/core/custom/evidence"
 	customgov "github.com/terra-project/core/custom/gov"
+	custommint "github.com/terra-project/core/custom/mint"
 	customparams "github.com/terra-project/core/custom/params"
 	customslashing "github.com/terra-project/core/custom/slashing"
 	customstaking "github.com/terra-project/core/custom/staking"
@@ -145,7 +146,7 @@ var (
 		custombank.AppModuleBasic{},
 		capability.AppModuleBasic{},
 		customstaking.AppModuleBasic{},
-		mint.AppModuleBasic{},
+		custommint.AppModuleBasic{},
 		customdistr.AppModuleBasic{},
 		customgov.NewAppModuleBasic(
 			paramsclient.ProposalHandler,

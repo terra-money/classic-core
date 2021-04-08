@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/terra-project/core/x/wasm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q

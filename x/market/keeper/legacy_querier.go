@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/terra-project/core/x/market/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/terra-project/core/x/market/types"
 )
 
 // NewLegacyQuerier is the module level router for state queries

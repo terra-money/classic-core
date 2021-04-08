@@ -5,12 +5,13 @@ import (
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/x/wasm"
 	"github.com/terra-project/core/x/wasm/keeper"
 	"github.com/terra-project/core/x/wasm/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 

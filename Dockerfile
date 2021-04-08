@@ -26,6 +26,5 @@ FROM alpine:3.12
 WORKDIR /root
 
 COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
-COPY --from=go-builder /code/build/terracli /usr/local/bin/terracli
 
 CMD ["/usr/local/bin/terrad", "version"]

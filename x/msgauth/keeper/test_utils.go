@@ -1,4 +1,5 @@
-// nolint:deadcode unused DONTCOVER
+//nolint:deadcode,unused
+//DONTCOVER
 package keeper
 
 import (

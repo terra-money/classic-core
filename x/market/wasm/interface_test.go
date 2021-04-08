@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"

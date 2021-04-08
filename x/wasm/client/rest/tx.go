@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/gorilla/mux"
 
 	feeutils "github.com/terra-project/core/custom/auth/client/utils"
 	wasmUtils "github.com/terra-project/core/x/wasm/client/utils"

@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/x/treasury/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BurnCoinsFromBurnAccount burn all coins from burn account

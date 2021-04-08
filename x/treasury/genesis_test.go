@@ -3,8 +3,9 @@ package treasury
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury/keeper"

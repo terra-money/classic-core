@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/oracle/keeper"

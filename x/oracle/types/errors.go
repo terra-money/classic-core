@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // Oracle Errors

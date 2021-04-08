@@ -3,9 +3,10 @@ package types
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 )
 
 func TestGenericAuthorization(t *testing.T) {

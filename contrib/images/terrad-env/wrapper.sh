@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 
-BINARY=/simd/${BINARY:-simd}
+BINARY=/terrad/${BINARY:-terrad}
 ID=${ID:-0}
-LOG=${LOG:-simd.log}
+LOG=${LOG:-terrad.log}
 
 if ! [ -f "${BINARY}" ]; then
-	echo "The binary $(basename "${BINARY}") cannot be found. Please add the binary to the shared folder. Please use the BINARY environment variable if the name of the binary is not 'simd'"
+	echo "The binary $(basename "${BINARY}") cannot be found. Please add the binary to the shared folder. Please use the BINARY environment variable if the name of the binary is not 'terrad'"
 	exit 1
 fi
 
@@ -16,10 +16,10 @@ if [ -z "${BINARY_CHECK}" ]; then
 	exit 1
 fi
 
-export SIMDHOME="/simd/node${ID}/simd"
+export TERRADHOME="/terrad/node${ID}/terrad"
 
-if [ -d "$(dirname "${SIMDHOME}"/"${LOG}")" ]; then
-  "${BINARY}" --home "${SIMDHOME}" "$@" | tee "${SIMDHOME}/${LOG}"
+if [ -d "$(dirname "${TERRADHOME}"/"${LOG}")" ]; then
+  "${BINARY}" --home "${TERRADHOME}" "$@" | tee "${TERRADHOME}/${LOG}"
 else
-  "${BINARY}" --home "${SIMDHOME}" "$@"
+  "${BINARY}" --home "${TERRADHOME}" "$@"
 fi

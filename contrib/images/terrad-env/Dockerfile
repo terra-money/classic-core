@@ -8,8 +8,8 @@ ARG UID=1000
 ARG GID=1000
 
 USER ${UID}:${GID}
-VOLUME [ /simd ]
-WORKDIR /simd
+VOLUME [ /terrad ]
+WORKDIR /terrad
 EXPOSE 26656 26657
 ENTRYPOINT ["/usr/bin/wrapper.sh"]
 CMD ["start", "--log_format", "plain"]

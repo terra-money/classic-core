@@ -3,11 +3,12 @@ package keeper
 import (
 	"encoding/binary"
 
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/terra-project/core/x/wasm/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/terra-project/core/x/wasm/types"
 )
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system

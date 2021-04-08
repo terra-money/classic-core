@@ -240,7 +240,7 @@ $ terrad add-genesis-account acc1 '10000000000uluna,1000000ukrw'
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	cmd.Flags().String(flagVestingAmt, "", "amount of coins for vesting accounts")
-	cmd.Flags().String(flagVestingSchedules, "", "comma seperated vesting schedules [denom|start|end|ratio][,[denom|start|end|ratio]], where 'start' and 'end' is day unit")
+	cmd.Flags().String(flagVestingSchedules, "", "comma separated vesting schedules [denom|start|end|ratio][,[denom|start|end|ratio]], where 'start' and 'end' is day unit")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

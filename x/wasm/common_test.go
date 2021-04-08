@@ -1,4 +1,3 @@
-// nolint:deadcode unused noalias
 package wasm_test
 
 import (
