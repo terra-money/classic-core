@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/x/msgauth/keeper"
 	"github.com/terra-project/core/x/msgauth/types"
+
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EndBlocker is called at the end of every block

@@ -9,9 +9,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/x/msgauth/keeper"
 	"github.com/terra-project/core/x/msgauth/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestDecodeMsgAuthStore(t *testing.T) {

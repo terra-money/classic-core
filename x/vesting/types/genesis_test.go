@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	core "github.com/terra-project/core/types"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 // require invalid vesting account fails validation
 func TestValidateGenesisInvalidAccounts(t *testing.T) {
 	acc1 := authtypes.NewBaseAccountWithAddress(sdk.AccAddress(addr1))
-	coins := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 150))
+	coins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 150))
 	baseVestingAcc := authvesttypes.NewBaseVestingAccount(acc1, coins, 0)
 
 	// invalid delegated vesting
@@ -39,6 +41,6 @@ func TestValidateGenesisInvalidAccounts(t *testing.T) {
 	require.NoError(t, authtypes.ValidateGenAccounts(genAccs))
 
 	// invalid vesting time
-	genAccs[0] = NewLazyGradedVestingAccountRaw(baseVestingAcc, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{1654668078, 1554668078, sdk.OneDec()}}}})
+	genAccs[0] = NewLazyGradedVestingAccountRaw(baseVestingAcc, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1654668078, 1554668078, sdk.OneDec()}}}})
 	require.Error(t, authtypes.ValidateGenAccounts(genAccs))
 }

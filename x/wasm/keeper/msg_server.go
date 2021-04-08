@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/terra-project/core/x/wasm/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/terra-project/core/x/wasm/types"
 )
 
 type msgServer struct {

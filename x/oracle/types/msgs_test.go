@@ -5,8 +5,9 @@ import (
 
 	core "github.com/terra-project/core/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestMsgFeederDelegation(t *testing.T) {

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gopkg.in/yaml.v2"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewAggregateExchangeRatePrevote returns AggregateExchangeRatePrevote object

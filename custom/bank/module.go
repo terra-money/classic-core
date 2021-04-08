@@ -1,6 +1,9 @@
 package bank
 
 import (
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -8,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/gorilla/mux"
-	"github.com/spf13/cobra"
 
 	customcli "github.com/terra-project/core/custom/bank/client/cli"
 	customrest "github.com/terra-project/core/custom/bank/client/rest"

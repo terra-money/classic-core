@@ -1,12 +1,15 @@
 package crisis
 
 import (
+	"encoding/json"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/crisis/types"
 
 	customtypes "github.com/terra-project/core/custom/crisis/types"
+	core "github.com/terra-project/core/types"
 )
 
 var (
@@ -22,4 +25,14 @@ type AppModuleBasic struct {
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
 	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+}
+
+// DefaultGenesis returns default genesis state as raw bytes for the gov
+// module.
+func (am AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+	// customize to set default genesis state deposit denom to uluna
+	defaultGenesisState := types.DefaultGenesisState()
+	defaultGenesisState.ConstantFee.Denom = core.MicroLunaDenom
+
+	return cdc.MustMarshalJSON(defaultGenesisState)
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

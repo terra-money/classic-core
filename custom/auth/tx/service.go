@@ -8,9 +8,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	feeutils "github.com/terra-project/core/custom/auth/client/utils"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	feeutils "github.com/terra-project/core/custom/auth/client/utils"
 )
 
 var _ ServiceServer = txServer{}
@@ -60,5 +61,5 @@ func RegisterTxService(
 // RegisterGRPCGatewayRoutes mounts the tx service's GRPC-gateway routes on the
 // given Mux.
 func RegisterGRPCGatewayRoutes(clientConn gogogrpc.ClientConn, mux *runtime.ServeMux) {
-	RegisterServiceHandlerClient(context.Background(), mux, NewServiceClient(clientConn))
+	_ = RegisterServiceHandlerClient(context.Background(), mux, NewServiceClient(clientConn))
 }

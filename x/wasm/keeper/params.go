@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/x/wasm/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // MaxContractSize defines maximum bytes size of a contract

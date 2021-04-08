@@ -8,6 +8,12 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -26,11 +32,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
 
 	terraapp "github.com/terra-project/core/app"
 	"github.com/terra-project/core/app/params"
@@ -44,6 +45,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := terraapp.MakeEncodingConfig()
 
 	config := sdk.GetConfig()
+	config.SetCoinType(core.CoinType)
+	config.SetFullFundraiserPath(core.FullFundraiserPath)
 	config.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)

@@ -3,9 +3,10 @@ package wasm
 import (
 	"bytes"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/terra-project/core/x/wasm/keeper"
 	"github.com/terra-project/core/x/wasm/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis sets wasm information for genesis.

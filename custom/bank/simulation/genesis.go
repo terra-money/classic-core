@@ -14,7 +14,7 @@ import (
 )
 
 // RandomGenesisBalances returns a slice of account balances. Each account has
-// a balance of simState.InitialStake for sdk.DefaultBondDenom.
+// a balance of simState.InitialStake for sdk.DefaultBondDenom and core.MicroLunaDenom.
 func RandomGenesisBalances(simState *module.SimulationState) []types.Balance {
 	genesisBalances := []types.Balance{}
 

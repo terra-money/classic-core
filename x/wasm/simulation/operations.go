@@ -1,6 +1,6 @@
 package simulation
 
-// DONTCOVER
+//DONTCOVER
 
 import (
 	"encoding/json"
@@ -19,6 +19,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
+	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/wasm/keeper"
 	"github.com/terra-project/core/x/wasm/types"
 )
@@ -251,7 +252,7 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 		}
 
 		spendableCoins = spendableCoins.Sub(fees)
-		spendableCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, spendableCoins.AmountOf(sdk.DefaultBondDenom)))
+		spendableCoins = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, spendableCoins.AmountOf(core.MicroLunaDenom)))
 
 		if err := bk.SendEnabledCoins(ctx, spendableCoins...); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "send not enabled"), nil, nil

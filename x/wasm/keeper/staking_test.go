@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -18,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -110,7 +111,7 @@ func TestInitializeStaking(t *testing.T) {
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload staking derivates code
@@ -178,7 +179,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1000000))
 	assert.Equal(t, v.Status, stakingtypes.Bonded)
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000), sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload staking derivates code

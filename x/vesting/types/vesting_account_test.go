@@ -5,13 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 	tmtime "github.com/tendermint/tendermint/types/time"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	core "github.com/terra-project/core/types"
 )
 
 var (
@@ -265,7 +268,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 	pubkey := secp256k1.GenPrivKey().PubKey()
 	addr := sdk.AccAddress(pubkey.Address())
 	baseAcc := authtypes.NewBaseAccount(addr, pubkey, 0, 0)
-	initialVesting := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 50))
+	initialVesting := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 50))
 	baseVestingWithCoins := authvestingtypes.NewBaseVestingAccount(baseAcc, initialVesting, 100)
 	tests := []struct {
 		name   string
@@ -289,27 +292,27 @@ func TestGenesisAccountValidate(t *testing.T) {
 		},
 		{
 			"valid continuous vesting account",
-			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{1554668078, 1654668078, sdk.OneDec()}}}}),
+			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1554668078, 1654668078, sdk.OneDec()}}}}),
 			nil,
 		},
 		{
 			"invalid vesting times",
-			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{1654668078, 1554668078, sdk.OneDec()}}}}),
+			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1654668078, 1554668078, sdk.OneDec()}}}}),
 			errors.New("vesting start-time cannot be before end-time"),
 		},
 		{
 			"invalid vesting times 2",
-			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{-1, 1554668078, sdk.OneDec()}}}}),
+			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{-1, 1554668078, sdk.OneDec()}}}}),
 			errors.New("vesting start-time cannot be negative"),
 		},
 		{
 			"invalid vesting ratio",
-			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{1554668078, 1654668078, sdk.ZeroDec()}}}}),
+			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1554668078, 1654668078, sdk.ZeroDec()}}}}),
 			errors.New("vesting ratio cannot be smaller than or equal with zero"),
 		},
 		{
 			"invalid vesting sum of ratio",
-			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{sdk.DefaultBondDenom, Schedules{Schedule{1554668078, 1654668078, sdk.NewDecWithPrec(1, 1)}}}}),
+			NewLazyGradedVestingAccount(baseAcc, initialVesting, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1554668078, 1654668078, sdk.NewDecWithPrec(1, 1)}}}}),
 			errors.New("vesting total ratio must be one"),
 		},
 	}

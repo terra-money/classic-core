@@ -1,10 +1,12 @@
 package simulation
 
-// DONTCOVER
+//DONTCOVER
 
 import (
 	"math/rand"
 	"strings"
+
+	core "github.com/terra-project/core/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	core "github.com/terra-project/core/types"
 
 	"github.com/terra-project/core/x/market/types"
 )
@@ -75,7 +76,7 @@ func SimulateMsgSwap(
 		var askDenom string
 		whitelistLen := len(whitelist)
 		if whitelistLen == 0 {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwap, "no avaliable exchange rates"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwap, "no available exchange rates"), nil, nil
 		}
 
 		if randVal := simtypes.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {
@@ -148,7 +149,7 @@ func SimulateMsgSwapSend(
 		var askDenom string
 		whitelistLen := len(whitelist)
 		if whitelistLen == 0 {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, "no avaliable exchange rates"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, "no available exchange rates"), nil, nil
 		}
 
 		if randVal := simtypes.RandIntBetween(r, 0, whitelistLen*2); randVal < whitelistLen {

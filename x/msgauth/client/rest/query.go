@@ -6,9 +6,10 @@ import (
 
 	"github.com/terra-project/core/x/msgauth/types"
 
+	"github.com/gorilla/mux"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/gorilla/mux"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
