@@ -186,10 +186,11 @@ tx.json should be format of StdTx
 				}
 
 				// override gas and fees
-				txf.WithFees(stdFee.Amount.String())
-				txf.WithGas(stdFee.Gas)
-				txf.WithSimulateAndExecute(false)
-				txf.WithGasPrices("")
+				txf = txf.
+					WithFees(stdFee.Amount.String()).
+					WithGas(stdFee.Gas).
+					WithSimulateAndExecute(false).
+					WithGasPrices("")
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint

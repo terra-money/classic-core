@@ -31,11 +31,10 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryTaxCap(),
 		GetCmdQueryTaxCaps(),
 		GetCmdQueryRewardWeight(),
-		GetCmdQueryParams(),
 		GetCmdQueryTaxProceeds(),
 		GetCmdQuerySeigniorageProceeds(),
-		GetCmdQueryParams(),
 		GetCmdQueryIndicators(),
+		GetCmdQueryParams(),
 	)
 
 	return oracleQueryCmd
@@ -233,7 +232,7 @@ $ terracli query treasury seigniorage-proceeds
 	return cmd
 }
 
-// GetCmdQueryIndicators implements the query params command.
+// GetCmdQueryIndicators implements the query indicators command.
 func GetCmdQueryIndicators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "indicators",

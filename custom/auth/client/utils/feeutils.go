@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -55,11 +55,25 @@ func ComputeFeesWithBaseReq(
 			WithGasPrices(br.GasPrices.String()).
 			WithGas(gasSetting.Gas).
 			WithGasAdjustment(gasAdj).
+			WithAccountNumber(br.AccountNumber).
+			WithSequence(br.Sequence).
 			WithMemo(br.Memo).
 			WithChainID(br.ChainID).
 			WithSimulateAndExecute(br.Simulate).
 			WithTxConfig(clientCtx.TxConfig).
-			WithTimeoutHeight(br.TimeoutHeight)
+			WithTimeoutHeight(br.TimeoutHeight).
+			WithAccountRetriever(clientCtx.AccountRetriever)
+
+		// Prepare AccountNumber & SequenceNumber when not given
+		clientCtx.FromAddress, err = sdk.AccAddressFromBech32(br.From)
+		if err != nil {
+			return nil, err
+		}
+
+		txf, err := tx.PrepareFactory(clientCtx, txf)
+		if err != nil {
+			return nil, err
+		}
 
 		_, adj, err := tx.CalculateGas(clientCtx.QueryWithData, txf, msgs...)
 
@@ -116,6 +130,12 @@ type ComputeReqParams struct {
 func ComputeFeesWithCmd(
 	clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg) (*legacytx.StdFee, error) {
 	txf := tx.NewFactoryCLI(clientCtx, flagSet)
+
+	// Prepare AccountNumber & SequenceNumber when not given
+	txf, err := tx.PrepareFactory(clientCtx, txf)
+	if err != nil {
+		return nil, err
+	}
 
 	gas := txf.Gas()
 	if txf.SimulateAndExecute() {
@@ -252,32 +272,17 @@ func computeTax(clientCtx client.Context, taxRate sdk.Dec, principal sdk.Coins) 
 }
 
 func queryTaxRate(clientCtx client.Context) (sdk.Dec, error) {
+	queryClient := treasuryexported.NewQueryClient(clientCtx)
 
-	// Query tax-rate
-	res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasuryexported.QuerierRoute, treasuryexported.QueryTaxRate), nil)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
-	var taxRate sdk.Dec
-	clientCtx.LegacyAmino.MustUnmarshalJSON(res, &taxRate)
-	return taxRate, nil
+	res, err := queryClient.TaxRate(context.Background(), &treasuryexported.QueryTaxRateRequest{})
+	return res.TaxRate, err
 }
 
 func queryTaxCap(clientCtx client.Context, denom string) (sdk.Int, error) {
-	// Query tax-cap
+	queryClient := treasuryexported.NewQueryClient(clientCtx)
 
-	params := treasuryexported.NewQueryTaxCapParams(denom)
-	bz := clientCtx.LegacyAmino.MustMarshalJSON(params)
-	res, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", treasuryexported.QuerierRoute, treasuryexported.QueryTaxCap), bz)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	var taxCap sdk.Int
-	clientCtx.LegacyAmino.MustUnmarshalJSON(res, &taxCap)
-
-	return taxCap, nil
+	res, err := queryClient.TaxCap(context.Background(), &treasuryexported.QueryTaxCapRequest{Denom: denom})
+	return res.TaxCap, err
 }
 
 // ParseFloat64 parses string to float64
