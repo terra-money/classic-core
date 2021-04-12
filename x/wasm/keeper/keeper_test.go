@@ -40,7 +40,7 @@ func TestContractInfo(t *testing.T) {
 	creatorAddr := addrFromUint64(codeID)
 	contractAddr := keeper.generateContractAddress(ctx, codeID, instanceID)
 
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    alice,
 		Beneficiary: bob,
 	}

@@ -287,6 +287,11 @@ func CreateTestInput(t *testing.T) TestInput {
 	treasuryKeeper.SetParams(ctx, treasurytypes.DefaultParams())
 
 	router := baseapp.NewRouter()
+	querier := baseapp.NewGRPCQueryRouter()
+	banktypes.RegisterQueryServer(querier, bankKeeper)
+	stakingtypes.RegisterQueryServer(querier, stakingkeeper.Querier{Keeper: stakingKeeper})
+	distrtypes.RegisterQueryServer(querier, distrKeeper)
+
 	keeper := NewKeeper(
 		appCodec,
 		keyContract,
@@ -295,6 +300,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		bankKeeper,
 		treasuryKeeper,
 		router,
+		querier,
 		types.DefaultFeatures,
 		tempDir,
 		config.DefaultConfig(),
@@ -341,8 +347,8 @@ func CreateTestInput(t *testing.T) TestInput {
 		keeper}
 }
 
-// InitMsg nolint
-type InitMsg struct {
+// HackatomExampleInitMsg nolint
+type HackatomExampleInitMsg struct {
 	Verifier    sdk.AccAddress `json:"verifier"`
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }

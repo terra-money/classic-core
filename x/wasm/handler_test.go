@@ -13,8 +13,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-
 	core "github.com/terra-project/core/types"
 )
 
@@ -53,7 +51,7 @@ func TestHandleStore(t *testing.T) {
 		"other valid wasm": {
 			msg: &types.MsgStoreCode{
 				Sender:       addr1.String(),
-				WASMByteCode: maskContract,
+				WASMByteCode: reflectContract,
 			},
 			isValid: true,
 		},
@@ -139,9 +137,9 @@ func TestHandleInstantiate(t *testing.T) {
 	}
 
 	expectedConfigStore := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigStore)
@@ -234,9 +232,9 @@ func TestHandleExecute(t *testing.T) {
 	}
 
 	expectedConfigStore := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigStore)

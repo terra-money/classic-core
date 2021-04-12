@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -26,28 +26,34 @@ func NewContractInfo(codeID uint64, address, owner sdk.AccAddress, initMsg []byt
 	}
 }
 
-// NewWasmAPIParams initializes params for a contract instance
-func NewWasmAPIParams(ctx sdk.Context, sender sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
-	return wasmTypes.Env{
-		Block: wasmTypes.BlockInfo{
-			Height:  uint64(ctx.BlockHeight()),
-			Time:    uint64(ctx.BlockTime().Unix()),
-			ChainID: ctx.ChainID(),
+// NewEnv initializes the environment for a contract instance
+func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+	env := wasmvmtypes.Env{
+		Block: wasmvmtypes.BlockInfo{
+			Height:    uint64(ctx.BlockHeight()),
+			Time:      uint64(ctx.BlockTime().Unix()),
+			TimeNanos: uint64(ctx.BlockTime().Nanosecond()),
+			ChainID:   ctx.ChainID(),
 		},
-		Message: wasmTypes.MessageInfo{
-			Sender:    sender.String(),
-			SentFunds: NewWasmCoins(deposit),
-		},
-		Contract: wasmTypes.ContractInfo{
+		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),
 		},
+	}
+	return env
+}
+
+// NewInfo initializes the MessageInfo for a contract instance
+func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmvmtypes.MessageInfo {
+	return wasmvmtypes.MessageInfo{
+		Sender: creator.String(),
+		Funds:  NewWasmCoins(deposit),
 	}
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
-func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
+func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 	for _, coin := range cosmosCoins {
-		wasmCoin := wasmTypes.Coin{
+		wasmCoin := wasmvmtypes.Coin{
 			Denom:  coin.Denom,
 			Amount: coin.Amount.String(),
 		}

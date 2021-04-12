@@ -392,9 +392,12 @@ func NewTerraApp(
 
 	// create wasm keeper with msg parser & querier
 	app.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec, keys[wasmtypes.StoreKey], app.GetSubspace(wasmtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.TreasuryKeeper, bApp.Router(),
-		wasmtypes.DefaultFeatures, homePath, wasmConfig,
+		appCodec, keys[wasmtypes.StoreKey],
+		app.GetSubspace(wasmtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper,
+		app.TreasuryKeeper, bApp.Router(),
+		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
+		homePath, wasmConfig,
 	)
 
 	// register wasm msg parser & querier

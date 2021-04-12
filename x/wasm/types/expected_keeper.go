@@ -3,6 +3,8 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // AccountKeeper - expected account keeper
@@ -33,4 +35,13 @@ type TreasuryKeeper interface {
 	RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins)
 	GetTaxRate(ctx sdk.Context) (taxRate sdk.Dec)
 	GetTaxCap(ctx sdk.Context, denom string) (taxCap sdk.Int)
+}
+
+// GRPCQueryHandler defines a function type which handles ABCI Query requests
+// using gRPC
+type GRPCQueryHandler = func(ctx sdk.Context, req abci.RequestQuery) (abci.ResponseQuery, error)
+
+// GRPCQueryRouter expected GRPCQueryRouter interface
+type GRPCQueryRouter interface {
+	Route(path string) GRPCQueryHandler
 }

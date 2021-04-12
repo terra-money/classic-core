@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,7 +36,7 @@ func TestEncoding(t *testing.T) {
 
 	cases := map[string]struct {
 		sender sdk.AccAddress
-		input  wasmTypes.CosmosMsg
+		input  wasmvmtypes.CosmosMsg
 		// set if valid
 		output []sdk.Msg
 		// set if invalid
@@ -44,7 +44,7 @@ func TestEncoding(t *testing.T) {
 	}{
 		"simple swap": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -62,7 +62,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"simple swap send": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap_send": {"from_address": "%s", "to_address": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -81,7 +81,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid swap amount": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234.123", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -93,7 +93,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid address": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,

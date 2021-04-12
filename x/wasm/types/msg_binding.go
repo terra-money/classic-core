@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -19,8 +19,8 @@ const (
 
 // WasmMsgParserInterface - msg parsers of each module
 type WasmMsgParserInterface interface {
-	Parse(contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) ([]sdk.Msg, error)
-	ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) ([]sdk.Msg, error)
+	Parse(contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (sdk.Msg, error)
+	ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error)
 }
 
 // WasmCustomMsg - wasm custom msg parser
@@ -38,7 +38,7 @@ func NewModuleMsgParser() MsgParser {
 }
 
 // Parse convert Wasm raw msg to chain msg
-func (p MsgParser) Parse(contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+func (p MsgParser) Parse(contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	switch {
 	case msg.Bank != nil:
 		if parser, ok := p[WasmMsgParserRouteBank]; ok {

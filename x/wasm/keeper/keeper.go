@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	wasm "github.com/CosmWasm/go-cosmwasm"
 	"github.com/spf13/viper"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -16,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	wasmvm "github.com/CosmWasm/wasmvm"
 
 	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/types"
@@ -31,15 +32,15 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	treasuryKeeper types.TreasuryKeeper
 
-	router sdk.Router
+	router      sdk.Router
+	queryRouter types.GRPCQueryRouter
 
-	wasmer    wasm.Wasmer
+	wasmer    types.WasmerEngine
 	querier   types.Querier
 	msgParser types.MsgParser
 
 	// WASM config values
-	wasmConfig       *config.Config
-	loggingWhitelist map[string]bool
+	wasmConfig *config.Config
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -51,11 +52,17 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	treasuryKeeper types.TreasuryKeeper,
 	router sdk.Router,
+	queryRouter types.GRPCQueryRouter,
 	supportedFeatures string,
 	homePath string,
 	wasmConfig *config.Config) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homePath, config.DBDir), supportedFeatures, 0)
-
+	wasmer, err := wasmvm.NewVM(
+		filepath.Join(homePath, config.DBDir),
+		supportedFeatures,
+		types.ContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.ContractMemoryCacheSize,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -66,18 +73,18 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		storeKey:         storeKey,
-		cdc:              cdc,
-		paramSpace:       paramspace,
-		wasmer:           *wasmer,
-		accountKeeper:    accountKeeper,
-		bankKeeper:       bankKeeper,
-		treasuryKeeper:   treasuryKeeper,
-		router:           router,
-		wasmConfig:       wasmConfig,
-		loggingWhitelist: wasmConfig.WhitelistToMap(),
-		msgParser:        types.NewModuleMsgParser(),
-		querier:          types.NewModuleQuerier(),
+		storeKey:       storeKey,
+		cdc:            cdc,
+		paramSpace:     paramspace,
+		wasmer:         wasmer,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
+		treasuryKeeper: treasuryKeeper,
+		router:         router,
+		queryRouter:    queryRouter,
+		wasmConfig:     wasmConfig,
+		msgParser:      types.NewModuleMsgParser(),
+		querier:        types.NewModuleQuerier(),
 	}
 }
 
