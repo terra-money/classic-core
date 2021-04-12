@@ -43,7 +43,7 @@ type WasmerEngine interface {
 	// (That is a detail for the external, sdk-facing, side).
 	//
 	// The caller is responsible for passing the correct `store` (which must have been initialized exactly once),
-	// and setting the env with relevent info on this instance (address, balance, etc)
+	// and setting the env with relevant info on this instance (address, balance, etc)
 	Execute(
 		code wasmvm.Checksum,
 		env wasmvmtypes.Env,
