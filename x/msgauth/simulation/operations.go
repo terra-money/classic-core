@@ -92,6 +92,10 @@ func SimulateMsgGrantAuthorization(
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgGrantAuthorization, "unable to grant to self"), nil, nil
 		}
 
+		if _, hasGrant := k.GetGrant(ctx, granter.Address, grantee.Address, banktypes.TypeMsgSend); hasGrant {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgGrantAuthorization, "grant already exists"), nil, nil
+		}
+
 		account := ak.GetAccount(ctx, granter.Address)
 		spendableCoins := bk.SpendableCoins(ctx, granter.Address)
 		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
