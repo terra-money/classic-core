@@ -27478,6 +27478,22 @@ paths:
                   max_contract_msg_size:
                     type: string
                     format: uint64
+                  max_contract_data_size:
+                    type: string
+                    format: uint64
+                  event_params:
+                    type: object
+                    properties:
+                      max_attribute_num:
+                        type: string
+                        format: uint64
+                      max_attribute_key_length:
+                        type: string
+                        format: uint64
+                      max_attribute_value_length:
+                        type: string
+                        format: uint64
+                    title: EventParams defines the event related parameteres
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -54119,6 +54135,19 @@ definitions:
         format: boolean
         title: Migratable is the flag to specify the contract migratability
     title: ContractInfo stores a WASM contract instance
+  terra.wasm.v1beta1.EventParams:
+    type: object
+    properties:
+      max_attribute_num:
+        type: string
+        format: uint64
+      max_attribute_key_length:
+        type: string
+        format: uint64
+      max_attribute_value_length:
+        type: string
+        format: uint64
+    title: EventParams defines the event related parameteres
   terra.wasm.v1beta1.Params:
     type: object
     properties:
@@ -54131,7 +54160,23 @@ definitions:
       max_contract_msg_size:
         type: string
         format: uint64
-    description: Params defines the parameters for the oracle module.
+      max_contract_data_size:
+        type: string
+        format: uint64
+      event_params:
+        type: object
+        properties:
+          max_attribute_num:
+            type: string
+            format: uint64
+          max_attribute_key_length:
+            type: string
+            format: uint64
+          max_attribute_value_length:
+            type: string
+            format: uint64
+        title: EventParams defines the event related parameteres
+    description: Params defines the parameters for the wasm module.
   terra.wasm.v1beta1.QueryByteCodeResponse:
     type: object
     properties:
@@ -54214,6 +54259,22 @@ definitions:
           max_contract_msg_size:
             type: string
             format: uint64
+          max_contract_data_size:
+            type: string
+            format: uint64
+          event_params:
+            type: object
+            properties:
+              max_attribute_num:
+                type: string
+                format: uint64
+              max_attribute_key_length:
+                type: string
+                format: uint64
+              max_attribute_value_length:
+                type: string
+                format: uint64
+            title: EventParams defines the event related parameteres
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   terra.wasm.v1beta1.QueryRawStoreResponse:
     type: object
