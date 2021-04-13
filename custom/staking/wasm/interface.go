@@ -106,25 +106,25 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 		return sdkMsg, nil
 	}
 
-	if msg.Withdraw != nil && len(msg.Withdraw.Recipient) != 0 {
-		rcpt, err := sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
+	if msg.Withdraw != nil {
+		if len(msg.Withdraw.Recipient) != 0 {
+			rcpt, err := sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
+			}
+
+			sdkMsg := distrtypes.NewMsgSetWithdrawAddress(
+				contractAddr,
+				rcpt,
+			)
+
+			if err := sdkMsg.ValidateBasic(); err != nil {
+				return nil, err
+			}
+
+			return sdkMsg, nil
 		}
 
-		sdkMsg := distrtypes.NewMsgSetWithdrawAddress(
-			contractAddr,
-			rcpt,
-		)
-
-		if err := sdkMsg.ValidateBasic(); err != nil {
-			return nil, err
-		}
-
-		return sdkMsg, nil
-	}
-
-	if msg.Withdraw != nil && len(msg.Withdraw.Validator) != 0 {
 		var err error
 
 		validator, err := sdk.ValAddressFromBech32(msg.Withdraw.Validator)
@@ -142,6 +142,7 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 		}
 
 		return sdkMsg, nil
+
 	}
 
 	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Staking")

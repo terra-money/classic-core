@@ -48,6 +48,15 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 			ctx.EventManager().EmitEvents(events)
 		}
 
+		// we only callback if requested. Short-circuit here the two cases we don't want to
+		// 1. reply on success but error happened
+		// 2. reply on failure but no error happened
+		if (msg.ReplyOn == wasmvmtypes.ReplySuccess && err != nil) ||
+			(msg.ReplyOn == wasmvmtypes.ReplyError && err == nil) {
+			return err
+		}
+
+		// otherwise, we create a SubcallResult and pass it into the calling contract
 		var result wasmvmtypes.SubcallResult
 		if err == nil {
 			// just take the first one for now if there are multiple sub-sdk messages
@@ -136,6 +145,20 @@ func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.Ac
 	limitedMeter := sdk.NewGasMeter(gasLimit)
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
+	sdkMsg, err := k.msgParser.Parse(contractAddr, msg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Charge tax on result msg
+	taxes := ante.FilterMsgAndComputeTax(subCtx, k.treasuryKeeper, sdkMsg)
+	if !taxes.IsZero() {
+		contractAcc := k.accountKeeper.GetAccount(subCtx, contractAddr)
+		if err := cosmosante.DeductFees(k.bankKeeper, subCtx, contractAcc, taxes); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	// catch out of gas panic and just charge the entire gas limit
 	defer func() {
 		if r := recover(); r != nil {
@@ -145,26 +168,13 @@ func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.Ac
 				k.Logger(ctx).Info("SubMsg rethrow panic: %#v", r)
 				panic(r)
 			}
+
 			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
 			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
 		}
 	}()
 
-	sdkMsg, err := k.msgParser.Parse(contractAddr, msg)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Charge tax on result msg
-	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsg)
-	if !taxes.IsZero() {
-		contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
-		if err := cosmosante.DeductFees(k.bankKeeper, ctx, contractAcc, taxes); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	res, err := k.handleSdkMessage(ctx, contractAddr, sdkMsg)
+	res, err := k.handleSdkMessage(subCtx, contractAddr, sdkMsg)
 	if err != nil {
 		return nil, nil, err
 	}

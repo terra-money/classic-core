@@ -71,5 +71,6 @@ func (p MsgParser) Parse(contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg)
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteWasm)
 	}
+
 	return nil, sdkerrors.Wrap(ErrInvalidMsg, "failed to parse empty msg")
 }
