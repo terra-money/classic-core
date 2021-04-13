@@ -1,5 +1,4 @@
-//nolint
-package types
+package types_test
 
 import (
 	"testing"
@@ -7,6 +6,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/terra-project/core/custom/auth"
+	"github.com/terra-project/core/x/vesting/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -40,8 +40,8 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 	ModuleBasics.RegisterLegacyAminoCodec(amino)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
-	RegisterLegacyAminoCodec(amino)
-	RegisterInterfaces(interfaceRegistry)
+	types.RegisterLegacyAminoCodec(amino)
+	types.RegisterInterfaces(interfaceRegistry)
 
 	return simparams.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,

@@ -56,7 +56,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyBasePool, &p.BasePool, validateBasePool),
 		paramstypes.NewParamSetPair(KeyPoolRecoveryPeriod, &p.PoolRecoveryPeriod, validatePoolRecoveryPeriod),
-		paramstypes.NewParamSetPair(KeyMinStabilitySpread, &p.MinStabilitySpread, validateMinStatbilitySpread),
+		paramstypes.NewParamSetPair(KeyMinStabilitySpread, &p.MinStabilitySpread, validateMinStabilitySpread),
 	}
 }
 
@@ -101,7 +101,7 @@ func validatePoolRecoveryPeriod(i interface{}) error {
 	return nil
 }
 
-func validateMinStatbilitySpread(i interface{}) error {
+func validateMinStabilitySpread(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

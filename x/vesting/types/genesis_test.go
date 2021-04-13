@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -11,6 +11,7 @@ import (
 	authvesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	core "github.com/terra-project/core/types"
+	"github.com/terra-project/core/x/vesting/types"
 )
 
 var (
@@ -41,6 +42,6 @@ func TestValidateGenesisInvalidAccounts(t *testing.T) {
 	require.NoError(t, authtypes.ValidateGenAccounts(genAccs))
 
 	// invalid vesting time
-	genAccs[0] = NewLazyGradedVestingAccountRaw(baseVestingAcc, VestingSchedules{VestingSchedule{core.MicroLunaDenom, Schedules{Schedule{1654668078, 1554668078, sdk.OneDec()}}}})
+	genAccs[0] = types.NewLazyGradedVestingAccountRaw(baseVestingAcc, types.VestingSchedules{types.VestingSchedule{core.MicroLunaDenom, types.Schedules{types.Schedule{1654668078, 1554668078, sdk.OneDec()}}}})
 	require.Error(t, authtypes.ValidateGenAccounts(genAccs))
 }
