@@ -20,6 +20,7 @@ import (
 
 var (
 	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModule           = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
 )
 

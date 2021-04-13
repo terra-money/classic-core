@@ -241,7 +241,7 @@ func SimulateMsgExecuteAuthorized(
 		execMsg := banktypes.NewMsgSend(
 			granterAddr,
 			granteeAddr,
-			simtypes.RandSubsetCoins(r, granterSpendableCoins),
+			coins,
 		)
 
 		msg, err := types.NewMsgExecAuthorized(grantee.Address, []sdk.Msg{execMsg})

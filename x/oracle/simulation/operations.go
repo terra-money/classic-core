@@ -179,7 +179,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		feederAddr := k.GetFeederDelegation(ctx, address)
 		feederSimAccount, _ := simtypes.FindAccount(accs, feederAddr)
 		feederAccount := ak.GetAccount(ctx, feederAddr)
-		spendableCoins := bk.GetAllBalances(ctx, feederAddr)
+		spendableCoins := bk.SpendableCoins(ctx, feederAddr)
 
 		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
@@ -238,7 +238,7 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgDelegateFeedConsent, "unable to delegate to validator"), nil, nil
 		}
 
-		spendableCoins := bk.GetAllBalances(ctx, account.GetAddress())
+		spendableCoins := bk.SpendableCoins(ctx, account.GetAddress())
 		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "unable to generate fees"), nil, err
