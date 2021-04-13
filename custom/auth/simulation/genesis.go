@@ -72,7 +72,7 @@ func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccoun
 				customvestingtypes.NewVestingSchedule(core.MicroLunaDenom, lazySchedules),
 			})
 		}
-		genesisAccs = append(genesisAccs, gacc)
+		genesisAccs[i] = gacc
 	}
 
 	return genesisAccs

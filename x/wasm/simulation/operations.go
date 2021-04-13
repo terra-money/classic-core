@@ -141,7 +141,7 @@ func SimulateMsgStoreCode(
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
-			helpers.DefaultGenTxGas,
+			helpers.DefaultGenTxGas*10,
 			chainID,
 			[]uint64{account.GetAccountNumber()},
 			[]uint64{account.GetSequence()},
