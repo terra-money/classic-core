@@ -38,7 +38,7 @@ func TestEncoding(t *testing.T) {
 		sender sdk.AccAddress
 		input  wasmvmtypes.CosmosMsg
 		// set if valid
-		output []sdk.Msg
+		output sdk.Msg
 		// set if invalid
 		isError bool
 	}{
@@ -52,12 +52,10 @@ func TestEncoding(t *testing.T) {
 					),
 				),
 			},
-			output: []sdk.Msg{
-				&types.MsgSwap{
-					Trader:    addrs[0].String(),
-					OfferCoin: sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
-					AskDenom:  core.MicroSDRDenom,
-				},
+			output: &types.MsgSwap{
+				Trader:    addrs[0].String(),
+				OfferCoin: sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
+				AskDenom:  core.MicroSDRDenom,
 			},
 		},
 		"simple swap send": {
@@ -70,13 +68,11 @@ func TestEncoding(t *testing.T) {
 					),
 				),
 			},
-			output: []sdk.Msg{
-				&types.MsgSwapSend{
-					FromAddress: addrs[0].String(),
-					ToAddress:   addrs[1].String(),
-					OfferCoin:   sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
-					AskDenom:    core.MicroSDRDenom,
-				},
+			output: &types.MsgSwapSend{
+				FromAddress: addrs[0].String(),
+				ToAddress:   addrs[1].String(),
+				OfferCoin:   sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
+				AskDenom:    core.MicroSDRDenom,
 			},
 		},
 		"invalid swap amount": {
@@ -96,7 +92,7 @@ func TestEncoding(t *testing.T) {
 			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
-						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
+						`{"swap_send": {"to_address": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
 						invalidAddr, core.MicroLunaDenom, core.MicroSDRDenom,
 					),
 				),

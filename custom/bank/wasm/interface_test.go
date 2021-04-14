@@ -28,7 +28,7 @@ func TestEncoding(t *testing.T) {
 		sender sdk.AccAddress
 		input  wasmvmtypes.CosmosMsg
 		// set if valid
-		output []sdk.Msg
+		output sdk.Msg
 		// set if invalid
 		isError bool
 	}{
@@ -51,14 +51,12 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			output: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: addrs[0].String(),
-					ToAddress:   addrs[1].String(),
-					Amount: sdk.Coins{
-						sdk.NewInt64Coin(core.MicroLunaDenom, 12345),
-						sdk.NewInt64Coin("usdt", 54321),
-					},
+			output: &banktypes.MsgSend{
+				FromAddress: addrs[0].String(),
+				ToAddress:   addrs[1].String(),
+				Amount: sdk.Coins{
+					sdk.NewInt64Coin(core.MicroLunaDenom, 12345),
+					sdk.NewInt64Coin("usdt", 54321),
 				},
 			},
 		},
