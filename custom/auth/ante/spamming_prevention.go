@@ -30,10 +30,16 @@ func NewSpammingPreventionDecorator(oracleKeeper OracleKeeper) SpammingPreventio
 
 // AnteHandle handles msg tax fee checking
 func (spd SpammingPreventionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if ctx.IsCheckTx() && !simulate && !ctx.IsReCheckTx() {
-		err := spd.CheckOracleSpamming(ctx, tx.GetMsgs())
-		if err != nil {
-			return ctx, err
+	if ctx.IsReCheckTx() {
+		return next(ctx, tx, simulate)
+	}
+
+	if !simulate {
+		if ctx.IsCheckTx() {
+			err := spd.CheckOracleSpamming(ctx, tx.GetMsgs())
+			if err != nil {
+				return ctx, err
+			}
 		}
 	}
 
