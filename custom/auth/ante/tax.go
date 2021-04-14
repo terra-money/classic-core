@@ -10,8 +10,12 @@ import (
 	core "github.com/terra-project/core/types"
 	marketexported "github.com/terra-project/core/x/market/exported"
 	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
+	oracleexported "github.com/terra-project/core/x/oracle/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
+
+// MaxOracleMsgGasUsage is constant expected oracle msg gas cost
+const MaxOracleMsgGasUsage = uint64(100_000)
 
 // TaxFeeDecorator will check if the transaction's fee is at least as large
 // as tax + the local validator's minimum gasFee (defined in validator config)
@@ -40,13 +44,16 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	feeCoins := feeTx.GetFee()
 	gas := feeTx.GetGas()
+	msgs := feeTx.GetMsgs()
 
 	if !simulate {
 		// Compute taxes
-		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs()...)
+		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, msgs...)
 
 		// Mempool fee validation
-		if ctx.IsCheckTx() {
+		// No fee validation for oracle txs
+		if ctx.IsCheckTx() &&
+			!(isOracleTx(ctx, msgs) && gas <= uint64(len(msgs))*MaxOracleMsgGasUsage) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
@@ -159,4 +166,19 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	}
 
 	return taxes
+}
+
+func isOracleTx(ctx sdk.Context, msgs []sdk.Msg) bool {
+	for _, msg := range msgs {
+		switch msg.(type) {
+		case *oracleexported.MsgAggregateExchangeRatePrevote:
+			continue
+		case *oracleexported.MsgAggregateExchangeRateVote:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
 }
