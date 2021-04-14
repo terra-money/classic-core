@@ -14,6 +14,9 @@ import (
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
+// MaxOracleMsgGasUsage is constant expected oracle msg gas cost
+const MaxOracleMsgGasUsage = uint64(100_000)
+
 // TaxFeeDecorator will check if the transaction's fee is at least as large
 // as tax + the local validator's minimum gasFee (defined in validator config)
 // and record tax proceeds to treasury module to track tax proceeds.
@@ -41,13 +44,16 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	feeCoins := feeTx.GetFee()
 	gas := feeTx.GetGas()
+	msgs := feeTx.GetMsgs()
 
 	if !simulate {
 		// Compute taxes
-		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs()...)
+		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, msgs...)
 
 		// Mempool fee validation
-		if ctx.IsCheckTx() && !(isOracleTx(ctx, feeTx.GetMsgs()) && gas <= 1000000) {
+		// No fee validation for oracle txs
+		if ctx.IsCheckTx() &&
+			!(isOracleTx(ctx, msgs) && gas <= uint64(len(msgs))*MaxOracleMsgGasUsage) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
@@ -165,9 +171,9 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 func isOracleTx(ctx sdk.Context, msgs []sdk.Msg) bool {
 	for _, msg := range msgs {
 		switch msg.(type) {
-		case oracleexported.MsgAggregateExchangeRatePrevote:
+		case *oracleexported.MsgAggregateExchangeRatePrevote:
 			continue
-		case oracleexported.MsgAggregateExchangeRateVote:
+		case *oracleexported.MsgAggregateExchangeRateVote:
 			continue
 		default:
 			return false
