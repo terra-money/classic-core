@@ -55,7 +55,7 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs())
 
 		// Mempool fee validation
-		if ctx.IsCheckTx() && !isOracleTx(ctx, feeTx.GetMsgs()) {
+		if ctx.IsCheckTx() && !(isOracleTx(ctx, feeTx.GetMsgs()) && gas <= 1000000) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
