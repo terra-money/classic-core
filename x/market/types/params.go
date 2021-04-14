@@ -13,8 +13,10 @@ import (
 
 // Parameter keys
 var (
-	// Terra liquidity pool(usdr unit) made available per ${PoolRecoveryPeriod} (usdr unit)
-	KeyBasePool = []byte("BasePool")
+	// Terra mint liquidity pool(usdr unit) made available per ${PoolRecoveryPeriod} (usdr unit)
+	KeyMintBasePool = []byte("MintBasePool")
+	// Terra burn liquidity pool(usdr unit) made available per ${PoolRecoveryPeriod} (usdr unit)
+	KeyBurnBasePool = []byte("BurnBasePool")
 	// The period required to recover BasePool
 	KeyPoolRecoveryPeriod = []byte("PoolRecoveryPeriod")
 	// Min spread
@@ -23,9 +25,10 @@ var (
 
 // Default parameter values
 var (
-	DefaultBasePool           = sdk.NewDec(250000 * core.MicroUnit) // 250,000sdr = 250,000,000,000usdr
-	DefaultPoolRecoveryPeriod = core.BlocksPerDay                   // 14,400
-	DefaultMinStabilitySpread = sdk.NewDecWithPrec(2, 2)            // 2%
+	DefaultMintBasePool       = sdk.NewDec(1000000 * core.MicroUnit) // 1000,000sdr = 1000,000,000,000usdr
+	DefaultBurnBasePool       = sdk.NewDec(100000 * core.MicroUnit)  // 100,000sdr = 100,000,000,000usdr
+	DefaultPoolRecoveryPeriod = core.BlocksPerDay                    // 14,400
+	DefaultMinStabilitySpread = sdk.NewDecWithPrec(2, 2)             // 2%
 )
 
 var _ paramstypes.ParamSet = &Params{}
@@ -33,7 +36,8 @@ var _ paramstypes.ParamSet = &Params{}
 // DefaultParams creates default market module parameters
 func DefaultParams() Params {
 	return Params{
-		BasePool:           DefaultBasePool,
+		MintBasePool:       DefaultMintBasePool,
+		BurnBasePool:       DefaultBurnBasePool,
 		PoolRecoveryPeriod: DefaultPoolRecoveryPeriod,
 		MinStabilitySpread: DefaultMinStabilitySpread,
 	}
@@ -54,7 +58,8 @@ func (p Params) String() string {
 // pairs of market module's parameters.
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
-		paramstypes.NewParamSetPair(KeyBasePool, &p.BasePool, validateBasePool),
+		paramstypes.NewParamSetPair(KeyMintBasePool, &p.MintBasePool, validateMintBasePool),
+		paramstypes.NewParamSetPair(KeyBurnBasePool, &p.BurnBasePool, validateBurnBasePool),
 		paramstypes.NewParamSetPair(KeyPoolRecoveryPeriod, &p.PoolRecoveryPeriod, validatePoolRecoveryPeriod),
 		paramstypes.NewParamSetPair(KeyMinStabilitySpread, &p.MinStabilitySpread, validateMinStabilitySpread),
 	}
@@ -62,8 +67,11 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 
 // Validate a set of params
 func (p Params) Validate() error {
-	if p.BasePool.IsNegative() {
-		return fmt.Errorf("base pool should be positive or zero, is %s", p.BasePool)
+	if p.MintBasePool.IsNegative() {
+		return fmt.Errorf("mint base pool should be positive or zero, is %s", p.MintBasePool)
+	}
+	if p.BurnBasePool.IsNegative() {
+		return fmt.Errorf("burn base pool should be positive or zero, is %s", p.BurnBasePool)
 	}
 	if p.PoolRecoveryPeriod == 0 {
 		return fmt.Errorf("pool recovery period should be positive, is %d", p.PoolRecoveryPeriod)
@@ -75,14 +83,27 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateBasePool(i interface{}) error {
+func validateMintBasePool(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	if v.IsNegative() {
-		return fmt.Errorf("base pool must be positive or zero: %s", v)
+		return fmt.Errorf("mint base pool must be positive or zero: %s", v)
+	}
+
+	return nil
+}
+
+func validateBurnBasePool(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("burn base pool must be positive or zero: %s", v)
 	}
 
 	return nil

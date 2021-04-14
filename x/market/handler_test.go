@@ -1,6 +1,7 @@
 package market
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,32 +29,32 @@ func TestMarketFilters(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSwapMsg(t *testing.T) {
+func TestSwapMsg_Mint(t *testing.T) {
 	input, h := setup(t)
 
 	params := input.MarketKeeper.GetParams(input.Ctx)
 	params.MinStabilitySpread = sdk.ZeroDec()
 	input.MarketKeeper.SetParams(input.Ctx, params)
 
-	beforeTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	beforePoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
 
-	amt := sdk.NewInt(10)
+	amt := sdk.NewInt(10000)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
 	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
 	_, err := h(input.Ctx, swapMsg)
 	require.NoError(t, err)
 
-	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
-	diff := beforeTerraPoolDelta.Sub(afterTerraPoolDelta)
+	afterPoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
+	diff := beforePoolDelta.Sub(afterPoolDelta)
 
 	// calculate estimation
-	basePool := input.MarketKeeper.GetParams(input.Ctx).BasePool
+	basePool := input.MarketKeeper.GetParams(input.Ctx).MintBasePool
 	price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
 	cp := basePool.Mul(basePool)
 
-	terraPool := basePool.Add(beforeTerraPoolDelta)
-	lunaPool := cp.Quo(terraPool)
-	estmiatedDiff := terraPool.Sub(cp.Quo(lunaPool.Add(price.MulInt(amt))))
+	offerPool := basePool.Add(beforePoolDelta)
+	askPool := cp.Quo(offerPool)
+	estmiatedDiff := offerPool.Sub(cp.Quo(askPool.Add(price.MulInt(amt))))
 	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 
 	// invalid recursive swap
@@ -61,14 +62,43 @@ func TestSwapMsg(t *testing.T) {
 
 	_, err = h(input.Ctx, swapMsg)
 	require.Error(t, err)
+}
 
-	// valid zero tobin tax test
-	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, sdk.ZeroDec())
-	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, sdk.ZeroDec())
-	offerCoin = sdk.NewCoin(core.MicroSDRDenom, amt)
-	swapMsg = types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
+func TestSwapMsg_Burn(t *testing.T) {
+	input, h := setup(t)
+
+	params := input.MarketKeeper.GetParams(input.Ctx)
+	params.MinStabilitySpread = sdk.ZeroDec()
+	input.MarketKeeper.SetParams(input.Ctx, params)
+
+	beforePoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
+
+	amt := sdk.NewInt(10000)
+	offerCoin := sdk.NewCoin(core.MicroSDRDenom, amt)
+	err := input.BankKeeper.AddCoins(input.Ctx, keeper.Addrs[0], sdk.NewCoins(offerCoin))
+	require.NoError(t, err)
+
+	supply := input.BankKeeper.GetSupply(input.Ctx)
+	supply.SetTotal(supply.GetTotal().Add(offerCoin))
+	input.BankKeeper.SetSupply(input.Ctx, supply)
+
+	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
 	_, err = h(input.Ctx, swapMsg)
 	require.NoError(t, err)
+
+	afterPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
+	diff := beforePoolDelta.Sub(afterPoolDelta)
+	fmt.Println("SIBONG", diff)
+
+	// calculate estimation
+	basePool := input.MarketKeeper.GetParams(input.Ctx).BurnBasePool
+	// price, _ := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroSDRDenom)
+	cp := basePool.Mul(basePool)
+
+	offerPool := basePool.Add(beforePoolDelta)
+	askPool := cp.Quo(offerPool)
+	estmiatedDiff := offerPool.Sub(cp.Quo(askPool.Add(sdk.NewDecFromInt(amt))))
+	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 }
 
 func TestSwapSendMsg(t *testing.T) {

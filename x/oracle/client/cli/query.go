@@ -49,11 +49,11 @@ func GetCmdQueryExchangeRates() *cobra.Command {
 Query the current exchange rate of Luna with an asset. 
 You can find the current list of active denoms by running
 
-$ terracli query oracle exchange-rates 
+$ terrad query oracle exchange-rates 
 
 Or, can filter with denom
 
-$ terracli query oracle exchange-rates ukrw
+$ terrad query oracle exchange-rates ukrw
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -98,7 +98,7 @@ func GetCmdQueryActives() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the active list of Terra assets recognized by the types.
 
-$ terracli query oracle actives
+$ terrad query oracle actives
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -155,7 +155,7 @@ func GetCmdQueryFeederDelegation() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the account the validator's oracle voting right is delegated to.
 
-$ terracli query oracle feeder terravaloper...
+$ terrad query oracle feeder terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -196,7 +196,7 @@ func GetCmdQueryMissCounter() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the # of vote periods missed in this oracle slash window.
 
-$ terracli query oracle miss terravaloper...
+$ terrad query oracle miss terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -236,11 +236,11 @@ func GetCmdQueryAggregatePrevote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle aggregate prevotes.
 
-$ terracli query oracle aggregate-prevotes
+$ terrad query oracle aggregate-prevotes
 
 Or, can filter with voter address
 
-$ terracli query oracle aggregate-prevotes terravaloper...
+$ terrad query oracle aggregate-prevotes terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -292,11 +292,11 @@ func GetCmdQueryAggregateVote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle aggregate vote.
 
-$ terracli query oracle aggregate-votes 
+$ terrad query oracle aggregate-votes 
 
 Or, can filter with voter address
 
-$ terracli query oracle aggregate-votes terravaloper...
+$ terrad query oracle aggregate-votes terravaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -377,11 +377,11 @@ func GetCmdQueryTobinTaxes() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current Oracle tobin taxes.
 
-$ terracli query oracle tobin-taxes
+$ terrad query oracle tobin-taxes
 
 Or, can filter with denom
 
-$ terracli query oracle tobin-taxes ukrw
+$ terrad query oracle tobin-taxes ukrw
 
 Or, can 
 `),

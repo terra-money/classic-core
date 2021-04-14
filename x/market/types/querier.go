@@ -6,9 +6,10 @@ import (
 
 // query endpoints supported by the oracle Querier
 const (
-	QuerySwap           = "swap"
-	QueryTerraPoolDelta = "terra_pool_delta"
-	QueryParameters     = "parameters"
+	QuerySwap          = "swap"
+	QueryMintPoolDelta = "mint_pool_delta"
+	QueryBurnPoolDelta = "burn_pool_delta"
+	QueryParameters    = "parameters"
 )
 
 // QuerySwapParams for query

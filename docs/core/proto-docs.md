@@ -11,12 +11,14 @@
     - [GenesisState](#terra.market.v1beta1.GenesisState)
   
 - [terra/market/v1beta1/query.proto](#terra/market/v1beta1/query.proto)
+    - [QueryBurnPoolDeltaRequest](#terra.market.v1beta1.QueryBurnPoolDeltaRequest)
+    - [QueryBurnPoolDeltaResponse](#terra.market.v1beta1.QueryBurnPoolDeltaResponse)
+    - [QueryMintPoolDeltaRequest](#terra.market.v1beta1.QueryMintPoolDeltaRequest)
+    - [QueryMintPoolDeltaResponse](#terra.market.v1beta1.QueryMintPoolDeltaResponse)
     - [QueryParamsRequest](#terra.market.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#terra.market.v1beta1.QueryParamsResponse)
     - [QuerySwapRequest](#terra.market.v1beta1.QuerySwapRequest)
     - [QuerySwapResponse](#terra.market.v1beta1.QuerySwapResponse)
-    - [QueryTerraPoolDeltaRequest](#terra.market.v1beta1.QueryTerraPoolDeltaRequest)
-    - [QueryTerraPoolDeltaResponse](#terra.market.v1beta1.QueryTerraPoolDeltaResponse)
   
     - [Query](#terra.market.v1beta1.Query)
   
@@ -219,7 +221,8 @@ Params defines the parameters for the market module.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `base_pool` | [bytes](#bytes) |  |  |
+| `mint_base_pool` | [bytes](#bytes) |  |  |
+| `burn_base_pool` | [bytes](#bytes) |  |  |
 | `pool_recovery_period` | [uint64](#uint64) |  |  |
 | `min_stability_spread` | [bytes](#bytes) |  |  |
 
@@ -253,7 +256,8 @@ GenesisState defines the market module's genesis state.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#terra.market.v1beta1.Params) |  | params defines all the paramaters of the module. |
-| `terra_pool_delta` | [bytes](#bytes) |  | the gap between the TerraPool and the BasePool |
+| `mint_pool_delta` | [bytes](#bytes) |  | the gap between the MintPool and the MintBasePool |
+| `burn_pool_delta` | [bytes](#bytes) |  | the gap between the BurnPool and the BurnBasePool |
 
 
 
@@ -273,6 +277,56 @@ GenesisState defines the market module's genesis state.
 <p align="right"><a href="#top">Top</a></p>
 
 ## terra/market/v1beta1/query.proto
+
+
+
+<a name="terra.market.v1beta1.QueryBurnPoolDeltaRequest"></a>
+
+### QueryBurnPoolDeltaRequest
+QueryBurnPoolDeltaRequest is the request type for the Query/BurnPoolDelta RPC method.
+
+
+
+
+
+
+<a name="terra.market.v1beta1.QueryBurnPoolDeltaResponse"></a>
+
+### QueryBurnPoolDeltaResponse
+QueryBurnPoolDeltaResponse is the response type for the Query/BurnPoolDelta RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `burn_pool_delta` | [bytes](#bytes) |  | burn_pool_delta defines the gap between the BurnPool and the BurnBasePool |
+
+
+
+
+
+
+<a name="terra.market.v1beta1.QueryMintPoolDeltaRequest"></a>
+
+### QueryMintPoolDeltaRequest
+QueryMintPoolDeltaRequest is the request type for the Query/MintPoolDelta RPC method.
+
+
+
+
+
+
+<a name="terra.market.v1beta1.QueryMintPoolDeltaResponse"></a>
+
+### QueryMintPoolDeltaResponse
+QueryMintPoolDeltaResponse is the response type for the Query/MintPoolDelta RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `mint_pool_delta` | [bytes](#bytes) |  | mint_pool_delta defines the gap between the MintPool and the MintBasePool |
+
+
+
 
 
 
@@ -331,31 +385,6 @@ QuerySwapResponse is the response type for the Query/Swap RPC method.
 
 
 
-
-<a name="terra.market.v1beta1.QueryTerraPoolDeltaRequest"></a>
-
-### QueryTerraPoolDeltaRequest
-QueryTerraPoolDeltaRequest is the request type for the Query/TerraPoolDelta RPC method.
-
-
-
-
-
-
-<a name="terra.market.v1beta1.QueryTerraPoolDeltaResponse"></a>
-
-### QueryTerraPoolDeltaResponse
-QueryTerraPoolDeltaResponse is the response type for the Query/TerraPoolDelta RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `terra_pool_delta` | [bytes](#bytes) |  | terra_pool_delta defines the gap between the TerraPool and the BasePool |
-
-
-
-
-
  <!-- end messages -->
 
  <!-- end enums -->
@@ -371,7 +400,8 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Swap` | [QuerySwapRequest](#terra.market.v1beta1.QuerySwapRequest) | [QuerySwapResponse](#terra.market.v1beta1.QuerySwapResponse) | Swap returns simulated swap amount. | GET|/terra/market/v1beta1/swap|
-| `TerraPoolDelta` | [QueryTerraPoolDeltaRequest](#terra.market.v1beta1.QueryTerraPoolDeltaRequest) | [QueryTerraPoolDeltaResponse](#terra.market.v1beta1.QueryTerraPoolDeltaResponse) | TerraPoolDelta returns terra_pool_delta amount. | GET|/terra/market/v1beta1/terra_pool_delta|
+| `MintPoolDelta` | [QueryMintPoolDeltaRequest](#terra.market.v1beta1.QueryMintPoolDeltaRequest) | [QueryMintPoolDeltaResponse](#terra.market.v1beta1.QueryMintPoolDeltaResponse) | MintPoolDelta returns mint_pool_delta amount. | GET|/terra/market/v1beta1/mint_pool_delta|
+| `BurnPoolDelta` | [QueryBurnPoolDeltaRequest](#terra.market.v1beta1.QueryBurnPoolDeltaRequest) | [QueryBurnPoolDeltaResponse](#terra.market.v1beta1.QueryBurnPoolDeltaResponse) | BurnPoolDelta returns burn_pool_delta amount. | GET|/terra/market/v1beta1/burn_pool_delta|
 | `Params` | [QueryParamsRequest](#terra.market.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.market.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/market/v1beta1/params|
 
  <!-- end services -->

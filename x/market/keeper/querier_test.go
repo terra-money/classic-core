@@ -63,17 +63,32 @@ func TestQuerySwap(t *testing.T) {
 	require.True(t, res.ReturnCoin.Amount.IsPositive())
 }
 
-func TestQueryTerraPool(t *testing.T) {
+func TestQueryMintPoolDelta(t *testing.T) {
 
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.MarketKeeper)
 
 	poolDelta := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, poolDelta)
+	input.MarketKeeper.SetMintPoolDelta(input.Ctx, poolDelta)
 
-	res, errRes := querier.TerraPoolDelta(ctx, &types.QueryTerraPoolDeltaRequest{})
+	res, errRes := querier.MintPoolDelta(ctx, &types.QueryMintPoolDeltaRequest{})
 	require.NoError(t, errRes)
 
-	require.Equal(t, poolDelta, res.TerraPoolDelta)
+	require.Equal(t, poolDelta, res.MintPoolDelta)
+}
+
+func TestQueryBurnPoolDelta(t *testing.T) {
+
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+	querier := NewQuerier(input.MarketKeeper)
+
+	poolDelta := sdk.NewDecWithPrec(17, 1)
+	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, poolDelta)
+
+	res, errRes := querier.BurnPoolDelta(ctx, &types.QueryBurnPoolDeltaRequest{})
+	require.NoError(t, errRes)
+
+	require.Equal(t, poolDelta, res.BurnPoolDelta)
 }
