@@ -54,6 +54,16 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		return cosmosMsg, nil
 	}
 
+	if msg.Migrate != nil {
+		targetContractAddr, err := sdk.AccAddressFromBech32(msg.Migrate.ContractAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		cosmosMsg := types.NewMsgMigrateContract(contractAddr, targetContractAddr, msg.Migrate.NewCodeID, msg.Migrate.Msg)
+		return cosmosMsg, nil
+	}
+
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
