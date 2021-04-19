@@ -110,7 +110,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte size is too huge")
 	}
 
-	if json.Valid(msg.InitMsg) {
+	if !json.Valid(msg.InitMsg) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte format is invalid json")
 	}
 
@@ -172,7 +172,7 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte size is too huge")
 	}
 
-	if json.Valid(msg.ExecuteMsg) {
+	if !json.Valid(msg.ExecuteMsg) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte format is invalid json")
 	}
 
@@ -234,7 +234,7 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte size is too huge")
 	}
 
-	if json.Valid(msg.MigrateMsg) {
+	if !json.Valid(msg.MigrateMsg) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm msg byte format is invalid json")
 	}
 
