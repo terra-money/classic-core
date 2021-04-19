@@ -38,7 +38,7 @@ func GenMaxContractMsgSize(r *rand.Rand) uint64 {
 
 // GenMaxContractDataSize randomized MaxContractDataSize
 func GenMaxContractDataSize(r *rand.Rand) uint64 {
-	return uint64(256 + r.Intn(1024))
+	return uint64(256 + r.Intn(512))
 }
 
 // RandomizedGenState generates a random GenesisState for wasm
