@@ -15,10 +15,17 @@ type WasmQuerierInterface interface {
 	QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error)
 }
 
+// StargateWasmQuerierInterface - query registration interface for stargate querier
+type StargateWasmQuerierInterface interface {
+	Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error)
+}
+
 // Querier - wasm query handler
 type Querier struct {
-	Ctx      sdk.Context
-	Queriers map[string]WasmQuerierInterface
+	Ctx             sdk.Context
+	ContractAddr    sdk.AccAddress
+	Queriers        map[string]WasmQuerierInterface
+	StargateQuerier StargateWasmQuerierInterface
 }
 
 // NewModuleQuerier return wasm querier
@@ -52,6 +59,12 @@ func (q Querier) WithCtx(ctx sdk.Context) Querier {
 	return q
 }
 
+// WithContractAddr returns new querier with contractAddr
+func (q Querier) WithContractAddr(contractAddr sdk.AccAddress) Querier {
+	q.ContractAddr = contractAddr
+	return q
+}
+
 // GasConsumed consume gas in the current context
 func (q Querier) GasConsumed() uint64 {
 	return q.Ctx.GasMeter().GasConsumed()
@@ -69,7 +82,6 @@ func (q Querier) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byt
 	}()
 
 	// do the query
-
 	switch {
 	case request.Bank != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteBank]; ok {
@@ -96,12 +108,20 @@ func (q Querier) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byt
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteStaking)
 
-	case request.Wasm != nil || request.Stargate != nil:
+	case request.Wasm != nil:
 		if querier, ok := q.Queriers[WasmQueryRouteWasm]; ok {
 			return querier.Query(ctx, request)
 		}
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, WasmQueryRouteWasm)
+	case request.Stargate != nil:
+		if q.StargateQuerier != nil {
+			return q.StargateQuerier.Query(ctx, request)
+		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, "stargate")
+	case request.IBC != nil:
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, "IBC not supported")
 	}
 
 	return nil, wasmvmtypes.Unknown{}

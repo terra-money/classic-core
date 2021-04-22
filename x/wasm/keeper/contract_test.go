@@ -223,7 +223,7 @@ func TestExecuteWithNonExistingContractAddress(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 
 	// unauthorized - trialCtx so we don't change state
-	nonExistingContractAddress := addrFromUint64(9999)
+	nonExistingContractAddress := types.GenerateContractAddress(9999, 9999)
 	_, err := keeper.ExecuteContract(ctx, nonExistingContractAddress, creator, []byte(`{}`), nil)
 	require.Error(t, err, sdkerrors.Wrapf(types.ErrNotFound, "contract %s", nonExistingContractAddress))
 }

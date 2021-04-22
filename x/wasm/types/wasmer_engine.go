@@ -107,4 +107,7 @@ type WasmerEngine interface {
 	// and the larger binary blobs (wasm and pre-compiles) are all managed by the
 	// rust library
 	GetCode(code wasmvm.Checksum) (wasmvm.WasmCode, error)
+
+	// Cleanup should be called when no longer using this to free resources on the rust-side
+	Cleanup()
 }

@@ -173,12 +173,12 @@ func TestReflectReflectCustomMsg(t *testing.T) {
 
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"reflect": reflectQuerier{},
-	})
+	}, nil)
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		"reflect": reflectRawMsgParser{
 			cdc: MakeTestCodec(t),
 		},
-	})
+	}, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
@@ -275,12 +275,12 @@ func TestReflectReflectCustomQuery(t *testing.T) {
 
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		"reflect": reflectQuerier{},
-	})
+	}, nil)
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		"reflect": reflectRawMsgParser{
 			cdc: MakeTestCodec(t),
 		},
-	})
+	}, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)

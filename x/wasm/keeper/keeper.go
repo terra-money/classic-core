@@ -35,7 +35,7 @@ type Keeper struct {
 	router      sdk.Router
 	queryRouter types.GRPCQueryRouter
 
-	wasmer    types.WasmerEngine
+	wasmVM    types.WasmerEngine
 	querier   types.Querier
 	msgParser types.MsgParser
 
@@ -56,7 +56,7 @@ func NewKeeper(
 	supportedFeatures string,
 	homePath string,
 	wasmConfig *config.Config) Keeper {
-	wasmer, err := wasmvm.NewVM(
+	wasmVM, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
 		types.ContractMemoryLimit,
@@ -76,7 +76,7 @@ func NewKeeper(
 		storeKey:       storeKey,
 		cdc:            cdc,
 		paramSpace:     paramspace,
-		wasmer:         wasmer,
+		wasmVM:         wasmVM,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
 		treasuryKeeper: treasuryKeeper,
@@ -210,7 +210,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 		return nil, sdkErr
 	}
 
-	byteCode, err := k.wasmer.GetCode(codeInfo.CodeHash)
+	byteCode, err := k.wasmVM.GetCode(codeInfo.CodeHash)
 	if err != nil {
 		return nil, err
 	}
@@ -219,15 +219,29 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 }
 
 // RegisterMsgParsers register module msg parsers
-func (k *Keeper) RegisterMsgParsers(parsers map[string]types.WasmMsgParserInterface) {
+func (k *Keeper) RegisterMsgParsers(
+	parsers map[string]types.WasmMsgParserInterface,
+	stargateWasmMsgParser types.StargateWasmMsgParserInterface,
+) {
 	for route, parser := range parsers {
-		k.msgParser[route] = parser
+		k.msgParser.Parsers[route] = parser
+	}
+
+	if stargateWasmMsgParser != nil {
+		k.msgParser.StargateParser = stargateWasmMsgParser
 	}
 }
 
 // RegisterQueriers register module queriers
-func (k *Keeper) RegisterQueriers(queriers map[string]types.WasmQuerierInterface) {
+func (k *Keeper) RegisterQueriers(
+	queriers map[string]types.WasmQuerierInterface,
+	stargateWasmQuerier types.StargateWasmQuerierInterface,
+) {
 	for route, querier := range queriers {
 		k.querier.Queriers[route] = querier
+	}
+
+	if stargateWasmQuerier != nil {
+		k.querier.StargateQuerier = stargateWasmQuerier
 	}
 }

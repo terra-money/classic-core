@@ -31,9 +31,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/capability"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer"
+	ibc "github.com/cosmos/cosmos-sdk/x/ibc/core"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -72,6 +75,9 @@ var ModuleBasics = module.NewBasicManager(
 	customparams.AppModuleBasic{},
 	oracle.AppModuleBasic{},
 	market.AppModuleBasic{},
+	ibc.AppModuleBasic{},
+	transfer.AppModuleBasic{},
+	capability.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint
@@ -324,13 +330,13 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
 		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
 		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
-	})
+	}, NewStargateWasmQuerier(keeper))
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteWasm:    NewWasmMsgParser(),
-	})
+	}, NewStargateWasmMsgParser(legacyAmino))
 
 	keeper.SetLastCodeID(ctx, 0)
 	keeper.SetLastInstanceID(ctx, 0)
@@ -345,12 +351,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		marketKeeper,
 		treasuryKeeper,
 		keeper}
-}
-
-// HackatomExampleInitMsg nolint
-type HackatomExampleInitMsg struct {
-	Verifier    sdk.AccAddress `json:"verifier"`
-	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
 
 func createFakeFundedAccount(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
@@ -393,4 +393,10 @@ func TestHandler(k Keeper) sdk.Handler {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
+}
+
+// HackatomExampleInitMsg nolint
+type HackatomExampleInitMsg struct {
+	Verifier    sdk.AccAddress `json:"verifier"`
+	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }

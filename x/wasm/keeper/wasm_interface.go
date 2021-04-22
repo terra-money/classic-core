@@ -2,9 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
-
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,7 +14,7 @@ import (
 var _ types.WasmQuerierInterface = WasmQuerier{}
 var _ types.WasmMsgParserInterface = WasmMsgParser{}
 
-// WasmMsgParser - wasm msg parser for staking msgs
+// WasmMsgParser - wasm msg parser for wasm msgs
 type WasmMsgParser struct{}
 
 // NewWasmMsgParser returns wasm msg parser
@@ -84,42 +81,22 @@ func NewWasmQuerier(keeper Keeper) WasmQuerier {
 
 // Query - implement query function
 func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
-	if request.Wasm != nil {
-		if request.Wasm.Smart != nil {
-			addr, err := sdk.AccAddressFromBech32(request.Wasm.Smart.ContractAddr)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Wasm.Smart.ContractAddr)
-			}
-
-			return querier.keeper.queryToContract(ctx, addr, request.Wasm.Smart.Msg)
+	if request.Wasm.Smart != nil {
+		addr, err := sdk.AccAddressFromBech32(request.Wasm.Smart.ContractAddr)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Wasm.Smart.ContractAddr)
 		}
 
-		if request.Wasm.Raw != nil {
-			addr, err := sdk.AccAddressFromBech32(request.Wasm.Raw.ContractAddr)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Wasm.Raw.ContractAddr)
-			}
-
-			return querier.keeper.queryToStore(ctx, addr, request.Wasm.Raw.Key), nil
-		}
+		return querier.keeper.queryToContract(ctx, addr, request.Wasm.Smart.Msg)
 	}
 
-	if request.Stargate != nil {
-		route := querier.keeper.queryRouter.Route(request.Stargate.Path)
-		if route == nil {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Stargate.Path)}
-		}
-
-		res, err := route(ctx, abci.RequestQuery{
-			Data: request.Stargate.Data,
-			Path: request.Stargate.Path,
-		})
-
+	if request.Wasm.Raw != nil {
+		addr, err := sdk.AccAddressFromBech32(request.Wasm.Raw.ContractAddr)
 		if err != nil {
-			return nil, err
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Wasm.Raw.ContractAddr)
 		}
 
-		return res.Value, nil
+		return querier.keeper.queryToStore(ctx, addr, request.Wasm.Raw.Key), nil
 	}
 
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}

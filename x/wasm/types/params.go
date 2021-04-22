@@ -44,10 +44,10 @@ var (
 
 // Constant gas parameters
 const (
-	InstanceCost       = uint64(40_000) // sdk gas cost for executing wasmer engine
+	InstanceCost       = uint64(40_000) // sdk gas cost for executing wasmVM engine
 	CompileCostPerByte = uint64(2)      // sdk gas cost per bytes
 
-	GasMultiplier    = uint64(100) // Please note that all gas prices returned to the wasmer engine should have this multiplied
+	GasMultiplier    = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
 	HumanizeCost     = uint64(5)   // wasm gas cost to convert canonical address to human address
 	CanonicalizeCost = uint64(4)   // wasm gas cost to convert human address to canonical address
 

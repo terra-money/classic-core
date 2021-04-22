@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	// ModuleName is the name of the contract module
+	// ModuleName is the name of the wasm module
 	ModuleName = "wasm"
 
 	// StoreKey is the string store representation
@@ -14,11 +14,14 @@ const (
 	// TStoreKey is the string transient store representation
 	TStoreKey = "transient_" + ModuleName
 
-	// QuerierRoute is the querier route for the staking module
+	// QuerierRoute is the querier route for the wasm module
 	QuerierRoute = ModuleName
 
-	// RouterKey is the msg router key for the staking module
+	// RouterKey is the msg router key for the wasm module
 	RouterKey = ModuleName
+
+	// IBCPortIDPrefix is the prefix of IBC Port ID for wasm module
+	IBCPortIDPrefix = ModuleName + "."
 )
 
 // Keys for wasm store

@@ -2197,6 +2197,7 @@ ContractInfo stores a WASM contract instance
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
 | `migratable` | [bool](#bool) |  | Migratable is the flag to specify the contract migratability |
+| `ibc_port_id` | [string](#string) |  | IBCPortID is the ID used in ibc communication |
 
 
 

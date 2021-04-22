@@ -19,7 +19,7 @@ func TestCodeInfo(t *testing.T) {
 	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	codeID := uint64(1)
-	creatorAddr := addrFromUint64(codeID)
+	_, _, creatorAddr := keyPubAddr()
 	expected := types.NewCodeInfo(codeID, []byte{1, 2, 3}, creatorAddr)
 	keeper.SetCodeInfo(ctx, 1, expected)
 
@@ -37,8 +37,8 @@ func TestContractInfo(t *testing.T) {
 
 	codeID := uint64(1)
 	instanceID := uint64(1)
-	creatorAddr := addrFromUint64(codeID)
-	contractAddr := keeper.generateContractAddress(ctx, codeID, instanceID)
+	_, _, creatorAddr := keyPubAddr()
+	contractAddr := types.GenerateContractAddress(codeID, instanceID)
 
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    alice,

@@ -1,7 +1,10 @@
 package types
 
 import (
+	"encoding/binary"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -60,4 +63,20 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 		wasmCoins = append(wasmCoins, wasmCoin)
 	}
 	return wasmCoins
+}
+
+// GenerateContractAddress generates a contract address from codeID + instanceID
+// and increases last instanceID
+func GenerateContractAddress(codeID uint64, instanceID uint64) sdk.AccAddress {
+	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
+	// overflow 32 bits. This is highly improbable, but something that could be refactored.
+	contractID := codeID<<32 + instanceID
+	return addrFromUint64(contractID)
+}
+
+func addrFromUint64(id uint64) sdk.AccAddress {
+	addr := make([]byte, 20)
+	addr[0] = 'C'
+	binary.PutUvarint(addr[1:], id)
+	return sdk.AccAddress(crypto.AddressHash(addr))
 }

@@ -68,7 +68,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	ctx, cdc, accKeeper, bankKeeper, keeper := input.Ctx, input.Cdc, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		types.WasmQueryRouteWasm: newWasmQuerierWithCounter(keeper),
-	})
+	}, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator = createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
@@ -96,7 +96,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	GasNoWork := types.InstanceCost + 4_384
-	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
 	const (
@@ -183,7 +183,7 @@ func TestGasCostOnQuery(t *testing.T) {
 
 func TestGasOnExternalQuery(t *testing.T) {
 	GasNoWork := types.InstanceCost + 4_384
-	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
 	cases := map[string]struct {

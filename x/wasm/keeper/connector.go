@@ -103,9 +103,38 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 	return nil
 }
 
+// dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
+func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data []byte, err error) {
+	limitedMeter := sdk.NewGasMeter(gasLimit)
+	subCtx := ctx.WithGasMeter(limitedMeter)
+
+	// catch out of gas panic and just charge the entire gas limit
+	defer func() {
+		if r := recover(); r != nil {
+			// if it's not an OutOfGas error, raise it again
+			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
+				k.Logger(ctx).Info("SubMsg rethrow panic: %#v", r)
+				panic(r)
+			}
+
+			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
+			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
+		}
+	}()
+
+	events, data, err = k.dispatchMessage(subCtx, contractAddr, msg)
+
+	// make sure we charge the parent what was spent
+	spent := subCtx.GasMeter().GasConsumed()
+	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
+
+	return events, data, err
+}
+
 // dispatchMessage does not emit events to prevent duplicate emission
 func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data []byte, err error) {
-	sdkMsg, err := k.msgParser.Parse(contractAddr, msg)
+	sdkMsg, err := k.msgParser.Parse(ctx, contractAddr, msg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -138,65 +167,6 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	events = append(events, sdkEvents...)
 
 	return
-}
-
-// dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
-func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data []byte, err error) {
-	limitedMeter := sdk.NewGasMeter(gasLimit)
-	subCtx := ctx.WithGasMeter(limitedMeter)
-
-	sdkMsg, err := k.msgParser.Parse(contractAddr, msg)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Charge tax on result msg
-	taxes := ante.FilterMsgAndComputeTax(subCtx, k.treasuryKeeper, sdkMsg)
-	if !taxes.IsZero() {
-		contractAcc := k.accountKeeper.GetAccount(subCtx, contractAddr)
-		if err := cosmosante.DeductFees(k.bankKeeper, subCtx, contractAcc, taxes); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	// catch out of gas panic and just charge the entire gas limit
-	defer func() {
-		if r := recover(); r != nil {
-			// if it's not an OutOfGas error, raise it again
-			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
-				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
-				k.Logger(ctx).Info("SubMsg rethrow panic: %#v", r)
-				panic(r)
-			}
-
-			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
-		}
-	}()
-
-	res, err := k.handleSdkMessage(subCtx, contractAddr, sdkMsg)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// set data
-	data = make([]byte, len(res.Data))
-	copy(data, res.Data)
-
-	// convert Tendermint.Events to sdk.Event
-	sdkEvents := make([]sdk.Event, len(res.Events))
-	for i := range res.Events {
-		sdkEvents[i] = sdk.Event(res.Events[i])
-	}
-
-	// append events
-	events = append(events, sdkEvents...)
-
-	// make sure we charge the parent what was spent
-	spent := subCtx.GasMeter().GasConsumed()
-	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
-
-	return events, data, err
 }
 
 func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) (*sdk.Result, error) {

@@ -50,4 +50,6 @@ message ContractInfo {
   bytes init_msg = 4 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
   // Migratable is the flag to specify the contract migratability
   bool migratable = 5 [(gogoproto.moretags) = "yaml:\"migratable\""];
+  // IBCPortID is the ID used in ibc communication
+  string ibc_port_id = 6 [(gogoproto.moretags) = "yaml:\"ibc_port_id\"", (gogoproto.customname) = "IBCPortID"];
 }

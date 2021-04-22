@@ -1,10 +1,7 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"time"
-
-	"github.com/tendermint/tendermint/crypto"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
@@ -32,7 +29,7 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 	// consume gas for compile cost
 	ctx.GasMeter().ConsumeGas(types.CompileCostPerByte*uint64(len(wasmCode)), "Compiling WASM Bytes Cost")
 
-	codeHash, err = k.wasmer.Create(wasmCode)
+	codeHash, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
@@ -84,7 +81,7 @@ func (k Keeper) InstantiateContract(
 	instanceID++
 
 	// create contract address
-	contractAddress := k.generateContractAddress(ctx, codeID, instanceID)
+	contractAddress := types.GenerateContractAddress(codeID, instanceID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
@@ -120,14 +117,14 @@ func (k Keeper) InstantiateContract(
 	contractStore := prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
 
 	// instantiate wasm contract
-	res, gasUsed, err := k.wasmer.Instantiate(
+	res, gasUsed, err := k.wasmVM.Instantiate(
 		codeInfo.CodeHash,
 		env,
 		info,
 		initMsg,
 		contractStore,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx),
+		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -195,14 +192,14 @@ func (k Keeper) ExecuteContract(
 
 	env := types.NewEnv(ctx, contractAddress)
 	info := types.NewInfo(caller, coins)
-	res, gasUsed, err := k.wasmer.Execute(
+	res, gasUsed, err := k.wasmVM.Execute(
 		codeInfo.CodeHash,
 		env,
 		info,
 		exeMsg,
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx),
+		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -272,13 +269,13 @@ func (k Keeper) MigrateContract(
 	prefixStoreKey := types.GetContractStoreKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
-	res, gasUsed, err := k.wasmer.Migrate(
+	res, gasUsed, err := k.wasmVM.Migrate(
 		newCodeInfo.CodeHash,
 		env,
 		migrateMsg,
 		prefixStore,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx),
+		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -333,13 +330,13 @@ func (k Keeper) reply(
 		reply.Result.Ok.Events = reply.Result.Ok.Events[:eventParams.MaxAttributeNum]
 	}
 
-	res, gasUsed, err := k.wasmer.Reply(
+	res, gasUsed, err := k.wasmVM.Reply(
 		codeInfo.CodeHash,
 		env,
 		reply,
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx),
+		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -371,22 +368,6 @@ func (k Keeper) reply(
 	return nil
 }
 
-// generates a contract address from codeID + instanceID
-// and increases last instanceID
-func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64, instanceID uint64) sdk.AccAddress {
-	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
-	// overflow 32 bits. This is highly improbable, but something that could be refactored.
-	contractID := codeID<<32 + instanceID
-	return addrFromUint64(contractID)
-}
-
-func addrFromUint64(id uint64) sdk.AccAddress {
-	addr := make([]byte, 20)
-	addr[0] = 'C'
-	binary.PutUvarint(addr[1:], id)
-	return sdk.AccAddress(crypto.AddressHash(addr))
-}
-
 func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-raw")
 	if key == nil {
@@ -409,13 +390,13 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
-	queryResult, gasUsed, err := k.wasmer.Query(
+	queryResult, gasUsed, err := k.wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
 		queryMsg,
 		contractStorePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx),
+		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
