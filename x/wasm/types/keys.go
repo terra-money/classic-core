@@ -19,9 +19,6 @@ const (
 
 	// RouterKey is the msg router key for the wasm module
 	RouterKey = ModuleName
-
-	// IBCPortIDPrefix is the prefix of IBC Port ID for wasm module
-	IBCPortIDPrefix = ModuleName + "."
 )
 
 // Keys for wasm store
