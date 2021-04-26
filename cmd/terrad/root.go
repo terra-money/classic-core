@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -132,6 +130,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 }
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	wasmconfig.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -220,8 +219,9 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		terraapp.MakeEncodingConfig(), // Ideally, we would reuse the one created by NewRootCmd.
 		appOpts,
 		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
-			ContractQueryGasLimit:    viper.GetUint64(wasmconfig.FlagContractQueryGasLimit),
-			ContractLoggingWhitelist: viper.GetString(wasmconfig.FlagContractLoggingWhitelist),
+			ContractQueryGasLimit:   cast.ToUint64(appOpts.Get(wasmconfig.FlagContractQueryGasLimit)),
+			ContractDebugMode:       cast.ToBool(appOpts.Get(wasmconfig.FlagContractDebugMode)),
+			ContractMemoryCacheSize: cast.ToUint32(appOpts.Get(wasmconfig.FlagContractMemoryCacheSize)),
 		}},
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),

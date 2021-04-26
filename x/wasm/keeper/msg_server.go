@@ -60,7 +60,7 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		return nil, err
 	}
 
-	contractAddr, err := k.Keeper.InstantiateContract(ctx, msg.CodeID, ownerAddr, msg.InitMsg, msg.InitCoins, msg.Migratable)
+	contractAddr, data, err := k.Keeper.InstantiateContract(ctx, msg.CodeID, ownerAddr, msg.InitMsg, msg.InitCoins, msg.Migratable)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +83,7 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 
 	return &types.MsgInstantiateContractResponse{
 		ContractAddress: contractAddr.String(),
+		Data:            data,
 	}, nil
 }
 

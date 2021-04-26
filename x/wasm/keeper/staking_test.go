@@ -3,12 +3,10 @@ package keeper
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -21,9 +19,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	core "github.com/terra-project/core/types"
 )
@@ -97,11 +96,6 @@ type InvestmentResponse struct {
 }
 
 func TestInitializeStaking(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, stakingKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.StakingKeeper, input.WasmKeeper
 
@@ -114,7 +108,7 @@ func TestInitializeStaking(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	// upload staking derivates code
+	// upload staking derivative code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
@@ -133,7 +127,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
+	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -153,7 +147,7 @@ func TestInitializeStaking(t *testing.T) {
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, badBz, nil, true)
+	_, _, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, badBz, nil, true)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -182,7 +176,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 500000))
 	creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	// upload staking derivates code
+	// upload staking derivative code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
@@ -201,7 +195,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
+	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -209,11 +203,6 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 }
 
 func TestBonding(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	initInfo := initializeStaking(t, input)
 
@@ -264,11 +253,6 @@ func TestBonding(t *testing.T) {
 }
 
 func TestUnbonding(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	initInfo := initializeStaking(t, input)
 
@@ -336,15 +320,10 @@ func TestUnbonding(t *testing.T) {
 }
 
 func TestReinvest(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	initInfo := initializeStaking(t, input)
 
-	ctx, accKeeper, bankKeeper, stakingKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.StakingKeeper, input.WasmKeeper
+	ctx, accKeeper, bankKeeper, stakingKeeper, distrKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.StakingKeeper, input.DistributionKeeper, input.WasmKeeper
 	valAddr, contractAddr, creatorAddr := initInfo.valAddr, initInfo.contractAddr, initInfo.creatorAddr
 
 	// initial checks of bonding state
@@ -370,10 +349,10 @@ func TestReinvest(t *testing.T) {
 
 	// update height a bit to solidify the delegation
 	ctx = nextBlock(ctx, stakingKeeper)
+
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
-	setValidatorRewards(
-		ctx, accKeeper, bankKeeper, stakingKeeper, input.DistributionKeeper, valAddr,
-		sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 240000)))
+	reward := sdk.NewInt64Coin(core.MicroLunaDenom, 240000)
+	setValidatorRewards(ctx, accKeeper, bankKeeper, stakingKeeper, distrKeeper, valAddr, reward)
 
 	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
@@ -385,7 +364,6 @@ func TestReinvest(t *testing.T) {
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
-	// Note: why is this immediate? just test setup?
 	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
 	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
@@ -409,6 +387,150 @@ func TestReinvest(t *testing.T) {
 	assertBalance(t, ctx, keeper, contractAddr, creatorAddr, "0")
 	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
 	assertSupply(t, ctx, keeper, contractAddr, "200000", sdk.NewInt64Coin(core.MicroLunaDenom, 236000))
+}
+
+func TestQueryStakingInfo(t *testing.T) {
+	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
+	input := CreateTestInput(t)
+	initInfo := initializeStaking(t, input)
+	ctx, valAddr, contractAddr := input.Ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, bankKeeper, stakingKeeper, accKeeper, distKeeper := input.WasmKeeper, input.BankKeeper, input.StakingKeeper, input.AccKeeper, input.DistributionKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
+
+	// full is 2x funds, 1x goes to the contract, other stays on his wallet
+	full := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 400000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 200000))
+	bob := createFakeFundedAccount(ctx, accKeeper, bankKeeper, full)
+
+	// we will stake 200k to a validator with 1M self-bond
+	// this means we should get 1/6 of the rewards
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// update height a bit to solidify the delegation
+	ctx = nextBlock(ctx, stakingKeeper)
+	// we get 1/6, our share should be 40k minus 10% commission = 36k
+	setValidatorRewards(ctx, accKeeper, bankKeeper,
+		stakingKeeper, distKeeper, valAddr,
+		sdk.NewInt64Coin(core.MicroLunaDenom, 240000))
+
+	// see what the current rewards are
+	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+
+	// STEP 2: Prepare the mask contract
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
+
+	// upload mask code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	maskID, err := keeper.StoreCode(ctx, creator, maskCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), maskID)
+
+	// creator instantiates a contract and gives it tokens
+	maskAddr, _, err := keeper.InstantiateContract(ctx, maskID, creator, []byte("{}"), nil, true)
+	require.NoError(t, err)
+	require.NotEmpty(t, maskAddr)
+
+	// STEP 3: now, let's reflect some queries.
+	// let's get the bonded denom
+	reflectBondedQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		BondedDenom: &struct{}{},
+	}}}}
+	reflectBondedBin := buildReflectQuery(t, &reflectBondedQuery)
+	res, err := keeper.queryToContract(ctx, maskAddr, reflectBondedBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRes ChainResponse
+	mustParse(t, res, &reflectRes)
+	var bondedRes wasmvmtypes.BondedDenomResponse
+	mustParse(t, reflectRes.Data, &bondedRes)
+	assert.Equal(t, core.MicroLunaDenom, bondedRes.Denom)
+
+	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
+	reflectValidatorsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Validators: &wasmvmtypes.ValidatorsQuery{},
+	}}}}
+	reflectValidatorsBin := buildReflectQuery(t, &reflectValidatorsQuery)
+	res, err = keeper.queryToContract(ctx, maskAddr, reflectValidatorsBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var validatorRes wasmvmtypes.ValidatorsResponse
+	mustParse(t, reflectRes.Data, &validatorRes)
+	require.Len(t, validatorRes.Validators, 1)
+	valInfo := validatorRes.Validators[0]
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), valInfo.Address)
+	require.Contains(t, valInfo.Commission, "0.100")
+	require.Contains(t, valInfo.MaxCommission, "0.200")
+	require.Contains(t, valInfo.MaxChangeRate, "0.010")
+
+	// test to get all my delegations
+	reflectAllDelegationsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		AllDelegations: &wasmvmtypes.AllDelegationsQuery{
+			Delegator: contractAddr.String(),
+		},
+	}}}}
+	reflectAllDelegationsBin := buildReflectQuery(t, &reflectAllDelegationsQuery)
+	res, err = keeper.queryToContract(ctx, maskAddr, reflectAllDelegationsBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var allDelegationsRes wasmvmtypes.AllDelegationsResponse
+	mustParse(t, reflectRes.Data, &allDelegationsRes)
+	require.Len(t, allDelegationsRes.Delegations, 1)
+	delInfo := allDelegationsRes.Delegations[0]
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
+
+	// test to get one delegations
+	reflectDelegationQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Delegation: &wasmvmtypes.DelegationQuery{
+			Validator: valAddr.String(),
+			Delegator: contractAddr.String(),
+		},
+	}}}}
+	reflectDelegationBin := buildReflectQuery(t, &reflectDelegationQuery)
+	res, err = keeper.queryToContract(ctx, maskAddr, reflectDelegationBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var delegationRes wasmvmtypes.DelegationResponse
+	mustParse(t, reflectRes.Data, &delegationRes)
+	assert.NotEmpty(t, delegationRes.Delegation)
+	delInfo2 := delegationRes.Delegation
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo2.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo2.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo2.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
+
+	require.Equal(t, wasmvmtypes.NewCoin(200000, core.MicroLunaDenom), delInfo2.CanRedelegate)
+	require.Len(t, delInfo2.AccumulatedRewards, 1)
+	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
+	require.Equal(t, wasmvmtypes.NewCoin(36000, core.MicroLunaDenom), delInfo2.AccumulatedRewards[0])
+
+	// ensure rewards did not change when querying (neither amount nor period)
+	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.Equal(t, origReward, finalReward)
 }
 
 // adds a few validators and returns a list of validators that are registered
@@ -465,7 +587,7 @@ func setValidatorRewards(
 	bankKeeper bankkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 	distKeeper distrkeeper.Keeper,
-	valAddr sdk.ValAddress, rewards sdk.Coins) {
+	valAddr sdk.ValAddress, rewards ...sdk.Coin) {
 
 	// allocate some rewards
 	validator := stakingKeeper.Validator(ctx, valAddr)

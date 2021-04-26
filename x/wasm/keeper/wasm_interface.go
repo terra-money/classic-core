@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	"github.com/terra-project/core/x/wasm/types"
 )
@@ -14,7 +14,7 @@ import (
 var _ types.WasmQuerierInterface = WasmQuerier{}
 var _ types.WasmMsgParserInterface = WasmMsgParser{}
 
-// WasmMsgParser - wasm msg parser for staking msgs
+// WasmMsgParser - wasm msg parser for wasm msgs
 type WasmMsgParser struct{}
 
 // NewWasmMsgParser returns wasm msg parser
@@ -23,7 +23,7 @@ func NewWasmMsgParser() WasmMsgParser {
 }
 
 // Parse implements wasm staking msg parser
-func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	msg := wasmMsg.Wasm
 
 	if msg.Execute != nil {
@@ -36,13 +36,8 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.Cosmos
 			return nil, err
 		}
 
-		cosmosMsg := types.MsgExecuteContract{
-			Sender:     contractAddr.String(),
-			Contract:   destContractAddr.String(),
-			ExecuteMsg: msg.Execute.Msg,
-			Coins:      coins,
-		}
-		return []sdk.Msg{&cosmosMsg}, nil
+		cosmosMsg := types.NewMsgExecuteContract(contractAddr, destContractAddr, msg.Execute.Msg, coins)
+		return cosmosMsg, nil
 	}
 
 	if msg.Instantiate != nil {
@@ -51,20 +46,26 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmTypes.Cosmos
 			return nil, err
 		}
 
-		cosmosMsg := types.MsgInstantiateContract{
-			Owner:     contractAddr.String(),
-			CodeID:    msg.Instantiate.CodeID,
-			InitMsg:   msg.Instantiate.Msg,
-			InitCoins: coins,
+		// The contract instantiated from the other contract, always migratable
+		cosmosMsg := types.NewMsgInstantiateContract(contractAddr, msg.Instantiate.CodeID, msg.Instantiate.Msg, coins, true)
+		return cosmosMsg, nil
+	}
+
+	if msg.Migrate != nil {
+		targetContractAddr, err := sdk.AccAddressFromBech32(msg.Migrate.ContractAddr)
+		if err != nil {
+			return nil, err
 		}
-		return []sdk.Msg{&cosmosMsg}, nil
+
+		cosmosMsg := types.NewMsgMigrateContract(contractAddr, targetContractAddr, msg.Migrate.NewCodeID, msg.Migrate.Msg)
+		return cosmosMsg, nil
 	}
 
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
 // ParseCustom implements custom parser
-func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) ([]sdk.Msg, error) {
+func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	return nil, nil
 }
 
@@ -79,7 +80,7 @@ func NewWasmQuerier(keeper Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (querier WasmQuerier) Query(ctx sdk.Context, request wasmTypes.QueryRequest) ([]byte, error) {
+func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 	if request.Wasm.Smart != nil {
 		addr, err := sdk.AccAddressFromBech32(request.Wasm.Smart.ContractAddr)
 		if err != nil {
@@ -88,17 +89,17 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmTypes.QueryRequest
 
 		return querier.keeper.queryToContract(ctx, addr, request.Wasm.Smart.Msg)
 	}
+
 	if request.Wasm.Raw != nil {
 		addr, err := sdk.AccAddressFromBech32(request.Wasm.Raw.ContractAddr)
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Wasm.Raw.ContractAddr)
 		}
 
-		models := querier.keeper.queryToStore(ctx, addr, request.Wasm.Raw.Key)
-		return json.Marshal(models)
+		return querier.keeper.queryToStore(ctx, addr, request.Wasm.Raw.Key), nil
 	}
 
-	return nil, wasmTypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 }
 
 // QueryCustom implements custom query interface

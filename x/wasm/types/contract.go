@@ -1,7 +1,10 @@
 package types
 
 import (
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"encoding/binary"
+
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/tendermint/tendermint/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -26,32 +29,54 @@ func NewContractInfo(codeID uint64, address, owner sdk.AccAddress, initMsg []byt
 	}
 }
 
-// NewWasmAPIParams initializes params for a contract instance
-func NewWasmAPIParams(ctx sdk.Context, sender sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
-	return wasmTypes.Env{
-		Block: wasmTypes.BlockInfo{
-			Height:  uint64(ctx.BlockHeight()),
-			Time:    uint64(ctx.BlockTime().Unix()),
-			ChainID: ctx.ChainID(),
+// NewEnv initializes the environment for a contract instance
+func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+	env := wasmvmtypes.Env{
+		Block: wasmvmtypes.BlockInfo{
+			Height:    uint64(ctx.BlockHeight()),
+			Time:      uint64(ctx.BlockTime().Unix()),
+			TimeNanos: uint64(ctx.BlockTime().Nanosecond()),
+			ChainID:   ctx.ChainID(),
 		},
-		Message: wasmTypes.MessageInfo{
-			Sender:    sender.String(),
-			SentFunds: NewWasmCoins(deposit),
-		},
-		Contract: wasmTypes.ContractInfo{
+		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),
 		},
+	}
+	return env
+}
+
+// NewInfo initializes the MessageInfo for a contract instance
+func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmvmtypes.MessageInfo {
+	return wasmvmtypes.MessageInfo{
+		Sender: creator.String(),
+		Funds:  NewWasmCoins(deposit),
 	}
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
-func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
+func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 	for _, coin := range cosmosCoins {
-		wasmCoin := wasmTypes.Coin{
+		wasmCoin := wasmvmtypes.Coin{
 			Denom:  coin.Denom,
 			Amount: coin.Amount.String(),
 		}
 		wasmCoins = append(wasmCoins, wasmCoin)
 	}
 	return wasmCoins
+}
+
+// GenerateContractAddress generates a contract address from codeID + instanceID
+// and increases last instanceID
+func GenerateContractAddress(codeID uint64, instanceID uint64) sdk.AccAddress {
+	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
+	// overflow 32 bits. This is highly improbable, but something that could be refactored.
+	contractID := codeID<<32 + instanceID
+	return addrFromUint64(contractID)
+}
+
+func addrFromUint64(id uint64) sdk.AccAddress {
+	addr := make([]byte, 20)
+	addr[0] = 'C'
+	binary.PutUvarint(addr[1:], id)
+	return sdk.AccAddress(crypto.AddressHash(addr))
 }

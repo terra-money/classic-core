@@ -162,6 +162,7 @@
 - [terra/wasm/v1beta1/wasm.proto](#terra/wasm/v1beta1/wasm.proto)
     - [CodeInfo](#terra.wasm.v1beta1.CodeInfo)
     - [ContractInfo](#terra.wasm.v1beta1.ContractInfo)
+    - [EventParams](#terra.wasm.v1beta1.EventParams)
     - [Params](#terra.wasm.v1beta1.Params)
   
 - [terra/wasm/v1beta1/genesis.proto](#terra/wasm/v1beta1/genesis.proto)
@@ -2202,10 +2203,27 @@ ContractInfo stores a WASM contract instance
 
 
 
+<a name="terra.wasm.v1beta1.EventParams"></a>
+
+### EventParams
+EventParams defines the event related parameteres
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `max_attribute_num` | [uint64](#uint64) |  |  |
+| `max_attribute_key_length` | [uint64](#uint64) |  |  |
+| `max_attribute_value_length` | [uint64](#uint64) |  |  |
+
+
+
+
+
+
 <a name="terra.wasm.v1beta1.Params"></a>
 
 ### Params
-Params defines the parameters for the oracle module.
+Params defines the parameters for the wasm module.
 
 
 | Field | Type | Label | Description |
@@ -2213,6 +2231,8 @@ Params defines the parameters for the oracle module.
 | `max_contract_size` | [uint64](#uint64) |  |  |
 | `max_contract_gas` | [uint64](#uint64) |  |  |
 | `max_contract_msg_size` | [uint64](#uint64) |  |  |
+| `max_contract_data_size` | [uint64](#uint64) |  |  |
+| `event_params` | [EventParams](#terra.wasm.v1beta1.EventParams) |  |  |
 
 
 

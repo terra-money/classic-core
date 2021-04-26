@@ -377,9 +377,12 @@ func NewTerraApp(
 		appCodec, keys[msgauthtypes.StoreKey], bApp.Router(),
 	)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec, keys[wasmtypes.StoreKey], app.GetSubspace(wasmtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.TreasuryKeeper, bApp.Router(),
-		wasmtypes.DefaultFeatures, homePath, wasmConfig,
+		appCodec, keys[wasmtypes.StoreKey],
+		app.GetSubspace(wasmtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper,
+		app.TreasuryKeeper, bApp.Router(),
+		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
+		homePath, wasmConfig,
 	)
 
 	// register wasm msg parser & querier
@@ -388,7 +391,7 @@ func NewTerraApp(
 		wasmtypes.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteWasm:    wasmkeeper.NewWasmMsgParser(),
-	})
+	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
 	app.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
 		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.BankKeeper),
 		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
@@ -396,7 +399,7 @@ func NewTerraApp(
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
 		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.TreasuryKeeper),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
-	})
+	}, wasmkeeper.NewStargateWasmQuerier(app.WasmKeeper))
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()

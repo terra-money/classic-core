@@ -4,12 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
-
-	"github.com/spf13/viper"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -21,11 +16,6 @@ import (
 )
 
 func TestLegacyContractState(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -34,21 +24,21 @@ func TestLegacyContractState(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
 	require.NoError(t, err)
 
 	contractModel := []types.Model{
