@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
@@ -31,7 +30,7 @@ func TestInitGenesis(t *testing.T) {
 	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	msg = types.NewMsgStoreCode(creator, maskContract)
+	msg = types.NewMsgStoreCode(creator, reflectContract)
 	_, err = h(input.Ctx, msg)
 	require.NoError(t, err)
 
@@ -90,9 +89,9 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	expectedConfigState := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigState)

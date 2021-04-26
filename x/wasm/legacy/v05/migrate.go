@@ -1,0 +1,67 @@
+package v05
+
+import (
+	v04wasm "github.com/terra-project/core/x/wasm/legacy/v04"
+	v05wasm "github.com/terra-project/core/x/wasm/types"
+)
+
+// Migrate accepts exported v0.4 x/wasm and
+// migrates it to v0.5 x/wasm genesis state. The migration includes:
+//
+// - Add new params for event and data size limit to x/wasm genesis state.
+// - Re-encode in v0.5 GenesisState.
+func Migrate(
+	wasmGenState v04wasm.GenesisState,
+) *v05wasm.GenesisState {
+	codes := make([]v05wasm.Code, len(wasmGenState.Codes))
+	for i, c := range wasmGenState.Codes {
+		codes[i] = v05wasm.Code{
+			CodeInfo: v05wasm.CodeInfo{
+				CodeID:   c.CodeInfo.CodeID,
+				CodeHash: c.CodeInfo.CodeHash,
+				Creator:  c.CodeInfo.Creator.String(),
+			},
+			CodeBytes: c.CodesBytes,
+		}
+	}
+
+	contracts := make([]v05wasm.Contract, len(wasmGenState.Contracts))
+	for i, c := range wasmGenState.Contracts {
+		models := make([]v05wasm.Model, len(c.ContractStore))
+		for j, m := range c.ContractStore {
+			models[j] = v05wasm.Model{
+				Key:   m.Key,
+				Value: m.Value,
+			}
+		}
+
+		contracts[i] = v05wasm.Contract{
+			ContractInfo: v05wasm.ContractInfo{
+				CodeID:     c.ContractInfo.CodeID,
+				Address:    c.ContractInfo.Address.String(),
+				Owner:      c.ContractInfo.Owner.String(),
+				Migratable: c.ContractInfo.Migratable,
+				InitMsg:    c.ContractInfo.InitMsg,
+			},
+			ContractStore: models,
+		}
+	}
+
+	return &v05wasm.GenesisState{
+		Params: v05wasm.Params{
+			MaxContractSize:     wasmGenState.Params.MaxContractSize,
+			MaxContractMsgSize:  wasmGenState.Params.MaxContractMsgSize,
+			MaxContractGas:      wasmGenState.Params.MaxContractGas,
+			MaxContractDataSize: 256,
+			EventParams: v05wasm.EventParams{
+				MaxAttributeNum:         16,
+				MaxAttributeKeyLength:   64,
+				MaxAttributeValueLength: 256,
+			},
+		},
+		Codes:          codes,
+		Contracts:      contracts,
+		LastCodeID:     wasmGenState.LastCodeID,
+		LastInstanceID: wasmGenState.LastInstanceID,
+	}
+}

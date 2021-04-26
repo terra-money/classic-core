@@ -14,9 +14,9 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/terra-project/go-cosmwasm/releases
-ADD https://github.com/terra-project/go-cosmwasm/releases/download/v0.10.4/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
-RUN sha256sum /lib/libgo_cosmwasm_muslc.a | grep 2aa7b034b9340fecaa928adf3e8c093893fd6a3986a569ce7cae7528845a0951
+# See https://github.com/CosmWasm/wasmvm/releases
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.14.0-beta3/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep adea8f977601daa8daa9885e02b31ca6dd0ab6d4dbbd8ba2ccfa447ffebda37c
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make update-swagger-docs build

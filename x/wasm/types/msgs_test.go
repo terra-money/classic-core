@@ -49,10 +49,11 @@ func TestMsgInstantiateCode(t *testing.T) {
 		initCoins  sdk.Coins
 		expectPass bool
 	}{
-		{sdk.AccAddress{}, 0, []byte{}, sdk.Coins{}, false},
+		{sdk.AccAddress{}, 0, []byte("{}"), sdk.Coins{}, false},
 		{addrs[0], 0, make([]byte, EnforcedMaxContractMsgSize+1), sdk.Coins{}, false},
-		{addrs[0], 0, []byte{}, sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
-		{addrs[0], 0, []byte{}, sdk.Coins{}, true},
+		{addrs[0], 0, []byte("{}"), sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
+		{addrs[0], 0, []byte("{invalid json}"), sdk.Coins{}, false},
+		{addrs[0], 0, []byte("{}"), sdk.Coins{}, true},
 	}
 
 	for i, tc := range tests {
@@ -78,11 +79,12 @@ func TestMsgExecuteContract(t *testing.T) {
 		coins      sdk.Coins
 		expectPass bool
 	}{
-		{sdk.AccAddress{}, addrs[1], []byte{}, sdk.Coins{}, false},
-		{addrs[0], sdk.AccAddress{}, []byte{}, sdk.Coins{}, false},
+		{sdk.AccAddress{}, addrs[1], []byte("{}"), sdk.Coins{}, false},
+		{addrs[0], sdk.AccAddress{}, []byte("{}"), sdk.Coins{}, false},
 		{addrs[0], addrs[1], make([]byte, EnforcedMaxContractMsgSize+1), sdk.Coins{}, false},
-		{addrs[0], addrs[1], []byte{}, sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
-		{addrs[0], addrs[1], []byte{}, sdk.Coins{}, true},
+		{addrs[0], addrs[1], []byte("{}"), sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
+		{addrs[0], addrs[1], []byte("{invalid json}"), sdk.Coins{}, false},
+		{addrs[0], addrs[1], []byte("{}"), sdk.Coins{}, true},
 	}
 
 	for i, tc := range tests {
@@ -108,11 +110,12 @@ func TestMsgMigrateContract(t *testing.T) {
 		msg        json.RawMessage
 		expectPass bool
 	}{
-		{sdk.AccAddress{}, addrs[1], 1, []byte{}, false},
-		{addrs[0], sdk.AccAddress{}, 1, []byte{}, false},
-		{addrs[0], addrs[1], 0, []byte{}, false},
+		{sdk.AccAddress{}, addrs[1], 1, []byte("{}"), false},
+		{addrs[0], sdk.AccAddress{}, 1, []byte("{}"), false},
+		{addrs[0], addrs[1], 0, []byte("{}"), false},
 		{addrs[0], addrs[1], 1, make([]byte, EnforcedMaxContractMsgSize+1), false},
-		{addrs[0], addrs[1], 1, []byte{}, true},
+		{addrs[0], addrs[1], 1, []byte("{invalid json}"), false},
+		{addrs[0], addrs[1], 1, []byte("{}"), true},
 	}
 
 	for i, tc := range tests {

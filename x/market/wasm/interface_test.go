@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,15 +36,15 @@ func TestEncoding(t *testing.T) {
 
 	cases := map[string]struct {
 		sender sdk.AccAddress
-		input  wasmTypes.CosmosMsg
+		input  wasmvmtypes.CosmosMsg
 		// set if valid
-		output []sdk.Msg
+		output sdk.Msg
 		// set if invalid
 		isError bool
 	}{
 		"simple swap": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -52,17 +52,15 @@ func TestEncoding(t *testing.T) {
 					),
 				),
 			},
-			output: []sdk.Msg{
-				&types.MsgSwap{
-					Trader:    addrs[0].String(),
-					OfferCoin: sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
-					AskDenom:  core.MicroSDRDenom,
-				},
+			output: &types.MsgSwap{
+				Trader:    addrs[0].String(),
+				OfferCoin: sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
+				AskDenom:  core.MicroSDRDenom,
 			},
 		},
 		"simple swap send": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap_send": {"from_address": "%s", "to_address": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -70,18 +68,16 @@ func TestEncoding(t *testing.T) {
 					),
 				),
 			},
-			output: []sdk.Msg{
-				&types.MsgSwapSend{
-					FromAddress: addrs[0].String(),
-					ToAddress:   addrs[1].String(),
-					OfferCoin:   sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
-					AskDenom:    core.MicroSDRDenom,
-				},
+			output: &types.MsgSwapSend{
+				FromAddress: addrs[0].String(),
+				ToAddress:   addrs[1].String(),
+				OfferCoin:   sdk.NewInt64Coin(core.MicroLunaDenom, 1234),
+				AskDenom:    core.MicroSDRDenom,
 			},
 		},
 		"invalid swap amount": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
 						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234.123", "denom": "%s"}, "ask_denom": "%s"}}`,
@@ -93,10 +89,10 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid address": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
+			input: wasmvmtypes.CosmosMsg{
 				Custom: []byte(
 					fmt.Sprintf(
-						`{"swap": {"trader": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
+						`{"swap_send": {"to_address": "%s", "offer_coin": {"amount": "1234", "denom": "%s"}, "ask_denom": "%s"}}`,
 						invalidAddr, core.MicroLunaDenom, core.MicroSDRDenom,
 					),
 				),

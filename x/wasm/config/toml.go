@@ -18,10 +18,11 @@ const defaultConfigTemplate = `# This is a TOML config file.
 # so we need to restrict the max usage to prevent DoS attack
 contract-query-gas-limit = "{{ .BaseConfig.ContractQueryGasLimit }}"
 
-# Only The logs from the contracts listed in this array
-# are stored in the local storage. To keep all logs,
-# a node operator can set "*" (not recommended).
-contract-logging-whitelist = "{{ .BaseConfig.ContractLoggingWhitelist }}"
+# The flag to specify whether print contract logs or not
+contract-debug-mode = "{{ .BaseConfig.ContractDebugMode }}"
+
+# The WASM VM memory cache size in MiB not bytes
+contract-memory-cache-size = "{{ .BaseConfig.ContractMemoryCacheSize }}"
 `
 
 var configTemplate *template.Template

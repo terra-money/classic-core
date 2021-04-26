@@ -6,14 +6,25 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/terra-project/core/x/wasm/types";
 
-// Params defines the parameters for the oracle module.
+// Params defines the parameters for the wasm module.
 message Params {
   option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = false;
 
-  uint64 max_contract_size     = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
-  uint64 max_contract_gas      = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
-  uint64 max_contract_msg_size = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
+  uint64      max_contract_size      = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
+  uint64      max_contract_gas       = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
+  uint64      max_contract_msg_size  = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
+  uint64      max_contract_data_size = 4 [(gogoproto.moretags) = "yaml:\"max_contract_data_size\""];
+  EventParams event_params           = 5 [(gogoproto.moretags) = "yaml:\"event_params\"", (gogoproto.nullable) = false];
+}
+
+// EventParams defines the event related parameteres
+message EventParams {
+  option (gogoproto.equal) = true;
+
+  uint64 max_attribute_num          = 1 [(gogoproto.moretags) = "yaml:\"max_contract_event_attribute_num\""];
+  uint64 max_attribute_key_length   = 2 [(gogoproto.moretags) = "yaml:\"max_contract_event_attribute_key_length\""];
+  uint64 max_attribute_value_length = 3 [(gogoproto.moretags) = "yaml:\"max_contract_event_attribute_value_length\""];
 }
 
 // CodeInfo is data for the uploaded contract WASM code

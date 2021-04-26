@@ -7,7 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
+	core "github.com/terra-project/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -24,22 +26,21 @@ func TestEncoding(t *testing.T) {
 
 	cases := map[string]struct {
 		sender sdk.AccAddress
-		input  wasmTypes.CosmosMsg
+		input  wasmvmtypes.CosmosMsg
 		// set if valid
-		output []sdk.Msg
+		output sdk.Msg
 		// set if invalid
 		isError bool
 	}{
 		"simple send": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
-				Bank: &wasmTypes.BankMsg{
-					Send: &wasmTypes.SendMsg{
-						FromAddress: addrs[0].String(),
-						ToAddress:   addrs[1].String(),
-						Amount: []wasmTypes.Coin{
+			input: wasmvmtypes.CosmosMsg{
+				Bank: &wasmvmtypes.BankMsg{
+					Send: &wasmvmtypes.SendMsg{
+						ToAddress: addrs[1].String(),
+						Amount: []wasmvmtypes.Coin{
 							{
-								Denom:  "uatom",
+								Denom:  core.MicroLunaDenom,
 								Amount: "12345",
 							},
 							{
@@ -50,27 +51,24 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			output: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: addrs[0].String(),
-					ToAddress:   addrs[1].String(),
-					Amount: sdk.Coins{
-						sdk.NewInt64Coin("uatom", 12345),
-						sdk.NewInt64Coin("usdt", 54321),
-					},
+			output: &banktypes.MsgSend{
+				FromAddress: addrs[0].String(),
+				ToAddress:   addrs[1].String(),
+				Amount: sdk.Coins{
+					sdk.NewInt64Coin(core.MicroLunaDenom, 12345),
+					sdk.NewInt64Coin("usdt", 54321),
 				},
 			},
 		},
 		"invalid send amount": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
-				Bank: &wasmTypes.BankMsg{
-					Send: &wasmTypes.SendMsg{
-						FromAddress: addrs[0].String(),
-						ToAddress:   addrs[1].String(),
-						Amount: []wasmTypes.Coin{
+			input: wasmvmtypes.CosmosMsg{
+				Bank: &wasmvmtypes.BankMsg{
+					Send: &wasmvmtypes.SendMsg{
+						ToAddress: addrs[1].String(),
+						Amount: []wasmvmtypes.Coin{
 							{
-								Denom:  "uatom",
+								Denom:  core.MicroLunaDenom,
 								Amount: "123.456",
 							},
 						},
@@ -81,14 +79,13 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid address": {
 			sender: addrs[0],
-			input: wasmTypes.CosmosMsg{
-				Bank: &wasmTypes.BankMsg{
-					Send: &wasmTypes.SendMsg{
-						FromAddress: addrs[0].String(),
-						ToAddress:   invalidAddr,
-						Amount: []wasmTypes.Coin{
+			input: wasmvmtypes.CosmosMsg{
+				Bank: &wasmvmtypes.BankMsg{
+					Send: &wasmvmtypes.SendMsg{
+						ToAddress: invalidAddr,
+						Amount: []wasmvmtypes.Coin{
 							{
-								Denom:  "uatom",
+								Denom:  core.MicroLunaDenom,
 								Amount: "7890",
 							},
 						},

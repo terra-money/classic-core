@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	"github.com/terra-project/core/x/oracle/keeper"
 	wasm "github.com/terra-project/core/x/wasm/exported"
@@ -25,7 +25,7 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) { return nil, nil }
 
 // ExchangeRateQueryParams query request params for exchange rates
 type ExchangeRateQueryParams struct {
@@ -92,5 +92,5 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		return bz, nil
 	}
 
-	return nil, wasmTypes.UnsupportedRequest{Kind: "unknown Oracle variant"}
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Oracle variant"}
 }

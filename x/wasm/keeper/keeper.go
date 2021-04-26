@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	wasm "github.com/CosmWasm/go-cosmwasm"
 	"github.com/spf13/viper"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -16,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	wasmvm "github.com/CosmWasm/wasmvm"
 
 	"github.com/terra-project/core/x/wasm/config"
 	"github.com/terra-project/core/x/wasm/types"
@@ -31,15 +32,15 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	treasuryKeeper types.TreasuryKeeper
 
-	router sdk.Router
+	router      sdk.Router
+	queryRouter types.GRPCQueryRouter
 
-	wasmer    wasm.Wasmer
+	wasmVM    types.WasmerEngine
 	querier   types.Querier
 	msgParser types.MsgParser
 
 	// WASM config values
-	wasmConfig       *config.Config
-	loggingWhitelist map[string]bool
+	wasmConfig *config.Config
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -51,11 +52,17 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	treasuryKeeper types.TreasuryKeeper,
 	router sdk.Router,
+	queryRouter types.GRPCQueryRouter,
 	supportedFeatures string,
 	homePath string,
 	wasmConfig *config.Config) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homePath, config.DBDir), supportedFeatures, 0)
-
+	wasmVM, err := wasmvm.NewVM(
+		filepath.Join(homePath, config.DBDir),
+		supportedFeatures,
+		types.ContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.ContractMemoryCacheSize,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -66,18 +73,18 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		storeKey:         storeKey,
-		cdc:              cdc,
-		paramSpace:       paramspace,
-		wasmer:           *wasmer,
-		accountKeeper:    accountKeeper,
-		bankKeeper:       bankKeeper,
-		treasuryKeeper:   treasuryKeeper,
-		router:           router,
-		wasmConfig:       wasmConfig,
-		loggingWhitelist: wasmConfig.WhitelistToMap(),
-		msgParser:        types.NewModuleMsgParser(),
-		querier:          types.NewModuleQuerier(),
+		storeKey:       storeKey,
+		cdc:            cdc,
+		paramSpace:     paramspace,
+		wasmVM:         wasmVM,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
+		treasuryKeeper: treasuryKeeper,
+		router:         router,
+		queryRouter:    queryRouter,
+		wasmConfig:     wasmConfig,
+		msgParser:      types.NewModuleMsgParser(),
+		querier:        types.NewModuleQuerier(),
 	}
 }
 
@@ -203,7 +210,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 		return nil, sdkErr
 	}
 
-	byteCode, err := k.wasmer.GetCode(codeInfo.CodeHash)
+	byteCode, err := k.wasmVM.GetCode(codeInfo.CodeHash)
 	if err != nil {
 		return nil, err
 	}
@@ -212,15 +219,29 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 }
 
 // RegisterMsgParsers register module msg parsers
-func (k *Keeper) RegisterMsgParsers(parsers map[string]types.WasmMsgParserInterface) {
+func (k *Keeper) RegisterMsgParsers(
+	parsers map[string]types.WasmMsgParserInterface,
+	stargateWasmMsgParser types.StargateWasmMsgParserInterface,
+) {
 	for route, parser := range parsers {
-		k.msgParser[route] = parser
+		k.msgParser.Parsers[route] = parser
+	}
+
+	if stargateWasmMsgParser != nil {
+		k.msgParser.StargateParser = stargateWasmMsgParser
 	}
 }
 
 // RegisterQueriers register module queriers
-func (k *Keeper) RegisterQueriers(queriers map[string]types.WasmQuerierInterface) {
+func (k *Keeper) RegisterQueriers(
+	queriers map[string]types.WasmQuerierInterface,
+	stargateWasmQuerier types.StargateWasmQuerierInterface,
+) {
 	for route, querier := range queriers {
 		k.querier.Queriers[route] = querier
+	}
+
+	if stargateWasmQuerier != nil {
+		k.querier.StargateQuerier = stargateWasmQuerier
 	}
 }

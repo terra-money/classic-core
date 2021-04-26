@@ -10,8 +10,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/tendermint/crypto"
@@ -23,13 +21,13 @@ import (
 var (
 	key1, pub1, addr1 = keyPubAddr()
 	testContract      []byte
-	maskContract      []byte
+	reflectContract   []byte
 	oldEscrowContract []byte
 )
 
 func loadContracts() {
-	testContract = mustLoad("./keeper/testdata/contract.wasm")
-	maskContract = mustLoad("./keeper/testdata/mask.wasm")
+	testContract = mustLoad("./keeper/testdata/hackatom.wasm")
+	reflectContract = mustLoad("./keeper/testdata/reflect.wasm")
 	oldEscrowContract = mustLoad("./testdata/escrow_0.7.wasm")
 }
 
@@ -54,9 +52,9 @@ type initMsg struct {
 }
 
 type state struct {
-	Verifier    wasmTypes.CanonicalAddress `json:"verifier"`
-	Beneficiary wasmTypes.CanonicalAddress `json:"beneficiary"`
-	Funder      wasmTypes.CanonicalAddress `json:"funder"`
+	Verifier    string `json:"verifier"`
+	Beneficiary string `json:"beneficiary"`
+	Funder      string `json:"funder"`
 }
 
 func createFakeFundedAccount(

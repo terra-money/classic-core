@@ -3,17 +3,14 @@ package keeper
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-	"github.com/spf13/viper"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerror "github.com/cosmos/cosmos-sdk/types/errors"
@@ -53,7 +50,7 @@ func newWasmQuerierWithCounter(keeper Keeper) wasmQuerierWithCounter {
 }
 
 // Query increase counter and execute real querier
-func (querier wasmQuerierWithCounter) Query(ctx sdk.Context, request wasmTypes.QueryRequest) ([]byte, error) {
+func (querier wasmQuerierWithCounter) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 	totalWasmQueryCounter++
 	return querier.real.Query(ctx, request)
 }
@@ -66,24 +63,18 @@ func (wasmQuerierWithCounter) QueryCustom(sdk.Context, json.RawMessage) ([]byte,
 // number os wasm queries called from a contract
 var totalWasmQueryCounter int
 
-func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper Keeper, cdc *codec.LegacyAmino, cleanup func()) {
-	// we do one basic setup before all test cases (which are read-only and don't change state)
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	viper.Set(flags.FlagHome, tempDir)
-	cleanup = func() { os.RemoveAll(tempDir) }
-
+func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper Keeper, cdc *codec.LegacyAmino) {
 	input := CreateTestInput(t)
 	ctx, cdc, accKeeper, bankKeeper, keeper := input.Ctx, input.Cdc, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		types.WasmQueryRouteWasm: newWasmQuerierWithCounter(keeper),
-	})
+	}, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator = createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 
 	// store the code
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
@@ -91,26 +82,26 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	// instantiate the contract
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
-	contractAddr, err := keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, deposit, false)
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, deposit, false)
 	require.NoError(t, err)
 
-	return contractAddr, creator, ctx, keeper, cdc, cleanup
+	return contractAddr, creator, ctx, keeper, cdc
 }
 
 func TestGasCostOnQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 4_341
-	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-	GasWork50 := GasNoWork + 5_708 // this is a little shy of 50k gas - to keep an eye on the limit
+	GasNoWork := types.InstanceCost + 4_384
+	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
+	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
 	const (
-		GasReturnUnhashed uint64 = 647
-		GasReturnHashed   uint64 = 597
+		GasReturnUnhashed uint64 = 283
+		GasReturnHashed   uint64 = 257
 	)
 
 	cases := map[string]struct {
@@ -151,13 +142,12 @@ func TestGasCostOnQuery(t *testing.T) {
 				Depth: 4,
 				Work:  50,
 			},
-			// this is (currently) 244_708 gas
-			expectedGas: 5*GasWork50 + 4*GasReturnHashed,
+			// NOTE: +6 for rounding issues
+			expectedGas: 5*GasWork50 + 4*GasReturnHashed - 6,
 		},
 	}
 
-	contractAddr, creator, ctx, keeper, _, cleanup := initRecurseContract(t)
-	defer cleanup()
+	contractAddr, creator, ctx, keeper, _ := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -192,9 +182,9 @@ func TestGasCostOnQuery(t *testing.T) {
 }
 
 func TestGasOnExternalQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 4_341
-	// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-	GasWork50 := GasNoWork + 5_708 // this is a little shy of 50k gas - to keep an eye on the limit
+	GasNoWork := types.InstanceCost + 4_384
+	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
+	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
 	cases := map[string]struct {
 		gasLimit    uint64
@@ -233,8 +223,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 		},
 	}
 
-	contractAddr, _, ctx, keeper, cdc, cleanup := initRecurseContract(t)
-	defer cleanup()
+	contractAddr, _, ctx, keeper, cdc := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -271,11 +260,11 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	// This attack would allow us to use far more than the provided gas before
 	// eventually hitting an OutOfGas panic.
 
-	GasNoWork := types.InstanceCost + 4_341
-	GasWork2k := GasNoWork + 230_623
+	GasNoWork := types.InstanceCost + 4_384
+	GasWork2k := GasNoWork + 229_495
 
 	// This is overhead for calling into a sub-contract
-	const GasReturnHashed uint64 = 603
+	const GasReturnHashed uint64 = 261
 
 	cases := map[string]struct {
 		gasLimit                  uint64
@@ -300,7 +289,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 5,
-			expectedGas:               GasWork2k + 5*(GasWork2k+GasReturnHashed),
+			// NOTE: +2 for rounding issues
+			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) + 2,
 		},
 		// this is where we expect an error...
 		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)
@@ -317,8 +307,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		},
 	}
 
-	contractAddr, _, ctx, keeper, _, cleanup := initRecurseContract(t)
-	defer cleanup()
+	contractAddr, _, ctx, keeper, _ := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
