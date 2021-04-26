@@ -16,7 +16,8 @@ import (
 
 func registerQueryRoutes(clientCtx client.Context, rtr *mux.Router) {
 	rtr.HandleFunc("/market/swap", querySwapHandlerFunction(clientCtx)).Methods("GET")
-	rtr.HandleFunc("/market/terra_pool_delta", queryTerraPoolDeltaHandlerFunction(clientCtx)).Methods("GET")
+	rtr.HandleFunc("/market/mint_pool_delta", queryMintPoolDeltaHandlerFunction(clientCtx)).Methods("GET")
+	rtr.HandleFunc("/market/burn_pool_delta", queryBurnPoolDeltaHandlerFunction(clientCtx)).Methods("GET")
 	rtr.HandleFunc("/market/parameters", queryParamsHandlerFunction(clientCtx)).Methods("GET")
 }
 
@@ -65,14 +66,31 @@ func querySwapHandlerFunction(clientCtx client.Context) http.HandlerFunc {
 	}
 }
 
-func queryTerraPoolDeltaHandlerFunction(clientCtx client.Context) http.HandlerFunc {
+func queryMintPoolDeltaHandlerFunction(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
 
-		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTerraPoolDelta), nil)
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMintPoolDelta), nil)
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
+	}
+}
+
+func queryBurnPoolDeltaHandlerFunction(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBurnPoolDelta), nil)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}

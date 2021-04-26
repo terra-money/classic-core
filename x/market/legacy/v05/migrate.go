@@ -1,0 +1,28 @@
+package v05
+
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	v04market "github.com/terra-project/core/x/market/legacy/v04"
+	v05market "github.com/terra-project/core/x/market/types"
+)
+
+// Migrate accepts exported v0.4 x/market and
+// migrates it to v0.5 x/market genesis state. The migration includes:
+//
+// - Split BasePool to MintPool and Burn Pool from x/market genesis state.
+// - Re-encode in v0.5 GenesisState.
+func Migrate(
+	marketGenState v04market.GenesisState,
+) *v05market.GenesisState {
+	return &v05market.GenesisState{
+		MintPoolDelta: sdk.ZeroDec(),
+		BurnPoolDelta: sdk.ZeroDec(),
+		Params: v05market.Params{
+			MintBasePool:       marketGenState.Params.BasePool.MulInt64(10),
+			BurnBasePool:       marketGenState.Params.BasePool,
+			PoolRecoveryPeriod: uint64(marketGenState.Params.PoolRecoveryPeriod),
+			MinStabilitySpread: marketGenState.Params.MinStabilitySpread,
+		},
+	}
+}

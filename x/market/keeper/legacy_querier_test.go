@@ -115,12 +115,12 @@ func TestLegacyQuerySwap(t *testing.T) {
 	require.True(t, swapCoin.Amount.IsPositive())
 }
 
-func TestLegacyQueryTerraPool(t *testing.T) {
+func TestLegacyQueryMintPool(t *testing.T) {
 
 	input := CreateTestInput(t)
 
 	poolDelta := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, poolDelta)
+	input.MarketKeeper.SetMintPoolDelta(input.Ctx, poolDelta)
 
 	querier := NewLegacyQuerier(input.MarketKeeper, input.Cdc)
 	query := abci.RequestQuery{
@@ -128,7 +128,29 @@ func TestLegacyQueryTerraPool(t *testing.T) {
 		Data: nil,
 	}
 
-	res, errRes := querier(input.Ctx, []string{types.QueryTerraPoolDelta}, query)
+	res, errRes := querier(input.Ctx, []string{types.QueryMintPoolDelta}, query)
+	require.NoError(t, errRes)
+
+	var retPool sdk.Dec
+	err := input.Cdc.UnmarshalJSON(res, &retPool)
+	require.NoError(t, err)
+	require.Equal(t, poolDelta, retPool)
+}
+
+func TestLegacyQueryBurnPool(t *testing.T) {
+
+	input := CreateTestInput(t)
+
+	poolDelta := sdk.NewDecWithPrec(17, 1)
+	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, poolDelta)
+
+	querier := NewLegacyQuerier(input.MarketKeeper, input.Cdc)
+	query := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, errRes := querier(input.Ctx, []string{types.QueryBurnPoolDelta}, query)
 	require.NoError(t, errRes)
 
 	var retPool sdk.Dec
