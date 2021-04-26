@@ -113,8 +113,8 @@ var (
 type TestInput struct {
 	Ctx           sdk.Context
 	Cdc           *codec.LegacyAmino
-	AccountKeeper types.AccountKeeper
-	BankKeeper    types.BankKeeper
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
 	OracleKeeper  types.OracleKeeper
 	MarketKeeper  Keeper
 }

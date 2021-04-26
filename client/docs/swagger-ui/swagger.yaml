@@ -5725,11 +5725,31 @@ paths:
                 example: '50'
         '500':
           description: Internal Server Error
-  /market/terra_pool_delta:
+  /market/mint_pool_delta:
     get:
       summary: >-
-        Get Terra pool delta, is usdr amount used for swap operation from the
-        TerraPool.
+        Get mint pool delta, is usdr amount used for swap operation from the
+        MintPool.
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: '10000000.00'
+        '400':
+          description: Bad Request
+        '500':
+          description: Internal Server Error
+  /market/burn_pool_delta:
+    get:
+      summary: >-
+        Get burn pool delta, is usdr amount used for swap operation from the
+        BurnPool.
       tags:
         - Market
       produces:
@@ -5758,15 +5778,18 @@ paths:
           schema:
             type: object
             properties:
-              daily_luna_delta_limit:
+              mint_base_pool:
                 type: number
-                example: '0.005'
-              min_swap_spread:
+                example: '1000000.0'
+              burn_base_pool:
+                type: number
+                example: '1000000.0'
+              pool_recovery_period:
+                type: number
+                example: '16000'
+              min_stability_spread:
                 type: number
                 example: '0.02'
-              max_swap_spread:
-                type: number
-                example: '0.1'
         '400':
           description: Bad Request
         '500':
@@ -25107,6 +25130,92 @@ paths:
             $ref: '#/definitions/terra.tx.v1beta1.ComputeTaxRequest'
       tags:
         - Service
+  /terra/market/v1beta1/burn_pool_delta:
+    get:
+      summary: BurnPoolDelta returns burn_pool_delta amount.
+      operationId: BurnPoolDelta
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              burn_pool_delta:
+                type: string
+                format: byte
+                title: >-
+                  burn_pool_delta defines the gap between the BurnPool and the
+                  BurnBasePool
+            description: >-
+              QueryBurnPoolDeltaResponse is the response type for the
+              Query/BurnPoolDelta RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /terra/market/v1beta1/mint_pool_delta:
+    get:
+      summary: MintPoolDelta returns mint_pool_delta amount.
+      operationId: MintPoolDelta
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              mint_pool_delta:
+                type: string
+                format: byte
+                title: >-
+                  mint_pool_delta defines the gap between the MintPool and the
+                  MintBasePool
+            description: >-
+              QueryMintPoolDeltaResponse is the response type for the
+              Query/MintPoolDelta RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
   /terra/market/v1beta1/params:
     get:
       summary: Params queries all parameters.
@@ -25121,7 +25230,10 @@ paths:
                 description: params defines the parameters of the module.
                 type: object
                 properties:
-                  base_pool:
+                  mint_base_pool:
+                    type: string
+                    format: byte
+                  burn_base_pool:
                     type: string
                     format: byte
                   pool_recovery_period:
@@ -25216,49 +25328,6 @@ paths:
           in: query
           required: false
           type: string
-      tags:
-        - Query
-  /terra/market/v1beta1/terra_pool_delta:
-    get:
-      summary: TerraPoolDelta returns terra_pool_delta amount.
-      operationId: TerraPoolDelta
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              terra_pool_delta:
-                type: string
-                format: byte
-                title: >-
-                  terra_pool_delta defines the gap between the TerraPool and the
-                  BasePool
-            description: >-
-              QueryTerraPoolDeltaResponse is the response type for the
-              Query/TerraPoolDelta RPC method.
-        default:
-          description: An unexpected error response
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
       tags:
         - Query
   /terra/oracle/v1beta1/denoms/actives:
@@ -37601,15 +37670,18 @@ definitions:
   MarketParams:
     type: object
     properties:
-      daily_luna_delta_limit:
+      mint_base_pool:
         type: number
-        example: '0.005'
-      min_swap_spread:
+        example: '1000000.0'
+      burn_base_pool:
+        type: number
+        example: '1000000.0'
+      pool_recovery_period:
+        type: number
+        example: '16000'
+      min_stability_spread:
         type: number
         example: '0.02'
-      max_swap_spread:
-        type: number
-        example: '0.1'
   PrevoteReq:
     type: object
     properties:
@@ -52911,7 +52983,10 @@ definitions:
   terra.market.v1beta1.Params:
     type: object
     properties:
-      base_pool:
+      mint_base_pool:
+        type: string
+        format: byte
+      burn_base_pool:
         type: string
         format: byte
       pool_recovery_period:
@@ -52921,6 +52996,30 @@ definitions:
         type: string
         format: byte
     description: Params defines the parameters for the market module.
+  terra.market.v1beta1.QueryBurnPoolDeltaResponse:
+    type: object
+    properties:
+      burn_pool_delta:
+        type: string
+        format: byte
+        title: >-
+          burn_pool_delta defines the gap between the BurnPool and the
+          BurnBasePool
+    description: >-
+      QueryBurnPoolDeltaResponse is the response type for the
+      Query/BurnPoolDelta RPC method.
+  terra.market.v1beta1.QueryMintPoolDeltaResponse:
+    type: object
+    properties:
+      mint_pool_delta:
+        type: string
+        format: byte
+        title: >-
+          mint_pool_delta defines the gap between the MintPool and the
+          MintBasePool
+    description: >-
+      QueryMintPoolDeltaResponse is the response type for the
+      Query/MintPoolDelta RPC method.
   terra.market.v1beta1.QueryParamsResponse:
     type: object
     properties:
@@ -52928,7 +53027,10 @@ definitions:
         description: params defines the parameters of the module.
         type: object
         properties:
-          base_pool:
+          mint_base_pool:
+            type: string
+            format: byte
+          burn_base_pool:
             type: string
             format: byte
           pool_recovery_period:
@@ -52952,18 +53054,6 @@ definitions:
           amount:
             type: string
     description: QuerySwapResponse is the response type for the Query/Swap RPC method.
-  terra.market.v1beta1.QueryTerraPoolDeltaResponse:
-    type: object
-    properties:
-      terra_pool_delta:
-        type: string
-        format: byte
-        title: >-
-          terra_pool_delta defines the gap between the TerraPool and the
-          BasePool
-    description: >-
-      QueryTerraPoolDeltaResponse is the response type for the
-      Query/TerraPoolDelta RPC method.
   terra.oracle.v1beta1.AggregateExchangeRatePrevote:
     type: object
     properties:

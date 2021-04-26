@@ -40,11 +40,11 @@ func GetCmdQueryGrants() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query grants between a granter-grantee pair,
 
-$ terracli query msgauth grant terra... terra...
+$ terrad query msgauth grant terra... terra...
 
 Or, query all grants of a granter,
 
-$ terracli query msgauth grant terra... 
+$ terrad query msgauth grant terra... 
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

@@ -108,11 +108,11 @@ func InstantiateContractCmd() *cobra.Command {
 		Long: `
 Instantiate a wasm contract of the code which has the given id
 
-$ terracli instantiate 1 '{"arbiter": "terra~~"}'
+$ terrad instantiate 1 '{"arbiter": "terra~~"}'
 
 You can also instantiate it with funds
 
-$ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
+$ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 `,
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -271,7 +271,7 @@ func MigrateContractCmd() *cobra.Command {
 Migrate a contract to new code by calling migrate function of 
 the new code.
 
-$ terracli tx wasm migrate terra... 10 '{"verifier": "terra..."}'
+$ terrad tx wasm migrate terra... 10 '{"verifier": "terra..."}'
 		`),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -326,7 +326,7 @@ func UpdateContractOwnerCmd() *cobra.Command {
 		Long: strings.TrimSpace(`
 Update a contract owner to a new address
 
-$ terracli tx wasm update-owner terra... terra...
+$ terrad tx wasm update-owner terra... terra...
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -220,5 +220,6 @@ func (app *TerraApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs 
 	/* Handle market state. */
 
 	// clear all market pools
-	app.MarketKeeper.SetTerraPoolDelta(ctx, sdk.ZeroDec())
+	app.MarketKeeper.SetMintPoolDelta(ctx, sdk.ZeroDec())
+	app.MarketKeeper.SetBurnPoolDelta(ctx, sdk.ZeroDec())
 }

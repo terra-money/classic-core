@@ -11,7 +11,10 @@ message GenesisState {
   // params defines all the paramaters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
 
-  // the gap between the TerraPool and the BasePool
-  bytes terra_pool_delta = 2
+  // the gap between the MintPool and the MintBasePool
+  bytes mint_pool_delta = 2
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // the gap between the BurnPool and the BurnBasePool
+  bytes burn_pool_delta = 3
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }

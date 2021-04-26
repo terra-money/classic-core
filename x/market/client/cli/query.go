@@ -25,7 +25,8 @@ func GetQueryCmd() *cobra.Command {
 
 	marketQueryCmd.AddCommand(
 		GetCmdQuerySwap(),
-		GetCmdQueryTerraPoolDelta(),
+		GetCmdQueryMintPoolDelta(),
+		GetCmdQueryBurnPoolDelta(),
 		GetCmdQueryParams(),
 	)
 
@@ -41,7 +42,7 @@ func GetCmdQuerySwap() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query a quote for how many coins can be received in a swap operation. Note; rates are dynamic and can quickly change.
 
-$ terracli query swap 5000000uluna usdr
+$ terrad query swap 5000000uluna usdr
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -74,16 +75,15 @@ $ terracli query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryTerraPoolDelta implements the query terra pool delta command.
-func GetCmdQueryTerraPoolDelta() *cobra.Command {
+// GetCmdQueryMintPoolDelta implements the query mint pool delta command.
+func GetCmdQueryMintPoolDelta() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "terra-pool-delta",
+		Use:   "mint-pool-delta",
 		Args:  cobra.NoArgs,
-		Short: "Query terra pool delta",
-		Long: `Query terra pool delta, which is usdr amount used for swap operation from the TerraPool.
-It can be negative if the market wants more Terra than Luna, and vice versa if the market wants more Luna.
+		Short: "Query mint pool delta",
+		Long: `Query mint pool delta, which is usdr amount used for mint operation from the MintBasePool.
 
-$ terracli query market terra-pool-delta
+$ terrad query market mint-pool-delta
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -92,8 +92,40 @@ $ terracli query market terra-pool-delta
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.TerraPoolDelta(context.Background(),
-				&types.QueryTerraPoolDeltaRequest{},
+			res, err := queryClient.MintPoolDelta(context.Background(),
+				&types.QueryMintPoolDeltaRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryBurn poolDelta implements the query mint pool delta command.
+func GetCmdQueryBurnPoolDelta() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn-pool-delta",
+		Args:  cobra.NoArgs,
+		Short: "Query burn pool delta",
+		Long: `Query burn pool delta, which is usdr amount used for mint operation from the BurnBasePool.
+
+$ terrad query market burn-pool-delta
+	`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.BurnPoolDelta(context.Background(),
+				&types.QueryBurnPoolDeltaRequest{},
 			)
 			if err != nil {
 				return err

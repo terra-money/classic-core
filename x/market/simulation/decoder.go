@@ -16,7 +16,12 @@ import (
 func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key[:1], types.TerraPoolDeltaKey):
+		case bytes.Equal(kvA.Key[:1], types.MintPoolDeltaKey):
+			var deltaA, deltaB sdk.DecProto
+			cdc.MustUnmarshalBinaryBare(kvA.Value, &deltaA)
+			cdc.MustUnmarshalBinaryBare(kvB.Value, &deltaB)
+			return fmt.Sprintf("%v\n%v", deltaA, deltaB)
+		case bytes.Equal(kvA.Key[:1], types.BurnPoolDeltaKey):
 			var deltaA, deltaB sdk.DecProto
 			cdc.MustUnmarshalBinaryBare(kvA.Value, &deltaA)
 			cdc.MustUnmarshalBinaryBare(kvB.Value, &deltaB)

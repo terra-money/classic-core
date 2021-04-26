@@ -48,11 +48,11 @@ func GetCmdGrantAuthorization() *cobra.Command {
 Grant authorization of a specific msg type to an address 
 to let the address execute a transaction on your behalf,
 
-$ terracli tx msgauth grant terra... send 1000000uluna,10000000ukrw --from [granter]
+$ terrad tx msgauth grant terra... send 1000000uluna,10000000ukrw --from [granter]
 
 Or, you can just give authorization of other msg types
 
-$ terracli tx msgauth grant terra... swap --from [granter]
+$ terrad tx msgauth grant terra... swap --from [granter]
 				`),
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -110,7 +110,7 @@ func GetCmdRevokeAuthorization() *cobra.Command {
 		Long: strings.TrimSpace(`
 Revoke authorization from an address for a msg type,
 
-$ terracli msgauth revoke terra... send --from [granter]
+$ terrad tx msgauth revoke terra... send --from [granter]
 `),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -147,7 +147,7 @@ func GetCmdSendAs() *cobra.Command {
 		Long: strings.TrimSpace(`
 Execute tx on behalf of granter account,
 
-$ terracli msgauth send-as terra... ./tx.json --from [grantee]
+$ terrad tx msgauth send-as terra... ./tx.json --from [grantee]
 
 tx.json should be format of StdTx
 `),

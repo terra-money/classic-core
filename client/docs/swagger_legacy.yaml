@@ -2110,9 +2110,27 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/terra_pool_delta:
+  /market/mint_pool_delta:
     get:
-      summary: Get Terra pool delta, is usdr amount used for swap operation from the TerraPool.
+      summary: Get mint pool delta, is usdr amount used for swap operation from the MintPool.
+      tags:
+        - Market
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: number
+            format: float
+            example: "10000000.00"
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+  /market/burn_pool_delta:
+    get:
+      summary: Get burn pool delta, is usdr amount used for swap operation from the BurnPool.
       tags:
         - Market
       produces:
@@ -3833,15 +3851,18 @@ definitions:
   MarketParams:
     type: object
     properties:
-      daily_luna_delta_limit:
+      mint_base_pool:
         type: number
-        example: "0.005"
-      min_swap_spread:
+        example: "1000000.0"
+      burn_base_pool:
+        type: number
+        example: "1000000.0"
+      pool_recovery_period:
+        type: number
+        example: "16000"
+      min_stability_spread:
         type: number
         example: "0.02"
-      max_swap_spread:
-        type: number
-        example: "0.1"
   PrevoteReq:
     type: object
     properties:
