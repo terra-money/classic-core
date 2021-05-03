@@ -135,7 +135,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	if appState[v038evidence.ModuleName] != nil {
 		// unmarshal relative source genesis application state
 		var evidenceGenState v038evidence.GenesisState
-		v04Codec.MustUnmarshalJSON(appState[v038bank.ModuleName], &evidenceGenState)
+		v04Codec.MustUnmarshalJSON(appState[v038evidence.ModuleName], &evidenceGenState)
 
 		// delete deprecated x/evidence genesis state
 		delete(appState, v038evidence.ModuleName)
