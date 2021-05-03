@@ -10,6 +10,8 @@ option go_package = "github.com/terra-project/core/x/wasm/types";
 service Msg {
   // StoreCode to submit Wasm code to the system
   rpc StoreCode(MsgStoreCode) returns (MsgStoreCodeResponse);
+  // MigrateCode to submit new version Wasm code to the system
+  rpc MigrateCode(MsgMigrateCode) returns (MsgMigrateCodeResponse);
   //  Instantiate creates a new smart contract instance for the given code id.
   rpc InstantiateContract(MsgInstantiateContract) returns (MsgInstantiateContractResponse);
   // Execute submits the given message data to a smart contract
@@ -30,6 +32,8 @@ message MsgStoreCode {
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 2 [(gogoproto.moretags) = "yaml:\"wasm_byte_code\"", (gogoproto.customname) = "WASMByteCode"];
+  // CodeID is optional
+  uint64 code_id = 3 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
 }
 
 // MsgStoreCodeResponse defines the Msg/StoreCode response type.
@@ -37,6 +41,23 @@ message MsgStoreCodeResponse {
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 1 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
 }
+
+// MsgMigrateCode represents a message to submit
+// Wasm code to the system
+message MsgMigrateCode {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // CodeID is the migration target code id 
+  uint64 code_id = 1 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
+  // Sender is the that actor that signed the messages
+  string sender = 2 [(gogoproto.moretags) = "yaml:\"sender\""];
+  // WASMByteCode can be raw or gzip compressed
+  bytes wasm_byte_code = 3 [(gogoproto.moretags) = "yaml:\"wasm_byte_code\"", (gogoproto.customname) = "WASMByteCode"];
+}
+
+// MsgMigrateCodeResponse defines the Msg/MigrateCode response type.
+message MsgMigrateCodeResponse {}
 
 // MsgInstantiateContract represents a message to create
 // a new smart contract instance for the given

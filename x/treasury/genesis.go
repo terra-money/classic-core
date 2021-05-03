@@ -31,7 +31,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		keeper.SetTaxCap(ctx, cap.Denom, cap.TaxCap)
 	}
 
-	for _, epochState := range data.EpochState {
+	for _, epochState := range data.EpochStates {
 		keeper.SetTR(ctx, int64(epochState.Epoch), epochState.TaxReward)
 		keeper.SetSR(ctx, int64(epochState.Epoch), epochState.SeigniorageReward)
 		keeper.SetTSL(ctx, int64(epochState.Epoch), epochState.TotalStakedLuna)

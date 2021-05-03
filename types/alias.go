@@ -37,11 +37,7 @@ const (
 	Bech32PrefixConsPub  = util.Bech32PrefixConsPub
 )
 
+// functions aliases
 var (
-	// functions aliases
 	IsPeriodLastBlock = util.IsPeriodLastBlock
-)
-
-type (
-	Base64Bytes = util.Base64Bytes
 )

@@ -37,9 +37,10 @@ func init() {
 
 // ParseConfig retrieves the default environment configuration for the
 // application.
-func ParseConfig() (*Config, error) {
+func ParseConfig(v *viper.Viper) (*Config, error) {
 	conf := DefaultConfig()
-	err := viper.Unmarshal(conf)
+	err := v.Unmarshal(conf)
+
 	return conf, err
 }
 
