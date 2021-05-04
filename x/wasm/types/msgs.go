@@ -5,13 +5,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	core "github.com/terra-project/core/types"
 )
 
 // ensure Msg interface compliance at compile time
 var (
 	_ sdk.Msg = &MsgStoreCode{}
+	_ sdk.Msg = &MsgMigrateCode{}
 	_ sdk.Msg = &MsgInstantiateContract{}
 	_ sdk.Msg = &MsgExecuteContract{}
 	_ sdk.Msg = &MsgMigrateContract{}
@@ -21,6 +20,7 @@ var (
 // wasm message types
 const (
 	TypeMsgStoreCode           = "store_code"
+	TypeMsgMigrateCode         = "migrate_code"
 	TypeMsgInstantiateContract = "instantiate_contract"
 	TypeMsgExecuteContract     = "execute_contract"
 	TypeMsgMigrateContract     = "migrate_contract"
@@ -28,7 +28,7 @@ const (
 )
 
 // NewMsgStoreCode creates a MsgStoreCode instance
-func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode core.Base64Bytes) *MsgStoreCode {
+func NewMsgStoreCode(sender sdk.AccAddress, wasmByteCode []byte) *MsgStoreCode {
 	return &MsgStoreCode{
 		Sender:       sender.String(),
 		WASMByteCode: wasmByteCode,
@@ -48,16 +48,65 @@ func (msg MsgStoreCode) GetSignBytes() []byte {
 
 // GetSigners Implements Msg
 func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
-	trader, err := sdk.AccAddressFromBech32(msg.Sender)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
 
-	return []sdk.AccAddress{trader}
+	return []sdk.AccAddress{sender}
 }
 
 // ValidateBasic Implements sdk.Msg
 func (msg MsgStoreCode) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	if len(msg.WASMByteCode) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
+	}
+
+	if uint64(len(msg.WASMByteCode)) > EnforcedMaxContractSize {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
+	}
+
+	return nil
+}
+
+// NewMsgMigrateCode creates a MsgMigrateCode instance
+// TODO - remove after columbus-5 update
+func NewMsgMigrateCode(codeID uint64, sender sdk.AccAddress, wasmByteCode []byte) *MsgMigrateCode {
+	return &MsgMigrateCode{
+		CodeID:       codeID,
+		Sender:       sender.String(),
+		WASMByteCode: wasmByteCode,
+	}
+}
+
+// Route implements sdk.Msg
+func (msg MsgMigrateCode) Route() string { return RouterKey }
+
+// Type implements sdk.Msg
+func (msg MsgMigrateCode) Type() string { return TypeMsgMigrateCode }
+
+// GetSignBytes Implements Msg
+func (msg MsgMigrateCode) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// GetSigners Implements Msg
+func (msg MsgMigrateCode) GetSigners() []sdk.AccAddress {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{sender}
+}
+
+// ValidateBasic Implements sdk.Msg
+func (msg MsgMigrateCode) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)

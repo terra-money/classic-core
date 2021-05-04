@@ -19,7 +19,7 @@ func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
 		TaxCaps:              taxCaps,
 		TaxProceeds:          taxProceeds,
 		EpochInitialIssuance: epochInitialIssuance,
-		EpochState:           epochStates,
+		EpochStates:          epochStates,
 	}
 }
 
@@ -32,7 +32,7 @@ func DefaultGenesisState() *GenesisState {
 		TaxCaps:              []TaxCap{},
 		TaxProceeds:          sdk.Coins{},
 		EpochInitialIssuance: sdk.Coins{},
-		EpochState:           []EpochState{},
+		EpochStates:          []EpochState{},
 	}
 }
 

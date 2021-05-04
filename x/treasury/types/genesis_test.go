@@ -31,7 +31,7 @@ func TestGenesisValidation(t *testing.T) {
 	dummyDec := sdk.NewDec(10)
 	dummyInt := sdk.NewInt(10)
 
-	genState.EpochState = []EpochState{
+	genState.EpochStates = []EpochState{
 		{
 			Epoch:             0,
 			TaxReward:         dummyDec,

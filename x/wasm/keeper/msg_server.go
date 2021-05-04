@@ -53,6 +53,35 @@ func (k msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	}, nil
 }
 
+func (k msgServer) MigrateCode(goCtx context.Context, msg *types.MsgMigrateCode) (*types.MsgMigrateCodeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.Keeper.MigrateCode(ctx, msg.CodeID, senderAddr, msg.WASMByteCode)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(
+		sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeMigrateCode,
+				sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			),
+		},
+	)
+
+	return &types.MsgMigrateCodeResponse{}, nil
+}
+
 func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInstantiateContract) (*types.MsgInstantiateContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)

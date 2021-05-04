@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -17,8 +16,8 @@ import (
 	"github.com/terra-project/core/x/msgauth/types"
 )
 
-// FlagPeriod is flag to specify grant period
-const FlagPeriod = "period"
+// flagPeriod is flag to specify grant period
+const flagPeriod = "period"
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
@@ -40,6 +39,7 @@ func GetTxCmd() *cobra.Command {
 	return AuthorizationTxCmd
 }
 
+// GetCmdGrantAuthorization return cmd handler to grant authorization
 func GetCmdGrantAuthorization() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "grant [grantee-address] [msg-type] [limit]",
@@ -81,8 +81,12 @@ $ terrad tx msgauth grant terra... swap --from [granter]
 				authorization = types.NewGenericAuthorization(msgType)
 			}
 
-			period := time.Duration(viper.GetInt64(FlagPeriod)) * time.Second
+			p, err := cmd.Flags().GetInt64(flagPeriod)
+			if err != nil {
+				return err
+			}
 
+			period := time.Duration(p) * time.Second
 			msg, err := types.NewMsgGrantAuthorization(granter, grantee, authorization, period)
 			if err != nil {
 				return err
@@ -97,12 +101,13 @@ $ terrad tx msgauth grant terra... swap --from [granter]
 		},
 	}
 
-	cmd.Flags().Int64(FlagPeriod, int64(3600*24*365), "The second unit of time duration which the authorization is active for the user; Default is a year")
+	cmd.Flags().Int64(flagPeriod, int64(3600*24*365), "The second unit of time duration which the authorization is active for the user; Default is a year")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
+// GetCmdRevokeAuthorization return cmd handler to revoke authorization
 func GetCmdRevokeAuthorization() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revoke [grantee_address] [msg_type]",
@@ -140,6 +145,7 @@ $ terrad tx msgauth revoke terra... send --from [granter]
 	return cmd
 }
 
+// GetCmdSendAs return cmd handler to transfer tokens with authorization privilege
 func GetCmdSendAs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-as [granter] [tx_json] --from [grantee]",

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,9 +21,10 @@ import (
 )
 
 const (
-	flagTo         = "to"
-	flagAmount     = "amount"
-	flagMigratable = "migratable"
+	flagTo            = "to"
+	flagAmount        = "amount"
+	flagMigratable    = "migratable"
+	flagMigrateCodeID = "migrate-code-id"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -51,7 +51,14 @@ func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store [wasm-file]",
 		Short: "Upload a wasm binary",
-		Args:  cobra.ExactArgs(1),
+		Long: `
+Contract developers can use store cmd to upload new wasm binary
+$ terrad tx store ./path-to-binary 
+
+Or to migrate columbus-4 code to columbus-5 code
+$ terrad tx store ./path-to-binary --migrate-code-id 3
+`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -78,7 +85,6 @@ func StoreCodeCmd() *cobra.Command {
 			// gzip the wasm file
 			if wasmUtils.IsWasm(wasmBytes) {
 				wasmBytes, err = wasmUtils.GzipIt(wasmBytes)
-
 				if err != nil {
 					return err
 				}
@@ -86,8 +92,16 @@ func StoreCodeCmd() *cobra.Command {
 				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
 			}
 
+			var msg sdk.Msg
+			if codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID); err != nil {
+				return err
+			} else if codeID != 0 {
+				msg = types.NewMsgMigrateCode(codeID, fromAddr, wasmBytes)
+			} else {
+				msg = types.NewMsgStoreCode(fromAddr, wasmBytes)
+			}
+
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgStoreCode(fromAddr, wasmBytes)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -95,6 +109,8 @@ func StoreCodeCmd() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().Uint64(flagMigrateCodeID, 0, "specifies the code ID to be migrated")
 
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -129,7 +145,10 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return fmt.Errorf("must specify flag --from")
 			}
 
-			migratable := viper.GetBool(flagMigratable)
+			migratable, err := cmd.Flags().GetBool(flagMigratable)
+			if err != nil {
+				return err
+			}
 
 			// get the id of the code to instantiate
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
