@@ -40,7 +40,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
-	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -158,7 +158,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
-	hackatomAddr, _, err := keeper.InstantiateContract(ctx, hackatomID, uploader, initMsgBz, contractStart, true)
+	hackatomAddr, _, err := keeper.InstantiateContract(ctx, hackatomID, uploader, sdk.AccAddress{}, initMsgBz, contractStart)
 	require.NoError(t, err)
 
 	validBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
@@ -307,7 +307,6 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			// uses all the subGasLimit, plus the 92k or so for the main contract
 			resultAssertions: []assertion{assertGasUsed(subGasLimit+98000, subGasLimit+100000), assertErrorString("out of gas")},
 		},
-
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
 			msg:              instantiateContract,
@@ -320,7 +319,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, contractStart)
 			_, _, empty := keyPubAddr()
 
-			contractAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, []byte("{}"), contractStart, true)
+			contractAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
 			require.NoError(t, err)
 
 			msg := tc.msg(contractAddr.String(), empty.String())
@@ -403,7 +402,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
-	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
 	require.NoError(t, err)
 
 	goodSend := wasmvmtypes.CosmosMsg{

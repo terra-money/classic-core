@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibcclienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
@@ -112,26 +111,4 @@ func encodeSdkAttributes(attrs []abci.EventAttribute) []wasmvmtypes.EventAttribu
 		}
 	}
 	return res
-}
-
-// ConvertWasmIBCTimeoutHeightToCosmosHeight convert wasm types to cosmos type
-func ConvertWasmIBCTimeoutHeightToCosmosHeight(ibcTimeoutBlock *wasmvmtypes.IBCTimeoutBlock) ibcclienttypes.Height {
-	if ibcTimeoutBlock == nil {
-		return ibcclienttypes.NewHeight(0, 0)
-	}
-	return ibcclienttypes.NewHeight(ibcTimeoutBlock.Revision, ibcTimeoutBlock.Height)
-}
-
-// ConvertWasmIBCTimeoutTimestampToCosmosTimestamp convert wasm types to cosmos type
-func ConvertWasmIBCTimeoutTimestampToCosmosTimestamp(timestamp *uint64) uint64 {
-	if timestamp == nil {
-		return 0
-	}
-	return *timestamp
-}
-
-// Messenger is an extension point for custom wasmVM message handling
-type Messenger interface {
-	// DispatchMessage encodes the wasmVM message and dispatches it.
-	DispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data []byte, err error)
 }

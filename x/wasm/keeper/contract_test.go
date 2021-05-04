@@ -132,7 +132,7 @@ func TestInstantiate(t *testing.T) {
 	require.NoError(t, err)
 
 	// create with no balance is also legal
-	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, nil, true)
+	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, nil)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 }
@@ -149,7 +149,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.NoError(t, err)
 
 	const nonExistingCodeID = 9999
-	_, _, err = keeper.InstantiateContract(ctx, nonExistingCodeID, creator, initMsgBz, nil, true)
+	_, _, err = keeper.InstantiateContract(ctx, nonExistingCodeID, creator, sdk.AccAddress{}, initMsgBz, nil)
 	require.Error(t, err, sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", nonExistingCodeID))
 }
 
@@ -168,7 +168,7 @@ func TestInstantiateWithBigInitMsg(t *testing.T) {
 
 	// test max init msg size
 	initMsgBz := make([]byte, keeper.MaxContractMsgSize(ctx)+1)
-	_, _, err = keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, deposit, true)
+	_, _, err = keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "init msg size is too huge")
 }
@@ -196,7 +196,7 @@ func TestExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -283,7 +283,7 @@ func TestExecuteWithHugeMsg(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -316,7 +316,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	// let's make sure we get a reasonable error, no panic/crash
@@ -347,7 +347,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling
@@ -383,7 +383,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling
@@ -408,11 +408,11 @@ func TestMigrate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	originalCodeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
-	newContractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	newCodeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
-	require.NotEqual(t, originalContractID, newContractID)
+	require.NotEqual(t, originalCodeID, newCodeID)
 
 	_, _, anyAddr := keyPubAddr()
 	_, _, newVerifierAddr := keyPubAddr()
@@ -430,7 +430,7 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		migratable           bool
+		admin                sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
 		codeID               uint64
@@ -439,63 +439,69 @@ func TestMigrate(t *testing.T) {
 		expVerifier          sdk.AccAddress
 	}{
 		"all good with same code id": {
-			migratable:  true,
+			admin:       creator,
 			caller:      creator,
-			codeID:      originalContractID,
+			codeID:      originalCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"all good with different code id": {
-			migratable:  true,
+			admin:       creator,
 			caller:      creator,
-			codeID:      newContractID,
+			codeID:      newCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
-		"prevent migration when migratable is false on instantiate": {
-			migratable: false,
-			caller:     creator,
-			codeID:     originalContractID,
-			expErr:     types.ErrNotMigratable,
+		"all good with admin set": {
+			admin:       fred,
+			caller:      fred,
+			codeID:      newCodeID,
+			migrateMsg:  migMsgBz,
+			expVerifier: newVerifierAddr,
 		},
-		"prevent migration when not sent by owner": {
-			migratable: true,
-			caller:     fred,
-			codeID:     originalContractID,
-			expErr:     sdkerrors.ErrUnauthorized,
+		"prevent migration when admin was not set on instantiate": {
+			caller: creator,
+			codeID: originalCodeID,
+			expErr: types.ErrNotMigratable,
+		},
+		"prevent migration when wrong admin": {
+			caller: creator,
+			admin:  fred,
+			codeID: originalCodeID,
+			expErr: sdkerrors.ErrUnauthorized,
 		},
 		"fail with non existing code id": {
-			migratable: true,
-			caller:     creator,
-			codeID:     99999,
-			expErr:     types.ErrNotFound,
+			admin:  creator,
+			caller: creator,
+			codeID: 99999,
+			expErr: types.ErrNotFound,
 		},
 		"fail with non existing contract addr": {
-			migratable:           true,
+			admin:                creator,
 			caller:               creator,
 			overrideContractAddr: anyAddr,
-			codeID:               originalContractID,
+			codeID:               originalCodeID,
 			expErr:               types.ErrNotFound,
 		},
 		"fail in contract with invalid migrate msg": {
-			migratable: true,
+			admin:      creator,
 			caller:     creator,
-			codeID:     originalContractID,
+			codeID:     originalCodeID,
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
 			expErr:     types.ErrMigrationFailed,
 		},
 		"fail in contract without migrate msg": {
-			migratable: true,
-			caller:     creator,
-			codeID:     originalContractID,
-			expErr:     types.ErrMigrationFailed,
+			admin:  creator,
+			caller: creator,
+			codeID: originalCodeID,
+			expErr: types.ErrMigrationFailed,
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-			addr, _, err := keeper.InstantiateContract(ctx, originalContractID, creator, initMsgBz, nil, spec.migratable)
+			addr, _, err := keeper.InstantiateContract(ctx, originalCodeID, creator, spec.admin, initMsgBz, nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
 				addr = spec.overrideContractAddr
@@ -547,7 +553,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	contractAddr, _, err := keeper.InstantiateContract(ctx, originalContractID, creator, initMsgBz, deposit, true)
+	contractAddr, _, err := keeper.InstantiateContract(ctx, originalContractID, creator, creator, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	migMsg := struct {

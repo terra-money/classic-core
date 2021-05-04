@@ -18,8 +18,10 @@ service Msg {
   rpc ExecuteContract(MsgExecuteContract) returns (MsgExecuteContractResponse);
   // Migrate runs a code upgrade/ downgrade for a smart contract
   rpc MigrateContract(MsgMigrateContract) returns (MsgMigrateContractResponse);
-  // UpdateContractOwner sets a new owner for a smart contract
-  rpc UpdateContractOwner(MsgUpdateContractOwner) returns (MsgUpdateContractOwnerResponse);
+  // UpdateContractAdmin sets a new admin for a smart contract
+  rpc UpdateContractAdmin(MsgUpdateContractAdmin) returns (MsgUpdateContractAdminResponse);
+  // ClearContractAdmin remove admin flag from a smart contract
+  rpc ClearContractAdmin(MsgClearContractAdmin) returns (MsgClearContractAdminResponse);
 }
 
 // MsgStoreCode represents a message to submit
@@ -48,7 +50,7 @@ message MsgMigrateCode {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // CodeID is the migration target code id 
+  // CodeID is the migration target code id
   uint64 code_id = 1 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // Sender is the that actor that signed the messages
   string sender = 2 [(gogoproto.moretags) = "yaml:\"sender\""];
@@ -66,20 +68,20 @@ message MsgInstantiateContract {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // Owner is an sender address that can execute migrations
-  string owner = 1 [(gogoproto.moretags) = "yaml:\"owner\""];
+  // Sender is an sender address
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  // Admin is an admin address that can execute migrations
+  string admin = 2 [(gogoproto.moretags) = "yaml:\"admin\""];
   // CodeID is the reference to the stored WASM code
-  uint64 code_id = 2 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
+  uint64 code_id = 3 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // InitMsg json encoded message to be passed to the contract on instantiation
-  bytes init_msg = 3 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
+  bytes init_msg = 4 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
   // InitCoins that are transferred to the contract on execution
-  repeated cosmos.base.v1beta1.Coin init_coins = 4 [
+  repeated cosmos.base.v1beta1.Coin init_coins = 5 [
     (gogoproto.moretags)     = "yaml:\"init_coins\"",
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  // Migratable is the flag to represent the contract can be migrated or not
-  bool migratable = 5 [(gogoproto.moretags) = "yaml:\"migratable\""];
 }
 
 // MsgInstantiateContractResponse defines the Msg/InstantiateContract response type.
@@ -123,8 +125,8 @@ message MsgMigrateContract {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // Owner is the current contract owner
-  string owner = 1 [(gogoproto.moretags) = "yaml:\"owner\""];
+  // Admin is the current contract admin
+  string admin = 1 [(gogoproto.moretags) = "yaml:\"admin\""];
   // Contract is the address of the smart contract
   string contract = 2 [(gogoproto.moretags) = "yaml:\"contract\""];
   // NewCodeID references the new WASM code
@@ -140,19 +142,34 @@ message MsgMigrateContractResponse {
   bytes data = 1 [(gogoproto.moretags) = "yaml:\"data\""];
 }
 
-// MsgUpdateContractOwner represents a message to
-// sets a new owner for a smart contract
-message MsgUpdateContractOwner {
+// MsgUpdateContractAdmin represents a message to
+// sets a new admin for a smart contract
+message MsgUpdateContractAdmin {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // Owner is the current contract owner
-  string owner = 1 [(gogoproto.moretags) = "yaml:\"owner\""];
-  // NewOwner is the new contract owner
-  string new_owner = 2 [(gogoproto.moretags) = "yaml:\"new_owner\""];
+  // Admin is the current contract admin
+  string admin = 1 [(gogoproto.moretags) = "yaml:\"admin\""];
+  // NewAdmin is the new contract admin
+  string new_admin = 2 [(gogoproto.moretags) = "yaml:\"new_admin\""];
   // Contract is the address of the smart contract
   string contract = 3 [(gogoproto.moretags) = "yaml:\"contract\""];
 }
 
-// MsgUpdateContractOwnerResponse defines the Msg/UpdateContractOwner response type.
-message MsgUpdateContractOwnerResponse {}
+// MsgUpdateContractAdminResponse defines the Msg/UpdateContractAdmin response type.
+message MsgUpdateContractAdminResponse {}
+
+// MsgClearContractAdmin represents a message to
+// clear admin address from a smart contract
+message MsgClearContractAdmin {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // Admin is the current contract admin
+  string admin = 1 [(gogoproto.moretags) = "yaml:\"admin\""];
+  // Contract is the address of the smart contract
+  string contract = 2 [(gogoproto.moretags) = "yaml:\"contract\""];
+}
+
+// MsgClearContractAdminResponse defines the Msg/ClearContractAdmin response type.
+message MsgClearContractAdminResponse {}

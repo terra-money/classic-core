@@ -190,6 +190,8 @@
     - [Query](#terra.wasm.v1beta1.Query)
   
 - [terra/wasm/v1beta1/tx.proto](#terra/wasm/v1beta1/tx.proto)
+    - [MsgClearContractAdmin](#terra.wasm.v1beta1.MsgClearContractAdmin)
+    - [MsgClearContractAdminResponse](#terra.wasm.v1beta1.MsgClearContractAdminResponse)
     - [MsgExecuteContract](#terra.wasm.v1beta1.MsgExecuteContract)
     - [MsgExecuteContractResponse](#terra.wasm.v1beta1.MsgExecuteContractResponse)
     - [MsgInstantiateContract](#terra.wasm.v1beta1.MsgInstantiateContract)
@@ -200,8 +202,8 @@
     - [MsgMigrateContractResponse](#terra.wasm.v1beta1.MsgMigrateContractResponse)
     - [MsgStoreCode](#terra.wasm.v1beta1.MsgStoreCode)
     - [MsgStoreCodeResponse](#terra.wasm.v1beta1.MsgStoreCodeResponse)
-    - [MsgUpdateContractOwner](#terra.wasm.v1beta1.MsgUpdateContractOwner)
-    - [MsgUpdateContractOwnerResponse](#terra.wasm.v1beta1.MsgUpdateContractOwnerResponse)
+    - [MsgUpdateContractAdmin](#terra.wasm.v1beta1.MsgUpdateContractAdmin)
+    - [MsgUpdateContractAdminResponse](#terra.wasm.v1beta1.MsgUpdateContractAdminResponse)
   
     - [Msg](#terra.wasm.v1beta1.Msg)
   
@@ -2225,10 +2227,10 @@ ContractInfo stores a WASM contract instance
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `address` | [string](#string) |  |  |
-| `owner` | [string](#string) |  | Owner address that can execute migrations |
+| `creator` | [string](#string) |  | Creator address that can execute migrations |
+| `admin` | [string](#string) |  | Admin address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
-| `migratable` | [bool](#bool) |  | Migratable is the flag to specify the contract migratability |
 
 
 
@@ -2583,6 +2585,33 @@ Query defines the gRPC querier service.
 
 
 
+<a name="terra.wasm.v1beta1.MsgClearContractAdmin"></a>
+
+### MsgClearContractAdmin
+MsgClearContractAdmin represents a message to
+clear admin address from a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta1.MsgClearContractAdminResponse"></a>
+
+### MsgClearContractAdminResponse
+MsgClearContractAdminResponse defines the Msg/ClearContractAdmin response type.
+
+
+
+
+
+
 <a name="terra.wasm.v1beta1.MsgExecuteContract"></a>
 
 ### MsgExecuteContract
@@ -2627,11 +2656,11 @@ code id.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `owner` | [string](#string) |  | Owner is an sender address that can execute migrations |
+| `sender` | [string](#string) |  | Sender is an sender address |
+| `admin` | [string](#string) |  | Admin is an admin address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg json encoded message to be passed to the contract on instantiation |
 | `init_coins` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | InitCoins that are transferred to the contract on execution |
-| `migratable` | [bool](#bool) |  | Migratable is the flag to represent the contract can be migrated or not |
 
 
 
@@ -2691,7 +2720,7 @@ runs a code upgrade/ downgrade for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `owner` | [string](#string) |  | Owner is the current contract owner |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `new_code_id` | [uint64](#uint64) |  | NewCodeID references the new WASM code |
 | `migrate_msg` | [bytes](#bytes) |  | MigrateMsg is json encoded message to be passed to the contract on migration |
@@ -2749,17 +2778,17 @@ MsgStoreCodeResponse defines the Msg/StoreCode response type.
 
 
 
-<a name="terra.wasm.v1beta1.MsgUpdateContractOwner"></a>
+<a name="terra.wasm.v1beta1.MsgUpdateContractAdmin"></a>
 
-### MsgUpdateContractOwner
-MsgUpdateContractOwner represents a message to
-sets a new owner for a smart contract
+### MsgUpdateContractAdmin
+MsgUpdateContractAdmin represents a message to
+sets a new admin for a smart contract
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `owner` | [string](#string) |  | Owner is the current contract owner |
-| `new_owner` | [string](#string) |  | NewOwner is the new contract owner |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
+| `new_admin` | [string](#string) |  | NewAdmin is the new contract admin |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 
 
@@ -2767,10 +2796,10 @@ sets a new owner for a smart contract
 
 
 
-<a name="terra.wasm.v1beta1.MsgUpdateContractOwnerResponse"></a>
+<a name="terra.wasm.v1beta1.MsgUpdateContractAdminResponse"></a>
 
-### MsgUpdateContractOwnerResponse
-MsgUpdateContractOwnerResponse defines the Msg/UpdateContractOwner response type.
+### MsgUpdateContractAdminResponse
+MsgUpdateContractAdminResponse defines the Msg/UpdateContractAdmin response type.
 
 
 
@@ -2795,7 +2824,8 @@ Msg defines the oracle Msg service.
 | `InstantiateContract` | [MsgInstantiateContract](#terra.wasm.v1beta1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#terra.wasm.v1beta1.MsgInstantiateContractResponse) | Instantiate creates a new smart contract instance for the given code id. | |
 | `ExecuteContract` | [MsgExecuteContract](#terra.wasm.v1beta1.MsgExecuteContract) | [MsgExecuteContractResponse](#terra.wasm.v1beta1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
 | `MigrateContract` | [MsgMigrateContract](#terra.wasm.v1beta1.MsgMigrateContract) | [MsgMigrateContractResponse](#terra.wasm.v1beta1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
-| `UpdateContractOwner` | [MsgUpdateContractOwner](#terra.wasm.v1beta1.MsgUpdateContractOwner) | [MsgUpdateContractOwnerResponse](#terra.wasm.v1beta1.MsgUpdateContractOwnerResponse) | UpdateContractOwner sets a new owner for a smart contract | |
+| `UpdateContractAdmin` | [MsgUpdateContractAdmin](#terra.wasm.v1beta1.MsgUpdateContractAdmin) | [MsgUpdateContractAdminResponse](#terra.wasm.v1beta1.MsgUpdateContractAdminResponse) | UpdateContractAdmin sets a new admin for a smart contract | |
+| `ClearContractAdmin` | [MsgClearContractAdmin](#terra.wasm.v1beta1.MsgClearContractAdmin) | [MsgClearContractAdminResponse](#terra.wasm.v1beta1.MsgClearContractAdminResponse) | ClearContractAdmin remove admin flag from a smart contract | |
 
  <!-- end services -->
 

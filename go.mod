@@ -3,7 +3,7 @@ go 1.15
 module github.com/terra-project/core
 
 require (
-	github.com/CosmWasm/wasmvm v0.14.0-beta3
+	github.com/CosmWasm/wasmvm v0.14.0-rc1
 	github.com/cosmos/cosmos-sdk v0.42.4
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2

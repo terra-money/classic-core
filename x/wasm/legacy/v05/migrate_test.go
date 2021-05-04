@@ -147,12 +147,12 @@ func TestMigrate(t *testing.T) {
 		{
 			"contract_info": {
 				"address": "terra13vs2znvhdcy948ejsh7p8p22j8l4n4y07062qq",
+				"admin": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww",
 				"code_id": "1",
+				"creator": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww",
 				"init_msg": {
 					"key": "value"
-				},
-				"migratable": true,
-				"owner": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww"
+				}
 			},
 			"contract_store": [
 				{
@@ -168,12 +168,12 @@ func TestMigrate(t *testing.T) {
 		{
 			"contract_info": {
 				"address": "terra13vs2znvhdcy948ejsh7p8p22j8l4n4y07062qq",
+				"admin": "",
 				"code_id": "2",
+				"creator": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww",
 				"init_msg": {
 					"key": "value"
-				},
-				"migratable": false,
-				"owner": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww"
+				}
 			},
 			"contract_store": [
 				{

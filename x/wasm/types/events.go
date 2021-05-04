@@ -8,14 +8,16 @@ const (
 	EventTypeInstantiateContract = "instantiate_contract"
 	EventTypeExecuteContract     = "execute_contract"
 	EventTypeMigrateContract     = "migrate_contract"
-	EventTypeUpdateContractOwner = "update_contract_owner"
+	EventTypeUpdateContractAdmin = "update_contract_admin"
+	EventTypeClearContractAdmin  = "clear_contract_admin"
 	EventTypeFromContract        = "from_contract"
 
 	AttributeKeySender          = "sender"
 	AttributeKeyCodeID          = "code_id"
 	AttributeKeyContractAddress = "contract_address"
 	AttributeKeyContractID      = "contract_id"
-	AttributeKeyOwner           = "owner"
+	AttributeKeyAdmin           = "admin"
+	AttributeKeyCreator         = "creator"
 
 	AttributeValueCategory = ModuleName
 )

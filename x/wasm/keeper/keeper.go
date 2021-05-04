@@ -80,8 +80,8 @@ func NewKeeper(
 		router:         router,
 		queryRouter:    queryRouter,
 		wasmConfig:     wasmConfig,
-		msgParser:      types.NewModuleMsgParser(),
-		querier:        types.NewModuleQuerier(),
+		msgParser:      types.NewWasmMsgParser(),
+		querier:        types.NewWasmQuerier(),
 	}
 }
 

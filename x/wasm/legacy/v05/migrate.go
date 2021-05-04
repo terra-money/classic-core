@@ -37,13 +37,18 @@ func Migrate(
 			}
 		}
 
+		adminAddr := ""
+		if c.ContractInfo.Migratable {
+			adminAddr = c.ContractInfo.Owner.String()
+		}
+
 		contracts[i] = v05wasm.Contract{
 			ContractInfo: v05wasm.ContractInfo{
-				CodeID:     c.ContractInfo.CodeID,
-				Address:    c.ContractInfo.Address.String(),
-				Owner:      c.ContractInfo.Owner.String(),
-				Migratable: c.ContractInfo.Migratable,
-				InitMsg:    c.ContractInfo.InitMsg,
+				CodeID:  c.ContractInfo.CodeID,
+				Address: c.ContractInfo.Address.String(),
+				Creator: c.ContractInfo.Owner.String(),
+				Admin:   adminAddr,
+				InitMsg: c.ContractInfo.InitMsg,
 			},
 			ContractStore: models,
 		}

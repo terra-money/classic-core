@@ -42,12 +42,12 @@ message ContractInfo {
   option (gogoproto.equal) = true;
 
   string address = 1 [(gogoproto.moretags) = "yaml:\"address\""];
-  // Owner address that can execute migrations
-  string owner = 2 [(gogoproto.moretags) = "yaml:\"owner\""];
+  // Creator address that can execute migrations
+  string creator = 2 [(gogoproto.moretags) = "yaml:\"creator\""];
+  // Admin address that can execute migrations
+  string admin = 3 [(gogoproto.moretags) = "yaml:\"admin\""];
   // CodeID is the reference to the stored Wasm code
-  uint64 code_id = 3 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
+  uint64 code_id = 4 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // InitMsg is the raw message used when instantiating a contract
-  bytes init_msg = 4 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
-  // Migratable is the flag to specify the contract migratability
-  bool migratable = 5 [(gogoproto.moretags) = "yaml:\"migratable\""];
+  bytes init_msg = 5 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
 }

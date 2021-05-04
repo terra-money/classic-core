@@ -69,20 +69,21 @@ func TestMsgInstantiateCode(t *testing.T) {
 
 	tests := []struct {
 		creator    sdk.AccAddress
+		admin      sdk.AccAddress
 		codeID     uint64
 		initMsg    []byte
 		initCoins  sdk.Coins
 		expectPass bool
 	}{
-		{sdk.AccAddress{}, 0, []byte("{}"), sdk.Coins{}, false},
-		{addrs[0], 0, make([]byte, EnforcedMaxContractMsgSize+1), sdk.Coins{}, false},
-		{addrs[0], 0, []byte("{}"), sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
-		{addrs[0], 0, []byte("{invalid json}"), sdk.Coins{}, false},
-		{addrs[0], 0, []byte("{}"), sdk.Coins{}, true},
+		{sdk.AccAddress{}, sdk.AccAddress{}, 0, []byte("{}"), sdk.Coins{}, false},
+		{addrs[0], sdk.AccAddress{}, 0, make([]byte, EnforcedMaxContractMsgSize+1), sdk.Coins{}, false},
+		{addrs[0], sdk.AccAddress{}, 0, []byte("{}"), sdk.Coins{{Amount: sdk.NewInt(1)}}, false},
+		{addrs[0], sdk.AccAddress{}, 0, []byte("{invalid json}"), sdk.Coins{}, false},
+		{addrs[0], sdk.AccAddress{}, 0, []byte("{}"), sdk.Coins{}, true},
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgInstantiateContract(tc.creator, tc.codeID, tc.initMsg, tc.initCoins, true)
+		msg := NewMsgInstantiateContract(tc.creator, tc.admin, tc.codeID, tc.initMsg, tc.initCoins)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -129,7 +130,7 @@ func TestMsgMigrateContract(t *testing.T) {
 	}
 
 	tests := []struct {
-		owner      sdk.AccAddress
+		admin      sdk.AccAddress
 		contract   sdk.AccAddress
 		codeID     uint64
 		msg        json.RawMessage
@@ -144,7 +145,7 @@ func TestMsgMigrateContract(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgMigrateContract(tc.owner, tc.contract, tc.codeID, tc.msg)
+		msg := NewMsgMigrateContract(tc.admin, tc.contract, tc.codeID, tc.msg)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -153,7 +154,7 @@ func TestMsgMigrateContract(t *testing.T) {
 	}
 }
 
-func TestMsgUpdateContractOwner(t *testing.T) {
+func TestMsgUpdateContractAdmin(t *testing.T) {
 	addrs := []sdk.AccAddress{
 		sdk.AccAddress([]byte("addr1_______________")),
 		sdk.AccAddress([]byte("addr2_______________")),
@@ -161,8 +162,8 @@ func TestMsgUpdateContractOwner(t *testing.T) {
 	}
 
 	tests := []struct {
-		owner      sdk.AccAddress
-		newOwner   sdk.AccAddress
+		admin      sdk.AccAddress
+		newAdmin   sdk.AccAddress
 		contract   sdk.AccAddress
 		expectPass bool
 	}{
@@ -173,7 +174,34 @@ func TestMsgUpdateContractOwner(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		msg := NewMsgUpdateContractOwner(tc.owner, tc.newOwner, tc.contract)
+		msg := NewMsgUpdateContractAdmin(tc.admin, tc.newAdmin, tc.contract)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
+func TestMsgClearContractMigratable(t *testing.T) {
+	addrs := []sdk.AccAddress{
+		sdk.AccAddress([]byte("addr1_______________")),
+		sdk.AccAddress([]byte("addr2_______________")),
+		sdk.AccAddress([]byte("addr3_______________")),
+	}
+
+	tests := []struct {
+		admin      sdk.AccAddress
+		contract   sdk.AccAddress
+		expectPass bool
+	}{
+		{sdk.AccAddress{}, addrs[1], false},
+		{addrs[0], sdk.AccAddress{}, false},
+		{addrs[0], addrs[1], true},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgClearContractAdmin(tc.admin, tc.contract)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
