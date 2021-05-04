@@ -238,8 +238,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
 		assert.Equal(t, event.Type, "instantiate_contract")
-		assert.Equal(t, event.Attributes[2].Key, "contract_address")
-		eventAddr := event.Attributes[2].Value
+		assert.Equal(t, event.Attributes[3].Key, "contract_address")
+		eventAddr := event.Attributes[3].Value
 		assert.NotEqual(t, contract, eventAddr)
 
 		// data field is the raw canonical address
