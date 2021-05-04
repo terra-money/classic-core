@@ -78,6 +78,9 @@ func (q querier) ContractInfo(c context.Context, req *types.QueryContractInfoReq
 func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreRequest) (res *types.QueryContractStoreResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// external query gas limit must be specified here
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(q.wasmConfig.ContractQueryGasLimit))
+
 	var contractAddr sdk.AccAddress
 	contractAddr, err = sdk.AccAddressFromBech32(req.ContractAddress)
 	if err != nil {

@@ -1,26 +1,16 @@
 package ante_test
 
 import (
-	"io/ioutil"
-	"os"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/spf13/viper"
 	"github.com/terra-project/core/custom/auth/ante"
 	oracletypes "github.com/terra-project/core/x/oracle/types"
 )
 
 func (suite *AnteTestSuite) TestOracleSpamming() {
-	tempDir, err := ioutil.TempDir("", "wasmtest")
-	suite.Require().NoError(err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	suite.SetupTest(true) // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 

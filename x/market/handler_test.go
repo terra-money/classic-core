@@ -1,7 +1,6 @@
 package market
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -88,7 +87,6 @@ func TestSwapMsg_Burn(t *testing.T) {
 
 	afterPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
 	diff := beforePoolDelta.Sub(afterPoolDelta)
-	fmt.Println("SIBONG", diff)
 
 	// calculate estimation
 	basePool := input.MarketKeeper.GetParams(input.Ctx).BurnBasePool

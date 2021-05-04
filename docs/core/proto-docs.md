@@ -194,6 +194,8 @@
     - [MsgExecuteContractResponse](#terra.wasm.v1beta1.MsgExecuteContractResponse)
     - [MsgInstantiateContract](#terra.wasm.v1beta1.MsgInstantiateContract)
     - [MsgInstantiateContractResponse](#terra.wasm.v1beta1.MsgInstantiateContractResponse)
+    - [MsgMigrateCode](#terra.wasm.v1beta1.MsgMigrateCode)
+    - [MsgMigrateCodeResponse](#terra.wasm.v1beta1.MsgMigrateCodeResponse)
     - [MsgMigrateContract](#terra.wasm.v1beta1.MsgMigrateContract)
     - [MsgMigrateContractResponse](#terra.wasm.v1beta1.MsgMigrateContractResponse)
     - [MsgStoreCode](#terra.wasm.v1beta1.MsgStoreCode)
@@ -1685,7 +1687,7 @@ GenesisState defines the oracle module's genesis state.
 | `tax_caps` | [TaxCap](#terra.treasury.v1beta1.TaxCap) | repeated |  |
 | `tax_proceeds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
 | `epoch_initial_issuance` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
-| `epoch_state` | [EpochState](#terra.treasury.v1beta1.EpochState) | repeated |  |
+| `epoch_states` | [EpochState](#terra.treasury.v1beta1.EpochState) | repeated |  |
 
 
 
@@ -2652,6 +2654,34 @@ MsgInstantiateContractResponse defines the Msg/InstantiateContract response type
 
 
 
+<a name="terra.wasm.v1beta1.MsgMigrateCode"></a>
+
+### MsgMigrateCode
+MsgMigrateCode represents a message to submit
+Wasm code to the system
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the migration target code id |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta1.MsgMigrateCodeResponse"></a>
+
+### MsgMigrateCodeResponse
+MsgMigrateCodeResponse defines the Msg/MigrateCode response type.
+
+
+
+
+
+
 <a name="terra.wasm.v1beta1.MsgMigrateContract"></a>
 
 ### MsgMigrateContract
@@ -2697,6 +2727,7 @@ Wasm code to the system
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `code_id` | [uint64](#uint64) |  | CodeID is optional |
 
 
 
@@ -2760,6 +2791,7 @@ Msg defines the oracle Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `StoreCode` | [MsgStoreCode](#terra.wasm.v1beta1.MsgStoreCode) | [MsgStoreCodeResponse](#terra.wasm.v1beta1.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system | |
+| `MigrateCode` | [MsgMigrateCode](#terra.wasm.v1beta1.MsgMigrateCode) | [MsgMigrateCodeResponse](#terra.wasm.v1beta1.MsgMigrateCodeResponse) | MigrateCode to submit new version Wasm code to the system | |
 | `InstantiateContract` | [MsgInstantiateContract](#terra.wasm.v1beta1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#terra.wasm.v1beta1.MsgInstantiateContractResponse) | Instantiate creates a new smart contract instance for the given code id. | |
 | `ExecuteContract` | [MsgExecuteContract](#terra.wasm.v1beta1.MsgExecuteContract) | [MsgExecuteContractResponse](#terra.wasm.v1beta1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
 | `MigrateContract` | [MsgMigrateContract](#terra.wasm.v1beta1.MsgMigrateContract) | [MsgMigrateContractResponse](#terra.wasm.v1beta1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |

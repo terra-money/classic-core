@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -91,14 +88,6 @@ func NewKeeper(
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// StoreConfig store wasm config to local config file
-func (k Keeper) StoreConfig() {
-	rootDir := viper.GetString(flags.FlagHome)
-	wasmConfigFilePath := filepath.Join(rootDir, "config/wasm.toml")
-
-	config.WriteConfigFile(wasmConfigFilePath, k.wasmConfig)
 }
 
 // GetLastCodeID return last code ID

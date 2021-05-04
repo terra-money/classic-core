@@ -11,6 +11,7 @@ import (
 // RegisterLegacyAminoCodec registers the wasm types and interface
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode", nil)
+	cdc.RegisterConcrete(&MsgMigrateCode{}, "wasm/MsgMigrateCode", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/MsgExecuteContract", nil)
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/MsgMigrateContract", nil)
@@ -21,6 +22,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgStoreCode{},
+		&MsgMigrateCode{},
 		&MsgInstantiateContract{},
 		&MsgExecuteContract{},
 		&MsgMigrateContract{},

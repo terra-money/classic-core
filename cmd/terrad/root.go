@@ -32,6 +32,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	terraapp "github.com/terra-project/core/app"
+	terralegacy "github.com/terra-project/core/app/legacy"
 	"github.com/terra-project/core/app/params"
 	core "github.com/terra-project/core/types"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
@@ -83,7 +84,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			wasmconfig.DBDir = filepath.Base(context.Config.DBDir()) + "/wasm"
 			wasmConfigFilePath := filepath.Join(configPath, "wasm.toml")
 			if _, err := os.Stat(wasmConfigFilePath); os.IsNotExist(err) {
-				wasmConf, _ := wasmconfig.ParseConfig()
+				wasmConf, _ := wasmconfig.ParseConfig(rootViper)
 				wasmconfig.WriteConfigFile(wasmConfigFilePath, wasmConf)
 			}
 
@@ -109,7 +110,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(terraapp.ModuleBasics, terraapp.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, terraapp.DefaultNodeHome),
-		terraapp.MigrateGenesisCmd(),
+		terralegacy.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(terraapp.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, terraapp.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(terraapp.ModuleBasics),
 		AddGenesisAccountCmd(terraapp.DefaultNodeHome),
