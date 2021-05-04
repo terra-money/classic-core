@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	core "github.com/terra-project/core/types"
-
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +16,7 @@ func TestMsgStoreCode(t *testing.T) {
 
 	tests := []struct {
 		sender       sdk.AccAddress
-		wasmByteCode core.Base64Bytes
+		wasmByteCode []byte
 		expectPass   bool
 	}{
 		{addrs[0], []byte{}, false},
@@ -37,6 +35,33 @@ func TestMsgStoreCode(t *testing.T) {
 	}
 }
 
+func TestMsgMigrateCode(t *testing.T) {
+	addrs := []sdk.AccAddress{
+		sdk.AccAddress([]byte("addr1_______________")),
+	}
+
+	tests := []struct {
+		codeID       uint64
+		sender       sdk.AccAddress
+		wasmByteCode []byte
+		expectPass   bool
+	}{
+		{1, addrs[0], []byte{}, false},
+		{2, sdk.AccAddress{}, []byte{1, 2, 3}, false},
+		{3, addrs[0], make([]byte, EnforcedMaxContractSize+1), false},
+		{1, addrs[0], []byte{1, 2, 3}, true},
+	}
+
+	for i, tc := range tests {
+		msg := NewMsgMigrateCode(tc.codeID, tc.sender, tc.wasmByteCode)
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
+		}
+	}
+}
+
 func TestMsgInstantiateCode(t *testing.T) {
 	addrs := []sdk.AccAddress{
 		sdk.AccAddress([]byte("addr1_______________")),
@@ -45,7 +70,7 @@ func TestMsgInstantiateCode(t *testing.T) {
 	tests := []struct {
 		creator    sdk.AccAddress
 		codeID     uint64
-		initMsg    core.Base64Bytes
+		initMsg    []byte
 		initCoins  sdk.Coins
 		expectPass bool
 	}{
@@ -75,7 +100,7 @@ func TestMsgExecuteContract(t *testing.T) {
 	tests := []struct {
 		sender     sdk.AccAddress
 		contract   sdk.AccAddress
-		msg        core.Base64Bytes
+		msg        []byte
 		coins      sdk.Coins
 		expectPass bool
 	}{

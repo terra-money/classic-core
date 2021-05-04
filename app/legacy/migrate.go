@@ -1,4 +1,4 @@
-package app
+package legacy
 
 // TODO change this script to columbus-4 to columbus-5 migration script
 //This file implements a genesis migration from cosmoshub-3 to cosmoshub-4. It migrates state from the modules in cosmoshub-3.
@@ -18,23 +18,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	captypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	evtypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	ibcxfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	ibccoretypes "github.com/cosmos/cosmos-sdk/x/ibc/core/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	legacy05 "github.com/terra-project/core/app/legacy/v05"
+	oracletypes "github.com/terra-project/core/x/oracle/types"
 )
 
 const (
 	flagGenesisTime     = "genesis-time"
 	flagInitialHeight   = "initial-height"
 	flagReplacementKeys = "replacement-cons-keys"
-	flagNoProp29        = "no-prop-29"
 )
 
 // MigrateGenesisCmd returns a command to execute genesis state migration.
@@ -53,19 +54,11 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 
 			var err error
 
-			firstMigration := "v0.38"
 			importGenesis := args[0]
 
 			jsonBlob, err := ioutil.ReadFile(importGenesis)
-
 			if err != nil {
 				return errors.Wrap(err, "failed to read provided genesis file")
-			}
-
-			jsonBlob, err = migrateTendermintGenesis(jsonBlob)
-
-			if err != nil {
-				return errors.Wrap(err, "failed to migration from 0.32 Tendermint params to 0.34 parms")
 			}
 
 			genDoc, err := tmtypes.GenesisDocFromJSON(jsonBlob)
@@ -78,51 +71,46 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
 			}
 
-			migrationFunc := cli.GetMigrationCallback(firstMigration)
-			if migrationFunc == nil {
-				return fmt.Errorf("unknown migration function for version: %s", firstMigration)
-			}
+			// Migrate Terra specific state
+			newGenState := legacy05.Migrate(initialState, clientCtx)
 
-			// TODO: handler error from migrationFunc call
-			newGenState := migrationFunc(initialState, clientCtx)
+			var bankGenesis banktypes.GenesisState
 
-			secondMigration := "v0.39"
+			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[banktypes.ModuleName], &bankGenesis)
 
-			migrationFunc = cli.GetMigrationCallback(secondMigration)
-			if migrationFunc == nil {
-				return fmt.Errorf("unknown migration function for version: %s", secondMigration)
-			}
+			var oracleGenesis oracletypes.GenesisState
+			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[oracletypes.ModuleName], &oracleGenesis)
 
-			// TODO: handler error from migrationFunc call
-			newGenState = migrationFunc(newGenState, clientCtx)
-
-			thirdMigration := "v0.40"
-
-			migrationFunc = cli.GetMigrationCallback(thirdMigration)
-			if migrationFunc == nil {
-				return fmt.Errorf("unknown migration function for version: %s", thirdMigration)
-			}
-
-			// TODO: handler error from migrationFunc call
-			newGenState = migrationFunc(newGenState, clientCtx)
-
-			var bankGenesis bank.GenesisState
-
-			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[bank.ModuleName], &bankGenesis)
-
-			bankGenesis.DenomMetadata = []bank.Metadata{
-				{
-					Description: "The native staking token of the Cosmos Hub.",
-					DenomUnits: []*bank.DenomUnit{
-						{Denom: "uatom", Exponent: uint32(0), Aliases: []string{"microatom"}},
-						{Denom: "matom", Exponent: uint32(3), Aliases: []string{"milliatom"}},
-						{Denom: "atom", Exponent: uint32(6), Aliases: []string{}},
-					},
-					Base:    "uatom",
-					Display: "atom",
+			// Register whitelist denom list
+			denomMetadata := make([]banktypes.Metadata, len(oracleGenesis.Params.Whitelist)+1)
+			denomMetadata[0] = banktypes.Metadata{
+				Description: "The native staking token of the Terra Columbus.",
+				DenomUnits: []*banktypes.DenomUnit{
+					{Denom: "uluna", Exponent: uint32(0), Aliases: []string{"microluna"}},
+					{Denom: "mluna", Exponent: uint32(3), Aliases: []string{"milliluna"}},
+					{Denom: "luna", Exponent: uint32(6), Aliases: []string{}},
 				},
+				Base:    "uluna",
+				Display: "luna",
 			}
-			newGenState[bank.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&bankGenesis)
+
+			for i, w := range oracleGenesis.Params.Whitelist {
+				base := w.Name
+				display := base[1:]
+				denomMetadata[i+1] = banktypes.Metadata{
+					Description: "The native stable token of the Terra Columbus.",
+					DenomUnits: []*banktypes.DenomUnit{
+						{Denom: "u" + display, Exponent: uint32(0), Aliases: []string{"micro" + display}},
+						{Denom: "m" + display, Exponent: uint32(3), Aliases: []string{"milli" + display}},
+						{Denom: display, Exponent: uint32(6), Aliases: []string{}},
+					},
+					Base:    base,
+					Display: display,
+				}
+			}
+
+			bankGenesis.DenomMetadata = denomMetadata
+			newGenState[banktypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&bankGenesis)
 
 			var stakingGenesis staking.GenesisState
 
@@ -194,43 +182,8 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 
 	cmd.Flags().String(flagGenesisTime, "", "override genesis_time with this flag")
 	cmd.Flags().Int(flagInitialHeight, 0, "Set the starting height for the chain")
-	cmd.Flags().String(flagReplacementKeys, "", "Proviide a JSON file to replace the consensus keys of validators")
+	cmd.Flags().String(flagReplacementKeys, "", "Provide a JSON file to replace the consensus keys of validators")
 	cmd.Flags().String(flags.FlagChainID, "", "override chain_id with this flag")
-	cmd.Flags().Bool(flagNoProp29, false, "Do not implement fund recovery from prop29")
 
 	return cmd
-}
-
-// MigrateTendermintGenesis makes sure a later version of Tendermint can parse
-// a JSON blob exported by an older version of Tendermint.
-func migrateTendermintGenesis(jsonBlob []byte) ([]byte, error) {
-	var jsonObj map[string]interface{}
-	err := json.Unmarshal(jsonBlob, &jsonObj)
-	if err != nil {
-		return nil, err
-	}
-
-	consensusParams, ok := jsonObj["consensus_params"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("exported json does not contain consensus_params field")
-	}
-	evidenceParams, ok := consensusParams["evidence"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("exported json does not contain consensus_params.evidence field")
-
-	}
-
-	evidenceParams["max_age_num_blocks"] = evidenceParams["max_age"]
-	delete(evidenceParams, "max_age")
-
-	evidenceParams["max_age_duration"] = "172800000000000"
-	evidenceParams["max_bytes"] = "50000"
-
-	jsonBlob, err = json.Marshal(jsonObj)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error resserializing JSON blob after tendermint migrations")
-	}
-
-	return jsonBlob, nil
 }

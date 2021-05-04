@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,14 +29,49 @@ func TestStoreCode(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create contract
-	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
-	require.Equal(t, uint64(1), contractID)
+	require.Equal(t, uint64(1), codeID)
 
 	// Verify content
-	storedCode, err := keeper.GetByteCode(ctx, contractID)
+	storedCode, err := keeper.GetByteCode(ctx, codeID)
 	require.NoError(t, err)
 	require.Equal(t, wasmCode, storedCode)
+}
+
+func TestMigrateCode(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
+	fakeAccount := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
+
+	codeID := uint64(1)
+	keeper.SetCodeInfo(ctx, codeID, types.CodeInfo{
+		CodeID:   1,
+		CodeHash: []byte{},
+		Creator:  creator.String(),
+	})
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	err = keeper.MigrateCode(ctx, codeID, fakeAccount, wasmCode)
+	require.Error(t, err)
+
+	err = keeper.MigrateCode(ctx, codeID, creator, wasmCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// Verify content
+	storedCode, err := keeper.GetByteCode(ctx, codeID)
+	require.NoError(t, err)
+	require.Equal(t, wasmCode, storedCode)
+
+	// Migration failed for the code which contains valid CodeHash
+	err = keeper.MigrateCode(ctx, codeID, creator, wasmCode)
+	require.Error(t, err)
 }
 
 func TestStoreCodeWithHugeCode(t *testing.T) {
@@ -262,11 +294,6 @@ func TestExecuteWithHugeMsg(t *testing.T) {
 }
 
 func TestExecuteWithPanic(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
-
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -298,10 +325,6 @@ func TestExecuteWithPanic(t *testing.T) {
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -338,10 +361,6 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -379,10 +398,6 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 }
 
 func TestMigrate(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -505,10 +520,6 @@ func TestMigrate(t *testing.T) {
 }
 
 func TestMigrateWithDispatchedMessage(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	viper.Set(flags.FlagHome, tempDir)
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 

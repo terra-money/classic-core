@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   version: "3.0"
-  title: 'Terra-Lite for Terra'
+  title: "Terra-Lite for Terra"
   description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
   - name: Transactions
@@ -2060,7 +2060,7 @@ paths:
         200:
           description: OK
           schema:
-             type: string
+            type: string
         400:
           description: Invalid coin denomination
         500:
@@ -2762,7 +2762,7 @@ paths:
           description: Internal Server Error
   /wasm/codes/{codeID}:
     post:
-      summary: Instantiate wasm contract message
+      summary: Instantiate wasm contract
       tags:
         - Wasm
       produces:
@@ -2803,6 +2803,32 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/CodeInfo"
+  /wasm/codes/{codeID}/migrate:
+    post:
+      summary: Migrate old wasm code to new wasm code
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: codeID
+          description: code ID you want to migrate
+          required: true
+          type: number
+        - in: body
+          name: migrate contract request body
+          schema:
+            $ref: "#/definitions/MigrateCodeReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
   /wasm/contracts/{contractAddress}:
     post:
       summary: Execute wasm contract message
@@ -2991,9 +3017,9 @@ paths:
               type: object
               properties:
                 GenericGrantInfo:
-                    $ref: "#/definitions/GenericGrantInfo"
+                  $ref: "#/definitions/GenericGrantInfo"
                 SendGrantInfo:
-                    $ref: "#/definitions/SendGrantInfo"
+                  $ref: "#/definitions/SendGrantInfo"
   /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}:
     post:
       summary: Grant msg execute permission to grantee address
@@ -3056,11 +3082,11 @@ paths:
             type: object
             properties:
               GenericGrantInfo:
-                  $ref: "#/definitions/GenericGrantInfo"
+                $ref: "#/definitions/GenericGrantInfo"
               SendGrantInfo:
-                  $ref: "#/definitions/SendGrantInfo"
-  /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}/revoke:
-    post:
+                $ref: "#/definitions/SendGrantInfo"
+  ? /msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}/revoke
+  : post:
       summary: Revoke grant from grantee address
       tags:
         - Authorization
@@ -3557,13 +3583,13 @@ definitions:
   TallyResult:
     type: object
     properties:
-      'yes':
+      "yes":
         type: string
         example: "0.0000000000"
       abstain:
         type: string
         example: "0.0000000000"
-      'no':
+      "no":
         type: string
         example: "0.0000000000"
       no_with_veto:
@@ -4142,6 +4168,14 @@ definitions:
       wasm_bytes:
         type: string
         example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
+  MigrateCodeReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
+      wasm_bytes:
+        type: string
+        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
   InstantiateContractReq:
     type: object
     properties:
@@ -4242,10 +4276,10 @@ definitions:
         description: "nano second of time duration"
         example: "3600000000000"
       limit:
-        type: array        
+        type: array
         items:
           $ref: "#/definitions/Coin"
-        description: "required when grant MsgType == send"  
+        description: "required when grant MsgType == send"
   RevokeGrantReq:
     type: object
     required:

@@ -7227,7 +7227,7 @@ paths:
           description: Internal Server Error
   '/wasm/codes/{codeID}':
     post:
-      summary: Instantiate wasm contract message
+      summary: Instantiate wasm contract
       tags:
         - Wasm
       produces:
@@ -7376,6 +7376,123 @@ paths:
                 type: string
               creator:
                 type: string
+  '/wasm/codes/{codeID}/migrate':
+    post:
+      summary: Migrate old wasm code to new wasm code
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: codeID
+          description: code ID you want to migrate
+          required: true
+          type: number
+        - in: body
+          name: migrate contract request body
+          schema:
+            type: object
+            properties:
+              base_req:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                    description: Sender address or Keybase name to generate a transaction
+                  memo:
+                    type: string
+                    example: "Sent via Terra Station \U0001F680"
+                  chain_id:
+                    type: string
+                    example: columbus-3
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '1'
+                  gas:
+                    type: string
+                    example: '200000'
+                  gas_adjustment:
+                    type: string
+                    example: '1.2'
+                  fees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+                  simulate:
+                    type: boolean
+                    example: false
+                    description: >-
+                      Estimate gas for a transaction (cannot be used in
+                      conjunction with generate_only)
+              wasm_bytes:
+                type: string
+                example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
+                type: object
+                properties:
+                  gas:
+                    type: string
+                  amount:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+              memo:
+                type: string
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
   '/wasm/contracts/{contractAddress}':
     post:
       summary: Execute wasm contract message
@@ -38308,6 +38425,54 @@ definitions:
       init_msg:
         type: string
   StoreCodeReq:
+    type: object
+    properties:
+      base_req:
+        type: object
+        properties:
+          from:
+            type: string
+            example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+            description: Sender address or Keybase name to generate a transaction
+          memo:
+            type: string
+            example: "Sent via Terra Station \U0001F680"
+          chain_id:
+            type: string
+            example: columbus-3
+          account_number:
+            type: string
+            example: '0'
+          sequence:
+            type: string
+            example: '1'
+          gas:
+            type: string
+            example: '200000'
+          gas_adjustment:
+            type: string
+            example: '1.2'
+          fees:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                  example: uluna
+                amount:
+                  type: string
+                  example: '50'
+          simulate:
+            type: boolean
+            example: false
+            description: >-
+              Estimate gas for a transaction (cannot be used in conjunction with
+              generate_only)
+      wasm_bytes:
+        type: string
+        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+  MigrateCodeReq:
     type: object
     properties:
       base_req:

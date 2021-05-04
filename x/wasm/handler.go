@@ -27,6 +27,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case *types.MsgStoreCode:
 			res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgMigrateCode:
+			res, err = msgServer.MigrateCode(sdk.WrapSDKContext(ctx), msg)
 		case *types.MsgInstantiateContract:
 			res, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), msg)
 		case *types.MsgExecuteContract:

@@ -4,6 +4,7 @@ package types
 // Wasm module event types
 const (
 	EventTypeStoreCode           = "store_code"
+	EventTypeMigrateCode         = "migrate_code"
 	EventTypeInstantiateContract = "instantiate_contract"
 	EventTypeExecuteContract     = "execute_contract"
 	EventTypeMigrateContract     = "migrate_contract"

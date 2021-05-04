@@ -9,19 +9,21 @@ import (
 // migrates it to v0.5 x/wasm genesis state. The migration includes:
 //
 // - Add new params for event and data size limit to x/wasm genesis state.
+// - Change code bytes and code hash to empty bytes
 // - Re-encode in v0.5 GenesisState.
 func Migrate(
 	wasmGenState v04wasm.GenesisState,
 ) *v05wasm.GenesisState {
+	// CosmWasm version is not compatible, so remove code bytes and code hash
 	codes := make([]v05wasm.Code, len(wasmGenState.Codes))
 	for i, c := range wasmGenState.Codes {
 		codes[i] = v05wasm.Code{
 			CodeInfo: v05wasm.CodeInfo{
 				CodeID:   c.CodeInfo.CodeID,
-				CodeHash: c.CodeInfo.CodeHash,
+				CodeHash: []byte{},
 				Creator:  c.CodeInfo.Creator.String(),
 			},
-			CodeBytes: c.CodesBytes,
+			CodeBytes: []byte{},
 		}
 	}
 

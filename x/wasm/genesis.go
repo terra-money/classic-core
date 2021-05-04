@@ -18,13 +18,18 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	keeper.SetLastInstanceID(ctx, data.LastInstanceID)
 
 	for _, code := range data.Codes {
-		codeHash, err := keeper.CompileCode(ctx, code.CodeBytes)
-		if err != nil {
-			panic(err)
-		}
+		// To cope with CosmWasm version update,
+		// we temporarily allow empty code bytes
+		// TODO - remove after columbus-5 update
+		if len(code.CodeBytes) != 0 {
+			codeHash, err := keeper.CompileCode(ctx, code.CodeBytes)
+			if err != nil {
+				panic(err)
+			}
 
-		if !bytes.Equal(codeHash, code.CodeInfo.CodeHash) {
-			panic("CodeHash is not same")
+			if !bytes.Equal(codeHash, code.CodeInfo.CodeHash) {
+				panic("CodeHash is not same")
+			}
 		}
 
 		keeper.SetCodeInfo(ctx, code.CodeInfo.CodeID, code.CodeInfo)

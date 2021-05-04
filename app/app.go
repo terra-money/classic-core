@@ -473,14 +473,15 @@ func NewTerraApp(
 	// can do so safely.
 	// NOTE: Treasury must occur after bank module so that initial supply is properly set
 	app.mm.SetOrderInitGenesis(
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
-		slashingtypes.ModuleName, govtypes.ModuleName,
-		markettypes.ModuleName, oracletypes.ModuleName,
-		treasurytypes.ModuleName, wasmtypes.ModuleName,
-		msgauthtypes.ModuleName, minttypes.ModuleName,
-		crisistypes.ModuleName, ibchost.ModuleName,
-		genutiltypes.ModuleName, evidencetypes.ModuleName,
-		ibctransfertypes.ModuleName,
+		capabilitytypes.ModuleName, authtypes.ModuleName,
+		banktypes.ModuleName, distrtypes.ModuleName,
+		stakingtypes.ModuleName, slashingtypes.ModuleName,
+		govtypes.ModuleName, markettypes.ModuleName,
+		oracletypes.ModuleName, treasurytypes.ModuleName,
+		wasmtypes.ModuleName, msgauthtypes.ModuleName,
+		minttypes.ModuleName, crisistypes.ModuleName,
+		ibchost.ModuleName, genutiltypes.ModuleName,
+		evidencetypes.ModuleName, ibctransfertypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)

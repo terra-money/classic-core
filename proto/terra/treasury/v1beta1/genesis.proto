@@ -18,7 +18,7 @@ message GenesisState {
       [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
   repeated cosmos.base.v1beta1.Coin epoch_initial_issuance = 6
       [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
-  repeated EpochState epoch_state = 7 [(gogoproto.nullable) = false];
+  repeated EpochState epoch_states = 7 [(gogoproto.nullable) = false];
 }
 
 // TaxCap is the max tax amount can be charged for the given denom

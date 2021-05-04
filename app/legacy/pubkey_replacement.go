@@ -1,6 +1,7 @@
-package app
+package legacy
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -98,14 +99,14 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 			}
 
 			for tmIdx, tmval := range genDoc.Validators {
-				if tmval.Address.String() == replaceValConsAddress.String() {
+				if bytes.Equal(tmval.Address.Bytes(), toReplaceValConsAddress.Bytes()) {
 					genDoc.Validators[tmIdx].Address = replaceValConsAddress.Bytes()
 					genDoc.Validators[tmIdx].PubKey = replaceValConsPubKey
 
 				}
 			}
-			stakingGenesis.Validators[i] = val
 
+			stakingGenesis.Validators[i] = val
 		}
 
 	}

@@ -108,10 +108,10 @@ func (vs VestingSchedule) Validate() error {
 		sumRatio = sumRatio.Add(lazySchedule.GetRatio())
 	}
 
-	// TODO - change vesting schedules to fit one
-	// when migrating vesting account
+	// add rounding to allow language specific calculation errors
 	const fixedPointDecimals = 1000000000
-	if !sumRatio.Equal(sdk.OneDec()) {
+	if !sumRatio.MulInt64(fixedPointDecimals).RoundInt().
+		ToDec().QuoInt64(fixedPointDecimals).Equal(sdk.OneDec()) {
 		return errors.New("vesting total ratio must be one")
 	}
 

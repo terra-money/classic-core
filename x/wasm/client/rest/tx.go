@@ -21,12 +21,18 @@ import (
 func registerTxRoutes(clientCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/codes", storeCodeHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), instantiateContractHandlerFn(clientCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}/migrate", RestCodeID), migrateCodeHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/migrate", RestContractAddress), migrateContractHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/owner", RestContractAddress), updateOwnerContractHandlerFn(clientCtx)).Methods("POST")
 }
 
 type storeCodeReq struct {
+	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
+	WasmBytes []byte       `json:"wasm_bytes"`
+}
+
+type migrateCodeReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
 	WasmBytes []byte       `json:"wasm_bytes"`
 }
@@ -92,6 +98,60 @@ func storeCodeHandlerFn(clientCtx client.Context) http.HandlerFunc {
 
 		// build and sign the transaction, then broadcast to Tendermint
 		msg := types.NewMsgStoreCode(fromAddr, wasmBytes)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
+	}
+}
+
+func migrateCodeHandlerFn(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req migrateCodeReq
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		vars := mux.Vars(r)
+		strCodeID := vars[RestCodeID]
+
+		// get the id of the code to migrate
+		codeID, err := strconv.ParseUint(strCodeID, 10, 64)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		wasmBytes := req.WasmBytes
+		if wasmBytesLen := uint64(len(wasmBytes)); wasmBytesLen > types.EnforcedMaxContractSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
+			return
+		}
+
+		// gzip the wasm file
+		if wasmUtils.IsWasm(wasmBytes) {
+			wasmBytes, err = wasmUtils.GzipIt(wasmBytes)
+			if rest.CheckBadRequestError(w, err) {
+				return
+			}
+		} else if !wasmUtils.IsGzip(wasmBytes) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid input file, use wasm binary or zip")
+			return
+		}
+
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if rest.CheckBadRequestError(w, err) {
+			return
+		}
+
+		// build and sign the transaction, then broadcast to Tendermint
+		msg := types.NewMsgMigrateCode(codeID, fromAddr, wasmBytes)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
