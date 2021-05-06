@@ -70,7 +70,7 @@ message MsgInstantiateContract {
 
   // Sender is an sender address
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
-  // Admin is an admin address that can execute migrations
+  // Admin is an optional admin address who can migrate the contract
   string admin = 2 [(gogoproto.moretags) = "yaml:\"admin\""];
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 3 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
