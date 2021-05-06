@@ -464,18 +464,8 @@
   
     - [Query](#cosmos.upgrade.v1beta1.Query)
   
-- [cosmos/vesting/v1beta1/tx.proto](#cosmos/vesting/v1beta1/tx.proto)
-    - [MsgCreateVestingAccount](#cosmos.vesting.v1beta1.MsgCreateVestingAccount)
-    - [MsgCreateVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse)
-  
-    - [Msg](#cosmos.vesting.v1beta1.Msg)
-  
 - [cosmos/vesting/v1beta1/vesting.proto](#cosmos/vesting/v1beta1/vesting.proto)
     - [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount)
-    - [ContinuousVestingAccount](#cosmos.vesting.v1beta1.ContinuousVestingAccount)
-    - [DelayedVestingAccount](#cosmos.vesting.v1beta1.DelayedVestingAccount)
-    - [Period](#cosmos.vesting.v1beta1.Period)
-    - [PeriodicVestingAccount](#cosmos.vesting.v1beta1.PeriodicVestingAccount)
   
 - [ibc/applications/transfer/v1/transfer.proto](#ibc/applications/transfer/v1/transfer.proto)
     - [DenomTrace](#ibc.applications.transfer.v1.DenomTrace)
@@ -7026,62 +7016,6 @@ Query defines the gRPC upgrade querier service.
 
 
 
-<a name="cosmos/vesting/v1beta1/tx.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmos/vesting/v1beta1/tx.proto
-
-
-
-<a name="cosmos.vesting.v1beta1.MsgCreateVestingAccount"></a>
-
-### MsgCreateVestingAccount
-MsgCreateVestingAccount defines a message that enables creating a vesting
-account.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `from_address` | [string](#string) |  |  |
-| `to_address` | [string](#string) |  |  |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
-| `end_time` | [int64](#int64) |  |  |
-| `delayed` | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse"></a>
-
-### MsgCreateVestingAccountResponse
-MsgCreateVestingAccountResponse defines the Msg/CreateVestingAccount response type.
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmos.vesting.v1beta1.Msg"></a>
-
-### Msg
-Msg defines the bank Msg service.
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `CreateVestingAccount` | [MsgCreateVestingAccount](#cosmos.vesting.v1beta1.MsgCreateVestingAccount) | [MsgCreateVestingAccountResponse](#cosmos.vesting.v1beta1.MsgCreateVestingAccountResponse) | CreateVestingAccount defines a method that enables creating a vesting account. | |
-
- <!-- end services -->
-
-
-
 <a name="cosmos/vesting/v1beta1/vesting.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -7103,74 +7037,6 @@ the necessary fields needed for any vesting account implementation.
 | `delegated_free` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
 | `delegated_vesting` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
 | `end_time` | [int64](#int64) |  |  |
-
-
-
-
-
-
-<a name="cosmos.vesting.v1beta1.ContinuousVestingAccount"></a>
-
-### ContinuousVestingAccount
-ContinuousVestingAccount implements the VestingAccount interface. It
-continuously vests by unlocking coins linearly with respect to time.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `base_vesting_account` | [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
-| `start_time` | [int64](#int64) |  |  |
-
-
-
-
-
-
-<a name="cosmos.vesting.v1beta1.DelayedVestingAccount"></a>
-
-### DelayedVestingAccount
-DelayedVestingAccount implements the VestingAccount interface. It vests all
-coins after a specific time, but non prior. In other words, it keeps them
-locked until a specified time.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `base_vesting_account` | [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
-
-
-
-
-
-
-<a name="cosmos.vesting.v1beta1.Period"></a>
-
-### Period
-Period defines a length of time and amount of coins that will vest.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `length` | [int64](#int64) |  |  |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
-
-
-
-
-
-
-<a name="cosmos.vesting.v1beta1.PeriodicVestingAccount"></a>
-
-### PeriodicVestingAccount
-PeriodicVestingAccount implements the VestingAccount interface. It
-periodically vests by unlocking coins during each specified period.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `base_vesting_account` | [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
-| `start_time` | [int64](#int64) |  |  |
-| `vesting_periods` | [Period](#cosmos.vesting.v1beta1.Period) | repeated |  |
 
 
 
