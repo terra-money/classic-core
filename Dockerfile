@@ -19,7 +19,7 @@ ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.14.0/libwasmvm_muslc
 RUN sha256sum /lib/libwasmvm_muslc.a | grep 220b85158d1ae72008f099a7ddafe27f6374518816dd5873fd8be272c5418026
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make update-swagger-docs build
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
 
 FROM alpine:3.12
 

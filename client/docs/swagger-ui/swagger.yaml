@@ -1443,17 +1443,6 @@ paths:
                         type: string
                       address:
                         type: string
-                      coins:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            denom:
-                              type: string
-                              example: uluna
-                            amount:
-                              type: string
-                              example: '50'
                       public_key:
                         type: string
                       sequence:
@@ -1477,17 +1466,6 @@ paths:
                                 type: string
                               address:
                                 type: string
-                              coins:
-                                type: array
-                                items:
-                                  type: object
-                                  properties:
-                                    denom:
-                                      type: string
-                                      example: uluna
-                                    amount:
-                                      type: string
-                                      example: '50'
                               public_key:
                                 type: string
                               sequence:
@@ -7647,8 +7625,16 @@ paths:
                 type: string
               address:
                 type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
               creator:
                 type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+              admin:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
               init_msg:
                 type: string
   '/wasm/contracts/{contractAddress}/migrate':
@@ -37520,17 +37506,6 @@ definitions:
         type: string
       address:
         type: string
-      coins:
-        type: array
-        items:
-          type: object
-          properties:
-            denom:
-              type: string
-              example: uluna
-            amount:
-              type: string
-              example: '50'
       public_key:
         type: string
       sequence:
@@ -37548,17 +37523,6 @@ definitions:
             type: string
           address:
             type: string
-          coins:
-            type: array
-            items:
-              type: object
-              properties:
-                denom:
-                  type: string
-                  example: uluna
-                amount:
-                  type: string
-                  example: '50'
           public_key:
             type: string
           sequence:
@@ -37573,17 +37537,6 @@ definitions:
             type: string
           address:
             type: string
-          coins:
-            type: array
-            items:
-              type: object
-              properties:
-                denom:
-                  type: string
-                  example: uluna
-                amount:
-                  type: string
-                  example: '50'
           public_key:
             type: string
           sequence:
@@ -37669,17 +37622,6 @@ definitions:
                 type: string
               address:
                 type: string
-              coins:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
               public_key:
                 type: string
               sequence:
@@ -37761,17 +37703,6 @@ definitions:
                     type: string
                   address:
                     type: string
-                  coins:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
                   public_key:
                     type: string
                   sequence:
@@ -38535,8 +38466,16 @@ definitions:
         type: string
       address:
         type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       creator:
         type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+      admin:
+        type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       init_msg:
         type: string
   StoreCodeReq:
