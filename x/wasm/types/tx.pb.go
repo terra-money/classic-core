@@ -208,7 +208,7 @@ var xxx_messageInfo_MsgMigrateCodeResponse proto.InternalMessageInfo
 type MsgInstantiateContract struct {
 	// Sender is an sender address
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty" yaml:"sender"`
-	// Admin is an admin address that can execute migrations
+	// Admin is an optional admin address who can migrate the contract
 	Admin string `protobuf:"bytes,2,opt,name=admin,proto3" json:"admin,omitempty" yaml:"admin"`
 	// CodeID is the reference to the stored WASM code
 	CodeID uint64 `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty" yaml:"code_id"`

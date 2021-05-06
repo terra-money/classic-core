@@ -27693,12 +27693,13 @@ paths:
                 properties:
                   address:
                     type: string
+                    title: Address is the address of the contract
                   creator:
                     type: string
-                    title: Creator address that can execute migrations
+                    title: Creator is the contract creator address
                   admin:
                     type: string
-                    title: Admin address that can execute migrations
+                    title: Admin is who can execute the contract migration
                   code_id:
                     type: string
                     format: uint64
@@ -54477,12 +54478,13 @@ definitions:
     properties:
       address:
         type: string
+        title: Address is the address of the contract
       creator:
         type: string
-        title: Creator address that can execute migrations
+        title: Creator is the contract creator address
       admin:
         type: string
-        title: Admin address that can execute migrations
+        title: Admin is who can execute the contract migration
       code_id:
         type: string
         format: uint64
@@ -54572,12 +54574,13 @@ definitions:
         properties:
           address:
             type: string
+            title: Address is the address of the contract
           creator:
             type: string
-            title: Creator address that can execute migrations
+            title: Creator is the contract creator address
           admin:
             type: string
-            title: Admin address that can execute migrations
+            title: Admin is who can execute the contract migration
           code_id:
             type: string
             format: uint64

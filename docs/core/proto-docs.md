@@ -2226,9 +2226,9 @@ ContractInfo stores a WASM contract instance
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  |  |
-| `creator` | [string](#string) |  | Creator address that can execute migrations |
-| `admin` | [string](#string) |  | Admin address that can execute migrations |
+| `address` | [string](#string) |  | Address is the address of the contract |
+| `creator` | [string](#string) |  | Creator is the contract creator address |
+| `admin` | [string](#string) |  | Admin is who can execute the contract migration |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
 
@@ -2657,7 +2657,7 @@ code id.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is an sender address |
-| `admin` | [string](#string) |  | Admin is an admin address that can execute migrations |
+| `admin` | [string](#string) |  | Admin is an optional admin address who can migrate the contract |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg json encoded message to be passed to the contract on instantiation |
 | `init_coins` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | InitCoins that are transferred to the contract on execution |

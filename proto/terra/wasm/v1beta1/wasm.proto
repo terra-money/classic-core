@@ -41,10 +41,11 @@ message CodeInfo {
 message ContractInfo {
   option (gogoproto.equal) = true;
 
+  // Address is the address of the contract
   string address = 1 [(gogoproto.moretags) = "yaml:\"address\""];
-  // Creator address that can execute migrations
+  // Creator is the contract creator address
   string creator = 2 [(gogoproto.moretags) = "yaml:\"creator\""];
-  // Admin address that can execute migrations
+  // Admin is who can execute the contract migration
   string admin = 3 [(gogoproto.moretags) = "yaml:\"admin\""];
   // CodeID is the reference to the stored Wasm code
   uint64 code_id = 4 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];

@@ -229,10 +229,11 @@ func (m *CodeInfo) GetCreator() string {
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
+	// Address is the address of the contract
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
-	// Creator address that can execute migrations
+	// Creator is the contract creator address
 	Creator string `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty" yaml:"creator"`
-	// Admin address that can execute migrations
+	// Admin is who can execute the contract migration
 	Admin string `protobuf:"bytes,3,opt,name=admin,proto3" json:"admin,omitempty" yaml:"admin"`
 	// CodeID is the reference to the stored Wasm code
 	CodeID uint64 `protobuf:"varint,4,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty" yaml:"code_id"`
