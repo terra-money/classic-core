@@ -3807,10 +3807,6 @@ definitions:
         type: string
       address:
         type: string
-      coins:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
       public_key:
         type: string
       sequence:
@@ -4181,9 +4177,14 @@ definitions:
       code_id:
         type: string
       address:
-        type: string
+        $ref: "#/definitions/Address"
+        description: contract address
       creator:
-        type: string
+        $ref: "#/definitions/Address"
+        description: contract creator address
+      admin:
+        $ref: "#/definitions/Address"
+        description: admin address which has contract migration privilege; empty means not migratable
       init_msg:
         type: string
   StoreCodeReq:
