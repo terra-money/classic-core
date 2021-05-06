@@ -46,7 +46,7 @@ func TestInitGenesis(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := types.NewMsgInstantiateContract(creator, 1, initMsgBz, deposit, true)
+	initCmd := types.NewMsgInstantiateContract(creator, creator, 1, initMsgBz, deposit)
 	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, creator, initMsgBz)
 	contractInfo, sdkErr := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, sdkErr)
 	require.Equal(t, expectedContractInfo, contractInfo)

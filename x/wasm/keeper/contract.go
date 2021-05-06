@@ -89,9 +89,9 @@ func (k Keeper) InstantiateContract(
 	ctx sdk.Context,
 	codeID uint64,
 	creator sdk.AccAddress,
+	admin sdk.AccAddress,
 	initMsg []byte,
-	deposit sdk.Coins,
-	migratable bool) (sdk.AccAddress, []byte, error) {
+	deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: init")
 
@@ -150,7 +150,7 @@ func (k Keeper) InstantiateContract(
 		initMsg,
 		contractStore,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
+		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -162,7 +162,7 @@ func (k Keeper) InstantiateContract(
 	}
 
 	// Must store contract info first, so last part can use it
-	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, initMsg, migratable)
+	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, admin, initMsg)
 
 	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
@@ -225,7 +225,7 @@ func (k Keeper) ExecuteContract(
 		exeMsg,
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
+		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -276,11 +276,11 @@ func (k Keeper) MigrateContract(
 		return nil, err
 	}
 
-	if !contractInfo.Migratable {
+	if contractInfo.Admin == "" {
 		return nil, types.ErrNotMigratable
 	}
 
-	if contractInfo.Owner != caller.String() {
+	if contractInfo.Admin != caller.String() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
 
@@ -301,7 +301,7 @@ func (k Keeper) MigrateContract(
 		migrateMsg,
 		prefixStore,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
+		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -362,7 +362,7 @@ func (k Keeper) reply(
 		reply,
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
+		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)
@@ -422,7 +422,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		queryMsg,
 		contractStorePrefix,
 		k.getCosmWasmAPI(ctx),
-		k.querier.WithCtx(ctx).WithContractAddr(contractAddress),
+		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
 	)

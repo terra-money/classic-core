@@ -8,7 +8,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
@@ -33,50 +33,32 @@ func TestEncoding(t *testing.T) {
 		// set if invalid
 		isError bool
 	}{
-		"staking delegate to non-validator": {
+		"distribution withdraw ": {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Delegate: &wasmvmtypes.DelegateMsg{
-						Validator: addrs[1].String(),
-						Amount:    wasmvmtypes.NewCoin(777, "stake"),
+				Distribution: &wasmvmtypes.DistributionMsg{
+					WithdrawDelegatorReward: &wasmvmtypes.WithdrawDelegatorRewardMsg{
+						Validator: valAddr2.String(),
 					},
 				},
 			},
-			isError: true,
-		},
-		"staking undelegate": {
-			sender: addrs[0],
-			input: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Undelegate: &wasmvmtypes.UndelegateMsg{
-						Validator: valAddr.String(),
-						Amount:    wasmvmtypes.NewCoin(555, "stake"),
-					},
-				},
-			},
-			output: &stakingtypes.MsgUndelegate{
+			output: &distrtypes.MsgWithdrawDelegatorReward{
 				DelegatorAddress: addrs[0].String(),
-				ValidatorAddress: valAddr.String(),
-				Amount:           sdk.NewInt64Coin("stake", 555),
+				ValidatorAddress: valAddr2.String(),
 			},
 		},
-		"staking redelegate": {
+		"staking withdraw ": {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Redelegate: &wasmvmtypes.RedelegateMsg{
-						SrcValidator: valAddr.String(),
-						DstValidator: valAddr2.String(),
-						Amount:       wasmvmtypes.NewCoin(222, "stake"),
+				Distribution: &wasmvmtypes.DistributionMsg{
+					SetWithdrawAddress: &wasmvmtypes.SetWithdrawAddressMsg{
+						Address: addrs[1].String(),
 					},
 				},
 			},
-			output: &stakingtypes.MsgBeginRedelegate{
-				DelegatorAddress:    addrs[0].String(),
-				ValidatorSrcAddress: valAddr.String(),
-				ValidatorDstAddress: valAddr2.String(),
-				Amount:              sdk.NewInt64Coin("stake", 222),
+			output: &distrtypes.MsgSetWithdrawAddress{
+				DelegatorAddress: addrs[0].String(),
+				WithdrawAddress:  addrs[1].String(),
 			},
 		},
 	}

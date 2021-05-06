@@ -25,7 +25,9 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+	return nil, nil
+}
 
 // ExchangeRateQueryParams query request params for exchange rates
 type ExchangeRateQueryParams struct {
@@ -70,7 +72,7 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		for _, quoteDenom := range params.ExchangeRates.QuoteDenoms {
 			quoteDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, quoteDenom)
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			// (BASE_DENOM / LUNA) / (DENOM / LUNA) = BASE_DENOM / QUOTE_DENOM

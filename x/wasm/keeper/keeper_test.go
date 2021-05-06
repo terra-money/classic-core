@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/terra-project/core/x/wasm/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestNewKeeper(t *testing.T) {
@@ -47,7 +49,7 @@ func TestContractInfo(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	expected := types.NewContractInfo(codeID, contractAddr, creatorAddr, initMsgBz, true)
+	expected := types.NewContractInfo(codeID, contractAddr, creatorAddr, sdk.AccAddress{}, initMsgBz)
 	keeper.SetContractInfo(ctx, contractAddr, expected)
 
 	as, err := keeper.GetContractInfo(ctx, contractAddr)

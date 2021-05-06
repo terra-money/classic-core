@@ -11,10 +11,11 @@ import (
 
 // Routes of pre-determined wasm querier
 const (
-	WasmMsgParserRouteBank    = "bank"
-	WasmMsgParserRouteStaking = "staking"
-	WasmMsgParserRouteMarket  = "market"
-	WasmMsgParserRouteWasm    = "wasm"
+	WasmMsgParserRouteBank         = "bank"
+	WasmMsgParserRouteStaking      = "staking"
+	WasmMsgParserRouteDistribution = "distribution"
+	WasmMsgParserRouteMarket       = "market"
+	WasmMsgParserRouteWasm         = "wasm"
 )
 
 // WasmMsgParserInterface - msg parsers of each module
@@ -40,8 +41,8 @@ type MsgParser struct {
 	StargateParser StargateWasmMsgParserInterface
 }
 
-// NewModuleMsgParser returns wasm msg parser
-func NewModuleMsgParser() MsgParser {
+// NewWasmMsgParser returns wasm msg parser
+func NewWasmMsgParser() MsgParser {
 	return MsgParser{
 		Parsers: make(map[string]WasmMsgParserInterface),
 	}
@@ -78,7 +79,17 @@ func (p MsgParser) Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmv
 		}
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteStaking)
+	case msg.Distribution != nil:
+		if parser, ok := p.Parsers[WasmMsgParserRouteDistribution]; ok {
+			return parser.Parse(contractAddr, msg)
+		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "distribution")
 	case msg.Wasm != nil:
+		if msg.Wasm.ClearAdmin != nil {
+			return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "ClearAdmin not supported")
+		}
+
 		if parser, ok := p.Parsers[WasmMsgParserRouteWasm]; ok {
 			return parser.Parse(contractAddr, msg)
 		}

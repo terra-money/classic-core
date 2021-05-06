@@ -65,7 +65,9 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+	return nil, nil
+}
 
 // CosmosQuery only contains swap simulation
 type CosmosQuery struct {

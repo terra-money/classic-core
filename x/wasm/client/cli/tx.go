@@ -23,7 +23,7 @@ import (
 const (
 	flagTo            = "to"
 	flagAmount        = "amount"
-	flagMigratable    = "migratable"
+	flagAdmin         = "admin"
 	flagMigrateCodeID = "migrate-code-id"
 )
 
@@ -41,7 +41,8 @@ func GetTxCmd() *cobra.Command {
 		InstantiateContractCmd(),
 		ExecuteContractCmd(),
 		MigrateContractCmd(),
-		UpdateContractOwnerCmd(),
+		UpdateContractAdminCmd(),
+		ClearContractAdminCmd(),
 	)
 	return txCmd
 }
@@ -145,7 +146,12 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return fmt.Errorf("must specify flag --from")
 			}
 
-			migratable, err := cmd.Flags().GetBool(flagMigratable)
+			admin, err := cmd.Flags().GetString(flagAdmin)
+			if err != nil {
+				return err
+			}
+
+			adminAddr, err := sdk.AccAddressFromBech32(admin)
 			if err != nil {
 				return err
 			}
@@ -176,7 +182,7 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgInstantiateContract(fromAddr, codeID, initMsgBz, coins, migratable)
+			msg := types.NewMsgInstantiateContract(fromAddr, adminAddr, codeID, initMsgBz, coins)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -201,7 +207,7 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 		},
 	}
 
-	cmd.Flags().Bool(flagMigratable, false, "setting the flag will make the contract migratable")
+	cmd.Flags().String(flagAdmin, "", "the contract admin address which is previlaged to migrate contract")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -337,15 +343,15 @@ $ terrad tx wasm migrate terra... 10 '{"verifier": "terra..."}'
 	return cmd
 }
 
-// UpdateContractOwnerCmd will instantiate a contract from previously uploaded code.
-func UpdateContractOwnerCmd() *cobra.Command {
+// UpdateContractAdminCmd will instantiate a contract from previously uploaded code.
+func UpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-owner [contract-addr-bech32] [new-owner]",
-		Short: "update a contract owner",
+		Use:   "update-admin [contract-addr-bech32] [new-admin]",
+		Short: "update a contract admin",
 		Long: strings.TrimSpace(`
-Update a contract owner to a new address
+Update a contract admin to a new address
 
-$ terrad tx wasm update-owner terra... terra...
+$ terrad tx wasm update-admin terra... terra...
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -364,13 +370,54 @@ $ terrad tx wasm update-owner terra... terra...
 				return err
 			}
 
-			newOwnerAddr, err := sdk.AccAddressFromBech32(args[1])
+			newAdminAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgUpdateContractOwner(fromAddr, newOwnerAddr, contractAddr)
+			msg := types.NewMsgUpdateContractAdmin(fromAddr, newAdminAddr, contractAddr)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// ClearContractAdminCmd will instantiate a contract from previously uploaded code.
+func ClearContractAdminCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clear-admin [contract-addr-bech32]",
+		Short: "clear a contract admin",
+		Long: strings.TrimSpace(`
+Clear a contract admin to make the contract un-migratable
+
+$ terrad tx wasm clear-admin terra... 
+		`),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			fromAddr := clientCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("must specify flag --from")
+			}
+
+			contractAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			// build and sign the transaction, then broadcast to Tendermint
+			msg := types.NewMsgClearContractAdmin(fromAddr, contractAddr)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

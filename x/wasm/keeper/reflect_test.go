@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/json"
 	"io/ioutil"
-	"strings"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -11,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
@@ -110,7 +108,7 @@ func TestReflectReflectContractSend(t *testing.T) {
 
 	// creator instantiates a contract and gives it tokens
 	reflectStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, []byte("{}"), reflectStart, true)
+	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, sdk.AccAddress{}, []byte("{}"), reflectStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, reflectAddr)
 
@@ -122,7 +120,7 @@ func TestReflectReflectContractSend(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 	escrowStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 25000))
-	escrowAddr, _, err := keeper.InstantiateContract(ctx, escrowID, creator, initMsgBz, escrowStart, true)
+	escrowAddr, _, err := keeper.InstantiateContract(ctx, escrowID, creator, sdk.AccAddress{}, initMsgBz, escrowStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, escrowAddr)
 
@@ -167,166 +165,6 @@ func TestReflectReflectContractSend(t *testing.T) {
 
 }
 
-func TestReflectReflectCustomMsg(t *testing.T) {
-	input := CreateTestInput(t)
-	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
-
-	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
-		"reflect": reflectQuerier{},
-	}, nil)
-	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
-		"reflect": reflectRawMsgParser{
-			cdc: MakeTestCodec(t),
-		},
-	}, nil)
-
-	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
-	bob := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
-	_, _, fred := keyPubAddr()
-
-	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
-	require.NoError(t, err)
-	require.Equal(t, uint64(1), codeID)
-
-	// creator instantiates a contract and gives it tokens
-	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
-	require.NoError(t, err)
-	require.NotEmpty(t, contractAddr)
-
-	// set owner to bob
-	transfer := ReflectHandleMsg{
-		Change: &ownerPayload{
-			Owner: bob,
-		},
-	}
-	transferBz, err := json.Marshal(transfer)
-	require.NoError(t, err)
-	_, err = keeper.ExecuteContract(ctx, contractAddr, creator, transferBz, nil)
-	require.NoError(t, err)
-
-	// check some account values
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
-
-	// bob can send contract's tokens to fred (using SendMsg)
-	msgs := []wasmvmtypes.CosmosMsg{{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
-				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
-					Denom:  core.MicroLunaDenom,
-					Amount: "15000",
-				}},
-			},
-		},
-	}}
-	reflectSend := ReflectHandleMsg{
-		Reflect: &reflectPayload{
-			Msgs: msgs,
-		},
-	}
-	reflectSendBz, err := json.Marshal(reflectSend)
-	require.NoError(t, err)
-	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, reflectSendBz, nil)
-	require.NoError(t, err)
-
-	// fred got coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 15000)))
-	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 25000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
-
-	// construct an opaque message
-	var sdkSendMsg sdk.Msg = &banktypes.MsgSend{
-		FromAddress: contractAddr.String(),
-		ToAddress:   fred.String(),
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 23000)),
-	}
-
-	opaque, err := toMaskRawMsg(MakeTestCodec(t), sdkSendMsg)
-	require.NoError(t, err)
-	reflectOpaque := ReflectHandleMsg{
-		Reflect: &reflectPayload{
-			Msgs: []wasmvmtypes.CosmosMsg{opaque},
-		},
-	}
-	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
-	require.NoError(t, err)
-
-	_, err = keeper.ExecuteContract(ctx, contractAddr, bob, reflectOpaqueBz, nil)
-	require.NoError(t, err)
-
-	// fred got more coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 38000)))
-	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 2000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
-}
-
-func TestReflectReflectCustomQuery(t *testing.T) {
-	input := CreateTestInput(t)
-	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
-
-	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
-		"reflect": reflectQuerier{},
-	}, nil)
-	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
-		"reflect": reflectRawMsgParser{
-			cdc: MakeTestCodec(t),
-		},
-	}, nil)
-
-	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
-
-	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
-	require.NoError(t, err)
-	require.Equal(t, uint64(1), codeID)
-
-	// creator instantiates a contract and gives it tokens
-	contractStart := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 40000))
-	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, true)
-	require.NoError(t, err)
-	require.NotEmpty(t, contractAddr)
-
-	// let's perform a normal query of state
-	ownerQuery := ReflectQueryMsg{
-		Owner: &struct{}{},
-	}
-	ownerQueryBz, err := json.Marshal(ownerQuery)
-	require.NoError(t, err)
-	ownerRes, err := keeper.queryToContract(ctx, contractAddr, ownerQueryBz)
-	require.NoError(t, err)
-	var res OwnerResponse
-	err = json.Unmarshal(ownerRes, &res)
-	require.NoError(t, err)
-	assert.Equal(t, res.Owner, creator.String())
-
-	// and now making use of the custom querier callbacks
-	customQuery := ReflectQueryMsg{
-		Capitalized: &Text{
-			Text: "all Caps noW",
-		},
-	}
-	customQueryBz, err := json.Marshal(customQuery)
-	require.NoError(t, err)
-	custom, err := keeper.queryToContract(ctx, contractAddr, customQueryBz)
-	require.NoError(t, err)
-	var resp capitalizedResponse
-	err = json.Unmarshal(custom, &resp)
-	require.NoError(t, err)
-	assert.Equal(t, resp.Text, "ALL CAPS NOW")
-}
-
 func TestReflectStargateQuery(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, keeper, bankKeeper := input.Ctx, input.AccKeeper, input.WasmKeeper, input.BankKeeper
@@ -344,7 +182,7 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
-	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, []byte("{}"), contractStart, false)
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -419,7 +257,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 
 	// creator instantiates a contract and gives it tokens
 	reflectStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, []byte("{}"), reflectStart, true)
+	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, sdk.AccAddress{}, []byte("{}"), reflectStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, reflectAddr)
 
@@ -491,7 +329,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 
 	// creator instantiates a contract and gives it tokens
 	reflectStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, []byte("{}"), reflectStart, true)
+	reflectAddr, _, err := keeper.InstantiateContract(ctx, reflectID, creator, sdk.AccAddress{}, []byte("{}"), reflectStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, reflectAddr)
 
@@ -555,15 +393,7 @@ func toMaskRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, erro
 		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
-	customMsgData, err := json.Marshal(reflectCustomMsg{Raw: rawBz})
-	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	customMsg, err := json.Marshal(types.WasmCustomMsg{
-		Route:   "reflect",
-		MsgData: customMsgData,
-	})
+	customMsg, err := json.Marshal(reflectCustomMsg{Raw: rawBz})
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -572,86 +402,4 @@ func toMaskRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, erro
 		Custom: customMsg,
 	}
 	return res, nil
-}
-
-// reflectRawMsgParser decodes msg.Data to an sdk.Msg using amino json encoding.
-// this needs to be registered on the Encoders
-type reflectRawMsgParser struct {
-	cdc codec.Marshaler
-}
-
-var _ types.WasmMsgParserInterface = reflectRawMsgParser{}
-
-func (p reflectRawMsgParser) Parse(_sender sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
-	return nil, nil
-}
-
-func (p reflectRawMsgParser) ParseCustom(_sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
-	var custom reflectCustomMsg
-	err := json.Unmarshal(msg, &custom)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
-	}
-	if custom.Raw != nil {
-		var any codectypes.Any
-		if err := p.cdc.UnmarshalJSON(custom.Raw, &any); err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
-		}
-		var msg sdk.Msg
-		if err := p.cdc.UnpackAny(&any, &msg); err != nil {
-			return nil, err
-		}
-		return msg, nil
-	}
-	if custom.Debug != "" {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
-	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
-}
-
-type reflectQuerier struct{}
-
-type reflectCustomQuery struct {
-	Ping        *struct{} `json:"ping,omitempty"`
-	Capitalized *Text     `json:"capitalized,omitempty"`
-}
-
-var _ types.WasmQuerierInterface = reflectQuerier{}
-
-// this is from the go code back to the contract (capitalized or ping)
-type customQueryResponse struct {
-	Msg string `json:"msg"`
-}
-
-// these are the return values from contract -> go depending on type of query
-type ownerResponse struct {
-	Owner string `json:"owner"`
-}
-
-type capitalizedResponse struct {
-	Text string `json:"text"`
-}
-
-type chainResponse struct {
-	Data []byte `json:"data"`
-}
-
-func (reflectQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
-	return nil, nil
-}
-
-func (reflectQuerier) QueryCustom(_ sdk.Context, request json.RawMessage) ([]byte, error) {
-	var custom reflectCustomQuery
-	err := json.Unmarshal(request, &custom)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
-	}
-	if custom.Capitalized != nil {
-		msg := strings.ToUpper(custom.Capitalized.Text)
-		return json.Marshal(customQueryResponse{Msg: msg})
-	}
-	if custom.Ping != nil {
-		return json.Marshal(customQueryResponse{Msg: "pong"})
-	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }

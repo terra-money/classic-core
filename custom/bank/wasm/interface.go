@@ -46,8 +46,8 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		return nil, err
 	}
 
-	sdkMsg := types.NewMsgSend(contractAddr, toAddr, amount)
-	return sdkMsg, sdkMsg.ValidateBasic()
+	cosmosMsg := types.NewMsgSend(contractAddr, toAddr, amount)
+	return cosmosMsg, cosmosMsg.ValidateBasic()
 }
 
 // ParseCustom implements custom parser

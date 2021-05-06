@@ -47,6 +47,7 @@ import (
 	custombank "github.com/terra-project/core/custom/bank"
 	bankwasm "github.com/terra-project/core/custom/bank/wasm"
 	customdistr "github.com/terra-project/core/custom/distribution"
+	distrwasm "github.com/terra-project/core/custom/distribution/wasm"
 	customparams "github.com/terra-project/core/custom/params"
 	customstaking "github.com/terra-project/core/custom/staking"
 	stakingwasm "github.com/terra-project/core/custom/staking/wasm"
@@ -332,10 +333,11 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
 	}, NewStargateWasmQuerier(keeper))
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
-		types.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteWasm:    NewWasmMsgParser(),
+		types.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteWasm:         NewWasmMsgParser(),
 	}, NewStargateWasmMsgParser(legacyAmino))
 
 	keeper.SetLastCodeID(ctx, 0)

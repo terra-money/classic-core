@@ -19,13 +19,18 @@ func NewCodeInfo(codeID uint64, codeHash []byte, creator sdk.AccAddress) CodeInf
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, address, owner sdk.AccAddress, initMsg []byte, migratable bool) ContractInfo {
+func NewContractInfo(codeID uint64, address, creator, admin sdk.AccAddress, initMsg []byte) ContractInfo {
+	var adminAddr string
+	if !admin.Empty() {
+		adminAddr = admin.String()
+	}
+
 	return ContractInfo{
-		Address:    address.String(),
-		CodeID:     codeID,
-		Owner:      owner.String(),
-		InitMsg:    initMsg,
-		Migratable: migratable,
+		Address: address.String(),
+		CodeID:  codeID,
+		Creator: creator.String(),
+		Admin:   adminAddr,
+		InitMsg: initMsg,
 	}
 }
 
@@ -33,10 +38,9 @@ func NewContractInfo(codeID uint64, address, owner sdk.AccAddress, initMsg []byt
 func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
-			Height:    uint64(ctx.BlockHeight()),
-			Time:      uint64(ctx.BlockTime().Unix()),
-			TimeNanos: uint64(ctx.BlockTime().Nanosecond()),
-			ChainID:   ctx.ChainID(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(ctx.BlockTime().Unix()),
+			ChainID: ctx.ChainID(),
 		},
 		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),

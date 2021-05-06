@@ -38,7 +38,7 @@ func TestLegacyContractState(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, initMsgBz, deposit, true)
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, sdk.AccAddress{}, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	contractModel := []types.Model{

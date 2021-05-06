@@ -24,7 +24,8 @@ func registerTxRoutes(clientCtx client.Context, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}/migrate", RestCodeID), migrateCodeHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), executeContractHandlerFn(clientCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/migrate", RestContractAddress), migrateContractHandlerFn(clientCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/owner", RestContractAddress), updateOwnerContractHandlerFn(clientCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/admin/update", RestContractAddress), updateContractAdminHandlerFn(clientCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/wasm/contract/{%s}/admin/clear", RestContractAddress), clearContractAdminHandlerFn(clientCtx)).Methods("POST")
 }
 
 type storeCodeReq struct {
@@ -38,10 +39,10 @@ type migrateCodeReq struct {
 }
 
 type instantiateContractReq struct {
-	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
-	InitCoins  sdk.Coins    `json:"init_coins" yaml:"init_coins"`
-	InitMsg    string       `json:"init_msg" yaml:"init_msg"`
-	Migratable bool         `json:"migratable" yaml:"migratable"`
+	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
+	InitCoins sdk.Coins    `json:"init_coins" yaml:"init_coins"`
+	InitMsg   string       `json:"init_msg" yaml:"init_msg"`
+	Admin     string       `json:"admin" yaml:"admin"`
 }
 
 type executeContractReq struct {
@@ -56,9 +57,13 @@ type migrateContractReq struct {
 	NewCodeID  uint64       `json:"new_code_id" yaml:"new_code_id"`
 }
 
-type updateContractOwnerReq struct {
-	BaseReq  rest.BaseReq   `json:"base_req" yaml:"base_req"`
-	NewOwner sdk.AccAddress `json:"new_owner" yaml:"new_owner"`
+type updateContractAdminReq struct {
+	BaseReq  rest.BaseReq `json:"base_req" yaml:"base_req"`
+	NewAdmin string       `json:"new_admin" yaml:"new_admin"`
+}
+
+type clearContractAdminReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 }
 
 func storeCodeHandlerFn(clientCtx client.Context) http.HandlerFunc {
@@ -187,6 +192,15 @@ func instantiateContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
+		adminAddr := sdk.AccAddress{}
+		if len(req.Admin) != 0 {
+			adminAddr, err = sdk.AccAddressFromBech32(req.Admin)
+			if rest.CheckBadRequestError(w, err) {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
 		initMsgBz := []byte(req.InitMsg)
 		if !json.Valid(initMsgBz) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "msg must be a json string format")
@@ -201,7 +215,7 @@ func instantiateContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgInstantiateContract(fromAddr, codeID, initMsgBz, req.InitCoins, req.Migratable)
+		msg := types.NewMsgInstantiateContract(fromAddr, adminAddr, codeID, initMsgBz, req.InitCoins)
 		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			return
 		}
@@ -333,9 +347,9 @@ func migrateContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	}
 }
 
-func updateOwnerContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
+func updateContractAdminHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req updateContractOwnerReq
+		var req updateContractAdminReq
 		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 			return
 		}
@@ -359,7 +373,49 @@ func updateOwnerContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgUpdateContractOwner(fromAddr, req.NewOwner, contractAddress)
+		newAdminAddr, err := sdk.AccAddressFromBech32(req.NewAdmin)
+		if rest.CheckBadRequestError(w, err) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgUpdateContractAdmin(fromAddr, newAdminAddr, contractAddress)
+		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
+	}
+}
+
+func clearContractAdminHandlerFn(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req clearContractAdminReq
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
+			return
+		}
+		vars := mux.Vars(r)
+		contractAddr := vars[RestContractAddress]
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
+		if rest.CheckBadRequestError(w, err) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if rest.CheckBadRequestError(w, err) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgClearContractAdmin(fromAddr, contractAddress)
 		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

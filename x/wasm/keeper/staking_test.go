@@ -127,7 +127,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
+	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -147,7 +147,7 @@ func TestInitializeStaking(t *testing.T) {
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, _, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, badBz, nil, true)
+	_, _, err = keeper.InstantiateContract(ctx, stakingID, creatorAddr, sdk.AccAddress{}, badBz, nil)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -195,7 +195,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, initBz, nil, true)
+	stakingAddr, _, err := keeper.InstantiateContract(ctx, stakingID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -438,7 +438,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, uint64(2), maskID)
 
 	// creator instantiates a contract and gives it tokens
-	maskAddr, _, err := keeper.InstantiateContract(ctx, maskID, creator, []byte("{}"), nil, true)
+	maskAddr, _, err := keeper.InstantiateContract(ctx, maskID, creator, sdk.AccAddress{}, []byte("{}"), nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, maskAddr)
 
@@ -459,22 +459,59 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
 	reflectValidatorsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
-		Validators: &wasmvmtypes.ValidatorsQuery{},
+		AllValidators: &wasmvmtypes.AllValidatorsQuery{},
 	}}}}
 	reflectValidatorsBin := buildReflectQuery(t, &reflectValidatorsQuery)
 	res, err = keeper.queryToContract(ctx, maskAddr, reflectValidatorsBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
-	var validatorRes wasmvmtypes.ValidatorsResponse
-	mustParse(t, reflectRes.Data, &validatorRes)
-	require.Len(t, validatorRes.Validators, 1)
-	valInfo := validatorRes.Validators[0]
+	var allValidatorsRes wasmvmtypes.AllValidatorsResponse
+	mustParse(t, reflectRes.Data, &allValidatorsRes)
+	require.Len(t, allValidatorsRes.Validators, 1)
+	valInfo := allValidatorsRes.Validators[0]
 	// Note: this ValAddress not AccAddress, may change with #264
 	require.Equal(t, valAddr.String(), valInfo.Address)
 	require.Contains(t, valInfo.Commission, "0.100")
 	require.Contains(t, valInfo.MaxCommission, "0.200")
 	require.Contains(t, valInfo.MaxChangeRate, "0.010")
+
+	// find a validator
+	reflectValidatorQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Validator: &wasmvmtypes.ValidatorQuery{
+			Address: valAddr.String(),
+		},
+	}}}}
+	reflectValidatorBin := buildReflectQuery(t, &reflectValidatorQuery)
+	res, err = keeper.queryToContract(ctx, maskAddr, reflectValidatorBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var validatorRes wasmvmtypes.ValidatorResponse
+	mustParse(t, reflectRes.Data, &validatorRes)
+	require.NotNil(t, validatorRes.Validator)
+	valInfo = *validatorRes.Validator
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), valInfo.Address)
+	require.Contains(t, valInfo.Commission, "0.100")
+	require.Contains(t, valInfo.MaxCommission, "0.200")
+	require.Contains(t, valInfo.MaxChangeRate, "0.010")
+
+	// missing validator
+	noVal := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
+	reflectNoValidatorQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Validator: &wasmvmtypes.ValidatorQuery{
+			Address: noVal.String(),
+		},
+	}}}}
+	reflectNoValidatorBin := buildReflectQuery(t, &reflectNoValidatorQuery)
+	res, err = keeper.queryToContract(ctx, maskAddr, reflectNoValidatorBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var noValidatorRes wasmvmtypes.ValidatorResponse
+	mustParse(t, reflectRes.Data, &noValidatorRes)
+	require.Nil(t, noValidatorRes.Validator)
 
 	// test to get all my delegations
 	reflectAllDelegationsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{

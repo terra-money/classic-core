@@ -26,7 +26,9 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+	return nil, nil
+}
 
 // CosmosQuery contains various treasury queries
 type CosmosQuery struct {
