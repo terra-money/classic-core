@@ -124,12 +124,12 @@ func TestInstantiateMaker(t *testing.T) {
 	}
 
 	initBz, err := json.Marshal(&initMsg)
-	makerAddr, _, err := keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil, true)
+	makerAddr, _, err := keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
 
 	// invalid init msg
-	_, _, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, []byte{}, nil, true)
+	_, _, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, sdk.AccAddress{}, []byte{}, nil)
 	require.Error(t, err)
 }
 
@@ -380,7 +380,7 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	}
 
 	initBz, err := json.Marshal(&initMsg)
-	makerAddr, _, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, initBz, nil, true)
+	makerAddr, _, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
 
@@ -413,7 +413,7 @@ func setupBindingsTesterContract(t *testing.T) (input TestInput, creatorAddr, bi
 
 	type EmptyStruct struct{}
 	initBz, err := json.Marshal(&EmptyStruct{})
-	bindingsTesterAddr, _, err = keeper.InstantiateContract(input.Ctx, bindingsTesterID, creatorAddr, initBz, nil, true)
+	bindingsTesterAddr, _, err = keeper.InstantiateContract(input.Ctx, bindingsTesterID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, bindingsTesterAddr)
 

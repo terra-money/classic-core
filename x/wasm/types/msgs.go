@@ -14,7 +14,8 @@ var (
 	_ sdk.Msg = &MsgInstantiateContract{}
 	_ sdk.Msg = &MsgExecuteContract{}
 	_ sdk.Msg = &MsgMigrateContract{}
-	_ sdk.Msg = &MsgUpdateContractOwner{}
+	_ sdk.Msg = &MsgUpdateContractAdmin{}
+	_ sdk.Msg = &MsgClearContractAdmin{}
 )
 
 // wasm message types
@@ -24,7 +25,8 @@ const (
 	TypeMsgInstantiateContract = "instantiate_contract"
 	TypeMsgExecuteContract     = "execute_contract"
 	TypeMsgMigrateContract     = "migrate_contract"
-	TypeMsgUpdateContractOwner = "update_contract_owner"
+	TypeMsgUpdateContractAdmin = "update_contract_admin"
+	TypeMsgClearContractAdmin  = "clear_contract_admin"
 )
 
 // NewMsgStoreCode creates a MsgStoreCode instance
@@ -124,13 +126,18 @@ func (msg MsgMigrateCode) ValidateBasic() error {
 }
 
 // NewMsgInstantiateContract creates a MsgInstantiateContract instance
-func NewMsgInstantiateContract(owner sdk.AccAddress, codeID uint64, initMsg []byte, initCoins sdk.Coins, migratable bool) *MsgInstantiateContract {
+func NewMsgInstantiateContract(sender, admin sdk.AccAddress, codeID uint64, initMsg []byte, initCoins sdk.Coins) *MsgInstantiateContract {
+	var adminAddr string
+	if !admin.Empty() {
+		adminAddr = admin.String()
+	}
+
 	return &MsgInstantiateContract{
-		Owner:      owner.String(),
-		CodeID:     codeID,
-		InitMsg:    initMsg,
-		InitCoins:  initCoins,
-		Migratable: migratable,
+		Sender:    sender.String(),
+		Admin:     adminAddr,
+		CodeID:    codeID,
+		InitMsg:   initMsg,
+		InitCoins: initCoins,
 	}
 }
 
@@ -146,9 +153,16 @@ func (msg MsgInstantiateContract) Type() string {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgInstantiateContract) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Owner)
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid owner address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	if len(msg.Admin) != 0 {
+		_, err := sdk.AccAddressFromBech32(msg.Admin)
+		if err != nil {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid admin address (%s)", err)
+		}
 	}
 
 	if !msg.InitCoins.IsValid() {
@@ -173,12 +187,12 @@ func (msg MsgInstantiateContract) GetSignBytes() []byte {
 
 // GetSigners implements sdk.Msg
 func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
-	owner, err := sdk.AccAddressFromBech32(msg.Owner)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
 
-	return []sdk.AccAddress{owner}
+	return []sdk.AccAddress{sender}
 }
 
 // NewMsgExecuteContract creates a NewMsgExecuteContract instance
@@ -244,9 +258,9 @@ func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgMigrateContract creates a MsgMigrateContract instance
-func NewMsgMigrateContract(owner, contract sdk.AccAddress, newCodeID uint64, migrateMsg json.RawMessage) *MsgMigrateContract {
+func NewMsgMigrateContract(admin, contract sdk.AccAddress, newCodeID uint64, migrateMsg json.RawMessage) *MsgMigrateContract {
 	return &MsgMigrateContract{
-		Owner:      owner.String(),
+		Admin:      admin.String(),
 		Contract:   contract.String(),
 		NewCodeID:  newCodeID,
 		MigrateMsg: migrateMsg,
@@ -269,9 +283,9 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "missing new_code_id")
 	}
 
-	_, err := sdk.AccAddressFromBech32(msg.Owner)
+	_, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid owner address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid admin address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Contract)
@@ -297,43 +311,43 @@ func (msg MsgMigrateContract) GetSignBytes() []byte {
 
 // GetSigners implements sdk.Msg
 func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
-	owner, err := sdk.AccAddressFromBech32(msg.Owner)
+	admin, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		panic(err)
 	}
 
-	return []sdk.AccAddress{owner}
+	return []sdk.AccAddress{admin}
 }
 
-// NewMsgUpdateContractOwner creates a MsgUpdateContractOwner instance
-func NewMsgUpdateContractOwner(owner, newOwner, contract sdk.AccAddress) *MsgUpdateContractOwner {
-	return &MsgUpdateContractOwner{
-		Owner:    owner.String(),
-		NewOwner: newOwner.String(),
+// NewMsgUpdateContractAdmin creates a MsgUpdateContractAdmin instance
+func NewMsgUpdateContractAdmin(admin, newAdmin, contract sdk.AccAddress) *MsgUpdateContractAdmin {
+	return &MsgUpdateContractAdmin{
+		Admin:    admin.String(),
+		NewAdmin: newAdmin.String(),
 		Contract: contract.String(),
 	}
 }
 
 // Route implements sdk.Msg
-func (msg MsgUpdateContractOwner) Route() string {
+func (msg MsgUpdateContractAdmin) Route() string {
 	return RouterKey
 }
 
 // Type implements sdk.Msg
-func (msg MsgUpdateContractOwner) Type() string {
-	return TypeMsgUpdateContractOwner
+func (msg MsgUpdateContractAdmin) Type() string {
+	return TypeMsgUpdateContractAdmin
 }
 
 // ValidateBasic implements sdk.Msg
-func (msg MsgUpdateContractOwner) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Owner)
+func (msg MsgUpdateContractAdmin) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid owner address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid admin address (%s)", err)
 	}
 
-	_, err = sdk.AccAddressFromBech32(msg.NewOwner)
+	_, err = sdk.AccAddressFromBech32(msg.NewAdmin)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid new owner address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid new admin address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Contract)
@@ -345,13 +359,60 @@ func (msg MsgUpdateContractOwner) ValidateBasic() error {
 }
 
 // GetSignBytes implements sdk.Msg
-func (msg MsgUpdateContractOwner) GetSignBytes() []byte {
+func (msg MsgUpdateContractAdmin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners implements sdk.Msg
-func (msg MsgUpdateContractOwner) GetSigners() []sdk.AccAddress {
-	owner, err := sdk.AccAddressFromBech32(msg.Owner)
+func (msg MsgUpdateContractAdmin) GetSigners() []sdk.AccAddress {
+	owner, err := sdk.AccAddressFromBech32(msg.Admin)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{owner}
+}
+
+// NewMsgClearContractAdmin creates a MsgClearContractAdmin instance
+func NewMsgClearContractAdmin(admin, contract sdk.AccAddress) *MsgClearContractAdmin {
+	return &MsgClearContractAdmin{
+		Admin:    admin.String(),
+		Contract: contract.String(),
+	}
+}
+
+// Route implements sdk.Msg
+func (msg MsgClearContractAdmin) Route() string {
+	return RouterKey
+}
+
+// Type implements sdk.Msg
+func (msg MsgClearContractAdmin) Type() string {
+	return TypeMsgClearContractAdmin
+}
+
+// ValidateBasic implements sdk.Msg
+func (msg MsgClearContractAdmin) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Admin)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid owner address (%s)", err)
+	}
+
+	_, err = sdk.AccAddressFromBech32(msg.Contract)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid contract address (%s)", err)
+	}
+
+	return nil
+}
+
+// GetSignBytes implements sdk.Msg
+func (msg MsgClearContractAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// GetSigners implements sdk.Msg
+func (msg MsgClearContractAdmin) GetSigners() []sdk.AccAddress {
+	owner, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		panic(err)
 	}

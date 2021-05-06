@@ -37,7 +37,8 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		}
 
 		cosmosMsg := types.NewMsgExecuteContract(contractAddr, destContractAddr, msg.Execute.Msg, coins)
-		return cosmosMsg, nil
+
+		return cosmosMsg, cosmosMsg.ValidateBasic()
 	}
 
 	if msg.Instantiate != nil {
@@ -46,9 +47,24 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 			return nil, err
 		}
 
+		adminAddr := sdk.AccAddress{}
+		if msg.Instantiate.Admin != "" {
+			adminAddr, err = sdk.AccAddressFromBech32(msg.Instantiate.Admin)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		// The contract instantiated from the other contract, always migratable
-		cosmosMsg := types.NewMsgInstantiateContract(contractAddr, msg.Instantiate.CodeID, msg.Instantiate.Msg, coins, true)
-		return cosmosMsg, nil
+		cosmosMsg := types.NewMsgInstantiateContract(
+			contractAddr,
+			adminAddr,
+			msg.Instantiate.CodeID,
+			msg.Instantiate.Msg,
+			coins,
+		)
+
+		return cosmosMsg, cosmosMsg.ValidateBasic()
 	}
 
 	if msg.Migrate != nil {
@@ -58,7 +74,33 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		}
 
 		cosmosMsg := types.NewMsgMigrateContract(contractAddr, targetContractAddr, msg.Migrate.NewCodeID, msg.Migrate.Msg)
-		return cosmosMsg, nil
+		return cosmosMsg, cosmosMsg.ValidateBasic()
+	}
+
+	if msg.UpdateAdmin != nil {
+		targetContractAddr, err := sdk.AccAddressFromBech32(msg.UpdateAdmin.ContractAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		newAdminAddr, err := sdk.AccAddressFromBech32(msg.UpdateAdmin.Admin)
+		if err != nil {
+			return nil, err
+		}
+
+		// current admin must be contractAddr
+		cosmosMsg := types.NewMsgUpdateContractAdmin(contractAddr, newAdminAddr, targetContractAddr)
+		return cosmosMsg, cosmosMsg.ValidateBasic()
+	}
+
+	if msg.ClearAdmin != nil {
+		targetContractAddr, err := sdk.AccAddressFromBech32(msg.ClearAdmin.ContractAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		cosmosMsg := types.NewMsgClearContractAdmin(contractAddr, targetContractAddr)
+		return cosmosMsg, cosmosMsg.ValidateBasic()
 	}
 
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")

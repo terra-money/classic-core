@@ -243,7 +243,7 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContract() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
-	msg := wasmtypes.NewMsgInstantiateContract(addr1, 0, []byte{}, sendCoins, true)
+	msg := wasmtypes.NewMsgInstantiateContract(addr1, addr1, 0, []byte{}, sendCoins)
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()

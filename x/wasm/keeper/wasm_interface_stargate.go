@@ -36,16 +36,16 @@ func (parser StargateWasmMsgParser) Parse(wasmMsg wasmvmtypes.CosmosMsg) (sdk.Ms
 		Value:   msg.Value,
 	}
 
-	var sdkMsg sdk.Msg
-	if err := parser.unpacker.UnpackAny(&any, &sdkMsg); err != nil {
+	var cosmosMsg sdk.Msg
+	if err := parser.unpacker.UnpackAny(&any, &cosmosMsg); err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 	}
 
-	if err := codectypes.UnpackInterfaces(sdkMsg, parser.unpacker); err != nil {
+	if err := codectypes.UnpackInterfaces(cosmosMsg, parser.unpacker); err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("UnpackInterfaces inside msg: %s", err))
 	}
 
-	return sdkMsg, nil
+	return cosmosMsg, nil
 }
 
 // StargateWasmQuerier - wasm query interface for wasm contract

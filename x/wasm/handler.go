@@ -35,8 +35,10 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), msg)
 		case *types.MsgMigrateContract:
 			res, err = msgServer.MigrateContract(sdk.WrapSDKContext(ctx), msg)
-		case *types.MsgUpdateContractOwner:
-			res, err = msgServer.UpdateContractOwner(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgUpdateContractAdmin:
+			res, err = msgServer.UpdateContractAdmin(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgClearContractAdmin:
+			res, err = msgServer.ClearContractAdmin(sdk.WrapSDKContext(ctx), msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm message type: %T", msg)

@@ -41,7 +41,15 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.NoError(t, err)
 
 	res, err := querier.QueryCustom(input.Ctx, bz)
-	require.Error(t, err)
+	require.NoError(t, err)
+
+	var exchangeRatesResponse wasm.ExchangeRatesQueryResponse
+	err = json.Unmarshal(res, &exchangeRatesResponse)
+	require.NoError(t, err)
+	require.Equal(t, wasm.ExchangeRatesQueryResponse{
+		BaseDenom:     core.MicroLunaDenom,
+		ExchangeRates: nil,
+	}, exchangeRatesResponse)
 
 	// not existing base denom query
 	queryParams = wasm.ExchangeRateQueryParams{
@@ -69,7 +77,6 @@ func TestQueryExchangeRates(t *testing.T) {
 	res, err = querier.QueryCustom(input.Ctx, bz)
 	require.NoError(t, err)
 
-	var exchangeRatesResponse wasm.ExchangeRatesQueryResponse
 	err = json.Unmarshal(res, &exchangeRatesResponse)
 	require.NoError(t, err)
 	require.Equal(t, exchangeRatesResponse, wasm.ExchangeRatesQueryResponse{

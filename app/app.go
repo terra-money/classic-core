@@ -122,6 +122,7 @@ import (
 	wasmtypes "github.com/terra-project/core/x/wasm/types"
 
 	bankwasm "github.com/terra-project/core/custom/bank/wasm"
+	distrwasm "github.com/terra-project/core/custom/distribution/wasm"
 	stakingwasm "github.com/terra-project/core/custom/staking/wasm"
 	marketwasm "github.com/terra-project/core/x/market/wasm"
 	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
@@ -387,10 +388,11 @@ func NewTerraApp(
 
 	// register wasm msg parser & querier
 	app.WasmKeeper.RegisterMsgParsers(map[string]wasmtypes.WasmMsgParserInterface{
-		wasmtypes.WasmMsgParserRouteBank:    bankwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteStaking: stakingwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteMarket:  marketwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteWasm:    wasmkeeper.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteWasm:         wasmkeeper.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
 	app.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
 		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.BankKeeper),

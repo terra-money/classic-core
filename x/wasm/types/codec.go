@@ -15,7 +15,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/MsgExecuteContract", nil)
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/MsgMigrateContract", nil)
-	cdc.RegisterConcrete(&MsgUpdateContractOwner{}, "wasm/MsgUpdateContractOwner", nil)
+	cdc.RegisterConcrete(&MsgUpdateContractAdmin{}, "wasm/MsgUpdateContractAdmin", nil)
+	cdc.RegisterConcrete(&MsgClearContractAdmin{}, "wasm/MsgClearContractAdmin", nil)
 }
 
 // RegisterInterfaces registers the x/market interfaces types with the interface registry
@@ -26,7 +27,8 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgInstantiateContract{},
 		&MsgExecuteContract{},
 		&MsgMigrateContract{},
-		&MsgUpdateContractOwner{},
+		&MsgUpdateContractAdmin{},
+		&MsgClearContractAdmin{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

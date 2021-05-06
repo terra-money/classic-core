@@ -41,62 +41,62 @@ func TestMigrate(t *testing.T) {
 
 	oracleGenState := v04oracle.GenesisState{
 		FeederDelegations: map[string]sdk.AccAddress{
-			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": feeder,
 			"terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn": feeder2,
+			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": feeder,
 		},
 		ExchangeRates: map[string]sdk.Dec{
-			core.MicroUSDDenom: sdk.NewDec(1700),
 			core.MicroSDRDenom: sdk.NewDec(1800),
+			core.MicroUSDDenom: sdk.NewDec(1700),
 		},
 		ExchangeRatePrevotes: []v04oracle.ExchangeRatePrevote{},
 		ExchangeRateVotes:    []v04oracle.ExchangeRateVote{},
 		MissCounters: map[string]int64{
-			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": 123,
 			"terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn": 321,
+			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": 123,
 		},
 		AggregateExchangeRatePrevotes: []v04oracle.AggregateExchangeRatePrevote{
-			{
-				Hash:        voteHash,
-				Voter:       voter,
-				SubmitBlock: 100,
-			},
 			{
 				Hash:        voteHash,
 				Voter:       voter2,
 				SubmitBlock: 100,
 			},
+			{
+				Hash:        voteHash,
+				Voter:       voter,
+				SubmitBlock: 100,
+			},
 		},
 		AggregateExchangeRateVotes: []v04oracle.AggregateExchangeRateVote{
-			{
-				Voter: voter,
-				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
-					{
-						Denom:        core.MicroUSDDenom,
-						ExchangeRate: sdk.NewDec(1700),
-					},
-					{
-						Denom:        core.MicroSDRDenom,
-						ExchangeRate: sdk.NewDec(1800),
-					},
-				},
-			},
 			{
 				Voter: voter2,
 				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
 					{
+						Denom:        core.MicroSDRDenom,
+						ExchangeRate: sdk.NewDec(1800),
+					},
+					{
 						Denom:        core.MicroUSDDenom,
 						ExchangeRate: sdk.NewDec(1700),
 					},
+				},
+			},
+			{
+				Voter: voter,
+				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
 					{
 						Denom:        core.MicroSDRDenom,
 						ExchangeRate: sdk.NewDec(1800),
+					},
+					{
+						Denom:        core.MicroUSDDenom,
+						ExchangeRate: sdk.NewDec(1700),
 					},
 				},
 			},
 		},
 		TobinTaxes: map[string]sdk.Dec{
-			core.MicroUSDDenom: sdk.NewDecWithPrec(2, 2),
 			core.MicroSDRDenom: sdk.NewDecWithPrec(1, 2),
+			core.MicroUSDDenom: sdk.NewDecWithPrec(2, 2),
 		},
 		Params: v04oracle.Params{
 			VotePeriod:               100,
@@ -108,12 +108,12 @@ func TestMigrate(t *testing.T) {
 			MinValidPerWindow:        sdk.NewDecWithPrec(5, 2),
 			Whitelist: v04oracle.DenomList{
 				{
-					Name:     core.MicroUSDDenom,
-					TobinTax: sdk.NewDecWithPrec(2, 2),
-				},
-				{
 					Name:     core.MicroSDRDenom,
 					TobinTax: sdk.NewDecWithPrec(1, 2),
+				},
+				{
+					Name:     core.MicroUSDDenom,
+					TobinTax: sdk.NewDecWithPrec(2, 2),
 				},
 			},
 		},
@@ -139,70 +139,70 @@ func TestMigrate(t *testing.T) {
 		{
 			"hash": "24738fdea72142136dde59c1e1f79f32c53dee12",
 			"submit_block": "100",
-			"voter": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
+			"voter": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
 		},
 		{
 			"hash": "24738fdea72142136dde59c1e1f79f32c53dee12",
 			"submit_block": "100",
-			"voter": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
+			"voter": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
 		}
 	],
 	"aggregate_exchange_rate_votes": [
 		{
 			"exchange_rate_tuples": [
 				{
-					"denom": "uusd",
-					"exchange_rate": "1700.000000000000000000"
-				},
-				{
 					"denom": "usdr",
 					"exchange_rate": "1800.000000000000000000"
+				},
+				{
+					"denom": "uusd",
+					"exchange_rate": "1700.000000000000000000"
 				}
 			],
-			"voter": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
+			"voter": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
 		},
 		{
 			"exchange_rate_tuples": [
 				{
-					"denom": "uusd",
-					"exchange_rate": "1700.000000000000000000"
-				},
-				{
 					"denom": "usdr",
 					"exchange_rate": "1800.000000000000000000"
+				},
+				{
+					"denom": "uusd",
+					"exchange_rate": "1700.000000000000000000"
 				}
 			],
-			"voter": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
+			"voter": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
 		}
 	],
 	"exchange_rates": [
 		{
-			"denom": "uusd",
-			"exchange_rate": "1700.000000000000000000"
-		},
-		{
 			"denom": "usdr",
 			"exchange_rate": "1800.000000000000000000"
+		},
+		{
+			"denom": "uusd",
+			"exchange_rate": "1700.000000000000000000"
 		}
 	],
 	"feeder_delegations": [
 		{
-			"feeder_address": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww",
-			"validator_address": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
-		},
-		{
 			"feeder_address": "terra13vs2znvhdcy948ejsh7p8p22j8l4n4y07062qq",
 			"validator_address": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
+		},
+		{
+			"feeder_address": "terra1mx72uukvzqtzhc6gde7shrjqfu5srk22v7gmww",
+			"validator_address": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
 		}
 	],
 	"miss_counters": [
 		{
-			"miss_counter": "123",
-			"validator_address": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
-		},
-		{
 			"miss_counter": "321",
 			"validator_address": "terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn"
+		},
+		{
+			"miss_counter": "123",
+			"validator_address": "terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a"
 		}
 	],
 	"params": {
@@ -215,23 +215,23 @@ func TestMigrate(t *testing.T) {
 		"vote_threshold": "0.500000000000000000",
 		"whitelist": [
 			{
-				"name": "uusd",
-				"tobin_tax": "0.020000000000000000"
-			},
-			{
 				"name": "usdr",
 				"tobin_tax": "0.010000000000000000"
+			},
+			{
+				"name": "uusd",
+				"tobin_tax": "0.020000000000000000"
 			}
 		]
 	},
 	"tobin_taxes": [
 		{
-			"denom": "uusd",
-			"tobin_tax": "0.020000000000000000"
-		},
-		{
 			"denom": "usdr",
 			"tobin_tax": "0.010000000000000000"
+		},
+		{
+			"denom": "uusd",
+			"tobin_tax": "0.020000000000000000"
 		}
 	]
 }`

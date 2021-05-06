@@ -84,12 +84,20 @@ func (k msgServer) MigrateCode(goCtx context.Context, msg *types.MsgMigrateCode)
 
 func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInstantiateContract) (*types.MsgInstantiateContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
 
-	contractAddr, data, err := k.Keeper.InstantiateContract(ctx, msg.CodeID, ownerAddr, msg.InitMsg, msg.InitCoins, msg.Migratable)
+	adminAddr := sdk.AccAddress{}
+	if len(msg.Admin) != 0 {
+		adminAddr, err = sdk.AccAddressFromBech32(msg.Admin)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	contractAddr, data, err := k.Keeper.InstantiateContract(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.InitCoins)
 	if err != nil {
 		return nil, err
 	}
@@ -98,14 +106,15 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		sdk.Events{
 			sdk.NewEvent(
 				types.EventTypeInstantiateContract,
-				sdk.NewAttribute(types.AttributeKeyOwner, msg.Owner),
+				sdk.NewAttribute(types.AttributeKeyCreator, msg.Sender),
+				sdk.NewAttribute(types.AttributeKeyAdmin, msg.Admin),
 				sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 				sdk.NewAttribute(types.AttributeKeyContractAddress, contractAddr.String()),
 			),
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 			),
 		},
 	)
@@ -162,12 +171,12 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, err
 	}
 
-	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)
+	adminAddr, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := k.Keeper.MigrateContract(ctx, contractAddr, ownerAddr, msg.NewCodeID, msg.MigrateMsg)
+	data, err := k.Keeper.MigrateContract(ctx, contractAddr, adminAddr, msg.NewCodeID, msg.MigrateMsg)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +191,7 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Admin),
 			),
 		},
 	)
@@ -192,7 +201,7 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 	}, nil
 }
 
-func (k msgServer) UpdateContractOwner(goCtx context.Context, msg *types.MsgUpdateContractOwner) (*types.MsgUpdateContractOwnerResponse, error) {
+func (k msgServer) UpdateContractAdmin(goCtx context.Context, msg *types.MsgUpdateContractAdmin) (*types.MsgUpdateContractAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
@@ -200,12 +209,12 @@ func (k msgServer) UpdateContractOwner(goCtx context.Context, msg *types.MsgUpda
 		return nil, err
 	}
 
-	_, err = sdk.AccAddressFromBech32(msg.Owner)
+	_, err = sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = sdk.AccAddressFromBech32(msg.NewOwner)
+	_, err = sdk.AccAddressFromBech32(msg.NewAdmin)
 	if err != nil {
 		return nil, err
 	}
@@ -215,18 +224,18 @@ func (k msgServer) UpdateContractOwner(goCtx context.Context, msg *types.MsgUpda
 		return nil, err
 	}
 
-	if contractInfo.Owner != msg.Owner {
+	if contractInfo.Admin != msg.Admin {
 		return nil, sdkerrors.ErrUnauthorized
 	}
 
-	contractInfo.Owner = msg.NewOwner
+	contractInfo.Admin = msg.NewAdmin
 	k.SetContractInfo(ctx, contractAddr, contractInfo)
 
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
-				types.EventTypeUpdateContractOwner,
-				sdk.NewAttribute(types.AttributeKeyOwner, msg.NewOwner),
+				types.EventTypeUpdateContractAdmin,
+				sdk.NewAttribute(types.AttributeKeyAdmin, msg.NewAdmin),
 				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract),
 			),
 			sdk.NewEvent(
@@ -236,5 +245,46 @@ func (k msgServer) UpdateContractOwner(goCtx context.Context, msg *types.MsgUpda
 		},
 	)
 
-	return &types.MsgUpdateContractOwnerResponse{}, nil
+	return &types.MsgUpdateContractAdminResponse{}, nil
+}
+
+func (k msgServer) ClearContractAdmin(goCtx context.Context, msg *types.MsgClearContractAdmin) (*types.MsgClearContractAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = sdk.AccAddressFromBech32(msg.Admin)
+	if err != nil {
+		return nil, err
+	}
+
+	contractInfo, err := k.GetContractInfo(ctx, contractAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if contractInfo.Admin != msg.Admin {
+		return nil, sdkerrors.ErrUnauthorized
+	}
+
+	contractInfo.Admin = ""
+	k.SetContractInfo(ctx, contractAddr, contractInfo)
+
+	ctx.EventManager().EmitEvents(
+		sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeClearContractAdmin,
+				sdk.NewAttribute(types.AttributeKeyContractAddress, msg.Contract),
+			),
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			),
+		},
+	)
+
+	return &types.MsgClearContractAdminResponse{}, nil
 }

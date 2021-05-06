@@ -107,7 +107,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 
 	// create with no balance is also legal
-	initCmd := types.NewMsgInstantiateContract(creator, 1, initMsgBz, nil, true)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, nil)
 	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
@@ -127,7 +127,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	iter := input.WasmKeeper.GetContractStoreIterator(input.Ctx, contractAddr)
@@ -173,7 +173,7 @@ func TestHandleExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := types.NewMsgInstantiateContract(creator, 1, initMsgBz, deposit, true)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, deposit)
 	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
@@ -193,7 +193,7 @@ func TestHandleExecute(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	// ensure bob doesn't exist
@@ -268,7 +268,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := types.NewMsgInstantiateContract(creator, 1, initMsgBz, deposit, true)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, deposit)
 	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
@@ -289,7 +289,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	handleMsg := map[string]interface{}{
@@ -360,7 +360,7 @@ func TestHandleMigrate(t *testing.T) {
 	initDataBz, err := json.Marshal(initData)
 	require.NoError(t, err)
 
-	initMsg := types.NewMsgInstantiateContract(creator, 1, initDataBz, deposit, true)
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
 	res, err = h(input.Ctx, initMsg)
 	require.NoError(t, err)
 
@@ -395,7 +395,7 @@ func TestHandleMigrate(t *testing.T) {
 	assert.Equal(t, newCodeID, cInfo.CodeID)
 }
 
-func TestHandleUpdateOwner(t *testing.T) {
+func TestHandleUpdateAdmin(t *testing.T) {
 	loadContracts()
 
 	input := keeper.CreateTestInput(t)
@@ -421,7 +421,7 @@ func TestHandleUpdateOwner(t *testing.T) {
 	initDataBz, err := json.Marshal(initData)
 	require.NoError(t, err)
 
-	initMsg := types.NewMsgInstantiateContract(creator, 1, initDataBz, deposit, true)
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
 	res, err := h(input.Ctx, initMsg)
 	require.NoError(t, err)
 
@@ -441,11 +441,66 @@ func TestHandleUpdateOwner(t *testing.T) {
 
 	require.False(t, contractAddr.Empty())
 
-	updateOwnerMsg := types.NewMsgUpdateContractOwner(creator, fred, contractAddr)
-	_, err = h(input.Ctx, updateOwnerMsg)
+	updateAdminMsg := types.NewMsgUpdateContractAdmin(creator, fred, contractAddr)
+	_, err = h(input.Ctx, updateAdminMsg)
 	require.NoError(t, err)
 
 	cInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, err)
-	require.Equal(t, fred.String(), cInfo.Owner)
+	require.Equal(t, fred.String(), cInfo.Admin)
+}
+
+func TestHandleClearAdmin(t *testing.T) {
+	loadContracts()
+
+	input := keeper.CreateTestInput(t)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
+
+	h := wasm.NewHandler(input.WasmKeeper)
+
+	storeMsg := types.NewMsgStoreCode(creator, testContract)
+
+	// store two same code
+	_, err := h(input.Ctx, storeMsg)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initData := map[string]interface{}{
+		"verifier":    fred.String(),
+		"beneficiary": bob.String(),
+	}
+	initDataBz, err := json.Marshal(initData)
+	require.NoError(t, err)
+
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
+	res, err := h(input.Ctx, initMsg)
+	require.NoError(t, err)
+
+	// Retrieve contract address from events
+	var contractAddr sdk.AccAddress
+	for _, event := range res.Events {
+		if event.Type == types.EventTypeInstantiateContract {
+			for _, attr := range event.Attributes {
+				if string(attr.GetKey()) == types.AttributeKeyContractAddress {
+					contractAddr, err = sdk.AccAddressFromBech32(string(attr.GetValue()))
+					require.NoError(t, err)
+					break
+				}
+			}
+		}
+	}
+
+	require.False(t, contractAddr.Empty())
+
+	clearAdminMsg := types.NewMsgClearContractAdmin(creator, contractAddr)
+	_, err = h(input.Ctx, clearAdminMsg)
+	require.NoError(t, err)
+
+	cInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	require.NoError(t, err)
+	require.True(t, len(cInfo.Admin) == 0)
 }

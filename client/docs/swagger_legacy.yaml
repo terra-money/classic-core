@@ -2898,9 +2898,9 @@ paths:
           description: Bad request
         500:
           description: Internal Server Error
-  /wasm/contracts/{contractAddress}/owner:
+  /wasm/contracts/{contractAddress}/admin/update:
     post:
-      summary: Update wasm contract owner to new address
+      summary: Update wasm contract admin to new address
       tags:
         - Wasm
       produces:
@@ -2908,13 +2908,39 @@ paths:
       parameters:
         - in: path
           name: contractAddress
-          description: contract address you want to update owner
+          description: contract address you want to update admin
           required: true
           type: string
         - in: body
-          name: update contract owner request body
+          name: update contract admin request body
           schema:
-            $ref: "#/definitions/UpdateContractOwnerReq"
+            $ref: "#/definitions/UpdateContractAdminReq"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/StdTx"
+        400:
+          description: Bad request
+        500:
+          description: Internal Server Error
+  /wasm/contracts/{contractAddress}/admin/clear:
+    post:
+      summary: Clear wasm contract admin to make the contract un-migratable
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to clear admin
+          required: true
+          type: string
+        - in: body
+          name: clear contract admin request body
+          schema:
+            $ref: "#/definitions/ClearContractAdminReq"
       responses:
         200:
           description: OK
@@ -4189,6 +4215,10 @@ definitions:
         type: string
         description: json formatted string
         example: "{}"
+      admin:
+        $ref: "#/definitions/Address"
+        description: admin address which has contract migration privilege; empty means not migratable
+        example: "terra..."
   ExecuteContractReq:
     type: object
     properties:
@@ -4213,15 +4243,20 @@ definitions:
       migrate_msg:
         type: string
         example: "{}"
-  UpdateContractOwnerReq:
+  UpdateContractAdminReq:
     type: object
     properties:
       base_req:
         $ref: "#/definitions/BaseReq"
-      new_owner:
+      new_admin:
         $ref: "#/definitions/Address"
-        description: json formatted string
-        example: "{}"
+        description: new contract admin address who has contract migration privilege
+        example: "terra..."
+  ClearContractAdminReq:
+    type: object
+    properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
   GenericAuthorization:
     type: object
     properties:

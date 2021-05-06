@@ -7300,6 +7300,10 @@ paths:
                 type: string
                 description: json formatted string
                 example: '{}'
+              admin:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       responses:
         '200':
           description: OK
@@ -7768,9 +7772,9 @@ paths:
           description: Bad request
         '500':
           description: Internal Server Error
-  '/wasm/contracts/{contractAddress}/owner':
+  '/wasm/contracts/{contractAddress}/admin/update':
     post:
-      summary: Update wasm contract owner to new address
+      summary: Update wasm contract admin to new address
       tags:
         - Wasm
       produces:
@@ -7778,11 +7782,11 @@ paths:
       parameters:
         - in: path
           name: contractAddress
-          description: contract address you want to update owner
+          description: contract address you want to update admin
           required: true
           type: string
         - in: body
-          name: update contract owner request body
+          name: update contract admin request body
           schema:
             type: object
             properties:
@@ -7828,10 +7832,124 @@ paths:
                     description: >-
                       Estimate gas for a transaction (cannot be used in
                       conjunction with generate_only)
-              new_owner:
+              new_admin:
                 type: string
                 description: bech32 encoded address
                 example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
+                type: object
+                properties:
+                  gas:
+                    type: string
+                  amount:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+              memo:
+                type: string
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
+  '/wasm/contracts/{contractAddress}/admin/clear':
+    post:
+      summary: Clear wasm contract admin to make the contract un-migratable
+      tags:
+        - Wasm
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contractAddress
+          description: contract address you want to clear admin
+          required: true
+          type: string
+        - in: body
+          name: clear contract admin request body
+          schema:
+            type: object
+            properties:
+              base_req:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                    description: Sender address or Keybase name to generate a transaction
+                  memo:
+                    type: string
+                    example: "Sent via Terra Station \U0001F680"
+                  chain_id:
+                    type: string
+                    example: columbus-3
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '1'
+                  gas:
+                    type: string
+                    example: '200000'
+                  gas_adjustment:
+                    type: string
+                    example: '1.2'
+                  fees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+                  simulate:
+                    type: boolean
+                    example: false
+                    description: >-
+                      Estimate gas for a transaction (cannot be used in
+                      conjunction with generate_only)
       responses:
         '200':
           description: OK
@@ -27589,9 +27707,12 @@ paths:
                 properties:
                   address:
                     type: string
-                  owner:
+                  creator:
                     type: string
-                    title: Owner address that can execute migrations
+                    title: Creator address that can execute migrations
+                  admin:
+                    type: string
+                    title: Admin address that can execute migrations
                   code_id:
                     type: string
                     format: uint64
@@ -27602,12 +27723,6 @@ paths:
                     title: >-
                       InitMsg is the raw message used when instantiating a
                       contract
-                  migratable:
-                    type: boolean
-                    format: boolean
-                    title: >-
-                      Migratable is the flag to specify the contract
-                      migratability
                 title: ContractInfo stores a WASM contract instance
             description: |-
               QueryContractInfoResponse is response type for the
@@ -38580,6 +38695,10 @@ definitions:
         type: string
         description: json formatted string
         example: '{}'
+      admin:
+        type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
   ExecuteContractReq:
     type: object
     properties:
@@ -38691,7 +38810,7 @@ definitions:
       migrate_msg:
         type: string
         example: '{}'
-  UpdateContractOwnerReq:
+  UpdateContractAdminReq:
     type: object
     properties:
       base_req:
@@ -38736,10 +38855,55 @@ definitions:
             description: >-
               Estimate gas for a transaction (cannot be used in conjunction with
               generate_only)
-      new_owner:
+      new_admin:
         type: string
         description: bech32 encoded address
         example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+  ClearContractAdminReq:
+    type: object
+    properties:
+      base_req:
+        type: object
+        properties:
+          from:
+            type: string
+            example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+            description: Sender address or Keybase name to generate a transaction
+          memo:
+            type: string
+            example: "Sent via Terra Station \U0001F680"
+          chain_id:
+            type: string
+            example: columbus-3
+          account_number:
+            type: string
+            example: '0'
+          sequence:
+            type: string
+            example: '1'
+          gas:
+            type: string
+            example: '200000'
+          gas_adjustment:
+            type: string
+            example: '1.2'
+          fees:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                  example: uluna
+                amount:
+                  type: string
+                  example: '50'
+          simulate:
+            type: boolean
+            example: false
+            description: >-
+              Estimate gas for a transaction (cannot be used in conjunction with
+              generate_only)
   GenericAuthorization:
     type: object
     properties:
@@ -54374,9 +54538,12 @@ definitions:
     properties:
       address:
         type: string
-      owner:
+      creator:
         type: string
-        title: Owner address that can execute migrations
+        title: Creator address that can execute migrations
+      admin:
+        type: string
+        title: Admin address that can execute migrations
       code_id:
         type: string
         format: uint64
@@ -54385,10 +54552,6 @@ definitions:
         type: string
         format: byte
         title: InitMsg is the raw message used when instantiating a contract
-      migratable:
-        type: boolean
-        format: boolean
-        title: Migratable is the flag to specify the contract migratability
     title: ContractInfo stores a WASM contract instance
   terra.wasm.v1beta1.EventParams:
     type: object
@@ -54470,9 +54633,12 @@ definitions:
         properties:
           address:
             type: string
-          owner:
+          creator:
             type: string
-            title: Owner address that can execute migrations
+            title: Creator address that can execute migrations
+          admin:
+            type: string
+            title: Admin address that can execute migrations
           code_id:
             type: string
             format: uint64
@@ -54481,10 +54647,6 @@ definitions:
             type: string
             format: byte
             title: InitMsg is the raw message used when instantiating a contract
-          migratable:
-            type: boolean
-            format: boolean
-            title: Migratable is the flag to specify the contract migratability
         title: ContractInfo stores a WASM contract instance
     description: |-
       QueryContractInfoResponse is response type for the

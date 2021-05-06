@@ -29,7 +29,8 @@ const (
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
 	OpWeightMsgExecuteContract     = "op_weight_msg_execute_contract"
 	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"
-	OpWeightMsgUpdateContractOwner = "op_weight_msg_update_contract_owner"
+	OpWeightMsgUpdateContractAdmin = "op_weight_msg_update_contract_admin"
+	OpWeightMsgClearContractAdmin  = "op_weight_msg_update_contract_admin"
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
@@ -44,7 +45,8 @@ func WeightedOperations(
 	var weightMsgInstantiateContract int
 	var weightMsgExecuteContract int
 	var weightMsgMigrateContract int
-	var weightMsgUpdateContractOwner int
+	var weightMsgUpdateContractAdmin int
+	var weightMsgClearContractAdmin int
 	appParams.GetOrGenerate(cdc, OpWeightMsgStoreCode, &weightMsgStoreCode, nil,
 		func(_ *rand.Rand) {
 			weightMsgStoreCode = 1
@@ -69,9 +71,15 @@ func WeightedOperations(
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgUpdateContractOwner, &weightMsgUpdateContractOwner, nil,
+	appParams.GetOrGenerate(cdc, OpWeightMsgUpdateContractAdmin, &weightMsgUpdateContractAdmin, nil,
 		func(_ *rand.Rand) {
-			weightMsgUpdateContractOwner = 3
+			weightMsgUpdateContractAdmin = 3
+		},
+	)
+
+	appParams.GetOrGenerate(cdc, OpWeightMsgClearContractAdmin, &weightMsgClearContractAdmin, nil,
+		func(_ *rand.Rand) {
+			weightMsgClearContractAdmin = 1
 		},
 	)
 
@@ -93,8 +101,12 @@ func WeightedOperations(
 			SimulateMsgMigrateContract(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
-			weightMsgUpdateContractOwner,
-			SimulateMsgUpdateContractOwner(ak, bk, k),
+			weightMsgUpdateContractAdmin,
+			SimulateMsgUpdateContractAdmin(ak, bk, k),
+		),
+		simulation.NewWeightedOperation(
+			weightMsgClearContractAdmin,
+			SimulateMsgClearContractAdmin(ak, bk, k),
 		),
 	}
 }
@@ -202,7 +214,7 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgInstantiateContract, "code not exists yet"), nil, nil
 		}
 
-		msg := types.NewMsgInstantiateContract(fredAcc.Address, 1, initMsgBz, nil, simtypes.RandIntBetween(r, 1, 2) == 1)
+		msg := types.NewMsgInstantiateContract(fredAcc.Address, fredAcc.Address, 1, initMsgBz, nil)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenTx(
@@ -240,9 +252,9 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "contract not exists yet"), nil, nil
 		}
 
-		// should owner execute the msg
-		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
-		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
+		// should creator execute the msg
+		creatorAddr, _ := sdk.AccAddressFromBech32(info.Creator)
+		simAccount, _ := simtypes.FindAccount(accs, creatorAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
 
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
@@ -301,17 +313,21 @@ func SimulateMsgMigrateContract(
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "contract not exists yet"), nil, nil
 		}
 
+		if len(info.Admin) == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "contract has no admin"), nil, nil
+		}
+
 		targetCodeID := 1
 		_, err = k.GetCodeInfo(ctx, 2)
 		if err == nil && info.CodeID == 1 {
 			targetCodeID = 2
 		}
 
-		// should owner execute the msg
-		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
-		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
+		// should admin migrate the msg
+		adminAddr, _ := sdk.AccAddressFromBech32(info.Admin)
+		simAccount, _ := simtypes.FindAccount(accs, adminAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
-		spendableCoins := bk.SpendableCoins(ctx, ownerAddr)
+		spendableCoins := bk.SpendableCoins(ctx, adminAddr)
 		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "unable to generate fee"), nil, err
@@ -320,7 +336,7 @@ func SimulateMsgMigrateContract(
 		spendableCoins = spendableCoins.Sub(fees)
 
 		migData := map[string]interface{}{
-			"verifier": info.Owner,
+			"verifier": info.Creator,
 		}
 		migDataBz, err := json.Marshal(migData)
 		if err != nil {
@@ -354,35 +370,93 @@ func SimulateMsgMigrateContract(
 }
 
 // nolint: funlen
-func SimulateMsgUpdateContractOwner(
+func SimulateMsgUpdateContractAdmin(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		contractAddr, _ := sdk.AccAddressFromBech32("cosmos1hqrdl6wstt8qzshwc6mrumpjk9338k0lr4dqxd")
+		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 		info, err := k.GetContractInfo(ctx, contractAddr)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "contract not exists yet"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractAdmin, "contract not exists yet"), nil, nil
 		}
 
-		// should owner execute the msg
-		ownerAddr, _ := sdk.AccAddressFromBech32(info.Owner)
-		simAccount, _ := simtypes.FindAccount(accs, ownerAddr)
+		if len(info.Admin) == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractAdmin, "contract has no admin"), nil, nil
+		}
+
+		// should admin execute the msg
+		adminAddr, _ := sdk.AccAddressFromBech32(info.Admin)
+		simAccount, _ := simtypes.FindAccount(accs, adminAddr)
 		account := ak.GetAccount(ctx, simAccount.Address)
-		spendableCoins := bk.SpendableCoins(ctx, ownerAddr)
+		spendableCoins := bk.SpendableCoins(ctx, adminAddr)
 		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "unable to generate fee"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractAdmin, "unable to generate fee"), nil, err
 		}
 
-		newOwnerAccount, _ := simtypes.RandomAcc(r, accs)
-		if simAccount.Address.Equals(newOwnerAccount.Address) {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractOwner, "same account selected"), nil, nil
+		newAdminAccount, _ := simtypes.RandomAcc(r, accs)
+		if simAccount.Address.Equals(newAdminAccount.Address) {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgUpdateContractAdmin, "same account selected"), nil, nil
 		}
 
-		msg := types.NewMsgUpdateContractOwner(simAccount.Address, newOwnerAccount.Address, contractAddr)
+		msg := types.NewMsgUpdateContractAdmin(simAccount.Address, newAdminAccount.Address, contractAddr)
+
+		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		tx, err := helpers.GenTx(
+			txGen,
+			[]sdk.Msg{msg},
+			fees,
+			helpers.DefaultGenTxGas,
+			chainID,
+			[]uint64{account.GetAccountNumber()},
+			[]uint64{account.GetSequence()},
+			simAccount.PrivKey,
+		)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
+		}
+
+		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
+		}
+
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+	}
+}
+
+// nolint: funlen
+func SimulateMsgClearContractAdmin(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
+		info, err := k.GetContractInfo(ctx, contractAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgClearContractAdmin, "contract not exists yet"), nil, nil
+		}
+
+		if len(info.Admin) == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgClearContractAdmin, "contract has no admin"), nil, nil
+		}
+
+		// should admin execute the msg
+		adminAddr, _ := sdk.AccAddressFromBech32(info.Admin)
+		simAccount, _ := simtypes.FindAccount(accs, adminAddr)
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendableCoins := bk.SpendableCoins(ctx, adminAddr)
+		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgClearContractAdmin, "unable to generate fee"), nil, err
+		}
+
+		msg := types.NewMsgClearContractAdmin(simAccount.Address, contractAddr)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenTx(

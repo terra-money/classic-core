@@ -33,7 +33,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 	binary.LittleEndian.PutUint64(lastInstanceIDbz, 456)
 
 	codeInfo := types.NewCodeInfo(1, []byte{1, 2, 3}, creatorAddr)
-	contractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, []byte{4, 5, 6}, true)
+	contractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, creatorAddr, []byte{4, 5, 6})
+	emptyAdminContractInfo := types.NewContractInfo(1, contractAddr, creatorAddr, sdk.AccAddress{}, []byte{4, 5, 6})
 	contractStore := []byte{7, 8, 9}
 
 	kvPairs := kv.Pairs{
@@ -42,6 +43,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 			{Key: types.LastInstanceIDKey, Value: lastInstanceIDbz},
 			{Key: types.CodeKey, Value: cdc.MustMarshalBinaryBare(&codeInfo)},
 			{Key: types.ContractInfoKey, Value: cdc.MustMarshalBinaryBare(&contractInfo)},
+			{Key: append(types.ContractInfoKey, 0x1), Value: cdc.MustMarshalBinaryBare(&emptyAdminContractInfo)},
 			{Key: types.ContractStoreKey, Value: contractStore},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
@@ -55,6 +57,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 		{"LastInstanceID", "lastInstanceIDA: 456\nlastInstanceIDB: 456"},
 		{"CodeInfo", fmt.Sprintf("%v\n%v", codeInfo, codeInfo)},
 		{"ContractInfo", fmt.Sprintf("%v\n%v", contractInfo, contractInfo)},
+		{"ContractInfo", fmt.Sprintf("%v\n%v", emptyAdminContractInfo, emptyAdminContractInfo)},
 		{"ContractStore", fmt.Sprintf("%v\n%v", contractStore, contractStore)},
 		{"other", ""},
 	}

@@ -41,17 +41,13 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 			return nil, err
 		}
 
-		sdkMsg := stakingtypes.NewMsgDelegate(
+		cosmosMsg := stakingtypes.NewMsgDelegate(
 			contractAddr,
 			validator,
 			coin,
 		)
 
-		if err := sdkMsg.ValidateBasic(); err != nil {
-			return nil, err
-		}
-
-		return sdkMsg, nil
+		return cosmosMsg, cosmosMsg.ValidateBasic()
 	}
 
 	if msg.Redelegate != nil {
@@ -68,18 +64,14 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 			return nil, err
 		}
 
-		sdkMsg := stakingtypes.NewMsgBeginRedelegate(
+		cosmosMsg := stakingtypes.NewMsgBeginRedelegate(
 			contractAddr,
 			src,
 			dst,
 			coin,
 		)
 
-		if err := sdkMsg.ValidateBasic(); err != nil {
-			return nil, err
-		}
-
-		return sdkMsg, nil
+		return cosmosMsg, cosmosMsg.ValidateBasic()
 	}
 
 	if msg.Undelegate != nil {
@@ -93,56 +85,17 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 			return nil, err
 		}
 
-		sdkMsg := stakingtypes.NewMsgUndelegate(
+		cosmosMsg := stakingtypes.NewMsgUndelegate(
 			contractAddr,
 			validator,
 			coin,
 		)
 
-		if err := sdkMsg.ValidateBasic(); err != nil {
+		if err := cosmosMsg.ValidateBasic(); err != nil {
 			return nil, err
 		}
 
-		return sdkMsg, nil
-	}
-
-	if msg.Withdraw != nil {
-		if len(msg.Withdraw.Recipient) != 0 {
-			rcpt, err := sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
-			}
-
-			sdkMsg := distrtypes.NewMsgSetWithdrawAddress(
-				contractAddr,
-				rcpt,
-			)
-
-			if err := sdkMsg.ValidateBasic(); err != nil {
-				return nil, err
-			}
-
-			return sdkMsg, nil
-		}
-
-		var err error
-
-		validator, err := sdk.ValAddressFromBech32(msg.Withdraw.Validator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
-		}
-
-		sdkMsg := distrtypes.NewMsgWithdrawDelegatorReward(
-			contractAddr,
-			validator,
-		)
-
-		if err := sdkMsg.ValidateBasic(); err != nil {
-			return nil, err
-		}
-
-		return sdkMsg, nil
-
+		return cosmosMsg, nil
 	}
 
 	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Staking")
@@ -174,7 +127,7 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 		return json.Marshal(res)
 	}
 
-	if request.Staking.Validators != nil {
+	if request.Staking.AllValidators != nil {
 		validators := querier.stakingKeeper.GetBondedValidatorsByPower(ctx)
 		wasmValidators := make([]wasmvmtypes.Validator, len(validators))
 
@@ -187,8 +140,29 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 			}
 		}
 
-		res := wasmvmtypes.ValidatorsResponse{
+		res := wasmvmtypes.AllValidatorsResponse{
 			Validators: wasmValidators,
+		}
+
+		return json.Marshal(res)
+	}
+
+	if request.Staking.Validator != nil {
+		validatorAddr, err := sdk.ValAddressFromBech32(request.Staking.Validator.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		v, found := querier.stakingKeeper.GetValidator(ctx, validatorAddr)
+
+		res := wasmvmtypes.ValidatorResponse{}
+		if found {
+			res.Validator = &wasmvmtypes.Validator{
+				Address:       v.OperatorAddress,
+				Commission:    v.Commission.Rate.String(),
+				MaxCommission: v.Commission.MaxRate.String(),
+				MaxChangeRate: v.Commission.MaxChangeRate.String(),
+			}
 		}
 
 		return json.Marshal(res)

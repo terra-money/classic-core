@@ -28,8 +28,8 @@ type Querier struct {
 	StargateQuerier StargateWasmQuerierInterface
 }
 
-// NewModuleQuerier return wasm querier
-func NewModuleQuerier() Querier {
+// NewWasmQuerier return wasm querier
+func NewWasmQuerier() Querier {
 	return Querier{
 		Queriers: make(map[string]WasmQuerierInterface),
 	}
