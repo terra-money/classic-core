@@ -33,7 +33,7 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
 
 		var err error
-		var events []sdk.Event
+		var events sdk.Events
 		var data []byte
 		if limitGas {
 			events, data, err = k.dispatchMessageWithGasLimit(subCtx, contractAddr, msg.Msg, *msg.GasLimit)
@@ -104,7 +104,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 }
 
 // dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
-func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data []byte, err error) {
+func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events sdk.Events, data []byte, err error) {
 	limitedMeter := sdk.NewGasMeter(gasLimit)
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
@@ -133,7 +133,7 @@ func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.Ac
 }
 
 // dispatchMessage does not emit events to prevent duplicate emission
-func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data []byte, err error) {
+func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (events sdk.Events, data []byte, err error) {
 	sdkMsg, err := k.msgParser.Parse(ctx, contractAddr, msg)
 	if err != nil {
 		return nil, nil, err
@@ -158,12 +158,12 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	copy(data, res.Data)
 
 	// convert Tendermint.Events to sdk.Event
-	sdkEvents := make([]sdk.Event, len(res.Events))
+	sdkEvents := make(sdk.Events, len(res.Events))
 	for i := range res.Events {
 		sdkEvents[i] = sdk.Event(res.Events[i])
 	}
 
-	// append events
+	// append message action attribute
 	events = append(events, sdkEvents...)
 
 	return

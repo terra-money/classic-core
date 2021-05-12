@@ -97,11 +97,20 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		}
 	}
 
-	contractAddr, data, err := k.Keeper.InstantiateContract(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.InitCoins)
+	eventManager := sdk.NewEventManager()
+	contractAddr, data, err := k.Keeper.InstantiateContract(
+		ctx.WithEventManager(eventManager),
+		msg.CodeID,
+		senderAddr,
+		adminAddr,
+		msg.InitMsg,
+		msg.InitCoins,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
@@ -116,7 +125,7 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 				sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 			),
-		},
+		}.AppendEvents(eventManager.Events()),
 	)
 
 	return &types.MsgInstantiateContractResponse{
@@ -138,11 +147,19 @@ func (k msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		return nil, err
 	}
 
-	data, err := k.Keeper.ExecuteContract(ctx, contractAddr, senderAddr, msg.ExecuteMsg, msg.Coins)
+	eventManager := sdk.NewEventManager()
+	data, err := k.Keeper.ExecuteContract(
+		ctx.WithEventManager(eventManager),
+		contractAddr,
+		senderAddr,
+		msg.ExecuteMsg,
+		msg.Coins,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
@@ -155,7 +172,7 @@ func (k msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 				sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 			),
-		},
+		}.AppendEvents(eventManager.Events()),
 	)
 
 	return &types.MsgExecuteContractResponse{
@@ -176,11 +193,19 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, err
 	}
 
-	data, err := k.Keeper.MigrateContract(ctx, contractAddr, adminAddr, msg.NewCodeID, msg.MigrateMsg)
+	eventManager := sdk.NewEventManager()
+	data, err := k.Keeper.MigrateContract(
+		ctx.WithEventManager(eventManager),
+		contractAddr,
+		adminAddr,
+		msg.NewCodeID,
+		msg.MigrateMsg,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(
 		sdk.Events{
 			sdk.NewEvent(
@@ -193,7 +218,7 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 				sdk.NewAttribute(sdk.AttributeKeySender, msg.Admin),
 			),
-		},
+		}.AppendEvents(eventManager.Events()),
 	)
 
 	return &types.MsgMigrateContractResponse{

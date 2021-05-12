@@ -193,7 +193,7 @@ func (k Keeper) InstantiateContract(
 func (k Keeper) ExecuteContract(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
-	caller sdk.AccAddress,
+	sender sdk.AccAddress,
 	exeMsg []byte,
 	coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
@@ -210,14 +210,14 @@ func (k Keeper) ExecuteContract(
 
 	// add more funds
 	if !coins.IsZero() {
-		err = k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
+		err = k.bankKeeper.SendCoins(ctx, sender, contractAddress, coins)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
-	info := types.NewInfo(caller, coins)
+	info := types.NewInfo(sender, coins)
 	res, gasUsed, err := k.wasmVM.Execute(
 		codeInfo.CodeHash,
 		env,
@@ -261,7 +261,7 @@ func (k Keeper) ExecuteContract(
 func (k Keeper) MigrateContract(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
-	caller sdk.AccAddress,
+	sender sdk.AccAddress,
 	newCodeID uint64,
 	migrateMsg []byte) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
@@ -280,7 +280,7 @@ func (k Keeper) MigrateContract(
 		return nil, types.ErrNotMigratable
 	}
 
-	if contractInfo.Admin != caller.String() {
+	if contractInfo.Admin != sender.String() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
 
