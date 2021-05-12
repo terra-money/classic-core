@@ -151,9 +151,12 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return err
 			}
 
-			adminAddr, err := sdk.AccAddressFromBech32(admin)
-			if err != nil {
-				return err
+			var adminAddr sdk.AccAddress
+			if len(admin) != 0 {
+				adminAddr, err = sdk.AccAddressFromBech32(admin)
+				if err != nil {
+					return err
+				}
 			}
 
 			// get the id of the code to instantiate
