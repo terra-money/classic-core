@@ -4105,11 +4105,26 @@ definitions:
         format: integer
         example: "1000000"
         description: "allowed max contract exe msg bytes size"
-      gas_multiplier:
+      max_contract_data_size:
         type: number
         format: integer
         example: "100"
-        description: "defines how many cosmwasm gas points = 1 sdk gas point"
+        description: "allowed max contract return data size"
+      event_params:
+        type: object
+        properties:
+          max_attribute_num:
+            type: string
+            example: "128"
+            description: "allowed max # of contract attribute num"
+          max_attribute_key_length:
+            type: string
+            example: "128"
+            description: "allowed max length of a contract event attribute key"
+          max_attribute_value_length:
+            type: string
+            example: "128"
+            description: "allowed max length of a contract event attribute value"
   MultiSignPubKey:
     type: object
     properties:
