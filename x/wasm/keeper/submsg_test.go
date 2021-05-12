@@ -114,7 +114,6 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 		Value: contractAddr.String(),
 	}, sender.Attributes[0])
 
-	// where does this come from?
 	module := sub.Events[2]
 	assert.Equal(t, "message", module.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
