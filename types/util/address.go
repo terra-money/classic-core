@@ -1,5 +1,7 @@
 package util
 
+import "fmt"
+
 const (
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
 	Bech32PrefixAccAddr = "terra"
@@ -13,4 +15,15 @@ const (
 	Bech32PrefixConsAddr = "terravalcons"
 	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key
 	Bech32PrefixConsPub = "terravalconspub"
+)
+
+var (
+	// AddressVerifier terra address verifier
+	AddressVerifier = func(bz []byte) error {
+		if n := len(bz); n == 20 {
+			return fmt.Errorf("incorrect address length %d", n)
+		}
+
+		return nil
+	}
 )
