@@ -15,6 +15,11 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	ibcxfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
+	host "github.com/cosmos/ibc-go/modules/core/24-host"
+	"github.com/cosmos/ibc-go/modules/core/exported"
+	ibccoretypes "github.com/cosmos/ibc-go/modules/core/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,10 +27,6 @@ import (
 	captypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	evtypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ibcxfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
-	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
-	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
-	ibccoretypes "github.com/cosmos/cosmos-sdk/x/ibc/core/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	legacy05 "github.com/terra-project/core/app/legacy/v05"
@@ -76,10 +77,10 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 
 			var bankGenesis banktypes.GenesisState
 
-			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[banktypes.ModuleName], &bankGenesis)
+			clientCtx.JSONCodec.MustUnmarshalJSON(newGenState[banktypes.ModuleName], &bankGenesis)
 
 			var oracleGenesis oracletypes.GenesisState
-			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[oracletypes.ModuleName], &oracleGenesis)
+			clientCtx.JSONCodec.MustUnmarshalJSON(newGenState[oracletypes.ModuleName], &oracleGenesis)
 
 			// Register whitelist denom list
 			denomMetadata := make([]banktypes.Metadata, len(oracleGenesis.Params.Whitelist)+1)
@@ -110,11 +111,11 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 			}
 
 			bankGenesis.DenomMetadata = denomMetadata
-			newGenState[banktypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&bankGenesis)
+			newGenState[banktypes.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(&bankGenesis)
 
 			var stakingGenesis staking.GenesisState
 
-			clientCtx.JSONMarshaler.MustUnmarshalJSON(newGenState[staking.ModuleName], &stakingGenesis)
+			clientCtx.JSONCodec.MustUnmarshalJSON(newGenState[staking.ModuleName], &stakingGenesis)
 
 			ibcTransferGenesis := ibcxfertypes.DefaultGenesisState()
 			ibcCoreGenesis := ibccoretypes.DefaultGenesisState()
@@ -127,11 +128,11 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 			ibcCoreGenesis.ClientGenesis.Params.AllowedClients = []string{exported.Tendermint}
 			stakingGenesis.Params.HistoricalEntries = 10000
 
-			newGenState[ibcxfertypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(ibcTransferGenesis)
-			newGenState[host.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(ibcCoreGenesis)
-			newGenState[captypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(capGenesis)
-			newGenState[evtypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(evGenesis)
-			newGenState[staking.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&stakingGenesis)
+			newGenState[ibcxfertypes.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(ibcTransferGenesis)
+			newGenState[host.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(ibcCoreGenesis)
+			newGenState[captypes.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(capGenesis)
+			newGenState[evtypes.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(evGenesis)
+			newGenState[staking.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(&stakingGenesis)
 
 			genDoc.AppState, err = json.Marshal(newGenState)
 			if err != nil {

@@ -50,6 +50,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
+const faucetAccountName = "faucet"
+
 var ModuleBasics = module.NewBasicManager(
 	customauth.AppModuleBasic{},
 	custombank.AppModuleBasic{},
@@ -61,7 +63,7 @@ var ModuleBasics = module.NewBasicManager(
 )
 
 // MakeTestCodec nolint
-func MakeTestCodec(t *testing.T) codec.Marshaler {
+func MakeTestCodec(t *testing.T) codec.Codec {
 	return MakeEncodingConfig(t).Marshaler
 }
 
@@ -109,7 +111,7 @@ var (
 		sdk.ValAddress(PubKeys[2].Address()),
 	}
 
-	InitTokens = sdk.TokensFromConsensusPower(200)
+	InitTokens = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction)
 	InitCoins  = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens))
 )
 
@@ -118,12 +120,12 @@ type TestInput struct {
 	Ctx            sdk.Context
 	Cdc            *codec.LegacyAmino
 	TreasuryKeeper Keeper
+	AccountKeeper  authkeeper.AccountKeeper
+	BankKeeper     bankkeeper.Keeper
+	DistrKeeper    distrkeeper.Keeper
 	StakingKeeper  stakingkeeper.Keeper
-	OracleKeeper   types.OracleKeeper
-	AccountKeeper  types.AccountKeeper
-	BankKeeper     types.BankKeeper
 	MarketKeeper   types.MarketKeeper
-	DistrKeeper    types.DistributionKeeper
+	OracleKeeper   types.OracleKeeper
 }
 
 // CreateTestInput nolint
@@ -162,9 +164,11 @@ func CreateTestInput(t *testing.T) TestInput {
 		stakingtypes.BondedPoolName:    true,
 		distrtypes.ModuleName:          true,
 		oracletypes.ModuleName:         true,
+		faucetAccountName:              true,
 	}
 
 	maccPerms := map[string][]string{
+		faucetAccountName:              {authtypes.Minter, authtypes.Burner},
 		authtypes.FeeCollectorName:     nil,
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
@@ -179,8 +183,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	accountKeeper := authkeeper.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms)
 	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
 
-	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)))))
-	bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)*10))))
+	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -218,7 +222,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	burnAcc := authtypes.NewEmptyModuleAccount(types.BurnModuleName, authtypes.Burner)
 
 	// + 1 for burn account
-	bankKeeper.SetBalances(ctx, notBondedPool.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)+1)))))
+	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)+1)))))
 
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
@@ -231,12 +235,12 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	for _, addr := range Addrs {
 		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
-		err := bankKeeper.AddCoins(ctx, addr, InitCoins)
+		err := bankKeeper.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, InitCoins)
 		require.NoError(t, err)
 	}
 
 	// to test burn module account
-	err := bankKeeper.AddCoins(ctx, burnAcc.GetAddress(), InitCoins)
+	err := bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, types.BurnModuleName, InitCoins)
 	require.NoError(t, err)
 
 	oracleKeeper := oraclekeeper.NewKeeper(
@@ -271,6 +275,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		accountKeeper,
 		bankKeeper,
 		marketKeeper,
+		oracleKeeper,
 		stakingKeeper,
 		distrKeeper,
 		distrtypes.ModuleName,
@@ -278,7 +283,7 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	treasuryKeeper.SetParams(ctx, types.DefaultParams())
 
-	return TestInput{ctx, legacyAmino, treasuryKeeper, stakingKeeper, oracleKeeper, accountKeeper, bankKeeper, marketKeeper, distrKeeper}
+	return TestInput{ctx, legacyAmino, treasuryKeeper, accountKeeper, bankKeeper, distrKeeper, stakingKeeper, marketKeeper, oracleKeeper}
 }
 
 // NewTestMsgCreateValidator test msg creator
@@ -297,7 +302,7 @@ func setupValidators(t *testing.T) (TestInput, sdk.Handler) {
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Create Validators
-	amt := sdk.TokensFromConsensusPower(100)
+	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
@@ -309,4 +314,15 @@ func setupValidators(t *testing.T) (TestInput, sdk.Handler) {
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	return input, sh
+}
+
+// FundAccount is a utility function that funds an account by minting and
+// sending the coins to the address. This should be used for testing purposes
+// only!
+func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error {
+	if err := input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, amounts); err != nil {
+		return err
+	}
+
+	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }

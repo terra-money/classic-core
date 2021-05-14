@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.client.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types";
+option go_package = "github.com/cosmos/ibc-go/modules/core/02-client/types";
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
@@ -56,7 +57,8 @@ message MsgUpdateClient {
 // MsgUpdateClientResponse defines the Msg/UpdateClient response type.
 message MsgUpdateClientResponse {}
 
-// MsgUpgradeClient defines an sdk.Msg to upgrade an IBC client to a new client state
+// MsgUpgradeClient defines an sdk.Msg to upgrade an IBC client to a new client
+// state
 message MsgUpgradeClient {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
@@ -65,7 +67,8 @@ message MsgUpgradeClient {
   string client_id = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
   // upgraded client state
   google.protobuf.Any client_state = 2 [(gogoproto.moretags) = "yaml:\"client_state\""];
-  // upgraded consensus state, only contains enough information to serve as a basis of trust in update logic
+  // upgraded consensus state, only contains enough information to serve as a
+  // basis of trust in update logic
   google.protobuf.Any consensus_state = 3 [(gogoproto.moretags) = "yaml:\"consensus_state\""];
   // proof that old chain committed to new client
   bytes proof_upgrade_client = 4 [(gogoproto.moretags) = "yaml:\"proof_upgrade_client\""];
@@ -92,5 +95,6 @@ message MsgSubmitMisbehaviour {
   string signer = 3;
 }
 
-// MsgSubmitMisbehaviourResponse defines the Msg/SubmitMisbehaviour response type.
+// MsgSubmitMisbehaviourResponse defines the Msg/SubmitMisbehaviour response
+// type.
 message MsgSubmitMisbehaviourResponse {}

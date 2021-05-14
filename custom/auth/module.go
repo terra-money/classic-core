@@ -38,7 +38,7 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(cdc codec.Marshaler, accountKeeper keeper.AccountKeeper, randGenAccountsFn types.RandomGenesisAccountsFn) AppModule {
+func NewAppModule(cdc codec.Codec, accountKeeper keeper.AccountKeeper, randGenAccountsFn types.RandomGenesisAccountsFn) AppModule {
 	return AppModule{
 		AppModule:         auth.NewAppModule(cdc, accountKeeper, randGenAccountsFn),
 		accountKeeper:     accountKeeper,

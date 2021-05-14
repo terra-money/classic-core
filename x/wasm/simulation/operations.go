@@ -36,7 +36,7 @@ const (
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
 	appParams simtypes.AppParams,
-	cdc codec.JSONMarshaler,
+	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
@@ -168,7 +168,7 @@ func SimulateMsgStoreCode(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -236,7 +236,7 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -266,7 +266,7 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 		spendableCoins = spendableCoins.Sub(fees)
 		spendableCoins = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, spendableCoins.AmountOf(core.MicroLunaDenom)))
 
-		if err := bk.SendEnabledCoins(ctx, spendableCoins...); err != nil {
+		if err := bk.IsSendEnabledCoins(ctx, spendableCoins...); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "send not enabled"), nil, nil
 		}
 
@@ -295,7 +295,7 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -365,7 +365,7 @@ func SimulateMsgMigrateContract(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -424,7 +424,7 @@ func SimulateMsgUpdateContractAdmin(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -478,6 +478,6 @@ func SimulateMsgClearContractAdmin(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }

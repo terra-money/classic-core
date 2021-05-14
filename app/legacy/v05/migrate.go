@@ -34,10 +34,10 @@ import (
 	v036paramscustom "github.com/terra-project/core/custom/params/legacy/v036"
 	v038upgradecustom "github.com/terra-project/core/custom/upgrade/legacy/v038"
 
+	v043authz "github.com/terra-project/core/custom/authz/legacy/v043"
 	v04market "github.com/terra-project/core/x/market/legacy/v04"
 	v05market "github.com/terra-project/core/x/market/legacy/v05"
 	v04msgauth "github.com/terra-project/core/x/msgauth/legacy/v04"
-	v05msgauth "github.com/terra-project/core/x/msgauth/legacy/v05"
 	v04oracle "github.com/terra-project/core/x/oracle/legacy/v04"
 	v05oracle "github.com/terra-project/core/x/oracle/legacy/v05"
 	v04treasury "github.com/terra-project/core/x/treasury/legacy/v04"
@@ -63,7 +63,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	v036paramscustom.RegisterLegacyAminoCodec(v04Codec)
 	v038upgradecustom.RegisterLegacyAminoCodec(v04Codec)
 
-	v05Codec := clientCtx.JSONMarshaler
+	v05Codec := clientCtx.JSONCodec
 
 	if appState[v038bank.ModuleName] != nil {
 		// unmarshal relative source genesis application state
@@ -146,6 +146,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	}
 
 	// Migrate x/gov.
+	// NOTE: custom gov migration contains v043 migration step, but call it as v040
 	if appState[v036gov.ModuleName] != nil {
 		// unmarshal relative source genesis application state
 		var govGenState v036gov.GenesisState
@@ -251,7 +252,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v05msgauth.ModuleName] = v05Codec.MustMarshalJSON(v05msgauth.Migrate(msgauthGenState))
+		appState[v043authz.ModuleName] = v05Codec.MustMarshalJSON(v043authz.Migrate(msgauthGenState))
 	}
 
 	if appState[v04treasury.ModuleName] != nil {

@@ -6,6 +6,7 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	v036distr "github.com/cosmos/cosmos-sdk/x/distribution/legacy/v036"
 	v040distr "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v034gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v034"
@@ -109,7 +110,6 @@ func migrateContent(oldContent v036gov.Content) *codectypes.Any {
 				Title:       oldContent.Title,
 				Plan: v040upgrade.Plan{
 					Name:   oldContent.Plan.Name,
-					Time:   oldContent.Plan.Time,
 					Height: oldContent.Plan.Height,
 					Info:   oldContent.Plan.Info,
 				},
@@ -183,7 +183,7 @@ func Migrate(oldGovState v036gov.GenesisState) *v040gov.GenesisState {
 		newVotes[i] = v040gov.Vote{
 			ProposalId: oldVote.ProposalID,
 			Voter:      oldVote.Voter.String(),
-			Option:     migrateVoteOption(oldVote.Option),
+			Options:    []v040gov.WeightedVoteOption{{Option: migrateVoteOption(oldVote.Option), Weight: sdk.NewDec(1)}},
 		}
 	}
 

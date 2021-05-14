@@ -15,7 +15,7 @@ import (
 
 var (
 	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
-	stakingAmt = sdk.TokensFromConsensusPower(10)
+	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
 	randomExchangeRate        = sdk.NewDec(1700)
 	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
@@ -31,7 +31,7 @@ func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	h := oracle.NewHandler(input.OracleKeeper)
 
 	sh := staking.NewHandler(input.StakingKeeper)
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], sdk.TokensFromConsensusPower(1)))
+	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
 	require.NoError(t, err)
 
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)

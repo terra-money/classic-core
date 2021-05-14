@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.connection.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/03-connection/types";
+option go_package = "github.com/cosmos/ibc-go/modules/core/03-connection/types";
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
@@ -19,7 +20,8 @@ service Msg {
   // ConnectionOpenAck defines a rpc handler method for MsgConnectionOpenAck.
   rpc ConnectionOpenAck(MsgConnectionOpenAck) returns (MsgConnectionOpenAckResponse);
 
-  // ConnectionOpenConfirm defines a rpc handler method for MsgConnectionOpenConfirm.
+  // ConnectionOpenConfirm defines a rpc handler method for
+  // MsgConnectionOpenConfirm.
   rpc ConnectionOpenConfirm(MsgConnectionOpenConfirm) returns (MsgConnectionOpenConfirmResponse);
 }
 
@@ -36,7 +38,8 @@ message MsgConnectionOpenInit {
   string       signer       = 5;
 }
 
-// MsgConnectionOpenInitResponse defines the Msg/ConnectionOpenInit response type.
+// MsgConnectionOpenInitResponse defines the Msg/ConnectionOpenInit response
+// type.
 message MsgConnectionOpenInitResponse {}
 
 // MsgConnectionOpenTry defines a msg sent by a Relayer to try to open a
@@ -46,8 +49,8 @@ message MsgConnectionOpenTry {
   option (gogoproto.goproto_getters) = false;
 
   string client_id = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
-  // in the case of crossing hello's, when both chains call OpenInit, we need the connection identifier
-  // of the previous connection in state INIT
+  // in the case of crossing hello's, when both chains call OpenInit, we need
+  // the connection identifier of the previous connection in state INIT
   string                    previous_connection_id = 2 [(gogoproto.moretags) = "yaml:\"previous_connection_id\""];
   google.protobuf.Any       client_state           = 3 [(gogoproto.moretags) = "yaml:\"client_state\""];
   Counterparty              counterparty           = 4 [(gogoproto.nullable) = false];
@@ -111,5 +114,6 @@ message MsgConnectionOpenConfirm {
   string signer = 4;
 }
 
-// MsgConnectionOpenConfirmResponse defines the Msg/ConnectionOpenConfirm response type.
+// MsgConnectionOpenConfirmResponse defines the Msg/ConnectionOpenConfirm
+// response type.
 message MsgConnectionOpenConfirmResponse {}

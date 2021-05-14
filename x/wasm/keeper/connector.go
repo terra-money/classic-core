@@ -178,9 +178,9 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, m
 	}
 
 	// find the handler and execute it
-	h := k.router.Route(ctx, msg.Route())
+	h := k.serviceRouter.Handler(msg)
 	if h == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, sdk.MsgTypeURL(msg))
 	}
 
 	res, err := h(ctx, msg)

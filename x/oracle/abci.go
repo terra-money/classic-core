@@ -29,6 +29,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
 
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
+
 	i := 0
 	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
 		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
@@ -36,7 +38,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// Exclude not bonded validator
 		if validator.IsBonded() {
 			valAddr := validator.GetOperator()
-			validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(), 0, 0, valAddr)
+			validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
 			i++
 		}
 	}

@@ -22,8 +22,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: types.MintPoolDeltaKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: mintDelta})},
-			{Key: types.BurnPoolDeltaKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: burnDelta})},
+			{Key: types.MintPoolDeltaKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: mintDelta})},
+			{Key: types.BurnPoolDeltaKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: burnDelta})},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}

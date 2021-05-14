@@ -36,7 +36,7 @@ var (
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
 	appParams simtypes.AppParams,
-	cdc codec.JSONMarshaler,
+	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper) simulation.WeightedOperations {
@@ -139,7 +139,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		voteHashMap[address.String()] = exchangeRatesStr
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -209,7 +209,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -267,6 +267,6 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }

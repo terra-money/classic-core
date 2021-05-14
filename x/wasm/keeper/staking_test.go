@@ -631,18 +631,16 @@ func setValidatorRewards(
 	payout := sdk.NewDecCoinsFromCoins(rewards...)
 	distKeeper.AllocateTokensToValidator(ctx, validator, payout)
 
-	// add more balances
-	distrAddr := accountKeeper.GetModuleAddress(distrtypes.ModuleName)
-	prevBalances := bankKeeper.GetAllBalances(ctx, distrAddr)
-	err := bankKeeper.SetBalances(ctx, distrAddr, prevBalances.Add(rewards...))
+	// allocate rewards to validator by minting tokens to distr module balance
+	err := bankKeeper.MintCoins(ctx, faucetAccountName, rewards)
 	if err != nil {
 		panic(err)
 	}
 
-	// update supply
-	supply := bankKeeper.GetSupply(ctx)
-	supply.GetTotal().Add(rewards...)
-	bankKeeper.SetSupply(ctx, supply)
+	err = bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, distrtypes.ModuleName, rewards)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {

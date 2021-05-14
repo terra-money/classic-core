@@ -23,7 +23,7 @@ func TestMigrate(t *testing.T) {
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
-		WithJSONMarshaler(encodingConfig.Marshaler)
+		WithJSONCodec(encodingConfig.Marshaler)
 
 	marketGenState := v04market.GenesisState{
 		TerraPoolDelta: sdk.ZeroDec(),
@@ -36,7 +36,7 @@ func TestMigrate(t *testing.T) {
 
 	migrated := v05market.Migrate(marketGenState)
 
-	bz, err := clientCtx.JSONMarshaler.MarshalJSON(migrated)
+	bz, err := clientCtx.JSONCodec.MarshalJSON(migrated)
 	require.NoError(t, err)
 
 	// Indent the JSON bz correctly.

@@ -3,7 +3,6 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 )
 
 // AccountKeeper is expected keeper for auth module
@@ -15,7 +14,6 @@ type AccountKeeper interface {
 
 // BankKeeper defines expected supply keeper
 type BankKeeper interface {
-	GetSupply(ctx sdk.Context) (supply bankexported.SupplyI)
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
@@ -26,7 +24,7 @@ type BankKeeper interface {
 	// only used for simulation
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	SendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
+	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
 }
 
 // OracleKeeper defines expected oracle keeper

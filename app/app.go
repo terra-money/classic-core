@@ -17,6 +17,17 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	transfer "github.com/cosmos/ibc-go/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -36,6 +47,9 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -52,19 +66,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	transfer "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer"
-	ibctransferkeeper "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
-	ibc "github.com/cosmos/cosmos-sdk/x/ibc/core"
-	ibcclient "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client"
-	porttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/05-port/types"
-	ibchost "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
-	ibckeeper "github.com/cosmos/cosmos-sdk/x/ibc/core/keeper"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -105,9 +114,6 @@ import (
 	"github.com/terra-project/core/x/market"
 	marketkeeper "github.com/terra-project/core/x/market/keeper"
 	markettypes "github.com/terra-project/core/x/market/types"
-	"github.com/terra-project/core/x/msgauth"
-	msgauthkeeper "github.com/terra-project/core/x/msgauth/keeper"
-	msgauthtypes "github.com/terra-project/core/x/msgauth/types"
 	"github.com/terra-project/core/x/oracle"
 	oraclekeeper "github.com/terra-project/core/x/oracle/keeper"
 	oracletypes "github.com/terra-project/core/x/oracle/types"
@@ -156,10 +162,13 @@ var (
 			upgradeclient.CancelProposalHandler,
 			treasuryclient.TaxRateUpdateProposalHandler,
 			treasuryclient.RewardWeightUpdateProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
 		),
 		customparams.AppModuleBasic{},
 		customcrisis.AppModuleBasic{},
 		customslashing.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		customupgrade.AppModuleBasic{},
 		customevidence.AppModuleBasic{},
@@ -169,7 +178,7 @@ var (
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		msgauth.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -206,7 +215,7 @@ var (
 type TerraApp struct { // nolint: golint
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
-	appCodec          codec.Marshaler
+	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	invCheckPeriod uint
@@ -218,6 +227,7 @@ type TerraApp struct { // nolint: golint
 
 	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
+	AuthzKeeper      authzkeeper.Keeper
 	BankKeeper       bankkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
 	StakingKeeper    stakingkeeper.Keeper
@@ -230,12 +240,12 @@ type TerraApp struct { // nolint: golint
 	ParamsKeeper     paramskeeper.Keeper
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	EvidenceKeeper   evidencekeeper.Keeper
+	FeeGrantKeeper   feegrantkeeper.Keeper
 	TransferKeeper   ibctransferkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	MarketKeeper     marketkeeper.Keeper
 	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
-	MsgauthKeeper    msgauthkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -246,6 +256,9 @@ type TerraApp struct { // nolint: golint
 
 	// simulation manager
 	sm *module.SimulationManager
+
+	// the configurator
+	configurator module.Configurator
 }
 
 func init() {
@@ -269,7 +282,7 @@ func NewTerraApp(
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetAppVersion(version.Version)
+	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
 	keys := sdk.NewKVStoreKeys(
@@ -278,7 +291,7 @@ func NewTerraApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		oracletypes.StoreKey, markettypes.StoreKey, treasurytypes.StoreKey,
-		wasmtypes.StoreKey, msgauthtypes.StoreKey,
+		wasmtypes.StoreKey, authzkeeper.StoreKey, feegrant.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -328,7 +341,9 @@ func NewTerraApp(
 	app.CrisisKeeper = crisiskeeper.NewKeeper(
 		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
 	)
-	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath)
+
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -336,9 +351,11 @@ func NewTerraApp(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
+	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, bApp.MsgServiceRouter())
+
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, scopedIBCKeeper,
+		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
 	// Create Transfer Keepers
@@ -367,21 +384,23 @@ func NewTerraApp(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, &stakingKeeper, distrtypes.ModuleName,
 	)
 	app.MarketKeeper = marketkeeper.NewKeeper(
-		appCodec, keys[markettypes.StoreKey], app.GetSubspace(markettypes.ModuleName),
+		appCodec, keys[markettypes.StoreKey],
+		app.GetSubspace(markettypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
 	)
 	app.TreasuryKeeper = treasurykeeper.NewKeeper(
-		appCodec, keys[treasurytypes.StoreKey], app.GetSubspace(treasurytypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.MarketKeeper, app.StakingKeeper, app.DistrKeeper,
+		appCodec, keys[treasurytypes.StoreKey],
+		app.GetSubspace(treasurytypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper,
+		app.MarketKeeper, app.OracleKeeper,
+		app.StakingKeeper, app.DistrKeeper,
 		distrtypes.ModuleName)
-	app.MsgauthKeeper = msgauthkeeper.NewKeeper(
-		appCodec, keys[msgauthtypes.StoreKey], bApp.Router(),
-	)
+
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec, keys[wasmtypes.StoreKey],
 		app.GetSubspace(wasmtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper,
-		app.TreasuryKeeper, bApp.Router(),
+		app.TreasuryKeeper, bApp.MsgServiceRouter(),
 		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
 		homePath, wasmConfig,
 	)
@@ -409,7 +428,7 @@ func NewTerraApp(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibchost.RouterKey, ibcclient.NewClientUpdateProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(treasurytypes.RouterKey, treasury.NewTreasuryPolicyUpdateHandler(app.TreasuryKeeper))
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
@@ -434,6 +453,7 @@ func NewTerraApp(
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants),
+		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
@@ -443,12 +463,12 @@ func NewTerraApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
+		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		transferModule,
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper),
-		msgauth.NewAppModule(appCodec, app.MsgauthKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -464,8 +484,8 @@ func NewTerraApp(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName,
 		oracletypes.ModuleName, markettypes.ModuleName,
-		treasurytypes.ModuleName, msgauthtypes.ModuleName,
-		stakingtypes.ModuleName,
+		treasurytypes.ModuleName, authz.ModuleName,
+		feegrant.ModuleName, stakingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -480,15 +500,17 @@ func NewTerraApp(
 		stakingtypes.ModuleName, slashingtypes.ModuleName,
 		govtypes.ModuleName, markettypes.ModuleName,
 		oracletypes.ModuleName, treasurytypes.ModuleName,
-		wasmtypes.ModuleName, msgauthtypes.ModuleName,
+		wasmtypes.ModuleName, authz.ModuleName,
 		minttypes.ModuleName, crisistypes.ModuleName,
 		ibchost.ModuleName, genutiltypes.ModuleName,
 		evidencetypes.ModuleName, ibctransfertypes.ModuleName,
+		feegrant.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.mm.RegisterServices(app.configurator)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -496,8 +518,10 @@ func NewTerraApp(
 	// transactions
 	app.sm = module.NewSimulationManager(
 		customauth.NewAppModule(appCodec, app.AccountKeeper, customauthsim.RandomGenesisAccounts),
+		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
+		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
@@ -511,7 +535,6 @@ func NewTerraApp(
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper),
-		msgauth.NewAppModule(appCodec, app.MsgauthKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -522,17 +545,25 @@ func NewTerraApp(
 	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(
-		customante.NewAnteHandler(
-			app.AccountKeeper, app.BankKeeper,
-			app.OracleKeeper, app.TreasuryKeeper,
-			ante.DefaultSigVerificationGasConsumer,
-			encodingConfig.TxConfig.SignModeHandler(),
-		),
+
+	anteHandler, err := customante.NewAnteHandler(
+		customante.HandlerOptions{
+			AccountKeeper:   app.AccountKeeper,
+			BankKeeper:      app.BankKeeper,
+			FeegrantKeeper:  app.FeeGrantKeeper,
+			OracleKeeper:    app.OracleKeeper,
+			TreasuryKeeper:  app.TreasuryKeeper,
+			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+		},
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -554,14 +585,6 @@ func NewTerraApp(
 	app.ScopedTransferKeeper = scopedTransferKeeper
 
 	return app
-}
-
-// MakeCodecs constructs the *std.Codec and *codec.LegacyAmino instances used by
-// Gaia. It is useful for tests and clients who do not want to construct the
-// full gaia application
-func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
-	config := MakeEncodingConfig()
-	return config.Marshaler, config.Amino
 }
 
 // Name returns the name of the App
@@ -623,7 +646,7 @@ func (app *TerraApp) LegacyAmino() *codec.LegacyAmino {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *TerraApp) AppCodec() codec.Marshaler {
+func (app *TerraApp) AppCodec() codec.Codec {
 	return app.appCodec
 }
 
@@ -724,7 +747,7 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)

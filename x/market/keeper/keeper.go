@@ -15,7 +15,7 @@ import (
 // Keeper of the market store
 type Keeper struct {
 	storeKey   sdk.StoreKey
-	cdc        codec.BinaryMarshaler
+	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
 	AccountKeeper types.AccountKeeper
@@ -25,7 +25,7 @@ type Keeper struct {
 
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(
-	cdc codec.BinaryMarshaler,
+	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
 	paramstore paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
@@ -67,14 +67,14 @@ func (k Keeper) GetMintPoolDelta(ctx sdk.Context) sdk.Dec {
 	}
 
 	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(bz, &dp)
+	k.cdc.MustUnmarshal(bz, &dp)
 	return dp.Dec
 }
 
 // SetMintPoolDelta updates MintPoolDelta which is gap between the MintPool and the BasePool
 func (k Keeper) SetMintPoolDelta(ctx sdk.Context, delta sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: delta})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: delta})
 	store.Set(types.MintPoolDeltaKey, bz)
 }
 
@@ -87,14 +87,14 @@ func (k Keeper) GetBurnPoolDelta(ctx sdk.Context) sdk.Dec {
 	}
 
 	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(bz, &dp)
+	k.cdc.MustUnmarshal(bz, &dp)
 	return dp.Dec
 }
 
 // SetBurnPoolDelta updates BurnPoolDelta which is gap between the BurnPool and the BasePool
 func (k Keeper) SetBurnPoolDelta(ctx sdk.Context, delta sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: delta})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: delta})
 	store.Set(types.BurnPoolDeltaKey, bz)
 }
 

@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	cosmwasm "github.com/CosmWasm/wasmvm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,9 +11,11 @@ import (
 func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
 	return cosmwasm.GoAPI{
 		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
-			if len(canon) != sdk.AddrLen {
-				return "", 0, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
+			err = sdk.VerifyAddressFormat(canon)
+			if err != nil {
+				return "", 0, nil
 			}
+
 			return sdk.AccAddress(canon).String(), types.HumanizeCost * types.GasMultiplier, nil
 		},
 		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {

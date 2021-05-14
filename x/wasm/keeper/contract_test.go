@@ -242,7 +242,7 @@ func TestExecute(t *testing.T) {
 	// ensure contract has updated balance
 	contractAcct = accKeeper.GetAccount(ctx, addr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), bankKeeper.GetAllBalances(input.Ctx, addr))
+	assert.Equal(t, sdk.Coins{}, bankKeeper.GetAllBalances(input.Ctx, addr))
 
 	t.Logf("Duration: %v (35619 gas)\n", diff)
 }
@@ -573,6 +573,20 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 				{"contract_address": contractAddr},
 				{"action": "burn"},
 				{"payout": myPayoutAddr},
+			},
+		},
+		{
+			"Type": "coin_spent",
+			"Attr": []dict{
+				{"spender": contractAddr},
+				{"amount": "100000" + core.MicroLunaDenom},
+			},
+		},
+		{
+			"Type": "coin_received",
+			"Attr": []dict{
+				{"receiver": myPayoutAddr},
+				{"amount": "100000" + core.MicroLunaDenom},
 			},
 		},
 		{

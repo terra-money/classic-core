@@ -15,7 +15,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	input := CreateTestInput(t)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	amt := sdk.TokensFromConsensusPower(100)
+	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 

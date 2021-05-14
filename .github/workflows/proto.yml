@@ -3,6 +3,7 @@ name: Protobuf
 # This workflow is only run when a .proto file has been changed
 on:
   pull_request:
+    type: [ labeled ]
     paths:
       - "**.proto"
 jobs:
@@ -14,6 +15,7 @@ jobs:
       - name: lint
         run: make proto-lint
   breakage:
+    if: ${{ github.event.label.name != 'proto-breaking' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master

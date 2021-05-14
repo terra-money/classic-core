@@ -36,6 +36,13 @@ func (k Keeper) Whitelist(ctx sdk.Context) (res types.DenomList) {
 	return
 }
 
+// SetWhitelist store new whitelist to param store
+// this function is only for test purpose
+func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist types.DenomList) {
+	k.paramSpace.Set(ctx, types.KeyWhitelist, whitelist)
+	return
+}
+
 // SlashFraction returns oracle voting penalty rate
 func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.KeySlashFraction, &res)

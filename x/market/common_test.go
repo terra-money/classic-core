@@ -11,7 +11,7 @@ import (
 
 var (
 	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
-	stakingAmt = sdk.TokensFromConsensusPower(10)
+	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
 	randomPrice = sdk.NewDec(1700)
 )

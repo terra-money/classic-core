@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
@@ -146,9 +147,10 @@ func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
 		return nil, err
 	}
 
-	alias := vestingAccountYAML{
+	out := vestingAccountYAML{
 		Address:          accAddr,
 		AccountNumber:    lgva.AccountNumber,
+		PubKey:           getPKString(lgva),
 		Sequence:         lgva.Sequence,
 		OriginalVesting:  lgva.OriginalVesting,
 		DelegatedFree:    lgva.DelegatedFree,
@@ -157,19 +159,24 @@ func (lgva LazyGradedVestingAccount) MarshalYAML() (interface{}, error) {
 		VestingSchedules: lgva.VestingSchedules,
 	}
 
-	if lgva.PubKey != nil {
-		pks, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeAccPub, lgva.GetPubKey())
-		if err != nil {
-			return nil, err
-		}
+	return marshalYaml(out)
+}
 
-		alias.PubKey = pks
+type getPK interface {
+	GetPubKey() cryptotypes.PubKey
+}
+
+func getPKString(g getPK) string {
+	if pk := g.GetPubKey(); pk != nil {
+		return pk.String()
 	}
+	return ""
+}
 
-	bz, err := yaml.Marshal(alias)
+func marshalYaml(i interface{}) (interface{}, error) {
+	bz, err := yaml.Marshal(i)
 	if err != nil {
 		return nil, err
 	}
-
-	return string(bz), err
+	return string(bz), nil
 }

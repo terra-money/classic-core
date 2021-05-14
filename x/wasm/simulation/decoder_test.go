@@ -41,9 +41,9 @@ func TestDecodeDistributionStore(t *testing.T) {
 		Pairs: []kv.Pair{
 			{Key: types.LastCodeIDKey, Value: lastCodeIDbz},
 			{Key: types.LastInstanceIDKey, Value: lastInstanceIDbz},
-			{Key: types.CodeKey, Value: cdc.MustMarshalBinaryBare(&codeInfo)},
-			{Key: types.ContractInfoKey, Value: cdc.MustMarshalBinaryBare(&contractInfo)},
-			{Key: append(types.ContractInfoKey, 0x1), Value: cdc.MustMarshalBinaryBare(&emptyAdminContractInfo)},
+			{Key: types.CodeKey, Value: cdc.MustMarshal(&codeInfo)},
+			{Key: types.ContractInfoKey, Value: cdc.MustMarshal(&contractInfo)},
+			{Key: append(types.ContractInfoKey, 0x1), Value: cdc.MustMarshal(&emptyAdminContractInfo)},
 			{Key: types.ContractStoreKey, Value: contractStore},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},

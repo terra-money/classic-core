@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.channel.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types";
+option go_package = "github.com/cosmos/ibc-go/modules/core/04-channel/types";
 
 import "gogoproto/gogo.proto";
 import "ibc/core/client/v1/client.proto";
@@ -24,7 +25,8 @@ service Msg {
   // ChannelCloseInit defines a rpc handler method for MsgChannelCloseInit.
   rpc ChannelCloseInit(MsgChannelCloseInit) returns (MsgChannelCloseInitResponse);
 
-  // ChannelCloseConfirm defines a rpc handler method for MsgChannelCloseConfirm.
+  // ChannelCloseConfirm defines a rpc handler method for
+  // MsgChannelCloseConfirm.
   rpc ChannelCloseConfirm(MsgChannelCloseConfirm) returns (MsgChannelCloseConfirmResponse);
 
   // RecvPacket defines a rpc handler method for MsgRecvPacket.
@@ -61,8 +63,8 @@ message MsgChannelOpenTry {
   option (gogoproto.goproto_getters) = false;
 
   string port_id = 1 [(gogoproto.moretags) = "yaml:\"port_id\""];
-  // in the case of crossing hello's, when both chains call OpenInit, we need the channel identifier
-  // of the previous channel in state INIT
+  // in the case of crossing hello's, when both chains call OpenInit, we need
+  // the channel identifier of the previous channel in state INIT
   string                    previous_channel_id  = 2 [(gogoproto.moretags) = "yaml:\"previous_channel_id\""];
   Channel                   channel              = 3 [(gogoproto.nullable) = false];
   string                    counterparty_version = 4 [(gogoproto.moretags) = "yaml:\"counterparty_version\""];
@@ -108,7 +110,8 @@ message MsgChannelOpenConfirm {
   string signer = 5;
 }
 
-// MsgChannelOpenConfirmResponse defines the Msg/ChannelOpenConfirm response type.
+// MsgChannelOpenConfirmResponse defines the Msg/ChannelOpenConfirm response
+// type.
 message MsgChannelOpenConfirmResponse {}
 
 // MsgChannelCloseInit defines a msg sent by a Relayer to Chain A
@@ -139,7 +142,8 @@ message MsgChannelCloseConfirm {
   string signer = 5;
 }
 
-// MsgChannelCloseConfirmResponse defines the Msg/ChannelCloseConfirm response type.
+// MsgChannelCloseConfirmResponse defines the Msg/ChannelCloseConfirm response
+// type.
 message MsgChannelCloseConfirmResponse {}
 
 // MsgRecvPacket receives incoming IBC packet

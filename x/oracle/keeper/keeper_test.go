@@ -89,7 +89,7 @@ func TestRewardPool(t *testing.T) {
 
 	fees := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1000)))
 	acc := input.AccountKeeper.GetModuleAccount(input.Ctx, types.ModuleName)
-	err := input.BankKeeper.SetBalances(input.Ctx, acc.GetAddress(), fees)
+	err := FundAccount(input, acc.GetAddress(), fees)
 	if err != nil {
 		panic(err) // never occurs
 	}

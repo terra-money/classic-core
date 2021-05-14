@@ -20,9 +20,9 @@ func TestEncoding(t *testing.T) {
 		sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()),
 	}
 
-	valAddr := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr := make(sdk.ValAddress, 1)
 	valAddr[0] = 12
-	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr2 := make(sdk.ValAddress, 2)
 	valAddr2[1] = 123
 
 	cases := map[string]struct {

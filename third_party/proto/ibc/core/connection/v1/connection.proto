@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.connection.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/03-connection/types";
+option go_package = "github.com/cosmos/ibc-go/modules/core/03-connection/types";
 
 import "gogoproto/gogo.proto";
 import "ibc/core/commitment/v1/commitment.proto";
@@ -24,8 +25,9 @@ message ConnectionEnd {
   State state = 3;
   // counterparty chain associated with this connection.
   Counterparty counterparty = 4 [(gogoproto.nullable) = false];
-  // delay period that must pass before a consensus state can be used for packet-verification
-  // NOTE: delay period logic is only implemented by some clients.
+  // delay period that must pass before a consensus state can be used for
+  // packet-verification NOTE: delay period logic is only implemented by some
+  // clients.
   uint64 delay_period = 5 [(gogoproto.moretags) = "yaml:\"delay_period\""];
 }
 

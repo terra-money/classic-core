@@ -17,7 +17,7 @@ import (
 // Keeper of the treasury store
 type Keeper struct {
 	storeKey   sdk.StoreKey
-	cdc        codec.BinaryMarshaler
+	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
 	accountKeeper types.AccountKeeper
@@ -25,17 +25,20 @@ type Keeper struct {
 	marketKeeper  types.MarketKeeper
 	stakingKeeper types.StakingKeeper
 	distrKeeper   types.DistributionKeeper
+	oracleKeeper  types.OracleKeeper
 
 	distributionModuleName string
 }
 
 // NewKeeper creates a new treasury Keeper instance
-func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey,
+func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	paramSpace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	marketKeeper types.MarketKeeper,
-	stakingKeeper types.StakingKeeper, distrKeeper types.DistributionKeeper,
+	oracleKeeper types.OracleKeeper,
+	stakingKeeper types.StakingKeeper,
+	distrKeeper types.DistributionKeeper,
 	distributionModuleName string) Keeper {
 
 	// ensure treasury module account is set
@@ -60,6 +63,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey,
 		accountKeeper:          accountKeeper,
 		bankKeeper:             bankKeeper,
 		marketKeeper:           marketKeeper,
+		oracleKeeper:           oracleKeeper,
 		stakingKeeper:          stakingKeeper,
 		distrKeeper:            distrKeeper,
 		distributionModuleName: distributionModuleName,
@@ -80,14 +84,14 @@ func (k Keeper) GetTaxRate(ctx sdk.Context) sdk.Dec {
 	}
 
 	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(b, &dp)
+	k.cdc.MustUnmarshal(b, &dp)
 	return dp.Dec
 }
 
 // SetTaxRate sets the tax rate
 func (k Keeper) SetTaxRate(ctx sdk.Context, taxRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: taxRate})
+	b := k.cdc.MustMarshal(&sdk.DecProto{Dec: taxRate})
 	store.Set(types.TaxRateKey, b)
 }
 
@@ -100,21 +104,21 @@ func (k Keeper) GetRewardWeight(ctx sdk.Context) sdk.Dec {
 	}
 
 	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(b, &dp)
+	k.cdc.MustUnmarshal(b, &dp)
 	return dp.Dec
 }
 
 // SetRewardWeight sets the reward weight
 func (k Keeper) SetRewardWeight(ctx sdk.Context, rewardWeight sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: rewardWeight})
+	b := k.cdc.MustMarshal(&sdk.DecProto{Dec: rewardWeight})
 	store.Set(types.RewardWeightKey, b)
 }
 
 // SetTaxCap sets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: cap})
+	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: cap})
 	store.Set(types.GetTaxCapKey(denom), bz)
 }
 
@@ -133,7 +137,7 @@ func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) sdk.Int {
 	}
 
 	ip := sdk.IntProto{}
-	k.cdc.MustUnmarshalBinaryBare(bz, &ip)
+	k.cdc.MustUnmarshal(bz, &ip)
 	return ip.Int
 }
 
@@ -146,7 +150,7 @@ func (k Keeper) IterateTaxCap(ctx sdk.Context, handler func(denom string, taxCap
 	for ; iter.Valid(); iter.Next() {
 		denom := string(iter.Key()[len(types.TaxCapKey):])
 		var ip sdk.IntProto
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ip)
+		k.cdc.MustUnmarshal(iter.Value(), &ip)
 
 		if handler(denom, ip.Int) {
 			break
@@ -172,7 +176,7 @@ func (k Keeper) RecordEpochTaxProceeds(ctx sdk.Context, delta sdk.Coins) {
 func (k Keeper) SetEpochTaxProceeds(ctx sdk.Context, taxProceeds sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryBare(&types.EpochTaxProceeds{TaxProceeds: taxProceeds})
+	bz := k.cdc.MustMarshal(&types.EpochTaxProceeds{TaxProceeds: taxProceeds})
 	store.Set(types.TaxProceedsKey, bz)
 }
 
@@ -184,7 +188,7 @@ func (k Keeper) PeekEpochTaxProceeds(ctx sdk.Context) sdk.Coins {
 	if bz == nil {
 		taxProceeds.TaxProceeds = sdk.Coins{}
 	} else {
-		k.cdc.MustUnmarshalBinaryBare(bz, &taxProceeds)
+		k.cdc.MustUnmarshal(bz, &taxProceeds)
 	}
 
 	return taxProceeds.TaxProceeds
@@ -192,15 +196,23 @@ func (k Keeper) PeekEpochTaxProceeds(ctx sdk.Context) sdk.Coins {
 
 // RecordEpochInitialIssuance updates epoch initial issuance from supply keeper
 func (k Keeper) RecordEpochInitialIssuance(ctx sdk.Context) {
-	totalCoins := k.bankKeeper.GetSupply(ctx).GetTotal()
-	k.SetEpochInitialIssuance(ctx, totalCoins)
+	whitelist := k.oracleKeeper.Whitelist(ctx)
+
+	totalSupply := make(sdk.Coins, len(whitelist)+1)
+	totalSupply[0] = k.bankKeeper.GetSupply(ctx, core.MicroLunaDenom)
+
+	for i, denom := range whitelist {
+		totalSupply[i+1] = k.bankKeeper.GetSupply(ctx, denom.Name)
+	}
+
+	k.SetEpochInitialIssuance(ctx, totalSupply.Sort())
 }
 
 // SetEpochInitialIssuance stores epoch initial issuance
 func (k Keeper) SetEpochInitialIssuance(ctx sdk.Context, issuance sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryBare(&types.EpochInitialIssuance{Issuance: issuance})
+	bz := k.cdc.MustMarshal(&types.EpochInitialIssuance{Issuance: issuance})
 	store.Set(types.EpochInitialIssuanceKey, bz)
 }
 
@@ -213,7 +225,7 @@ func (k Keeper) GetEpochInitialIssuance(ctx sdk.Context) sdk.Coins {
 	if bz == nil {
 		initialIssuance.Issuance = sdk.Coins{}
 	} else {
-		k.cdc.MustUnmarshalBinaryBare(bz, &initialIssuance)
+		k.cdc.MustUnmarshal(bz, &initialIssuance)
 	}
 
 	return initialIssuance.Issuance
@@ -221,11 +233,11 @@ func (k Keeper) GetEpochInitialIssuance(ctx sdk.Context) sdk.Coins {
 
 // PeekEpochSeigniorage returns epoch seigniorage
 func (k Keeper) PeekEpochSeigniorage(ctx sdk.Context) sdk.Int {
-	epochIssuance := k.bankKeeper.GetSupply(ctx).GetTotal().AmountOf(core.MicroLunaDenom)
+	epochIssuance := k.bankKeeper.GetSupply(ctx, core.MicroLunaDenom).Amount
 	preEpochIssuance := k.GetEpochInitialIssuance(ctx).AmountOf(core.MicroLunaDenom)
 	epochSeigniorage := preEpochIssuance.Sub(epochIssuance)
 
-	if epochSeigniorage.LT(sdk.ZeroInt()) {
+	if epochSeigniorage.IsNegative() {
 		return sdk.ZeroInt()
 	}
 
@@ -241,7 +253,7 @@ func (k Keeper) GetTR(ctx sdk.Context, epoch int64) sdk.Dec {
 	if bz == nil {
 		dp.Dec = sdk.ZeroDec()
 	} else {
-		k.cdc.MustUnmarshalBinaryBare(bz, &dp)
+		k.cdc.MustUnmarshal(bz, &dp)
 	}
 
 	return dp.Dec
@@ -251,7 +263,7 @@ func (k Keeper) GetTR(ctx sdk.Context, epoch int64) sdk.Dec {
 func (k Keeper) SetTR(ctx sdk.Context, epoch int64, TR sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: TR})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: TR})
 	store.Set(types.GetTRKey(epoch), bz)
 }
 
@@ -275,7 +287,7 @@ func (k Keeper) GetSR(ctx sdk.Context, epoch int64) sdk.Dec {
 	if bz == nil {
 		dp.Dec = sdk.ZeroDec()
 	} else {
-		k.cdc.MustUnmarshalBinaryBare(bz, &dp)
+		k.cdc.MustUnmarshal(bz, &dp)
 	}
 
 	return dp.Dec
@@ -285,7 +297,7 @@ func (k Keeper) GetSR(ctx sdk.Context, epoch int64) sdk.Dec {
 func (k Keeper) SetSR(ctx sdk.Context, epoch int64, SR sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: SR})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: SR})
 	store.Set(types.GetSRKey(epoch), bz)
 }
 
@@ -309,7 +321,7 @@ func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) sdk.Int {
 	if bz == nil {
 		ip.Int = sdk.ZeroInt()
 	} else {
-		k.cdc.MustUnmarshalBinaryBare(bz, &ip)
+		k.cdc.MustUnmarshal(bz, &ip)
 	}
 
 	return ip.Int
@@ -319,7 +331,7 @@ func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) sdk.Int {
 func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, TSL sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: TSL})
+	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: TSL})
 	store.Set(types.GetTSLKey(epoch), bz)
 }
 
