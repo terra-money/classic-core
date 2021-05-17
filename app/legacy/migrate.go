@@ -1,9 +1,5 @@
 package legacy
 
-// TODO change this script to columbus-4 to columbus-5 migration script
-//This file implements a genesis migration from cosmoshub-3 to cosmoshub-4. It migrates state from the modules in cosmoshub-3.
-//This file also implements setting an initial height from an upgrade.
-
 import (
 	"encoding/json"
 	"fmt"
