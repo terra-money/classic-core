@@ -10,6 +10,7 @@ import (
 	"github.com/terra-project/core/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 func TestExchangeRate(t *testing.T) {
@@ -293,7 +294,7 @@ func TestAggregateVoteIterate(t *testing.T) {
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[1]), aggregateVote2)
 
 	i := 0
-	bigger := bytes.Compare(Addrs[0], Addrs[1])
+	bigger := bytes.Compare(address.MustLengthPrefix(Addrs[0]), address.MustLengthPrefix(Addrs[1]))
 	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(voter sdk.ValAddress, p types.AggregateExchangeRateVote) (stop bool) {
 		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
 			require.Equal(t, aggregateVote1, p)

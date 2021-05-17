@@ -153,7 +153,7 @@ func (k Keeper) IterateFeederDelegations(ctx sdk.Context,
 	iter := sdk.KVStorePrefixIterator(store, types.FeederDelegationKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		delegator := sdk.ValAddress(iter.Key()[len(types.FeederDelegationKey):])
+		delegator := sdk.ValAddress(iter.Key()[2:])
 		delegate := sdk.AccAddress(iter.Value())
 
 		if handler(delegator, delegate) {
@@ -200,7 +200,7 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 	iter := sdk.KVStorePrefixIterator(store, types.MissCounterKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		operator := sdk.ValAddress(iter.Key()[len(types.MissCounterKey):])
+		operator := sdk.ValAddress(iter.Key()[2:])
 
 		var missCounter gogotypes.UInt64Value
 		k.cdc.MustUnmarshal(iter.Value(), &missCounter)
@@ -246,7 +246,7 @@ func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler fu
 	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRatePrevoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		voterAddr := sdk.ValAddress(iter.Key()[1:])
+		voterAddr := sdk.ValAddress(iter.Key()[2:])
 
 		var aggregatePrevote types.AggregateExchangeRatePrevote
 		k.cdc.MustUnmarshal(iter.Value(), &aggregatePrevote)
@@ -290,7 +290,7 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRateVoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		voterAddr := sdk.ValAddress(iter.Key()[1:])
+		voterAddr := sdk.ValAddress(iter.Key()[2:])
 
 		var aggregateVote types.AggregateExchangeRateVote
 		k.cdc.MustUnmarshal(iter.Value(), &aggregateVote)
