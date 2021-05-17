@@ -5,11 +5,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	core "github.com/terra-project/core/types"
 	marketexported "github.com/terra-project/core/x/market/exported"
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 	oracleexported "github.com/terra-project/core/x/oracle/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
@@ -129,8 +129,13 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 		case *wasmexported.MsgExecuteContract:
 			taxes = taxes.Add(computeTax(ctx, tk, msg.Coins)...)
 
-		case *msgauthexported.MsgExecAuthorized:
-			taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, msg.GetMsgs()...)...)
+		case *authz.MsgExec:
+			messages, err := msg.GetMessages()
+			if err != nil {
+				panic(err)
+			}
+
+			taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, messages...)...)
 		}
 	}
 

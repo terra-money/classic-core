@@ -161,7 +161,7 @@ func TestOracleTally(t *testing.T) {
 	validatorClaimMap := make(map[string]types.Claim)
 	for _, valAddr := range valAddrs {
 		validatorClaimMap[valAddr.String()] = types.Claim{
-			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(),
+			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
 			Weight:    int64(0),
 			WinCount:  int64(0),
 			Recipient: valAddr,
@@ -178,7 +178,7 @@ func TestOracleTally(t *testing.T) {
 	expectedValidatorClaimMap := make(map[string]types.Claim)
 	for _, valAddr := range valAddrs {
 		expectedValidatorClaimMap[valAddr.String()] = types.Claim{
-			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(),
+			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
 			Weight:    int64(0),
 			WinCount:  int64(0),
 			Recipient: valAddr,
@@ -237,8 +237,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroSDRDenom, Amount: randomExchangeRate}}, 1)
 
 	rewardsAmt := sdk.NewInt(100000000)
-	moduleAcc := input.AccountKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), types.ModuleName)
-	err := input.BankKeeper.SetBalances(input.Ctx, moduleAcc.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardsAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardsAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -311,8 +310,7 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroKRWDenom, Amount: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
-	moduleAcc := input.AccountKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), types.ModuleName)
-	err := input.BankKeeper.SetBalances(input.Ctx, moduleAcc.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -348,8 +346,7 @@ func TestOracleExchangeRate(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}, {Denom: core.MicroSDRDenom, Amount: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
-	moduleAcc := input.AccountKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), types.ModuleName)
-	err := input.BankKeeper.SetBalances(input.Ctx, moduleAcc.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -390,8 +387,7 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroKRWDenom, Amount: krwExchangeRateWithErr}, {Denom: core.MicroUSDDenom, Amount: usdExchangeRateWithErr}}, 4)
 
 	rewardAmt := sdk.NewInt(100000000)
-	moduleAcc := input.AccountKeeper.GetModuleAccount(input.Ctx.WithBlockHeight(1), types.ModuleName)
-	err := input.BankKeeper.SetBalances(input.Ctx, moduleAcc.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)

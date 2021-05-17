@@ -1,24 +1,22 @@
 package keeper
 
 import (
-	core "github.com/terra-project/core/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // UpdateTaxCap updates all denom's tax cap
 func (k Keeper) UpdateTaxCap(ctx sdk.Context) sdk.Coins {
 	taxPolicyCap := sdk.NewDecCoinFromCoin(k.TaxPolicy(ctx).Cap)
-	total := k.bankKeeper.GetSupply(ctx).GetTotal()
+	whitelist := k.oracleKeeper.Whitelist(ctx)
 
 	var newCaps sdk.Coins
-	for _, coin := range total {
-		// ignore uluna tax cap (uluna has no tax); keep sdr tax cap
-		if coin.Denom == core.MicroLunaDenom || coin.Denom == taxPolicyCap.Denom {
+	for _, denom := range whitelist {
+		// keep sdr tax cap
+		if denom.Name == taxPolicyCap.Denom {
 			continue
 		}
 
-		newDecCap, err := k.marketKeeper.ComputeInternalSwap(ctx, taxPolicyCap, coin.Denom)
+		newDecCap, err := k.marketKeeper.ComputeInternalSwap(ctx, taxPolicyCap, denom.Name)
 		if err == nil {
 			newCap, _ := newDecCap.TruncateDecimal()
 			newCaps = append(newCaps, newCap)

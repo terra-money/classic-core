@@ -17,6 +17,8 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 	)
 	minValidPerWindow := k.MinValidPerWindow(ctx)
 	slashFraction := k.SlashFraction(ctx)
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
+
 	k.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter uint64) bool {
 
 		// Calculate valid vote rate; (SlashWindow - MissCounter)/SlashWindow
@@ -35,7 +37,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 
 				k.StakingKeeper.Slash(
 					ctx, consAddr,
-					distributionHeight, validator.GetConsensusPower(), slashFraction,
+					distributionHeight, validator.GetConsensusPower(powerReduction), slashFraction,
 				)
 				k.StakingKeeper.Jail(ctx, consAddr)
 			}

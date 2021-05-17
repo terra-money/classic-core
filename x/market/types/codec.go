@@ -6,8 +6,6 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-
-	msgauthtypes "github.com/terra-project/core/x/msgauth/types"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/market interfaces and concrete types
@@ -43,7 +41,4 @@ func init() {
 	RegisterLegacyAminoCodec(amino)
 	cryptocodec.RegisterCrypto(amino)
 	amino.Seal()
-
-	msgauthtypes.RegisterGrantableMsgType(TypeMsgSwap)
-	msgauthtypes.RegisterMsgAuthTypeCodec(&MsgSwap{}, "market/MsgSwap")
 }

@@ -24,7 +24,7 @@ var ModuleBasics = module.NewBasicManager(
 )
 
 // MakeTestCodec nolint
-func MakeTestCodec(t *testing.T) codec.Marshaler {
+func MakeTestCodec(t *testing.T) codec.Codec {
 	return MakeEncodingConfig(t).Marshaler
 }
 

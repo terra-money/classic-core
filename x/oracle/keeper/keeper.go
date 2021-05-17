@@ -19,7 +19,7 @@ import (
 
 // Keeper of the oracle store
 type Keeper struct {
-	cdc        codec.BinaryMarshaler
+	cdc        codec.BinaryCodec
 	storeKey   sdk.StoreKey
 	paramSpace paramstypes.Subspace
 
@@ -32,7 +32,7 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey,
+func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	paramspace paramstypes.Subspace, accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {
@@ -80,14 +80,14 @@ func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (sdk.Dec, err
 	}
 
 	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(b, &dp)
+	k.cdc.MustUnmarshal(b, &dp)
 	return dp.Dec, nil
 }
 
 // SetLunaExchangeRate sets the consensus exchange rate of Luna denominated in the denom asset to the store.
 func (k Keeper) SetLunaExchangeRate(ctx sdk.Context, denom string, exchangeRate sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: exchangeRate})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: exchangeRate})
 	store.Set(types.GetExchangeRateKey(denom), bz)
 }
 
@@ -117,7 +117,7 @@ func (k Keeper) IterateLunaExchangeRates(ctx sdk.Context, handler func(denom str
 	for ; iter.Valid(); iter.Next() {
 		denom := string(iter.Key()[len(types.ExchangeRateKey):])
 		dp := sdk.DecProto{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &dp)
+		k.cdc.MustUnmarshal(iter.Value(), &dp)
 		if handler(denom, dp.Dec) {
 			break
 		}
@@ -153,7 +153,7 @@ func (k Keeper) IterateFeederDelegations(ctx sdk.Context,
 	iter := sdk.KVStorePrefixIterator(store, types.FeederDelegationKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		delegator := sdk.ValAddress(iter.Key()[len(types.FeederDelegationKey):])
+		delegator := sdk.ValAddress(iter.Key()[2:])
 		delegate := sdk.AccAddress(iter.Value())
 
 		if handler(delegator, delegate) {
@@ -175,14 +175,14 @@ func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) uint64 
 	}
 
 	var missCounter gogotypes.UInt64Value
-	k.cdc.MustUnmarshalBinaryBare(bz, &missCounter)
+	k.cdc.MustUnmarshal(bz, &missCounter)
 	return missCounter.Value
 }
 
 // SetMissCounter updates the # of vote periods missed in this oracle slash window
 func (k Keeper) SetMissCounter(ctx sdk.Context, operator sdk.ValAddress, missCounter uint64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.UInt64Value{Value: missCounter})
+	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})
 	store.Set(types.GetMissCounterKey(operator), bz)
 }
 
@@ -200,10 +200,10 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 	iter := sdk.KVStorePrefixIterator(store, types.MissCounterKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		operator := sdk.ValAddress(iter.Key()[len(types.MissCounterKey):])
+		operator := sdk.ValAddress(iter.Key()[2:])
 
 		var missCounter gogotypes.UInt64Value
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &missCounter)
+		k.cdc.MustUnmarshal(iter.Value(), &missCounter)
 
 		if handler(operator, missCounter.Value) {
 			break
@@ -222,14 +222,14 @@ func (k Keeper) GetAggregateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAd
 		err = sdkerrors.Wrap(types.ErrNoAggregatePrevote, voter.String())
 		return
 	}
-	k.cdc.MustUnmarshalBinaryBare(b, &aggregatePrevote)
+	k.cdc.MustUnmarshal(b, &aggregatePrevote)
 	return
 }
 
 // SetAggregateExchangeRatePrevote set an oracle aggregate prevote to the store
 func (k Keeper) SetAggregateExchangeRatePrevote(ctx sdk.Context, voter sdk.ValAddress, prevote types.AggregateExchangeRatePrevote) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&prevote)
+	bz := k.cdc.MustMarshal(&prevote)
 
 	store.Set(types.GetAggregateExchangeRatePrevoteKey(voter), bz)
 }
@@ -246,10 +246,10 @@ func (k Keeper) IterateAggregateExchangeRatePrevotes(ctx sdk.Context, handler fu
 	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRatePrevoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		voterAddr := sdk.ValAddress(iter.Key()[1:])
+		voterAddr := sdk.ValAddress(iter.Key()[2:])
 
 		var aggregatePrevote types.AggregateExchangeRatePrevote
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &aggregatePrevote)
+		k.cdc.MustUnmarshal(iter.Value(), &aggregatePrevote)
 		if handler(voterAddr, aggregatePrevote) {
 			break
 		}
@@ -267,14 +267,14 @@ func (k Keeper) GetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddre
 		err = sdkerrors.Wrap(types.ErrNoAggregateVote, voter.String())
 		return
 	}
-	k.cdc.MustUnmarshalBinaryBare(b, &aggregateVote)
+	k.cdc.MustUnmarshal(b, &aggregateVote)
 	return
 }
 
 // SetAggregateExchangeRateVote adds an oracle aggregate prevote to the store
 func (k Keeper) SetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress, vote types.AggregateExchangeRateVote) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&vote)
+	bz := k.cdc.MustMarshal(&vote)
 	store.Set(types.GetAggregateExchangeRateVoteKey(voter), bz)
 }
 
@@ -290,10 +290,10 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRateVoteKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		voterAddr := sdk.ValAddress(iter.Key()[1:])
+		voterAddr := sdk.ValAddress(iter.Key()[2:])
 
 		var aggregateVote types.AggregateExchangeRateVote
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &aggregateVote)
+		k.cdc.MustUnmarshal(iter.Value(), &aggregateVote)
 		if handler(voterAddr, aggregateVote) {
 			break
 		}
@@ -310,7 +310,7 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (sdk.Dec, error) {
 	}
 
 	tobinTax := sdk.DecProto{}
-	k.cdc.MustUnmarshalBinaryBare(bz, &tobinTax)
+	k.cdc.MustUnmarshal(bz, &tobinTax)
 
 	return tobinTax.Dec, nil
 }
@@ -318,7 +318,7 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (sdk.Dec, error) {
 // SetTobinTax updates tobin tax for the denom
 func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: tobinTax})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})
 	store.Set(types.GetTobinTaxKey(denom), bz)
 }
 
@@ -331,7 +331,7 @@ func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, to
 		denom := types.ExtractDenomFromTobinTaxKey(iter.Key())
 
 		var tobinTax sdk.DecProto
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &tobinTax)
+		k.cdc.MustUnmarshal(iter.Value(), &tobinTax)
 		if handler(denom, tobinTax.Dec) {
 			break
 		}

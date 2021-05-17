@@ -25,19 +25,20 @@ import (
 	v040slashing "github.com/cosmos/cosmos-sdk/x/slashing/legacy/v040"
 	v038staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v038"
 	v040staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v040"
+	v043staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v043"
 
 	v039authcustom "github.com/terra-project/core/custom/auth/legacy/v039"
 	v040authcustom "github.com/terra-project/core/custom/auth/legacy/v040"
 	v036distrcustom "github.com/terra-project/core/custom/distribution/legacy/v036"
 	v036govcustom "github.com/terra-project/core/custom/gov/legacy/v036"
-	v040govcustom "github.com/terra-project/core/custom/gov/legacy/v040"
+	v043govcustom "github.com/terra-project/core/custom/gov/legacy/v043"
 	v036paramscustom "github.com/terra-project/core/custom/params/legacy/v036"
 	v038upgradecustom "github.com/terra-project/core/custom/upgrade/legacy/v038"
 
+	v043authz "github.com/terra-project/core/custom/authz/legacy/v043"
 	v04market "github.com/terra-project/core/x/market/legacy/v04"
 	v05market "github.com/terra-project/core/x/market/legacy/v05"
 	v04msgauth "github.com/terra-project/core/x/msgauth/legacy/v04"
-	v05msgauth "github.com/terra-project/core/x/msgauth/legacy/v05"
 	v04oracle "github.com/terra-project/core/x/oracle/legacy/v04"
 	v05oracle "github.com/terra-project/core/x/oracle/legacy/v05"
 	v04treasury "github.com/terra-project/core/x/treasury/legacy/v04"
@@ -63,7 +64,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	v036paramscustom.RegisterLegacyAminoCodec(v04Codec)
 	v038upgradecustom.RegisterLegacyAminoCodec(v04Codec)
 
-	v05Codec := clientCtx.JSONMarshaler
+	v05Codec := clientCtx.JSONCodec
 
 	if appState[v038bank.ModuleName] != nil {
 		// unmarshal relative source genesis application state
@@ -146,6 +147,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	}
 
 	// Migrate x/gov.
+	// NOTE: custom gov migration contains v043 migration step, but call it as v040
 	if appState[v036gov.ModuleName] != nil {
 		// unmarshal relative source genesis application state
 		var govGenState v036gov.GenesisState
@@ -156,7 +158,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040gov.ModuleName] = v05Codec.MustMarshalJSON(v040govcustom.Migrate(govGenState))
+		appState[v040gov.ModuleName] = v05Codec.MustMarshalJSON(v043govcustom.Migrate(govGenState))
 	}
 
 	// Migrate x/mint.
@@ -198,7 +200,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v040staking.Migrate(stakingGenState))
+		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v043staking.MigrateJSON(v040staking.Migrate(stakingGenState)))
 	}
 
 	// Migrate x/genutil
@@ -251,7 +253,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v05msgauth.ModuleName] = v05Codec.MustMarshalJSON(v05msgauth.Migrate(msgauthGenState))
+		appState[v043authz.ModuleName] = v05Codec.MustMarshalJSON(v043authz.Migrate(msgauthGenState))
 	}
 
 	if appState[v04treasury.ModuleName] != nil {

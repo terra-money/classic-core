@@ -57,6 +57,8 @@ type state struct {
 	Funder      string `json:"funder"`
 }
 
+const faucetAccountName = "faucet"
+
 func createFakeFundedAccount(
 	ctx sdk.Context,
 	am authkeeper.AccountKeeper,
@@ -65,7 +67,11 @@ func createFakeFundedAccount(
 	_, _, addr := keyPubAddr()
 	baseAcct := authtypes.NewBaseAccountWithAddress(addr)
 	am.SetAccount(ctx, baseAcct)
-	bk.SetBalances(ctx, addr, coins)
+	if err := bk.MintCoins(ctx, faucetAccountName, coins); err != nil {
+		panic(err)
+	}
+
+	bk.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, coins)
 
 	return addr
 }

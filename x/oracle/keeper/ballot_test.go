@@ -17,7 +17,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	power := int64(100)
-	amt := sdk.TokensFromConsensusPower(power)
+	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 
@@ -82,7 +82,7 @@ func TestClearBallots(t *testing.T) {
 	input := CreateTestInput(t)
 
 	power := int64(100)
-	amt := sdk.TokensFromConsensusPower(power)
+	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 
@@ -172,13 +172,15 @@ func TestApplyWhitelist(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, price, sdk.OneDec())
 
-	metadata := input.BankKeeper.GetDenomMetaData(input.Ctx, "uusd")
+	metadata, ok := input.BankKeeper.GetDenomMetaData(input.Ctx, "uusd")
+	require.True(t, ok)
 	require.Equal(t, metadata.Base, "uusd")
 	require.Equal(t, metadata.Display, "usd")
 	require.Equal(t, len(metadata.DenomUnits), 3)
 	require.Equal(t, metadata.Description, "The native stable token of the Terra Columbus.")
 
-	metadata = input.BankKeeper.GetDenomMetaData(input.Ctx, "ukrw")
+	metadata, ok = input.BankKeeper.GetDenomMetaData(input.Ctx, "ukrw")
+	require.True(t, ok)
 	require.Equal(t, metadata.Base, "ukrw")
 	require.Equal(t, metadata.Display, "krw")
 	require.Equal(t, len(metadata.DenomUnits), 3)

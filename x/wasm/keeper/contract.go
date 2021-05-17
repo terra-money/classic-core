@@ -132,7 +132,7 @@ func (k Keeper) InstantiateContract(
 	}
 
 	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	k.cdc.MustUnmarshal(bz, &codeInfo)
 
 	// prepare env and info for contract instantiate call
 	env := types.NewEnv(ctx, contractAddress)
@@ -445,7 +445,7 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 	}
 
 	var contractInfo types.ContractInfo
-	k.cdc.MustUnmarshalBinaryBare(bz, &contractInfo)
+	k.cdc.MustUnmarshal(bz, &contractInfo)
 
 	bz = store.Get(types.GetCodeInfoKey(contractInfo.CodeID))
 	if bz == nil {
@@ -453,7 +453,7 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 		return
 	}
 
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	k.cdc.MustUnmarshal(bz, &codeInfo)
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
 	contractStorePrefix = prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
 	return

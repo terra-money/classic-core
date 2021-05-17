@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.client.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types";
+option go_package = "github.com/cosmos/ibc-go/modules/core/02-client/types";
 
 import "ibc/core/client/v1/client.proto";
 import "gogoproto/gogo.proto";
@@ -38,7 +39,8 @@ message GenesisMetadata {
   bytes value = 2;
 }
 
-// IdentifiedGenesisMetadata has the client metadata with the corresponding client id.
+// IdentifiedGenesisMetadata has the client metadata with the corresponding
+// client id.
 message IdentifiedGenesisMetadata {
   string                   client_id       = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
   repeated GenesisMetadata client_metadata = 2

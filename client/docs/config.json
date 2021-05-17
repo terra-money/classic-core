@@ -138,10 +138,6 @@
         }
       },
       {
-        "url": "./tmp-swagger-gen/terra/msgauth/v1beta1/query.swagger.json",
-        "operationIds": {}
-      },
-      {
         "url": "./tmp-swagger-gen/terra/wasm/v1beta1/query.swagger.json",
         "operationIds": {
           "rename": {
@@ -161,7 +157,8 @@
         "url": "./tmp-swagger-gen/ibc/core/client/v1/query.swagger.json",
         "operationIds": {
           "rename": {
-            "Params": "IBCClientParams"
+            "Params": "IBCClientParams",
+            "UpgradedConsensusState": "IBCUpgradedConsensusState"
           }
         }
       },

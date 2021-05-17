@@ -26,7 +26,7 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 		sdk.NewCoin(core.MicroKRWDenom, taxAmount),
 		sdk.NewCoin(core.MicroGBPDenom, taxAmount),
 		sdk.NewCoin(core.MicroCNYDenom, taxAmount),
-	})
+	}.Sort())
 
 	// Update Indicators
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
@@ -39,22 +39,19 @@ func TestFeeRewardsForEpoch(t *testing.T) {
 func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	input, _ := setupValidators(t)
 
-	sAmt := sdk.NewInt(1000)
-	lnasdrRate := sdk.NewDec(10)
+	amt := sdk.NewInt(1000)
+	sdrRate := sdk.NewDec(10)
 
 	// Add seigniorage
-	supply := input.BankKeeper.GetSupply(input.Ctx)
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sAmt)))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
 	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
 	// Set random prices
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lnasdrRate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdrRate)
 	input.Ctx = input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek))
 
 	// Add seigniorage
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt())))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
+	err := input.BankKeeper.BurnCoins(input.Ctx, faucetAccountName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, amt)))
+	require.NoError(t, err)
 
 	// Update Indicators
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
@@ -62,16 +59,13 @@ func TestSeigniorageRewardsForEpoch(t *testing.T) {
 	// Get seigniorage rewards (SR)
 	SR := input.TreasuryKeeper.GetSR(input.Ctx, input.TreasuryKeeper.GetEpoch(input.Ctx))
 	miningRewardWeight := input.TreasuryKeeper.GetRewardWeight(input.Ctx)
-	require.Equal(t, lnasdrRate.MulInt(sAmt).Mul(miningRewardWeight), SR)
+	require.Equal(t, sdrRate.MulInt(amt).Mul(miningRewardWeight), SR)
 }
 
 func TestMiningRewardsForEpoch(t *testing.T) {
 	input, _ := setupValidators(t)
 
 	amt := sdk.NewInt(1000).MulRaw(core.MicroUnit)
-	supply := input.BankKeeper.GetSupply(input.Ctx)
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, amt)))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
 	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
 	// Set random prices
@@ -88,11 +82,11 @@ func TestMiningRewardsForEpoch(t *testing.T) {
 		sdk.NewCoin(core.MicroKRWDenom, amt),
 		sdk.NewCoin(core.MicroGBPDenom, amt),
 		sdk.NewCoin(core.MicroCNYDenom, amt),
-	})
+	}.Sort())
 
 	// Add seigniorage
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.ZeroInt())))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
+	err := input.BankKeeper.BurnCoins(input.Ctx, faucetAccountName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, amt)))
+	require.NoError(t, err)
 
 	input.TreasuryKeeper.UpdateIndicators(input.Ctx)
 

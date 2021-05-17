@@ -43,7 +43,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			proposal, err := ParseTaxRateUpdateProposalWithDeposit(clientCtx.JSONMarshaler, args[0])
+			proposal, err := ParseTaxRateUpdateProposalWithDeposit(clientCtx.JSONCodec, args[0])
 			if err != nil {
 				return err
 			}
@@ -104,7 +104,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			proposal, err := ParseRewardWeightUpdateProposalWithDeposit(clientCtx.JSONMarshaler, args[0])
+			proposal, err := ParseRewardWeightUpdateProposalWithDeposit(clientCtx.JSONCodec, args[0])
 			if err != nil {
 				return err
 			}

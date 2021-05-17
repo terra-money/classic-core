@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -49,10 +50,10 @@ func GetCodeInfoKey(codeID uint64) []byte {
 
 // GetContractInfoKey returns the key of the WASM contract info for the contract address
 func GetContractInfoKey(addr sdk.AccAddress) []byte {
-	return append(ContractInfoKey, addr...)
+	return append(ContractInfoKey, address.MustLengthPrefix(addr)...)
 }
 
 // GetContractStoreKey returns the store prefix for the WASM contract store
 func GetContractStoreKey(addr sdk.AccAddress) []byte {
-	return append(ContractStoreKey, addr...)
+	return append(ContractStoreKey, address.MustLengthPrefix(addr)...)
 }

@@ -50,14 +50,12 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// creator can send contract's tokens to fred (using SendMsg)
+	sentCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(15000)))
 	msg := wasmvmtypes.CosmosMsg{
 		Bank: &wasmvmtypes.BankMsg{
 			Send: &wasmvmtypes.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
-					Denom:  core.MicroLunaDenom,
-					Amount: "15000",
-				}},
+				Amount:    types.EncodeSdkCoins(sentCoins),
 			},
 		},
 	}
@@ -98,23 +96,31 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotNil(t, res.Result.Ok)
 	sub := res.Result.Ok
 	assert.Empty(t, sub.Data)
-	require.Len(t, sub.Events, 3)
+	require.Len(t, sub.Events, 5)
 
-	transfer := sub.Events[0]
+	transfer := sub.Events[2]
 	assert.Equal(t, "transfer", transfer.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "recipient",
 		Value: fred.String(),
 	}, transfer.Attributes[0])
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "sender",
+		Value: contractAddr.String(),
+	}, transfer.Attributes[1])
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "amount",
+		Value: sentCoins.String(),
+	}, transfer.Attributes[2])
 
-	sender := sub.Events[1]
+	sender := sub.Events[3]
 	assert.Equal(t, "message", sender.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "sender",
 		Value: contractAddr.String(),
 	}, sender.Attributes[0])
 
-	module := sub.Events[2]
+	module := sub.Events[4]
 	assert.Equal(t, "message", module.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "module",
@@ -268,7 +274,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			submsgID: 5,
 			msg:      validBankSend,
 			// note we charge another 40k for the reply call
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(130000, 132000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(139000, 141000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -288,7 +294,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(130000, 132000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(139000, 141000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,

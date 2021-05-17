@@ -3,7 +3,6 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -16,6 +15,7 @@ type StakingKeeper interface {
 	Jail(sdk.Context, sdk.ConsAddress)                                         // jail a validator
 	ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterator                 // an iterator for the current validator power store
 	MaxValidators(sdk.Context) uint32                                          // MaxValidators returns the maximum amount of bonded validators
+	PowerReduction(ctx sdk.Context) (res sdk.Int)
 }
 
 // DistributionKeeper is expected keeper for distribution module
@@ -37,12 +37,10 @@ type AccountKeeper interface {
 type BankKeeper interface {
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetSupply(ctx sdk.Context) bankexported.SupplyI
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
-	GetDenomMetaData(ctx sdk.Context, denom string) banktypes.Metadata
+	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
 	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
 
 	// only used for simulation
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	SetBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error
 }

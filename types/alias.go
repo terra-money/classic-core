@@ -40,4 +40,5 @@ const (
 // functions aliases
 var (
 	IsPeriodLastBlock = util.IsPeriodLastBlock
+	AddressVerifier   = util.AddressVerifier
 )

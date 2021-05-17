@@ -21,7 +21,7 @@ var (
 
 // AppModuleBasic defines the basic application module used by the oracle module.
 type AppModuleBasic struct {
-	cdc codec.Marshaler
+	cdc codec.Codec
 }
 
 // Name returns the module's name
@@ -41,12 +41,12 @@ func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry
 
 // DefaultGenesis returns default genesis state as raw bytes for the staking
 // module.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return nil
 }
 
 // ValidateGenesis performs genesis state validation for the oracle module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	return nil
 }
 

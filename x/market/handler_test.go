@@ -74,12 +74,8 @@ func TestSwapMsg_Burn(t *testing.T) {
 
 	amt := sdk.NewInt(10000)
 	offerCoin := sdk.NewCoin(core.MicroSDRDenom, amt)
-	err := input.BankKeeper.AddCoins(input.Ctx, keeper.Addrs[0], sdk.NewCoins(offerCoin))
+	err := keeper.FundAccount(input, keeper.Addrs[0], sdk.NewCoins(offerCoin))
 	require.NoError(t, err)
-
-	supply := input.BankKeeper.GetSupply(input.Ctx)
-	supply.SetTotal(supply.GetTotal().Add(offerCoin))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
 
 	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
 	_, err = h(input.Ctx, swapMsg)

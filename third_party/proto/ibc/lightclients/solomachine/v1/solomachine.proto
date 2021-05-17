@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.lightclients.solomachine.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/light-clients/06-solomachine/types";
+option go_package = "github.com/cosmos/ibc-go/modules/light-clients/06-solomachine/types";
 
 import "ibc/core/connection/v1/connection.proto";
 import "ibc/core/channel/v1/channel.proto";
@@ -22,14 +23,16 @@ message ClientState {
   bool allow_update_after_proposal = 4 [(gogoproto.moretags) = "yaml:\"allow_update_after_proposal\""];
 }
 
-// ConsensusState defines a solo machine consensus state. The sequence of a consensus state
-// is contained in the "height" key used in storing the consensus state.
+// ConsensusState defines a solo machine consensus state. The sequence of a
+// consensus state is contained in the "height" key used in storing the
+// consensus state.
 message ConsensusState {
   option (gogoproto.goproto_getters) = false;
   // public key of the solo machine
   google.protobuf.Any public_key = 1 [(gogoproto.moretags) = "yaml:\"public_key\""];
-  // diversifier allows the same public key to be re-used across different solo machine clients
-  // (potentially on different chains) without being considered misbehaviour.
+  // diversifier allows the same public key to be re-used across different solo
+  // machine clients (potentially on different chains) without being considered
+  // misbehaviour.
   string diversifier = 2;
   uint64 timestamp   = 3;
 }
@@ -86,8 +89,8 @@ message SignBytes {
   bytes data = 5;
 }
 
-// DataType defines the type of solo machine proof being created. This is done to preserve uniqueness of different
-// data sign byte encodings.
+// DataType defines the type of solo machine proof being created. This is done
+// to preserve uniqueness of different data sign byte encodings.
 enum DataType {
   option (gogoproto.goproto_enum_prefix) = false;
 

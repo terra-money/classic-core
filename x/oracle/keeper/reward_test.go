@@ -18,7 +18,7 @@ func TestRewardBallotWinners(t *testing.T) {
 	input := CreateTestInput(t)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	amt := sdk.TokensFromConsensusPower(100)
+	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 
@@ -51,7 +51,7 @@ func TestRewardBallotWinners(t *testing.T) {
 	// Prepare reward pool
 	givingAmt := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 30000000))
 	acc := input.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
-	input.BankKeeper.SetBalances(ctx, acc.GetAddress(), givingAmt)
+	err = FundAccount(input, acc.GetAddress(), givingAmt)
 	require.NoError(t, err)
 
 	votePeriodsPerWindow := sdk.NewDec((int64)(input.OracleKeeper.RewardDistributionWindow(input.Ctx))).

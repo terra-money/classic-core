@@ -223,7 +223,7 @@ func TestHandleExecute(t *testing.T) {
 	// ensure contract has updated balance
 	contractAcct = input.AccKeeper.GetAccount(input.Ctx, contractAddr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
+	assert.Equal(t, sdk.Coins{}, input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
 
 	iter := input.WasmKeeper.GetContractStoreIterator(input.Ctx, contractAddr)
 	var models []types.Model
@@ -312,7 +312,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	// ensure contract has updated balance
 	contractAcct := input.AccKeeper.GetAccount(input.Ctx, contractAddr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
+	assert.Equal(t, sdk.Coins{}, input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
 }
 
 func TestHandleMigrate(t *testing.T) {

@@ -120,8 +120,6 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 	defer func() {
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
-			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us
-			// to keep the stracktrace.
 			case sdk.ErrorOutOfGas:
 				err = sdkerrors.Wrap(
 					sdkerrors.ErrOutOfGas, fmt.Sprintf(
