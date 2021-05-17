@@ -25,12 +25,13 @@ import (
 	v040slashing "github.com/cosmos/cosmos-sdk/x/slashing/legacy/v040"
 	v038staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v038"
 	v040staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v040"
+	v043staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v043"
 
 	v039authcustom "github.com/terra-project/core/custom/auth/legacy/v039"
 	v040authcustom "github.com/terra-project/core/custom/auth/legacy/v040"
 	v036distrcustom "github.com/terra-project/core/custom/distribution/legacy/v036"
 	v036govcustom "github.com/terra-project/core/custom/gov/legacy/v036"
-	v040govcustom "github.com/terra-project/core/custom/gov/legacy/v040"
+	v043govcustom "github.com/terra-project/core/custom/gov/legacy/v043"
 	v036paramscustom "github.com/terra-project/core/custom/params/legacy/v036"
 	v038upgradecustom "github.com/terra-project/core/custom/upgrade/legacy/v038"
 
@@ -157,7 +158,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040gov.ModuleName] = v05Codec.MustMarshalJSON(v040govcustom.Migrate(govGenState))
+		appState[v040gov.ModuleName] = v05Codec.MustMarshalJSON(v043govcustom.Migrate(govGenState))
 	}
 
 	// Migrate x/mint.
@@ -199,7 +200,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v040staking.Migrate(stakingGenState))
+		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v043staking.MigrateJSON(v040staking.Migrate(stakingGenState)))
 	}
 
 	// Migrate x/genutil

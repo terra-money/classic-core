@@ -1,4 +1,4 @@
-package v040
+package v043
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	v040distr "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v034gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v034"
 	v036gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v036"
-	v040gov "github.com/cosmos/cosmos-sdk/x/gov/types"
+	v043gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 	v036params "github.com/cosmos/cosmos-sdk/x/params/legacy/v036"
 	v040params "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	v038upgrade "github.com/cosmos/cosmos-sdk/x/upgrade/legacy/v038"
@@ -21,48 +21,48 @@ import (
 	v05treasury "github.com/terra-project/core/x/treasury/types"
 )
 
-func migrateVoteOption(oldVoteOption v034gov.VoteOption) v040gov.VoteOption {
+func migrateVoteOption(oldVoteOption v034gov.VoteOption) v043gov.VoteOption {
 	switch oldVoteOption {
 	case v034gov.OptionEmpty:
-		return v040gov.OptionEmpty
+		return v043gov.OptionEmpty
 
 	case v034gov.OptionYes:
-		return v040gov.OptionYes
+		return v043gov.OptionYes
 
 	case v034gov.OptionAbstain:
-		return v040gov.OptionAbstain
+		return v043gov.OptionAbstain
 
 	case v034gov.OptionNo:
-		return v040gov.OptionNo
+		return v043gov.OptionNo
 
 	case v034gov.OptionNoWithVeto:
-		return v040gov.OptionNoWithVeto
+		return v043gov.OptionNoWithVeto
 
 	default:
 		panic(fmt.Errorf("'%s' is not a valid vote option", oldVoteOption))
 	}
 }
 
-func migrateProposalStatus(oldProposalStatus v034gov.ProposalStatus) v040gov.ProposalStatus {
+func migrateProposalStatus(oldProposalStatus v034gov.ProposalStatus) v043gov.ProposalStatus {
 	switch oldProposalStatus {
 
 	case v034gov.StatusNil:
-		return v040gov.StatusNil
+		return v043gov.StatusNil
 
 	case v034gov.StatusDepositPeriod:
-		return v040gov.StatusDepositPeriod
+		return v043gov.StatusDepositPeriod
 
 	case v034gov.StatusVotingPeriod:
-		return v040gov.StatusVotingPeriod
+		return v043gov.StatusVotingPeriod
 
 	case v034gov.StatusPassed:
-		return v040gov.StatusPassed
+		return v043gov.StatusPassed
 
 	case v034gov.StatusRejected:
-		return v040gov.StatusRejected
+		return v043gov.StatusRejected
 
 	case v034gov.StatusFailed:
-		return v040gov.StatusFailed
+		return v043gov.StatusFailed
 
 	default:
 		panic(fmt.Errorf("'%s' is not a valid proposal status", oldProposalStatus))
@@ -75,7 +75,7 @@ func migrateContent(oldContent v036gov.Content) *codectypes.Any {
 	switch oldContent := oldContent.(type) {
 	case v036gov.TextProposal:
 		{
-			protoProposal = &v040gov.TextProposal{
+			protoProposal = &v043gov.TextProposal{
 				Title:       oldContent.Title,
 				Description: oldContent.Description,
 			}
@@ -168,32 +168,32 @@ func migrateContent(oldContent v036gov.Content) *codectypes.Any {
 // - Migrate proposal content to Any.
 // - Convert addresses from bytes to bech32 strings.
 // - Re-encode in v0.40 GenesisState.
-func Migrate(oldGovState v036gov.GenesisState) *v040gov.GenesisState {
-	newDeposits := make([]v040gov.Deposit, len(oldGovState.Deposits))
+func Migrate(oldGovState v036gov.GenesisState) *v043gov.GenesisState {
+	newDeposits := make([]v043gov.Deposit, len(oldGovState.Deposits))
 	for i, oldDeposit := range oldGovState.Deposits {
-		newDeposits[i] = v040gov.Deposit{
+		newDeposits[i] = v043gov.Deposit{
 			ProposalId: oldDeposit.ProposalID,
 			Depositor:  oldDeposit.Depositor.String(),
 			Amount:     oldDeposit.Amount,
 		}
 	}
 
-	newVotes := make([]v040gov.Vote, len(oldGovState.Votes))
+	newVotes := make([]v043gov.Vote, len(oldGovState.Votes))
 	for i, oldVote := range oldGovState.Votes {
-		newVotes[i] = v040gov.Vote{
+		newVotes[i] = v043gov.Vote{
 			ProposalId: oldVote.ProposalID,
 			Voter:      oldVote.Voter.String(),
-			Options:    []v040gov.WeightedVoteOption{{Option: migrateVoteOption(oldVote.Option), Weight: sdk.NewDec(1)}},
+			Options:    []v043gov.WeightedVoteOption{{Option: migrateVoteOption(oldVote.Option), Weight: sdk.NewDec(1)}},
 		}
 	}
 
-	newProposals := make([]v040gov.Proposal, len(oldGovState.Proposals))
+	newProposals := make([]v043gov.Proposal, len(oldGovState.Proposals))
 	for i, oldProposal := range oldGovState.Proposals {
-		newProposals[i] = v040gov.Proposal{
+		newProposals[i] = v043gov.Proposal{
 			ProposalId: oldProposal.ProposalID,
 			Content:    migrateContent(oldProposal.Content),
 			Status:     migrateProposalStatus(oldProposal.Status),
-			FinalTallyResult: v040gov.TallyResult{
+			FinalTallyResult: v043gov.TallyResult{
 				Yes:        oldProposal.FinalTallyResult.Yes,
 				Abstain:    oldProposal.FinalTallyResult.Abstain,
 				No:         oldProposal.FinalTallyResult.No,
@@ -207,19 +207,19 @@ func Migrate(oldGovState v036gov.GenesisState) *v040gov.GenesisState {
 		}
 	}
 
-	return &v040gov.GenesisState{
+	return &v043gov.GenesisState{
 		StartingProposalId: oldGovState.StartingProposalID,
 		Deposits:           newDeposits,
 		Votes:              newVotes,
 		Proposals:          newProposals,
-		DepositParams: v040gov.DepositParams{
+		DepositParams: v043gov.DepositParams{
 			MinDeposit:       oldGovState.DepositParams.MinDeposit,
 			MaxDepositPeriod: oldGovState.DepositParams.MaxDepositPeriod,
 		},
-		VotingParams: v040gov.VotingParams{
+		VotingParams: v043gov.VotingParams{
 			VotingPeriod: oldGovState.VotingParams.VotingPeriod,
 		},
-		TallyParams: v040gov.TallyParams{
+		TallyParams: v043gov.TallyParams{
 			Quorum:        oldGovState.TallyParams.Quorum,
 			Threshold:     oldGovState.TallyParams.Threshold,
 			VetoThreshold: oldGovState.TallyParams.Veto,
