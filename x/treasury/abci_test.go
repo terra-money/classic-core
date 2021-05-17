@@ -5,9 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	core "github.com/terra-project/core/types"
 	"github.com/terra-project/core/x/treasury/keeper"
 	"github.com/terra-project/core/x/treasury/types"
@@ -23,32 +20,25 @@ func TestBurnAddress(t *testing.T) {
 	require.True(t, input.BankKeeper.GetAllBalances(input.Ctx, burnAddress).IsZero())
 }
 
-func TestEndBlockerIssuanceUpdate(t *testing.T) {
+func TestEndBlockerIssuanceUpdateWithBurnModule(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
-	// Set total staked luna to prevent divide by zero error when computing TRL
-	bondedModuleAddr := input.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName)
-	err := input.BankKeeper.SetBalances(input.Ctx, bondedModuleAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000000000)))
-	require.NoError(t, err)
-
-	supply := input.BankKeeper.GetSupply(input.Ctx)
+	supply := input.BankKeeper.GetSupply(input.Ctx, core.MicroLunaDenom)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek) - 1)
 	EndBlocker(input.Ctx, input.TreasuryKeeper)
 
 	issuance := input.TreasuryKeeper.GetEpochInitialIssuance(input.Ctx)
-	require.Equal(t, supply.GetTotal().Sub(keeper.InitCoins), issuance)
+	require.Equal(t,
+		// subtract due to burn module account burning
+		supply.Amount.Sub(keeper.InitCoins.AmountOf(core.MicroLunaDenom)),
+		issuance.AmountOf(core.MicroLunaDenom))
 }
 
 func TestUpdate(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
 	windowProbation := input.TreasuryKeeper.WindowProbation(input.Ctx)
-
-	// Set total staked luna to prevent divide by zero error when computing TRL
-	bondedModuleAddr := input.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName)
-	err := input.BankKeeper.SetBalances(input.Ctx, bondedModuleAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000000000)))
-	require.NoError(t, err)
 
 	targetEpoch := int64(windowProbation + 1)
 	for epoch := int64(0); epoch < targetEpoch; epoch++ {
@@ -76,11 +66,6 @@ func TestEmptyIndicator(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
 	windowProbation := input.TreasuryKeeper.WindowProbation(input.Ctx)
-
-	// Set total staked luna to prevent divide by zero error when computing TRL
-	bondedModuleAddr := input.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName)
-	err := input.BankKeeper.SetBalances(input.Ctx, bondedModuleAddr, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000000000)))
-	require.NoError(t, err)
 
 	targetEpoch := int64(windowProbation + 1)
 	for epoch := int64(0); epoch < targetEpoch; epoch++ {

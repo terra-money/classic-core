@@ -43,7 +43,7 @@ func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, val
 
 // ballot for the asset is passing the threshold amount of voting power
 func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k keeper.Keeper) (sdk.Int, bool) {
-	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx))
+	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 	ballotPower := sdk.NewInt(ballot.Power())

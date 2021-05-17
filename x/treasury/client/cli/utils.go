@@ -9,7 +9,7 @@ import (
 )
 
 // ParseTaxRateUpdateProposalWithDeposit reads and parses a TaxRateUpdateProposalJSON from a file.
-func ParseTaxRateUpdateProposalWithDeposit(cdc codec.JSONMarshaler, proposalFile string) (types.TaxRateUpdateProposalWithDeposit, error) {
+func ParseTaxRateUpdateProposalWithDeposit(cdc codec.JSONCodec, proposalFile string) (types.TaxRateUpdateProposalWithDeposit, error) {
 	proposal := types.TaxRateUpdateProposalWithDeposit{}
 
 	contents, err := ioutil.ReadFile(proposalFile)
@@ -25,7 +25,7 @@ func ParseTaxRateUpdateProposalWithDeposit(cdc codec.JSONMarshaler, proposalFile
 }
 
 // ParseRewardWeightUpdateProposalWithDeposit reads and parses a RewardWeightUpdateProposalJSON from a file.
-func ParseRewardWeightUpdateProposalWithDeposit(cdc codec.JSONMarshaler, proposalFile string) (types.RewardWeightUpdateProposalWithDeposit, error) {
+func ParseRewardWeightUpdateProposalWithDeposit(cdc codec.JSONCodec, proposalFile string) (types.RewardWeightUpdateProposalWithDeposit, error) {
 	proposal := types.RewardWeightUpdateProposalWithDeposit{}
 
 	contents, err := ioutil.ReadFile(proposalFile)

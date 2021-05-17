@@ -301,7 +301,8 @@ func TestSellMsg(t *testing.T) {
 
 	sellAmount := sdk.NewInt(rand.Int63()%10000 + 2)
 	sellCoin := sdk.NewCoin(core.MicroLunaDenom, sellAmount)
-	bankKeeper.AddCoins(input.Ctx, creatorAddr, sdk.NewCoins(sellCoin))
+	err := FundAccount(input, creatorAddr, sdk.NewCoins(sellCoin))
+	require.NoError(t, err)
 
 	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, sellCoin, core.MicroSDRDenom)
 	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))

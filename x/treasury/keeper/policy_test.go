@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	core "github.com/terra-project/core/types"
+	oracletypes "github.com/terra-project/core/x/oracle/types"
 	"github.com/terra-project/core/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func TestUpdateTaxRate(t *testing.T) {
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Create Validators
-	amt := sdk.TokensFromConsensusPower(1)
+	amt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
@@ -49,7 +50,7 @@ func TestUpdateRewardWeight(t *testing.T) {
 	sh := staking.NewHandler(input.StakingKeeper)
 
 	// Create Validators
-	amt := sdk.TokensFromConsensusPower(1)
+	amt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
@@ -76,15 +77,20 @@ func TestUpdateRewardWeight(t *testing.T) {
 
 func TestUpdateTaxCap(t *testing.T) {
 	input := CreateTestInput(t)
-	supply := input.BankKeeper.GetSupply(input.Ctx)
-	supply.SetTotal(
-		sdk.NewCoins(
-			sdk.NewInt64Coin(core.MicroLunaDenom, 1000000),
-			sdk.NewInt64Coin(core.MicroSDRDenom, 1000000),
-			sdk.NewInt64Coin(core.MicroKRWDenom, 1000000),
-		),
+	input.OracleKeeper.SetWhitelist(
+		input.Ctx,
+		oracletypes.DenomList{
+			{
+				Name: core.MicroLunaDenom,
+			},
+			{
+				Name: core.MicroSDRDenom,
+			},
+			{
+				Name: core.MicroKRWDenom,
+			},
+		},
 	)
-	input.BankKeeper.SetSupply(input.Ctx, supply)
 
 	// Create Validators
 	sdrPrice := sdk.NewDecWithPrec(13, 1)

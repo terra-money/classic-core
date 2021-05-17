@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/terra-project/core/custom/auth/ante"
 	"github.com/terra-project/core/x/wasm/types"
@@ -148,6 +150,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 		}
 	}
 
+	fmt.Println("SIBONG", msg, sdkMsg)
 	res, err := k.handleSdkMessage(ctx, contractAddr, sdkMsg)
 	if err != nil {
 		return nil, nil, err
@@ -178,9 +181,9 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, m
 	}
 
 	// find the handler and execute it
-	h := k.router.Route(ctx, msg.Route())
+	h := k.serviceRouter.Handler(msg)
 	if h == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, sdk.MsgTypeURL(msg))
 	}
 
 	res, err := h(ctx, msg)

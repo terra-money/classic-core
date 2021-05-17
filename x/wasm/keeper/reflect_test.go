@@ -383,7 +383,7 @@ type reflectCustomMsg struct {
 
 // toMaskRawMsg encodes an sdk msg using amino json encoding.
 // Then wraps it as an opaque message
-func toMaskRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
+func toMaskRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, err

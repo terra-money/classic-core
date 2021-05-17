@@ -256,16 +256,11 @@ func TestLegacyQuerySeigniorageProceeds(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.TreasuryKeeper, input.Cdc)
 
-	targetIssuance := sdk.NewInt(1000)
 	targetSeigniorage := sdk.NewInt(10)
-	supply := input.BankKeeper.GetSupply(input.Ctx)
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance)))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
 	input.TreasuryKeeper.RecordEpochInitialIssuance(input.Ctx)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek))
-	supply.SetTotal(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetIssuance.Sub(targetSeigniorage))))
-	input.BankKeeper.SetSupply(input.Ctx, supply)
+	input.BankKeeper.BurnCoins(input.Ctx, faucetAccountName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, targetSeigniorage)))
 
 	queriedSeigniorageProceeds := getQueriedSeigniorageProceeds(t, input.Ctx, input.Cdc, querier, input.TreasuryKeeper.GetEpoch(input.Ctx))
 
@@ -277,7 +272,7 @@ func TestLegacyQueryIndicators(t *testing.T) {
 	querier := NewLegacyQuerier(input.TreasuryKeeper, input.Cdc)
 	sh := staking.NewHandler(input.StakingKeeper)
 
-	stakingAmt := sdk.TokensFromConsensusPower(1)
+	stakingAmt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))

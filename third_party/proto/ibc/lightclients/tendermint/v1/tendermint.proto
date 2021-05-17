@@ -1,7 +1,8 @@
 syntax = "proto3";
+
 package ibc.lightclients.tendermint.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/light-clients/07-tendermint/types";
+option go_package = "github.com/cosmos/ibc-go/modules/light-clients/07-tendermint/types";
 
 import "tendermint/types/validator.proto";
 import "tendermint/types/types.proto";
@@ -43,10 +44,12 @@ message ClientState {
   repeated ics23.ProofSpec proof_specs = 8 [(gogoproto.moretags) = "yaml:\"proof_specs\""];
 
   // Path at which next upgraded client will be committed.
-  // Each element corresponds to the key for a single CommitmentProof in the chained proof.
-  // NOTE: ClientState must stored under `{upgradePath}/{upgradeHeight}/clientState`
-  // ConsensusState must be stored under `{upgradepath}/{upgradeHeight}/consensusState`
-  // For SDK chains using the default upgrade module, upgrade_path should be []string{"upgrade", "upgradedIBCState"}`
+  // Each element corresponds to the key for a single CommitmentProof in the
+  // chained proof. NOTE: ClientState must stored under
+  // `{upgradePath}/{upgradeHeight}/clientState` ConsensusState must be stored
+  // under `{upgradepath}/{upgradeHeight}/consensusState` For SDK chains using
+  // the default upgrade module, upgrade_path should be []string{"upgrade",
+  // "upgradedIBCState"}`
   repeated string upgrade_path = 9 [(gogoproto.moretags) = "yaml:\"upgrade_path\""];
 
   // This flag, when set to true, will allow governance to recover a client
@@ -104,7 +107,8 @@ message Header {
   .tendermint.types.ValidatorSet trusted_validators = 4 [(gogoproto.moretags) = "yaml:\"trusted_validators\""];
 }
 
-// Fraction defines the protobuf message type for tmmath.Fraction that only supports positive values.
+// Fraction defines the protobuf message type for tmmath.Fraction that only
+// supports positive values.
 message Fraction {
   uint64 numerator   = 1;
   uint64 denominator = 2;

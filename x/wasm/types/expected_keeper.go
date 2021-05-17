@@ -1,12 +1,13 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	connectiontypes "github.com/cosmos/cosmos-sdk/x/ibc/core/03-connection/types"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
-	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
+	connectiontypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/modules/core/exported"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -29,9 +30,8 @@ type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	SetBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error
-	SendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
-	SendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
+	IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
 }
 
 // TreasuryKeeper - expected treasury keeper
@@ -48,6 +48,11 @@ type GRPCQueryHandler = func(ctx sdk.Context, req abci.RequestQuery) (abci.Respo
 // GRPCQueryRouter expected GRPCQueryRouter interface
 type GRPCQueryRouter interface {
 	Route(path string) GRPCQueryHandler
+}
+
+// MsgServiceRouter expected MsgServiceRouter interface
+type MsgServiceRouter interface {
+	Handler(msg sdk.Msg) baseapp.MsgServiceHandler
 }
 
 // ChannelKeeper defines the expected IBC channel keeper

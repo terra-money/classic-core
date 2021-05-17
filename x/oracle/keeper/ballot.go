@@ -85,7 +85,7 @@ func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.DenomList, voteT
 			k.SetTobinTax(ctx, item.Name, item.TobinTax)
 
 			// Register meta data to bank module
-			if metadata := k.bankKeeper.GetDenomMetaData(ctx, item.Name); metadata.Base == "" {
+			if _, ok := k.bankKeeper.GetDenomMetaData(ctx, item.Name); !ok {
 				base := item.Name
 				display := base[1:]
 

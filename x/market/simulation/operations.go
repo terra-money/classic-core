@@ -27,7 +27,7 @@ const (
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
 	appParams simtypes.AppParams,
-	cdc codec.JSONMarshaler,
+	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	ok types.OracleKeeper,
@@ -114,7 +114,7 @@ func SimulateMsgSwap(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }
 
@@ -161,7 +161,7 @@ func SimulateMsgSwapSend(
 		}
 
 		// Check send_enabled status of offer denom
-		if !bk.SendEnabledCoin(ctx, sdk.Coin{Denom: offerDenom, Amount: sdk.NewInt(1)}) {
+		if !bk.IsSendEnabledCoin(ctx, sdk.Coin{Denom: offerDenom, Amount: sdk.NewInt(1)}) {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgSwapSend, err.Error()), nil, nil
 		}
 
@@ -196,6 +196,6 @@ func SimulateMsgSwapSend(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
 	}
 }

@@ -1,5 +1,8 @@
 syntax = "proto3";
+
 package ibc.core.connection.v1;
+
+option go_package = "github.com/cosmos/ibc-go/modules/core/03-connection/types";
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
@@ -8,36 +11,34 @@ import "ibc/core/connection/v1/connection.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/core/03-connection/types";
-
 // Query provides defines the gRPC querier service
 service Query {
   // Connection queries an IBC connection end.
   rpc Connection(QueryConnectionRequest) returns (QueryConnectionResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1beta1/connections/{connection_id}";
+    option (google.api.http).get = "/ibc/core/connection/v1/connections/{connection_id}";
   }
 
   // Connections queries all the IBC connections of a chain.
   rpc Connections(QueryConnectionsRequest) returns (QueryConnectionsResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1beta1/connections";
+    option (google.api.http).get = "/ibc/core/connection/v1/connections";
   }
 
   // ClientConnections queries the connection paths associated with a client
   // state.
   rpc ClientConnections(QueryClientConnectionsRequest) returns (QueryClientConnectionsResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1beta1/client_connections/{client_id}";
+    option (google.api.http).get = "/ibc/core/connection/v1/client_connections/{client_id}";
   }
 
   // ConnectionClientState queries the client state associated with the
   // connection.
   rpc ConnectionClientState(QueryConnectionClientStateRequest) returns (QueryConnectionClientStateResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1beta1/connections/{connection_id}/client_state";
+    option (google.api.http).get = "/ibc/core/connection/v1/connections/{connection_id}/client_state";
   }
 
   // ConnectionConsensusState queries the consensus state associated with the
   // connection.
   rpc ConnectionConsensusState(QueryConnectionConsensusStateRequest) returns (QueryConnectionConsensusStateResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1beta1/connections/{connection_id}/consensus_state/"
+    option (google.api.http).get = "/ibc/core/connection/v1/connections/{connection_id}/consensus_state/"
                                    "revision/{revision_number}/height/{revision_height}";
   }
 }

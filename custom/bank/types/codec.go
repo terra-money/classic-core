@@ -3,17 +3,12 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/x/bank/exported"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	msgauthtypes "github.com/terra-project/core/x/msgauth/types"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/bank interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterInterface((*exported.SupplyI)(nil), nil)
-	cdc.RegisterConcrete(&types.Supply{}, "bank/Supply", nil)
 	cdc.RegisterConcrete(&types.MsgSend{}, "bank/MsgSend", nil)
 	cdc.RegisterConcrete(&types.MsgMultiSend{}, "bank/MsgMultiSend", nil)
 }
@@ -34,7 +29,4 @@ func init() {
 	RegisterLegacyAminoCodec(amino)
 	cryptocodec.RegisterCrypto(amino)
 	amino.Seal()
-
-	msgauthtypes.RegisterGrantableMsgType(types.TypeMsgSend)
-	msgauthtypes.RegisterMsgAuthTypeCodec(&types.MsgSend{}, "bank/MsgSend")
 }

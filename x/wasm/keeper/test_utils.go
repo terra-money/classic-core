@@ -1,8 +1,9 @@
-//nolint
 package keeper
 
+//nolint
+//DONTCOVER
+
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -15,6 +16,9 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/cosmos/ibc-go/modules/apps/transfer"
+	ibc "github.com/cosmos/ibc-go/modules/core"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -23,23 +27,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer"
-	ibc "github.com/cosmos/cosmos-sdk/x/ibc/core"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -67,6 +65,8 @@ import (
 	"github.com/terra-project/core/x/wasm/types"
 )
 
+const faucetAccountName = "faucet"
+
 // ModuleBasics nolint
 var ModuleBasics = module.NewBasicManager(
 	customauth.AppModuleBasic{},
@@ -82,7 +82,7 @@ var ModuleBasics = module.NewBasicManager(
 )
 
 // MakeTestCodec nolint
-func MakeTestCodec(t *testing.T) codec.Marshaler {
+func MakeTestCodec(t *testing.T) codec.Codec {
 	return MakeEncodingConfig(t).Marshaler
 }
 
@@ -131,7 +131,7 @@ var (
 		sdk.ValAddress(PubKeys[2].Address()),
 	}
 
-	InitTokens = sdk.TokensFromConsensusPower(200)
+	InitTokens = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction)
 	InitCoins  = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens))
 )
 
@@ -184,16 +184,17 @@ func CreateTestInput(t *testing.T) TestInput {
 	require.NoError(t, ms.LoadLatestVersion())
 
 	blackListAddrs := map[string]bool{
+		faucetAccountName:              true,
 		authtypes.FeeCollectorName:     true,
 		stakingtypes.NotBondedPoolName: true,
 		stakingtypes.BondedPoolName:    true,
 		distrtypes.ModuleName:          true,
-		oracletypes.ModuleName:         true,
 		markettypes.ModuleName:         true,
 		treasurytypes.ModuleName:       true,
 	}
 
 	maccPerms := map[string][]string{
+		faucetAccountName:              {authtypes.Burner, authtypes.Minter},
 		authtypes.FeeCollectorName:     nil,
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
@@ -208,8 +209,10 @@ func CreateTestInput(t *testing.T) TestInput {
 	accountKeeper := authkeeper.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms)
 	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
 
-	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)))))
-	bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)*10))))
+	err := bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
+	require.NoError(t, err)
+
 	bankKeeper.SetParams(ctx, banktypes.DefaultParams())
 
 	stakingKeeper := stakingkeeper.NewKeeper(
@@ -245,7 +248,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	oracleAcc := authtypes.NewEmptyModuleAccount(oracletypes.ModuleName)
 	marketAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Burner, authtypes.Minter)
 
-	bankKeeper.SetBalances(ctx, notBondedPool.GetAddress(), sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs))))))
+	err = bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs))))))
+	require.NoError(t, err)
 
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
@@ -256,7 +260,7 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	for _, addr := range Addrs {
 		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
-		err := bankKeeper.AddCoins(ctx, addr, InitCoins)
+		err := bankKeeper.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, InitCoins)
 		require.NoError(t, err)
 	}
 
@@ -287,13 +291,15 @@ func CreateTestInput(t *testing.T) TestInput {
 	treasuryKeeper := treasurykeeper.NewKeeper(
 		appCodec,
 		keyTreasury, paramsKeeper.Subspace(treasurytypes.ModuleName),
-		accountKeeper, bankKeeper, marketKeeper, stakingKeeper, distrKeeper,
+		accountKeeper, bankKeeper,
+		marketKeeper, oracleKeeper,
+		stakingKeeper, distrKeeper,
 		distrtypes.ModuleName,
 	)
 
 	treasuryKeeper.SetParams(ctx, treasurytypes.DefaultParams())
 
-	router := baseapp.NewRouter()
+	router := baseapp.NewMsgServiceRouter()
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
 	stakingtypes.RegisterQueryServer(querier, stakingkeeper.Querier{Keeper: stakingKeeper})
@@ -313,15 +319,18 @@ func CreateTestInput(t *testing.T) TestInput {
 		config.DefaultConfig(),
 	)
 
-	bankHandler := bank.NewHandler(bankKeeper)
-	stakingHandler := staking.NewHandler(stakingKeeper)
-	distrHandler := distr.NewHandler(distrKeeper)
-	marketHandler := market.NewHandler(marketKeeper)
-	router.AddRoute(sdk.NewRoute(banktypes.RouterKey, bankHandler))
-	router.AddRoute(sdk.NewRoute(stakingtypes.RouterKey, stakingHandler))
-	router.AddRoute(sdk.NewRoute(distrtypes.RouterKey, distrHandler))
-	router.AddRoute(sdk.NewRoute(markettypes.RouterKey, marketHandler))
-	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(keeper)))
+	router.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
+	bankMsgServer := bankkeeper.NewMsgServerImpl(bankKeeper)
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(stakingKeeper)
+	distrMsgServer := distrkeeper.NewMsgServerImpl(distrKeeper)
+	marketMsgServer := marketkeeper.NewMsgServerImpl(marketKeeper)
+	wasmMsgServer := NewMsgServerImpl(keeper)
+
+	banktypes.RegisterMsgServer(router, bankMsgServer)
+	stakingtypes.RegisterMsgServer(router, stakingMsgServer)
+	distrtypes.RegisterMsgServer(router, distrMsgServer)
+	markettypes.RegisterMsgServer(router, marketMsgServer)
+	types.RegisterMsgServer(router, wasmMsgServer)
 
 	keeper.SetParams(ctx, types.DefaultParams())
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
@@ -355,14 +364,28 @@ func CreateTestInput(t *testing.T) TestInput {
 		keeper}
 }
 
+// FundAccount is a utility function that funds an account by minting and
+// sending the coins to the address. This should be used for testing purposes
+// only!
+func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error {
+	if err := input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, amounts); err != nil {
+		return err
+	}
+
+	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
+}
+
 func createFakeFundedAccount(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	ak.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
-	bk.SetBalances(ctx, addr, coins)
-	supply := bk.GetSupply(ctx)
-	supply.SetTotal(supply.GetTotal().Add(coins...))
-	bk.SetSupply(ctx, supply)
 
+	if err := bk.MintCoins(ctx, faucetAccountName, coins); err != nil {
+		panic(err)
+	}
+
+	if err := bk.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, coins); err != nil {
+		panic(err)
+	}
 	return addr
 }
 
@@ -371,30 +394,6 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
 	return key, pub, addr
-}
-
-// TestHandler returns a wasm handler for tests (to avoid circular imports)
-func TestHandler(k Keeper) sdk.Handler {
-	msgServer := NewMsgServerImpl(k)
-
-	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
-		switch msg := msg.(type) {
-		case *types.MsgInstantiateContract:
-			res, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgExecuteContract:
-			res, err := msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgMigrateContract:
-			res, err := msgServer.MigrateContract(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		default:
-			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-		}
-	}
 }
 
 // HackatomExampleInitMsg nolint

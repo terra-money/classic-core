@@ -22,15 +22,15 @@ import (
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey   sdk.StoreKey
-	cdc        codec.BinaryMarshaler
+	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
 	accountKeeper  types.AccountKeeper
 	bankKeeper     types.BankKeeper
 	treasuryKeeper types.TreasuryKeeper
 
-	router      sdk.Router
-	queryRouter types.GRPCQueryRouter
+	serviceRouter types.MsgServiceRouter
+	queryRouter   types.GRPCQueryRouter
 
 	wasmVM    types.WasmerEngine
 	querier   types.Querier
@@ -42,13 +42,13 @@ type Keeper struct {
 
 // NewKeeper creates a new contract Keeper instance
 func NewKeeper(
-	cdc codec.BinaryMarshaler,
+	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
 	paramspace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	treasuryKeeper types.TreasuryKeeper,
-	router sdk.Router,
+	serviceRouter types.MsgServiceRouter,
 	queryRouter types.GRPCQueryRouter,
 	supportedFeatures string,
 	homePath string,
@@ -77,7 +77,7 @@ func NewKeeper(
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
 		treasuryKeeper: treasuryKeeper,
-		router:         router,
+		serviceRouter:  serviceRouter,
 		queryRouter:    queryRouter,
 		wasmConfig:     wasmConfig,
 		msgParser:      types.NewWasmMsgParser(),
@@ -133,14 +133,14 @@ func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) (codeInfo types.Code
 	if bz == nil {
 		return types.CodeInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", codeID)
 	}
-	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	k.cdc.MustUnmarshal(bz, &codeInfo)
 	return
 }
 
 // SetCodeInfo stores CodeInfo for the given codeID
 func (k Keeper) SetCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(&codeInfo)
+	bz := k.cdc.MustMarshal(&codeInfo)
 	store.Set(types.GetCodeInfoKey(codeID), bz)
 }
 
@@ -151,14 +151,14 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	if contractBz == nil {
 		return types.ContractInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "constractInfo %s", contractAddress.String())
 	}
-	k.cdc.MustUnmarshalBinaryBare(contractBz, &contractInfo)
+	k.cdc.MustUnmarshal(contractBz, &contractInfo)
 	return contractInfo, nil
 }
 
 // SetContractInfo stores ContractInfo for the given contractAddress
 func (k Keeper) SetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, codeInfo types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryBare(&codeInfo)
+	b := k.cdc.MustMarshal(&codeInfo)
 	store.Set(types.GetContractInfoKey(contractAddress), b)
 }
 
@@ -168,7 +168,7 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(types.ContractInfo)
 	iter := prefixStore.Iterator(nil, nil)
 	for ; iter.Valid(); iter.Next() {
 		var contract types.ContractInfo
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &contract)
+		k.cdc.MustUnmarshal(iter.Value(), &contract)
 		// cb returns true to stop early
 		if cb(contract) {
 			break

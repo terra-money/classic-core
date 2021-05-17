@@ -41,12 +41,12 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: types.ExchangeRateKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: exchangeRate})},
+			{Key: types.ExchangeRateKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: exchangeRate})},
 			{Key: types.FeederDelegationKey, Value: feederAddr.Bytes()},
-			{Key: types.MissCounterKey, Value: cdc.MustMarshalBinaryBare(&gogotypes.UInt64Value{Value: missCounter})},
-			{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshalBinaryBare(&aggregatePrevote)},
-			{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshalBinaryBare(&aggregateVote)},
-			{Key: types.TobinTaxKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: tobinTax})},
+			{Key: types.MissCounterKey, Value: cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})},
+			{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshal(&aggregatePrevote)},
+			{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshal(&aggregateVote)},
+			{Key: types.TobinTaxKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}

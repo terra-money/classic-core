@@ -12,13 +12,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 
 	core "github.com/terra-project/core/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	marketexported "github.com/terra-project/core/x/market/exported"
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 	treasuryexported "github.com/terra-project/core/x/treasury/exported"
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
@@ -64,7 +64,8 @@ func ComputeFeesWithBaseReq(
 			WithSimulateAndExecute(br.Simulate).
 			WithTxConfig(clientCtx.TxConfig).
 			WithTimeoutHeight(br.TimeoutHeight).
-			WithAccountRetriever(clientCtx.AccountRetriever)
+			WithAccountRetriever(clientCtx.AccountRetriever).
+			WithSimulateAndExecute(gasSetting.Simulate)
 
 		// Prepare AccountNumber & SequenceNumber when not given
 		clientCtx.FromAddress, err = sdk.AccAddressFromBech32(br.From)
@@ -72,18 +73,12 @@ func ComputeFeesWithBaseReq(
 			return nil, err
 		}
 
-		txf, err := tx.PrepareFactory(clientCtx, txf)
+		err := tx.BroadcastTx(clientCtx, txf)
 		if err != nil {
 			return nil, err
 		}
 
-		_, adj, err := tx.CalculateGas(clientCtx.QueryWithData, txf, msgs...)
-
-		if err != nil {
-			return nil, err
-		}
-
-		gas = adj
+		gas = txf.Gas()
 	}
 
 	// Computes taxes of the msgs
@@ -133,20 +128,14 @@ func ComputeFeesWithCmd(
 	clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg) (*legacytx.StdFee, error) {
 	txf := tx.NewFactoryCLI(clientCtx, flagSet)
 
-	// Prepare AccountNumber & SequenceNumber when not given
-	txf, err := tx.PrepareFactory(clientCtx, txf)
-	if err != nil {
-		return nil, err
-	}
-
 	gas := txf.Gas()
 	if txf.SimulateAndExecute() {
-		_, adj, err := tx.CalculateGas(clientCtx.QueryWithData, txf, msgs...)
+		err := tx.BroadcastTx(clientCtx, txf)
 		if err != nil {
 			return nil, err
 		}
 
-		gas = adj
+		gas = txf.Gas()
 	}
 
 	// Computes taxes of the msgs
@@ -205,8 +194,13 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 				taxes = taxes.Add(tax...)
 			}
 
-		case *msgauthexported.MsgExecAuthorized:
-			tax, err := FilterMsgAndComputeTax(clientCtx, msg.GetMsgs()...)
+		case *authz.MsgExec:
+			messages, err := msg.GetMessages()
+			if err != nil {
+				panic(err)
+			}
+
+			tax, err := FilterMsgAndComputeTax(clientCtx, messages...)
 			if err != nil {
 				return nil, err
 			}

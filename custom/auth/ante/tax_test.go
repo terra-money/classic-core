@@ -4,12 +4,12 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/terra-project/core/custom/auth/ante"
 	core "github.com/terra-project/core/types"
 	markettypes "github.com/terra-project/core/x/market/types"
-	msgauthtypes "github.com/terra-project/core/x/msgauth/types"
 	wasmtypes "github.com/terra-project/core/x/wasm/types"
 )
 
@@ -333,7 +333,7 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContract() {
 	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
 }
 
-func (suite *AnteTestSuite) TestEnsureMempoolFeesExecAuthorized() {
+func (suite *AnteTestSuite) TestEnsureMempoolFeesExec() {
 
 	suite.SetupTest(true) // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
@@ -347,12 +347,11 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecAuthorized() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
-	msg, err := msgauthtypes.NewMsgExecAuthorized(addr1, []sdk.Msg{banktypes.NewMsgSend(addr1, addr1, sendCoins)})
-	suite.Require().NoError(err)
+	msg := authz.NewMsgExec(addr1, []sdk.Msg{banktypes.NewMsgSend(addr1, addr1, sendCoins)})
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()
-	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.Require().NoError(suite.txBuilder.SetMsgs(&msg))
 	suite.txBuilder.SetFeeAmount(feeAmount)
 	suite.txBuilder.SetGasLimit(gasLimit)
 

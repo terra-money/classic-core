@@ -30,14 +30,14 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: types.TaxRateKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: taxRate})},
-			{Key: types.RewardWeightKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: rewardWeight})},
-			{Key: types.TaxCapKey, Value: cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: taxCap})},
-			{Key: types.TaxProceedsKey, Value: cdc.MustMarshalBinaryBare(&types.EpochTaxProceeds{TaxProceeds: taxProceeds})},
-			{Key: types.EpochInitialIssuanceKey, Value: cdc.MustMarshalBinaryBare(&types.EpochInitialIssuance{Issuance: epochInitialIssuance})},
-			{Key: types.TRKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: TR})},
-			{Key: types.SRKey, Value: cdc.MustMarshalBinaryBare(&sdk.DecProto{Dec: SR})},
-			{Key: types.TSLKey, Value: cdc.MustMarshalBinaryBare(&sdk.IntProto{Int: TSL})},
+			{Key: types.TaxRateKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: taxRate})},
+			{Key: types.RewardWeightKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: rewardWeight})},
+			{Key: types.TaxCapKey, Value: cdc.MustMarshal(&sdk.IntProto{Int: taxCap})},
+			{Key: types.TaxProceedsKey, Value: cdc.MustMarshal(&types.EpochTaxProceeds{TaxProceeds: taxProceeds})},
+			{Key: types.EpochInitialIssuanceKey, Value: cdc.MustMarshal(&types.EpochInitialIssuance{Issuance: epochInitialIssuance})},
+			{Key: types.TRKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: TR})},
+			{Key: types.SRKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: SR})},
+			{Key: types.TSLKey, Value: cdc.MustMarshal(&sdk.IntProto{Int: TSL})},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}

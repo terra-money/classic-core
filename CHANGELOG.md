@@ -1,3 +1,10 @@
+## [Unreleased]
+
+ * (tendermint) Bump Tendermint version to [v0.34.10](https://github.com/tendermint/tendermint/releases/tag/v0.34.10).
+ * (cosmos-sdk) Bump Cosmos SDK version to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0).
+ * (cosmwasm) Bump CosmWasm version to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
+ * (golang) Bump golang prerequisite from 1.15 to 1.16.
+
 ## 0.4.5
 This release is a hotfix for two high-severity issues.
 
@@ -119,7 +126,7 @@ $ make install
 
 ### Param Changes
 * [\#433](https://github.com/terra-project/core/pull/433) Increase ExecuteMsgSize limit to 4096 from 1024
-
+ 
 ## 0.4.0
 
 ### Release Notes

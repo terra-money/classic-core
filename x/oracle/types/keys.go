@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -49,22 +50,22 @@ func GetExchangeRateKey(denom string) []byte {
 
 // GetFeederDelegationKey - stored by *Validator* address
 func GetFeederDelegationKey(v sdk.ValAddress) []byte {
-	return append(FeederDelegationKey, v.Bytes()...)
+	return append(FeederDelegationKey, address.MustLengthPrefix(v)...)
 }
 
 // GetMissCounterKey - stored by *Validator* address
 func GetMissCounterKey(v sdk.ValAddress) []byte {
-	return append(MissCounterKey, v.Bytes()...)
+	return append(MissCounterKey, address.MustLengthPrefix(v)...)
 }
 
 // GetAggregateExchangeRatePrevoteKey - stored by *Validator* address
 func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {
-	return append(AggregateExchangeRatePrevoteKey, v.Bytes()...)
+	return append(AggregateExchangeRatePrevoteKey, address.MustLengthPrefix(v)...)
 }
 
 // GetAggregateExchangeRateVoteKey - stored by *Validator* address
 func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
-	return append(AggregateExchangeRateVoteKey, v.Bytes()...)
+	return append(AggregateExchangeRateVoteKey, address.MustLengthPrefix(v)...)
 }
 
 // GetTobinTaxKey - stored by *denom* bytes

@@ -4,8 +4,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
 )
 
 // RegisterLegacyAminoCodec registers all the necessary types and interfaces for the
@@ -43,6 +41,4 @@ var (
 func init() {
 	RegisterLegacyAminoCodec(amino)
 	cryptocodec.RegisterCrypto(amino)
-
-	msgauthexported.RegisterMsgAuthTypeCodec(govtypes.MsgVote{}, "gov/MsgVote")
 }

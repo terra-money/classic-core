@@ -13,7 +13,7 @@ import (
 
 // NewDecodeStore returns a decoder function closure that unmarshals the KVPair's
 // Value to the corresponding market type.
-func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB kv.Pair) string {
+func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
 		case bytes.Equal(kvA.Key[:1], types.LastCodeIDKey):
@@ -26,13 +26,13 @@ func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB kv.Pair) string {
 			return fmt.Sprintf("lastInstanceIDA: %d\nlastInstanceIDB: %d", lastInstanceIDKeyA, lastInstanceIDKeyB)
 		case bytes.Equal(kvA.Key[:1], types.CodeKey):
 			var codeInfoA, codeInfoB types.CodeInfo
-			cdc.MustUnmarshalBinaryBare(kvA.Value, &codeInfoA)
-			cdc.MustUnmarshalBinaryBare(kvB.Value, &codeInfoB)
+			cdc.MustUnmarshal(kvA.Value, &codeInfoA)
+			cdc.MustUnmarshal(kvB.Value, &codeInfoB)
 			return fmt.Sprintf("%v\n%v", codeInfoA, codeInfoB)
 		case bytes.Equal(kvA.Key[:1], types.ContractInfoKey):
 			var contractInfoA, contractInfoB types.ContractInfo
-			cdc.MustUnmarshalBinaryBare(kvA.Value, &contractInfoA)
-			cdc.MustUnmarshalBinaryBare(kvB.Value, &contractInfoB)
+			cdc.MustUnmarshal(kvA.Value, &contractInfoA)
+			cdc.MustUnmarshal(kvB.Value, &contractInfoB)
 			return fmt.Sprintf("%v\n%v", contractInfoA, contractInfoB)
 		case bytes.Equal(kvA.Key[:1], types.ContractStoreKey):
 			return fmt.Sprintf("%v\n%v", kvA.Value, kvB.Value)
