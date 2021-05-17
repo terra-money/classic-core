@@ -97,6 +97,7 @@ type AppModule struct {
 	keeper        keeper.Keeper
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
+	registry      codectypes.InterfaceRegistry
 }
 
 // NewAppModule creates a new AppModule object
@@ -104,12 +105,14 @@ func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
 	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper) AppModule {
+	bankKeeper types.BankKeeper,
+	registry codectypes.InterfaceRegistry) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc},
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
+		registry:       registry,
 	}
 }
 
@@ -194,8 +197,9 @@ func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 
 // WeightedOperations returns the all the wasm module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	protoCdc := codec.NewProtoCodec(am.registry)
 	return simulation.WeightedOperations(
 		simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.bankKeeper, am.keeper,
+		am.accountKeeper, am.bankKeeper, am.keeper, protoCdc,
 	)
 }

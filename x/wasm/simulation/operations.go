@@ -40,6 +40,7 @@ func WeightedOperations(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
+	protoCdc *codec.ProtoCodec,
 ) simulation.WeightedOperations {
 	var weightMsgStoreCode int
 	var weightMsgInstantiateContract int
@@ -90,15 +91,15 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
-			SimulateMsgInstantiateContract(ak, bk, k),
+			SimulateMsgInstantiateContract(ak, bk, k, protoCdc),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgExecuteContract,
-			SimulateMsgExecuteContract(ak, bk, k),
+			SimulateMsgExecuteContract(ak, bk, k, protoCdc),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgMigrateContract,
-			SimulateMsgMigrateContract(ak, bk, k),
+			SimulateMsgMigrateContract(ak, bk, k, protoCdc),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgUpdateContractAdmin,
@@ -185,7 +186,11 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 }
 
 // nolint: funlen
-func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
+func SimulateMsgInstantiateContract(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper,
+	protoCdc *codec.ProtoCodec) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -236,12 +241,16 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", protoCdc), nil, nil
 	}
 }
 
 // nolint: funlen
-func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
+func SimulateMsgExecuteContract(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper,
+	protoCdc *codec.ProtoCodec) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -295,7 +304,7 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", protoCdc), nil, nil
 	}
 }
 
@@ -303,7 +312,8 @@ func SimulateMsgExecuteContract(ak types.AccountKeeper, bk types.BankKeeper, k k
 func SimulateMsgMigrateContract(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simtypes.Operation {
+	k keeper.Keeper,
+	protoCdc *codec.ProtoCodec) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -365,7 +375,7 @@ func SimulateMsgMigrateContract(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, "", protoCdc), nil, nil
 	}
 }
 

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/terra-project/core/custom/auth/ante"
 	"github.com/terra-project/core/x/wasm/types"
@@ -148,6 +150,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 		}
 	}
 
+	fmt.Println("SIBONG", msg, sdkMsg)
 	res, err := k.handleSdkMessage(ctx, contractAddr, sdkMsg)
 	if err != nil {
 		return nil, nil, err
