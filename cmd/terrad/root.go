@@ -27,15 +27,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzcli "github.com/cosmos/cosmos-sdk/x/authz/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
-	feegrantcli "github.com/cosmos/cosmos-sdk/x/feegrant/client/cli"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	terraapp "github.com/terra-project/core/app"
 	terralegacy "github.com/terra-project/core/app/legacy"
 	"github.com/terra-project/core/app/params"
+	authcustomcli "github.com/terra-project/core/custom/auth/client/cli"
 	core "github.com/terra-project/core/types"
 	wasmconfig "github.com/terra-project/core/x/wasm/config"
 )
@@ -165,8 +164,7 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
-		feegrantcli.GetQueryCmd(),
-		authzcli.GetQueryCmd(),
+		authcustomcli.GetTxFeesEstimateCommand(),
 	)
 
 	terraapp.ModuleBasics.AddQueryCommands(cmd)
@@ -195,8 +193,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		flags.LineBreak,
-		feegrantcli.GetTxCmd(),
-		authzcli.GetTxCmd(),
 	)
 
 	terraapp.ModuleBasics.AddTxCommands(cmd)

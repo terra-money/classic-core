@@ -7,7 +7,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	feeutils "github.com/terra-project/core/custom/auth/client/utils"
@@ -30,26 +29,12 @@ $ terrad tx estimate-fee [file] --gas-adjustment 1.4 --gas-prices 0.015uluna
 				return err
 			}
 
-			// Generate transaction factory for gas simulation
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-
-			stdTx, err := authclient.ReadTxFromFile(clientCtx, args[1])
+			stdTx, err := authclient.ReadTxFromFile(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
 
 			stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), stdTx.GetMsgs()...)
-			if err != nil {
-				return err
-			}
-
-			// override gas and fees
-			txf = txf.
-				WithFees(stdFee.Amount.String()).
-				WithGas(stdFee.Gas).
-				WithSimulateAndExecute(false).
-				WithGasPrices("")
-
 			if err != nil {
 				return err
 			}
