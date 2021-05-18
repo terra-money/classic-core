@@ -61,11 +61,10 @@ func ComputeFeesWithBaseReq(
 			WithSequence(br.Sequence).
 			WithMemo(br.Memo).
 			WithChainID(br.ChainID).
-			WithSimulateAndExecute(br.Simulate).
+			WithSimulateAndExecute(br.Simulate || gasSetting.Simulate).
 			WithTxConfig(clientCtx.TxConfig).
 			WithTimeoutHeight(br.TimeoutHeight).
-			WithAccountRetriever(clientCtx.AccountRetriever).
-			WithSimulateAndExecute(gasSetting.Simulate)
+			WithAccountRetriever(clientCtx.AccountRetriever)
 
 		// Prepare AccountNumber & SequenceNumber when not given
 		clientCtx.FromAddress, err = sdk.AccAddressFromBech32(br.From)
@@ -73,12 +72,17 @@ func ComputeFeesWithBaseReq(
 			return nil, err
 		}
 
-		err := tx.BroadcastTx(clientCtx, txf, msgs...)
+		txf, err := prepareFactory(clientCtx, txf)
 		if err != nil {
 			return nil, err
 		}
 
-		gas = txf.Gas()
+		_, adj, err := tx.CalculateGas(clientCtx, txf, msgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		gas = adj
 	}
 
 	// Computes taxes of the msgs
@@ -130,12 +134,17 @@ func ComputeFeesWithCmd(
 
 	gas := txf.Gas()
 	if txf.SimulateAndExecute() {
-		err := tx.BroadcastTx(clientCtx, txf, msgs...)
+		txf, err := prepareFactory(clientCtx, txf)
 		if err != nil {
 			return nil, err
 		}
 
-		gas = txf.Gas()
+		_, adj, err := tx.CalculateGas(clientCtx, txf, msgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		gas = adj
 	}
 
 	// Computes taxes of the msgs
@@ -290,4 +299,34 @@ func ParseFloat64(s string, defaultIfEmpty float64) (n float64, err error) {
 	n, err = strconv.ParseFloat(s, 64)
 
 	return
+}
+
+// prepareFactory ensures the account defined by ctx.GetFromAddress() exists and
+// if the account number and/or the account sequence number are zero (not set),
+// they will be queried for and set on the provided Factory. A new Factory with
+// the updated fields will be returned.
+func prepareFactory(clientCtx client.Context, txf tx.Factory) (tx.Factory, error) {
+	from := clientCtx.GetFromAddress()
+
+	if err := txf.AccountRetriever().EnsureExists(clientCtx, from); err != nil {
+		return txf, err
+	}
+
+	initNum, initSeq := txf.AccountNumber(), txf.Sequence()
+	if initNum == 0 || initSeq == 0 {
+		num, seq, err := txf.AccountRetriever().GetAccountNumberSequence(clientCtx, from)
+		if err != nil {
+			return txf, err
+		}
+
+		if initNum == 0 {
+			txf = txf.WithAccountNumber(num)
+		}
+
+		if initSeq == 0 {
+			txf = txf.WithSequence(seq)
+		}
+	}
+
+	return txf, nil
 }
