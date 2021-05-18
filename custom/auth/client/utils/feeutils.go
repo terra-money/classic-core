@@ -73,7 +73,7 @@ func ComputeFeesWithBaseReq(
 			return nil, err
 		}
 
-		err := tx.BroadcastTx(clientCtx, txf)
+		err := tx.BroadcastTx(clientCtx, txf, msgs...)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +130,7 @@ func ComputeFeesWithCmd(
 
 	gas := txf.Gas()
 	if txf.SimulateAndExecute() {
-		err := tx.BroadcastTx(clientCtx, txf)
+		err := tx.BroadcastTx(clientCtx, txf, msgs...)
 		if err != nil {
 			return nil, err
 		}
