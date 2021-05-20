@@ -118,7 +118,6 @@ import (
 	oraclekeeper "github.com/terra-project/core/x/oracle/keeper"
 	oracletypes "github.com/terra-project/core/x/oracle/types"
 	"github.com/terra-project/core/x/treasury"
-	treasuryclient "github.com/terra-project/core/x/treasury/client"
 	treasurykeeper "github.com/terra-project/core/x/treasury/keeper"
 	treasurytypes "github.com/terra-project/core/x/treasury/types"
 	"github.com/terra-project/core/x/vesting"
@@ -160,8 +159,6 @@ var (
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
-			treasuryclient.TaxRateUpdateProposalHandler,
-			treasuryclient.RewardWeightUpdateProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),
@@ -428,8 +425,7 @@ func NewTerraApp(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(treasurytypes.RouterKey, treasury.NewTreasuryPolicyUpdateHandler(app.TreasuryKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
