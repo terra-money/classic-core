@@ -13,7 +13,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*types.ModuleAccountI)(nil), nil)
 	cdc.RegisterInterface((*types.GenesisAccount)(nil), nil)
 	cdc.RegisterInterface((*types.AccountI)(nil), nil)
-	cdc.RegisterConcrete(&types.BaseAccount{}, "core/BaseAccount", nil)
+	cdc.RegisterConcrete(&types.BaseAccount{}, "core/Account", nil)
 	cdc.RegisterConcrete(&types.ModuleAccount{}, "core/ModuleAccount", nil)
 	cdc.RegisterConcrete(legacytx.StdTx{}, "core/StdTx", nil)
 }
