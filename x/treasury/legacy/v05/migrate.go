@@ -3,12 +3,16 @@ package v05
 import (
 	v04treasury "github.com/terra-project/core/x/treasury/legacy/v04"
 	v05treasury "github.com/terra-project/core/x/treasury/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Migrate accepts exported v0.4 x/treasury and
 // migrates it to v0.5 x/treasury genesis state. The migration includes:
 //
 // - Merge Epoch genesis data to EpochState from x/treasury genesis state.
+// - Update RewardWeight to one to burn all seigniorage
+// - Update Params.RewardPolicy so that RewardWeight does not change.
 // - Re-encode in v0.5 GenesisState.
 func Migrate(
 	treasuryGenState v04treasury.GenesisState,
@@ -43,7 +47,7 @@ func Migrate(
 	return &v05treasury.GenesisState{
 		EpochInitialIssuance: treasuryGenState.EpochInitialIssuance,
 		EpochStates:          epochStates,
-		RewardWeight:         treasuryGenState.RewardWeight,
+		RewardWeight:         sdk.OneDec(),
 		TaxCaps:              taxCaps,
 		TaxProceeds:          treasuryGenState.TaxProceed,
 		TaxRate:              treasuryGenState.TaxRate,
@@ -55,10 +59,10 @@ func Migrate(
 				ChangeRateMax: treasuryGenState.Params.TaxPolicy.ChangeRateMax,
 			},
 			RewardPolicy: v05treasury.PolicyConstraints{
-				RateMin:       treasuryGenState.Params.RewardPolicy.RateMin,
-				RateMax:       treasuryGenState.Params.RewardPolicy.RateMax,
+				RateMin:       sdk.ZeroDec(),
+				RateMax:       sdk.OneDec(),
 				Cap:           treasuryGenState.Params.RewardPolicy.Cap,
-				ChangeRateMax: treasuryGenState.Params.RewardPolicy.ChangeRateMax,
+				ChangeRateMax: sdk.ZeroDec(),
 			},
 			MiningIncrement:         treasuryGenState.Params.MiningIncrement,
 			SeigniorageBurdenTarget: treasuryGenState.Params.SeigniorageBurdenTarget,
