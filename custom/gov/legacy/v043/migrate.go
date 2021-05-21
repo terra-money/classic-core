@@ -18,7 +18,6 @@ import (
 	v040upgrade "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	v04treasury "github.com/terra-project/core/x/treasury/legacy/v04"
-	v05treasury "github.com/terra-project/core/x/treasury/types"
 )
 
 func migrateVoteOption(oldVoteOption v034gov.VoteOption) v043gov.VoteOption {
@@ -134,19 +133,11 @@ func migrateContent(oldContent v036gov.Content) *codectypes.Any {
 		}
 	case v04treasury.TaxRateUpdateProposal:
 		{
-			protoProposal = &v05treasury.TaxRateUpdateProposal{
-				Description: oldContent.Description,
-				Title:       oldContent.Title,
-				TaxRate:     oldContent.TaxRate,
-			}
+			return nil
 		}
 	case v04treasury.RewardWeightUpdateProposal:
 		{
-			protoProposal = &v05treasury.RewardWeightUpdateProposal{
-				Description:  oldContent.Description,
-				Title:        oldContent.Title,
-				RewardWeight: oldContent.RewardWeight,
-			}
+			return nil
 		}
 	default:
 		panic(fmt.Errorf("%T is not a valid proposal content type", oldContent))
@@ -189,21 +180,23 @@ func Migrate(oldGovState v036gov.GenesisState) *v043gov.GenesisState {
 
 	newProposals := make([]v043gov.Proposal, len(oldGovState.Proposals))
 	for i, oldProposal := range oldGovState.Proposals {
-		newProposals[i] = v043gov.Proposal{
-			ProposalId: oldProposal.ProposalID,
-			Content:    migrateContent(oldProposal.Content),
-			Status:     migrateProposalStatus(oldProposal.Status),
-			FinalTallyResult: v043gov.TallyResult{
-				Yes:        oldProposal.FinalTallyResult.Yes,
-				Abstain:    oldProposal.FinalTallyResult.Abstain,
-				No:         oldProposal.FinalTallyResult.No,
-				NoWithVeto: oldProposal.FinalTallyResult.NoWithVeto,
-			},
-			SubmitTime:      oldProposal.SubmitTime,
-			DepositEndTime:  oldProposal.DepositEndTime,
-			TotalDeposit:    oldProposal.TotalDeposit,
-			VotingStartTime: oldProposal.VotingStartTime,
-			VotingEndTime:   oldProposal.VotingEndTime,
+		if content := migrateContent(oldProposal.Content); content != nil {
+			newProposals[i] = v043gov.Proposal{
+				ProposalId: oldProposal.ProposalID,
+				Content:    content,
+				Status:     migrateProposalStatus(oldProposal.Status),
+				FinalTallyResult: v043gov.TallyResult{
+					Yes:        oldProposal.FinalTallyResult.Yes,
+					Abstain:    oldProposal.FinalTallyResult.Abstain,
+					No:         oldProposal.FinalTallyResult.No,
+					NoWithVeto: oldProposal.FinalTallyResult.NoWithVeto,
+				},
+				SubmitTime:      oldProposal.SubmitTime,
+				DepositEndTime:  oldProposal.DepositEndTime,
+				TotalDeposit:    oldProposal.TotalDeposit,
+				VotingStartTime: oldProposal.VotingStartTime,
+				VotingEndTime:   oldProposal.VotingEndTime,
+			}
 		}
 	}
 
