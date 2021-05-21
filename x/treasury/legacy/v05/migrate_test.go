@@ -135,9 +135,9 @@ func TestMigrate(t *testing.T) {
 				"amount": "0",
 				"denom": "unused"
 			},
-			"change_rate_max": "0.005000000000000000",
-			"rate_max": "0.100000000000000000",
-			"rate_min": "0.010000000000000000"
+			"change_rate_max": "0.000000000000000000",
+			"rate_max": "1.000000000000000000",
+			"rate_min": "0.000000000000000000"
 		},
 		"seigniorage_burden_target": "0.670000000000000000",
 		"tax_policy": {
@@ -153,7 +153,7 @@ func TestMigrate(t *testing.T) {
 		"window_probation": "18",
 		"window_short": "4"
 	},
-	"reward_weight": "0.050000000000000000",
+	"reward_weight": "1.000000000000000000",
 	"tax_caps": [
 		{
 			"denom": "uluna",
