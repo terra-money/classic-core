@@ -9,7 +9,7 @@ paths:
       description: Information about the connected node
       summary: The properties of the connected node
       tags:
-        - Tendermint RPC
+        - Terra REST
       produces:
         - application/json
       responses:
@@ -115,7 +115,7 @@ paths:
                     properties:
                       chain_id:
                         type: string
-                        example: columbus-3
+                        example: columbus-5
                       height:
                         type: number
                         example: 1
@@ -203,7 +203,7 @@ paths:
                     properties:
                       chain_id:
                         type: string
-                        example: columbus-3
+                        example: columbus-5
                       height:
                         type: number
                         example: 1
@@ -365,7 +365,7 @@ paths:
                     properties:
                       chain_id:
                         type: string
-                        example: columbus-3
+                        example: columbus-5
                       height:
                         type: number
                         example: 1
@@ -453,7 +453,7 @@ paths:
                     properties:
                       chain_id:
                         type: string
-                        example: columbus-3
+                        example: columbus-5
                       height:
                         type: number
                         example: 1
@@ -616,9 +616,12 @@ paths:
                       description: bech32 encoded address
                       example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
                     pub_key:
-                      type: string
-                      example: >-
-                        terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        value:
+                          type: string
                     voting_power:
                       type: string
                       example: '1000'
@@ -659,9 +662,12 @@ paths:
                       description: bech32 encoded address
                       example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
                     pub_key:
-                      type: string
-                      example: >-
-                        terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        value:
+                          type: string
                     voting_power:
                       type: string
                       example: '1000'
@@ -676,6 +682,7 @@ paths:
           description: Server internal error
   '/txs/{hash}':
     get:
+      deprecated: true
       summary: Get a Tx by hash
       tags:
         - Transactions
@@ -773,6 +780,7 @@ paths:
           description: Internal Server Error
   /txs:
     get:
+      deprecated: true
       tags:
         - Transactions
       summary: Search transactions
@@ -785,7 +793,9 @@ paths:
           type: string
           description: >-
             transaction events such as 'message.action=send' which results in
-            the following endpoint: 'GET /txs?message.action=send'
+            the following endpoint: 'GET /txs?message.action=send'. note that
+            each module documents its own events. look for xx_events.md in the
+            corresponding cosmos-sdk/docs/spec directory
           x-example: send
         - in: query
           name: message.sender
@@ -805,24 +815,15 @@ paths:
           type: integer
           x-example: 1
         - in: query
-          name: tx.height
-          description: 'transaction events with height: ''GET /txs?tx.height=10000'''
-          type: integer
-          x-example: 100
-        - in: query
           name: tx.minheight
-          description: >-
-            transaction events with height range option: 'GET
-            /txs?tx.minheight=10000'
           type: integer
-          x-example: 100
+          description: transactions on blocks with height greater or equal this value
+          x-example: 25
         - in: query
           name: tx.maxheight
-          description: >-
-            transaction events with height range option: 'GET
-            /txs?tx.maxheight=10000'
           type: integer
-          x-example: 100
+          description: transactions on blocks with height less than or equal this value
+          x-example: 800000
       responses:
         '200':
           description: All txs matching the provided events
@@ -1080,6 +1081,7 @@ paths:
           description: Internal Server Error
   /txs/encode:
     post:
+      deprecated: true
       tags:
         - Transactions
       summary: Encode a transaction to the Amino wire format
@@ -1155,79 +1157,44 @@ paths:
                 type: string
                 example: The base64-encoded Amino-serialized bytes for the tx
         '400':
-          description: The tx was malformated
+          description: The tx was malformed
         '500':
           description: Server internal error
-  /txs/estimate_fee:
+  /txs/decode:
     post:
+      deprecated: true
       tags:
         - Transactions
-      summary: Estimate fees and gas of a transaction
-      description: Estimate fees and gas of a transaction according to given parameters
+      summary: Decode a transaction from the Amino wire format
+      description: >-
+        Decode a transaction (signed or not) from base64-encoded Amino
+        serialized bytes to JSON
       consumes:
         - application/json
       produces:
         - application/json
       parameters:
         - in: body
-          name: estimate_req
-          description: The tx and gas params to compute fees
+          name: tx
+          description: The tx to decode
           required: true
           schema:
             type: object
             properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              msgs:
-                type: array
-                items:
-                  type: string
+              tx:
+                type: string
+                example: >-
+                  SvBiXe4KPqijYZoKFFHEzJ8c2HPAfv2EFUcIhx0yPagwEhTy0vPA+GGhCEslKXa4Af0uB+mfShoMCgVzdGFrZRIDMTAwEgQQwJoM
       responses:
         '200':
-          description: Estimated gas and fees object
+          description: The tx was successfully decoded
           schema:
             type: object
             properties:
+              msg:
+                type: array
+                items:
+                  type: string
               fee:
                 type: object
                 properties:
@@ -1244,12 +1211,37 @@ paths:
                         amount:
                           type: string
                           example: '50'
+              memo:
+                type: string
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
-          description: The tx was malformated
+          description: The tx was malformed
         '500':
           description: Server internal error
   '/bank/balances/{address}':
     get:
+      deprecated: true
       summary: Get the account balances
       tags:
         - Bank
@@ -1280,6 +1272,7 @@ paths:
           description: Server internal error
   '/bank/accounts/{address}/transfers':
     post:
+      deprecated: true
       summary: Send coins from one account to another
       tags:
         - Bank
@@ -1313,7 +1306,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -1356,7 +1349,7 @@ paths:
                       example: '50'
       responses:
         '202':
-          description: Tx was succesfully generated
+          description: Tx was successfully generated
           schema:
             type: object
             properties:
@@ -1408,8 +1401,60 @@ paths:
           description: Invalid request
         '500':
           description: Server internal error
+  /bank/total:
+    get:
+      deprecated: true
+      summary: Total supply of coins in the chain
+      tags:
+        - Bank
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              total:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                      example: uluna
+                    amount:
+                      type: string
+                      example: '50'
+        '500':
+          description: Internal Server Error
+  '/bank/total/{denomination}':
+    parameters:
+      - in: path
+        name: denomination
+        description: Coin denomination
+        required: true
+        type: string
+        x-example: uluna
+    get:
+      deprecated: true
+      summary: Total supply of a single coin denomination
+      tags:
+        - Bank
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: string
+        '400':
+          description: Invalid coin denomination
+        '500':
+          description: Internal Server Error
   '/auth/accounts/{address}':
     get:
+      deprecated: true
       summary: Get the account information on blockchain
       tags:
         - Auth
@@ -1424,9 +1469,7 @@ paths:
           x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       responses:
         '200':
-          description: >-
-            Account information on the blockchain (one of Account and
-            LazyGradedVestingAccount)
+          description: Account information on the blockchain
           schema:
             type: object
             properties:
@@ -1435,7 +1478,7 @@ paths:
                 properties:
                   type:
                     type: string
-                    example: auth/Account
+                    example: core/Account
                   value:
                     type: object
                     properties:
@@ -1528,167 +1571,8 @@ paths:
                                   ratio:
                                     type: string
                                     example: '0.100000000000000000'
-        '204':
-          description: No content about this account address
         '500':
-          description: Server internel error
-  '/auth/accounts/{address}/multisign':
-    post:
-      summary: Generate multisig signatures for transactions generated offline
-      tags:
-        - Auth
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address
-          required: true
-          type: string
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-        - in: body
-          name: multisig_req
-          description: >-
-            multisign request information; pubkey is optional param in case
-            multisig account never used before
-          required: true
-          schema:
-            type: object
-            properties:
-              tx:
-                type: object
-                properties:
-                  msg:
-                    type: array
-                    items:
-                      type: string
-                  fee:
-                    type: object
-                    properties:
-                      gas:
-                        type: string
-                      amount:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            denom:
-                              type: string
-                              example: uluna
-                            amount:
-                              type: string
-                              example: '50'
-                  memo:
-                    type: string
-                  signatures:
-                    type: string
-                    example: null
-              chain_id:
-                type: string
-                example: columbus-3
-              signatures:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    signature:
-                      type: string
-                      example: >-
-                        MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                    pub_key:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                          example: tendermint/PubKeySecp256k1
-                        value:
-                          type: string
-                          example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-              signature_only:
-                type: boolean
-              pubkey:
-                type: object
-                properties:
-                  threshold:
-                    type: number
-                    example: 1
-                  pubkeys:
-                    type: array
-                    items:
-                      type: string
-                      example: >-
-                        terrapub1addwnpepq2l6pwj8h9fwxdjuge7lazu0sszpkck0nlhjag6q9drffrd93atywdt8ksu
-      responses:
-        '200':
-          description: Generated multisigned tx or multisig
-          schema:
-            type: object
-            properties:
-              MultiSignedTx:
-                type: object
-                properties:
-                  msg:
-                    type: array
-                    items:
-                      type: string
-                  fee:
-                    type: object
-                    properties:
-                      gas:
-                        type: string
-                      amount:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            denom:
-                              type: string
-                              example: uluna
-                            amount:
-                              type: string
-                              example: '50'
-                  memo:
-                    type: string
-                  signature:
-                    type: object
-                    properties:
-                      signature:
-                        type: string
-                        example: >-
-                          MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                      pub_key:
-                        type: object
-                        properties:
-                          type:
-                            type: string
-                            example: tendermint/PubKeySecp256k1
-                          value:
-                            type: string
-                            example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                      account_number:
-                        type: string
-                        example: '0'
-                      sequence:
-                        type: string
-                        example: '0'
-              MultiSig:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-        '500':
-          description: Server internel error
+          description: Server internal error
   '/staking/delegators/{delegatorAddr}/delegations':
     parameters:
       - in: path
@@ -1698,6 +1582,7 @@ paths:
         type: string
         x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
+      deprecated: true
       summary: Get all delegations from a delegator
       tags:
         - Staking
@@ -1735,7 +1620,7 @@ paths:
       parameters:
         - in: body
           name: delegation
-          description: The password of the account to remove from the KMS
+          description: Delegate an amount of liquid coins to a validator
           schema:
             type: object
             properties:
@@ -1751,7 +1636,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -1810,79 +1695,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid delegator address or delegation request body
         '401':
@@ -1904,6 +1760,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Query the current delegation between a delegator and a validator
       tags:
         - Staking
@@ -1943,6 +1800,7 @@ paths:
         type: string
         x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
+      deprecated: true
       summary: Get all unbonding delegations from a delegator
       tags:
         - Staking
@@ -1982,7 +1840,7 @@ paths:
       parameters:
         - in: body
           name: delegation
-          description: The password of the account to remove from the KMS
+          description: Unbond an amount of bonded shares from a validator
           schema:
             type: object
             properties:
@@ -1998,7 +1856,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -2037,8 +1895,14 @@ paths:
                 description: bech32 encoded address
                 example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
               amount:
-                type: string
-                example: '100'
+                type: object
+                properties:
+                  denom:
+                    type: string
+                    example: uluna
+                  amount:
+                    type: string
+                    example: '50'
       tags:
         - Staking
       consumes:
@@ -2051,79 +1915,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid delegator address or unbonding delegation request body
         '401':
@@ -2145,6 +1980,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Query all unbonding delegations between a delegator and a validator
       tags:
         - Staking
@@ -2195,6 +2031,7 @@ paths:
         required: false
         type: string
     get:
+      deprecated: true
       summary: Get all redelegations (filter by query params)
       tags:
         - Staking
@@ -2231,6 +2068,149 @@ paths:
                         type: string
         '500':
           description: Internal Server Error
+  '/staking/delegators/{delegatorAddr}/redelegations':
+    parameters:
+      - in: path
+        name: delegatorAddr
+        description: Bech32 AccAddress of Delegator
+        required: true
+        type: string
+        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+    post:
+      deprecated: true
+      summary: Submit a redelegation
+      parameters:
+        - in: body
+          name: delegation
+          description: The sender and tx information
+          schema:
+            type: object
+            properties:
+              base_req:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                    description: Sender address or Keybase name to generate a transaction
+                  memo:
+                    type: string
+                    example: "Sent via Terra Station \U0001F680"
+                  chain_id:
+                    type: string
+                    example: Columbus-5
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '1'
+                  gas:
+                    type: string
+                    example: '200000'
+                  gas_adjustment:
+                    type: string
+                    example: '1.2'
+                  fees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+                  simulate:
+                    type: boolean
+                    example: false
+                    description: >-
+                      Estimate gas for a transaction (cannot be used in
+                      conjunction with generate_only)
+              delegator_address:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+              validator_src_address:
+                type: string
+                description: bech32 encoded address
+                example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
+              validator_dst_address:
+                type: string
+                description: bech32 encoded address
+                example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
+              amount:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                      example: uluna
+                    amount:
+                      type: string
+                      example: '50'
+      tags:
+        - Staking
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Tx was successfully generated
+          schema:
+            type: object
+            properties:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
+                type: object
+                properties:
+                  gas:
+                    type: string
+                  amount:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+              memo:
+                type: string
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
+        '400':
+          description: Invalid delegator address or redelegation request body
+        '500':
+          description: Internal Server Error
   '/staking/delegators/{delegatorAddr}/validators':
     parameters:
       - in: path
@@ -2240,6 +2220,7 @@ paths:
         type: string
         x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
+      deprecated: true
       summary: Query all validators that a delegator is bonded to
       tags:
         - Staking
@@ -2258,9 +2239,12 @@ paths:
                   description: bech32 encoded address
                   example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
                 consensus_pubkey:
-                  type: string
-                  example: >-
-                    terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    value:
+                      type: string
                 jailed:
                   type: boolean
                 status:
@@ -2277,6 +2261,8 @@ paths:
                     identity:
                       type: string
                     website:
+                      type: string
+                    security_contact:
                       type: string
                     details:
                       type: string
@@ -2326,6 +2312,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Query a validator that a delegator is bonded to
       tags:
         - Staking
@@ -2342,9 +2329,12 @@ paths:
                 description: bech32 encoded address
                 example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
               consensus_pubkey:
-                type: string
-                example: >-
-                  terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                type: object
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
               jailed:
                 type: boolean
               status:
@@ -2361,6 +2351,8 @@ paths:
                   identity:
                     type: string
                   website:
+                    type: string
+                  security_contact:
                     type: string
                   details:
                     type: string
@@ -2395,131 +2387,9 @@ paths:
           description: Invalid delegator address or validator address
         '500':
           description: Internal Server Error
-  '/staking/delegators/{delegatorAddr}/txs':
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra167w96tdvmazakdwkw2u57227eduula2cy572lf
-    get:
-      summary: Get all staking txs (i.e msgs) from a delegator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                total_count:
-                  type: number
-                  example: 1
-                count:
-                  type: number
-                  example: 1
-                page_number:
-                  type: number
-                  example: 1
-                page_total:
-                  type: number
-                  example: 1
-                limit:
-                  type: number
-                  example: 30
-                txs:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      hash:
-                        type: string
-                        example: >-
-                          D085138D913993919295FF4B0A9107F1F2CDE0D37A87CE0644E217CBF3B49656
-                      height:
-                        type: number
-                        example: 368
-                      tx:
-                        type: object
-                        properties:
-                          msg:
-                            type: array
-                            items:
-                              type: string
-                          fee:
-                            type: object
-                            properties:
-                              gas:
-                                type: string
-                              amount:
-                                type: array
-                                items:
-                                  type: object
-                                  properties:
-                                    denom:
-                                      type: string
-                                      example: uluna
-                                    amount:
-                                      type: string
-                                      example: '50'
-                          memo:
-                            type: string
-                          signature:
-                            type: object
-                            properties:
-                              signature:
-                                type: string
-                                example: >-
-                                  MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                              pub_key:
-                                type: object
-                                properties:
-                                  type:
-                                    type: string
-                                    example: tendermint/PubKeySecp256k1
-                                  value:
-                                    type: string
-                                    example: >-
-                                      Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                              account_number:
-                                type: string
-                                example: '0'
-                              sequence:
-                                type: string
-                                example: '0'
-                      result:
-                        type: object
-                        properties:
-                          log:
-                            type: string
-                          gas_wanted:
-                            type: string
-                            example: '200000'
-                          gas_used:
-                            type: string
-                            example: '26354'
-                          tags:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                key:
-                                  type: string
-                                value:
-                                  type: string
-        '204':
-          description: No staking transaction about this delegator address
-        '400':
-          description: Invalid delegator address
-        '500':
-          description: Internal Server Error
   /staking/validators:
     get:
+      deprecated: true
       summary: >-
         Get all validator candidates. By default it returns only the bonded
         validators.
@@ -2558,9 +2428,12 @@ paths:
                   description: bech32 encoded address
                   example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
                 consensus_pubkey:
-                  type: string
-                  example: >-
-                    terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    value:
+                      type: string
                 jailed:
                   type: boolean
                 status:
@@ -2577,6 +2450,8 @@ paths:
                     identity:
                       type: string
                     website:
+                      type: string
+                    security_contact:
                       type: string
                     details:
                       type: string
@@ -2616,8 +2491,9 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Query the information from a single validator
       tags:
         - Staking
@@ -2634,9 +2510,12 @@ paths:
                 description: bech32 encoded address
                 example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
               consensus_pubkey:
-                type: string
-                example: >-
-                  terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+                type: object
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
               jailed:
                 type: boolean
               status:
@@ -2653,6 +2532,8 @@ paths:
                   identity:
                     type: string
                   website:
+                    type: string
+                  security_contact:
                     type: string
                   details:
                     type: string
@@ -2694,8 +2575,9 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Get all delegations from a validator
       tags:
         - Staking
@@ -2735,8 +2617,9 @@ paths:
         description: Bech32 OperatorAddress of validator
         required: true
         type: string
-        x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Get all unbonding delegations from a validator
       tags:
         - Staking
@@ -2773,6 +2656,7 @@ paths:
           description: Internal Server Error
   /staking/pool:
     get:
+      deprecated: true
       summary: Get the current state of the staking pool
       tags:
         - Staking
@@ -2792,6 +2676,7 @@ paths:
           description: Internal Server Error
   /staking/parameters:
     get:
+      deprecated: true
       summary: Get the current staking parameter values
       tags:
         - Staking
@@ -2809,53 +2694,17 @@ paths:
                 type: integer
               max_entries:
                 type: integer
+              historical_entries:
+                type: integer
               bond_denom:
                 type: string
-        '500':
-          description: Internal Server Error
-  '/slashing/validators/{validatorPubKey}/signing_info':
-    get:
-      summary: Get sign info of given validator
-      description: Get sign info of given validator
-      produces:
-        - application/json
-      tags:
-        - Slashing
-      parameters:
-        - type: string
-          description: Bech32 validator public key
-          name: validatorPubKey
-          required: true
-          in: path
-          x-example: >-
-            terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              address:
+              power_reduction:
                 type: string
-                example: terravalcons1qsdpq864szmfk8nh82qcg7lyle6k95w07acdqn
-              start_height:
-                type: string
-              index_offset:
-                type: string
-              jailed_until:
-                type: string
-              tombstoned:
-                type: boolean
-              missed_blocks_counter:
-                type: string
-        '204':
-          description: No sign info of this validator
-        '400':
-          description: Invalid validator public key
         '500':
           description: Internal Server Error
   /slashing/signing_infos:
     get:
+      deprecated: true
       summary: Get sign info of given all validators
       description: Get sign info of all validators
       produces:
@@ -2892,8 +2741,6 @@ paths:
                   type: string
                 jailed_until:
                   type: string
-                tombstoned:
-                  type: boolean
                 missed_blocks_counter:
                   type: string
         '400':
@@ -2902,6 +2749,7 @@ paths:
           description: Internal Server Error
   '/slashing/validators/{validatorAddr}/unjail':
     post:
+      deprecated: true
       summary: Unjail a jailed validator
       description: Send transaction to unjail a jailed validator
       consumes:
@@ -2916,7 +2764,7 @@ paths:
           name: validatorAddr
           required: true
           in: path
-          x-example: terravaloper1qwl879nx9t6kef4supyazayf7vjhennyh568ys
+          x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
         - description: ''
           name: UnjailBody
           in: body
@@ -2973,89 +2821,61 @@ paths:
                         example: '0'
       responses:
         '200':
-          description: Tx was succesfully generated
+          description: Tx was successfully generated
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid validator address or base_req
         '500':
           description: Internal Server Error
   /slashing/parameters:
     get:
+      deprecated: true
       summary: Get the current slashing parameters
       tags:
         - Slashing
@@ -3067,8 +2887,6 @@ paths:
           schema:
             type: object
             properties:
-              max_evidence_age:
-                type: string
               signed_blocks_window:
                 type: string
               min_signed_per_window:
@@ -3083,6 +2901,7 @@ paths:
           description: Internal Server Error
   /gov/proposals:
     post:
+      deprecated: true
       summary: Submit a proposal
       description: Send transaction to submit a proposal
       consumes:
@@ -3113,7 +2932,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -3167,7 +2986,7 @@ paths:
                       example: '50'
       responses:
         '200':
-          description: Tx was succesfully generated
+          description: Tx was successfully generated
           schema:
             type: object
             properties:
@@ -3220,6 +3039,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: Query proposals
       description: Query proposals information with parameters
       produces:
@@ -3298,6 +3118,7 @@ paths:
           description: Internal Server Error
   /gov/proposals/param_change:
     post:
+      deprecated: true
       summary: Generate a parameter change proposal transaction
       description: Generate a parameter change proposal transaction
       consumes:
@@ -3328,7 +3149,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -3397,159 +3218,7 @@ paths:
                       type: object
       responses:
         '200':
-          description: The transaction was succesfully generated
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Invalid proposal body
-        '500':
-          description: Internal Server Error
-  /gov/proposals/community_pool_spend:
-    post:
-      summary: Grant community pool coins to contributor
-      description: Generate a community pool spend transaction
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - description: >-
-            The community pool spend proposal body that contains receipient and
-            reward info
-          name: post_proposal_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              title:
-                type: string
-                x-example: Param Change
-              description:
-                type: string
-                x-example: Update max validators
-              proposer:
-                type: string
-                description: bech32 encoded address
-                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-              deposit:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
-              recipient:
-                type: string
-                description: bech32 encoded address
-                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-              amount:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
-      responses:
-        '200':
-          description: The transaction was succesfully generated
+          description: The transaction was successfully generated
           schema:
             type: object
             properties:
@@ -3603,6 +3272,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}':
     get:
+      deprecated: true
       summary: Query a proposal
       description: Query a proposal by id
       produces:
@@ -3667,6 +3337,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/proposer':
     get:
+      deprecated: true
       summary: Query proposer
       description: Query for the proposer for a proposal
       produces:
@@ -3695,6 +3366,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/deposits':
     get:
+      deprecated: true
       summary: Query deposits
       description: Query deposits by proposalId
       produces:
@@ -3737,6 +3409,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Deposit tokens to a proposal
       description: Send transaction to deposit tokens to a proposal
       consumes:
@@ -3771,7 +3444,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -3822,79 +3495,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid proposal id or deposit body
         '401':
@@ -3903,6 +3547,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/deposits/{depositor}':
     get:
+      deprecated: true
       summary: Query deposit
       description: Query deposit by proposalId and depositor address
       produces:
@@ -3953,6 +3598,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/votes':
     get:
+      deprecated: true
       summary: Query voters
       description: Query voters information by proposalId
       produces:
@@ -3978,13 +3624,40 @@ paths:
                   type: string
                 proposal_id:
                   type: string
-                option:
-                  type: string
+                options:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      option:
+                        type: string
+                        enum:
+                          - VOTE_OPTION_UNSPECIFIED
+                          - VOTE_OPTION_YES
+                          - VOTE_OPTION_ABSTAIN
+                          - VOTE_OPTION_NO
+                          - VOTE_OPTION_NO_WITH_VETO
+                        default: VOTE_OPTION_UNSPECIFIED
+                        description: >-
+                          VoteOption enumerates the valid vote options for a
+                          given governance proposal.
+
+                          - VOTE_OPTION_UNSPECIFIED: VOTE_OPTION_UNSPECIFIED
+                          defines a no-op vote option. - VOTE_OPTION_YES:
+                          VOTE_OPTION_YES defines a yes vote option. -
+                          VOTE_OPTION_ABSTAIN: VOTE_OPTION_ABSTAIN defines an
+                          abstain vote option. - VOTE_OPTION_NO: VOTE_OPTION_NO
+                          defines a no vote option. - VOTE_OPTION_NO_WITH_VETO:
+                          VOTE_OPTION_NO_WITH_VETO defines a no with veto vote
+                          option.
+                      weight:
+                        type: string
         '400':
           description: Invalid proposal id
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Vote a proposal
       description: Send transaction to vote a proposal
       consumes:
@@ -4021,7 +3694,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -4064,79 +3737,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid proposal id or vote body
         '401':
@@ -4145,6 +3789,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/votes/{voter}':
     get:
+      deprecated: true
       summary: Query vote
       description: Query vote information by proposal Id and voter address
       produces:
@@ -4174,8 +3819,34 @@ paths:
                 type: string
               proposal_id:
                 type: string
-              option:
-                type: string
+              options:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    option:
+                      type: string
+                      enum:
+                        - VOTE_OPTION_UNSPECIFIED
+                        - VOTE_OPTION_YES
+                        - VOTE_OPTION_ABSTAIN
+                        - VOTE_OPTION_NO
+                        - VOTE_OPTION_NO_WITH_VETO
+                      default: VOTE_OPTION_UNSPECIFIED
+                      description: >-
+                        VoteOption enumerates the valid vote options for a given
+                        governance proposal.
+
+                        - VOTE_OPTION_UNSPECIFIED: VOTE_OPTION_UNSPECIFIED
+                        defines a no-op vote option. - VOTE_OPTION_YES:
+                        VOTE_OPTION_YES defines a yes vote option. -
+                        VOTE_OPTION_ABSTAIN: VOTE_OPTION_ABSTAIN defines an
+                        abstain vote option. - VOTE_OPTION_NO: VOTE_OPTION_NO
+                        defines a no vote option. - VOTE_OPTION_NO_WITH_VETO:
+                        VOTE_OPTION_NO_WITH_VETO defines a no with veto vote
+                        option.
+                    weight:
+                      type: string
         '400':
           description: Invalid proposal id or voter address
         '404':
@@ -4184,6 +3855,7 @@ paths:
           description: Internal Server Error
   '/gov/proposals/{proposalId}/tally':
     get:
+      deprecated: true
       summary: Get a proposal's tally result at the current time
       description: >-
         Gets a proposal's tally result at the current time. If the proposal is
@@ -4224,6 +3896,7 @@ paths:
           description: Internal Server Error
   /gov/parameters/deposit:
     get:
+      deprecated: true
       summary: Query governance deposit parameters
       description: >-
         Query governance deposit parameters. The max_deposit_period units are in
@@ -4260,6 +3933,7 @@ paths:
           description: Internal Server Error
   /gov/parameters/tallying:
     get:
+      deprecated: true
       summary: Query governance tally parameters
       description: Query governance tally parameters
       produces:
@@ -4271,13 +3945,13 @@ paths:
           description: OK
           schema:
             properties:
-              quorum:
-                type: string
-                example: '0.4000000000'
               threshold:
                 type: string
                 example: '0.5000000000'
-              veto:
+              quorum:
+                type: string
+                example: '0.3340000000'
+              veto_threshold:
                 type: string
                 example: '0.3340000000'
         '400':
@@ -4288,6 +3962,7 @@ paths:
           description: Internal Server Error
   /gov/parameters/voting:
     get:
+      deprecated: true
       summary: Query governance voting parameters
       description: >-
         Query governance voting parameters. The voting_period units are in
@@ -4319,6 +3994,7 @@ paths:
         type: string
         x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
+      deprecated: true
       summary: Get the total rewards balance from all delegations
       description: >-
         Get the sum of all the rewards earned by delegations by a single
@@ -4369,6 +4045,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Withdraw all the delegator's delegation rewards
       description: Withdraw all the delegator's delegation rewards
       tags:
@@ -4394,7 +4071,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -4430,79 +4107,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid delegator address
         '401':
@@ -4524,6 +4172,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Query a delegation reward
       description: Query a single delegation reward by a delegator
       tags:
@@ -4549,6 +4198,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Withdraw a delegation reward
       description: Withdraw a delegator's delegation reward from a single validator
       tags:
@@ -4574,7 +4224,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -4610,79 +4260,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid delegator address or delegation body
         '401':
@@ -4698,6 +4319,7 @@ paths:
         type: string
         x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
     get:
+      deprecated: true
       summary: Get the rewards withdrawal address
       description: >-
         Get the delegations' rewards withdrawal address. This is the address in
@@ -4718,6 +4340,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Replace the rewards withdrawal address
       description: Replace the delegations' rewards withdrawal address for a new one.
       tags:
@@ -4743,7 +4366,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -4783,79 +4406,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid delegator or withdraw address
         '401':
@@ -4871,6 +4465,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Validator distribution information
       description: Query the distribution information of a single validator
       tags:
@@ -4922,6 +4517,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Fee distribution outstanding rewards of a single validator
       tags:
         - Distribution
@@ -4931,16 +4527,19 @@ paths:
         '200':
           description: OK
           schema:
-            type: array
-            items:
-              type: object
-              properties:
-                denom:
-                  type: string
-                  example: uluna
-                amount:
-                  type: string
-                  example: '50'
+            type: object
+            properties:
+              rewards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                      example: uluna
+                    amount:
+                      type: string
+                      example: '50'
         '500':
           description: Internal Server Error
   '/distribution/validators/{validatorAddr}/rewards':
@@ -4952,6 +4551,7 @@ paths:
         type: string
         x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
     get:
+      deprecated: true
       summary: Commission and self-delegation rewards of a single validator
       description: Query the commission and self-delegation rewards of validator.
       tags:
@@ -4977,6 +4577,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Withdraw the validator's rewards
       description: Withdraw the validator's self-delegation and commissions rewards
       tags:
@@ -5002,7 +4603,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -5038,79 +4639,50 @@ paths:
           schema:
             type: object
             properties:
-              check_tx:
+              msg:
+                type: array
+                items:
+                  type: string
+              fee:
                 type: object
                 properties:
-                  code:
-                    type: integer
-                  data:
+                  gas:
                     type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
+                  amount:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
+                        denom:
                           type: string
-                        value:
+                          example: uluna
+                        amount:
                           type: string
-                example:
-                  code: 0
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              deliver_tx:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  data:
-                    type: string
-                  gas_used:
-                    type: integer
-                  gas_wanted:
-                    type: integer
-                  info:
-                    type: string
-                  log:
-                    type: string
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                example:
-                  code: 5
-                  data: data
-                  log: log
-                  gas_used: 5000
-                  gas_wanted: 10000
-                  info: info
-                  tags:
-                    - ''
-                    - ''
-              hash:
+                          example: '50'
+              memo:
                 type: string
-                example: EE5F3404034C524501629B56E0DDC38FAD651F04
-              height:
-                type: integer
+              signature:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    example: >-
+                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
+                  pub_key:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tendermint/PubKeySecp256k1
+                      value:
+                        type: string
+                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '0'
         '400':
           description: Invalid validator address
         '401':
@@ -5119,6 +4691,7 @@ paths:
           description: Internal Server Error
   /distribution/community_pool:
     get:
+      deprecated: true
       summary: Community pool parameters
       tags:
         - Distribution
@@ -5142,6 +4715,7 @@ paths:
           description: Internal Server Error
   /distribution/parameters:
     get:
+      deprecated: true
       summary: Fee distribution parameters
       tags:
         - Distribution
@@ -5162,6 +4736,7 @@ paths:
           description: Internal Server Error
   /minting/parameters:
     get:
+      deprecated: true
       summary: Minting module parameters
       tags:
         - Mint
@@ -5188,6 +4763,7 @@ paths:
           description: Internal Server Error
   /minting/inflation:
     get:
+      deprecated: true
       summary: Current minting inflation value
       tags:
         - Mint
@@ -5202,6 +4778,7 @@ paths:
           description: Internal Server Error
   /minting/annual-provisions:
     get:
+      deprecated: true
       summary: Current minting annual provisions value
       tags:
         - Mint
@@ -5214,57 +4791,9 @@ paths:
             type: string
         '500':
           description: Internal Server Error
-  /supply/total:
-    get:
-      summary: Total supply of coins in the chain
-      tags:
-        - Supply
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              total:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
-        '500':
-          description: Internal Server Error
-  '/supply/total/{denomination}':
-    parameters:
-      - in: path
-        name: denomination
-        description: Coin denomination
-        required: true
-        type: string
-        x-example: uatom
-    get:
-      summary: Total supply of a single coin denomination
-      tags:
-        - Supply
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: string
-        '400':
-          description: Invalid coin denomination
-        '500':
-          description: Internal Server Error
   /market/swap:
     post:
+      deprecated: true
       summary: Swap coin with another coin
       tags:
         - Market
@@ -5292,7 +4821,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -5393,6 +4922,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: Query swap result amount
       tags:
         - Market
@@ -5427,6 +4957,7 @@ paths:
           description: Internal Server Error
   /market/mint_pool_delta:
     get:
+      deprecated: true
       summary: >-
         Get mint pool delta, is usdr amount used for swap operation from the
         MintPool.
@@ -5447,6 +4978,7 @@ paths:
           description: Internal Server Error
   /market/burn_pool_delta:
     get:
+      deprecated: true
       summary: >-
         Get burn pool delta, is usdr amount used for swap operation from the
         BurnPool.
@@ -5467,6 +4999,7 @@ paths:
           description: Internal Server Error
   /market/parameters:
     get:
+      deprecated: true
       summary: Get market params
       tags:
         - Market
@@ -5494,508 +5027,9 @@ paths:
           description: Bad Request
         '500':
           description: Internal Server Error
-  '/oracle/denoms/{denom}/votes':
-    post:
-      summary: >-
-        Generate oracle exchange rate vote message containing exchange rate and
-        salt for an prevote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to vote
-          required: true
-          type: string
-        - in: body
-          name: Vote request body
-          schema:
-            type: object
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              exchange_rate:
-                type: number
-                example: '1000.0'
-                description: >-
-                  proof exchange rate of Luna in denom currency was used to make
-                  prevote hash; initial prevote does not require this field
-              salt:
-                type: string
-                example: abcd
-                description: >-
-                  proof salt was used to make prevote hash; initial prevote does
-                  not require this field
-              validator:
-                type: string
-                description: bech32 encoded address
-                example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Bad request
-        '500':
-          description: Internal Server Error
-    get:
-      summary: >-
-        Request to get the currently unelected outstanding exchange rate oracle
-        vote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                exchange_rate:
-                  type: number
-                  example: '0.01241'
-                denom:
-                  type: string
-                  example: ukrw
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/denoms/{denom}/votes/{validator}':
-    get:
-      summary: >-
-        Request to get the currently unelected outstanding exchange rate oracle
-        vote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-        - in: path
-          name: validator
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                exchange_rate:
-                  type: number
-                  example: '0.01241'
-                denom:
-                  type: string
-                  example: ukrw
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/voters/{validator}/votes':
-    get:
-      summary: >-
-        Request to get the currently outstanding exchange rate oracle votes of a
-        validator
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                exchange_rate:
-                  type: number
-                  example: '0.01241'
-                denom:
-                  type: string
-                  example: ukrw
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/denoms/{denom}/prevotes':
-    post:
-      summary: >-
-        Generate oracle exchange rate prevote message containing a hash of a
-        vote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to prevote
-          required: true
-          type: string
-        - in: body
-          name: Vote request body
-          schema:
-            type: object
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              exchange_rate:
-                type: number
-                example: '1000.0'
-                description: >-
-                  exchange rate of Luna in denom currency is to make prevote
-                  hash; this field is required to submit prevote in case absence
-                  of hash
-              salt:
-                type: string
-                example: abcd
-                description: >-
-                  salt is to make prevote hash; this field is required to submit
-                  prevote in case  absence of hash
-              hash:
-                type: string
-                example: 061bf1e27dfff121f40c826e593c8a28ec299a02
-                description: hex string; hash of next vote; empty == skip prevote
-              validator:
-                type: string
-                description: bech32 encoded address
-                example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Bad request
-        '500':
-          description: Internal Server Error
-    get:
-      summary: Request to get the currently outstanding exchange rate oracle prevote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                hash:
-                  type: string
-                  example: 061bf1e27dfff121f40c826e593c8a28ec299a02
-                denom:
-                  type: string
-                  example: uusd
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-                submit_block:
-                  type: number
-                  example: '1'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/denoms/{denom}/prevotes/{validator}':
-    get:
-      summary: Request to get the currently outstanding exchange rate oracle prevote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-        - in: path
-          name: validator
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                hash:
-                  type: string
-                  example: 061bf1e27dfff121f40c826e593c8a28ec299a02
-                denom:
-                  type: string
-                  example: uusd
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-                submit_block:
-                  type: number
-                  example: '1'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
-  '/oracle/voters/{validator}/prevotes':
-    get:
-      summary: >-
-        Request to get the currently outstanding exchange rate oracle prevotes
-        of a validator
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          required: true
-          type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                hash:
-                  type: string
-                  example: 061bf1e27dfff121f40c826e593c8a28ec299a02
-                denom:
-                  type: string
-                  example: uusd
-                voter:
-                  type: string
-                  description: bech32 encoded address
-                  example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-                submit_block:
-                  type: number
-                  example: '1'
-        '400':
-          description: Bad Request
-        '500':
-          description: Internal Server Error
   '/oracle/denoms/{denom}/exchange_rate':
     get:
+      deprecated: true
       summary: Get the current effective exchange rate in Luna for the asset
       tags:
         - Oracle
@@ -6019,6 +5053,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/exchange_rates:
     get:
+      deprecated: true
       summary: Get all activated exchange rates
       tags:
         - Oracle
@@ -6044,6 +5079,7 @@ paths:
           description: Internal Server Error
   /oracle/denoms/actives:
     get:
+      deprecated: true
       summary: Get all activated denoms
       tags:
         - Oracle
@@ -6065,6 +5101,7 @@ paths:
           description: Internal Server Error
   '/oracle/voters/{validator}/feeder':
     post:
+      deprecated: true
       summary: Generate oracle feeder right delegation message
       tags:
         - Oracle
@@ -6093,7 +5130,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -6182,6 +5219,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: Get delegated oracle feeder of a validator
       tags:
         - Oracle
@@ -6206,6 +5244,7 @@ paths:
           description: Internal Server Error
   '/oracle/voters/{validator}/miss':
     get:
+      deprecated: true
       summary: Get the number of vote periods missed in this oracle slash window.
       tags:
         - Oracle
@@ -6230,6 +5269,7 @@ paths:
           description: Internal Server Error
   '/oracle/voters/{validator}/aggregate_prevote':
     post:
+      deprecated: true
       summary: >-
         Generate oracle aggregate exchange rate prevote message containing a
         hash
@@ -6260,7 +5300,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -6362,6 +5402,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: >-
         Get the currently outstanding aggregate exchange rate oracle prevote of
         a validator
@@ -6397,6 +5438,7 @@ paths:
           description: Internal Server Error
   '/oracle/voters/{validator}/aggregate_vote':
     post:
+      deprecated: true
       summary: >-
         Generate oracle aggregate exchange rate vote message containing exchange
         rates and salt to prove the aggregate prevote
@@ -6427,7 +5469,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -6524,6 +5566,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: >-
         Get the currently outstanding aggregate exchange rate oracle vote of a
         validator
@@ -6564,6 +5607,7 @@ paths:
           description: Internal Server Error
   /oracle/parameters:
     get:
+      deprecated: true
       summary: Get oracle params
       tags:
         - Oracle
@@ -6593,6 +5637,7 @@ paths:
           description: Internal Server Error
   /treasury/tax_rate:
     get:
+      deprecated: true
       summary: Get current tax rate
       tags:
         - Treasury
@@ -6609,6 +5654,7 @@ paths:
           description: Internal Server Error
   '/treasury/tax_cap/{denom}':
     get:
+      deprecated: true
       summary: Get tax cap of the denom
       tags:
         - Treasury
@@ -6630,6 +5676,7 @@ paths:
           description: Not Found
   /treasury/tax_caps:
     get:
+      deprecated: true
       summary: Get tax caps for the all whitelisted denoms
       tags:
         - Treasury
@@ -6653,6 +5700,7 @@ paths:
           description: Not Found
   /treasury/reward_weight:
     get:
+      deprecated: true
       summary: Get current reward weight
       tags:
         - Treasury
@@ -6670,6 +5718,7 @@ paths:
           description: Internal Server Error
   /treasury/tax_proceeds:
     get:
+      deprecated: true
       summary: Get current tax proceeds
       tags:
         - Treasury
@@ -6693,6 +5742,7 @@ paths:
           description: Internal Server Error
   /treasury/seigniorage_proceeds:
     get:
+      deprecated: true
       summary: retrieves the size of the seigniorage pool
       tags:
         - Treasury
@@ -6708,6 +5758,7 @@ paths:
           description: Internal Server
   /treasury/parameters:
     get:
+      deprecated: true
       summary: Get treasury module params
       tags:
         - Treasury
@@ -6795,6 +5846,7 @@ paths:
           description: Not Found
   /treasury/indicators:
     get:
+      deprecated: true
       summary: Get the current treasury indicators
       tags:
         - Treasury
@@ -6815,6 +5867,7 @@ paths:
                 example: '0.000366833881714302'
   /wasm/codes:
     post:
+      deprecated: true
       summary: Generate wasm store code message
       tags:
         - Wasm
@@ -6838,7 +5891,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -6927,6 +5980,7 @@ paths:
           description: Internal Server Error
   '/wasm/codes/{codeID}':
     post:
+      deprecated: true
       summary: Instantiate wasm contract
       tags:
         - Wasm
@@ -6955,7 +6009,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7059,6 +6113,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: Get code info of the code ID
       tags:
         - Wasm
@@ -7082,6 +6137,7 @@ paths:
                 type: string
   '/wasm/codes/{codeID}/migrate':
     post:
+      deprecated: true
       summary: Migrate old wasm code to new wasm code
       tags:
         - Wasm
@@ -7110,7 +6166,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7199,6 +6255,7 @@ paths:
           description: Internal Server Error
   '/wasm/contracts/{contractAddress}':
     post:
+      deprecated: true
       summary: Execute wasm contract message
       tags:
         - Wasm
@@ -7227,7 +6284,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7326,6 +6383,7 @@ paths:
         '500':
           description: Internal Server Error
     get:
+      deprecated: true
       summary: Get contract info of the contract Address
       tags:
         - Wasm
@@ -7361,6 +6419,7 @@ paths:
                 type: string
   '/wasm/contracts/{contractAddress}/migrate':
     post:
+      deprecated: true
       summary: Migrate wasm contract to new code base
       tags:
         - Wasm
@@ -7389,7 +6448,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7482,6 +6541,7 @@ paths:
           description: Internal Server Error
   '/wasm/contracts/{contractAddress}/admin/update':
     post:
+      deprecated: true
       summary: Update wasm contract admin to new address
       tags:
         - Wasm
@@ -7510,7 +6570,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7600,6 +6660,7 @@ paths:
           description: Internal Server Error
   '/wasm/contracts/{contractAddress}/admin/clear':
     post:
+      deprecated: true
       summary: Clear wasm contract admin to make the contract un-migratable
       tags:
         - Wasm
@@ -7628,7 +6689,7 @@ paths:
                     example: "Sent via Terra Station \U0001F680"
                   chain_id:
                     type: string
-                    example: columbus-3
+                    example: Columbus-5
                   account_number:
                     type: string
                     example: '0'
@@ -7714,6 +6775,7 @@ paths:
           description: Internal Server Error
   '/wasm/contracts/{contractAddress}/store':
     get:
+      deprecated: true
       summary: Get stored information with query msg
       tags:
         - Wasm
@@ -7738,6 +6800,7 @@ paths:
             type: string
   '/wasm/contracts/{contractAddress}/store/raw':
     get:
+      deprecated: true
       summary: Get stored information with store key
       tags:
         - Wasm
@@ -7766,6 +6829,7 @@ paths:
             type: string
   /wasm/parameters:
     get:
+      deprecated: true
       summary: Get wasm module params
       tags:
         - Wasm
@@ -7814,527 +6878,6 @@ paths:
                     description: allowed max length of a contract event attribute value
         '404':
           description: Not Found
-  '/msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants':
-    get:
-      summary: Get all grants between the granter and the grantee
-      tags:
-        - Authorization
-      parameters:
-        - in: path
-          name: granterAddress
-          description: granter address you want to lookup
-          required: true
-          type: string
-        - in: path
-          name: granteeAddress
-          description: grantee address you want to lookup
-          required: true
-          type: string
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: grant informations (one of GenericGrantInfo and SendGrantInfo)
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                GenericGrantInfo:
-                  type: object
-                  properties:
-                    authorization:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                          example: msgauth/GenericAuthorization
-                        value:
-                          type: object
-                          properties:
-                            msg_type:
-                              type: string
-                              example: send
-                    expiration:
-                      type: string
-                      example: '2021-06-24T09:33:20.012999Z'
-                SendGrantInfo:
-                  type: object
-                  properties:
-                    authorization:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                          example: msgauth/SendAuthorization
-                        value:
-                          type: object
-                          properties:
-                            spend_limit:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  denom:
-                                    type: string
-                                    example: uluna
-                                  amount:
-                                    type: string
-                                    example: '50'
-                    expiration:
-                      type: string
-                      example: '2021-06-24T09:33:20.012999Z'
-  '/msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}':
-    post:
-      summary: Grant msg execute permission to grantee address
-      tags:
-        - Authorization
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: granterAddress
-          required: true
-          type: string
-        - in: path
-          name: granteeAddress
-          required: true
-          type: string
-        - in: path
-          name: msgType
-          required: true
-          type: string
-        - in: body
-          name: grant request body
-          schema:
-            type: object
-            required:
-              - base_req
-              - period
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              period:
-                type: string
-                description: nano second of time duration
-                example: '3600000000000'
-              limit:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
-                description: required when grant MsgType == send
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Bad request
-        '500':
-          description: Internal Server Error
-    get:
-      summary: Get grant about a specific msg type between the granter and the grantee
-      tags:
-        - Authorization
-      parameters:
-        - in: path
-          name: granterAddress
-          description: granter address you want to lookup
-          required: true
-          type: string
-        - in: path
-          name: granteeAddress
-          description: grantee address you want to lookup
-          required: true
-          type: string
-        - in: path
-          name: msgType
-          description: msg type you want to lookup
-          required: true
-          type: string
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: grant information (one of GenericGrantInfo and SendGrantInfo)
-          schema:
-            type: object
-            properties:
-              GenericGrantInfo:
-                type: object
-                properties:
-                  authorization:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: msgauth/GenericAuthorization
-                      value:
-                        type: object
-                        properties:
-                          msg_type:
-                            type: string
-                            example: send
-                  expiration:
-                    type: string
-                    example: '2021-06-24T09:33:20.012999Z'
-              SendGrantInfo:
-                type: object
-                properties:
-                  authorization:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: msgauth/SendAuthorization
-                      value:
-                        type: object
-                        properties:
-                          spend_limit:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                denom:
-                                  type: string
-                                  example: uluna
-                                amount:
-                                  type: string
-                                  example: '50'
-                  expiration:
-                    type: string
-                    example: '2021-06-24T09:33:20.012999Z'
-  '/msgauth/granters/{granterAddress}/grantees/{granteeAddress}/grants/{msgType}/revoke':
-    post:
-      summary: Revoke grant from grantee address
-      tags:
-        - Authorization
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: granterAddress
-          required: true
-          type: string
-        - in: path
-          name: granteeAddress
-          required: true
-          type: string
-        - in: path
-          name: msgType
-          required: true
-          type: string
-        - in: body
-          name: revoke request body
-          schema:
-            type: object
-            required:
-              - base_req
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Bad request
-        '500':
-          description: Internal Server Error
-  /msgauth/execute:
-    post:
-      summary: Execute msgs from grantee address
-      tags:
-        - Authorization
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: revoke request body
-          schema:
-            type: object
-            required:
-              - base_req
-              - msgs
-            properties:
-              base_req:
-                type: object
-                properties:
-                  from:
-                    type: string
-                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-                    description: Sender address or Keybase name to generate a transaction
-                  memo:
-                    type: string
-                    example: "Sent via Terra Station \U0001F680"
-                  chain_id:
-                    type: string
-                    example: columbus-3
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '1'
-                  gas:
-                    type: string
-                    example: '200000'
-                  gas_adjustment:
-                    type: string
-                    example: '1.2'
-                  fees:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-                  simulate:
-                    type: boolean
-                    example: false
-                    description: >-
-                      Estimate gas for a transaction (cannot be used in
-                      conjunction with generate_only)
-              msgs:
-                type: array
-                items:
-                  type: string
-      responses:
-        '200':
-          description: OK
-          schema:
-            type: object
-            properties:
-              msg:
-                type: array
-                items:
-                  type: string
-              fee:
-                type: object
-                properties:
-                  gas:
-                    type: string
-                  amount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                          example: uluna
-                        amount:
-                          type: string
-                          example: '50'
-              memo:
-                type: string
-              signature:
-                type: object
-                properties:
-                  signature:
-                    type: string
-                    example: >-
-                      MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-                  pub_key:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: tendermint/PubKeySecp256k1
-                      value:
-                        type: string
-                        example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-                  account_number:
-                    type: string
-                    example: '0'
-                  sequence:
-                    type: string
-                    example: '0'
-        '400':
-          description: Bad request
-        '500':
-          description: Internal Server Error
   /cosmos/auth/v1beta1/accounts:
     get:
       summary: Accounts returns all the existing accounts
@@ -37091,34 +35634,6 @@ definitions:
           sequence:
             type: string
             example: '0'
-  UnsignedStdTx:
-    type: object
-    properties:
-      msg:
-        type: array
-        items:
-          type: string
-      fee:
-        type: object
-        properties:
-          gas:
-            type: string
-          amount:
-            type: array
-            items:
-              type: object
-              properties:
-                denom:
-                  type: string
-                  example: uluna
-                amount:
-                  type: string
-                  example: '50'
-      memo:
-        type: string
-      signatures:
-        type: string
-        example: null
   BlockID:
     type: object
     properties:
@@ -37139,7 +35654,7 @@ definitions:
     properties:
       chain_id:
         type: string
-        example: columbus-3
+        example: columbus-5
       height:
         type: number
         example: 1
@@ -37212,7 +35727,7 @@ definitions:
         properties:
           chain_id:
             type: string
-            example: columbus-3
+            example: columbus-5
           height:
             type: number
             example: 1
@@ -37355,7 +35870,7 @@ definitions:
             properties:
               chain_id:
                 type: string
-                example: columbus-3
+                example: columbus-5
               height:
                 type: number
                 example: 1
@@ -37443,7 +35958,7 @@ definitions:
             properties:
               chain_id:
                 type: string
-                example: columbus-3
+                example: columbus-5
               height:
                 type: number
                 example: 1
@@ -37639,7 +36154,7 @@ definitions:
         example: "Sent via Terra Station \U0001F680"
       chain_id:
         type: string
-        example: columbus-3
+        example: Columbus-5
       account_number:
         type: string
         example: '0'
@@ -37677,9 +36192,12 @@ definitions:
         description: bech32 encoded address
         example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
       pub_key:
-        type: string
-        example: >-
-          terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+        type: object
+        properties:
+          type:
+            type: string
+          value:
+            type: string
       voting_power:
         type: string
         example: '1000'
@@ -37778,8 +36296,32 @@ definitions:
         type: string
       proposal_id:
         type: string
-      option:
-        type: string
+      options:
+        type: array
+        items:
+          type: object
+          properties:
+            option:
+              type: string
+              enum:
+                - VOTE_OPTION_UNSPECIFIED
+                - VOTE_OPTION_YES
+                - VOTE_OPTION_ABSTAIN
+                - VOTE_OPTION_NO
+                - VOTE_OPTION_NO_WITH_VETO
+              default: VOTE_OPTION_UNSPECIFIED
+              description: >-
+                VoteOption enumerates the valid vote options for a given
+                governance proposal.
+
+                - VOTE_OPTION_UNSPECIFIED: VOTE_OPTION_UNSPECIFIED defines a
+                no-op vote option. - VOTE_OPTION_YES: VOTE_OPTION_YES defines a
+                yes vote option. - VOTE_OPTION_ABSTAIN: VOTE_OPTION_ABSTAIN
+                defines an abstain vote option. - VOTE_OPTION_NO: VOTE_OPTION_NO
+                defines a no vote option. - VOTE_OPTION_NO_WITH_VETO:
+                VOTE_OPTION_NO_WITH_VETO defines a no with veto vote option.
+            weight:
+              type: string
   Validator:
     type: object
     properties:
@@ -37788,9 +36330,12 @@ definitions:
         description: bech32 encoded address
         example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
       consensus_pubkey:
-        type: string
-        example: >-
-          terravalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8
+        type: object
+        properties:
+          type:
+            type: string
+          value:
+            type: string
       jailed:
         type: boolean
       status:
@@ -37807,6 +36352,8 @@ definitions:
           identity:
             type: string
           website:
+            type: string
+          security_contact:
             type: string
           details:
             type: string
@@ -37971,8 +36518,6 @@ definitions:
         type: string
       jailed_until:
         type: string
-      tombstoned:
-        type: boolean
       missed_blocks_counter:
         type: string
   ParamChange:
@@ -38019,7 +36564,7 @@ definitions:
     properties:
       type:
         type: string
-        example: auth/Account
+        example: core/Account
       value:
         type: object
         properties:
@@ -38288,7 +36833,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38364,7 +36909,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38429,7 +36974,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38490,7 +37035,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38552,7 +37097,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38609,7 +37154,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -38870,72 +37415,6 @@ definitions:
           type: string
           example: >-
             terrapub1addwnpepq2l6pwj8h9fwxdjuge7lazu0sszpkck0nlhjag6q9drffrd93atywdt8ksu
-  MultiSignReq:
-    type: object
-    properties:
-      tx:
-        type: object
-        properties:
-          msg:
-            type: array
-            items:
-              type: string
-          fee:
-            type: object
-            properties:
-              gas:
-                type: string
-              amount:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
-          memo:
-            type: string
-          signatures:
-            type: string
-            example: null
-      chain_id:
-        type: string
-        example: columbus-3
-      signatures:
-        type: array
-        items:
-          type: object
-          properties:
-            signature:
-              type: string
-              example: >-
-                MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-            pub_key:
-              type: object
-              properties:
-                type:
-                  type: string
-                  example: tendermint/PubKeySecp256k1
-                value:
-                  type: string
-                  example: Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH
-      signature_only:
-        type: boolean
-      pubkey:
-        type: object
-        properties:
-          threshold:
-            type: number
-            example: 1
-          pubkeys:
-            type: array
-            items:
-              type: string
-              example: >-
-                terrapub1addwnpepq2l6pwj8h9fwxdjuge7lazu0sszpkck0nlhjag6q9drffrd93atywdt8ksu
   StdSignature:
     type: object
     properties:
@@ -39012,7 +37491,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39060,7 +37539,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39108,7 +37587,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39172,7 +37651,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39231,7 +37710,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39283,7 +37762,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39332,7 +37811,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39456,7 +37935,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39519,7 +37998,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
@@ -39567,7 +38046,7 @@ definitions:
             example: "Sent via Terra Station \U0001F680"
           chain_id:
             type: string
-            example: columbus-3
+            example: Columbus-5
           account_number:
             type: string
             example: '0'
