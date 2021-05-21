@@ -24,30 +24,38 @@ func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 	// Mint seigniorage
 	seigniorageCoin, _ := seigniorageDecCoin.TruncateDecimal()
 	seigniorageCoins := sdk.NewCoins(seigniorageCoin)
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, seigniorageCoins)
-	if err != nil {
-		panic(err)
+	if seigniorageCoins.IsValid() {
+		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, seigniorageCoins); err != nil {
+			panic(err)
+		}
 	}
 	seigniorageAmt := seigniorageCoin.Amount
 
 	// Send reward to oracle module
 	burnAmt := rewardWeight.MulInt(seigniorageAmt).TruncateInt()
 	burnCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, burnAmt))
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnCoins)
-	if err != nil {
-		panic(err)
+	if burnCoins.IsValid() {
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnCoins); err != nil {
+			panic(err)
+		}
 	}
 
 	// Send left to distribution module
 	leftAmt := seigniorageAmt.Sub(burnAmt)
 	leftCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, leftAmt))
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionModuleName, leftCoins)
-	if err != nil {
-		panic(err)
-	}
+	if leftCoins.IsValid() {
+		if err := k.bankKeeper.SendCoinsFromModuleToModule(
+			ctx,
+			types.ModuleName,
+			k.distributionModuleName,
+			leftCoins,
+		); err != nil {
+			panic(err)
+		}
 
-	// Update distribution community pool
-	feePool := k.distrKeeper.GetFeePool(ctx)
-	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(leftCoins...)...)
-	k.distrKeeper.SetFeePool(ctx, feePool)
+		// Update distribution community pool
+		feePool := k.distrKeeper.GetFeePool(ctx)
+		feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(leftCoins...)...)
+		k.distrKeeper.SetFeePool(ctx, feePool)
+	}
 }
