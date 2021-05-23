@@ -23,6 +23,10 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
+replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.3-terra
+
+replace github.com/tendermint/tendermint => github.com/YunSuk-Yeo/tendermint v0.33.9
+
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
