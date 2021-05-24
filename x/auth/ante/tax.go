@@ -14,9 +14,6 @@ import (
 	wasmexported "github.com/terra-project/core/x/wasm/exported"
 )
 
-// MaxOracleMsgGasUsage is constant expected oracle msg gas cost
-const MaxOracleMsgGasUsage = uint64(100_000)
-
 // FeeTx defines the interface to be implemented by Tx to use the FeeDecorators
 type FeeTx interface {
 	sdk.Tx
@@ -52,14 +49,13 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	feeCoins := feeTx.GetFee()
 	gas := feeTx.GetGas()
-	msgs := feeTx.GetMsgs()
 
 	if !simulate {
 		// Compute taxes
 		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, feeTx.GetMsgs())
 
 		// Mempool fee validation
-		if ctx.IsCheckTx() && !(isOracleTx(ctx, msgs) && gas <= uint64(len(msgs))*MaxOracleMsgGasUsage) {
+		if ctx.IsCheckTx() && !(isOracleTx(ctx, feeTx.GetMsgs()) && gas <= 1000000) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
