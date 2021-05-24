@@ -25,7 +25,7 @@ require (
 
 replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.3-terra
 
-replace github.com/tendermint/tendermint => github.com/YunSuk-Yeo/tendermint v0.33.9
+replace github.com/tendermint/tendermint => github.com/terra-project/tendermint v0.33.9-terra
 
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
 

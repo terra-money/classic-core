@@ -17,8 +17,6 @@ github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrd
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/Workiva/go-datastructures v1.0.52 h1:PLSK6pwn8mYdaoaCZEMsXBpBotr4HHn9abU0yMQt0NI=
 github.com/Workiva/go-datastructures v1.0.52/go.mod h1:Z+F2Rca0qCsVYDS8z7bAGm8f3UkzuWYS/oBZz5a7VVA=
-github.com/YunSuk-Yeo/tendermint v0.33.9 h1:MFfE5mE0nDZRTHmyrVAG+eF5SJACOgdLoUikrA2VC7M=
-github.com/YunSuk-Yeo/tendermint v0.33.9/go.mod h1:RZqmEDs3ei2jqUMby6afoUWs5Y4UBiSvHSj61ik8JQ4=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -462,6 +460,8 @@ github.com/terra-project/go-cosmwasm v0.10.4 h1:2UmueP0/LngjTYmFr7K3sJRA2cvtROxa
 github.com/terra-project/go-cosmwasm v0.10.4/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
 github.com/terra-project/ledger-terra-go v0.11.1-terra h1:BnwRp8dyJMN5sROg8g6dXc5/Zoi44gd5c8Llf0Nobac=
 github.com/terra-project/ledger-terra-go v0.11.1-terra/go.mod h1:5fdyEuDNvsymbqag/EaaAeWAgyAebQe2VH38H+DnXnA=
+github.com/terra-project/tendermint v0.33.9-terra h1:2KHDf6CiSdHAKA19k6YU7+InoMKyejjyJt1QBrgtDFE=
+github.com/terra-project/tendermint v0.33.9-terra/go.mod h1:RZqmEDs3ei2jqUMby6afoUWs5Y4UBiSvHSj61ik8JQ4=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
