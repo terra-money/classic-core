@@ -1596,12 +1596,15 @@ paths:
             items:
               type: object
               properties:
-                delegator_address:
-                  type: string
-                validator_address:
-                  type: string
-                shares:
-                  type: string
+                delegation:
+                  type: object
+                  properties:
+                    delegator_address:
+                      type: string
+                    validator_address:
+                      type: string
+                    shares:
+                      type: string
                 balance:
                   type: object
                   properties:
@@ -1772,12 +1775,15 @@ paths:
           schema:
             type: object
             properties:
-              delegator_address:
-                type: string
-              validator_address:
-                type: string
-              shares:
-                type: string
+              delegation:
+                type: object
+                properties:
+                  delegator_address:
+                    type: string
+                  validator_address:
+                    type: string
+                  shares:
+                    type: string
               balance:
                 type: object
                 properties:
@@ -2591,12 +2597,15 @@ paths:
             items:
               type: object
               properties:
-                delegator_address:
-                  type: string
-                validator_address:
-                  type: string
-                shares:
-                  type: string
+                delegation:
+                  type: object
+                  properties:
+                    delegator_address:
+                      type: string
+                    validator_address:
+                      type: string
+                    shares:
+                      type: string
                 balance:
                   type: object
                   properties:
@@ -36387,12 +36396,15 @@ definitions:
   Delegation:
     type: object
     properties:
-      delegator_address:
-        type: string
-      validator_address:
-        type: string
-      shares:
-        type: string
+      delegation:
+        type: object
+        properties:
+          delegator_address:
+            type: string
+          validator_address:
+            type: string
+          shares:
+            type: string
       balance:
         type: object
         properties:
