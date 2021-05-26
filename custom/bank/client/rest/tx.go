@@ -21,8 +21,8 @@ import (
 func RegisterRoutes(clientCtx client.Context, rtr *mux.Router) {
 	r := clientrest.WithHTTPDeprecationHeaders(rtr)
 
-	rtr.HandleFunc("/bank/accounts/{address}/transfers", sendRequestHandlerFn(clientCtx)).Methods("POST")
-	bankrest.RegisterHandlers(clientCtx, r)
+	r.HandleFunc("/bank/accounts/{address}/transfers", sendRequestHandlerFn(clientCtx)).Methods("POST")
+	bankrest.RegisterHandlers(clientCtx, rtr)
 }
 
 // SendReq defines the properties of a send request's body.
