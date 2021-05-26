@@ -11,11 +11,11 @@ import (
 // RegisterLegacyAminoCodec registers the necessary x/distribution interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&types.MsgWithdrawDelegatorReward{}, "cosmos-sdk/MsgWithdrawDelegationReward", nil)
-	cdc.RegisterConcrete(&types.MsgWithdrawValidatorCommission{}, "cosmos-sdk/MsgWithdrawValidatorCommission", nil)
-	cdc.RegisterConcrete(&types.MsgSetWithdrawAddress{}, "cosmos-sdk/MsgModifyWithdrawAddress", nil)
-	cdc.RegisterConcrete(&types.MsgFundCommunityPool{}, "cosmos-sdk/MsgFundCommunityPool", nil)
-	cdc.RegisterConcrete(&types.CommunityPoolSpendProposal{}, "cosmos-sdk/CommunityPoolSpendProposal", nil)
+	cdc.RegisterConcrete(&types.MsgWithdrawDelegatorReward{}, "distribution/MsgWithdrawDelegationReward", nil)
+	cdc.RegisterConcrete(&types.MsgWithdrawValidatorCommission{}, "distribution/MsgWithdrawValidatorCommission", nil)
+	cdc.RegisterConcrete(&types.MsgSetWithdrawAddress{}, "distribution/MsgModifyWithdrawAddress", nil)
+	cdc.RegisterConcrete(&types.MsgFundCommunityPool{}, "distribution/MsgFundCommunityPool", nil)
+	cdc.RegisterConcrete(&types.CommunityPoolSpendProposal{}, "distribution/CommunityPoolSpendProposal", nil)
 }
 
 var (
