@@ -4503,16 +4503,19 @@ paths:
                       type: string
                       example: '50'
               val_commission:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    denom:
-                      type: string
-                      example: uluna
-                    amount:
-                      type: string
-                      example: '50'
+                type: object
+                properties:
+                  commission:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
         '400':
           description: Invalid validator address
         '500':
@@ -36501,16 +36504,19 @@ definitions:
               type: string
               example: '50'
       val_commission:
-        type: array
-        items:
-          type: object
-          properties:
-            denom:
-              type: string
-              example: uluna
-            amount:
-              type: string
-              example: '50'
+        type: object
+        properties:
+          commission:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                  example: uluna
+                amount:
+                  type: string
+                  example: '50'
   PublicKey:
     type: object
     properties:

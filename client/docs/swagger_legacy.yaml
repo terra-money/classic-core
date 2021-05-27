@@ -3314,9 +3314,12 @@ definitions:
         items:
           $ref: "#/definitions/Coin"
       val_commission:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
+        type: object
+        properties:
+          commission:
+            type: array
+            items:
+              $ref: "#/definitions/Coin"
   PublicKey:
     type: object
     properties:
