@@ -23,9 +23,9 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.3-terra.1
+replace github.com/cosmos/cosmos-sdk => github.com/terra-project/cosmos-sdk v0.39.3-terra.2
 
-replace github.com/tendermint/tendermint => github.com/terra-project/tendermint v0.33.9-terra.1
+replace github.com/tendermint/tendermint => github.com/terra-project/tendermint v0.33.9-terra.2
 
 replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
 
