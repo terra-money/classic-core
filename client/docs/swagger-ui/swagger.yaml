@@ -3081,16 +3081,24 @@ paths:
             items:
               type: object
               properties:
-                proposal_id:
-                  type: integer
-                title:
+                id:
                   type: string
-                description:
-                  type: string
-                proposal_type:
-                  type: string
-                proposal_status:
-                  type: string
+                  example: '1'
+                content:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      example: gov/TextProposal
+                    value:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        description:
+                          type: string
+                status:
+                  type: number
                 final_tally_result:
                   type: object
                   properties:
@@ -3106,8 +3114,6 @@ paths:
                     no_with_veto:
                       type: string
                       example: '0.0000000000'
-                submit_time:
-                  type: string
                 total_deposit:
                   type: array
                   items:
@@ -3119,7 +3125,13 @@ paths:
                       amount:
                         type: string
                         example: '50'
+                submit_time:
+                  type: string
+                deposit_end_time:
+                  type: string
                 voting_start_time:
+                  type: string
+                voting_end_time:
                   type: string
         '400':
           description: Invalid query parameters
@@ -3300,16 +3312,24 @@ paths:
           schema:
             type: object
             properties:
-              proposal_id:
-                type: integer
-              title:
+              id:
                 type: string
-              description:
-                type: string
-              proposal_type:
-                type: string
-              proposal_status:
-                type: string
+                example: '1'
+              content:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: gov/TextProposal
+                  value:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                      description:
+                        type: string
+              status:
+                type: number
               final_tally_result:
                 type: object
                 properties:
@@ -3325,8 +3345,6 @@ paths:
                   no_with_veto:
                     type: string
                     example: '0.0000000000'
-              submit_time:
-                type: string
               total_deposit:
                 type: array
                 items:
@@ -3338,7 +3356,13 @@ paths:
                     amount:
                       type: string
                       example: '50'
+              submit_time:
+                type: string
+              deposit_end_time:
+                type: string
               voting_start_time:
+                type: string
+              voting_end_time:
                 type: string
         '400':
           description: Invalid proposal id
@@ -36219,16 +36243,24 @@ definitions:
   TextProposal:
     type: object
     properties:
-      proposal_id:
-        type: integer
-      title:
+      id:
         type: string
-      description:
-        type: string
-      proposal_type:
-        type: string
-      proposal_status:
-        type: string
+        example: '1'
+      content:
+        type: object
+        properties:
+          type:
+            type: string
+            example: gov/TextProposal
+          value:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+      status:
+        type: number
       final_tally_result:
         type: object
         properties:
@@ -36244,8 +36276,6 @@ definitions:
           no_with_veto:
             type: string
             example: '0.0000000000'
-      submit_time:
-        type: string
       total_deposit:
         type: array
         items:
@@ -36257,7 +36287,13 @@ definitions:
             amount:
               type: string
               example: '50'
+      submit_time:
+        type: string
+      deposit_end_time:
+        type: string
       voting_start_time:
+        type: string
+      voting_end_time:
         type: string
   Proposer:
     type: object
