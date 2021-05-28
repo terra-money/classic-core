@@ -929,6 +929,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       tags:
         - Transactions
       summary: Broadcast a signed tx
@@ -1619,6 +1620,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Submit delegation
       parameters:
         - in: body
@@ -1842,6 +1844,7 @@ paths:
         '500':
           description: Internal Server Error
     post:
+      deprecated: true
       summary: Submit an unbonding delegation
       parameters:
         - in: body
