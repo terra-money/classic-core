@@ -13,7 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -33,7 +33,7 @@ func (r *replacementConfigs) isReplacedValidator(validatorAddress string) (int, 
 }
 
 type replacementConfig struct {
-	Name             string `json:"validator_name"`
+	ValidatorName    string `json:"validator_name"`
 	ValidatorAddress string `json:"validator_address"`
 	ConsensusPubkey  string `json:"stargate_consensus_public_key"`
 }
@@ -49,7 +49,7 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 	err = json.Unmarshal(jsonReplacementBlob, &replacementKeys)
 
 	if err != nil {
-		log.Fatal("Could not unmarshal replacement keys ")
+		log.Fatal(errors.Wrap(err, "Could not unmarshal replacement keys "))
 	}
 
 	var state types.AppMap
@@ -70,10 +70,9 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 
 			toReplaceValConsAddress, _ := val.GetConsAddr()
 
-			// TODO: check gaia before making release candidate
-			consPubKey, err := legacybech32.UnmarshalPubKey(legacybech32.ConsPK, replacement.ConsensusPubkey)
-			if err != nil {
-				log.Fatal(fmt.Errorf("failed to decode key:%s %w", consPubKey, err))
+			var consPubKey cryptotypes.PubKey
+			if err := clientCtx.JSONCodec.UnmarshalInterfaceJSON([]byte(replacement.ConsensusPubkey), &consPubKey); err != nil {
+				log.Fatal(fmt.Errorf("failed to decode key:%s %w", replacement.ConsensusPubkey, err))
 			}
 
 			val.ConsensusPubkey, err = codectypes.NewAnyWithValue(consPubKey)
