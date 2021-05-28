@@ -343,6 +343,12 @@ func NewTerraApp(
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
+	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-beta3", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		app.Logger().Info("Upgrade successfully done")
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
+	})
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
@@ -600,6 +606,7 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
+	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
