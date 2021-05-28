@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
+	"github.com/spf13/cast"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -432,11 +433,7 @@ func NewTerraApp(
 	)
 
 	/****  Module Options ****/
-	var skipGenesisInvariants = false
-	opt := appOpts.Get(crisis.FlagSkipGenesisInvariants)
-	if opt, ok := opt.(bool); ok {
-		skipGenesisInvariants = opt
-	}
+	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

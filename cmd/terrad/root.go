@@ -73,6 +73,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			cmd.SetErr(cmd.ErrOrStderr())
 
 			initClientCtx = client.ReadHomeFlag(initClientCtx, cmd)
+			// TODO - remove this line when https://github.com/cosmos/cosmos-sdk/pull/9211/files fix included
+			initClientCtx = initClientCtx.WithKeyringDir(initClientCtx.HomeDir)
 			initClientCtx, err := config.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
