@@ -27,4 +27,11 @@ WORKDIR /root
 
 COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
 
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
+
 CMD ["/usr/local/bin/terrad", "version"]

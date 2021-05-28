@@ -106,9 +106,17 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --tag terramoney/core ./
+	docker build --tag terramoney/core ./ -f ./static.Dockerfile
 	docker create --name temp terramoney/core:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
+	docker rm temp
+
+build-linux-with-shared-library:
+	mkdir -p $(BUILDDIR)
+	docker build --tag terramoney/core-shared ./ -f ./shared.Dockerfile
+	docker create --name temp terramoney/core-shared:latest
+	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
+	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
 
 install: go.sum 
