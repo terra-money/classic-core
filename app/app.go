@@ -343,12 +343,6 @@ func NewTerraApp(
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
-	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-beta3", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		app.Logger().Info("Upgrade successfully done")
-		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
-		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-	})
-
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
@@ -510,6 +504,13 @@ func NewTerraApp(
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+
+	// TODO - remove after bombay migration
+	// Register upgrade handler for v0.5.0-beta3
+	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-beta3", func(ctx sdk.Context, _ upgradetypes.Plan, _ module.VersionMap) (module.VersionMap, error) {
+		app.Logger().Info("Upgrade successfully done")
+		return app.mm.RunMigrations(ctx, app.configurator, app.mm.GetVersionMap())
+	})
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
