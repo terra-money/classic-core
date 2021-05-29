@@ -187,7 +187,7 @@ var (
 		markettypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         nil,
 		distrtypes.ModuleName:          nil,
-		treasurytypes.ModuleName:       {authtypes.Minter},
+		treasurytypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -504,13 +504,6 @@ func NewTerraApp(
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
-
-	// TODO - remove after bombay migration
-	// Register upgrade handler for v0.5.0-beta3
-	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-beta3", func(ctx sdk.Context, _ upgradetypes.Plan, _ module.VersionMap) (module.VersionMap, error) {
-		app.Logger().Info("Upgrade successfully done")
-		return app.mm.RunMigrations(ctx, app.configurator, app.mm.GetVersionMap())
-	})
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
