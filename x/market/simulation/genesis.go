@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 // Simulation parameter constants

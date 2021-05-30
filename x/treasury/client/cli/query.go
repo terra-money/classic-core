@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 
 	"github.com/spf13/cobra"
 

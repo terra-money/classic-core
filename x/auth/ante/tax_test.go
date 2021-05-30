@@ -17,17 +17,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/terra-project/core/app"
+	"github.com/terra-money/core/app"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/auth/ante"
-	"github.com/terra-project/core/x/bank"
-	"github.com/terra-project/core/x/msgauth"
-	oracleexported "github.com/terra-project/core/x/oracle/exported"
-	"github.com/terra-project/core/x/treasury"
-	"github.com/terra-project/core/x/wasm"
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/auth"
+	"github.com/terra-money/core/x/auth/ante"
+	"github.com/terra-money/core/x/bank"
+	"github.com/terra-money/core/x/msgauth"
+	oracleexported "github.com/terra-money/core/x/oracle/exported"
+	"github.com/terra-money/core/x/treasury"
+	"github.com/terra-money/core/x/wasm"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 )
 
 // returns context and app with params set on account keeper

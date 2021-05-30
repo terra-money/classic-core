@@ -15,8 +15,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/supply/internal/types"
-	"github.com/terra-project/core/x/supply/simulation"
+	"github.com/terra-money/core/x/supply/internal/types"
+	"github.com/terra-money/core/x/supply/simulation"
 )
 
 var (

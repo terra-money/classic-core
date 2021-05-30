@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 func TestNewKeeper(t *testing.T) {

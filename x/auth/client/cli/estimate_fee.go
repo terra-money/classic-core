@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	tutils "github.com/terra-project/core/x/auth/client/utils"
+	tutils "github.com/terra-money/core/x/auth/client/utils"
 )
 
 // GetTxFeesEstimateCommand will create a send tx and sign it with the given key.

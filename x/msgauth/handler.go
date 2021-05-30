@@ -3,7 +3,7 @@ package msgauth
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 )
 
 func NewHandler(k Keeper) sdk.Handler {

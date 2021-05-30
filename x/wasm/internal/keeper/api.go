@@ -6,7 +6,7 @@ import (
 	cosmwasm "github.com/CosmWasm/go-cosmwasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 func (k Keeper) getCosmwamAPI(ctx sdk.Context) cosmwasm.GoAPI {

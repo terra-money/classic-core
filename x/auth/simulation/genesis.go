@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	vestingtypes "github.com/terra-project/core/x/auth/vesting/types"
+	vestingtypes "github.com/terra-money/core/x/auth/vesting/types"
 )
 
 // Simulation parameter constants

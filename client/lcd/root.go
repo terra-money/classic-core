@@ -22,7 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/terra-project/core/client/lcd/statik"
+	_ "github.com/terra-money/core/client/lcd/statik"
 )
 
 // FlagPublic will restrict some query endpoint for

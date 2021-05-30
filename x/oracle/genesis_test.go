@@ -1,13 +1,13 @@
 package oracle
 
 import (
-	"github.com/terra-project/core/x/oracle/internal/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/oracle/internal/keeper"
+	"github.com/terra-money/core/x/oracle/internal/keeper"
 )
 
 func TestExportInitGenesis(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/types"
-	"github.com/terra-project/core/client/lcd"
+	"github.com/terra-money/core/client/lcd"
 )
 
 // TxQueryMaxHeightRange maximum allowed height range for /txs query

@@ -11,7 +11,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/multisig"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	"github.com/terra-project/core/app"
+	"github.com/terra-money/core/app"
 )
 
 func TestMultisigPubkey(t *testing.T) {

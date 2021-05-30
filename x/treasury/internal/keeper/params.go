@@ -2,7 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 )
 
 // TaxPolicy defines constraints for TaxRate

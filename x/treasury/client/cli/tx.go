@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 )
 
 // GetCmdSubmitTaxRateUpdateProposal implements the command to submit a tax-rate-update proposal

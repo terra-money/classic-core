@@ -19,8 +19,8 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/wasm/internal/keeper"
+	"github.com/terra-money/core/x/auth"
+	"github.com/terra-money/core/x/wasm/internal/keeper"
 )
 
 var (

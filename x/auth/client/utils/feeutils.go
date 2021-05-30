@@ -11,12 +11,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
-	marketexported "github.com/terra-project/core/x/market/exported"
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
-	treasuryexported "github.com/terra-project/core/x/treasury/exported"
-	wasmexported "github.com/terra-project/core/x/wasm/exported"
+	marketexported "github.com/terra-money/core/x/market/exported"
+	msgauthexported "github.com/terra-money/core/x/msgauth/exported"
+	treasuryexported "github.com/terra-money/core/x/treasury/exported"
+	wasmexported "github.com/terra-money/core/x/wasm/exported"
 )
 
 type (

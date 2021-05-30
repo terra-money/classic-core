@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 )
 
 // Profile with:

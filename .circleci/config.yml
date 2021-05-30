@@ -4,11 +4,11 @@ executors:
   golang:
     docker:
       - image: circleci/golang:1.13.1
-    working_directory: /go/src/github.com/terra-project/core
+    working_directory: /go/src/github.com/terra-money/core
   mac:
     macos:
       xcode: "10.3.0"
-    working_directory: /Users/distiller/project/src/github.com/terra-project/core
+    working_directory: /Users/distiller/project/src/github.com/terra-money/core
     environment:
       GO_VERSION: "1.13.1"
 
@@ -200,7 +200,7 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/github.com/terra-project/core
+    working_directory: /home/circleci/.go_workspace/src/github.com/terra-money/core
     machine:
       image: circleci/classic:latest
     environment:
@@ -307,7 +307,7 @@ jobs:
             cp gitian-build-multi/result/terra-multi-res.yml .
             rm -rf gitian-build-multi/
       - store_artifacts:
-          path: /go/src/github.com/terra-project/core/terra-multi-res.yml
+          path: /go/src/github.com/terra-money/core/terra-multi-res.yml
 
 workflows:
   version: 2

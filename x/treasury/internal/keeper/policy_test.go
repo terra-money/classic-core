@@ -3,8 +3,8 @@ package keeper
 import (
 	"testing"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 
 	"github.com/stretchr/testify/require"
 

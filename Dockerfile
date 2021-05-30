@@ -14,8 +14,8 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/terra-project/go-cosmwasm/releases
-ADD https://github.com/terra-project/go-cosmwasm/releases/download/v0.10.4/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
+# See https://github.com/terra-money/go-cosmwasm/releases
+ADD https://github.com/terra-money/go-cosmwasm/releases/download/v0.10.4/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 RUN sha256sum /lib/libgo_cosmwasm_muslc.a | grep 2aa7b034b9340fecaa928adf3e8c093893fd6a3986a569ce7cae7528845a0951
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file

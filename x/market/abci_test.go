@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-project/core/x/market/internal/keeper"
+	"github.com/terra-money/core/x/market/internal/keeper"
 )
 
 func TestReplenishPools(t *testing.T) {

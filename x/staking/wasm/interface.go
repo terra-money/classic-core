@@ -10,7 +10,7 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
-	wasm "github.com/terra-project/core/x/wasm/exported"
+	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}

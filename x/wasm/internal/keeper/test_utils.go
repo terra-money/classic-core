@@ -25,17 +25,17 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	core "github.com/terra-project/core/types"
-	bankwasm "github.com/terra-project/core/x/bank/wasm"
-	"github.com/terra-project/core/x/market"
-	marketwasm "github.com/terra-project/core/x/market/wasm"
-	"github.com/terra-project/core/x/oracle"
-	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
-	stakingwasm "github.com/terra-project/core/x/staking/wasm"
-	"github.com/terra-project/core/x/treasury"
-	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
-	"github.com/terra-project/core/x/wasm/config"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	bankwasm "github.com/terra-money/core/x/bank/wasm"
+	"github.com/terra-money/core/x/market"
+	marketwasm "github.com/terra-money/core/x/market/wasm"
+	"github.com/terra-money/core/x/oracle"
+	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
+	stakingwasm "github.com/terra-money/core/x/staking/wasm"
+	"github.com/terra-money/core/x/treasury"
+	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
+	"github.com/terra-money/core/x/wasm/config"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 func makeTestCodec() *codec.Codec {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 // Simulation parameter constants

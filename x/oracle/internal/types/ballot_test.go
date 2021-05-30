@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"

@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankrest "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
+	feeutils "github.com/terra-money/core/x/auth/client/utils"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application

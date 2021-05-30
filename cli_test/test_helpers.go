@@ -16,7 +16,7 @@ import (
 
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/terra-project/core/app"
+	"github.com/terra-money/core/app"
 
 	clientkeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -31,7 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	authutils "github.com/terra-project/core/x/auth/client/utils"
+	authutils "github.com/terra-money/core/x/auth/client/utils"
 )
 
 const (

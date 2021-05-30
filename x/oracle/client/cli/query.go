@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/terra-project/core/x/oracle/internal/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"

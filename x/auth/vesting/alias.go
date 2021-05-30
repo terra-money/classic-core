@@ -3,7 +3,7 @@ package vesting
 import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/terra-project/core/x/auth/vesting/types"
+	"github.com/terra-money/core/x/auth/vesting/types"
 )
 
 var (

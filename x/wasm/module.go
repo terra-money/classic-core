@@ -17,9 +17,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/wasm/client/cli"
-	"github.com/terra-project/core/x/wasm/client/rest"
-	"github.com/terra-project/core/x/wasm/simulation"
+	"github.com/terra-money/core/x/wasm/client/cli"
+	"github.com/terra-money/core/x/wasm/client/rest"
+	"github.com/terra-money/core/x/wasm/simulation"
 )
 
 var (

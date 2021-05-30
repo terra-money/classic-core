@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/auth/ante"
-	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-money/core/x/auth/ante"
+	"github.com/terra-money/core/x/oracle"
 )
 
 func TestOracleSpamming(t *testing.T) {

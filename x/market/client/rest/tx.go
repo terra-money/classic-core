@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/market/internal/types"
+	feeutils "github.com/terra-money/core/x/auth/client/utils"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {

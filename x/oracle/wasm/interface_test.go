@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/keeper"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/keeper"
 )
 
 func TestQueryExchangeRates(t *testing.T) {

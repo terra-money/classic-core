@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/keeper"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/market/internal/keeper"
 )
 
 func TestMarketFilters(t *testing.T) {

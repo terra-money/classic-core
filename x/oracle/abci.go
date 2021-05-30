@@ -1,12 +1,12 @@
 package oracle
 
 import (
-	"github.com/terra-project/core/x/oracle/internal/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 // EndBlocker is called at the end of every block

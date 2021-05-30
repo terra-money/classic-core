@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
+	msgauthexported "github.com/terra-money/core/x/msgauth/exported"
 )
 
 // ModuleCdc defines module codec

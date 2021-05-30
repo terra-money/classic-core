@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 )
 
 // Keeper of the treasury store

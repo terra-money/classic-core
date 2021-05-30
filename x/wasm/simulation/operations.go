@@ -20,8 +20,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/wasm/internal/keeper"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/internal/keeper"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 const (

@@ -1,11 +1,11 @@
 package treasury
 
 import (
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 // EndBlocker is called at the end of every block

@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 func makeTestCodec() (cdc *codec.Codec) {

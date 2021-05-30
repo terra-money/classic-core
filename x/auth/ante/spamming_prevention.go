@@ -7,8 +7,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/viper"
 
-	core "github.com/terra-project/core/types"
-	oracleexported "github.com/terra-project/core/x/oracle/exported"
+	core "github.com/terra-money/core/types"
+	oracleexported "github.com/terra-money/core/x/oracle/exported"
 )
 
 // FlagTxGasHardLimit defines the hard cap to prevent tx spamming attack

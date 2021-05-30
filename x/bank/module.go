@@ -16,10 +16,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/bank/client/cli"
-	"github.com/terra-project/core/x/bank/client/rest"
-	"github.com/terra-project/core/x/bank/internal/types"
-	"github.com/terra-project/core/x/bank/simulation"
+	"github.com/terra-money/core/x/bank/client/cli"
+	"github.com/terra-money/core/x/bank/client/rest"
+	"github.com/terra-money/core/x/bank/internal/types"
+	"github.com/terra-money/core/x/bank/simulation"
 )
 
 var (

@@ -20,9 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	wasmUtils "github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	feeutils "github.com/terra-money/core/x/auth/client/utils"
+	wasmUtils "github.com/terra-money/core/x/wasm/client/utils"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 const (

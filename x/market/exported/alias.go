@@ -1,7 +1,7 @@
 // nolint:deadcode unused DONTCOVER
 package exported
 
-import "github.com/terra-project/core/x/market/internal/types"
+import "github.com/terra-money/core/x/market/internal/types"
 
 type (
 	MsgSwap     = types.MsgSwap

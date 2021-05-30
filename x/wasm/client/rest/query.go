@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	"github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/client/utils"
+	"github.com/terra-money/core/x/wasm/internal/types"
 
 	"github.com/gorilla/mux"
 )

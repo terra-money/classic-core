@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/mock"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/keeper"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/keeper"
 )
 
 func TestOracleFilters(t *testing.T) {

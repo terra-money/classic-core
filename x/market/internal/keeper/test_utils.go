@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/types"
-	"github.com/terra-project/core/x/oracle"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/market/internal/types"
+	"github.com/terra-money/core/x/oracle"
 
 	"time"
 

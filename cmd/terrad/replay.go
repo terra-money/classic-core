@@ -17,8 +17,8 @@ import (
 	tmstore "github.com/tendermint/tendermint/store"
 	tm "github.com/tendermint/tendermint/types"
 
-	"github.com/terra-project/core/app"
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	"github.com/terra-money/core/app"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"

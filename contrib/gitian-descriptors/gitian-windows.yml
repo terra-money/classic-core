@@ -20,7 +20,7 @@ packages:
 - "xxd"
 - "quilt"
 remotes:
-- "url": "https://github.com/terra-project/core.git"
+- "url": "https://github.com/terra-money/core.git"
   "dir": "core"
 files:
 - "go1.13.7.linux-amd64.tar.gz"
@@ -65,7 +65,7 @@ script: |
   popd
 
   # Prepare GOPATH and install deps
-  distsrc=${GOPATH}/src/github.com/terra-project/core
+  distsrc=${GOPATH}/src/github.com/terra-money/core
   mkdir -p ${distsrc}
   pushd ${distsrc}
   tar --strip-components=1 -xf $SOURCEDIST

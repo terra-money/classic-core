@@ -21,15 +21,15 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/terra-project/core/app"
-	"github.com/terra-project/core/client/lcd"
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/auth"
+	"github.com/terra-money/core/app"
+	"github.com/terra-money/core/client/lcd"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/auth"
 
-	tauthcmd "github.com/terra-project/core/x/auth/client/cli"
-	tauthrest "github.com/terra-project/core/x/auth/client/rest"
-	"github.com/terra-project/core/x/bank"
-	tbankcmd "github.com/terra-project/core/x/bank/client/cli"
+	tauthcmd "github.com/terra-money/core/x/auth/client/cli"
+	tauthrest "github.com/terra-money/core/x/auth/client/rest"
+	"github.com/terra-money/core/x/bank"
+	tbankcmd "github.com/terra-money/core/x/bank/client/cli"
 )
 
 // flagOldHDPath is to specify the command will use old hd path

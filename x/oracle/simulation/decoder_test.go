@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 )
 
 var (

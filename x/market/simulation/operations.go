@@ -13,10 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle"
 
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 // Simulation operation weights constants

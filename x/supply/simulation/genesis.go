@@ -4,7 +4,7 @@ package simulation
 
 import (
 	"fmt"
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 

@@ -11,7 +11,7 @@ import (
 	vesttypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/tendermint/tendermint/crypto"
 
-	customauthtypes "github.com/terra-project/core/x/auth/internal/types"
+	customauthtypes "github.com/terra-money/core/x/auth/internal/types"
 
 	"gopkg.in/yaml.v2"
 )

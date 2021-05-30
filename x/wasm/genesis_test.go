@@ -7,8 +7,8 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

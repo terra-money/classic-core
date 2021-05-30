@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

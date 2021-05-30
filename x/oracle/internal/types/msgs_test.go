@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/mock"

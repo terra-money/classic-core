@@ -7,8 +7,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 )
 
 // NewHandler returns a handler for "oracle" type messages.
