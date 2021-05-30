@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/types"
 
 	"github.com/stretchr/testify/require"
 

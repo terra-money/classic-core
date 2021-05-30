@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/cosmos/cosmos-sdk/std"
 
-	"github.com/terra-project/core/app/params"
+	"github.com/terra-money/core/app/params"
 )
 
 // MakeEncodingConfig creates an EncodingConfig for testing

@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm"
-	"github.com/terra-project/core/x/wasm/keeper"
-	"github.com/terra-project/core/x/wasm/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

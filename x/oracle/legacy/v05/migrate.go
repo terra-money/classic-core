@@ -1,8 +1,8 @@
 package v05
 
 import (
-	v04oracle "github.com/terra-project/core/x/oracle/legacy/v04"
-	v05oracle "github.com/terra-project/core/x/oracle/types"
+	v04oracle "github.com/terra-money/core/x/oracle/legacy/v04"
+	v05oracle "github.com/terra-money/core/x/oracle/types"
 )
 
 // Migrate accepts exported v0.4 x/oracle and

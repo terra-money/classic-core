@@ -1,6 +1,6 @@
 go 1.16
 
-module github.com/terra-project/core
+module github.com/terra-money/core
 
 require (
 	github.com/CosmWasm/wasmvm v0.14.0
@@ -25,7 +25,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/cosmos/ledger-cosmos-go => github.com/terra-project/ledger-terra-go v0.11.1-terra
+replace github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.33.2
 

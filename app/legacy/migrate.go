@@ -25,8 +25,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	legacy05 "github.com/terra-project/core/app/legacy/v05"
-	oracletypes "github.com/terra-project/core/x/oracle/types"
+	legacy05 "github.com/terra-money/core/app/legacy/v05"
+	oracletypes "github.com/terra-money/core/x/oracle/types"
 )
 
 const (

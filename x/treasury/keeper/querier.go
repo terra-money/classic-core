@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/treasury/types"
 )
 
 // querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q

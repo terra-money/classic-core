@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/market/types"
-	oracletypes "github.com/terra-project/core/x/oracle/types"
+	"github.com/terra-money/core/x/market/types"
+	oracletypes "github.com/terra-money/core/x/oracle/types"
 )
 
 type msgServer struct {

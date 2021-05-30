@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	customauth "github.com/terra-project/core/custom/auth"
-	custombank "github.com/terra-project/core/custom/bank"
-	customdistr "github.com/terra-project/core/custom/distribution"
-	customparams "github.com/terra-project/core/custom/params"
-	customstaking "github.com/terra-project/core/custom/staking"
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/types"
+	customauth "github.com/terra-money/core/custom/auth"
+	custombank "github.com/terra-money/core/custom/bank"
+	customdistr "github.com/terra-money/core/custom/distribution"
+	customparams "github.com/terra-money/core/custom/params"
+	customstaking "github.com/terra-money/core/custom/staking"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/types"
 
 	"time"
 

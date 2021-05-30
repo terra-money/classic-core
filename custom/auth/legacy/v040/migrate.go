@@ -8,8 +8,8 @@ import (
 	v040auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	v040authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	v039authcustom "github.com/terra-project/core/custom/auth/legacy/v039"
-	v040vesting "github.com/terra-project/core/x/vesting/types"
+	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
+	v040vesting "github.com/terra-money/core/x/vesting/types"
 )
 
 // convertBaseAccount converts a 0.39 BaseAccount to a 0.40 BaseAccount.

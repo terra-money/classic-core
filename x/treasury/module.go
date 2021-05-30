@@ -7,8 +7,8 @@ import (
 	"math/rand"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/terra-project/core/x/treasury/keeper"
-	"github.com/terra-project/core/x/treasury/simulation"
+	"github.com/terra-money/core/x/treasury/keeper"
+	"github.com/terra-money/core/x/treasury/simulation"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -22,9 +22,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/terra-project/core/x/treasury/client/cli"
-	"github.com/terra-project/core/x/treasury/client/rest"
-	"github.com/terra-project/core/x/treasury/types"
+	"github.com/terra-money/core/x/treasury/client/cli"
+	"github.com/terra-money/core/x/treasury/client/rest"
+	"github.com/terra-money/core/x/treasury/types"
 )
 
 var (

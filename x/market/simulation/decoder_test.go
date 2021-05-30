@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/terra-project/core/x/market/keeper"
-	"github.com/terra-project/core/x/market/types"
+	"github.com/terra-money/core/x/market/keeper"
+	"github.com/terra-money/core/x/market/types"
 )
 
 func TestDecodeDistributionStore(t *testing.T) {

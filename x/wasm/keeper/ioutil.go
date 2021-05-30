@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 // magic bytes to identify gzip.

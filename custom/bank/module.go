@@ -12,10 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	customcli "github.com/terra-project/core/custom/bank/client/cli"
-	customrest "github.com/terra-project/core/custom/bank/client/rest"
-	customsim "github.com/terra-project/core/custom/bank/simulation"
-	customtypes "github.com/terra-project/core/custom/bank/types"
+	customcli "github.com/terra-money/core/custom/bank/client/cli"
+	customrest "github.com/terra-money/core/custom/bank/client/rest"
+	customsim "github.com/terra-money/core/custom/bank/simulation"
+	customtypes "github.com/terra-money/core/custom/bank/types"
 )
 
 var (

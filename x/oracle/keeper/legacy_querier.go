@@ -8,7 +8,7 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/terra-project/core/x/oracle/types"
+	"github.com/terra-money/core/x/oracle/types"
 )
 
 // NewLegacyQuerier is the module level router for state queries

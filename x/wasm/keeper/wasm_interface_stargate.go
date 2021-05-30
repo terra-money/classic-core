@@ -11,7 +11,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 var _ types.StargateWasmQuerierInterface = StargateWasmQuerier{}
