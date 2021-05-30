@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/mock"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/keeper"
-	"github.com/terra-project/core/x/market/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/market/internal/keeper"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 func TestEncoding(t *testing.T) {

@@ -7,11 +7,11 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	core "github.com/terra-project/core/types"
-	marketexported "github.com/terra-project/core/x/market/exported"
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
-	oracleexported "github.com/terra-project/core/x/oracle/exported"
-	wasmexported "github.com/terra-project/core/x/wasm/exported"
+	core "github.com/terra-money/core/types"
+	marketexported "github.com/terra-money/core/x/market/exported"
+	msgauthexported "github.com/terra-money/core/x/msgauth/exported"
+	oracleexported "github.com/terra-money/core/x/oracle/exported"
+	wasmexported "github.com/terra-money/core/x/wasm/exported"
 )
 
 // MaxOracleMsgGasUsage is constant expected oracle msg gas cost

@@ -15,8 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/market/internal/types"
+	feeutils "github.com/terra-money/core/x/auth/client/utils"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 )
 
 func TestTerraExport(t *testing.T) {

@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

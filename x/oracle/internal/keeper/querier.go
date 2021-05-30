@@ -8,8 +8,8 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 )
 
 // NewQuerier is the module level router for state queries

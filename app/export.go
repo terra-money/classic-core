@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/slashing"
-	"github.com/terra-project/core/x/staking"
+	"github.com/terra-money/core/x/oracle"
+	"github.com/terra-money/core/x/slashing"
+	"github.com/terra-money/core/x/staking"
 )
 
 // ExportAppStateAndValidators exports the state of terra for a genesis file

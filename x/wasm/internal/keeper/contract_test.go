@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 func TestStoreCode(t *testing.T) {

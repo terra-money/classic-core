@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 func TestApplySwapToPool(t *testing.T) {

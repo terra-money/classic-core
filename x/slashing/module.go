@@ -16,7 +16,7 @@ import (
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/terra-project/core/x/slashing/internal/types"
+	"github.com/terra-money/core/x/slashing/internal/types"
 )
 
 var (

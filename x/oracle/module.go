@@ -3,8 +3,8 @@ package oracle
 import (
 	"encoding/json"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/oracle/simulation"
+	"github.com/terra-money/core/x/auth"
+	"github.com/terra-money/core/x/oracle/simulation"
 	"math/rand"
 
 	"github.com/gorilla/mux"
@@ -17,8 +17,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/oracle/client/cli"
-	"github.com/terra-project/core/x/oracle/client/rest"
+	"github.com/terra-money/core/x/oracle/client/cli"
+	"github.com/terra-money/core/x/oracle/client/rest"
 )
 
 var (

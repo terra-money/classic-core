@@ -3,8 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/market/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/market/internal/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

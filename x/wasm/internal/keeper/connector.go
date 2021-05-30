@@ -2,7 +2,7 @@ package keeper
 
 import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-	"github.com/terra-project/core/x/auth/ante"
+	"github.com/terra-money/core/x/auth/ante"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

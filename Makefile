@@ -5,7 +5,7 @@ VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
-CORE_PACK := $(shell go list -m github.com/terra-project/core | sed  's/ /\@/g')
+CORE_PACK := $(shell go list -m github.com/terra-money/core | sed  's/ /\@/g')
 ifneq ($(OS),Windows_NT)
   UNAME_S = $(shell uname -s)
 endif

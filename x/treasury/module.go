@@ -3,7 +3,7 @@ package treasury
 import (
 	"encoding/json"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/terra-project/core/x/treasury/simulation"
+	"github.com/terra-money/core/x/treasury/simulation"
 	"math/rand"
 
 	"github.com/gorilla/mux"
@@ -16,8 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/treasury/client/cli"
-	"github.com/terra-project/core/x/treasury/client/rest"
+	"github.com/terra-money/core/x/treasury/client/cli"
+	"github.com/terra-money/core/x/treasury/client/rest"
 )
 
 var (

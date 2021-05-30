@@ -8,8 +8,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/keeper"
+	"github.com/terra-money/core/x/treasury/internal/types"
 )
 
 // Simulation operation weights constants

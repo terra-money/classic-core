@@ -18,9 +18,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/terra-project/core/x/msgauth/client/cli"
-	"github.com/terra-project/core/x/msgauth/client/rest"
-	"github.com/terra-project/core/x/msgauth/simulation"
+	"github.com/terra-money/core/x/msgauth/client/cli"
+	"github.com/terra-money/core/x/msgauth/client/rest"
+	"github.com/terra-money/core/x/msgauth/simulation"
 )
 
 // module codec

@@ -7,7 +7,7 @@ import (
 	tmkv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 )
 
 // DecodeStore unmarshals the KVPair's Value to the corresponding distribution type

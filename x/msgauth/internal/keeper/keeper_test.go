@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 )
 
 type TestSuite struct {

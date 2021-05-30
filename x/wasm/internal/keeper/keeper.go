@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/terra-project/core/x/params"
-	"github.com/terra-project/core/x/wasm/config"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/params"
+	"github.com/terra-money/core/x/wasm/config"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 // Keeper will have a reference to Wasmer with it's own data directory.

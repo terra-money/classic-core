@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/internal/types"
 )
 
 // Keeper of the oracle store

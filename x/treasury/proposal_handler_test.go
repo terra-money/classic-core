@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/internal/keeper"
+	"github.com/terra-money/core/x/treasury/internal/types"
 )
 
 func testTaxRateUpdateProposal(taxRate sdk.Dec) types.TaxRateUpdateProposal {

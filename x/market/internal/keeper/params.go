@@ -2,7 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 // BasePool is Terra liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod

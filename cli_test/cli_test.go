@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-project/core/app"
-	core "github.com/terra-project/core/types"
+	"github.com/terra-money/core/app"
+	core "github.com/terra-money/core/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/tests"

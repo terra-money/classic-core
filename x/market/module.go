@@ -3,9 +3,9 @@ package market
 import (
 	"encoding/json"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/market/simulation"
-	"github.com/terra-project/core/x/oracle"
+	"github.com/terra-money/core/x/auth"
+	"github.com/terra-money/core/x/market/simulation"
+	"github.com/terra-money/core/x/oracle"
 	"math/rand"
 
 	"github.com/gorilla/mux"
@@ -18,8 +18,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/market/client/cli"
-	"github.com/terra-project/core/x/market/client/rest"
+	"github.com/terra-money/core/x/market/client/cli"
+	"github.com/terra-money/core/x/market/client/rest"
 )
 
 var (

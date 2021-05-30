@@ -18,8 +18,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	feeutils "github.com/terra-money/core/x/auth/client/utils"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 )
 
 // FlagPeriod is flag to specify grant period

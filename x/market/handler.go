@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/internal/types"
 )
 
 // NewHandler creates a new handler for all market type messages.

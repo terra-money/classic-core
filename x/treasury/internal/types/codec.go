@@ -3,7 +3,7 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	"github.com/terra-project/core/x/gov"
+	"github.com/terra-money/core/x/gov"
 )
 
 // RegisterCodec registers concrete types on codec codec

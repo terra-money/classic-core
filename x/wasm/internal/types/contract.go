@@ -6,7 +6,7 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 // Model is a struct that holds a KV pair

@@ -23,7 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 
-	"github.com/terra-project/core/x/auth/vesting"
+	"github.com/terra-money/core/x/auth/vesting"
 )
 
 const (

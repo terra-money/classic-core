@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto"
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system

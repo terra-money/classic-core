@@ -8,9 +8,9 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
-	wasm "github.com/terra-project/core/x/wasm/exported"
+	"github.com/terra-money/core/x/treasury/internal/keeper"
+	"github.com/terra-money/core/x/treasury/internal/types"
+	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}

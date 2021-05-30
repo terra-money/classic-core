@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	marketwasm "github.com/terra-project/core/x/market/wasm"
-	oraclewasm "github.com/terra-project/core/x/oracle/wasm"
-	treasurywasm "github.com/terra-project/core/x/treasury/wasm"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	marketwasm "github.com/terra-money/core/x/market/wasm"
+	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
+	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
+	"github.com/terra-money/core/x/wasm/internal/types"
 )
 
 // MakerInitMsg nolint

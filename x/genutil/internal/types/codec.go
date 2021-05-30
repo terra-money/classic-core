@@ -4,8 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/auth"
-	"github.com/terra-project/core/x/staking"
+	"github.com/terra-money/core/x/auth"
+	"github.com/terra-money/core/x/staking"
 )
 
 // ModuleCdc defines generic sealed codec to be used throughout this module

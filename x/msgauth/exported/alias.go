@@ -4,7 +4,7 @@ package exported
 import (
 	"time"
 
-	"github.com/terra-project/core/x/msgauth/internal/types"
+	"github.com/terra-money/core/x/msgauth/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

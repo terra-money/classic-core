@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	msgauthexported "github.com/terra-project/core/x/msgauth/exported"
+	msgauthexported "github.com/terra-money/core/x/msgauth/exported"
 )
 
 // RegisterCodec registers concrete types on codec codec

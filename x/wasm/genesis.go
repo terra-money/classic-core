@@ -4,9 +4,9 @@ import (
 	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/internal/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	// "github.com/terra-project/core/x/wasm/internal/types"
+	// "github.com/terra-money/core/x/wasm/internal/types"
 )
 
 // InitGenesis sets wasm information for genesis.

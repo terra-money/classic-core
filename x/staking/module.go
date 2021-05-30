@@ -19,8 +19,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/staking/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/staking/internal/types"
 )
 
 var (

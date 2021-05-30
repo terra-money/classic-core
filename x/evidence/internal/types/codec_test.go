@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence/exported"
 
-	"github.com/terra-project/core/x/evidence/internal/types"
+	"github.com/terra-money/core/x/evidence/internal/types"
 )
 
 var _ exported.Evidence = (*testEvidence)(nil)

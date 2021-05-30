@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/params"
 
-	"github.com/terra-project/core/x/gov"
+	"github.com/terra-money/core/x/gov"
 )
 
 // RegisterCodec registers all necessary param module types with a given codec.

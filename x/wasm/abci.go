@@ -3,8 +3,8 @@ package wasm
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/internal/keeper"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/internal/keeper"
 )
 
 // BeginBlocker handles softfork over param changes

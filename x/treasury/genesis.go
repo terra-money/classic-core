@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 // InitGenesis initializes default parameters

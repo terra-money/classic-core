@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/treasury/internal/keeper"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/treasury/internal/keeper"
 )
 
 func TestEndBlockerIssuanceUpdate(t *testing.T) {

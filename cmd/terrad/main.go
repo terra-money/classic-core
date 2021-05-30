@@ -15,8 +15,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/terra-project/core/app"
-	core "github.com/terra-project/core/types"
+	"github.com/terra-money/core/app"
+	core "github.com/terra-money/core/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -27,10 +27,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	"github.com/terra-project/core/x/auth"
-	coreante "github.com/terra-project/core/x/auth/ante"
-	"github.com/terra-project/core/x/staking"
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	"github.com/terra-money/core/x/auth"
+	coreante "github.com/terra-money/core/x/auth/ante"
+	"github.com/terra-money/core/x/staking"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 )
 
 // terrad custom flags

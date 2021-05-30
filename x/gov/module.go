@@ -16,8 +16,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov/client"
 	sim "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/gov/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/gov/internal/types"
 )
 
 var (

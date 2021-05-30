@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 
-	"github.com/terra-project/core/x/auth"
+	"github.com/terra-money/core/x/auth"
 )
 
 // RegisterCodec registers the account types and interface

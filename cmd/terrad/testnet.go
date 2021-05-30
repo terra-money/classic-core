@@ -35,8 +35,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	core "github.com/terra-project/core/types"
-	tgenutil "github.com/terra-project/core/x/genutil"
+	core "github.com/terra-money/core/types"
+	tgenutil "github.com/terra-money/core/x/genutil"
 )
 
 var (
