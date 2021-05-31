@@ -1,3 +1,5 @@
+// Irrelevant comment
+
 package main
 
 import (
