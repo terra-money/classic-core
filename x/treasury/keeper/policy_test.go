@@ -3,9 +3,9 @@ package keeper
 import (
 	"testing"
 
-	core "github.com/terra-project/core/types"
-	oracletypes "github.com/terra-project/core/x/oracle/types"
-	"github.com/terra-project/core/x/treasury/types"
+	core "github.com/terra-money/core/types"
+	oracletypes "github.com/terra-money/core/x/oracle/types"
+	"github.com/terra-money/core/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
 

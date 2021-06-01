@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 var (

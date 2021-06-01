@@ -19,9 +19,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/keeper"
-	"github.com/terra-project/core/x/wasm/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 const (

@@ -15,8 +15,8 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 
-	"github.com/terra-project/core/x/wasm/config"
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/config"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 // Keeper will have a reference to Wasmer with it's own data directory.

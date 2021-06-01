@@ -1,8 +1,8 @@
 package v05
 
 import (
-	v04treasury "github.com/terra-project/core/x/treasury/legacy/v04"
-	v05treasury "github.com/terra-project/core/x/treasury/types"
+	v04treasury "github.com/terra-money/core/x/treasury/legacy/v04"
+	v05treasury "github.com/terra-money/core/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

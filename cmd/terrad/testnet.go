@@ -33,7 +33,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 var (

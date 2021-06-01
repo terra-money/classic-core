@@ -10,7 +10,7 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 // NewLegacyQuerier creates a new querier

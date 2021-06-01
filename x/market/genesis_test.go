@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/market/keeper"
+	"github.com/terra-money/core/x/market/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -8,8 +8,8 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-project/core/x/oracle/keeper"
-	wasm "github.com/terra-project/core/x/wasm/exported"
+	"github.com/terra-money/core/x/oracle/keeper"
+	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}

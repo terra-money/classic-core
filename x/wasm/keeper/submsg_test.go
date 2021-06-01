@@ -14,8 +14,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 // test handing of submessages, very closely related to the reflect_test

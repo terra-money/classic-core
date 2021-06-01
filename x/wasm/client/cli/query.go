@@ -14,8 +14,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/client/utils"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 const flagRaw = "raw"
