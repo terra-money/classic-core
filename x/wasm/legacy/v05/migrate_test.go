@@ -195,8 +195,8 @@ func TestMigrate(t *testing.T) {
 			"max_attribute_num": "16",
 			"max_attribute_value_length": "256"
 		},
-		"max_contract_data_size": "256",
-		"max_contract_gas": "10000",
+		"max_contract_data_size": "1024",
+		"max_contract_gas": "20000000",
 		"max_contract_msg_size": "1024",
 		"max_contract_size": "100"
 	}
