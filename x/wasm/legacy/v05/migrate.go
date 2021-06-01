@@ -56,15 +56,11 @@ func Migrate(
 
 	return &v05wasm.GenesisState{
 		Params: v05wasm.Params{
-			MaxContractSize:     wasmGenState.Params.MaxContractSize,
-			MaxContractMsgSize:  wasmGenState.Params.MaxContractMsgSize,
-			MaxContractGas:      wasmGenState.Params.MaxContractGas,
-			MaxContractDataSize: 256,
-			EventParams: v05wasm.EventParams{
-				MaxAttributeNum:         16,
-				MaxAttributeKeyLength:   64,
-				MaxAttributeValueLength: 256,
-			},
+			MaxContractSize:     v05wasm.DefaultMaxContractSize,
+			MaxContractMsgSize:  v05wasm.DefaultMaxContractMsgSize,
+			MaxContractGas:      v05wasm.DefaultMaxContractGas,
+			MaxContractDataSize: v05wasm.DefaultMaxContractDataSize,
+			EventParams:         v05wasm.DefaultEventParams,
 		},
 		Codes:          codes,
 		Contracts:      contracts,

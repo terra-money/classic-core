@@ -3,6 +3,7 @@ package v05
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	v039auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v039"
 	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 	v036supply "github.com/cosmos/cosmos-sdk/x/bank/legacy/v036"
@@ -18,7 +19,7 @@ import (
 	v040genutil "github.com/cosmos/cosmos-sdk/x/genutil/legacy/v040"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	v036gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v036"
-	v040gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v040"
+	v043gov "github.com/cosmos/cosmos-sdk/x/gov/legacy/v043"
 	v039mint "github.com/cosmos/cosmos-sdk/x/mint/legacy/v039"
 	v040mint "github.com/cosmos/cosmos-sdk/x/mint/legacy/v040"
 	v039slashing "github.com/cosmos/cosmos-sdk/x/slashing/legacy/v039"
@@ -158,7 +159,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040gov.ModuleName] = v05Codec.MustMarshalJSON(v043govcustom.Migrate(govGenState))
+		appState[v043gov.ModuleName] = v05Codec.MustMarshalJSON(v043govcustom.Migrate(govGenState))
 	}
 
 	// Migrate x/mint.
@@ -183,6 +184,19 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// delete deprecated x/slashing genesis state
 		delete(appState, v039slashing.ModuleName)
+
+		// fill empty cons address
+		for address, info := range slashingGenState.SigningInfos {
+			if info.Address.Empty() {
+				if addr, err := sdk.ConsAddressFromBech32(address); err != nil {
+					panic(err)
+				} else {
+					info.Address = addr
+				}
+
+				slashingGenState.SigningInfos[address] = info
+			}
+		}
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.

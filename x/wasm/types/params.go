@@ -10,10 +10,10 @@ import (
 
 // Max params for static check
 const (
-	EnforcedMaxContractSize     = uint64(500 * 1024)  // 500KB
+	EnforcedMaxContractSize     = uint64(3000 * 1024) // 3MB
 	EnforcedMaxContractGas      = uint64(100_000_000) // 100,000,000
-	EnforcedMaxContractMsgSize  = uint64(10 * 1024)   // 10KB
-	EnforcedMaxContractDataSize = uint64(1024)        // 1KB
+	EnforcedMaxContractMsgSize  = uint64(20 * 1024)   // 10KB
+	EnforcedMaxContractDataSize = uint64(5 * 1024)    // 5KB
 )
 
 // Parameter keys
@@ -27,10 +27,10 @@ var (
 
 // Default parameter values
 const (
-	DefaultMaxContractSize     = EnforcedMaxContractSize // 500 KB
-	DefaultMaxContractGas      = EnforcedMaxContractGas  // 100,000,000
-	DefaultMaxContractMsgSize  = uint64(1 * 1024)        // 1KB
-	DefaultMaxContractDataSize = uint64(256)             // 256 bytes
+	DefaultMaxContractSize     = uint64(600 * 1024) // 600 KB
+	DefaultMaxContractGas      = uint64(20_000_000) // 20,000,000
+	DefaultMaxContractMsgSize  = uint64(4 * 1024)   // 4KB
+	DefaultMaxContractDataSize = uint64(1024)       // 1KB
 )
 
 // Default event parameter values
