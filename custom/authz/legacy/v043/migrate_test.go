@@ -9,10 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/app"
-	v043authz "github.com/terra-project/core/custom/authz/legacy/v043"
-	core "github.com/terra-project/core/types"
-	v04msgauth "github.com/terra-project/core/x/msgauth/legacy/v04"
+	"github.com/terra-money/core/app"
+	v043authz "github.com/terra-money/core/custom/authz/legacy/v043"
+	core "github.com/terra-money/core/types"
+	v04msgauth "github.com/terra-money/core/x/msgauth/legacy/v04"
 )
 
 func TestMigrate(t *testing.T) {

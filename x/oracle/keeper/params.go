@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/terra-project/core/x/oracle/types"
+	"github.com/terra-money/core/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

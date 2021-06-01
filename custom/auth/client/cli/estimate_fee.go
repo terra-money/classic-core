@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
-	feeutils "github.com/terra-project/core/custom/auth/client/utils"
+	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 )
 
 // GetTxFeesEstimateCommand will create a send tx and sign it with the given key.

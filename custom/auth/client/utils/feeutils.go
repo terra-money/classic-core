@@ -14,13 +14,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	marketexported "github.com/terra-project/core/x/market/exported"
-	treasuryexported "github.com/terra-project/core/x/treasury/exported"
-	wasmexported "github.com/terra-project/core/x/wasm/exported"
+	marketexported "github.com/terra-money/core/x/market/exported"
+	treasuryexported "github.com/terra-money/core/x/treasury/exported"
+	wasmexported "github.com/terra-money/core/x/wasm/exported"
 )
 
 type (

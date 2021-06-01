@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	feeutils "github.com/terra-project/core/custom/auth/client/utils"
+	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

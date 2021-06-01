@@ -36,5 +36,5 @@ $(find "$(pwd)/third_party/proto/cosmos" -maxdepth 4 -name '*.proto') \
 $(find "$(pwd)/third_party/proto/ibc" -maxdepth 4 -name '*.proto')
 
 # move proto files to the right places
-cp -r github.com/terra-project/core/* ./
+cp -r github.com/terra-money/core/* ./
 rm -rf github.com

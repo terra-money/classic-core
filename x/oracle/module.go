@@ -20,11 +20,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/terra-project/core/x/oracle/client/cli"
-	"github.com/terra-project/core/x/oracle/client/rest"
-	"github.com/terra-project/core/x/oracle/keeper"
-	"github.com/terra-project/core/x/oracle/simulation"
-	"github.com/terra-project/core/x/oracle/types"
+	"github.com/terra-money/core/x/oracle/client/cli"
+	"github.com/terra-money/core/x/oracle/client/rest"
+	"github.com/terra-money/core/x/oracle/keeper"
+	"github.com/terra-money/core/x/oracle/simulation"
+	"github.com/terra-money/core/x/oracle/types"
 )
 
 var (

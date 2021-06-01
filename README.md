@@ -8,14 +8,11 @@
 <p align="center">
 Full-node software implementing the Terra protocol<br/><br/>
 
-<a href="https://circleci.com/gh/terra-project/core/tree/develop">
-    <img src="https://circleci.com/gh/terra-project/core/tree/develop.svg?style=svg&circle-token=9d02a374fccebf599abb8ae363c30e33d45acc6d">
+<a href="https://codecov.io/gh/terra-money/core">
+    <img src="https://codecov.io/gh/terra-money/core/branch/develop/graph/badge.svg">
 </a>
-<a href="https://codecov.io/gh/terra-project/core">
-    <img src="https://codecov.io/gh/terra-project/core/branch/develop/graph/badge.svg">
-</a>
-<a href="https://goreportcard.com/report/github.com/terra-project/core">
-    <img src="https://goreportcard.com/badge/github.com/terra-project/core">
+<a href="https://goreportcard.com/report/github.com/terra-money/core">
+    <img src="https://goreportcard.com/badge/github.com/terra-money/core">
 </a>
 
 </p>
@@ -26,7 +23,7 @@ Full-node software implementing the Terra protocol<br/><br/>
   <br/>
   <a href="https://docs.terra.money/dev">Dev Guide</a>
   ·
-  <a href="https://pkg.go.dev/github.com/terra-project/core?tab=subdirectories">Go API</a>
+  <a href="https://pkg.go.dev/github.com/terra-money/core?tab=subdirectories">Go API</a>
   ·
   <a href="https://swagger.terra.money/">REST API</a>
   ·
@@ -51,7 +48,7 @@ The Terra blockchain is secured through distributed consensus over native staked
 
 ### Binaries
 
-You can find the latest binaries on our [releases](https://github.com/terra-project/core/releases) page.
+You can find the latest binaries on our [releases](https://github.com/terra-money/core/releases) page.
 
 ### From Source
 
@@ -69,10 +66,10 @@ If you haven't already, install Golang by following the [official docs](https://
 
 #### Step 2: Get Terra Core source code
 
-Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-project/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` and `terracli` binaries.
+Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` and `terracli` binaries.
 
 ```bash
-git clone https://github.com/terra-project/core/
+git clone https://github.com/terra-money/core/
 cd core
 git checkout master
 ```
@@ -189,11 +186,11 @@ Your `terrad` node should now be running a node on `tcp://localhost:26656`, list
 
 ### Joining the mainnet
 
-[The mainnet repo](https://github.com/terra-project/mainnet) contains snapshot of the launch as well as network updates.
+[The mainnet repo](https://github.com/terra-money/mainnet) contains snapshot of the launch as well as network updates.
 
 ### Joining a testnet
 
-[Our testnet repo](https://github.com/terra-project/testnet) contains latest configuration files for the testnet.
+[Our testnet repo](https://github.com/terra-money/testnet) contains latest configuration files for the testnet.
 
 ## Production Environment
 
@@ -291,10 +288,10 @@ journalctl -t terrad -f
 - Developer Tools
 
   - SDKs
-    - [Terra.js](https://www.github.com/terra-project/terra.js) for JavaScript
-    - [Jigu](https://www.github.com/terra-project/jigu) for Python
+    - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
+    - [Jigu](https://www.github.com/terra-money/jigu) for Python
   - [Faucet](https://faucet.terra.money) can be used to get tokens for testnets
-  - [LocalTerra](https://www.github.com/terra-project/LocalTerra) can be used to set up a private local testnet with configurable world state
+  - [LocalTerra](https://www.github.com/terra-money/LocalTerra) can be used to set up a private local testnet with configurable world state
 
 - Block Explorers
 

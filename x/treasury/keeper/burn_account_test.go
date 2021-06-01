@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/treasury/types"
+	"github.com/terra-money/core/x/treasury/types"
 )
 
 func TestBurnCoinsFromBurnAccount(t *testing.T) {

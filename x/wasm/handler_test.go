@@ -7,13 +7,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/wasm"
-	"github.com/terra-project/core/x/wasm/keeper"
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 func TestHandleStore(t *testing.T) {

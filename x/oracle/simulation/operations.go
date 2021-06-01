@@ -14,9 +14,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/keeper"
-	"github.com/terra-project/core/x/oracle/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/keeper"
+	"github.com/terra-money/core/x/oracle/types"
 )
 
 // Simulation operation weights constants

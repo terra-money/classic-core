@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	customtypes "github.com/terra-project/core/custom/slashing/types"
+	customtypes "github.com/terra-money/core/custom/slashing/types"
 )
 
 var (

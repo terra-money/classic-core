@@ -12,7 +12,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/vesting/types"
+	"github.com/terra-money/core/x/vesting/types"
 )
 
 var (

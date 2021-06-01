@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 
 	"github.com/stretchr/testify/require"
 

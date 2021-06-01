@@ -20,11 +20,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/terra-project/core/x/wasm/client/cli"
-	"github.com/terra-project/core/x/wasm/client/rest"
-	"github.com/terra-project/core/x/wasm/keeper"
-	"github.com/terra-project/core/x/wasm/simulation"
-	"github.com/terra-project/core/x/wasm/types"
+	"github.com/terra-money/core/x/wasm/client/cli"
+	"github.com/terra-money/core/x/wasm/client/rest"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/simulation"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 var (
