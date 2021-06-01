@@ -7,6 +7,7 @@ import (
 	v039auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v039"
 	v040auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	v040authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	v40mint "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
 	v040vesting "github.com/terra-money/core/x/vesting/types"
@@ -52,13 +53,25 @@ func convertBaseVestingAccount(old *v039auth.BaseVestingAccount) *v040authvestin
 // - Removing coins from account encoding.
 // - Re-encode in v0.40 GenesisState.
 func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
+	mintModuleAddress := v040auth.NewModuleAddress(v40mint.ModuleName)
+
 	// Convert v0.39 accounts to v0.40 ones.
 	var v040Accounts = make([]v040auth.GenesisAccount, len(authGenState.Accounts))
 	for i, v039Account := range authGenState.Accounts {
 		switch v039Account := v039Account.(type) {
 		case *v039auth.BaseAccount:
 			{
-				v040Accounts[i] = convertBaseAccount(v039Account)
+				// columbus chain has mint address as normal account
+				// so need to changes this to module account
+				if !v039Account.GetAddress().Equals(mintModuleAddress) {
+					v040Accounts[i] = convertBaseAccount(v039Account)
+				} else {
+					v040Accounts[i] = &v040auth.ModuleAccount{
+						BaseAccount: convertBaseAccount(v039Account),
+						Name:        v40mint.ModuleName,
+						Permissions: []string{v040auth.Minter},
+					}
+				}
 			}
 		case *v039auth.ModuleAccount:
 			{

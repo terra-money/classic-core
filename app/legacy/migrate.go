@@ -63,6 +63,13 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 				return errors.Wrapf(err, "failed to read genesis document from file %s", importGenesis)
 			}
 
+			// increase block consensus params
+			genDoc.ConsensusParams.Block.MaxBytes = int64(3000000)
+			genDoc.ConsensusParams.Block.MaxGas = int64(100000000)
+
+			// decrease evidence max bytes
+			genDoc.ConsensusParams.Evidence.MaxBytes = int64(50000)
+
 			var initialState types.AppMap
 			if err := json.Unmarshal(genDoc.AppState, &initialState); err != nil {
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
