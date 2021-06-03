@@ -10,6 +10,7 @@ import (
 	v40mint "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
+	v40treasury "github.com/terra-money/core/x/treasury/types"
 	v040vesting "github.com/terra-money/core/x/vesting/types"
 )
 
@@ -54,6 +55,7 @@ func convertBaseVestingAccount(old *v039auth.BaseVestingAccount) *v040authvestin
 // - Re-encode in v0.40 GenesisState.
 func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
 	mintModuleAddress := v040auth.NewModuleAddress(v40mint.ModuleName)
+	treasuryModuleAddress := v040auth.NewModuleAddress(v40treasury.ModuleName)
 
 	// Convert v0.39 accounts to v0.40 ones.
 	var v040Accounts = make([]v040auth.GenesisAccount, len(authGenState.Accounts))
@@ -75,10 +77,16 @@ func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
 			}
 		case *v039auth.ModuleAccount:
 			{
+				// burn permission must be added to treasury module
+				permissions := v039Account.Permissions
+				if v039Account.GetAddress().Equals(treasuryModuleAddress) {
+					permissions = append(permissions, v040auth.Burner)
+				}
+
 				v040Accounts[i] = &v040auth.ModuleAccount{
 					BaseAccount: convertBaseAccount(v039Account.BaseAccount),
 					Name:        v039Account.Name,
-					Permissions: v039Account.Permissions,
+					Permissions: permissions,
 				}
 			}
 		case *v039auth.BaseVestingAccount:
