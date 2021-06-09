@@ -84,7 +84,7 @@ func (p MsgParser) Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmv
 			return parser.Parse(contractAddr, msg)
 		}
 
-		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "distribution")
+		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteDistribution)
 	case msg.Wasm != nil:
 		if parser, ok := p.Parsers[WasmMsgParserRouteWasm]; ok {
 			return parser.Parse(contractAddr, msg)
