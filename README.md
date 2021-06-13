@@ -315,7 +315,7 @@ journalctl -t terrad -f
 ## Community
 
 - [Offical Website](https://terra.money)
-- [Discord](https://discord.gg/Gutqybc)
+- [Discord](https://discord.gg/e29HWwC2Mz)
 - [Telegram](https://t.me/terra_announcements)
 - [Twitter](https://twitter.com/terra_money)
 - [YouTube](https://goo.gl/3G4T1z)
