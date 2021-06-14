@@ -84,12 +84,8 @@ func (p MsgParser) Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmv
 			return parser.Parse(contractAddr, msg)
 		}
 
-		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "distribution")
+		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteDistribution)
 	case msg.Wasm != nil:
-		if msg.Wasm.ClearAdmin != nil {
-			return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "ClearAdmin not supported")
-		}
-
 		if parser, ok := p.Parsers[WasmMsgParserRouteWasm]; ok {
 			return parser.Parse(contractAddr, msg)
 		}

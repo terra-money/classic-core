@@ -215,9 +215,9 @@ func TestExchangeRatesQuerier(t *testing.T) {
 
 	exchangeRateQueryMsg := bindingsTesterExchangeRatesQueryMsg{
 		ExchangeRates: exchangeRatesQueryMsg{
-			BaseDenom: core.MicroKRWDenom,
+			BaseDenom: core.MicroLunaDenom,
 			QuoteDenoms: []string{
-				core.MicroLunaDenom,
+				core.MicroKRWDenom,
 			},
 		},
 	}

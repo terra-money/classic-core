@@ -139,6 +139,10 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 		return nil, nil, err
 	}
 
+	if sdkMsg == nil {
+		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "failed to parse msg")
+	}
+
 	// Charge tax on result msg
 	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsg)
 	if !taxes.IsZero() {
