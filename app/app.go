@@ -101,6 +101,7 @@ import (
 	customauthrest "github.com/terra-money/core/custom/auth/client/rest"
 	customauthsim "github.com/terra-money/core/custom/auth/simulation"
 	customauthtx "github.com/terra-money/core/custom/auth/tx"
+	customauthz "github.com/terra-money/core/custom/authz"
 	custombank "github.com/terra-money/core/custom/bank"
 	customcrisis "github.com/terra-money/core/custom/crisis"
 	customdistr "github.com/terra-money/core/custom/distribution"
@@ -149,6 +150,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		customauth.AppModuleBasic{},
+		customauthz.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		custombank.AppModuleBasic{},
 		capability.AppModuleBasic{},
@@ -176,7 +178,6 @@ var (
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
 	)
 
 	// module account permissions
