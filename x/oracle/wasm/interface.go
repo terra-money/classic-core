@@ -70,14 +70,15 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 
 		var items []ExchangeRateItem
 		for _, quoteDenom := range params.ExchangeRates.QuoteDenoms {
+			// LUNA / QUOTE_DENOM
 			quoteDenomExchangeRate, err := querier.keeper.GetLunaExchangeRate(ctx, quoteDenom)
 			if err != nil {
 				continue
 			}
 
-			// (BASE_DENOM / LUNA) / (DENOM / LUNA) = BASE_DENOM / QUOTE_DENOM
+			// (LUNA / QUOTE_DENOM) / (BASE_DENOM / LUNA) = BASE_DENOM / QUOTE_DENOM
 			items = append(items, ExchangeRateItem{
-				ExchangeRate: baseDenomExchangeRate.Quo(quoteDenomExchangeRate).String(),
+				ExchangeRate: quoteDenomExchangeRate.Quo(baseDenomExchangeRate).String(),
 				QuoteDenom:   quoteDenom,
 			})
 		}

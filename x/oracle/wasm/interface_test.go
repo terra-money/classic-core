@@ -66,8 +66,8 @@ func TestQueryExchangeRates(t *testing.T) {
 
 	// valid query luna exchange rates
 	queryParams = wasm.ExchangeRateQueryParams{
-		BaseDenom:   core.MicroKRWDenom,
-		QuoteDenoms: []string{core.MicroLunaDenom, core.MicroUSDDenom, core.MicroSDRDenom},
+		BaseDenom:   core.MicroLunaDenom,
+		QuoteDenoms: []string{core.MicroKRWDenom, core.MicroUSDDenom, core.MicroSDRDenom},
 	}
 	bz, err = json.Marshal(wasm.CosmosQuery{
 		ExchangeRates: &queryParams,
@@ -80,18 +80,18 @@ func TestQueryExchangeRates(t *testing.T) {
 	err = json.Unmarshal(res, &exchangeRatesResponse)
 	require.NoError(t, err)
 	require.Equal(t, exchangeRatesResponse, wasm.ExchangeRatesQueryResponse{
-		BaseDenom: core.MicroKRWDenom,
+		BaseDenom: core.MicroLunaDenom,
 		ExchangeRates: []wasm.ExchangeRateItem{
 			{
 				ExchangeRate: KRWExchangeRate.String(),
-				QuoteDenom:   core.MicroLunaDenom,
+				QuoteDenom:   core.MicroKRWDenom,
 			},
 			{
-				ExchangeRate: KRWExchangeRate.Quo(USDExchangeRate).String(),
+				ExchangeRate: USDExchangeRate.String(),
 				QuoteDenom:   core.MicroUSDDenom,
 			},
 			{
-				ExchangeRate: KRWExchangeRate.Quo(SDRExchangeRate).String(),
+				ExchangeRate: SDRExchangeRate.String(),
 				QuoteDenom:   core.MicroSDRDenom,
 			},
 		},
