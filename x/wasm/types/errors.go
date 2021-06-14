@@ -25,4 +25,5 @@ var (
 	ErrExceedMaxContractEventAttributeNum         = sdkerrors.Register(ModuleName, 18, "exceeds max contract event attributes num limit")
 	ErrExceedMaxContractEventAttributeKeyLength   = sdkerrors.Register(ModuleName, 19, "exceeds max contract event attribute key length limit")
 	ErrExceedMaxContractEventAttributeValueLength = sdkerrors.Register(ModuleName, 20, "exceeds max contract event attribute value length limit")
+	ErrReplyFailed                                = sdkerrors.Register(ModuleName, 21, "reply wasm contract failed")
 )

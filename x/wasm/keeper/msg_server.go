@@ -97,9 +97,16 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		}
 	}
 
+	maxGas := k.MaxContractGas(ctx)
+	remain := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
+	if remain > maxGas {
+		remain = maxGas
+	}
+
+	newGasMeter := sdk.NewGasMeter(remain)
 	eventManager := sdk.NewEventManager()
 	contractAddr, data, err := k.Keeper.InstantiateContract(
-		ctx.WithEventManager(eventManager),
+		ctx.WithEventManager(eventManager).WithGasMeter(newGasMeter),
 		msg.CodeID,
 		senderAddr,
 		adminAddr,
@@ -109,6 +116,9 @@ func (k msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 	if err != nil {
 		return nil, err
 	}
+
+	// consume gas used from wasm execution
+	ctx.GasMeter().ConsumeGas(newGasMeter.GasConsumed(), "wasm vm execute")
 
 	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(
@@ -147,9 +157,16 @@ func (k msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		return nil, err
 	}
 
+	maxGas := k.MaxContractGas(ctx)
+	remain := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
+	if remain > maxGas {
+		remain = maxGas
+	}
+
+	newGasMeter := sdk.NewGasMeter(remain)
 	eventManager := sdk.NewEventManager()
 	data, err := k.Keeper.ExecuteContract(
-		ctx.WithEventManager(eventManager),
+		ctx.WithEventManager(eventManager).WithGasMeter(newGasMeter),
 		contractAddr,
 		senderAddr,
 		msg.ExecuteMsg,
@@ -158,6 +175,9 @@ func (k msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 	if err != nil {
 		return nil, err
 	}
+
+	// consume gas used from wasm execution
+	ctx.GasMeter().ConsumeGas(newGasMeter.GasConsumed(), "wasm vm execute")
 
 	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(
@@ -193,9 +213,16 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, err
 	}
 
+	maxGas := k.MaxContractGas(ctx)
+	remain := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
+	if remain > maxGas {
+		remain = maxGas
+	}
+
+	newGasMeter := sdk.NewGasMeter(remain)
 	eventManager := sdk.NewEventManager()
 	data, err := k.Keeper.MigrateContract(
-		ctx.WithEventManager(eventManager),
+		ctx.WithEventManager(eventManager).WithGasMeter(newGasMeter),
 		contractAddr,
 		adminAddr,
 		msg.NewCodeID,
@@ -204,6 +231,9 @@ func (k msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 	if err != nil {
 		return nil, err
 	}
+
+	// consume gas used from wasm execution
+	ctx.GasMeter().ConsumeGas(newGasMeter.GasConsumed(), "wasm vm execute")
 
 	// prepend the event to keep the events order
 	ctx.EventManager().EmitEvents(

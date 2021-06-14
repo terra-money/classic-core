@@ -59,9 +59,6 @@ func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
 	}
 
 	remaining := (meter.Limit() - meter.GasConsumed())
-	if maxGas := k.MaxContractGas(ctx); remaining > maxGas {
-		remaining = maxGas
-	}
 	return remaining * types.GasMultiplier
 }
 
