@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -96,6 +97,8 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 				},
 				Base:    "uluna",
 				Display: "luna",
+				Name:    "LUNA",
+				Symbol:  "LUNA",
 			}
 
 			for i, w := range oracleGenesis.Params.Whitelist {
@@ -110,6 +113,8 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 					},
 					Base:    base,
 					Display: display,
+					Name:    fmt.Sprintf("%s TERRA", strings.ToUpper(display)),
+					Symbol:  fmt.Sprintf("%sT", strings.ToUpper(display[:len(display)-1])),
 				}
 			}
 
