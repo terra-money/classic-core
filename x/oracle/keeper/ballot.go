@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/terra-money/core/x/oracle/types"
@@ -44,6 +45,13 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context, validatorClaimMap map[str
 	}
 
 	k.IterateAggregateExchangeRateVotes(ctx, aggregateHandler)
+
+	// sort created ballot
+	for denom, ballot := range votes {
+		sort.Sort(ballot)
+		votes[denom] = ballot
+	}
+
 	return
 }
 
