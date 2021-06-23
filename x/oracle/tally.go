@@ -42,10 +42,7 @@ func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, val
 }
 
 // ballot for the asset is passing the threshold amount of voting power
-func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k keeper.Keeper) (sdk.Int, bool) {
-	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
-	voteThreshold := k.VoteThreshold(ctx)
-	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
+func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) (sdk.Int, bool) {
 	ballotPower := sdk.NewInt(ballot.Power())
 	return ballotPower, !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
 }
@@ -56,6 +53,10 @@ func ballotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot, k keeper.
 func pickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string]sdk.Dec, voteMap map[string]types.ExchangeRateBallot) string {
 	largestBallotPower := int64(0)
 	referenceTerra := ""
+
+	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
+	voteThreshold := k.VoteThreshold(ctx)
+	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 
 	for denom, ballot := range voteMap {
 		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
@@ -69,7 +70,7 @@ func pickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string
 
 		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
-		if power, ok := ballotIsPassing(ctx, ballot, k); ok {
+		if power, ok := ballotIsPassing(ballot, thresholdVotes); ok {
 			ballotPower = power.Int64()
 		} else {
 			delete(voteTargets, denom)
