@@ -59,13 +59,6 @@ func newDelegateHandlerFunction(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		// Bytes comparison, so do not require type conversion
-		if !voterAddr.Equals(req.Feeder) {
-			err := fmt.Errorf("[%v] can not change [%v] delegation", req.Feeder, voterAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		// create the message
 		msg := types.NewMsgDelegateFeedConsent(voterAddr, req.Feeder)
 		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
