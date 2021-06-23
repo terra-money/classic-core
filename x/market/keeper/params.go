@@ -14,7 +14,7 @@ func (k Keeper) MintBasePool(ctx sdk.Context) (res sdk.Dec) {
 
 // BurnBasePool is burn liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod
 func (k Keeper) BurnBasePool(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.KeyMintBasePool, &res)
+	k.paramSpace.Get(ctx, types.KeyBurnBasePool, &res)
 	return
 }
 
