@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-money/core/x/wasm/client/utils"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -191,10 +190,10 @@ func GetCmdGetContractStore() *cobra.Command {
 // GetCmdGetRawStore dumps full internal state of a given contract
 func GetCmdGetRawStore() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "raw-store [bech32-address] [key] [subkey]",
+		Use:   "raw-store [bech32-address] [base64-raw-key]",
 		Short: "Prints out raw store of a contract",
 		Long:  "Prints out raw store of a contract",
-		Args:  cobra.RangeArgs(2, 3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -208,14 +207,8 @@ func GetCmdGetRawStore() *cobra.Command {
 				return err
 			}
 
-			// need to extend key with prefix of its length
 			key := args[1]
-			subkey := ""
-			if len(args) == 3 {
-				subkey = args[2]
-			}
-
-			keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
+			keyBz := []byte(key)
 			res, err := queryClient.RawStore(context.Background(), &types.QueryRawStoreRequest{
 				ContractAddress: addr,
 				Key:             keyBz,
