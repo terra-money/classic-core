@@ -102,12 +102,15 @@ func newAggregatePrevoteHandlerFunction(clientCtx client.Context) http.HandlerFu
 			}
 
 			hash = types.GetAggregateVoteHash(req.Salt, req.ExchangeRates, voterAddr)
-		} else {
+		} else if len(req.Hash) > 0 {
 			hash, err = types.AggregateVoteHashFromHexString(req.Hash)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
+		} else {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "must provide Hash or (ExchangeRates & Salt)")
+			return
 		}
 
 		// create the message
