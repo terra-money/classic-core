@@ -11696,7 +11696,7 @@ QuerySwapRequest is the request type for the Query/Swap RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `offer_coin` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  | offer_coin defines the coin being offered |
+| `offer_coin` | [string](#string) |  | offer_coin defines the coin being offered (i.e. 1000000uluna) |
 | `ask_denom` | [string](#string) |  | ask_denom defines the denom of the coin to swap to |
 
 
