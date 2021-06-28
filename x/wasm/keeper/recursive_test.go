@@ -95,7 +95,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 }
 
 func TestGasCostOnQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 4_372
+	GasNoWork := types.InstanceCost + 3_343
 	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
@@ -182,14 +182,14 @@ func TestGasCostOnQuery(t *testing.T) {
 }
 
 func TestGasOnExternalQuery(t *testing.T) {
-	GasNoWork := types.InstanceCost + 4_372
+	GasNoWork := types.InstanceCost + 3_343
 	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_692 // this is a little shy of 50k gas - to keep an eye on the limit
 
 	cases := map[string]struct {
-		gasLimit    uint64
-		msg         Recurse
-		expectPanic bool
+		gasLimit       uint64
+		msg            Recurse
+		expectOutOfGas bool
 	}{
 		"no recursion, plenty gas": {
 			gasLimit: 400_000,
@@ -210,7 +210,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 			msg: Recurse{
 				Work: 50,
 			},
-			expectPanic: true,
+			expectOutOfGas: true,
 		},
 		"recursion 4, external gas limit": {
 			// this uses 244708 gas but give less
@@ -219,7 +219,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 				Depth: 4,
 				Work:  50,
 			},
-			expectPanic: true,
+			expectOutOfGas: true,
 		},
 	}
 
@@ -239,7 +239,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 			bz, err := cdc.MarshalJSON(types.NewQueryContractParams(contractAddr, msg))
 			require.NoError(t, err)
 
-			if tc.expectPanic {
+			if tc.expectOutOfGas {
 				_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 				require.Error(t, err)
 				require.Contains(t, err.Error(), sdkerror.ErrOutOfGas.Error())
@@ -260,7 +260,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	// This attack would allow us to use far more than the provided gas before
 	// eventually hitting an OutOfGas panic.
 
-	GasNoWork := types.InstanceCost + 4_372
+	GasNoWork := types.InstanceCost + 3_343
 	GasWork2k := GasNoWork + 229_495
 
 	// This is overhead for calling into a sub-contract
