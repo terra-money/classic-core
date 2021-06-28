@@ -155,8 +155,8 @@ func (k Keeper) InstantiateContract(
 		k.getGasRemaining(ctx),
 	)
 
-	// consume gas before raise error
-	k.consumeGas(ctx, gasUsed, "Contract init")
+	// add types.GasMultiplier to occur out of gas panic
+	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract init")
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
@@ -230,7 +230,8 @@ func (k Keeper) ExecuteContract(
 		k.getGasRemaining(ctx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Execution")
+	// add types.GasMultiplier to occur out of gas panic
+	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Execution")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
@@ -306,7 +307,8 @@ func (k Keeper) MigrateContract(
 		k.getGasRemaining(ctx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Migration")
+	// add types.GasMultiplier to occur out of gas panic
+	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Migration")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
@@ -367,9 +369,10 @@ func (k Keeper) reply(
 		k.getGasRemaining(ctx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Reply")
+	// add types.GasMultiplier to occur out of gas panic
+	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Reply")
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
+		return sdkerrors.Wrap(types.ErrReplyFailed, err.Error())
 	}
 
 	// vaildate events is size and parse to sdk events
@@ -427,9 +430,10 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		k.getGasRemaining(ctx),
 	)
 
-	k.consumeGas(ctx, gasUsed, "Contract Query")
+	// add types.GasMultiplier to occur out of gas panic
+	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Query")
 	if err != nil {
-		err = sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
 	}
 
 	return queryResult, err
