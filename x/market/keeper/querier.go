@@ -40,12 +40,13 @@ func (q querier) Swap(c context.Context, req *types.QuerySwapRequest) (*types.Qu
 		return nil, status.Error(codes.InvalidArgument, "invalid ask denom")
 	}
 
-	if err := req.OfferCoin.Validate(); err != nil {
+	offerCoin, err := sdk.ParseCoinNormalized(req.OfferCoin)
+	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	retCoin, err := q.simulateSwap(ctx, req.OfferCoin, req.AskDenom)
+	retCoin, err := q.simulateSwap(ctx, offerCoin, req.AskDenom)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

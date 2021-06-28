@@ -36,7 +36,7 @@ func TestQuerySwap(t *testing.T) {
 	require.Error(t, err)
 
 	// empty ask denom cause error
-	_, err = querier.Swap(ctx, &types.QuerySwapRequest{OfferCoin: sdk.Coin{Denom: core.MicroSDRDenom, Amount: sdk.NewInt(100)}})
+	_, err = querier.Swap(ctx, &types.QuerySwapRequest{OfferCoin: sdk.Coin{Denom: core.MicroSDRDenom, Amount: sdk.NewInt(100)}.String()})
 	require.Error(t, err)
 
 	// empty offer coin cause error
@@ -44,13 +44,13 @@ func TestQuerySwap(t *testing.T) {
 	require.Error(t, err)
 
 	// recursive query
-	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10))
+	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10)).String()
 	res, err := querier.Swap(ctx, &types.QuerySwapRequest{OfferCoin: offerCoin, AskDenom: core.MicroLunaDenom})
 	require.Error(t, err)
 
 	// overflow query
 	overflowAmt, _ := sdk.NewIntFromString("1000000000000000000000000000000000")
-	overflowOfferCoin := sdk.NewCoin(core.MicroLunaDenom, overflowAmt)
+	overflowOfferCoin := sdk.NewCoin(core.MicroLunaDenom, overflowAmt).String()
 	_, err = querier.Swap(ctx, &types.QuerySwapRequest{OfferCoin: overflowOfferCoin, AskDenom: core.MicroSDRDenom})
 	require.Error(t, err)
 
