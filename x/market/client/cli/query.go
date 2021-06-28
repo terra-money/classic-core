@@ -53,7 +53,7 @@ $ terrad query swap 5000000uluna usdr
 
 			// parse offerCoin
 			offerCoinStr := args[0]
-			offerCoin, err := sdk.ParseCoinNormalized(offerCoinStr)
+			_, err = sdk.ParseCoinNormalized(offerCoinStr)
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,7 @@ $ terrad query swap 5000000uluna usdr
 			askDenom := args[1]
 
 			res, err := queryClient.Swap(context.Background(),
-				&types.QuerySwapRequest{OfferCoin: offerCoin, AskDenom: askDenom},
+				&types.QuerySwapRequest{OfferCoin: offerCoinStr, AskDenom: askDenom},
 			)
 			if err != nil {
 				return err

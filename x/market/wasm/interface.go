@@ -91,7 +91,7 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 	q := keeper.NewQuerier(querier.keeper)
 	if params.Swap != nil {
 		res, err := q.Swap(sdk.WrapSDKContext(ctx), &types.QuerySwapRequest{
-			OfferCoin: params.Swap.OfferCoin,
+			OfferCoin: params.Swap.OfferCoin.String(),
 			AskDenom:  params.Swap.AskDenom,
 		})
 		if err != nil {
