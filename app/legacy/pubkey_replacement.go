@@ -60,8 +60,8 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 	var stakingGenesis staking.GenesisState
 	var slashingGenesis slashing.GenesisState
 
-	clientCtx.JSONCodec.MustUnmarshalJSON(state[staking.ModuleName], &stakingGenesis)
-	clientCtx.JSONCodec.MustUnmarshalJSON(state[slashing.ModuleName], &slashingGenesis)
+	clientCtx.Codec.MustUnmarshalJSON(state[staking.ModuleName], &stakingGenesis)
+	clientCtx.Codec.MustUnmarshalJSON(state[slashing.ModuleName], &slashingGenesis)
 
 	for i, val := range stakingGenesis.Validators {
 		idx, replacement := replacementKeys.isReplacedValidator(val.OperatorAddress)
@@ -71,7 +71,7 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 			toReplaceValConsAddress, _ := val.GetConsAddr()
 
 			var consPubKey cryptotypes.PubKey
-			if err := clientCtx.JSONCodec.UnmarshalInterfaceJSON([]byte(replacement.ConsensusPubkey), &consPubKey); err != nil {
+			if err := clientCtx.Codec.UnmarshalInterfaceJSON([]byte(replacement.ConsensusPubkey), &consPubKey); err != nil {
 				log.Fatal(fmt.Errorf("failed to decode key:%s %w", replacement.ConsensusPubkey, err))
 			}
 
@@ -109,8 +109,8 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 		}
 
 	}
-	state[staking.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(&stakingGenesis)
-	state[slashing.ModuleName] = clientCtx.JSONCodec.MustMarshalJSON(&slashingGenesis)
+	state[staking.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenesis)
+	state[slashing.ModuleName] = clientCtx.Codec.MustMarshalJSON(&slashingGenesis)
 
 	genDoc.AppState, err = json.Marshal(state)
 

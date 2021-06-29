@@ -26,7 +26,6 @@ import (
 	v040slashing "github.com/cosmos/cosmos-sdk/x/slashing/legacy/v040"
 	v038staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v038"
 	v040staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v040"
-	v043staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v043"
 
 	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
 	v040authcustom "github.com/terra-money/core/custom/auth/legacy/v040"
@@ -65,7 +64,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 	v036paramscustom.RegisterLegacyAminoCodec(v04Codec)
 	v038upgradecustom.RegisterLegacyAminoCodec(v04Codec)
 
-	v05Codec := clientCtx.JSONCodec
+	v05Codec := clientCtx.Codec
 
 	if appState[v038bank.ModuleName] != nil {
 		// unmarshal relative source genesis application state
@@ -214,7 +213,7 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 
 		// Migrate relative source genesis application state and marshal it into
 		// the respective key.
-		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v043staking.MigrateJSON(v040staking.Migrate(stakingGenState)))
+		appState[v040staking.ModuleName] = v05Codec.MustMarshalJSON(v040staking.Migrate(stakingGenState))
 	}
 
 	// Migrate x/genutil
