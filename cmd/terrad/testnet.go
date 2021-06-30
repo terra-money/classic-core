@@ -122,7 +122,8 @@ func InitTestnet(
 	nodeIDs := make([]string, numValidators)
 	valPubKeys := make([]cryptotypes.PubKey, numValidators)
 
-	terraappConfig := srvconfig.DefaultConfig()
+	_, appConfig := initAppConfig()
+	terraappConfig := appConfig.(TerraAppConfig)
 	terraappConfig.MinGasPrices = minGasPrices
 	terraappConfig.API.Enable = true
 	terraappConfig.Telemetry.Enabled = true
