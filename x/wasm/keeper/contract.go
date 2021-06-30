@@ -153,6 +153,7 @@ func (k Keeper) InstantiateContract(
 		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
+		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
@@ -167,8 +168,8 @@ func (k Keeper) InstantiateContract(
 	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
-	// vaildate events is size and parse to sdk events
-	events, err := types.ValidateAndParseEvents(contractAddress, k.EventParams(ctx), res.Attributes...)
+	// parse wasm events to sdk events
+	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "event validation failed")
 	}
@@ -182,7 +183,7 @@ func (k Keeper) InstantiateContract(
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchAll(ctx, contractAddress, res.Submessages, res.Messages); err != nil {
+	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -228,6 +229,7 @@ func (k Keeper) ExecuteContract(
 		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
+		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
@@ -236,8 +238,8 @@ func (k Keeper) ExecuteContract(
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
 
-	// vaildate events is size and parse to sdk events
-	events, err := types.ValidateAndParseEvents(contractAddress, k.EventParams(ctx), res.Attributes...)
+	// parse wasm events to sdk events
+	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "event validation failed")
 	}
@@ -251,7 +253,7 @@ func (k Keeper) ExecuteContract(
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchAll(ctx, contractAddress, res.Submessages, res.Messages); err != nil {
+	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -305,6 +307,7 @@ func (k Keeper) MigrateContract(
 		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
+		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
@@ -313,8 +316,8 @@ func (k Keeper) MigrateContract(
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
 
-	// vaildate events is size and parse to sdk events
-	events, err := types.ValidateAndParseEvents(contractAddress, k.EventParams(ctx), res.Attributes...)
+	// parse wasm events to sdk events
+	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "event validation failed")
 	}
@@ -331,7 +334,7 @@ func (k Keeper) MigrateContract(
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
 	// dispatch submessages and messages
-	if err := k.dispatchAll(ctx, contractAddress, res.Submessages, res.Messages); err != nil {
+	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -347,17 +350,9 @@ func (k Keeper) reply(
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "reply")
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: reply")
 
-	eventParams := k.EventParams(ctx)
 	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
 
 	env := types.NewEnv(ctx, contractAddress)
-
-	// to prevent passing too huge events to wasmvm
-	// cap the reply.Events length to eventParams.MaxAttributeNum
-	if reply.Result.Ok != nil && uint64(len(reply.Result.Ok.Events)) > eventParams.MaxAttributeNum {
-		reply.Result.Ok.Events = reply.Result.Ok.Events[:eventParams.MaxAttributeNum]
-	}
-
 	res, gasUsed, err := k.wasmVM.Reply(
 		codeInfo.CodeHash,
 		env,
@@ -367,6 +362,7 @@ func (k Keeper) reply(
 		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
+		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
@@ -375,8 +371,8 @@ func (k Keeper) reply(
 		return sdkerrors.Wrap(types.ErrReplyFailed, err.Error())
 	}
 
-	// vaildate events is size and parse to sdk events
-	events, err := types.ValidateAndParseEvents(contractAddress, eventParams, res.Attributes...)
+	// parse wasm events to sdk events
+	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return sdkerrors.Wrap(err, "event validation failed")
 	}
@@ -390,7 +386,7 @@ func (k Keeper) reply(
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchAll(ctx, contractAddress, res.Submessages, res.Messages); err != nil {
+	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -428,6 +424,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		k.querier.WithCtx(ctx),
 		k.getGasMeter(ctx),
 		k.getGasRemaining(ctx),
+		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic

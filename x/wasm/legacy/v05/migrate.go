@@ -60,7 +60,6 @@ func Migrate(
 			MaxContractMsgSize:  v05wasm.DefaultMaxContractMsgSize,
 			MaxContractGas:      v05wasm.DefaultMaxContractGas,
 			MaxContractDataSize: v05wasm.DefaultMaxContractDataSize,
-			EventParams:         v05wasm.DefaultEventParams,
 		},
 		Codes:          codes,
 		Contracts:      contracts,

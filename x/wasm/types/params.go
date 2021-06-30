@@ -5,6 +5,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -22,7 +24,6 @@ var (
 	KeyMaxContractGas      = []byte("MaxContractGas")
 	KeyMaxContractMsgSize  = []byte("MaxContractMsgSize")
 	KeyMaxContractDataSize = []byte("MaxContractDataSize")
-	KeyEventParams         = []byte("EventParams")
 )
 
 // Default parameter values
@@ -33,30 +34,36 @@ const (
 	DefaultMaxContractDataSize = uint64(1024)       // 1KB
 )
 
-// Default event parameter values
-var (
-	DefaultEventParams = EventParams{
-		MaxAttributeNum:         16,
-		MaxAttributeKeyLength:   64,
-		MaxAttributeValueLength: 256,
-	}
-)
-
 // Constant gas parameters
 const (
 	InstanceCost       = uint64(40_000) // sdk gas cost for executing wasmVM engine
 	CompileCostPerByte = uint64(2)      // sdk gas cost per bytes
 
-	GasMultiplier    = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
-	HumanizeCost     = uint64(5)   // wasm gas cost to convert canonical address to human address
-	CanonicalizeCost = uint64(4)   // wasm gas cost to convert human address to canonical address
+	GasMultiplier = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
+
+	humanizeCost               = uint64(5) // sdk gas cost to convert canonical address to human address
+	canonicalizeCost           = uint64(4) // sdk gas cost to convert human address to canonical address
+	deserializationCostPerByte = uint64(1) // sdk gas cost to deserialize data
+
+	// HumanizeWasmGasCost humanize cost in wasm gas unit
+	HumanizeWasmGasCost = humanizeCost * GasMultiplier
+	// CanonicalizeWasmGasCost canonicalize cost in wasm gas unit
+	CanonicalizeWasmGasCost = canonicalizeCost * GasMultiplier
 
 	// ContractMemoryLimit is the memory limit of each contract execution (in MiB)
 	// constant value so all nodes run with the same limit.
 	ContractMemoryLimit = uint32(32)
 )
 
-var _ paramstypes.ParamSet = &Params{}
+var (
+	// JSONDeserializationWasmGasCost json deserialization cost in wasm gas unit
+	JSONDeserializationWasmGasCost = wasmvmtypes.UFraction{
+		Numerator:   deserializationCostPerByte * GasMultiplier,
+		Denominator: 1,
+	}
+
+	_ paramstypes.ParamSet = &Params{}
+)
 
 // DefaultParams creates default treasury module parameters
 func DefaultParams() Params {
@@ -65,7 +72,6 @@ func DefaultParams() Params {
 		MaxContractGas:      DefaultMaxContractGas,
 		MaxContractMsgSize:  DefaultMaxContractMsgSize,
 		MaxContractDataSize: DefaultMaxContractDataSize,
-		EventParams:         DefaultEventParams,
 	}
 }
 
@@ -78,7 +84,6 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeyMaxContractGas, &p.MaxContractGas, validateMaxContractGas),
 		paramstypes.NewParamSetPair(KeyMaxContractMsgSize, &p.MaxContractMsgSize, validateMaxContractMsgSize),
 		paramstypes.NewParamSetPair(KeyMaxContractDataSize, &p.MaxContractDataSize, validateMaxContractDataSize),
-		paramstypes.NewParamSetPair(KeyEventParams, &p.EventParams, validateEventParams),
 	}
 }
 
@@ -157,15 +162,6 @@ func validateMaxContractDataSize(i interface{}) error {
 
 	if v > EnforcedMaxContractDataSize {
 		return fmt.Errorf("max contract data byte size %d must be equal or smaller than %d", v, EnforcedMaxContractDataSize)
-	}
-
-	return nil
-}
-
-func validateEventParams(i interface{}) error {
-	_, ok := i.(EventParams)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

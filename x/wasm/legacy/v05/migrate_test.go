@@ -190,11 +190,6 @@ func TestMigrate(t *testing.T) {
 	"last_code_id": "2",
 	"last_instance_id": "2",
 	"params": {
-		"event_params": {
-			"max_attribute_key_length": "64",
-			"max_attribute_num": "16",
-			"max_attribute_value_length": "256"
-		},
 		"max_contract_data_size": "1024",
 		"max_contract_gas": "20000000",
 		"max_contract_msg_size": "4096",

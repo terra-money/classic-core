@@ -11,6 +11,7 @@ const (
 	EventTypeUpdateContractAdmin = "update_contract_admin"
 	EventTypeClearContractAdmin  = "clear_contract_admin"
 	EventTypeFromContract        = "from_contract"
+	EventTypeWasmPrefix          = "wasm"
 
 	AttributeKeySender          = "sender"
 	AttributeKeyCodeID          = "code_id"

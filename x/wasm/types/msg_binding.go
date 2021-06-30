@@ -14,6 +14,7 @@ const (
 	WasmMsgParserRouteBank         = "bank"
 	WasmMsgParserRouteStaking      = "staking"
 	WasmMsgParserRouteDistribution = "distribution"
+	WasmMsgParserRouteGov          = "gov"
 	WasmMsgParserRouteMarket       = "market"
 	WasmMsgParserRouteWasm         = "wasm"
 )
@@ -85,6 +86,12 @@ func (p MsgParser) Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmv
 		}
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteDistribution)
+	case msg.Gov != nil:
+		if parser, ok := p.Parsers[WasmMsgParserRouteGov]; ok {
+			return parser.Parse(contractAddr, msg)
+		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, WasmMsgParserRouteGov)
 	case msg.Wasm != nil:
 		if parser, ok := p.Parsers[WasmMsgParserRouteWasm]; ok {
 			return parser.Parse(contractAddr, msg)

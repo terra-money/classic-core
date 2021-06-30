@@ -30,12 +30,6 @@ func (k Keeper) MaxContractDataSize(ctx sdk.Context) (res uint64) {
 	return
 }
 
-// EventParams defines event related params
-func (k Keeper) EventParams(ctx sdk.Context) (res types.EventParams) {
-	k.paramSpace.Get(ctx, types.KeyEventParams, &res)
-	return
-}
-
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)

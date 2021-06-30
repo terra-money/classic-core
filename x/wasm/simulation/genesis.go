@@ -74,7 +74,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 			MaxContractGas:      maxContractGas,
 			MaxContractMsgSize:  maxContractMsgSize,
 			MaxContractDataSize: maxContractDataSize,
-			EventParams:         types.DefaultEventParams,
 		},
 		0,
 		0,

@@ -16,7 +16,7 @@ func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
 				return "", 0, nil
 			}
 
-			return sdk.AccAddress(canon).String(), types.HumanizeCost * types.GasMultiplier, nil
+			return sdk.AccAddress(canon).String(), types.HumanizeWasmGasCost, nil
 		},
 		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {
 			addr, err := sdk.AccAddressFromBech32(human)
@@ -24,7 +24,7 @@ func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
 				return nil, 0, err
 			}
 
-			return addr, types.CanonicalizeCost * types.GasMultiplier, nil
+			return addr, types.CanonicalizeWasmGasCost, nil
 		},
 	}
 }
