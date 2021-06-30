@@ -39,6 +39,14 @@ func TestParseEvents(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, sdk.Events{sdk.NewEvent(
+		EventTypeWasmPrefix,
+		[]sdk.Attribute{
+			{Key: AttributeKeyContractAddress, Value: addr.String()},
+			{Key: "key1", Value: "value1"},
+			{Key: "key2", Value: "value2"},
+			{Key: "key3", Value: "value3"},
+		}...,
+	), sdk.NewEvent(
 		EventTypeFromContract,
 		[]sdk.Attribute{
 			{Key: AttributeKeyContractAddress, Value: addr.String()},
@@ -47,7 +55,7 @@ func TestParseEvents(t *testing.T) {
 			{Key: "key3", Value: "value3"},
 		}...,
 	), sdk.NewEvent(
-		fmt.Sprintf("%s-type1", EventTypeWasmPrefix),
+		fmt.Sprintf("%s_type1", EventTypeWasmPrefix),
 		[]sdk.Attribute{
 			{Key: AttributeKeyContractAddress, Value: addr.String()},
 			{Key: "key1", Value: "value1"},
@@ -55,7 +63,7 @@ func TestParseEvents(t *testing.T) {
 			{Key: "key3", Value: "value3"},
 		}...,
 	), sdk.NewEvent(
-		fmt.Sprintf("%s-type2", EventTypeWasmPrefix),
+		fmt.Sprintf("%s_type2", EventTypeWasmPrefix),
 		[]sdk.Attribute{
 			{Key: AttributeKeyContractAddress, Value: addr.String()},
 			{Key: "key1", Value: "value1"},

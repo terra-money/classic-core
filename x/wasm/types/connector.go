@@ -26,16 +26,20 @@ func ParseEvents(
 
 	var sdkEvents sdk.Events
 
-	sdkEvent, err := buildEvent(EventTypeFromContract, contractAddr, attributes)
+	sdkEvent, err := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
 	if err != nil {
 		return nil, err
 	}
 
 	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
 
+	// Deprecated: from_contract
+	sdkEvent.Type = EventTypeFromContract
+	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+
 	// append wasm prefix for the events
 	for _, event := range events {
-		sdkEvent, err := buildEvent(fmt.Sprintf("%s-%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
+		sdkEvent, err := buildEvent(fmt.Sprintf("%s_%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
 		if err != nil {
 			return nil, err
 		}
@@ -115,9 +119,15 @@ func EncodeSdkCoins(coins sdk.Coins) wasmvmtypes.Coins {
 }
 
 // EncodeSdkEvents - encode sdk events to wasm events
+// Deprecated `from_contract` will be excluded from the events
 func EncodeSdkEvents(events []sdk.Event) []wasmvmtypes.Event {
 	res := make([]wasmvmtypes.Event, len(events))
 	for i, ev := range events {
+		// Deprecated: from_contract
+		if ev.Type == EventTypeFromContract {
+			continue
+		}
+
 		res[i] = wasmvmtypes.Event{
 			Type:       ev.Type,
 			Attributes: encodeSdkAttributes(ev.Attributes),

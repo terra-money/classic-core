@@ -568,6 +568,14 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	type dict map[string]interface{}
 	expEvents := []dict{
 		{
+			"Type": "wasm",
+			"Attr": []dict{
+				{"contract_address": contractAddr},
+				{"action": "burn"},
+				{"payout": myPayoutAddr},
+			},
+		},
+		{
 			"Type": "from_contract",
 			"Attr": []dict{
 				{"contract_address": contractAddr},
