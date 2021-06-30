@@ -10,8 +10,10 @@ const (
 	EventTypeMigrateContract     = "migrate_contract"
 	EventTypeUpdateContractAdmin = "update_contract_admin"
 	EventTypeClearContractAdmin  = "clear_contract_admin"
-	EventTypeFromContract        = "from_contract"
 	EventTypeWasmPrefix          = "wasm"
+
+	// Deprecated
+	EventTypeFromContract = "from_contract"
 
 	AttributeKeySender          = "sender"
 	AttributeKeyCodeID          = "code_id"
