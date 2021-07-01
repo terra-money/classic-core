@@ -183,11 +183,14 @@ func (k Keeper) InstantiateContract(
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	respData := res.Data
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
+	} else if replyData != nil {
+		respData = replyData
 	}
 
-	return contractAddress, res.Data, nil
+	return contractAddress, respData, nil
 }
 
 // ExecuteContract executes the contract instance
@@ -253,11 +256,14 @@ func (k Keeper) ExecuteContract(
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	respData := res.Data
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
+	} else if replyData != nil {
+		respData = replyData
 	}
 
-	return res.Data, nil
+	return respData, nil
 }
 
 // MigrateContract allows to upgrade a contract to a new code with data migration.
@@ -334,11 +340,14 @@ func (k Keeper) MigrateContract(
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
 	// dispatch submessages and messages
-	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	respData := res.Data
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
+	} else if replyData != nil {
+		respData = replyData
 	}
 
-	return res.Data, nil
+	return respData, nil
 }
 
 // reply is only called from keeper internal functions
@@ -346,7 +355,7 @@ func (k Keeper) MigrateContract(
 func (k Keeper) reply(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
-	reply wasmvmtypes.Reply) error {
+	reply wasmvmtypes.Reply) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "reply")
 	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: reply")
 
@@ -368,29 +377,32 @@ func (k Keeper) reply(
 	// add types.GasMultiplier to occur out of gas panic
 	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Reply")
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrReplyFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrReplyFailed, err.Error())
 	}
 
 	// parse wasm events to sdk events
 	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
-		return sdkerrors.Wrap(err, "event validation failed")
+		return nil, sdkerrors.Wrap(err, "event validation failed")
 	}
 
 	// validate data size
 	if uint64(len(res.Data)) > k.MaxContractDataSize(ctx) {
-		return sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
+		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
 	}
 
 	// emit events
 	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages and messages
-	if err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
-		return sdkerrors.Wrap(err, "dispatch")
+	respData := res.Data
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+		return nil, sdkerrors.Wrap(err, "dispatch")
+	} else if replyData != nil {
+		respData = replyData
 	}
 
-	return nil
+	return respData, nil
 }
 
 func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {

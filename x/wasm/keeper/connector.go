@@ -12,12 +12,14 @@ import (
 
 // dispatchMessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) error {
+// returns ReplyData only when the reply returns non-nil data
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) ([]byte, error) {
+	var respReplyData []byte
 	for _, msg := range msgs {
 		switch msg.ReplyOn {
 		case wasmvmtypes.ReplySuccess, wasmvmtypes.ReplyError, wasmvmtypes.ReplyAlways, wasmvmtypes.ReplyNever:
 		default:
-			return sdkerrors.Wrap(types.ErrInvalidMsg, "unknown replyOn value")
+			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "unknown replyOn value")
 		}
 
 		// first, we build a sub-context which we can use inside the submessages
@@ -45,7 +47,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 
 		// we only callback if requested. Short-circuit here the cases we don't want to
 		if (msg.ReplyOn == wasmvmtypes.ReplySuccess || msg.ReplyOn == wasmvmtypes.ReplyNever) && err != nil {
-			return err
+			return nil, err
 		}
 
 		if msg.ReplyOn == wasmvmtypes.ReplyNever || (msg.ReplyOn == wasmvmtypes.ReplyError && err == nil) {
@@ -75,14 +77,17 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 			Result: result,
 		}
 
-		// we can ignore any result returned as the events are
-		// already in the ctx.EventManager()
-		err = k.reply(ctx, contractAddr, reply)
-		if err != nil {
-			return err
+		// we can ignore any result returned as there is nothing to do with the data
+		// and the events are already in the ctx.EventManager()
+		replyData, err := k.reply(ctx, contractAddr, reply)
+		switch {
+		case err != nil:
+			return nil, sdkerrors.Wrap(err, "reply")
+		case replyData != nil:
+			respReplyData = replyData
 		}
 	}
-	return nil
+	return respReplyData, nil
 }
 
 // dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
