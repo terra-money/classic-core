@@ -14,6 +14,12 @@ import (
 // that dispatched them, both on success as well as failure
 func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) error {
 	for _, msg := range msgs {
+		switch msg.ReplyOn {
+		case wasmvmtypes.ReplySuccess, wasmvmtypes.ReplyError, wasmvmtypes.ReplyAlways, wasmvmtypes.ReplyNever:
+		default:
+			return sdkerrors.Wrap(types.ErrInvalidMsg, "unknown replyOn value")
+		}
+
 		// first, we build a sub-context which we can use inside the submessages
 		subCtx, commit := ctx.CacheContext()
 
