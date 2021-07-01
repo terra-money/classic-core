@@ -7,6 +7,8 @@ import (
 	"github.com/terra-money/core/app/params"
 )
 
+var legacyCodecRegistered = false
+
 // MakeEncodingConfig creates an EncodingConfig for testing
 func MakeEncodingConfig() params.EncodingConfig {
 	encodingConfig := params.MakeEncodingConfig()
@@ -15,10 +17,13 @@ func MakeEncodingConfig() params.EncodingConfig {
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
-	// authz module use this codec to get signbytes.
-	// authz MsgExec can execute all message types,
-	// so legacy.Cdc need to register all amino messages to get proper signature
-	ModuleBasics.RegisterLegacyAminoCodec(legacy.Cdc)
+	if !legacyCodecRegistered {
+		// authz module use this codec to get signbytes.
+		// authz MsgExec can execute all message types,
+		// so legacy.Cdc need to register all amino messages to get proper signature
+		ModuleBasics.RegisterLegacyAminoCodec(legacy.Cdc)
+		legacyCodecRegistered = true
+	}
 
 	return encodingConfig
 }
