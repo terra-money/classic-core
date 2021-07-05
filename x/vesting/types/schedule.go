@@ -100,7 +100,6 @@ func (vs VestingSchedule) GetDenom() string {
 func (vs VestingSchedule) Validate() error {
 	sumRatio := sdk.ZeroDec()
 	for _, lazySchedule := range vs.Schedules {
-
 		if err := lazySchedule.Validate(); err != nil {
 			return err
 		}
