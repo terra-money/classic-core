@@ -5,73 +5,42 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Max params for static check
 const (
-	EnforcedMaxContractSize     = uint64(3000 * 1024) // 3MB
-	EnforcedMaxContractGas      = uint64(100_000_000) // 100,000,000
-	EnforcedMaxContractMsgSize  = uint64(20 * 1024)   // 10KB
-	EnforcedMaxContractDataSize = uint64(5 * 1024)    // 5KB
+	EnforcedMaxContractSize    = uint64(3000 * 1024) // 3MB
+	EnforcedMaxContractGas     = uint64(100_000_000) // 100,000,000
+	EnforcedMaxContractMsgSize = uint64(20 * 1024)   // 10KB
 )
 
 // Parameter keys
 var (
-	KeyMaxContractSize     = []byte("MaxContractSize")
-	KeyMaxContractGas      = []byte("MaxContractGas")
-	KeyMaxContractMsgSize  = []byte("MaxContractMsgSize")
-	KeyMaxContractDataSize = []byte("MaxContractDataSize")
+	KeyMaxContractSize    = []byte("MaxContractSize")
+	KeyMaxContractGas     = []byte("MaxContractGas")
+	KeyMaxContractMsgSize = []byte("MaxContractMsgSize")
 )
 
 // Default parameter values
 const (
-	DefaultMaxContractSize     = uint64(600 * 1024) // 600 KB
-	DefaultMaxContractGas      = uint64(20_000_000) // 20,000,000
-	DefaultMaxContractMsgSize  = uint64(4 * 1024)   // 4KB
-	DefaultMaxContractDataSize = uint64(1024)       // 1KB
-)
-
-// Constant gas parameters
-const (
-	InstanceCost       = uint64(40_000) // sdk gas cost for executing wasmVM engine
-	CompileCostPerByte = uint64(2)      // sdk gas cost per bytes
-
-	GasMultiplier = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
-
-	humanizeCost               = uint64(5) // sdk gas cost to convert canonical address to human address
-	canonicalizeCost           = uint64(4) // sdk gas cost to convert human address to canonical address
-	deserializationCostPerByte = uint64(1) // sdk gas cost to deserialize data
-
-	// HumanizeWasmGasCost humanize cost in wasm gas unit
-	HumanizeWasmGasCost = humanizeCost * GasMultiplier
-	// CanonicalizeWasmGasCost canonicalize cost in wasm gas unit
-	CanonicalizeWasmGasCost = canonicalizeCost * GasMultiplier
+	DefaultMaxContractSize    = uint64(600 * 1024) // 600 KB
+	DefaultMaxContractGas     = uint64(20_000_000) // 20,000,000
+	DefaultMaxContractMsgSize = uint64(4 * 1024)   // 4KB
 
 	// ContractMemoryLimit is the memory limit of each contract execution (in MiB)
 	// constant value so all nodes run with the same limit.
 	ContractMemoryLimit = uint32(32)
 )
 
-var (
-	// JSONDeserializationWasmGasCost json deserialization cost in wasm gas unit
-	JSONDeserializationWasmGasCost = wasmvmtypes.UFraction{
-		Numerator:   deserializationCostPerByte * GasMultiplier,
-		Denominator: 1,
-	}
-
-	_ paramstypes.ParamSet = &Params{}
-)
+var _ paramstypes.ParamSet = &Params{}
 
 // DefaultParams creates default treasury module parameters
 func DefaultParams() Params {
 	return Params{
-		MaxContractSize:     DefaultMaxContractSize,
-		MaxContractGas:      DefaultMaxContractGas,
-		MaxContractMsgSize:  DefaultMaxContractMsgSize,
-		MaxContractDataSize: DefaultMaxContractDataSize,
+		MaxContractSize:    DefaultMaxContractSize,
+		MaxContractGas:     DefaultMaxContractGas,
+		MaxContractMsgSize: DefaultMaxContractMsgSize,
 	}
 }
 
@@ -83,7 +52,6 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeyMaxContractSize, &p.MaxContractSize, validateMaxContractSize),
 		paramstypes.NewParamSetPair(KeyMaxContractGas, &p.MaxContractGas, validateMaxContractGas),
 		paramstypes.NewParamSetPair(KeyMaxContractMsgSize, &p.MaxContractMsgSize, validateMaxContractMsgSize),
-		paramstypes.NewParamSetPair(KeyMaxContractDataSize, &p.MaxContractDataSize, validateMaxContractDataSize),
 	}
 }
 
@@ -149,19 +117,6 @@ func validateMaxContractMsgSize(i interface{}) error {
 
 	if v > EnforcedMaxContractMsgSize {
 		return fmt.Errorf("max contract msg byte size %d must be equal or smaller than %d", v, EnforcedMaxContractMsgSize)
-	}
-
-	return nil
-}
-
-func validateMaxContractDataSize(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v > EnforcedMaxContractDataSize {
-		return fmt.Errorf("max contract data byte size %d must be equal or smaller than %d", v, EnforcedMaxContractDataSize)
 	}
 
 	return nil

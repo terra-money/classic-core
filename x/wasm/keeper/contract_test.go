@@ -232,7 +232,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.True(t, gasAfter-gasBefore > types.InstanceCost)
+	require.True(t, gasAfter-gasBefore > types.InstantiateContractCosts(0))
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)

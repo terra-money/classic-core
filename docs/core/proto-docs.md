@@ -13145,7 +13145,6 @@ Params defines the parameters for the wasm module.
 | `max_contract_size` | [uint64](#uint64) |  |  |
 | `max_contract_gas` | [uint64](#uint64) |  |  |
 | `max_contract_msg_size` | [uint64](#uint64) |  |  |
-| `max_contract_data_size` | [uint64](#uint64) |  |  |
 
 
 

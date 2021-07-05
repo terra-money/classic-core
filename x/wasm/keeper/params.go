@@ -24,12 +24,6 @@ func (k Keeper) MaxContractMsgSize(ctx sdk.Context) (res uint64) {
 	return
 }
 
-// MaxContractDataSize defines maximum bytes size of returned data
-func (k Keeper) MaxContractDataSize(ctx sdk.Context) (res uint64) {
-	k.paramSpace.Get(ctx, types.KeyMaxContractDataSize, &res)
-	return
-}
-
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)

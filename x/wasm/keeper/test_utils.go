@@ -355,7 +355,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.SetLastInstanceID(ctx, 0)
 
 	return TestInput{
-		ctx, legacyAmino,
+		ctx.WithGasMeter(sdk.NewGasMeter(keeper.MaxContractGas(ctx))),
+		legacyAmino,
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,

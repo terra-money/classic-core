@@ -27,7 +27,8 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 	}
 
 	// consume gas for compile cost
-	ctx.GasMeter().ConsumeGas(types.CompileCostPerByte*uint64(len(wasmCode)), "Compiling WASM Bytes Cost")
+
+	ctx.GasMeter().ConsumeGas(types.CompileCosts(len(wasmCode)), "Compiling WASM Bytes Cost")
 
 	codeHash, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
@@ -93,7 +94,7 @@ func (k Keeper) InstantiateContract(
 	initMsg []byte,
 	deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
-	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: init")
+	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(initMsg)), "Loading CosmWasm module: init")
 
 	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, nil, sdkerrors.Wrap(types.ErrExceedMaxContractMsgSize, "init msg size is too huge")
@@ -151,16 +152,19 @@ func (k Keeper) InstantiateContract(
 		contractStore,
 		k.getCosmWasmAPI(ctx),
 		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getWasmVMGasMeter(ctx),
+		k.getWasmVMGasRemaining(ctx),
 		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
-	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract init")
+	k.consumeWasmVMGas(ctx, gasUsed+types.GasMultiplier, "Contract initialize")
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
+
+	// consume gas for wasm events
+	ctx.GasMeter().ConsumeGas(types.EventCosts(res.Attributes, res.Events), "Event Cost")
 
 	// Must store contract info first, so last part can use it
 	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, admin, initMsg)
@@ -172,11 +176,6 @@ func (k Keeper) InstantiateContract(
 	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "event validation failed")
-	}
-
-	// validate data size
-	if uint64(len(res.Data)) > k.MaxContractDataSize(ctx) {
-		return nil, nil, sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
 	}
 
 	// emit events
@@ -198,12 +197,12 @@ func (k Keeper) ExecuteContract(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
 	sender sdk.AccAddress,
-	exeMsg []byte,
+	execMsg []byte,
 	coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
-	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: execute")
+	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(execMsg)), "Loading CosmWasm module: execute")
 
-	if uint64(len(exeMsg)) > k.MaxContractMsgSize(ctx) {
+	if uint64(len(execMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractMsgSize, "execute msg size is too huge")
 	}
 
@@ -226,30 +225,28 @@ func (k Keeper) ExecuteContract(
 		codeInfo.CodeHash,
 		env,
 		info,
-		exeMsg,
+		execMsg,
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
 		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getWasmVMGasMeter(ctx),
+		k.getWasmVMGasRemaining(ctx),
 		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
-	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Execution")
+	k.consumeWasmVMGas(ctx, gasUsed+types.GasMultiplier, "Contract Execution")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
 	}
+
+	// consume gas for wasm events
+	ctx.GasMeter().ConsumeGas(types.EventCosts(res.Attributes, res.Events), "Event Cost")
 
 	// parse wasm events to sdk events
 	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "event validation failed")
-	}
-
-	// validate data size
-	if uint64(len(res.Data)) > k.MaxContractDataSize(ctx) {
-		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
 	}
 
 	// emit events
@@ -274,7 +271,7 @@ func (k Keeper) MigrateContract(
 	newCodeID uint64,
 	migrateMsg []byte) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
-	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: migrate")
+	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(migrateMsg)), "Loading CosmWasm module: migrate")
 
 	if uint64(len(migrateMsg)) > k.MaxContractMsgSize(ctx) {
 		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractMsgSize, "migrate msg size is too huge")
@@ -311,26 +308,24 @@ func (k Keeper) MigrateContract(
 		prefixStore,
 		k.getCosmWasmAPI(ctx),
 		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getWasmVMGasMeter(ctx),
+		k.getWasmVMGasRemaining(ctx),
 		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
-	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Migration")
+	k.consumeWasmVMGas(ctx, gasUsed+types.GasMultiplier, "Contract Migration")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
+
+	// consume gas for wasm events
+	ctx.GasMeter().ConsumeGas(types.EventCosts(res.Attributes, res.Events), "Event Cost")
 
 	// parse wasm events to sdk events
 	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "event validation failed")
-	}
-
-	// validate data size
-	if uint64(len(res.Data)) > k.MaxContractDataSize(ctx) {
-		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
 	}
 
 	// emit events
@@ -357,7 +352,7 @@ func (k Keeper) reply(
 	contractAddress sdk.AccAddress,
 	reply wasmvmtypes.Reply) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "reply")
-	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: reply")
+	ctx.GasMeter().ConsumeGas(types.ReplyCosts(reply), "Loading CosmWasm module: reply")
 
 	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
 
@@ -369,26 +364,24 @@ func (k Keeper) reply(
 		storePrefix,
 		k.getCosmWasmAPI(ctx),
 		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getWasmVMGasMeter(ctx),
+		k.getWasmVMGasRemaining(ctx),
 		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
-	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Reply")
+	k.consumeWasmVMGas(ctx, gasUsed+types.GasMultiplier, "Contract Reply")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrReplyFailed, err.Error())
 	}
+
+	// consume gas for wasm events
+	ctx.GasMeter().ConsumeGas(types.EventCosts(res.Attributes, res.Events), "Event Cost")
 
 	// parse wasm events to sdk events
 	events, err := types.ParseEvents(contractAddress, res.Attributes, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "event validation failed")
-	}
-
-	// validate data size
-	if uint64(len(res.Data)) > k.MaxContractDataSize(ctx) {
-		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractDataSize, "returned data size is too huge")
 	}
 
 	// emit events
@@ -419,7 +412,7 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 
 func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
-	ctx.GasMeter().ConsumeGas(types.InstanceCost, "Loading CosmWasm module: query")
+	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(queryMsg)), "Loading CosmWasm module: query")
 
 	codeInfo, contractStorePrefix, err := k.getContractDetails(ctx, contractAddress)
 	if err != nil {
@@ -434,13 +427,13 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		contractStorePrefix,
 		k.getCosmWasmAPI(ctx),
 		k.querier.WithCtx(ctx),
-		k.getGasMeter(ctx),
-		k.getGasRemaining(ctx),
+		k.getWasmVMGasMeter(ctx),
+		k.getWasmVMGasRemaining(ctx),
 		types.JSONDeserializationWasmGasCost,
 	)
 
 	// add types.GasMultiplier to occur out of gas panic
-	k.consumeGas(ctx, gasUsed+types.GasMultiplier, "Contract Query")
+	k.consumeWasmVMGas(ctx, gasUsed+types.GasMultiplier, "Contract Query")
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
 	}

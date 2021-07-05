@@ -235,5 +235,6 @@ func TestMigrate(t *testing.T) {
 		}
 	]
 }`
+
 	require.Equal(t, expected, string(indentedBz))
 }
