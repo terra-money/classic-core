@@ -3,7 +3,7 @@ go 1.16
 module github.com/terra-money/core
 
 require (
-	github.com/CosmWasm/wasmvm v0.15.1-0.20210625091425-b7e65fc1ce9e
+	github.com/CosmWasm/wasmvm v0.15.1
 	github.com/cosmos/cosmos-sdk v0.43.0-beta1
 	github.com/cosmos/ibc-go v1.0.0-alpha2
 	github.com/gogo/protobuf v1.3.3
