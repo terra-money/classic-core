@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/gov/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -27,12 +25,24 @@ func NewWasmMsgParser() WasmMsgParser {
 func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	msg := wasmMsg.Gov
 
-	voteOption, err := types.VoteOptionFromString(utils.NormalizeVoteOption(msg.Vote.Vote.String()))
-	if err != nil {
-		return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of vote option")
+	var option types.VoteOption
+	switch msg.Vote.Vote {
+	case wasmvmtypes.Yes:
+		option = types.OptionYes
+	case wasmvmtypes.No:
+		option = types.OptionNo
+	case wasmvmtypes.NoWithVeto:
+		option = types.OptionNoWithVeto
+	case wasmvmtypes.Abstain:
+		option = types.OptionAbstain
 	}
 
-	cosmosMsg := types.NewMsgVote(contractAddr, msg.Vote.ProposalId, voteOption)
+	cosmosMsg := &types.MsgVote{
+		ProposalId: msg.Vote.ProposalId,
+		Voter:      contractAddr.String(),
+		Option:     option,
+	}
+
 	return cosmosMsg, cosmosMsg.ValidateBasic()
 }
 
