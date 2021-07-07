@@ -32,7 +32,7 @@ func TestEncoding(t *testing.T) {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: wasmvmtypes.VoteMsg{
+					Vote: &wasmvmtypes.VoteMsg{
 						ProposalId: 1,
 						Vote:       wasmvmtypes.Yes,
 					},
@@ -48,7 +48,7 @@ func TestEncoding(t *testing.T) {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: wasmvmtypes.VoteMsg{
+					Vote: &wasmvmtypes.VoteMsg{
 						ProposalId: 1,
 						Vote:       wasmvmtypes.No,
 					},
@@ -64,7 +64,7 @@ func TestEncoding(t *testing.T) {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: wasmvmtypes.VoteMsg{
+					Vote: &wasmvmtypes.VoteMsg{
 						ProposalId: 1,
 						Vote:       wasmvmtypes.NoWithVeto,
 					},
@@ -80,7 +80,7 @@ func TestEncoding(t *testing.T) {
 			sender: addrs[0],
 			input: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
-					Vote: wasmvmtypes.VoteMsg{
+					Vote: &wasmvmtypes.VoteMsg{
 						ProposalId: 1,
 						Vote:       wasmvmtypes.Abstain,
 					},
