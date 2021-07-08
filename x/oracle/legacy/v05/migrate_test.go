@@ -2,7 +2,6 @@ package v05_test
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -237,22 +236,25 @@ func TestMigrate(t *testing.T) {
 	]
 }`
 
-	require.True(t, areEqualJSON(expected, string(indentedBz)))
+	areEqualJSON(t, expected, string(indentedBz))
 }
 
-func areEqualJSON(s1, s2 string) bool {
+func areEqualJSON(t *testing.T, s1, s2 string) {
 	var o1 interface{}
 	var o2 interface{}
 
 	var err error
 	err = json.Unmarshal([]byte(s1), &o1)
-	if err != nil {
-		panic(err)
-	}
-	err = json.Unmarshal([]byte(s2), &o2)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
-	return reflect.DeepEqual(o1, o2)
+	err = json.Unmarshal([]byte(s2), &o2)
+	require.NoError(t, err)
+
+	bz1, err := json.Marshal(o1)
+	require.NoError(t, err)
+
+	bz2, err := json.Marshal(o2)
+	require.NoError(t, err)
+
+	require.Equal(t, bz1, bz2)
 }
