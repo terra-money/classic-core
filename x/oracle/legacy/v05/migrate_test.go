@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -40,72 +41,66 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	oracleGenState := v04oracle.GenesisState{
-		FeederDelegations: map[string]sdk.AccAddress{
-			"terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn": feeder2,
-			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": feeder,
+		AggregateExchangeRatePrevotes: []v04oracle.AggregateExchangeRatePrevote{
+			{
+				Hash:        voteHash,
+				SubmitBlock: 100,
+				Voter:       voter2,
+			},
+			{
+				Hash:        voteHash,
+				SubmitBlock: 100,
+				Voter:       voter,
+			},
+		},
+		AggregateExchangeRateVotes: []v04oracle.AggregateExchangeRateVote{
+			{
+				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
+					{
+						Denom:        core.MicroSDRDenom,
+						ExchangeRate: sdk.NewDec(1800),
+					},
+					{
+						Denom:        core.MicroUSDDenom,
+						ExchangeRate: sdk.NewDec(1700),
+					},
+				},
+				Voter: voter2,
+			},
+			{
+				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
+					{
+						Denom:        core.MicroSDRDenom,
+						ExchangeRate: sdk.NewDec(1800),
+					},
+					{
+						Denom:        core.MicroUSDDenom,
+						ExchangeRate: sdk.NewDec(1700),
+					},
+				},
+				Voter: voter,
+			},
 		},
 		ExchangeRates: map[string]sdk.Dec{
 			core.MicroSDRDenom: sdk.NewDec(1800),
 			core.MicroUSDDenom: sdk.NewDec(1700),
 		},
-		ExchangeRatePrevotes: []v04oracle.ExchangeRatePrevote{},
-		ExchangeRateVotes:    []v04oracle.ExchangeRateVote{},
+		FeederDelegations: map[string]sdk.AccAddress{
+			"terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn": feeder2,
+			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": feeder,
+		},
 		MissCounters: map[string]int64{
 			"terravaloper13vs2znvhdcy948ejsh7p8p22j8l4n4y07qkhsn": 321,
 			"terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a": 123,
 		},
-		AggregateExchangeRatePrevotes: []v04oracle.AggregateExchangeRatePrevote{
-			{
-				Hash:        voteHash,
-				Voter:       voter2,
-				SubmitBlock: 100,
-			},
-			{
-				Hash:        voteHash,
-				Voter:       voter,
-				SubmitBlock: 100,
-			},
-		},
-		AggregateExchangeRateVotes: []v04oracle.AggregateExchangeRateVote{
-			{
-				Voter: voter2,
-				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
-					{
-						Denom:        core.MicroSDRDenom,
-						ExchangeRate: sdk.NewDec(1800),
-					},
-					{
-						Denom:        core.MicroUSDDenom,
-						ExchangeRate: sdk.NewDec(1700),
-					},
-				},
-			},
-			{
-				Voter: voter,
-				ExchangeRateTuples: v04oracle.ExchangeRateTuples{
-					{
-						Denom:        core.MicroSDRDenom,
-						ExchangeRate: sdk.NewDec(1800),
-					},
-					{
-						Denom:        core.MicroUSDDenom,
-						ExchangeRate: sdk.NewDec(1700),
-					},
-				},
-			},
-		},
-		TobinTaxes: map[string]sdk.Dec{
-			core.MicroSDRDenom: sdk.NewDecWithPrec(1, 2),
-			core.MicroUSDDenom: sdk.NewDecWithPrec(2, 2),
-		},
 		Params: v04oracle.Params{
-			VotePeriod:               100,
-			VoteThreshold:            sdk.NewDecWithPrec(5, 1),
+			MinValidPerWindow:        sdk.NewDecWithPrec(5, 2),
 			RewardBand:               sdk.NewDecWithPrec(7, 2),
 			RewardDistributionWindow: 100,
 			SlashFraction:            sdk.NewDecWithPrec(1, 3),
 			SlashWindow:              100,
-			MinValidPerWindow:        sdk.NewDecWithPrec(5, 2),
+			VotePeriod:               100,
+			VoteThreshold:            sdk.NewDecWithPrec(5, 1),
 			Whitelist: v04oracle.DenomList{
 				{
 					Name:     core.MicroSDRDenom,
@@ -117,6 +112,12 @@ func TestMigrate(t *testing.T) {
 				},
 			},
 		},
+		TobinTaxes: map[string]sdk.Dec{
+			core.MicroSDRDenom: sdk.NewDecWithPrec(1, 2),
+			core.MicroUSDDenom: sdk.NewDecWithPrec(2, 2),
+		},
+		ExchangeRatePrevotes: []v04oracle.ExchangeRatePrevote{},
+		ExchangeRateVotes:    []v04oracle.ExchangeRateVote{},
 	}
 
 	migrated := v05oracle.Migrate(oracleGenState)
@@ -236,25 +237,5 @@ func TestMigrate(t *testing.T) {
 	]
 }`
 
-	areEqualJSON(t, expected, string(indentedBz))
-}
-
-func areEqualJSON(t *testing.T, s1, s2 string) {
-	var o1 interface{}
-	var o2 interface{}
-
-	var err error
-	err = json.Unmarshal([]byte(s1), &o1)
-	require.NoError(t, err)
-
-	err = json.Unmarshal([]byte(s2), &o2)
-	require.NoError(t, err)
-
-	bz1, err := json.Marshal(o1)
-	require.NoError(t, err)
-
-	bz2, err := json.Marshal(o2)
-	require.NoError(t, err)
-
-	require.Equal(t, bz1, bz2)
+	assert.JSONEq(t, expected, string(indentedBz))
 }

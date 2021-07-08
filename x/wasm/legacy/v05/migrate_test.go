@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -195,5 +196,5 @@ func TestMigrate(t *testing.T) {
 		"max_contract_size": "614400"
 	}
 }`
-	require.Equal(t, expected, string(indentedBz))
+	assert.JSONEq(t, expected, string(indentedBz))
 }

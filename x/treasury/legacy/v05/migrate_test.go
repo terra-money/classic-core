@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -181,25 +182,5 @@ func TestMigrate(t *testing.T) {
 	"tax_rate": "0.020000000000000000"
 }`
 
-	areEqualJSON(t, expected, string(indentedBz))
-}
-
-func areEqualJSON(t *testing.T, s1, s2 string) {
-	var o1 interface{}
-	var o2 interface{}
-
-	var err error
-	err = json.Unmarshal([]byte(s1), &o1)
-	require.NoError(t, err)
-
-	err = json.Unmarshal([]byte(s2), &o2)
-	require.NoError(t, err)
-
-	bz1, err := json.Marshal(o1)
-	require.NoError(t, err)
-
-	bz2, err := json.Marshal(o2)
-	require.NoError(t, err)
-
-	require.Equal(t, bz1, bz2)
+	assert.JSONEq(t, expected, string(indentedBz))
 }
