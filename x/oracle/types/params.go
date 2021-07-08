@@ -100,7 +100,7 @@ func (p Params) Validate() error {
 	}
 
 	if p.RewardDistributionWindow < p.VotePeriod {
-		return fmt.Errorf("oracle parameter RewardDistributionWindow must be greater than or equal with votes period")
+		return fmt.Errorf("oracle parameter RewardDistributionWindow must be greater than or equal with VotePeriod")
 	}
 
 	if p.SlashFraction.GT(sdk.OneDec()) || p.SlashFraction.IsNegative() {
@@ -108,7 +108,7 @@ func (p Params) Validate() error {
 	}
 
 	if p.SlashWindow < p.VotePeriod {
-		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal with votes period")
+		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal with VotePeriod")
 	}
 
 	if p.MinValidPerWindow.GT(sdk.OneDec()) || p.MinValidPerWindow.IsNegative() {

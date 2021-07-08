@@ -91,7 +91,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, address)
-		if val == nil {
+		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "unable to find validator"), nil, nil
 		}
 
@@ -155,7 +155,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 
 		// ensure the validator exists
 		val := k.StakingKeeper.Validator(ctx, address)
-		if val == nil {
+		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "unable to find validator"), nil, nil
 		}
 

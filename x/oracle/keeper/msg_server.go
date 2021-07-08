@@ -33,23 +33,14 @@ func (ms msgServer) AggregateExchangeRatePrevote(goCtx context.Context, msg *typ
 		return nil, err
 	}
 
-	if !feederAddr.Equals(valAddr) {
-		delegate := ms.GetFeederDelegation(ctx, valAddr)
-		if !delegate.Equals(feederAddr) {
-			return nil, sdkerrors.Wrap(types.ErrNoVotingPermission, msg.Feeder)
-		}
+	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+		return nil, err
 	}
 
 	// Convert hex string to votehash
 	voteHash, err := types.AggregateVoteHashFromHexString(msg.Hash)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidHash, err.Error())
-	}
-
-	// Check that the given validator exists
-	val := ms.StakingKeeper.Validator(ctx, valAddr)
-	if val == nil {
-		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Validator)
 	}
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight()))
@@ -83,17 +74,8 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		return nil, err
 	}
 
-	if !feederAddr.Equals(valAddr) {
-		delegate := ms.GetFeederDelegation(ctx, valAddr)
-		if !delegate.Equals(feederAddr) {
-			return nil, sdkerrors.Wrap(types.ErrNoVotingPermission, msg.Feeder)
-		}
-	}
-
-	// Check that the given validator exists
-	val := ms.StakingKeeper.Validator(ctx, valAddr)
-	if val == nil {
-		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Validator)
+	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+		return nil, err
 	}
 
 	params := ms.GetParams(ctx)

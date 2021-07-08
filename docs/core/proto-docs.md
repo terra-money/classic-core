@@ -13654,7 +13654,6 @@ Wasm code to the system
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
-| `code_id` | [uint64](#uint64) |  | CodeID is optional |
 
 
 

@@ -3,6 +3,7 @@ package oracle_test
 import (
 	"fmt"
 	"math"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -167,6 +168,7 @@ func TestOracleTally(t *testing.T) {
 			Recipient: valAddr,
 		}
 	}
+	sort.Sort(ballot)
 	weightedMedian := ballot.WeightedMedian()
 	standardDeviation := ballot.StandardDeviation()
 	maxSpread := weightedMedian.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
