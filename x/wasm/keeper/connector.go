@@ -126,7 +126,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	}
 
 	if sdkMsg == nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "failed to parse msg")
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to parse msg %v", msg)
 	}
 
 	// Charge tax on result msg

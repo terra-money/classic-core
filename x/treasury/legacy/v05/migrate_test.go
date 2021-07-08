@@ -2,6 +2,7 @@ package v05_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -181,5 +182,22 @@ func TestMigrate(t *testing.T) {
 	"tax_rate": "0.020000000000000000"
 }`
 
-	require.Equal(t, expected, string(indentedBz))
+	require.True(t, areEqualJSON(expected, string(indentedBz)))
+}
+
+func areEqualJSON(s1, s2 string) bool {
+	var o1 interface{}
+	var o2 interface{}
+
+	var err error
+	err = json.Unmarshal([]byte(s1), &o1)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal([]byte(s2), &o2)
+	if err != nil {
+		panic(err)
+	}
+
+	return reflect.DeepEqual(o1, o2)
 }
