@@ -30,7 +30,7 @@ func Migrate(
 
 	// Remove cumulative height dependencies
 	cumulativeEpochs := int(treasuryGenState.CumulativeHeight / int64(v04treasury.BlocksPerWeek))
-	epochStates := make([]v05treasury.EpochState, len(treasuryGenState.TRs))
+	epochStates := make([]v05treasury.EpochState, len(treasuryGenState.TRs)-cumulativeEpochs)
 	for i := range treasuryGenState.TRs {
 		if i < cumulativeEpochs {
 			continue

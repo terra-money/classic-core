@@ -34,8 +34,6 @@ message MsgStoreCode {
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 2 [(gogoproto.moretags) = "yaml:\"wasm_byte_code\"", (gogoproto.customname) = "WASMByteCode"];
-  // CodeID is optional
-  uint64 code_id = 3 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
 }
 
 // MsgStoreCodeResponse defines the Msg/StoreCode response type.

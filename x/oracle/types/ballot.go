@@ -79,7 +79,7 @@ func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
-			sort.Sort(pb)
+			panic("ballot must be sorted")
 		}
 
 		pivot := int64(0)
@@ -126,7 +126,7 @@ func (pb ExchangeRateBallot) Len() int {
 // Less reports whether the element with
 // index i should sort before the element with index j.
 func (pb ExchangeRateBallot) Less(i, j int) bool {
-	return pb[i].ExchangeRate.LTE(pb[j].ExchangeRate)
+	return pb[i].ExchangeRate.LT(pb[j].ExchangeRate)
 }
 
 // Swap implements sort.Interface.
