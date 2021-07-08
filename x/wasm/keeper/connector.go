@@ -10,21 +10,18 @@ import (
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
-func (k Keeper) dispatchAll(ctx sdk.Context, contractAddr sdk.AccAddress, subMsgs []wasmvmtypes.SubMsg, msgs []wasmvmtypes.CosmosMsg) error {
-	// first dispatch all submessages (and the replies).
-	err := k.dispatchSubmessages(ctx, contractAddr, subMsgs...)
-	if err != nil {
-		return err
-	}
-
-	// then dispatch all the normal messages
-	return k.dispatchMessages(ctx, contractAddr, msgs...)
-}
-
-// dispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
+// dispatchMessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
-func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) error {
+// returns ReplyData only when the reply returns non-nil data
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) ([]byte, error) {
+	var respReplyData []byte
 	for _, msg := range msgs {
+		switch msg.ReplyOn {
+		case wasmvmtypes.ReplySuccess, wasmvmtypes.ReplyError, wasmvmtypes.ReplyAlways, wasmvmtypes.ReplyNever:
+		default:
+			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "unknown replyOn value")
+		}
+
 		// first, we build a sub-context which we can use inside the submessages
 		subCtx, commit := ctx.CacheContext()
 
@@ -48,12 +45,13 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 			ctx.EventManager().EmitEvents(events)
 		}
 
-		// we only callback if requested. Short-circuit here the two cases we don't want to
-		// 1. reply on success but error happened
-		// 2. reply on failure but no error happened
-		if (msg.ReplyOn == wasmvmtypes.ReplySuccess && err != nil) ||
-			(msg.ReplyOn == wasmvmtypes.ReplyError && err == nil) {
-			return err
+		// we only callback if requested. Short-circuit here the cases we don't want to
+		if (msg.ReplyOn == wasmvmtypes.ReplySuccess || msg.ReplyOn == wasmvmtypes.ReplyNever) && err != nil {
+			return nil, err
+		}
+
+		if msg.ReplyOn == wasmvmtypes.ReplyNever || (msg.ReplyOn == wasmvmtypes.ReplyError && err == nil) {
+			continue
 		}
 
 		// otherwise, we create a SubcallResult and pass it into the calling contract
@@ -79,28 +77,17 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 			Result: result,
 		}
 
-		// we can ignore any result returned as the events are
-		// already in the ctx.EventManager()
-		err = k.reply(ctx, contractAddr, reply)
-		if err != nil {
-			return err
+		// we can ignore any result returned as there is nothing to do with the data
+		// and the events are already in the ctx.EventManager()
+		replyData, err := k.reply(ctx, contractAddr, reply)
+		switch {
+		case err != nil:
+			return nil, sdkerrors.Wrap(err, "reply")
+		case replyData != nil:
+			respReplyData = replyData
 		}
 	}
-	return nil
-}
-
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		events, _, err := k.dispatchMessage(ctx, contractAddr, msg)
-		if err != nil {
-			return err
-		}
-
-		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-		ctx.EventManager().EmitEvents(events)
-	}
-
-	return nil
+	return respReplyData, nil
 }
 
 // dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
@@ -139,7 +126,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	}
 
 	if sdkMsg == nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "failed to parse msg")
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to parse msg %v", msg)
 	}
 
 	// Charge tax on result msg

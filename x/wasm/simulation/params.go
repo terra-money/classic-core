@@ -31,10 +31,5 @@ func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 				return fmt.Sprintf("\"%d\"", GenMaxContractMsgSize(r))
 			},
 		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.KeyMaxContractDataSize),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", GenMaxContractDataSize(r))
-			},
-		),
 	}
 }

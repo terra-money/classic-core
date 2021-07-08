@@ -130,6 +130,7 @@ import (
 
 	bankwasm "github.com/terra-money/core/custom/bank/wasm"
 	distrwasm "github.com/terra-money/core/custom/distribution/wasm"
+	govwasm "github.com/terra-money/core/custom/gov/wasm"
 	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
@@ -416,6 +417,7 @@ func NewTerraApp(
 		wasmtypes.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteWasm:         wasmkeeper.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
 	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
 	app.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
 		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.BankKeeper),

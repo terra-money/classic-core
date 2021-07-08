@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+ * (cosmwasm) Bump CosmWasm version to [v0.15.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.0).
  * (tendermint) Bump Tendermint version to [v0.34.10](https://github.com/tendermint/tendermint/releases/tag/v0.34.10).
  * (cosmos-sdk) Bump Cosmos SDK version to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0).
  * (cosmwasm) Bump CosmWasm version to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
