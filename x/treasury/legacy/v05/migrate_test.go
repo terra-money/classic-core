@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -181,5 +182,5 @@ func TestMigrate(t *testing.T) {
 	"tax_rate": "0.020000000000000000"
 }`
 
-	require.Equal(t, expected, string(indentedBz))
+	assert.JSONEq(t, expected, string(indentedBz))
 }

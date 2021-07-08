@@ -14,27 +14,54 @@ import (
 // DefaultFeatures - Cosmwasm feature
 const DefaultFeatures = "stargate,staking,terra"
 
-// ValidateAndParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
-func ValidateAndParseEvents(contractAddr sdk.AccAddress, params EventParams, attributes ...wasmvmtypes.EventAttribute) (sdk.Events, error) {
-	if len(attributes) == 0 {
+// ParseEvents converts wasm EventAttributes and Events into an sdk.Events
+func ParseEvents(
+	contractAddr sdk.AccAddress,
+	attributes wasmvmtypes.EventAttributes,
+	events wasmvmtypes.Events,
+) (sdk.Events, error) {
+	if len(attributes) == 0 && len(events) == 0 {
 		return nil, nil
 	}
 
-	if len(attributes) > int(params.MaxAttributeNum) {
-		return nil, ErrExceedMaxContractEventAttributeNum
+	var sdkEvents sdk.Events
+
+	sdkEvent, err := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+
+	// Deprecated: from_contract
+	sdkEvent.Type = EventTypeFromContract
+	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+
+	// append wasm prefix for the events
+	for _, event := range events {
+		sdkEvent, err := buildEvent(fmt.Sprintf("%s_%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+	}
+
+	return sdkEvents, nil
+}
+
+func buildEvent(
+	eventType string,
+	contractAddr sdk.AccAddress,
+	attributes wasmvmtypes.EventAttributes,
+) (*sdk.Event, error) {
+	if len(attributes) == 0 {
+		return nil, nil
 	}
 
 	// we always tag with the contract address issuing this event
 	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddress, contractAddr.String())}
 	for _, l := range attributes {
-		if len(l.Key) > int(params.MaxAttributeKeyLength) {
-			return nil, ErrExceedMaxContractEventAttributeKeyLength
-		}
-
-		if len(l.Value) > int(params.MaxAttributeValueLength) {
-			return nil, ErrExceedMaxContractEventAttributeValueLength
-		}
-
 		// and reserve the contract_address key for our use (not contract)
 		if l.Key != AttributeKeyContractAddress {
 			attr := sdk.NewAttribute(l.Key, l.Value)
@@ -42,7 +69,8 @@ func ValidateAndParseEvents(contractAddr sdk.AccAddress, params EventParams, att
 		}
 	}
 
-	return sdk.Events{sdk.NewEvent(EventTypeFromContract, attrs...)}, nil
+	event := sdk.NewEvent(eventType, attrs...)
+	return &event, nil
 }
 
 // ParseToCoin converts wasm coin to sdk.Coin
@@ -91,9 +119,15 @@ func EncodeSdkCoins(coins sdk.Coins) wasmvmtypes.Coins {
 }
 
 // EncodeSdkEvents - encode sdk events to wasm events
+// Deprecated `from_contract` will be excluded from the events
 func EncodeSdkEvents(events []sdk.Event) []wasmvmtypes.Event {
 	res := make([]wasmvmtypes.Event, len(events))
 	for i, ev := range events {
+		// Deprecated: from_contract
+		if ev.Type == EventTypeFromContract {
+			continue
+		}
+
 		res[i] = wasmvmtypes.Event{
 			Type:       ev.Type,
 			Attributes: encodeSdkAttributes(ev.Attributes),

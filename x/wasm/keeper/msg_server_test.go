@@ -39,7 +39,7 @@ func TestInstantiateExceedMaxGas(t *testing.T) {
 	// must panic
 	require.Panics(t, func() {
 		params := keeper.GetParams(ctx)
-		params.MaxContractGas = types.InstanceCost + 1
+		params.MaxContractGas = types.InstantiateContractCosts(0) + 1
 		keeper.SetParams(ctx, params)
 		NewMsgServerImpl(keeper).InstantiateContract(ctx.Context(), types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, codeID, initMsgBz, nil))
 	})
@@ -74,7 +74,7 @@ func TestExecuteExceedMaxGas(t *testing.T) {
 	// must panic
 	require.Panics(t, func() {
 		params := keeper.GetParams(ctx)
-		params.MaxContractGas = types.InstanceCost + 1
+		params.MaxContractGas = types.InstantiateContractCosts(0) + 1
 		keeper.SetParams(ctx, params)
 		NewMsgServerImpl(keeper).ExecuteContract(ctx.Context(), types.NewMsgExecuteContract(creator, addr, []byte(`{"release":{}}`), nil))
 	})
@@ -109,7 +109,7 @@ func TestMigrateExceedMaxGas(t *testing.T) {
 	// must panic
 	require.Panics(t, func() {
 		params := keeper.GetParams(ctx)
-		params.MaxContractGas = types.InstanceCost + 1
+		params.MaxContractGas = types.InstantiateContractCosts(0) + 1
 		keeper.SetParams(ctx, params)
 		NewMsgServerImpl(keeper).MigrateContract(ctx.Context(), types.NewMsgMigrateContract(creator, addr, codeID, []byte(`{"release":{}}`)))
 	})

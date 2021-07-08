@@ -274,12 +274,15 @@ func SimulateMsgExecuteContract(
 
 		spendableCoins = spendableCoins.Sub(fees)
 		spendableCoins = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, spendableCoins.AmountOf(core.MicroLunaDenom)))
+		if spendableCoins.Empty() {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "unable to generate deposit"), nil, err
+		}
 
 		if err := bk.IsSendEnabledCoins(ctx, spendableCoins...); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgExecuteContract, "send not enabled"), nil, nil
 		}
 
-		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), simtypes.RandSubsetCoins(r, spendableCoins))
+		msg := types.NewMsgExecuteContract(simAccount.Address, contractAddr, []byte(`{"release": {}}`), spendableCoins)
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenTx(
 			txGen,

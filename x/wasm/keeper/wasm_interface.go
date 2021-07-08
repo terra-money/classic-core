@@ -31,7 +31,7 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Execute.ContractAddr)
 		}
-		coins, err := types.ParseToCoins(msg.Execute.Send)
+		coins, err := types.ParseToCoins(msg.Execute.Funds)
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 	}
 
 	if msg.Instantiate != nil {
-		coins, err := types.ParseToCoins(msg.Instantiate.Send)
+		coins, err := types.ParseToCoins(msg.Instantiate.Funds)
 		if err != nil {
 			return nil, err
 		}

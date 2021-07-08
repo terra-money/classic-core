@@ -70,11 +70,9 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	wasmGenesis := types.NewGenesisState(
 		types.Params{
-			MaxContractSize:     maxContractSize,
-			MaxContractGas:      maxContractGas,
-			MaxContractMsgSize:  maxContractMsgSize,
-			MaxContractDataSize: maxContractDataSize,
-			EventParams:         types.DefaultEventParams,
+			MaxContractSize:    maxContractSize,
+			MaxContractGas:     maxContractGas,
+			MaxContractMsgSize: maxContractMsgSize,
 		},
 		0,
 		0,

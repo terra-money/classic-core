@@ -46,6 +46,7 @@ import (
 	bankwasm "github.com/terra-money/core/custom/bank/wasm"
 	customdistr "github.com/terra-money/core/custom/distribution"
 	distrwasm "github.com/terra-money/core/custom/distribution/wasm"
+	govwasm "github.com/terra-money/core/custom/gov/wasm"
 	customparams "github.com/terra-money/core/custom/params"
 	customstaking "github.com/terra-money/core/custom/staking"
 	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
@@ -344,8 +345,9 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteWasm:         NewWasmMsgParser(),
 	}, NewStargateWasmMsgParser(legacyAmino))
 
@@ -353,7 +355,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.SetLastInstanceID(ctx, 0)
 
 	return TestInput{
-		ctx, legacyAmino,
+		ctx.WithGasMeter(sdk.NewGasMeter(keeper.MaxContractGas(ctx))),
+		legacyAmino,
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
