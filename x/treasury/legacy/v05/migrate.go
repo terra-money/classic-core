@@ -36,7 +36,7 @@ func Migrate(
 			continue
 		}
 
-		epochStates[i] = v05treasury.EpochState{
+		epochStates[i-cumulativeEpochs] = v05treasury.EpochState{
 			Epoch:             uint64(i - cumulativeEpochs),
 			TaxReward:         treasuryGenState.TRs[i],
 			SeigniorageReward: treasuryGenState.SRs[i],
