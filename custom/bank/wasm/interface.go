@@ -32,10 +32,6 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 		return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Bank")
 	}
 
-	if len(msg.Send.Amount) == 0 {
-		return nil, nil
-	}
-
 	toAddr, stderr := sdk.AccAddressFromBech32(msg.Send.ToAddress)
 	if stderr != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Send.ToAddress)

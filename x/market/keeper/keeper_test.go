@@ -67,6 +67,6 @@ func TestReplenishPools(t *testing.T) {
 
 	burnPoolDelta = input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
 	burnReplenishAmt := burnDiff.QuoInt64(recoveryPeriod)
-	expectedBurnDelta := mintDiff.Sub(burnReplenishAmt)
+	expectedBurnDelta := burnDiff.Sub(burnReplenishAmt)
 	require.Equal(t, expectedBurnDelta, burnPoolDelta)
 }

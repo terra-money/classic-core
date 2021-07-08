@@ -1,6 +1,7 @@
 package types
 
 import (
+	fmt "fmt"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -125,10 +126,17 @@ func (lgva LazyGradedVestingAccount) GetEndTime() int64 {
 
 // Validate checks for errors on the account fields
 func (lgva LazyGradedVestingAccount) Validate() error {
+	denomMap := make(map[string]bool)
 	for _, vestingSchedule := range lgva.GetVestingSchedules() {
+		if _, ok := denomMap[vestingSchedule.Denom]; ok {
+			return fmt.Errorf("cannot have multiple vesting schedules for %s", vestingSchedule.Denom)
+		}
+
 		if err := vestingSchedule.Validate(); err != nil {
 			return err
 		}
+
+		denomMap[vestingSchedule.Denom] = true
 	}
 
 	return lgva.BaseVestingAccount.Validate()

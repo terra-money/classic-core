@@ -16,89 +16,95 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	params := k.GetParams(ctx)
+	if core.IsPeriodLastBlock(ctx, params.VotePeriod) {
 
-	// Not yet time for a tally
-	if !core.IsPeriodLastBlock(ctx, params.VotePeriod) {
-		return
-	}
+		// Build claim map over all validators in active set
+		validatorClaimMap := make(map[string]types.Claim)
 
-	// Build claim map over all validators in active set
-	validatorClaimMap := make(map[string]types.Claim)
+		maxValidators := k.StakingKeeper.MaxValidators(ctx)
+		iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+		defer iterator.Close()
 
-	maxValidators := k.StakingKeeper.MaxValidators(ctx)
-	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
-	defer iterator.Close()
+		powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
+		i := 0
+		for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+			validator := k.StakingKeeper.Validator(ctx, iterator.Value())
 
-	i := 0
-	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
-
-		// Exclude not bonded validator
-		if validator.IsBonded() {
-			valAddr := validator.GetOperator()
-			validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
-			i++
+			// Exclude not bonded validator
+			if validator.IsBonded() {
+				valAddr := validator.GetOperator()
+				validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
+				i++
+			}
 		}
-	}
 
-	// Denom-TobinTax map
-	voteTargets := make(map[string]sdk.Dec)
-	k.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
-		voteTargets[denom] = tobinTax
-		return false
-	})
+		// Denom-TobinTax map
+		voteTargets := make(map[string]sdk.Dec)
+		k.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
+			voteTargets[denom] = tobinTax
+			return false
+		})
 
-	// Clear all exchange rates
-	k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
-		k.DeleteLunaExchangeRate(ctx, denom)
-		return false
-	})
+		// Clear all exchange rates
+		k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
+			k.DeleteLunaExchangeRate(ctx, denom)
+			return false
+		})
 
-	// Organize votes to ballot by denom
-	// NOTE: **Filter out inactive or jailed validators**
-	// NOTE: **Make abstain votes to have zero vote power**
-	voteMap := k.OrganizeBallotByDenom(ctx, validatorClaimMap)
+		// Organize votes to ballot by denom
+		// NOTE: **Filter out inactive or jailed validators**
+		// NOTE: **Make abstain votes to have zero vote power**
+		voteMap := k.OrganizeBallotByDenom(ctx, validatorClaimMap)
 
-	if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
-		// make voteMap of Reference Terra to calculate cross exchange rates
-		ballotRT := voteMap[referenceTerra]
-		voteMapRT := ballotRT.ToMap()
-		exchangeRateRT := ballotRT.WeightedMedian()
+		if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
+			// make voteMap of Reference Terra to calculate cross exchange rates
+			ballotRT := voteMap[referenceTerra]
+			voteMapRT := ballotRT.ToMap()
+			exchangeRateRT := ballotRT.WeightedMedian()
 
-		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-		for denom, ballot := range voteMap {
+			// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+			for denom, ballot := range voteMap {
 
-			// Convert ballot to cross exchange rates
-			if denom != referenceTerra {
-				ballot = ballot.ToCrossRate(voteMapRT)
+				// Convert ballot to cross exchange rates
+				if denom != referenceTerra {
+					ballot = ballot.ToCrossRate(voteMapRT)
+				}
+
+				// Get weighted median of cross exchange rates
+				exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
+
+				// Transform into the original form uluna/stablecoin
+				if denom != referenceTerra {
+					exchangeRate = exchangeRateRT.Quo(exchangeRate)
+				}
+
+				// Set the exchange rate, emit ABCI event
+				k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRate)
+			}
+		}
+
+		//---------------------------
+		// Do miss counting & slashing
+		voteTargetsLen := len(voteTargets)
+		for _, claim := range validatorClaimMap {
+			// Skip abstain & valid voters
+			if int(claim.WinCount) == voteTargetsLen {
+				continue
 			}
 
-			// Get weighted median of cross exchange rates
-			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
-
-			// Transform into the original form uluna/stablecoin
-			if denom != referenceTerra {
-				exchangeRate = exchangeRateRT.Quo(exchangeRate)
-			}
-
-			// Set the exchange rate, emit ABCI event
-			k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRate)
-		}
-	}
-
-	//---------------------------
-	// Do miss counting & slashing
-	voteTargetsLen := len(voteTargets)
-	for _, claim := range validatorClaimMap {
-		// Skip abstain & valid voters
-		if int(claim.WinCount) == voteTargetsLen {
-			continue
+			// Increase miss counter
+			k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)
 		}
 
-		// Increase miss counter
-		k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)
+		// Distribute rewards to ballot winners
+		k.RewardBallotWinners(ctx, validatorClaimMap)
+
+		// Clear the ballot
+		k.ClearBallots(ctx, params.VotePeriod)
+
+		// Update vote targets and tobin tax
+		k.ApplyWhitelist(ctx, params.Whitelist, voteTargets)
 	}
 
 	// Do slash who did miss voting over threshold and
@@ -106,15 +112,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if core.IsPeriodLastBlock(ctx, params.SlashWindow) {
 		k.SlashAndResetMissCounters(ctx)
 	}
-
-	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, validatorClaimMap)
-
-	// Clear the ballot
-	k.ClearBallots(ctx, params.VotePeriod)
-
-	// Update vote targets and tobin tax
-	k.ApplyWhitelist(ctx, params.Whitelist, voteTargets)
 
 	return
 }

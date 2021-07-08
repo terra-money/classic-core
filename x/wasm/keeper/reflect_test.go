@@ -26,9 +26,9 @@ import (
 
 // ReflectHandleMsg is used to encode handle messages
 type ReflectHandleMsg struct {
-	Reflect        *reflectPayload    `json:"reflect_msg,omitempty"`
-	ReflectSubCall *reflectSubPayload `json:"reflect_sub_call,omitempty"`
-	Change         *ownerPayload      `json:"change_owner,omitempty"`
+	Reflect       *reflectPayload    `json:"reflect_msg,omitempty"`
+	ReflectSubMsg *reflectSubPayload `json:"reflect_sub_msg,omitempty"`
+	Change        *ownerPayload      `json:"change_owner,omitempty"`
 }
 
 type ownerPayload struct {
@@ -45,10 +45,10 @@ type reflectSubPayload struct {
 
 // ReflectQueryMsg is used to encode query messages
 type ReflectQueryMsg struct {
-	Owner         *struct{}   `json:"owner,omitempty"`
-	Capitalized   *Text       `json:"capitalized,omitempty"`
-	Chain         *ChainQuery `json:"chain,omitempty"`
-	SubCallResult *SubCall    `json:"sub_call_result,omitempty"`
+	Owner        *struct{}   `json:"owner,omitempty"`
+	Capitalized  *Text       `json:"capitalized,omitempty"`
+	Chain        *ChainQuery `json:"chain,omitempty"`
+	SubMsgResult *SubCall    `json:"sub_msg_result,omitempty"`
 }
 
 type ChainQuery struct {
@@ -140,7 +140,7 @@ func TestReflectReflectContractSend(t *testing.T) {
 			Execute: &wasmvmtypes.ExecuteMsg{
 				ContractAddr: escrowAddr.String(),
 				Msg:          approveMsg,
-				Send: []wasmvmtypes.Coin{{
+				Funds: []wasmvmtypes.Coin{{
 					Denom:  core.MicroLunaDenom,
 					Amount: "14000",
 				}},

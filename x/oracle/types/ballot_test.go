@@ -167,7 +167,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}{
 		{
 			// Supermajority one number
-			[]int64{2, 1, 10, 100000},
+			[]int64{1, 2, 10, 100000},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
 			sdk.NewDec(10),

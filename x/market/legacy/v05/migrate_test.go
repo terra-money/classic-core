@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -59,5 +60,5 @@ func TestMigrate(t *testing.T) {
 	}
 }`
 
-	require.Equal(t, expected, string(indentedBz))
+	assert.JSONEq(t, expected, string(indentedBz))
 }

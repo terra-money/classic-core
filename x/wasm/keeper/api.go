@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"math"
+
 	cosmwasm "github.com/CosmWasm/wasmvm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,20 +13,22 @@ import (
 func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
 	return cosmwasm.GoAPI{
 		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
+			humanizeCost := types.HumanizeWasmGasCost * types.GasMultiplier
 			err = sdk.VerifyAddressFormat(canon)
 			if err != nil {
-				return "", 0, nil
+				return "", humanizeCost, nil
 			}
 
-			return sdk.AccAddress(canon).String(), types.HumanizeCost * types.GasMultiplier, nil
+			return sdk.AccAddress(canon).String(), humanizeCost, nil
 		},
 		CanonicalAddress: func(human string) (canonicalAddr []byte, usedGas uint64, err error) {
+			canonicalizeCost := types.CanonicalizeWasmGasCost * types.GasMultiplier
 			addr, err := sdk.AccAddressFromBech32(human)
 			if err != nil {
-				return nil, 0, err
+				return nil, canonicalizeCost, err
 			}
 
-			return addr, types.CanonicalizeCost * types.GasMultiplier, nil
+			return addr, canonicalizeCost, nil
 		},
 	}
 }
@@ -38,11 +42,11 @@ type wasmGasMeter struct {
 var _ cosmwasm.GasMeter = wasmGasMeter{}
 
 func (m wasmGasMeter) GasConsumed() sdk.Gas {
-	return m.originalMeter.GasConsumed() * m.gasMultiplier
+	return types.ToWasmVMGas(m.originalMeter.GasConsumed())
 }
 
 // return gas meter interface for wasm gas meter
-func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
+func (k Keeper) getWasmVMGasMeter(ctx sdk.Context) wasmGasMeter {
 	return wasmGasMeter{
 		originalMeter: ctx.GasMeter(),
 		gasMultiplier: types.GasMultiplier,
@@ -50,7 +54,7 @@ func (k Keeper) getGasMeter(ctx sdk.Context) wasmGasMeter {
 }
 
 // return remaining gas in wasm gas unit
-func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
+func (k Keeper) getWasmVMGasRemaining(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
 
 	// avoid integer overflow
@@ -58,12 +62,17 @@ func (k Keeper) getGasRemaining(ctx sdk.Context) uint64 {
 		return 0
 	}
 
+	// infinite gas meter with limit=0 and not out of gas
+	if meter.Limit() == 0 {
+		return math.MaxUint64
+	}
+
 	remaining := (meter.Limit() - meter.GasConsumed())
-	return remaining * types.GasMultiplier
+	return types.ToWasmVMGas(remaining)
 }
 
 // converts contract gas usage to sdk gas and consumes it
-func (k Keeper) consumeGas(ctx sdk.Context, gas uint64, descriptor string) {
-	consumed := gas / types.GasMultiplier
+func (k Keeper) consumeWasmVMGas(ctx sdk.Context, wasmVMGas uint64, descriptor string) {
+	consumed := types.FromWasmVMGas(wasmVMGas)
 	ctx.GasMeter().ConsumeGas(consumed, descriptor)
 }

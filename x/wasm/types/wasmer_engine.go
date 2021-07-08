@@ -36,6 +36,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
+		deserializeCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.Response, uint64, error)
 
 	// Execute calls a given contract. Since the only difference between contracts with the same CodeID is the
@@ -54,6 +55,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
+		deserializeCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.Response, uint64, error)
 
 	// Query allows a client to execute a contract-specific query. If the result is not empty, it should be
@@ -68,6 +70,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
+		deserializeCost wasmvmtypes.UFraction,
 	) ([]byte, uint64, error)
 
 	// Migrate will migrate an existing contract to a new code binary.
@@ -85,6 +88,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
+		deserializeCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.Response, uint64, error)
 
 	// Reply is called on the original dispatching contract after running a submessage
@@ -97,6 +101,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
+		deserializeCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.Response, uint64, error)
 
 	// GetCode will load the original wasm code for the given code id.

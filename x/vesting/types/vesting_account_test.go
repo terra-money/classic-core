@@ -316,6 +316,14 @@ func TestGenesisAccountValidate(t *testing.T) {
 			types.NewLazyGradedVestingAccount(baseAcc, initialVesting, types.VestingSchedules{types.VestingSchedule{core.MicroLunaDenom, types.Schedules{types.Schedule{1554668078, 1654668078, sdk.NewDecWithPrec(1, 1)}}}}),
 			errors.New("vesting total ratio must be one"),
 		},
+		{
+			"multiple vesting schedule for a denom",
+			types.NewLazyGradedVestingAccount(baseAcc, initialVesting, types.VestingSchedules{
+				{core.MicroLunaDenom, types.Schedules{types.Schedule{1554668078, 1654668078, sdk.OneDec()}}},
+				{core.MicroLunaDenom, types.Schedules{types.Schedule{1554668078, 1654668078, sdk.OneDec()}}},
+			}),
+			errors.New("cannot have multiple vesting schedules for uluna"),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
