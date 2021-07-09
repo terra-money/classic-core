@@ -106,6 +106,7 @@ import (
 	customcrisis "github.com/terra-money/core/custom/crisis"
 	customdistr "github.com/terra-money/core/custom/distribution"
 	customevidence "github.com/terra-money/core/custom/evidence"
+	customfeegrant "github.com/terra-money/core/custom/feegrant"
 	customgov "github.com/terra-money/core/custom/gov"
 	custommint "github.com/terra-money/core/custom/mint"
 	customparams "github.com/terra-money/core/custom/params"
@@ -169,7 +170,7 @@ var (
 		customparams.AppModuleBasic{},
 		customcrisis.AppModuleBasic{},
 		customslashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
+		customfeegrant.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		customupgrade.AppModuleBasic{},
 		customevidence.AppModuleBasic{},
