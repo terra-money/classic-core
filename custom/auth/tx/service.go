@@ -8,39 +8,34 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	customante "github.com/terra-money/core/custom/auth/ante"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ ServiceServer = txServer{}
 
 // txServer is the server for the protobuf Tx service.
 type txServer struct {
-	clientCtx         client.Context
-	interfaceRegistry codectypes.InterfaceRegistry
+	treasuryKeeper customante.TreasuryKeeper
 }
 
 // NewTxServer creates a new Tx service server.
-func NewTxServer(clientCtx client.Context, interfaceRegistry codectypes.InterfaceRegistry) ServiceServer {
+func NewTxServer(treasuryKeeper customante.TreasuryKeeper) ServiceServer {
 	return txServer{
-		clientCtx:         clientCtx,
-		interfaceRegistry: interfaceRegistry,
+		treasuryKeeper: treasuryKeeper,
 	}
 }
 
 // ComputeTax implements the ServiceServer.ComputeTax RPC method.
-func (ts txServer) ComputeTax(ctx context.Context, req *ComputeTaxRequest) (*ComputeTaxResponse, error) {
+func (ts txServer) ComputeTax(c context.Context, req *ComputeTaxRequest) (*ComputeTaxResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
 	}
 
-	taxAmount, err := feeutils.FilterMsgAndComputeTax(ts.clientCtx, req.Tx.GetMsgs()...)
-	if err != nil {
-		return nil, err
-	}
-
+	taxAmount := customante.FilterMsgAndComputeTax(ctx, ts.treasuryKeeper, req.Tx.GetMsgs()...)
 	return &ComputeTaxResponse{
 		TaxAmount: taxAmount,
 	}, nil
@@ -49,12 +44,11 @@ func (ts txServer) ComputeTax(ctx context.Context, req *ComputeTaxRequest) (*Com
 // RegisterTxService registers the tx service on the gRPC router.
 func RegisterTxService(
 	qrt gogogrpc.Server,
-	clientCtx client.Context,
-	interfaceRegistry codectypes.InterfaceRegistry,
+	treasuryKeeper customante.TreasuryKeeper,
 ) {
 	RegisterServiceServer(
 		qrt,
-		NewTxServer(clientCtx, interfaceRegistry),
+		NewTxServer(treasuryKeeper),
 	)
 }
 
@@ -62,4 +56,11 @@ func RegisterTxService(
 // given Mux.
 func RegisterGRPCGatewayRoutes(clientConn gogogrpc.ClientConn, mux *runtime.ServeMux) {
 	_ = RegisterServiceHandlerClient(context.Background(), mux, NewServiceClient(clientConn))
+}
+
+var _ codectypes.UnpackInterfacesMessage = ComputeTaxRequest{}
+
+// UnpackInterfaces implements the UnpackInterfacesMessage interface.
+func (m ComputeTaxRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return m.Tx.UnpackInterfaces(unpacker)
 }
