@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/snapshots"
@@ -54,13 +52,12 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	sdkConfig.Seal()
 
 	initClientCtx := client.Context{}.
-		WithJSONCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
-		WithBroadcastMode(flags.BroadcastBlock).
 		WithHomeDir(terraapp.DefaultNodeHome).
 		WithViper("TERRA")
 
@@ -73,8 +70,6 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			cmd.SetErr(cmd.ErrOrStderr())
 
 			initClientCtx = client.ReadHomeFlag(initClientCtx, cmd)
-			// TODO - remove this line when https://github.com/cosmos/cosmos-sdk/pull/9211/files fix included
-			initClientCtx = initClientCtx.WithKeyringDir(initClientCtx.HomeDir)
 			initClientCtx, err := config.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
@@ -84,33 +79,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			err = server.InterceptConfigsPreRunHandler(cmd)
-			if err != nil {
-				return err
-			}
+			terraAppTemplate, terraAppConfig := initAppConfig()
 
-			context := cmd.Context().Value(server.ServerContextKey).(*server.Context)
-			rootViper := context.Viper
-
-			rootDir := rootViper.GetString(flags.FlagHome)
-			configPath := filepath.Join(rootDir, "config")
-
-			// load application DBDir and set wasm DBDir
-			wasmconfig.DBDir = filepath.Base(context.Config.DBDir()) + "/wasm"
-			wasmConfigFilePath := filepath.Join(configPath, "wasm.toml")
-			if _, err := os.Stat(wasmConfigFilePath); os.IsNotExist(err) {
-				wasmConf, _ := wasmconfig.ParseConfig(rootViper)
-				wasmconfig.WriteConfigFile(wasmConfigFilePath, wasmConf)
-			}
-
-			rootViper.SetConfigType("toml")
-			rootViper.SetConfigName("wasm")
-			rootViper.AddConfigPath(configPath)
-			if err := rootViper.MergeInConfig(); err != nil {
-				return fmt.Errorf("failed to merge configuration: %w", err)
-			}
-
-			return nil
+			return server.InterceptConfigsPreRunHandler(cmd, terraAppTemplate, terraAppConfig)
 		},
 	}
 
@@ -135,7 +106,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		debug.Cmd(),
 	)
 
-	server.AddCommands(rootCmd, terraapp.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
+	a := appCreator{encodingConfig}
+	server.AddCommands(rootCmd, terraapp.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -144,10 +116,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		txCommand(),
 		keys.Commands(terraapp.DefaultNodeHome),
 	)
+
+	// add rosetta commands
+	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
+
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	wasmconfig.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -203,8 +178,12 @@ func txCommand() *cobra.Command {
 	return cmd
 }
 
+type appCreator struct {
+	encodingConfig params.EncodingConfig
+}
+
 // newApp is an AppCreator
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
@@ -235,13 +214,9 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		terraapp.MakeEncodingConfig(), // Ideally, we would reuse the one created by NewRootCmd.
+		a.encodingConfig,
 		appOpts,
-		&wasmconfig.Config{BaseConfig: wasmconfig.BaseConfig{
-			ContractQueryGasLimit:   cast.ToUint64(appOpts.Get(wasmconfig.FlagContractQueryGasLimit)),
-			ContractDebugMode:       cast.ToBool(appOpts.Get(wasmconfig.FlagContractDebugMode)),
-			ContractMemoryCacheSize: cast.ToUint32(appOpts.Get(wasmconfig.FlagContractMemoryCacheSize)),
-		}},
+		wasmconfig.GetConfig(appOpts),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -256,22 +231,20 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	)
 }
 
-func createSimappAndExport(
+func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
 
-	encCfg := terraapp.MakeEncodingConfig() // Ideally, we would reuse the one created by NewRootCmd.
-	encCfg.Marshaler = codec.NewProtoCodec(encCfg.InterfaceRegistry)
-	var gaiaApp *terraapp.TerraApp
+	var terraApp *terraapp.TerraApp
 	if height != -1 {
-		gaiaApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, "", cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), encCfg, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, "", cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
 
-		if err := gaiaApp.LoadHeight(height); err != nil {
+		if err := terraApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		gaiaApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, "", cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), encCfg, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, "", cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
 	}
 
-	return gaiaApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
+	return terraApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
 }

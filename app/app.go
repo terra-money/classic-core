@@ -106,6 +106,7 @@ import (
 	customcrisis "github.com/terra-money/core/custom/crisis"
 	customdistr "github.com/terra-money/core/custom/distribution"
 	customevidence "github.com/terra-money/core/custom/evidence"
+	customfeegrant "github.com/terra-money/core/custom/feegrant"
 	customgov "github.com/terra-money/core/custom/gov"
 	custommint "github.com/terra-money/core/custom/mint"
 	customparams "github.com/terra-money/core/custom/params"
@@ -169,7 +170,7 @@ var (
 		customparams.AppModuleBasic{},
 		customcrisis.AppModuleBasic{},
 		customslashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
+		customfeegrant.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		customupgrade.AppModuleBasic{},
 		customevidence.AppModuleBasic{},
@@ -346,8 +347,9 @@ func NewTerraApp(
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// clear SoftwareUpgradeProposal
-	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
+	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-rc0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		// Just pass current version map, no migration required
+		return app.mm.RunMigrations(ctx, app.configurator, app.mm.GetVersionMap())
 	})
 
 	// register the staking hooks
@@ -622,9 +624,6 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-
-	// store initial module version maps to upgrade keeper
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }

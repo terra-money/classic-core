@@ -987,8 +987,6 @@ paths:
                 type: integer
               bond_denom:
                 type: string
-              power_reduction:
-                type: string
         500:
           description: Internal Server Error
   /slashing/signing_infos:

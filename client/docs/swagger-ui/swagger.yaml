@@ -2710,8 +2710,6 @@ paths:
                 type: integer
               bond_denom:
                 type: string
-              power_reduction:
-                type: string
         '500':
           description: Internal Server Error
   /slashing/signing_infos:
@@ -7365,7 +7363,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -8105,7 +8103,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -8355,7 +8353,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -8657,7 +8655,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -10320,6 +10318,8 @@ paths:
                           type: string
                           title: checksum
                       title: Module is the type for VersionInfo
+                  cosmos_sdk_version:
+                    type: string
                 description: VersionInfo is the type for the GetNodeInfoResponse message.
             description: >-
               GetNodeInfoResponse is the request type for the Query/GetNodeInfo
@@ -11186,7 +11186,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -11663,7 +11663,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -12317,7 +12317,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -12775,7 +12775,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -14003,7 +14003,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -14783,7 +14783,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -15284,6 +15284,24 @@ paths:
                       format: uint64
                     voter:
                       type: string
+                    option:
+                      description: >-
+                        Deprecated: Prefer to use `options` instead. This field
+                        is set in queries
+
+                        if and only if `len(options) == 1` and that option has
+                        weight 1. In all
+
+                        other cases, this field will default to
+                        VOTE_OPTION_UNSPECIFIED.
+                      type: string
+                      enum:
+                        - VOTE_OPTION_UNSPECIFIED
+                        - VOTE_OPTION_YES
+                        - VOTE_OPTION_ABSTAIN
+                        - VOTE_OPTION_NO
+                        - VOTE_OPTION_NO_WITH_VETO
+                      default: VOTE_OPTION_UNSPECIFIED
                     options:
                       type: array
                       items:
@@ -15584,7 +15602,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -15610,6 +15628,24 @@ paths:
                     format: uint64
                   voter:
                     type: string
+                  option:
+                    description: >-
+                      Deprecated: Prefer to use `options` instead. This field is
+                      set in queries
+
+                      if and only if `len(options) == 1` and that option has
+                      weight 1. In all
+
+                      other cases, this field will default to
+                      VOTE_OPTION_UNSPECIFIED.
+                    type: string
+                    enum:
+                      - VOTE_OPTION_UNSPECIFIED
+                      - VOTE_OPTION_YES
+                      - VOTE_OPTION_ABSTAIN
+                      - VOTE_OPTION_NO
+                      - VOTE_OPTION_NO_WITH_VETO
+                    default: VOTE_OPTION_UNSPECIFIED
                   options:
                     type: array
                     items:
@@ -16280,7 +16316,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -16717,7 +16753,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -17125,7 +17161,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -17465,7 +17501,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -18064,7 +18100,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -19242,11 +19278,6 @@ paths:
                   bond_denom:
                     type: string
                     description: bond_denom defines the bondable coin denomination.
-                  power_reduction:
-                    type: string
-                    title: >-
-                      power_reduction is the amount of staking tokens required
-                      for 1 unit of consensus-engine power
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -20240,7 +20271,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -21091,7 +21122,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -21958,7 +21989,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -22501,7 +22532,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -23494,6 +23525,16 @@ paths:
                       Time or Height is
 
                       reached and the software will exit.
+                  time:
+                    type: string
+                    format: date-time
+                    description: >-
+                      Deprecated: Time based upgrades have been deprecated. Time
+                      based upgrade logic
+
+                      has been removed from the SDK.
+
+                      If this field is not empty, an error will be thrown.
                   height:
                     type: string
                     format: int64
@@ -23508,6 +23549,181 @@ paths:
 
                       such as a git commit that validators could automatically
                       upgrade to
+                  upgraded_client_state:
+                    type: object
+                    properties:
+                      type_url:
+                        type: string
+                        description: >-
+                          A URL/resource name that uniquely identifies the type
+                          of the serialized
+
+                          protocol buffer message. This string must contain at
+                          least
+
+                          one "/" character. The last segment of the URL's path
+                          must represent
+
+                          the fully qualified name of the type (as in
+
+                          `path/google.protobuf.Duration`). The name should be
+                          in a canonical form
+
+                          (e.g., leading "." is not accepted).
+
+
+                          In practice, teams usually precompile into the binary
+                          all types that they
+
+                          expect it to use in the context of Any. However, for
+                          URLs which use the
+
+                          scheme `http`, `https`, or no scheme, one can
+                          optionally set up a type
+
+                          server that maps type URLs to message definitions as
+                          follows:
+
+
+                          * If no scheme is provided, `https` is assumed.
+
+                          * An HTTP GET on the URL must yield a
+                          [google.protobuf.Type][]
+                            value in binary format, or produce an error.
+                          * Applications are allowed to cache lookup results
+                          based on the
+                            URL, or have them precompiled into a binary to avoid any
+                            lookup. Therefore, binary compatibility needs to be preserved
+                            on changes to types. (Use versioned type names to manage
+                            breaking changes.)
+
+                          Note: this functionality is not currently available in
+                          the official
+
+                          protobuf release, and it is not used for type URLs
+                          beginning with
+
+                          type.googleapis.com.
+
+
+                          Schemes other than `http`, `https` (or the empty
+                          scheme) might be
+
+                          used with implementation specific semantics.
+                      value:
+                        type: string
+                        format: byte
+                        description: >-
+                          Must be a valid serialized protocol buffer of the
+                          above specified type.
+                    description: >-
+                      `Any` contains an arbitrary serialized protocol buffer
+                      message along with a
+
+                      URL that describes the type of the serialized message.
+
+
+                      Protobuf library provides support to pack/unpack Any
+                      values in the form
+
+                      of utility functions or additional generated methods of
+                      the Any type.
+
+
+                      Example 1: Pack and unpack a message in C++.
+
+                          Foo foo = ...;
+                          Any any;
+                          any.PackFrom(foo);
+                          ...
+                          if (any.UnpackTo(&foo)) {
+                            ...
+                          }
+
+                      Example 2: Pack and unpack a message in Java.
+
+                          Foo foo = ...;
+                          Any any = Any.pack(foo);
+                          ...
+                          if (any.is(Foo.class)) {
+                            foo = any.unpack(Foo.class);
+                          }
+
+                       Example 3: Pack and unpack a message in Python.
+
+                          foo = Foo(...)
+                          any = Any()
+                          any.Pack(foo)
+                          ...
+                          if any.Is(Foo.DESCRIPTOR):
+                            any.Unpack(foo)
+                            ...
+
+                       Example 4: Pack and unpack a message in Go
+
+                           foo := &pb.Foo{...}
+                           any, err := ptypes.MarshalAny(foo)
+                           ...
+                           foo := &pb.Foo{}
+                           if err := ptypes.UnmarshalAny(any, foo); err != nil {
+                             ...
+                           }
+
+                      The pack methods provided by protobuf library will by
+                      default use
+
+                      'type.googleapis.com/full.type.name' as the type URL and
+                      the unpack
+
+                      methods only use the fully qualified type name after the
+                      last '/'
+
+                      in the type URL, for example "foo.bar.com/x/y.z" will
+                      yield type
+
+                      name "y.z".
+
+
+
+                      JSON
+
+                      ====
+
+                      The JSON representation of an `Any` value uses the regular
+
+                      representation of the deserialized, embedded message, with
+                      an
+
+                      additional field `@type` which contains the type URL.
+                      Example:
+
+                          package google.profile;
+                          message Person {
+                            string first_name = 1;
+                            string last_name = 2;
+                          }
+
+                          {
+                            "@type": "type.googleapis.com/google.profile.Person",
+                            "firstName": <string>,
+                            "lastName": <string>
+                          }
+
+                      If the embedded message type is well-known and has a
+                      custom JSON
+
+                      representation, that representation will be embedded
+                      adding a field
+
+                      `value` which holds the custom JSON in addition to the
+                      `@type`
+
+                      field. Example (for message [google.protobuf.Duration][]):
+
+                          {
+                            "@type": "type.googleapis.com/google.protobuf.Duration",
+                            "value": "1.212s"
+                          }
             description: >-
               QueryCurrentPlanResponse is the response type for the
               Query/CurrentPlan RPC
@@ -23702,6 +23918,237 @@ paths:
                           "@type": "type.googleapis.com/google.protobuf.Duration",
                           "value": "1.212s"
                         }
+      tags:
+        - Query
+  /cosmos/upgrade/v1beta1/module_versions:
+    get:
+      summary: ModuleVersions queries the list of module versions from state.
+      operationId: ModuleVersions
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              module_versions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      title: name of the app module
+                    version:
+                      type: string
+                      format: uint64
+                      title: consensus version of the app module
+                  description: ModuleVersion specifies a module and its consensus version.
+                description: >-
+                  module_versions is a list of module names with their consensus
+                  versions.
+            description: >-
+              QueryModuleVersionsResponse is the response type for the
+              Query/ModuleVersions
+
+              RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := ptypes.MarshalAny(foo)
+                         ...
+                         foo := &pb.Foo{}
+                         if err := ptypes.UnmarshalAny(any, foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: module_name
+          description: |-
+            module_name is a field to query a specific module
+            consensus version from state. Leaving this empty will
+            fetch the full list of module versions from state.
+          in: query
+          required: false
+          type: string
       tags:
         - Query
   '/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height}':
@@ -25768,22 +26215,6 @@ paths:
                   max_contract_msg_size:
                     type: string
                     format: uint64
-                  max_contract_data_size:
-                    type: string
-                    format: uint64
-                  event_params:
-                    type: object
-                    properties:
-                      max_attribute_num:
-                        type: string
-                        format: uint64
-                      max_attribute_key_length:
-                        type: string
-                        format: uint64
-                      max_attribute_value_length:
-                        type: string
-                        format: uint64
-                    title: EventParams defines the event related parameteres
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -26200,7 +26631,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -28018,7 +28449,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -28638,7 +29069,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -30100,7 +30531,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -30799,7 +31230,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -31946,7 +32377,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -33799,7 +34230,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -35137,7 +35568,7 @@ paths:
           format: boolean
         - name: pagination.reverse
           description: >-
-            reverse is set to true indicates that, results to be returned in the
+            reverse is set to true if results are to be returned in the
             descending order.
           in: query
           required: false
@@ -38581,8 +39012,8 @@ definitions:
         type: boolean
         format: boolean
         description: >-
-          reverse is set to true indicates that, results to be returned in the
-          descending order.
+          reverse is set to true if results are to be returned in the descending
+          order.
     description: |-
       message SomeRequest {
                Foo some_parameter = 1;
@@ -40767,6 +41198,8 @@ definitions:
                   type: string
                   title: checksum
               title: Module is the type for VersionInfo
+          cosmos_sdk_version:
+            type: string
         description: VersionInfo is the type for the GetNodeInfoResponse message.
     description: >-
       GetNodeInfoResponse is the request type for the Query/GetNodeInfo RPC
@@ -41204,6 +41637,8 @@ definitions:
               type: string
               title: checksum
           title: Module is the type for VersionInfo
+      cosmos_sdk_version:
+        type: string
     description: VersionInfo is the type for the GetNodeInfoResponse message.
   tendermint.crypto.PublicKey:
     type: object
@@ -45275,6 +45710,23 @@ definitions:
             format: uint64
           voter:
             type: string
+          option:
+            description: >-
+              Deprecated: Prefer to use `options` instead. This field is set in
+              queries
+
+              if and only if `len(options) == 1` and that option has weight 1.
+              In all
+
+              other cases, this field will default to VOTE_OPTION_UNSPECIFIED.
+            type: string
+            enum:
+              - VOTE_OPTION_UNSPECIFIED
+              - VOTE_OPTION_YES
+              - VOTE_OPTION_ABSTAIN
+              - VOTE_OPTION_NO
+              - VOTE_OPTION_NO_WITH_VETO
+            default: VOTE_OPTION_UNSPECIFIED
           options:
             type: array
             items:
@@ -45318,6 +45770,23 @@ definitions:
               format: uint64
             voter:
               type: string
+            option:
+              description: >-
+                Deprecated: Prefer to use `options` instead. This field is set
+                in queries
+
+                if and only if `len(options) == 1` and that option has weight 1.
+                In all
+
+                other cases, this field will default to VOTE_OPTION_UNSPECIFIED.
+              type: string
+              enum:
+                - VOTE_OPTION_UNSPECIFIED
+                - VOTE_OPTION_YES
+                - VOTE_OPTION_ABSTAIN
+                - VOTE_OPTION_NO
+                - VOTE_OPTION_NO_WITH_VETO
+              default: VOTE_OPTION_UNSPECIFIED
             options:
               type: array
               items:
@@ -45409,6 +45878,23 @@ definitions:
         format: uint64
       voter:
         type: string
+      option:
+        description: >-
+          Deprecated: Prefer to use `options` instead. This field is set in
+          queries
+
+          if and only if `len(options) == 1` and that option has weight 1. In
+          all
+
+          other cases, this field will default to VOTE_OPTION_UNSPECIFIED.
+        type: string
+        enum:
+          - VOTE_OPTION_UNSPECIFIED
+          - VOTE_OPTION_YES
+          - VOTE_OPTION_ABSTAIN
+          - VOTE_OPTION_NO
+          - VOTE_OPTION_NO_WITH_VETO
+        default: VOTE_OPTION_UNSPECIFIED
       options:
         type: array
         items:
@@ -46353,11 +46839,6 @@ definitions:
       bond_denom:
         type: string
         description: bond_denom defines the bondable coin denomination.
-      power_reduction:
-        type: string
-        title: >-
-          power_reduction is the amount of staking tokens required for 1 unit of
-          consensus-engine power
     description: Params defines the parameters for the staking module.
   cosmos.staking.v1beta1.Pool:
     type: object
@@ -47598,11 +48079,6 @@ definitions:
           bond_denom:
             type: string
             description: bond_denom defines the bondable coin denomination.
-          power_reduction:
-            type: string
-            title: >-
-              power_reduction is the amount of staking tokens required for 1
-              unit of consensus-engine power
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   cosmos.staking.v1beta1.QueryPoolResponse:
     type: object
@@ -52103,6 +52579,17 @@ definitions:
         type: boolean
         format: boolean
     description: 'EventAttribute is a single key-value pair, associated with an event.'
+  cosmos.upgrade.v1beta1.ModuleVersion:
+    type: object
+    properties:
+      name:
+        type: string
+        title: name of the app module
+      version:
+        type: string
+        format: uint64
+        title: consensus version of the app module
+    description: ModuleVersion specifies a module and its consensus version.
   cosmos.upgrade.v1beta1.Plan:
     type: object
     properties:
@@ -52126,6 +52613,16 @@ definitions:
           Height is
 
           reached and the software will exit.
+      time:
+        type: string
+        format: date-time
+        description: >-
+          Deprecated: Time based upgrades have been deprecated. Time based
+          upgrade logic
+
+          has been removed from the SDK.
+
+          If this field is not empty, an error will be thrown.
       height:
         type: string
         format: int64
@@ -52137,6 +52634,165 @@ definitions:
         title: |-
           Any application specific upgrade info to be included on-chain
           such as a git commit that validators could automatically upgrade to
+      upgraded_client_state:
+        type: object
+        properties:
+          type_url:
+            type: string
+            description: >-
+              A URL/resource name that uniquely identifies the type of the
+              serialized
+
+              protocol buffer message. This string must contain at least
+
+              one "/" character. The last segment of the URL's path must
+              represent
+
+              the fully qualified name of the type (as in
+
+              `path/google.protobuf.Duration`). The name should be in a
+              canonical form
+
+              (e.g., leading "." is not accepted).
+
+
+              In practice, teams usually precompile into the binary all types
+              that they
+
+              expect it to use in the context of Any. However, for URLs which
+              use the
+
+              scheme `http`, `https`, or no scheme, one can optionally set up a
+              type
+
+              server that maps type URLs to message definitions as follows:
+
+
+              * If no scheme is provided, `https` is assumed.
+
+              * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                value in binary format, or produce an error.
+              * Applications are allowed to cache lookup results based on the
+                URL, or have them precompiled into a binary to avoid any
+                lookup. Therefore, binary compatibility needs to be preserved
+                on changes to types. (Use versioned type names to manage
+                breaking changes.)
+
+              Note: this functionality is not currently available in the
+              official
+
+              protobuf release, and it is not used for type URLs beginning with
+
+              type.googleapis.com.
+
+
+              Schemes other than `http`, `https` (or the empty scheme) might be
+
+              used with implementation specific semantics.
+          value:
+            type: string
+            format: byte
+            description: >-
+              Must be a valid serialized protocol buffer of the above specified
+              type.
+        description: >-
+          `Any` contains an arbitrary serialized protocol buffer message along
+          with a
+
+          URL that describes the type of the serialized message.
+
+
+          Protobuf library provides support to pack/unpack Any values in the
+          form
+
+          of utility functions or additional generated methods of the Any type.
+
+
+          Example 1: Pack and unpack a message in C++.
+
+              Foo foo = ...;
+              Any any;
+              any.PackFrom(foo);
+              ...
+              if (any.UnpackTo(&foo)) {
+                ...
+              }
+
+          Example 2: Pack and unpack a message in Java.
+
+              Foo foo = ...;
+              Any any = Any.pack(foo);
+              ...
+              if (any.is(Foo.class)) {
+                foo = any.unpack(Foo.class);
+              }
+
+           Example 3: Pack and unpack a message in Python.
+
+              foo = Foo(...)
+              any = Any()
+              any.Pack(foo)
+              ...
+              if any.Is(Foo.DESCRIPTOR):
+                any.Unpack(foo)
+                ...
+
+           Example 4: Pack and unpack a message in Go
+
+               foo := &pb.Foo{...}
+               any, err := ptypes.MarshalAny(foo)
+               ...
+               foo := &pb.Foo{}
+               if err := ptypes.UnmarshalAny(any, foo); err != nil {
+                 ...
+               }
+
+          The pack methods provided by protobuf library will by default use
+
+          'type.googleapis.com/full.type.name' as the type URL and the unpack
+
+          methods only use the fully qualified type name after the last '/'
+
+          in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+          name "y.z".
+
+
+
+          JSON
+
+          ====
+
+          The JSON representation of an `Any` value uses the regular
+
+          representation of the deserialized, embedded message, with an
+
+          additional field `@type` which contains the type URL. Example:
+
+              package google.profile;
+              message Person {
+                string first_name = 1;
+                string last_name = 2;
+              }
+
+              {
+                "@type": "type.googleapis.com/google.profile.Person",
+                "firstName": <string>,
+                "lastName": <string>
+              }
+
+          If the embedded message type is well-known and has a custom JSON
+
+          representation, that representation will be embedded adding a field
+
+          `value` which holds the custom JSON in addition to the `@type`
+
+          field. Example (for message [google.protobuf.Duration][]):
+
+              {
+                "@type": "type.googleapis.com/google.protobuf.Duration",
+                "value": "1.212s"
+              }
     description: >-
       Plan specifies information about a planned upgrade and when it should
       occur.
@@ -52181,6 +52837,16 @@ definitions:
               Height is
 
               reached and the software will exit.
+          time:
+            type: string
+            format: date-time
+            description: >-
+              Deprecated: Time based upgrades have been deprecated. Time based
+              upgrade logic
+
+              has been removed from the SDK.
+
+              If this field is not empty, an error will be thrown.
           height:
             type: string
             format: int64
@@ -52194,11 +52860,200 @@ definitions:
 
               such as a git commit that validators could automatically upgrade
               to
+          upgraded_client_state:
+            type: object
+            properties:
+              type_url:
+                type: string
+                description: >-
+                  A URL/resource name that uniquely identifies the type of the
+                  serialized
+
+                  protocol buffer message. This string must contain at least
+
+                  one "/" character. The last segment of the URL's path must
+                  represent
+
+                  the fully qualified name of the type (as in
+
+                  `path/google.protobuf.Duration`). The name should be in a
+                  canonical form
+
+                  (e.g., leading "." is not accepted).
+
+
+                  In practice, teams usually precompile into the binary all
+                  types that they
+
+                  expect it to use in the context of Any. However, for URLs
+                  which use the
+
+                  scheme `http`, `https`, or no scheme, one can optionally set
+                  up a type
+
+                  server that maps type URLs to message definitions as follows:
+
+
+                  * If no scheme is provided, `https` is assumed.
+
+                  * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                    value in binary format, or produce an error.
+                  * Applications are allowed to cache lookup results based on
+                  the
+                    URL, or have them precompiled into a binary to avoid any
+                    lookup. Therefore, binary compatibility needs to be preserved
+                    on changes to types. (Use versioned type names to manage
+                    breaking changes.)
+
+                  Note: this functionality is not currently available in the
+                  official
+
+                  protobuf release, and it is not used for type URLs beginning
+                  with
+
+                  type.googleapis.com.
+
+
+                  Schemes other than `http`, `https` (or the empty scheme) might
+                  be
+
+                  used with implementation specific semantics.
+              value:
+                type: string
+                format: byte
+                description: >-
+                  Must be a valid serialized protocol buffer of the above
+                  specified type.
+            description: >-
+              `Any` contains an arbitrary serialized protocol buffer message
+              along with a
+
+              URL that describes the type of the serialized message.
+
+
+              Protobuf library provides support to pack/unpack Any values in the
+              form
+
+              of utility functions or additional generated methods of the Any
+              type.
+
+
+              Example 1: Pack and unpack a message in C++.
+
+                  Foo foo = ...;
+                  Any any;
+                  any.PackFrom(foo);
+                  ...
+                  if (any.UnpackTo(&foo)) {
+                    ...
+                  }
+
+              Example 2: Pack and unpack a message in Java.
+
+                  Foo foo = ...;
+                  Any any = Any.pack(foo);
+                  ...
+                  if (any.is(Foo.class)) {
+                    foo = any.unpack(Foo.class);
+                  }
+
+               Example 3: Pack and unpack a message in Python.
+
+                  foo = Foo(...)
+                  any = Any()
+                  any.Pack(foo)
+                  ...
+                  if any.Is(Foo.DESCRIPTOR):
+                    any.Unpack(foo)
+                    ...
+
+               Example 4: Pack and unpack a message in Go
+
+                   foo := &pb.Foo{...}
+                   any, err := ptypes.MarshalAny(foo)
+                   ...
+                   foo := &pb.Foo{}
+                   if err := ptypes.UnmarshalAny(any, foo); err != nil {
+                     ...
+                   }
+
+              The pack methods provided by protobuf library will by default use
+
+              'type.googleapis.com/full.type.name' as the type URL and the
+              unpack
+
+              methods only use the fully qualified type name after the last '/'
+
+              in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+              name "y.z".
+
+
+
+              JSON
+
+              ====
+
+              The JSON representation of an `Any` value uses the regular
+
+              representation of the deserialized, embedded message, with an
+
+              additional field `@type` which contains the type URL. Example:
+
+                  package google.profile;
+                  message Person {
+                    string first_name = 1;
+                    string last_name = 2;
+                  }
+
+                  {
+                    "@type": "type.googleapis.com/google.profile.Person",
+                    "firstName": <string>,
+                    "lastName": <string>
+                  }
+
+              If the embedded message type is well-known and has a custom JSON
+
+              representation, that representation will be embedded adding a
+              field
+
+              `value` which holds the custom JSON in addition to the `@type`
+
+              field. Example (for message [google.protobuf.Duration][]):
+
+                  {
+                    "@type": "type.googleapis.com/google.protobuf.Duration",
+                    "value": "1.212s"
+                  }
     description: >-
       QueryCurrentPlanResponse is the response type for the Query/CurrentPlan
       RPC
 
       method.
+  cosmos.upgrade.v1beta1.QueryModuleVersionsResponse:
+    type: object
+    properties:
+      module_versions:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+              title: name of the app module
+            version:
+              type: string
+              format: uint64
+              title: consensus version of the app module
+          description: ModuleVersion specifies a module and its consensus version.
+        description: >-
+          module_versions is a list of module names with their consensus
+          versions.
+    description: >-
+      QueryModuleVersionsResponse is the response type for the
+      Query/ModuleVersions
+
+      RPC method.
   cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse:
     type: object
     properties:
@@ -52949,19 +53804,6 @@ definitions:
         format: byte
         title: InitMsg is the raw message used when instantiating a contract
     title: ContractInfo stores a WASM contract instance
-  terra.wasm.v1beta1.EventParams:
-    type: object
-    properties:
-      max_attribute_num:
-        type: string
-        format: uint64
-      max_attribute_key_length:
-        type: string
-        format: uint64
-      max_attribute_value_length:
-        type: string
-        format: uint64
-    title: EventParams defines the event related parameteres
   terra.wasm.v1beta1.Params:
     type: object
     properties:
@@ -52974,22 +53816,6 @@ definitions:
       max_contract_msg_size:
         type: string
         format: uint64
-      max_contract_data_size:
-        type: string
-        format: uint64
-      event_params:
-        type: object
-        properties:
-          max_attribute_num:
-            type: string
-            format: uint64
-          max_attribute_key_length:
-            type: string
-            format: uint64
-          max_attribute_value_length:
-            type: string
-            format: uint64
-        title: EventParams defines the event related parameteres
     description: Params defines the parameters for the wasm module.
   terra.wasm.v1beta1.QueryByteCodeResponse:
     type: object
@@ -53073,22 +53899,6 @@ definitions:
           max_contract_msg_size:
             type: string
             format: uint64
-          max_contract_data_size:
-            type: string
-            format: uint64
-          event_params:
-            type: object
-            properties:
-              max_attribute_num:
-                type: string
-                format: uint64
-              max_attribute_key_length:
-                type: string
-                format: uint64
-              max_attribute_value_length:
-                type: string
-                format: uint64
-            title: EventParams defines the event related parameteres
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   terra.wasm.v1beta1.QueryRawStoreResponse:
     type: object

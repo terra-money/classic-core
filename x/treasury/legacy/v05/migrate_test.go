@@ -24,7 +24,7 @@ func TestMigrate(t *testing.T) {
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
-		WithJSONCodec(encodingConfig.Marshaler)
+		WithCodec(encodingConfig.Marshaler)
 
 	treasuryGenState := v04treasury.GenesisState{
 		TaxRate:      sdk.NewDecWithPrec(2, 2),
@@ -82,7 +82,7 @@ func TestMigrate(t *testing.T) {
 
 	migrated := v05treasury.Migrate(treasuryGenState)
 
-	bz, err := clientCtx.JSONCodec.MarshalJSON(migrated)
+	bz, err := clientCtx.Codec.MarshalJSON(migrated)
 	require.NoError(t, err)
 
 	// Indent the JSON bz correctly.

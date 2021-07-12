@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
@@ -35,6 +36,20 @@ type (
 		Fee legacytx.StdFee `json:"fee" yaml:"fee"`
 	}
 )
+
+var _ codectypes.UnpackInterfacesMessage = EstimateFeeReq{}
+
+// UnpackInterfaces implements the UnpackInterfacesMessage interface.
+func (m EstimateFeeReq) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	for _, m := range m.Msgs {
+		err := codectypes.UnpackInterfaces(m, unpacker)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // ComputeFeesWithBaseReq returns fee amount with given stdTx.
 func ComputeFeesWithBaseReq(
