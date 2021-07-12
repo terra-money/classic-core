@@ -347,7 +347,7 @@ func NewTerraApp(
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// clear SoftwareUpgradeProposal
-	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0-rc0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// Just pass current version map, no migration required
 		return app.mm.RunMigrations(ctx, app.configurator, app.mm.GetVersionMap())
 	})
