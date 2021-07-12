@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -12,13 +11,9 @@ import (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*authz.Authorization)(nil), nil)
 
-	cdc.RegisterConcrete(authz.MsgGrant{}, "msgauth/MsgGrantAuthorization", nil)
-	cdc.RegisterConcrete(authz.MsgRevoke{}, "msgauth/MsgRevokeAuthorization", nil)
-	cdc.RegisterConcrete(authz.MsgExec{}, "msgauth/MsgExecAuthorized", nil)
-	cdc.RegisterConcrete(banktypes.SendAuthorization{}, "msgauth/SendAuthorization", nil)
-	cdc.RegisterConcrete(authz.GenericAuthorization{}, "msgauth/GenericAuthorization", nil)
-}
-
-func init() {
-	RegisterLegacyAminoCodec(legacy.Cdc)
+	cdc.RegisterConcrete(&authz.MsgGrant{}, "msgauth/MsgGrantAuthorization", nil)
+	cdc.RegisterConcrete(&authz.MsgRevoke{}, "msgauth/MsgRevokeAuthorization", nil)
+	cdc.RegisterConcrete(&authz.MsgExec{}, "msgauth/MsgExecAuthorized", nil)
+	cdc.RegisterConcrete(&banktypes.SendAuthorization{}, "msgauth/SendAuthorization", nil)
+	cdc.RegisterConcrete(&authz.GenericAuthorization{}, "msgauth/GenericAuthorization", nil)
 }

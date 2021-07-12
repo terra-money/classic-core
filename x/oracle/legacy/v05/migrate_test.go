@@ -25,7 +25,7 @@ func TestMigrate(t *testing.T) {
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
-		WithJSONCodec(encodingConfig.Marshaler)
+		WithCodec(encodingConfig.Marshaler)
 
 	voter, err := sdk.ValAddressFromBech32("terravaloper1mx72uukvzqtzhc6gde7shrjqfu5srk22v3yx7a")
 	require.NoError(t, err)
@@ -122,7 +122,7 @@ func TestMigrate(t *testing.T) {
 
 	migrated := v05oracle.Migrate(oracleGenState)
 
-	bz, err := clientCtx.JSONCodec.MarshalJSON(migrated)
+	bz, err := clientCtx.Codec.MarshalJSON(migrated)
 	require.NoError(t, err)
 
 	// Indent the JSON bz correctly.
