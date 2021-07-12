@@ -1240,6 +1240,94 @@ paths:
           description: The tx was malformed
         '500':
           description: Server internal error
+  /txs/estimate_fee:
+    post:
+      deprecated: true
+      tags:
+        - Transactions
+      summary: Estimate fee and gas of a transaction
+      description: Estimate fee and gas of a transaction according to given parameters
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: transaction
+          description: The sender and tx information
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                    description: Sender address or Keybase name to generate a transaction
+                  memo:
+                    type: string
+                    example: "Sent via Terra Station \U0001F680"
+                  chain_id:
+                    type: string
+                    example: Columbus-5
+                  account_number:
+                    type: string
+                    example: '0'
+                  sequence:
+                    type: string
+                    example: '1'
+                  gas:
+                    type: string
+                    example: '200000'
+                  gas_adjustment:
+                    type: string
+                    example: '1.2'
+                  fees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          example: uluna
+                        amount:
+                          type: string
+                          example: '50'
+                  simulate:
+                    type: boolean
+                    example: false
+                    description: >-
+                      Estimate gas for a transaction (cannot be used in
+                      conjunction with generate_only)
+              msgs:
+                type: array
+                items:
+                  type: string
+      responses:
+        '200':
+          description: The fee was successfully estimated
+          schema:
+            type: object
+            properties:
+              gas:
+                type: string
+              amount:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                      example: uluna
+                    amount:
+                      type: string
+                      example: '50'
+        '400':
+          description: The tx was malformed
+        '500':
+          description: Server internal error
   '/bank/balances/{address}':
     get:
       deprecated: true

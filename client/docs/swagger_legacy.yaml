@@ -389,6 +389,47 @@ paths:
           description: The tx was malformed
         500:
           description: Server internal error
+  /txs/estimate_fee:
+    post:
+      deprecated: true
+      tags:
+        - Transactions
+      summary: Estimate fee and gas of a transaction
+      description: Estimate fee and gas of a transaction according to given parameters
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: transaction
+          description: The sender and tx information
+          required: true
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              msgs:
+                type: array
+                items:
+                  $ref: "#/definitions/Msg"
+      responses:
+        200:
+          description: The fee was successfully estimated
+          schema:
+            type: object
+            properties:
+              gas:
+                type: string
+              amount:
+                type: array
+                items:
+                  $ref: "#/definitions/Coin"
+        400:
+          description: The tx was malformed
+        500:
+          description: Server internal error
   /bank/balances/{address}:
     get:
       deprecated: true
