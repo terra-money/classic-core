@@ -325,7 +325,7 @@ We are currently finalizing contribution standards and guidelines. In the meanwh
 
 This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
 
-© 2020 Terraform Labs, PTE.
+© 2020 Terraform Labs, PTE LTD
 
 <hr/>
 
