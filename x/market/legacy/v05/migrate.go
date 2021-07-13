@@ -19,7 +19,7 @@ func Migrate(
 		MintPoolDelta: sdk.ZeroDec(),
 		BurnPoolDelta: sdk.ZeroDec(),
 		Params: v05market.Params{
-			MintBasePool:       marketGenState.Params.BasePool.MulInt64(10),
+			MintBasePool:       marketGenState.Params.BasePool,
 			BurnBasePool:       marketGenState.Params.BasePool,
 			PoolRecoveryPeriod: uint64(marketGenState.Params.PoolRecoveryPeriod),
 			MinStabilitySpread: marketGenState.Params.MinStabilitySpread,
