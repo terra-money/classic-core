@@ -87,12 +87,19 @@ make install
 
 Add `GOROOT` and `GOPATH` to your environment `PATH`
 
-Append at the end of your shell profile file (ex: .zshrc, .profile, etc)
+Append at the end of your shell profile file (ex: `.zshrc`, `.profile`, etc)
 
 ```bash
 export GOPATH="$(go env GOPATH)"
 export GOROOT="$(go env GOROOT)"
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+```
+
+Log out then log back in to apply the changes or run the `source` command on the profile file to apply the changes immediately.
+
+For example:
+```bash
+source ~/.profile
 ```
 
 #### Step 4: Verify your installation
