@@ -39,7 +39,7 @@ func ParseEvents(
 
 	// append wasm prefix for the events
 	for _, event := range events {
-		sdkEvent, err := buildEvent(fmt.Sprintf("%s_%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
+		sdkEvent, err := buildEvent(fmt.Sprintf("%s-%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
 		if err != nil {
 			return nil, err
 		}
