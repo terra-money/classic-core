@@ -13,6 +13,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&govtypes.MsgSubmitProposal{}, "gov/MsgSubmitProposal", nil)
 	cdc.RegisterConcrete(&govtypes.MsgDeposit{}, "gov/MsgDeposit", nil)
 	cdc.RegisterConcrete(&govtypes.MsgVote{}, "gov/MsgVote", nil)
+	cdc.RegisterConcrete(&govtypes.MsgVoteWeighted{}, "gov/MsgVoteWeighted", nil)
 	cdc.RegisterConcrete(&govtypes.TextProposal{}, "gov/TextProposal", nil)
 }
 
