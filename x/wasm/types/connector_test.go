@@ -55,7 +55,7 @@ func TestParseEvents(t *testing.T) {
 			{Key: "key3", Value: "value3"},
 		}...,
 	), sdk.NewEvent(
-		fmt.Sprintf("%s_type1", EventTypeWasmPrefix),
+		fmt.Sprintf("%s-type1", EventTypeWasmPrefix),
 		[]sdk.Attribute{
 			{Key: AttributeKeyContractAddress, Value: addr.String()},
 			{Key: "key1", Value: "value1"},
@@ -63,7 +63,7 @@ func TestParseEvents(t *testing.T) {
 			{Key: "key3", Value: "value3"},
 		}...,
 	), sdk.NewEvent(
-		fmt.Sprintf("%s_type2", EventTypeWasmPrefix),
+		fmt.Sprintf("%s-type2", EventTypeWasmPrefix),
 		[]sdk.Attribute{
 			{Key: AttributeKeyContractAddress, Value: addr.String()},
 			{Key: "key1", Value: "value1"},

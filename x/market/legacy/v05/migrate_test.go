@@ -55,7 +55,7 @@ func TestMigrate(t *testing.T) {
 	"params": {
 		"burn_base_pool": "1000000.000000000000000000",
 		"min_stability_spread": "0.020000000000000000",
-		"mint_base_pool": "10000000.000000000000000000",
+		"mint_base_pool": "1000000.000000000000000000",
 		"pool_recovery_period": "10000"
 	}
 }`
