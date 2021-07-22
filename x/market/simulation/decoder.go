@@ -16,12 +16,7 @@ import (
 func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key[:1], types.MintPoolDeltaKey):
-			var deltaA, deltaB sdk.DecProto
-			cdc.MustUnmarshal(kvA.Value, &deltaA)
-			cdc.MustUnmarshal(kvB.Value, &deltaB)
-			return fmt.Sprintf("%v\n%v", deltaA, deltaB)
-		case bytes.Equal(kvA.Key[:1], types.BurnPoolDeltaKey):
+		case bytes.Equal(kvA.Key[:1], types.TerraPoolDeltaKey):
 			var deltaA, deltaB sdk.DecProto
 			cdc.MustUnmarshal(kvA.Value, &deltaA)
 			cdc.MustUnmarshal(kvB.Value, &deltaB)

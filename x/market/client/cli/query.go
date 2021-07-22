@@ -25,8 +25,7 @@ func GetQueryCmd() *cobra.Command {
 
 	marketQueryCmd.AddCommand(
 		GetCmdQuerySwap(),
-		GetCmdQueryMintPoolDelta(),
-		GetCmdQueryBurnPoolDelta(),
+		GetCmdQueryTerraPoolDelta(),
 		GetCmdQueryParams(),
 	)
 
@@ -75,15 +74,16 @@ $ terrad query swap 5000000uluna usdr
 	return cmd
 }
 
-// GetCmdQueryMintPoolDelta implements the query mint pool delta command.
-func GetCmdQueryMintPoolDelta() *cobra.Command {
+// GetCmdQueryTerraPoolDelta implements the query mint pool delta command.
+func GetCmdQueryTerraPoolDelta() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint-pool-delta",
+		Use:   "terra-pool-delta",
 		Args:  cobra.NoArgs,
-		Short: "Query mint pool delta",
-		Long: `Query mint pool delta, which is usdr amount used for mint operation from the MintBasePool.
+		Short: "Query terra pool delta",
+		Long: `Query terra pool delta, which is usdr amount used for swap operation from the TerraPool.
+It can be negative if the market wants more Terra than Luna, and vice versa if the market wants more Luna.
 
-$ terrad query market mint-pool-delta
+$ terracli query market terra-pool-delta
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -92,40 +92,8 @@ $ terrad query market mint-pool-delta
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.MintPoolDelta(context.Background(),
-				&types.QueryMintPoolDeltaRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryBurn poolDelta implements the query mint pool delta command.
-func GetCmdQueryBurnPoolDelta() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "burn-pool-delta",
-		Args:  cobra.NoArgs,
-		Short: "Query burn pool delta",
-		Long: `Query burn pool delta, which is usdr amount used for mint operation from the BurnBasePool.
-
-$ terrad query market burn-pool-delta
-	`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.BurnPoolDelta(context.Background(),
-				&types.QueryBurnPoolDeltaRequest{},
+			res, err := queryClient.TerraPoolDelta(context.Background(),
+				&types.QueryTerraPoolDeltaRequest{},
 			)
 			if err != nil {
 				return err

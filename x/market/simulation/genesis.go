@@ -15,19 +15,13 @@ import (
 
 // Simulation parameter constants
 const (
-	mintBasePoolKey       = "mint_base_pool"
-	burnBasePoolKey       = "burn_base_pool"
+	basePoolKey           = "base_pool"
 	poolRecoveryPeriodKey = "pool_recovery_period"
 	minStabilitySpreadKey = "min_spread"
 )
 
-// GenMintBasePool randomized MintBasePool
-func GenMintBasePool(r *rand.Rand) sdk.Dec {
-	return sdk.NewDec(50000000000000).Add(sdk.NewDec(int64(r.Intn(10000000000))))
-}
-
-// GenBurnBasePool randomized BurnBasePool
-func GenBurnBasePool(r *rand.Rand) sdk.Dec {
+// GenBasePool randomized MintBasePool
+func GenBasePool(r *rand.Rand) sdk.Dec {
 	return sdk.NewDec(50000000000000).Add(sdk.NewDec(int64(r.Intn(10000000000))))
 }
 
@@ -44,16 +38,10 @@ func GenMinSpread(r *rand.Rand) sdk.Dec {
 // RandomizedGenState generates a random GenesisState for gov
 func RandomizedGenState(simState *module.SimulationState) {
 
-	var mintBasePool sdk.Dec
+	var basePool sdk.Dec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, mintBasePoolKey, &mintBasePool, simState.Rand,
-		func(r *rand.Rand) { mintBasePool = GenMintBasePool(r) },
-	)
-
-	var burnBasePool sdk.Dec
-	simState.AppParams.GetOrGenerate(
-		simState.Cdc, burnBasePoolKey, &burnBasePool, simState.Rand,
-		func(r *rand.Rand) { burnBasePool = GenBurnBasePool(r) },
+		simState.Cdc, basePoolKey, &basePool, simState.Rand,
+		func(r *rand.Rand) { basePool = GenBasePool(r) },
 	)
 
 	var poolRecoveryPeriod uint64
@@ -70,10 +58,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	marketGenesis := types.NewGenesisState(
 		sdk.ZeroDec(),
-		sdk.ZeroDec(),
 		types.Params{
-			MintBasePool:       mintBasePool,
-			BurnBasePool:       burnBasePool,
+			BasePool:           basePool,
 			PoolRecoveryPeriod: poolRecoveryPeriod,
 			MinStabilitySpread: minStabilitySpread,
 		},

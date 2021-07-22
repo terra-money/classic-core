@@ -16,11 +16,9 @@ func Migrate(
 	marketGenState v04market.GenesisState,
 ) *v05market.GenesisState {
 	return &v05market.GenesisState{
-		MintPoolDelta: sdk.ZeroDec(),
-		BurnPoolDelta: sdk.ZeroDec(),
+		TerraPoolDelta: sdk.ZeroDec(),
 		Params: v05market.Params{
-			MintBasePool:       marketGenState.Params.BasePool,
-			BurnBasePool:       marketGenState.Params.BasePool,
+			BasePool:           marketGenState.Params.BasePool,
 			PoolRecoveryPeriod: uint64(marketGenState.Params.PoolRecoveryPeriod),
 			MinStabilitySpread: marketGenState.Params.MinStabilitySpread,
 		},

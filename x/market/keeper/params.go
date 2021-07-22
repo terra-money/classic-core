@@ -6,15 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MintBasePool is mint liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod
-func (k Keeper) MintBasePool(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.KeyMintBasePool, &res)
-	return
-}
-
-// BurnBasePool is burn liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod
-func (k Keeper) BurnBasePool(ctx sdk.Context) (res sdk.Dec) {
-	k.paramSpace.Get(ctx, types.KeyBurnBasePool, &res)
+// BasePool is liquidity pool(usdr unit) which will be made available per PoolRecoveryPeriod
+func (k Keeper) BasePool(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.KeyBasePool, &res)
 	return
 }
 
