@@ -235,5 +235,4 @@ func TestQueryContractInfo(t *testing.T) {
 		Admin:   "",
 		CodeID:  1,
 	})
-
 }
