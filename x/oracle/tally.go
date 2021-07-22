@@ -1,8 +1,6 @@
 package oracle
 
 import (
-	"sort"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/terra-money/core/x/oracle/keeper"
@@ -11,11 +9,8 @@ import (
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
+// CONTRACT: pb must be sorted
 func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
-	if !sort.IsSorted(pb) {
-		sort.Sort(pb)
-	}
-
 	weightedMedian = pb.WeightedMedian()
 	standardDeviation := pb.StandardDeviation()
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
