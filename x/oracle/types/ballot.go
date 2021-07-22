@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,13 +74,10 @@ func (pb ExchangeRateBallot) Power() int64 {
 }
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
+// CONTRACT: ballot must be sorted
 func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
-		if !sort.IsSorted(pb) {
-			panic("ballot must be sorted")
-		}
-
 		pivot := int64(0)
 		for _, v := range pb {
 			votePower := v.Power
