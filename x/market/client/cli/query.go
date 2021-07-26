@@ -83,7 +83,7 @@ func GetCmdQueryTerraPoolDelta() *cobra.Command {
 		Long: `Query terra pool delta, which is usdr amount used for swap operation from the TerraPool.
 It can be negative if the market wants more Terra than Luna, and vice versa if the market wants more Luna.
 
-$ terracli query market terra-pool-delta
+$ terrad query market terra-pool-delta
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
