@@ -15,14 +15,9 @@ service Query {
     option (google.api.http).get = "/terra/market/v1beta1/swap";
   }
 
-  // MintPoolDelta returns mint_pool_delta amount.
-  rpc MintPoolDelta(QueryMintPoolDeltaRequest) returns (QueryMintPoolDeltaResponse) {
-    option (google.api.http).get = "/terra/market/v1beta1/mint_pool_delta";
-  }
-
-  // BurnPoolDelta returns burn_pool_delta amount.
-  rpc BurnPoolDelta(QueryBurnPoolDeltaRequest) returns (QueryBurnPoolDeltaResponse) {
-    option (google.api.http).get = "/terra/market/v1beta1/burn_pool_delta";
+  // TerraPoolDelta returns terra_pool_delta amount.
+  rpc TerraPoolDelta(QueryTerraPoolDeltaRequest) returns (QueryTerraPoolDeltaResponse) {
+    option (google.api.http).get = "/terra/market/v1beta1/terra_pool_delta";
   }
 
   // Params queries all parameters.
@@ -48,23 +43,13 @@ message QuerySwapResponse {
   cosmos.base.v1beta1.Coin return_coin = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryMintPoolDeltaRequest is the request type for the Query/MintPoolDelta RPC method.
-message QueryMintPoolDeltaRequest {}
+// QueryTerraPoolDeltaRequest is the request type for the Query/TerraPoolDelta RPC method.
+message QueryTerraPoolDeltaRequest {}
 
-// QueryMintPoolDeltaResponse is the response type for the Query/MintPoolDelta RPC method.
-message QueryMintPoolDeltaResponse {
-  // mint_pool_delta defines the gap between the MintPool and the MintBasePool
-  bytes mint_pool_delta = 1
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
-}
-
-// QueryBurnPoolDeltaRequest is the request type for the Query/BurnPoolDelta RPC method.
-message QueryBurnPoolDeltaRequest {}
-
-// QueryBurnPoolDeltaResponse is the response type for the Query/BurnPoolDelta RPC method.
-message QueryBurnPoolDeltaResponse {
-  // burn_pool_delta defines the gap between the BurnPool and the BurnBasePool
-  bytes burn_pool_delta = 1
+// QueryTerraPoolDeltaResponse is the response type for the Query/TerraPoolDelta RPC method.
+message QueryTerraPoolDeltaResponse {
+  // terra_pool_delta defines the gap between the TerraPool and the TerraBasePool
+  bytes terra_pool_delta = 1
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 

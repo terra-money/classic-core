@@ -2024,29 +2024,10 @@ paths:
             $ref: "#/definitions/Coin"
         500:
           description: Internal Server Error
-  /market/mint_pool_delta:
+  /market/terra_pool_delta:
     get:
       deprecated: true
-      summary: Get mint pool delta, is usdr amount used for swap operation from the MintPool.
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "10000000.00"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /market/burn_pool_delta:
-    get:
-      deprecated: true
-      summary: Get burn pool delta, is usdr amount used for swap operation from the BurnPool.
+      summary: Get terra pool delta, is usdr amount used for swap operation from the TerraPool.
       tags:
         - Market
       produces:
@@ -3515,10 +3496,7 @@ definitions:
   MarketParams:
     type: object
     properties:
-      mint_base_pool:
-        type: number
-        example: "1000000.0"
-      burn_base_pool:
+      base_pool:
         type: number
         example: "1000000.0"
       pool_recovery_period:

@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestApplySwapToPool_Mint(t *testing.T) {
+func TestApplySwapToPool(t *testing.T) {
 	input := CreateTestInput(t)
 
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
@@ -19,133 +19,50 @@ func TestApplySwapToPool_Mint(t *testing.T) {
 
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000))
 	askCoin := sdk.NewDecCoin(core.MicroSDRDenom, sdk.NewInt(1700))
-	oldMintDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
+	oldSDRPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
+	newSDRPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	sdrDiff := newSDRPoolDelta.Sub(oldSDRPoolDelta)
+	require.Equal(t, sdk.NewDec(-1700), sdrDiff)
 
-	newMintDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	sdrDiff := newMintDelta.Sub(oldMintDelta)
-	require.Equal(t, sdk.NewDec(1700), sdrDiff)
-}
-
-func TestApplySwapToPool_Burn(t *testing.T) {
-	input := CreateTestInput(t)
-
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
-
-	offerCoin := sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
-	askCoin := sdk.NewDecCoin(core.MicroLunaDenom, sdk.NewInt(1000))
-	oldBurnPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
+	// reverse swap
+	offerCoin = sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
+	askCoin = sdk.NewDecCoin(core.MicroLunaDenom, sdk.NewInt(1000))
+	oldSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
-
-	newBurnPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-	sdrDiff := newBurnPoolDelta.Sub(oldBurnPoolDelta)
+	newSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	sdrDiff = newSDRPoolDelta.Sub(oldSDRPoolDelta)
 	require.Equal(t, sdk.NewDec(1700), sdrDiff)
-}
-
-func TestApplySwapToPool_TerraTerra(t *testing.T) {
-	input := CreateTestInput(t)
-
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
 	// TERRA <> TERRA, no pool changes are expected
-	offerCoin := sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
-	askCoin := sdk.NewDecCoin(core.MicroKRWDenom, sdk.NewInt(3400))
-	oldMintPoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	oldBurnPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
+	offerCoin = sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1700))
+	askCoin = sdk.NewDecCoin(core.MicroKRWDenom, sdk.NewInt(3400))
+	oldSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	input.MarketKeeper.ApplySwapToPool(input.Ctx, offerCoin, askCoin)
-
-	newMintPoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	newBurnPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-
-	require.Equal(t, oldMintPoolDelta, newMintPoolDelta)
-	require.Equal(t, oldBurnPoolDelta, newBurnPoolDelta)
+	newSDRPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	sdrDiff = newSDRPoolDelta.Sub(oldSDRPoolDelta)
+	require.Equal(t, sdk.NewDec(0), sdrDiff)
 }
-
-func TestComputeSwap_Mint(t *testing.T) {
+func TestComputeSwap(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// Set Oracle Price
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
 
-	offerCoin := sdk.NewInt64Coin(core.MicroLunaDenom, rand.Int63()%10000+2)
+	for i := 0; i < 100; i++ {
+		swapAmountInSDR := lunaPriceInSDR.MulInt64(rand.Int63()%10000 + 2).TruncateInt()
+		offerCoin := sdk.NewCoin(core.MicroSDRDenom, swapAmountInSDR)
+		retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 
-	basePool := input.MarketKeeper.MintBasePool(input.Ctx)
-	poolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	require.True(t, poolDelta.IsZero())
+		require.NoError(t, err)
+		require.True(t, spread.GTE(input.MarketKeeper.MinStabilitySpread(input.Ctx)))
+		require.Equal(t, sdk.NewDecFromInt(offerCoin.Amount).Quo(lunaPriceInSDR), retCoin.Amount)
+	}
 
-	cp := basePool.Mul(basePool)
-	offerPool := basePool.Add(poolDelta)
-	askPool := cp.Quo(offerPool)
-
-	// ask = ask_pool - cp / (offer_pool + offer_amount)
-	// spread % = (return - ask) / return
-	expectedReturnAmount := sdk.NewDecFromInt(offerCoin.Amount).Mul(lunaPriceInSDR)
-	expectedSpread := expectedReturnAmount.Sub(askPool.Sub(cp.Quo(offerPool.Add(expectedReturnAmount)))).Quo(expectedReturnAmount)
-
-	// without min stability fee
-	params := input.MarketKeeper.GetParams(input.Ctx)
-	params.MinStabilitySpread = sdk.ZeroDec()
-	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroSDRDenom)
-	require.NoError(t, err)
-	require.Equal(t, expectedReturnAmount, retCoin.Amount)
-	require.Equal(t, expectedSpread, spread)
-
-	// with min stability fee
-	params.MinStabilitySpread = sdk.OneDec()
-	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	retCoin, spread, err = input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroSDRDenom)
-	require.NoError(t, err)
-	require.Equal(t, expectedReturnAmount, retCoin.Amount)
-	require.Equal(t, sdk.OneDec(), spread)
-}
-
-func TestComputeSwap_Burn(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Set Oracle Price
-	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
-
-	offerCoin := sdk.NewInt64Coin(core.MicroSDRDenom, rand.Int63()%10000+2)
-
-	basePool := input.MarketKeeper.BurnBasePool(input.Ctx)
-	poolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-	require.True(t, poolDelta.IsZero())
-
-	cp := basePool.Mul(basePool)
-	offerPool := basePool.Add(poolDelta)
-	askPool := cp.Quo(offerPool)
-
-	// ask = ask_pool - cp / (offer_pool + offer_amount)
-	// spread % = (return - ask) / return
-	expectedReturnAmountInSDR := sdk.NewDecFromInt(offerCoin.Amount)
-	expectedReturnAmount := expectedReturnAmountInSDR.Quo(lunaPriceInSDR)
-	expectedSpread := expectedReturnAmountInSDR.Sub(askPool.Sub(cp.Quo(offerPool.Add(expectedReturnAmountInSDR)))).Quo(expectedReturnAmountInSDR)
-
-	// without min stability fee
-	params := input.MarketKeeper.GetParams(input.Ctx)
-	params.MinStabilitySpread = sdk.ZeroDec()
-	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
-	require.NoError(t, err)
-	require.Equal(t, expectedReturnAmount, retCoin.Amount)
-	require.Equal(t, expectedSpread, spread)
-
-	// with min stability fee
-	params.MinStabilitySpread = sdk.OneDec()
-	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	retCoin, spread, err = input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
-	require.NoError(t, err)
-	require.Equal(t, expectedReturnAmount, retCoin.Amount)
-	require.Equal(t, sdk.OneDec(), spread)
+	offerCoin := sdk.NewCoin(core.MicroSDRDenom, lunaPriceInSDR.QuoInt64(2).TruncateInt())
+	_, _, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	require.Error(t, err)
 }
 
 func TestComputeInternalSwap(t *testing.T) {
