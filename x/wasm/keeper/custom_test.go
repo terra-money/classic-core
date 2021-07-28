@@ -88,6 +88,9 @@ type bindingsTesterTaxCapQueryMsg struct {
 type bindingsTesterExchangeRatesQueryMsg struct {
 	ExchangeRates exchangeRatesQueryMsg `json:"exchange_rates"`
 }
+type bindingsTesterContractInfoQuerymsg struct {
+	ContractInfo contractInfoQueryMsg `json:"contract_info"`
+}
 type swapQueryMsg struct {
 	OfferCoin wasmvmtypes.Coin `json:"offer_coin"`
 	AskDenom  string           `json:"ask_denom"`
@@ -99,6 +102,9 @@ type taxCapQueryMsg struct {
 type exchangeRatesQueryMsg struct {
 	BaseDenom   string   `json:"base_denom"`
 	QuoteDenoms []string `json:"quote_denoms"`
+}
+type contractInfoQueryMsg struct {
+	ContractAddress string `json:"contract_address"`
 }
 
 func TestInstantiateMaker(t *testing.T) {
@@ -238,6 +244,37 @@ func TestExchangeRatesQuerier(t *testing.T) {
 	exchangeRateDec, err := sdk.NewDecFromStr(exchangeRateResponse.ExchangeRates[0].ExchangeRate)
 	require.NoError(t, err)
 	require.Equal(t, KRWExchangeRate, exchangeRateDec)
+}
+
+func TestContractInfoQuerier(t *testing.T) {
+	input, _, testerAddr, _ := setupBindingsTesterContract(t)
+
+	ctx, keeper := input.Ctx, input.WasmKeeper
+
+	contractInfoQueryMsg := bindingsTesterContractInfoQuerymsg{
+		ContractInfo: contractInfoQueryMsg{
+			ContractAddress: testerAddr.String(),
+		},
+	}
+
+	bz, err := json.Marshal(contractInfoQueryMsg)
+	require.NoError(t, err)
+
+	res, err := keeper.queryToContract(ctx, testerAddr, bz)
+	require.NoError(t, err)
+
+	var contractInfoResponse ContractInfoQueryResponse
+	err = json.Unmarshal(res, &contractInfoResponse)
+	require.NoError(t, err)
+
+	contractInfo, err := keeper.GetContractInfo(ctx, testerAddr)
+	require.NoError(t, err)
+	require.Equal(t, contractInfoResponse, ContractInfoQueryResponse{
+		CodeID:  contractInfo.CodeID,
+		Address: contractInfo.Address,
+		Creator: contractInfo.Creator,
+		Admin:   contractInfo.Admin,
+	})
 }
 
 func TestBuyMsg(t *testing.T) {
