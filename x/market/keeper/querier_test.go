@@ -70,25 +70,10 @@ func TestQueryMintPoolDelta(t *testing.T) {
 	querier := NewQuerier(input.MarketKeeper)
 
 	poolDelta := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetMintPoolDelta(input.Ctx, poolDelta)
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, poolDelta)
 
-	res, errRes := querier.MintPoolDelta(ctx, &types.QueryMintPoolDeltaRequest{})
+	res, errRes := querier.TerraPoolDelta(ctx, &types.QueryTerraPoolDeltaRequest{})
 	require.NoError(t, errRes)
 
-	require.Equal(t, poolDelta, res.MintPoolDelta)
-}
-
-func TestQueryBurnPoolDelta(t *testing.T) {
-
-	input := CreateTestInput(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.MarketKeeper)
-
-	poolDelta := sdk.NewDecWithPrec(17, 1)
-	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, poolDelta)
-
-	res, errRes := querier.BurnPoolDelta(ctx, &types.QueryBurnPoolDeltaRequest{})
-	require.NoError(t, errRes)
-
-	require.Equal(t, poolDelta, res.BurnPoolDelta)
+	require.Equal(t, poolDelta, res.TerraPoolDelta)
 }

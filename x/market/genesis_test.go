@@ -11,8 +11,7 @@ import (
 
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestInput(t)
-	input.MarketKeeper.SetMintPoolDelta(input.Ctx, sdk.NewDec(1123))
-	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, sdk.NewDec(3321))
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, sdk.NewDec(1123))
 	genesis := ExportGenesis(input.Ctx, input.MarketKeeper)
 
 	newInput := keeper.CreateTestInput(t)

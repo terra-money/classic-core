@@ -58,10 +58,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetMintPoolDelta returns the gap between the MintPool and the MintBasePool
-func (k Keeper) GetMintPoolDelta(ctx sdk.Context) sdk.Dec {
+// GetTerraPoolDelta returns the gap between the TerraPool and the TerraBasePool
+func (k Keeper) GetTerraPoolDelta(ctx sdk.Context) sdk.Dec {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.MintPoolDeltaKey)
+	bz := store.Get(types.TerraPoolDeltaKey)
 	if bz == nil {
 		return sdk.ZeroDec()
 	}
@@ -71,47 +71,23 @@ func (k Keeper) GetMintPoolDelta(ctx sdk.Context) sdk.Dec {
 	return dp.Dec
 }
 
-// SetMintPoolDelta updates MintPoolDelta which is gap between the MintPool and the BasePool
-func (k Keeper) SetMintPoolDelta(ctx sdk.Context, delta sdk.Dec) {
+// SetTerraPoolDelta updates TerraPoolDelta which is gap between the TerraPool and the BasePool
+func (k Keeper) SetTerraPoolDelta(ctx sdk.Context, delta sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: delta})
-	store.Set(types.MintPoolDeltaKey, bz)
-}
-
-// GetBurnPoolDelta returns the gap between the BurnPool and the BurnBasePool
-func (k Keeper) GetBurnPoolDelta(ctx sdk.Context) sdk.Dec {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.BurnPoolDeltaKey)
-	if bz == nil {
-		return sdk.ZeroDec()
-	}
-
-	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshal(bz, &dp)
-	return dp.Dec
-}
-
-// SetBurnPoolDelta updates BurnPoolDelta which is gap between the BurnPool and the BasePool
-func (k Keeper) SetBurnPoolDelta(ctx sdk.Context, delta sdk.Dec) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: delta})
-	store.Set(types.BurnPoolDeltaKey, bz)
+	store.Set(types.TerraPoolDeltaKey, bz)
 }
 
 // ReplenishPools replenishes each pool(Terra,Luna) to BasePool
 func (k Keeper) ReplenishPools(ctx sdk.Context) {
-	mintDelta := k.GetMintPoolDelta(ctx)
-	burnDelta := k.GetBurnPoolDelta(ctx)
+	poolDelta := k.GetTerraPoolDelta(ctx)
 
 	poolRecoveryPeriod := int64(k.PoolRecoveryPeriod(ctx))
-	mintRegressionAmt := mintDelta.QuoInt64(poolRecoveryPeriod)
-	burnRegressionAmt := burnDelta.QuoInt64(poolRecoveryPeriod)
+	poolRegressionAmt := poolDelta.QuoInt64(poolRecoveryPeriod)
 
 	// Replenish pools towards each base pool
 	// regressionAmt cannot make delta zero
-	mintDelta = mintDelta.Sub(mintRegressionAmt)
-	burnDelta = burnDelta.Sub(burnRegressionAmt)
+	poolDelta = poolDelta.Sub(poolRegressionAmt)
 
-	k.SetMintPoolDelta(ctx, mintDelta)
-	k.SetBurnPoolDelta(ctx, burnDelta)
+	k.SetTerraPoolDelta(ctx, poolDelta)
 }

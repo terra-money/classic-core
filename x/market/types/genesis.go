@@ -8,20 +8,18 @@ import (
 )
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(mintPoolDelta, burnPoolDelta sdk.Dec, params Params) *GenesisState {
+func NewGenesisState(terraPoolDelta sdk.Dec, params Params) *GenesisState {
 	return &GenesisState{
-		MintPoolDelta: mintPoolDelta,
-		BurnPoolDelta: burnPoolDelta,
-		Params:        params,
+		TerraPoolDelta: terraPoolDelta,
+		Params:         params,
 	}
 }
 
 // DefaultGenesisState returns raw genesis raw message for testing
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		MintPoolDelta: sdk.ZeroDec(),
-		BurnPoolDelta: sdk.ZeroDec(),
-		Params:        DefaultParams(),
+		TerraPoolDelta: sdk.ZeroDec(),
+		Params:         DefaultParams(),
 	}
 }
 

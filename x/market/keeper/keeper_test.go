@@ -10,29 +10,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestMintPoolDeltaUpdate(t *testing.T) {
+func TestTerraPoolDeltaUpdate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	terraPoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
+	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	require.Equal(t, sdk.ZeroDec(), terraPoolDelta)
 
 	diff := sdk.NewDec(10)
-	input.MarketKeeper.SetMintPoolDelta(input.Ctx, diff)
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, diff)
 
-	terraPoolDelta = input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	require.Equal(t, diff, terraPoolDelta)
-}
-
-func TestBurnPoolDeltaUpdate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	terraPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-	require.Equal(t, sdk.ZeroDec(), terraPoolDelta)
-
-	diff := sdk.NewDec(10)
-	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, diff)
-
-	terraPoolDelta = input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
+	terraPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
 	require.Equal(t, diff, terraPoolDelta)
 }
 
@@ -42,31 +29,29 @@ func TestReplenishPools(t *testing.T) {
 	input := CreateTestInput(t)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
 
-	recoveryPeriod := int64(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx))
-	mintBasePool := input.MarketKeeper.MintBasePool(input.Ctx)
-	mintPoolDelta := input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	require.True(t, mintPoolDelta.IsZero())
-
-	burnBasePool := input.MarketKeeper.BurnBasePool(input.Ctx)
-	burnPoolDelta := input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-	require.True(t, burnPoolDelta.IsZero())
+	basePool := input.MarketKeeper.BasePool(input.Ctx)
+	terraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	require.True(t, terraPoolDelta.IsZero())
 
 	// Positive delta
-	mintDiff := mintBasePool.QuoInt64((int64)(core.BlocksPerDay))
-	input.MarketKeeper.SetMintPoolDelta(input.Ctx, mintDiff)
-
-	burnDiff := burnBasePool.QuoInt64((int64)(core.BlocksPerDay))
-	input.MarketKeeper.SetBurnPoolDelta(input.Ctx, burnDiff)
+	diff := basePool.QuoInt64((int64)(core.BlocksPerDay))
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, diff)
 
 	input.MarketKeeper.ReplenishPools(input.Ctx)
 
-	mintPoolDelta = input.MarketKeeper.GetMintPoolDelta(input.Ctx)
-	mintReplenishAmt := mintDiff.QuoInt64(recoveryPeriod)
-	expectedMintDelta := mintDiff.Sub(mintReplenishAmt)
-	require.Equal(t, expectedMintDelta, mintPoolDelta)
+	terraPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	replenishAmt := diff.QuoInt64((int64)(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx)))
+	expectedDelta := diff.Sub(replenishAmt)
+	require.Equal(t, expectedDelta, terraPoolDelta)
 
-	burnPoolDelta = input.MarketKeeper.GetBurnPoolDelta(input.Ctx)
-	burnReplenishAmt := burnDiff.QuoInt64(recoveryPeriod)
-	expectedBurnDelta := burnDiff.Sub(burnReplenishAmt)
-	require.Equal(t, expectedBurnDelta, burnPoolDelta)
+	// Negative delta
+	diff = diff.Neg()
+	input.MarketKeeper.SetTerraPoolDelta(input.Ctx, diff)
+
+	input.MarketKeeper.ReplenishPools(input.Ctx)
+
+	terraPoolDelta = input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
+	replenishAmt = diff.QuoInt64((int64)(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx)))
+	expectedDelta = diff.Sub(replenishAmt)
+	require.Equal(t, expectedDelta, terraPoolDelta)
 }

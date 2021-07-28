@@ -66,7 +66,7 @@ If you haven't already, install Golang by following the [official docs](https://
 
 #### Step 2: Get Terra Core source code
 
-Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` and `terracli` binaries.
+Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` binary.
 
 ```bash
 git clone https://github.com/terra-money/core/
@@ -76,7 +76,7 @@ git checkout master
 
 #### Step 3: Build from source
 
-You can now build Terra Core. Running the following command will install executables `terrad` (Terra node daemon) and `terracli` (CLI for interacting with the node) to your `GOPATH`.
+You can now build Terra Core. Running the following command will install executable `terrad` (Terra node daemon and CLI for interacting with the node) to your `GOPATH`.
 
 ```bash
 make install
@@ -88,49 +88,54 @@ Verify that everything is OK. If you get something like the following, you've su
 
 ```bash
 terrad version --long
-terracli version --long
 name: terra
 server_name: terrad
-client_name: terracli
-version: 0.4.0
-commit: b42a89e383217ad15cfb93c53624ffde4035096f
+version: 0.5.0-rc0-9-g640fd0ed
+commit: 640fd0ed921d029f4d1c3d88435bd5dbd67d14cd
 build_tags: netgo,ledger
-go: go version go1.13.4 darwin/amd64
+go: go version go1.16.5 darwin/amd64
 ```
 
-### `terracli`
+### CLI
 
-Installing Terra Core will also include the **`terracli`** entrypoint into your `PATH`, which provides you a command-line interface to a node running `terrad`, communicating over RPC. You can find comprehensive coverage on how to use the CLI on our [official docs](https://docs.terra.money/terracli). The various subcommands and their expected arguments can also be discovered by issuing:
+`terrad` provides you a command-line interface to a running node, communicating over RPC. You can find comprehensive coverage on how to use the CMD on our [official docs](https://docs.terra.money/terracli). The various subcommands and their expected arguments can also be discovered by issuing:
 
 <pre>
         <div align="left">
-        <b>$ terracli --help</b>
+        <b>$ terrad --help</b>
 
         Command line interface for interacting with terrad
 
         Usage:
-          terracli [command]
+          terrad [command]
 
         Available Commands:
-          status      Query remote node for status
-          config      Create or query an application CLI configuration file
-          query       Querying subcommands
-          tx          Transactions subcommands
-
-          rest-server Start LCD (light-client daemon), a local REST server
-
-          keys        Add or view local private keys
-
-          version     Print the app version
-          help        Help about any command
+          add-genesis-account Add a genesis account to genesis.json
+          collect-gentxs      Collect genesis txs and output a genesis.json file
+          debug               Tool for helping with debugging your application
+          export              Export state to JSON
+          gentx               Generate a genesis tx carrying a self delegation
+          help                Help about any command
+          init                Initialize private validator, p2p, genesis, and application configuration files
+          keys                Manage your application's keys
+          migrate             Migrate genesis to a specified target version
+          query               Querying subcommands
+          rosetta             spin up a rosetta server
+          start               Run the full node
+          status              Query remote node for status
+          tendermint          Tendermint subcommands
+          testnet             Initialize files for a terrad testnet
+          tx                  Transactions subcommands
+          unsafe-reset-all    Resets the blockchain database, removes address book files, and resets data/priv_validator_state.json to the genesis state
+          validate-genesis    validates the genesis file at the default location or at the location passed as an arg
+          version             Print the application binary version information
 
         Flags:
-              --chain-id string   Chain ID of tendermint node
-          -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
-          -h, --help              help for terracli
-              --home string       directory for config and data (default "$HOME/.terracli")
-          -o, --output string     Output format (text|json) (default "text")
-              --trace             print out full stack trace on errors
+          -h, --help                help for terrad
+              --home string         directory for config and data (default "/Users/yeoyunseog/.terra")
+              --log_format string   The logging format (json|plain) (default "plain")
+              --log_level string    The logging level (trace|debug|info|warn|error|fatal|panic) (default "info")
+              --trace               print out full stack trace on errors
 
         <b>Use "terracli [command] --help" for more information about a command.</b>
         </div>
@@ -143,8 +148,8 @@ Installing Terra Core will also include the **`terracli`** entrypoint into your 
 | Chain ID       | Description        | Public Node (LCD)             |
 | -------------- | ------------------ | ----------------------------- |
 | `columbus-4`   | Mainnet            | https://lcd.terra.dev         |
-| `soju-0014`    | Columbus-3 Testnet | https://soju-lcd.terra.dev    |
 | `tequila-0004` | Columbus-4 Testnet | https://tequila-lcd.terra.dev |
+| `bombay-0008`  | Columbus-5 Testnet | https://bombay-lcd.terra.dev  |
 
 ### Running a Local Testnet
 
@@ -161,7 +166,7 @@ terrad init --chain-id=<testnet_name> <node_moniker>
 You will need a Terra account to start. You can generate one with:
 
 ```bash
-terracli keys add <account_name>
+terrad keys add <account_name>
 ```
 
 #### Step 2. Add account to genesis
@@ -169,7 +174,7 @@ terracli keys add <account_name>
 Next, you need to add your account to the genesis. The following commands add your account and set the initial balance:
 
 ```bash
-terrad add-genesis-account $(terracli keys show <account_name> -a) 100000000uluna,1000usd
+terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
 terrad gentx --name my_account --amount 10000000uluna
 terrad collect-gentxs
 ```
@@ -222,7 +227,7 @@ Modify `/etc/security/limits.conf` to raise the `nofile` capability.
 
 - `26657` is the default port for the RPC protocol. This port is used for querying / sending transactions. In other words, this port needs to be opened for serving queries from `terracli`. It is safe to _NOT_ to open this port to the public unless you are planning to run a public node.
 
-- `1317` is the default port for [Lite Client Daemon](https://docs.terra.money/terracli/lcd.html) (LCD), which can be executed by `terracli rest-server`. LCD provides HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://swagger.terra.money) for usage examples. You don't need to open this port unless you have use of it.
+- `1317` is the default port for [Lite Client Daemon](https://docs.terra.money/terracli/lcd.html) (LCD), which can be enabled at `~/.terra/config/app.toml`. LCD provides HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://swagger.terra.money) for usage examples. You don't need to open this port unless you have use of it.
 
 - `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database which can be used for monitoring the environment. This port is not opened in the default configuration.
 
