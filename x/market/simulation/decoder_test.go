@@ -17,13 +17,11 @@ func TestDecodeDistributionStore(t *testing.T) {
 	cdc := keeper.MakeTestCodec(t)
 	dec := NewDecodeStore(cdc)
 
-	mintDelta := sdk.NewDecWithPrec(12, 2)
-	burnDelta := sdk.NewDecWithPrec(121, 2)
+	terraDelta := sdk.NewDecWithPrec(12, 2)
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: types.MintPoolDeltaKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: mintDelta})},
-			{Key: types.BurnPoolDeltaKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: burnDelta})},
+			{Key: types.TerraPoolDeltaKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: terraDelta})},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}
@@ -32,8 +30,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 		name        string
 		expectedLog string
 	}{
-		{"MintPoolDelta", fmt.Sprintf("%v\n%v", mintDelta, mintDelta)},
-		{"BurnPoolDelta", fmt.Sprintf("%v\n%v", burnDelta, burnDelta)},
+		{"TerraPoolDelta", fmt.Sprintf("%v\n%v", terraDelta, terraDelta)},
 		{"other", ""},
 	}
 

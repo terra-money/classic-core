@@ -12,11 +12,7 @@ func TestGenesisValidation(t *testing.T) {
 	genState := DefaultGenesisState()
 	require.NoError(t, ValidateGenesis(genState))
 
-	genState.Params.MintBasePool = sdk.NewDec(-1)
-	require.Error(t, ValidateGenesis(genState))
-
-	genState = DefaultGenesisState()
-	genState.Params.BurnBasePool = sdk.NewDec(-1)
+	genState.Params.BasePool = sdk.NewDec(-1)
 	require.Error(t, ValidateGenesis(genState))
 
 	genState = DefaultGenesisState()

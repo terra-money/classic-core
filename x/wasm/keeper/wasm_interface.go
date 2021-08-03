@@ -144,7 +144,57 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 }
 
+// ContractInfoQueryParams query request params for contract info
+type ContractInfoQueryParams struct {
+	ContractAddress string `json:"contract_address"`
+}
+
+// CosmosQuery custom query interface for oracle querier
+type CosmosQuery struct {
+	ContractInfo *ContractInfoQueryParams `json:"contract_info,omitempty"`
+}
+
+// ContractInfoQueryResponse - exchange rates query response for wasm module
+type ContractInfoQueryResponse struct {
+	Address string `json:"address"`
+	Creator string `json:"creator"`
+	Admin   string `json:"admin,omitempty"`
+	CodeID  uint64 `json:"code_id"`
+}
+
 // QueryCustom implements custom query interface
-func (WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
-	return nil, nil
+func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+	var params CosmosQuery
+	err := json.Unmarshal(data, &params)
+
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	if params.ContractInfo != nil {
+		contractAddress, err := sdk.AccAddressFromBech32(params.ContractInfo.ContractAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		contractInfo, err := querier.keeper.GetContractInfo(ctx, contractAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		bz, err := json.Marshal(ContractInfoQueryResponse{
+			Address: contractInfo.Address,
+			Creator: contractInfo.Creator,
+			Admin:   contractInfo.Admin,
+			CodeID:  contractInfo.CodeID,
+		})
+
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		}
+
+		return bz, nil
+	}
+
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Wasm variant"}
 }

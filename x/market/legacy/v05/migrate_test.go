@@ -50,14 +50,12 @@ func TestMigrate(t *testing.T) {
 	// Make sure about:
 	// - BasePool to Mint & Burn pool
 	expected := `{
-	"burn_pool_delta": "0.000000000000000000",
-	"mint_pool_delta": "0.000000000000000000",
 	"params": {
-		"burn_base_pool": "1000000.000000000000000000",
+		"base_pool": "1000000.000000000000000000",
 		"min_stability_spread": "0.020000000000000000",
-		"mint_base_pool": "1000000.000000000000000000",
 		"pool_recovery_period": "10000"
-	}
+	},
+	"terra_pool_delta": "0.000000000000000000"
 }`
 
 	assert.JSONEq(t, expected, string(indentedBz))

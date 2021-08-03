@@ -16,14 +16,9 @@ import (
 // on the simulation
 func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{
-		simulation.NewSimParamChange(types.ModuleName, string(types.KeyMintBasePool),
+		simulation.NewSimParamChange(types.ModuleName, string(types.KeyBasePool),
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%s\"", GenMintBasePool(r))
-			},
-		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.KeyBurnBasePool),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%s\"", GenBurnBasePool(r))
+				return fmt.Sprintf("\"%s\"", GenBasePool(r))
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, string(types.KeyPoolRecoveryPeriod),

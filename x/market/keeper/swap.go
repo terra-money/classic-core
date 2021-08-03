@@ -18,31 +18,29 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 		return nil
 	}
 
-	offerDecCion := sdk.NewDecCoinFromCoin(offerCoin)
+	terraPoolDelta := k.GetTerraPoolDelta(ctx)
 
-	// Mint - swapping Luna to Terra,
-	// MintPoolDelta increased
-	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
-		mintPoolDelta := k.GetMintPoolDelta(ctx)
-		offerBaseCoin, err := k.ComputeInternalSwap(ctx, offerDecCion, core.MicroSDRDenom)
-		if err != nil {
-			return err
-		}
-
-		k.SetMintPoolDelta(ctx, mintPoolDelta.Add(offerBaseCoin.Amount))
-	}
-
-	// Burn - swapping Terra to Luna,
-	// BurnPoolDelta increased
+	// In case swapping Terra to Luna, the terra swap pool(offer) must be increased and the luna swap pool(ask) must be decreased
 	if offerCoin.Denom != core.MicroLunaDenom && askCoin.Denom == core.MicroLunaDenom {
-		burnPoolDelta := k.GetBurnPoolDelta(ctx)
-		offerBaseCoin, err := k.ComputeInternalSwap(ctx, offerDecCion, core.MicroSDRDenom)
+		offerBaseCoin, err := k.ComputeInternalSwap(ctx, sdk.NewDecCoinFromCoin(offerCoin), core.MicroSDRDenom)
 		if err != nil {
 			return err
 		}
 
-		k.SetBurnPoolDelta(ctx, burnPoolDelta.Add(offerBaseCoin.Amount))
+		terraPoolDelta = terraPoolDelta.Add(offerBaseCoin.Amount)
 	}
+
+	// In case swapping Luna to Terra, the luna swap pool(offer) must be increased and the terra swap pool(ask) must be decreased
+	if offerCoin.Denom == core.MicroLunaDenom && askCoin.Denom != core.MicroLunaDenom {
+		askBaseCoin, err := k.ComputeInternalSwap(ctx, askCoin, core.MicroSDRDenom)
+		if err != nil {
+			return err
+		}
+
+		terraPoolDelta = terraPoolDelta.Sub(askBaseCoin.Amount)
+	}
+
+	k.SetTerraPoolDelta(ctx, terraPoolDelta)
 
 	return nil
 }
@@ -95,25 +93,26 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 		return
 	}
 
-	var basePool sdk.Dec
-	var poolDelta sdk.Dec
-
-	if offerCoin.Denom == core.MicroLunaDenom {
-		// Mint - Luna => Terra
-		basePool = k.MintBasePool(ctx)
-		poolDelta = k.GetMintPoolDelta(ctx)
-	} else {
-		// Burn - Terra => Luna
-		basePool = k.BurnBasePool(ctx)
-		poolDelta = k.GetBurnPoolDelta(ctx)
-	}
-
+	basePool := k.BasePool(ctx)
 	minSpread := k.MinStabilitySpread(ctx)
 
 	// constant-product, which by construction is square of base(equilibrium) pool
 	cp := basePool.Mul(basePool)
-	offerPool := basePool.Add(poolDelta)
-	askPool := cp.Quo(offerPool)
+	terraPoolDelta := k.GetTerraPoolDelta(ctx)
+	terraPool := basePool.Add(terraPoolDelta)
+	lunaPool := cp.Quo(terraPool)
+
+	var offerPool sdk.Dec // base denom(usdr) unit
+	var askPool sdk.Dec   // base denom(usdr) unit
+	if offerCoin.Denom != core.MicroLunaDenom {
+		// Terra->Luna swap
+		offerPool = terraPool
+		askPool = lunaPool
+	} else {
+		// Luna->Terra swap
+		offerPool = lunaPool
+		askPool = terraPool
+	}
 
 	// Get cp(constant-product) based swap amount
 	// askBaseAmount = askPool - cp / (offerPool + offerBaseAmount)

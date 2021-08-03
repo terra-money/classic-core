@@ -13,15 +13,9 @@ func TestParamsEqual(t *testing.T) {
 	err := p1.Validate()
 	require.NoError(t, err)
 
-	// invalid mint base pool
-	p1.MintBasePool = sdk.NewDec(-1)
+	// invalid base pool
+	p1.BasePool = sdk.NewDec(-1)
 	err = p1.Validate()
-	require.Error(t, err)
-
-	// invalid mint base pool
-	p2 := DefaultParams()
-	p2.BurnBasePool = sdk.NewDec(-1)
-	err = p2.Validate()
 	require.Error(t, err)
 
 	// invalid pool recovery period
