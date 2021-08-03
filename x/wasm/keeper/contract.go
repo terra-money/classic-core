@@ -355,6 +355,9 @@ func (k Keeper) reply(
 	ctx.GasMeter().ConsumeGas(types.ReplyCosts(reply), "Loading CosmWasm module: reply")
 
 	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
 
 	env := types.NewEnv(ctx, contractAddress)
 	res, gasUsed, err := k.wasmVM.Reply(
