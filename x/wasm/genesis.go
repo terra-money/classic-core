@@ -22,7 +22,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		// we temporarily allow empty code bytes
 		// TODO - remove after columbus-5 update
 		if len(code.CodeBytes) != 0 {
-			codeHash, err := keeper.CompileCode(ctx, code.CodeBytes)
+			codeHash, _, err := keeper.CompileCode(ctx, code.CodeBytes)
 			if err != nil {
 				panic(err)
 			}
