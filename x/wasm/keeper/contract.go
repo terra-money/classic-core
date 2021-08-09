@@ -100,6 +100,7 @@ func (k Keeper) InstantiateContract(
 	initMsg []byte,
 	deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
+	ctx.GasMeter().ConsumeGas(types.RegisterContractCosts(), "Registering contract to the store")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(initMsg)), "Loading CosmWasm module: init")
 
 	if uint64(len(initMsg)) > k.MaxContractMsgSize(ctx) {
