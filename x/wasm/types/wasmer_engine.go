@@ -18,6 +18,10 @@ type WasmerEngine interface {
 	// be instantiated with custom inputs in the future.
 	Create(code wasmvm.WasmCode) (wasmvm.Checksum, error)
 
+	// AnalyzeCode will statically analyze the code.
+	// Reports if it exposes all IBC entry points and required features.
+	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
+
 	// Instantiate will create a new contract based on the given codeID.
 	// We can set the initMsg (contract "genesis") here, and it then receives
 	// an account and address and can be invoked (Execute) many times.

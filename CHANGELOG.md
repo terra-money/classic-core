@@ -1,10 +1,15 @@
 ## [Unreleased]
-
- * (cosmwasm) Bump CosmWasm version to [v0.15.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.0).
- * (tendermint) Bump Tendermint version to [v0.34.10](https://github.com/tendermint/tendermint/releases/tag/v0.34.10).
- * (cosmos-sdk) Bump Cosmos SDK version to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0).
- * (cosmwasm) Bump CosmWasm version to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
- * (golang) Bump golang prerequisite from 1.15 to 1.16.
+ - [\#523](https://github.com/terra-money/core/pull/526) Bump CosmosSDK [v0.43.0-rc3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc3) and CosmWasm [v0.16.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.16.0)
+- [\#520](https://github.com/terra-money/core/pull/520) Implement ContractInfo wasm query interface for the contracts
+- [\#518](https://github.com/terra-money/core/pull/518) Rollback market base pool split
+- [\#507](https://github.com/terra-money/core/pull/507) Bump SDK to [v0.43.0-rc0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc0).
+- [\#507](https://github.com/terra-money/core/pull/507) Bump Tendermint to [v0.34.11](https://github.com/tendermint/tendermint/releases/tag/v0.34.11). 
+- [\#509](https://github.com/terra-money/core/pull/509) Bump cosmwasm to [v0.15.1](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.1).
+- [\#467](https://github.com/terra-money/core/pull/467) Split market base pool into mint & burn base pool
+- [\#465](https://github.com/terra-money/core/pull/465) [\#472](https://github.com/terra-money/core/pull/472)  Bump cosmwasm to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
+- [\#477](https://github.com/terra-money/core/pull/477) Burn `reward_weight` ratio of seigniorage instead of redirecting to oracle rewards
+- [260b41a](https://github.com/terra-money/core/blob/471cd878b11b21f10511e272621b850a690eb6f3/x/market/keeper/msg_server.go#L121-L127) Redirect swap fees to oracle rewards (distributed over 3 years) 
+- Bump golang prerequisite from 1.15 to 1.16.
 
 ## 0.4.5
 This release is a hotfix for two high-severity issues.

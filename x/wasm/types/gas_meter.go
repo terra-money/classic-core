@@ -10,15 +10,16 @@ import (
 const (
 	GasMultiplier = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
 
-	compileCostPerByte             = uint64(2)      // sdk gas cost per bytes
-	instantiateCost                = uint64(40_000) // sdk gas cost for executing wasmVM engine
-	humanizeCost                   = uint64(5)      // sdk gas cost to convert canonical address to human address
-	canonicalizeCost               = uint64(4)      // sdk gas cost to convert human address to canonical address
-	deserializationCostPerByte     = uint64(1)      // sdk gas cost to deserialize data
-	eventAttributeCost             = uint64(10)     // sdk gas cost to emit attribute
-	customEventCost                = uint64(20)     // sdk gas cost to emit custom event
-	eventAttributeDataCostPerByte  = uint64(1)      // sdk gas cost per bytes to emit event
-	contractMessageDataCostPerByte = uint64(1)      // sdk gas cost per bytes to execute submessages
+	compileCostPerByte             = uint64(2)       // sdk gas cost per bytes
+	instantiateCost                = uint64(40_000)  // sdk gas cost for executing wasmVM engine
+	registerCost                   = uint64(160_000) // sdk gas cost for creating contract
+	humanizeCost                   = uint64(5)       // sdk gas cost to convert canonical address to human address
+	canonicalizeCost               = uint64(4)       // sdk gas cost to convert human address to canonical address
+	deserializationCostPerByte     = uint64(1)       // sdk gas cost to deserialize data
+	eventAttributeCost             = uint64(10)      // sdk gas cost to emit attribute
+	customEventCost                = uint64(20)      // sdk gas cost to emit custom event
+	eventAttributeDataCostPerByte  = uint64(1)       // sdk gas cost per bytes to emit event
+	contractMessageDataCostPerByte = uint64(1)       // sdk gas cost per bytes to execute submessages
 
 	// HumanizeWasmGasCost humanize cost in wasm gas unit
 	HumanizeWasmGasCost = humanizeCost * GasMultiplier
@@ -43,6 +44,11 @@ func CompileCosts(byteLength int) sdk.Gas {
 func InstantiateContractCosts(msgLen int) sdk.Gas {
 	dataCosts := sdk.Gas(msgLen) * contractMessageDataCostPerByte
 	return instantiateCost + dataCosts
+}
+
+// RegisterContractCosts costs when registering a new contract to the store
+func RegisterContractCosts() sdk.Gas {
+	return registerCost
 }
 
 // ReplyCosts costs to to handle a message reply
