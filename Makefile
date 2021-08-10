@@ -106,7 +106,7 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --tag terramoney/core ./
+	docker build --no-cache --tag terramoney/core ./
 	docker create --name temp terramoney/core:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
