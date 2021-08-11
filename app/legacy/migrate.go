@@ -65,8 +65,8 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 			}
 
 			// increase block consensus params
-			genDoc.ConsensusParams.Block.MaxBytes = int64(3000000)
-			genDoc.ConsensusParams.Block.MaxGas = int64(100000000)
+			genDoc.ConsensusParams.Block.MaxBytes = int64(5_000_000)
+			genDoc.ConsensusParams.Block.MaxGas = int64(1_000_000_000)
 
 			// decrease evidence max bytes
 			genDoc.ConsensusParams.Evidence.MaxBytes = int64(50000)
