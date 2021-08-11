@@ -26,16 +26,18 @@ func ParseEvents(
 
 	var sdkEvents sdk.Events
 
-	sdkEvent, err := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
-	if err != nil {
-		return nil, err
+	if len(attributes) != 0 {
+		sdkEvent, err := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+
+		// Deprecated: from_contract
+		sdkEvent.Type = EventTypeFromContract
+		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
 	}
-
-	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
-
-	// Deprecated: from_contract
-	sdkEvent.Type = EventTypeFromContract
-	sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
 
 	// append wasm prefix for the events
 	for _, event := range events {
