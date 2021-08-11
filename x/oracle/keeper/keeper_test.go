@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func TestExchangeRate(t *testing.T) {
@@ -342,9 +343,9 @@ func TestTobinTaxGetSet(t *testing.T) {
 func TestValidateFeeder(t *testing.T) {
 	// initial setup
 	input := CreateTestInput(t)
-	addr, val := ValAddrs[0], PubKeys[0]
-	addr1, val1 := ValAddrs[1], PubKeys[1]
-	amt := sdk.TokensFromConsensusPower(100)
+	addr, val := ValAddrs[0], ValPubKeys[0]
+	addr1, val1 := ValAddrs[1], ValPubKeys[1]
+	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 
@@ -356,26 +357,28 @@ func TestValidateFeeder(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	require.Equal(
-		t, input.BankKeeper.GetCoins(ctx, sdk.AccAddress(addr)),
+		t, input.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(addr)),
 		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
 	)
 	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr).GetBondedTokens())
 	require.Equal(
-		t, input.BankKeeper.GetCoins(ctx, sdk.AccAddress(addr1)),
+		t, input.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(addr1)),
 		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
 	)
 	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr1).GetBondedTokens())
 
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr), sdk.ValAddress(addr), true))
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1), true))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr), sdk.ValAddress(addr)))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1)))
 
 	// delegate works
-	input.OracleKeeper.SetOracleDelegate(input.Ctx, sdk.ValAddress(addr), sdk.AccAddress(addr1))
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), true))
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(Addrs[2]), sdk.ValAddress(addr), true))
+	input.OracleKeeper.SetFeederDelegation(input.Ctx, sdk.ValAddress(addr), sdk.AccAddress(addr1))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr)))
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(Addrs[2]), sdk.ValAddress(addr)))
 
 	// only active validators can do oracle votes
-	input.StakingKeeper.SetLastValidatorPower(input.Ctx, sdk.ValAddress(addr), 0)
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), false))
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr), true))
+	validator, found := input.StakingKeeper.GetValidator(input.Ctx, sdk.ValAddress(addr))
+	require.True(t, found)
+	validator.Status = stakingtypes.Unbonded
+	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr)))
 }

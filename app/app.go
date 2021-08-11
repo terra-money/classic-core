@@ -594,21 +594,7 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 
 // EndBlocker application updates every end block
 func (app *TerraApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	res := app.mm.EndBlock(ctx, req)
-	if core.IsSoftforkHeight(ctx, 3) {
-		return abci.ResponseEndBlock{
-			ConsensusParamUpdates: &abci.ConsensusParams{
-				Block: &abci.BlockParams{
-					MaxBytes: 1000000,
-					MaxGas:   30000000,
-				},
-			},
-			ValidatorUpdates: res.ValidatorUpdates,
-			Events:           res.Events,
-		}
-	}
-
-	return res
+	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
