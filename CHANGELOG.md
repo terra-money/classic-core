@@ -17,6 +17,7 @@
 
 ### Bug Fixes
 - [\#497](https://github.com/terra-money/core/pull/497) Fix wasm oracle querier to return Base/Quote exchange rate
+- [\#529](https://github.com/terra-money/core/pull/529) Fix keyring kwallet backend when using with empty wallet.
 
 ## 0.4.0
 
