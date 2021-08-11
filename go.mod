@@ -4,8 +4,8 @@ module github.com/terra-money/core
 
 require (
 	github.com/CosmWasm/wasmvm v0.16.0
-	github.com/cosmos/cosmos-sdk v0.43.0-rc3
-	github.com/cosmos/ibc-go v1.0.0-rc4
+	github.com/cosmos/cosmos-sdk v0.43.0
+	github.com/cosmos/ibc-go v1.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -29,3 +29,5 @@ replace github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terr
 replace google.golang.org/grpc => google.golang.org/grpc v1.33.2
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+
+replace github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76

@@ -2,7 +2,8 @@
 
 ### Improvements
 
-- [\#523](https://github.com/terra-money/core/pull/526) Bump CosmosSDK [v0.43.0-rc3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc3) and CosmWasm [v0.16.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.16.0)
+- [\#529](https://github.com/terra-money/core/pull/529) Bump CosmosSDK to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0)
+- [\#523](https://github.com/terra-money/core/pull/526) Bump CosmosSDK to [v0.43.0-rc3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc3) and CosmWasm to [v0.16.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.16.0)
 - [\#520](https://github.com/terra-money/core/pull/520) Implement ContractInfo wasm query interface for the contracts
 - [\#518](https://github.com/terra-money/core/pull/518) Rollback market base pool split
 - [\#507](https://github.com/terra-money/core/pull/507) Bump SDK to [v0.43.0-rc0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc0).
@@ -16,6 +17,7 @@
 
 ### Bug Fixes
 - [\#497](https://github.com/terra-money/core/pull/497) Fix wasm oracle querier to return Base/Quote exchange rate
+- [\#529](https://github.com/terra-money/core/pull/529) Fix keyring kwallet backend when using with empty wallet.
 
 ## 0.4.5
 This release is a hotfix for two high-severity issues.
