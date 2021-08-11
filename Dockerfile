@@ -1,6 +1,6 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.15-alpine3.12 AS go-builder
+FROM golang:1.16-alpine3.12 AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -14,18 +14,24 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/terra-project/go-cosmwasm/releases
-ADD https://github.com/terra-project/go-cosmwasm/releases/download/v0.10.4/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
-RUN sha256sum /lib/libgo_cosmwasm_muslc.a | grep 2aa7b034b9340fecaa928adf3e8c093893fd6a3986a569ce7cae7528845a0951
+# See https://github.com/CosmWasm/wasmvm/releases
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.16.0/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep ef294a7a53c8d0aa6a8da4b10e94fb9f053f9decf160540d6c7594734bc35cd6
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make update-swagger-docs build
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
 
 FROM alpine:3.12
 
 WORKDIR /root
 
 COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
-COPY --from=go-builder /code/build/terracli /usr/local/bin/terracli
+
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
 
 CMD ["/usr/local/bin/terrad", "version"]

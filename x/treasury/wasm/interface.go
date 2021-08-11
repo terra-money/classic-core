@@ -6,11 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-project/core/x/treasury/internal/keeper"
-	"github.com/terra-project/core/x/treasury/internal/types"
-	wasm "github.com/terra-project/core/x/wasm/exported"
+	"github.com/terra-money/core/x/treasury/keeper"
+	"github.com/terra-money/core/x/treasury/types"
+	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}
@@ -26,7 +26,9 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+	return nil, nil
+}
 
 // CosmosQuery contains various treasury queries
 type CosmosQuery struct {

@@ -1,26 +1,21 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/spf13/cobra"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/market/internal/types"
+	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	"github.com/terra-money/core/x/market/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	marketTxCmd := &cobra.Command{
 		Use:                        "market",
 		Short:                      "Market transaction subcommands",
@@ -29,15 +24,15 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	marketTxCmd.AddCommand(flags.PostCommands(
-		GetSwapCmd(cdc),
-	)...)
+	marketTxCmd.AddCommand(
+		GetSwapCmd(),
+	)
 
 	return marketTxCmd
 }
 
 // GetSwapCmd will create and send a MsgSwap
-func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
+func GetSwapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "swap [offer-coin] [ask-denom] [to-address]",
 		Args:  cobra.RangeArgs(2, 3),
@@ -45,25 +40,29 @@ func GetSwapCmd(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(`
 Swap the offer-coin to the ask-denom currency at the oracle's effective exchange rate. 
 
-$ terracli market swap "1000ukrw" "uusd"
+$ terrad market swap "1000ukrw" "uusd"
 
-The to-address can be specfied. A default to-address is trader.
+The to-address can be specified. A default to-address is trader.
 
-$ terracli market swap "1000ukrw" "uusd" "terra1..."
+$ terrad market swap "1000ukrw" "uusd" "terra1..."
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Generate transaction factory for gas simulation
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
 
 			offerCoinStr := args[0]
-			offerCoin, err := sdk.ParseCoin(offerCoinStr)
+			offerCoin, err := sdk.ParseCoinNormalized(offerCoinStr)
 			if err != nil {
 				return err
 			}
 
 			askDenom := args[1]
-			fromAddress := cliCtx.GetFromAddress()
+			fromAddress := clientCtx.GetFromAddress()
 
 			var msg sdk.Msg
 			if len(args) == 3 {
@@ -73,40 +72,38 @@ $ terracli market swap "1000ukrw" "uusd" "terra1..."
 				}
 
 				msg = types.NewMsgSwapSend(fromAddress, toAddress, offerCoin, askDenom)
-				if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
-					// extimate tax and gas
-					fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-						Memo:          txBldr.Memo(),
-						ChainID:       txBldr.ChainID(),
-						AccountNumber: txBldr.AccountNumber(),
-						Sequence:      txBldr.Sequence(),
-						GasPrices:     txBldr.GasPrices(),
-						Gas:           fmt.Sprintf("%d", txBldr.Gas()),
-						GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
-						Msgs:          []sdk.Msg{msg},
-					})
+				if err = msg.ValidateBasic(); err != nil {
+					return err
+				}
+
+				if !clientCtx.GenerateOnly && txf.Fees().IsZero() {
+					// estimate tax and gas
+					stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
 
 					if err != nil {
 						return err
 					}
 
 					// override gas and fees
-					txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
-						gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+					txf = txf.
+						WithFees(stdFee.Amount.String()).
+						WithGas(stdFee.Gas).
+						WithSimulateAndExecute(false).
+						WithGasPrices("")
 				}
 			} else {
 				msg = types.NewMsgSwap(fromAddress, offerCoin, askDenom)
-			}
-
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
+				if err = msg.ValidateBasic(); err != nil {
+					return err
+				}
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
+
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

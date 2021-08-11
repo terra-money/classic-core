@@ -1,57 +1,77 @@
-package app
+package app_test
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
 	"os"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/spf13/viper"
-	"github.com/terra-project/core/x/market"
-	"github.com/terra-project/core/x/oracle"
-	"github.com/terra-project/core/x/treasury"
-	"github.com/terra-project/core/x/wasm"
-	wasmconfig "github.com/terra-project/core/x/wasm/config"
+	terraapp "github.com/terra-money/core/app"
+	"github.com/terra-money/core/app/helpers"
+	wasmconfig "github.com/terra-money/core/x/wasm/config"
 
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/rand"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	simulation2 "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
-// Get flags every time the simulator is run
 func init() {
 	simapp.GetSimulatorFlags()
 }
 
-type StoreKeysPrefixes struct {
-	A        sdk.StoreKey
-	B        sdk.StoreKey
-	Prefixes [][]byte
-}
+// Profile with:
+// /usr/local/go/bin/go test -benchmem -run=^$ github.com/cosmos/cosmos-sdk/GaiaApp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
+func BenchmarkFullAppSimulation(b *testing.B) {
+	config, db, dir, logger, _, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	if err != nil {
+		b.Fatalf("simulation setup failed: %s", err.Error())
+	}
 
-// fauxMerkleModeOpt returns a BaseApp option to use a dbStoreAdapter instead of
-// an IAVLStore for faster simulation speed.
-func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
-	bapp.SetFauxMerkleMode()
+	defer func() {
+		db.Close()
+		err = os.RemoveAll(dir)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}()
+
+	app := terraapp.NewTerraApp(
+		logger, db, nil, true, map[int64]bool{},
+		terraapp.DefaultNodeHome, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
+
+	// Run randomized simulation:w
+	_, simParams, simErr := simulation.SimulateFromSeed(
+		b,
+		os.Stdout,
+		app.BaseApp,
+		simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+		simulation2.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simapp.SimulationOperations(app, app.AppCodec(), config),
+		app.ModuleAccountAddrs(),
+		config,
+		app.AppCodec(),
+	)
+
+	// export state and simParams before the simulation error is checked
+	if err = simapp.CheckExportSimulation(app, config, simParams); err != nil {
+		b.Fatal(err)
+	}
+
+	if simErr != nil {
+		b.Fatal(simErr)
+	}
+
+	if config.Commit {
+		simapp.PrintStats(db)
+	}
 }
 
 // interBlockCacheOpt returns a BaseApp option function that sets the persistent
@@ -60,201 +80,8 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 	return baseapp.SetInterBlockCache(store.NewCommitKVStoreCacheManager())
 }
 
-func TestFullAppSimulation(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if skip {
-		t.Skip("skipping application simulation")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		db.Close()
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	viper.Set(flags.FlagHome, dir)
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
-	require.Equal(t, "TerraApp", app.Name())
-
-	// run randomized simulation
-	_, simParams, simErr := simulation.SimulateFromSeed(
-		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
-		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
-	)
-
-	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
-	require.NoError(t, err)
-	require.NoError(t, simErr)
-
-	if config.Commit {
-		simapp.PrintStats(db)
-	}
-}
-
-func TestAppImportExport(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if skip {
-		t.Skip("skipping application import/export simulation")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		db.Close()
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	viper.Set(flags.FlagHome, dir)
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
-	require.Equal(t, "TerraApp", app.Name())
-
-	// Run randomized simulation
-	_, simParams, simErr := simulation.SimulateFromSeed(
-		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
-		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
-	)
-
-	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
-	require.NoError(t, err)
-	require.NoError(t, simErr)
-
-	if config.Commit {
-		simapp.PrintStats(db)
-	}
-
-	fmt.Printf("exporting genesis...\n")
-
-	appState, _, err := app.ExportAppStateAndValidators(false, []string{})
-	require.NoError(t, err)
-
-	fmt.Printf("importing genesis...\n")
-
-	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		newDB.Close()
-		require.NoError(t, os.RemoveAll(newDir))
-	}()
-
-	viper.Set(flags.FlagHome, dir)
-	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
-	require.Equal(t, "TerraApp", newApp.Name())
-
-	var genesisState simapp.GenesisState
-	err = app.Codec().UnmarshalJSON(appState, &genesisState)
-	require.NoError(t, err)
-
-	ctxA := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
-	ctxB := newApp.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
-	newApp.mm.InitGenesis(ctxB, genesisState)
-
-	fmt.Printf("comparing stores...\n")
-
-	storeKeysPrefixes := []StoreKeysPrefixes{
-		{app.keys[baseapp.MainStoreKey], newApp.keys[baseapp.MainStoreKey], [][]byte{}},
-		{app.keys[auth.StoreKey], newApp.keys[auth.StoreKey], [][]byte{}},
-		{app.keys[staking.StoreKey], newApp.keys[staking.StoreKey],
-			[][]byte{
-				staking.UnbondingQueueKey, staking.RedelegationQueueKey, staking.ValidatorQueueKey,
-			}}, // ordering may change but it doesn't matter
-		{app.keys[slashing.StoreKey], newApp.keys[slashing.StoreKey], [][]byte{}},
-		{app.keys[distr.StoreKey], newApp.keys[distr.StoreKey], [][]byte{}},
-		{app.keys[supply.StoreKey], newApp.keys[supply.StoreKey], [][]byte{}},
-		{app.keys[params.StoreKey], newApp.keys[params.StoreKey], [][]byte{}},
-		{app.keys[gov.StoreKey], newApp.keys[gov.StoreKey], [][]byte{}},
-		{app.keys[oracle.StoreKey], newApp.keys[oracle.StoreKey], [][]byte{}},
-		{app.keys[market.StoreKey], newApp.keys[market.StoreKey], [][]byte{}},
-		{app.keys[mint.StoreKey], newApp.keys[mint.StoreKey], [][]byte{}},
-		{app.keys[treasury.StoreKey], newApp.keys[treasury.StoreKey], [][]byte{}},
-		{app.keys[wasm.StoreKey], newApp.keys[wasm.StoreKey], [][]byte{}},
-	}
-
-	for _, skp := range storeKeysPrefixes {
-		storeA := ctxA.KVStore(skp.A)
-		storeB := ctxB.KVStore(skp.B)
-
-		failedKVAs, failedKVBs := sdk.DiffKVStores(storeA, storeB, skp.Prefixes)
-		require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare")
-
-		fmt.Printf("compared %d key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
-		require.Equal(t, len(failedKVAs), 0, simapp.GetSimulationLog(skp.A.Name(), app.SimulationManager().StoreDecoders, app.Codec(), failedKVAs, failedKVBs))
-	}
-}
-
-func TestAppSimulationAfterImport(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if skip {
-		t.Skip("skipping application simulation after import")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		db.Close()
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	viper.Set(flags.FlagHome, dir)
-	app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
-	require.Equal(t, "TerraApp", app.Name())
-
-	// Run randomized simulation
-	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
-		t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
-		simapp.SimulationOperations(app, app.Codec(), config),
-		app.ModuleAccountAddrs(), config,
-	)
-
-	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
-	require.NoError(t, err)
-	require.NoError(t, simErr)
-
-	if config.Commit {
-		simapp.PrintStats(db)
-	}
-
-	if stopEarly {
-		fmt.Println("can't export or import a zero-validator genesis, exiting test...")
-		return
-	}
-
-	fmt.Printf("exporting genesis...\n")
-
-	appState, _, err := app.ExportAppStateAndValidators(true, []string{})
-	require.NoError(t, err)
-
-	fmt.Printf("importing genesis...\n")
-
-	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		newDB.Close()
-		require.NoError(t, os.RemoveAll(newDir))
-	}()
-
-	viper.Set(flags.FlagHome, dir)
-	newApp := NewTerraApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), fauxMerkleModeOpt)
-	require.Equal(t, "TerraApp", newApp.Name())
-
-	newApp.InitChain(abci.RequestInitChain{
-		AppStateBytes: appState,
-	})
-
-	_, _, err = simulation.SimulateFromSeed(
-		t, os.Stdout, newApp.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
-		simapp.SimulationOperations(newApp, newApp.Codec(), config),
-		newApp.ModuleAccountAddrs(), config,
-	)
-	require.NoError(t, err)
-}
-
-// TODO: Make another test for the fuzzer itself, which just has noOp txs
-// and doesn't depend on the application.
+//// TODO: Make another test for the fuzzer itself, which just has noOp txs
+//// and doesn't depend on the application.
 func TestAppStateDeterminism(t *testing.T) {
 	if !simapp.FlagEnabledValue {
 		t.Skip("skipping application simulation")
@@ -275,10 +102,6 @@ func TestAppStateDeterminism(t *testing.T) {
 		config.Seed = rand.Int63()
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
-			tempDir, err := ioutil.TempDir("", "wasmtest")
-			require.NoError(t, err)
-			viper.Set(flags.FlagHome, tempDir)
-
 			var logger log.Logger
 			if simapp.FlagVerboseValue {
 				logger = log.TestingLogger()
@@ -287,18 +110,26 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-
-			app := NewTerraApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
+			app := terraapp.NewTerraApp(
+				logger, db, nil, true, map[int64]bool{}, terraapp.DefaultNodeHome,
+				simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+				simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
 				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 			)
 
-			_, _, err = simulation.SimulateFromSeed(
-				t, os.Stdout, app.BaseApp, simapp.AppStateFn(app.Codec(), app.SimulationManager()),
-				simapp.SimulationOperations(app, app.Codec(), config),
-				app.ModuleAccountAddrs(), config,
+			_, _, err := simulation.SimulateFromSeed(
+				t,
+				os.Stdout,
+				app.BaseApp,
+				simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+				simulation2.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+				simapp.SimulationOperations(app, app.AppCodec(), config),
+				app.ModuleAccountAddrs(),
+				config,
+				app.AppCodec(),
 			)
 			require.NoError(t, err)
 
@@ -311,12 +142,10 @@ func TestAppStateDeterminism(t *testing.T) {
 
 			if j != 0 {
 				require.Equal(
-					t, appHashList[0], appHashList[j],
+					t, string(appHashList[0]), string(appHashList[j]),
 					"non-determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 				)
 			}
-
-			os.RemoveAll(tempDir)
 		}
 	}
 }

@@ -1,0 +1,152 @@
+syntax = "proto3";
+package terra.treasury.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "terra/treasury/v1beta1/treasury.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/treasury/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // TaxRate return the current tax rate
+  rpc TaxRate(QueryTaxRateRequest) returns (QueryTaxRateResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/tax_rate";
+  }
+
+  // TaxCap returns the tax cap of a denom
+  rpc TaxCap(QueryTaxCapRequest) returns (QueryTaxCapResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/tax_caps/{denom}";
+  }
+
+  // TaxCaps returns the all tax caps
+  rpc TaxCaps(QueryTaxCapsRequest) returns (QueryTaxCapsResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/tax_caps";
+  }
+
+  // RewardWeight return the current reward weight
+  rpc RewardWeight(QueryRewardWeightRequest) returns (QueryRewardWeightResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/reward_weight";
+  }
+
+  // SeigniorageProceeds return the current seigniorage proceeds
+  rpc SeigniorageProceeds(QuerySeigniorageProceedsRequest) returns (QuerySeigniorageProceedsResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/seigniorage_proceeds";
+  }
+
+  // TaxProceeds return the current tax proceeds
+  rpc TaxProceeds(QueryTaxProceedsRequest) returns (QueryTaxProceedsResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/tax_proceeds";
+  }
+
+  // Indicators return the current trl informations
+  rpc Indicators(QueryIndicatorsRequest) returns (QueryIndicatorsResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/indicators";
+  }
+
+  // Params queries all parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/params";
+  }
+}
+
+// QueryTaxRateRequest is the request type for the Query/TaxRate RPC method.
+message QueryTaxRateRequest {}
+
+// QueryTaxRateResponse is response type for the
+// Query/TaxRate RPC method.
+message QueryTaxRateResponse {
+  string tax_rate = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QueryTaxCapRequest is the request type for the Query/TaxCap RPC method.
+message QueryTaxCapRequest {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // denom defines the denomination to query for.
+  string denom = 1;
+}
+
+// QueryTaxCapResponse is response type for the
+// Query/TaxCap RPC method.
+message QueryTaxCapResponse {
+  string tax_cap = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+// QueryTaxCapsRequest is the request type for the Query/TaxCaps RPC method.
+message QueryTaxCapsRequest {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+}
+
+// QueryTaxCapsResponseItem is response item type for the
+// Query/TaxCaps RPC method.
+message QueryTaxCapsResponseItem {
+  string denom   = 1;
+  string tax_cap = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+// QueryTaxCapsResponse is response type for the
+// Query/TaxCaps RPC method.
+message QueryTaxCapsResponse {
+  repeated QueryTaxCapsResponseItem tax_caps = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryRewardWeightRequest is the request type for the Query/RewardWeight RPC method.
+message QueryRewardWeightRequest {}
+
+// QueryRewardWeightResponse is response type for the
+// Query/RewardWeight RPC method.
+message QueryRewardWeightResponse {
+  string reward_weight = 1
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QueryTaxProceedsRequest is the request type for the Query/TaxProceeds RPC method.
+message QueryTaxProceedsRequest {}
+
+// QueryTaxProceedsResponse is response type for the
+// Query/TaxProceeds RPC method.
+message QueryTaxProceedsResponse {
+  repeated cosmos.base.v1beta1.Coin tax_proceeds = 1
+      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
+}
+
+// QuerySeigniorageProceedsRequest is the request type for the Query/SeigniorageProceeds RPC method.
+message QuerySeigniorageProceedsRequest {}
+
+// QuerySeigniorageProceedsResponse is response type for the
+// Query/SeigniorageProceeds RPC method.
+message QuerySeigniorageProceedsResponse {
+  string seigniorage_proceeds = 1
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+// QueryIndicatorsRequest is the request type for the Query/Indicators RPC method.
+message QueryIndicatorsRequest {}
+
+// QueryIndicatorsResponse is response type for the
+// Query/Indicators RPC method.
+message QueryIndicatorsResponse {
+  string trl_year = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false,
+    (gogoproto.customname) = "TRLYear"
+  ];
+  string trl_month = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false,
+    (gogoproto.customname) = "TRLMonth"
+  ];
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}

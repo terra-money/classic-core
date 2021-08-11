@@ -1,17 +1,17 @@
 package simulation
 
-// DONTCOVER
+//DONTCOVER
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/oracle/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/oracle/types"
 )
 
 // Simulation parameter constants
@@ -26,8 +26,8 @@ const (
 )
 
 // GenVotePeriod randomized VotePeriod
-func GenVotePeriod(r *rand.Rand) int64 {
-	return int64(1 + r.Intn(100))
+func GenVotePeriod(r *rand.Rand) uint64 {
+	return uint64(1 + r.Intn(100))
 }
 
 // GenVoteThreshold randomized VoteThreshold
@@ -41,8 +41,8 @@ func GenRewardBand(r *rand.Rand) sdk.Dec {
 }
 
 // GenRewardDistributionWindow randomized RewardDistributionWindow
-func GenRewardDistributionWindow(r *rand.Rand) int64 {
-	return int64(100 + r.Intn(100000))
+func GenRewardDistributionWindow(r *rand.Rand) uint64 {
+	return uint64(100 + r.Intn(100000))
 }
 
 // GenSlashFraction randomized SlashFraction
@@ -51,8 +51,8 @@ func GenSlashFraction(r *rand.Rand) sdk.Dec {
 }
 
 // GenSlashWindow randomized SlashWindow
-func GenSlashWindow(r *rand.Rand) int64 {
-	return int64(100 + r.Intn(100000))
+func GenSlashWindow(r *rand.Rand) uint64 {
+	return uint64(100 + r.Intn(100000))
 }
 
 // GenMinValidPerWindow randomized MinValidPerWindow
@@ -63,7 +63,7 @@ func GenMinValidPerWindow(r *rand.Rand) sdk.Dec {
 // RandomizedGenState generates a random GenesisState for oracle
 func RandomizedGenState(simState *module.SimulationState) {
 
-	var votePeriod int64
+	var votePeriod uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, votePeriodKey, &votePeriod, simState.Rand,
 		func(r *rand.Rand) { votePeriod = GenVotePeriod(r) },
@@ -81,7 +81,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { rewardBand = GenRewardBand(r) },
 	)
 
-	var rewardDistributionWindow int64
+	var rewardDistributionWindow uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, rewardDistributionWindowKey, &rewardDistributionWindow, simState.Rand,
 		func(r *rand.Rand) { rewardDistributionWindow = GenRewardDistributionWindow(r) },
@@ -93,7 +93,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { slashFraction = GenSlashFraction(r) },
 	)
 
-	var slashWindow int64
+	var slashWindow uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, slashWindowKey, &slashWindow, simState.Rand,
 		func(r *rand.Rand) { slashWindow = GenSlashWindow(r) },
@@ -112,24 +112,26 @@ func RandomizedGenState(simState *module.SimulationState) {
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
 			Whitelist: types.DenomList{
-				{core.MicroKRWDenom, types.DefaultTobinTax},
-				{core.MicroSDRDenom, types.DefaultTobinTax},
-				{core.MicroUSDDenom, types.DefaultTobinTax},
-				{core.MicroMNTDenom, sdk.NewDecWithPrec(2, 2)}},
+				{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax},
+				{Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax},
+				{Name: core.MicroUSDDenom, TobinTax: types.DefaultTobinTax},
+				{Name: core.MicroMNTDenom, TobinTax: sdk.NewDecWithPrec(2, 2)}},
 			SlashFraction:     slashFraction,
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
 		},
-		[]types.ExchangeRatePrevote{},
-		[]types.ExchangeRateVote{},
-		map[string]sdk.Dec{},
-		map[string]sdk.AccAddress{},
-		map[string]int64{},
+		[]types.ExchangeRateTuple{},
+		[]types.FeederDelegation{},
+		[]types.MissCounter{},
 		[]types.AggregateExchangeRatePrevote{},
 		[]types.AggregateExchangeRateVote{},
-		map[string]sdk.Dec{},
+		[]types.TobinTax{},
 	)
 
-	fmt.Printf("Selected randomly generated oracle parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, oracleGenesis))
+	bz, err := json.MarshalIndent(&oracleGenesis.Params, "", " ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Selected randomly generated oracle parameters:\n%s\n", bz)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(oracleGenesis)
 }

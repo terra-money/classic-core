@@ -1,0 +1,39 @@
+syntax = "proto3";
+package terra.treasury.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "terra/treasury/v1beta1/treasury.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/treasury/types";
+
+// GenesisState defines the oracle module's genesis state.
+message GenesisState {
+  Params params   = 1 [(gogoproto.nullable) = false];
+  string tax_rate = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string reward_weight = 3
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  repeated TaxCap tax_caps                       = 4 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin tax_proceeds = 5
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin epoch_initial_issuance = 6
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated EpochState epoch_states = 7 [(gogoproto.nullable) = false];
+}
+
+// TaxCap is the max tax amount can be charged for the given denom
+message TaxCap {
+  string denom   = 1;
+  string tax_cap = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+// EpochState is the record for each epoch state
+message EpochState {
+  uint64 epoch      = 1;
+  string tax_reward = 2
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string seigniorage_reward = 3
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string total_staked_luna = 4
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}

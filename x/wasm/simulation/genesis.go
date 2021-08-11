@@ -1,22 +1,24 @@
 package simulation
 
-// DONTCOVER
+//DONTCOVER
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/terra-money/core/x/wasm/types"
+
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/terra-project/core/x/wasm/internal/types"
 )
 
 // Simulation parameter constants
 const (
-	maxContractSizeKey    = "max_contract_size"
-	maxContractGasKey     = "max_contract_gas"
-	maxContractMsgSizeKey = "max_contract_msg_size"
-	gasMultiplierKey      = "gas_multiplier"
+	maxContractSizeKey     = "max_contract_size"
+	maxContractGasKey      = "max_contract_gas"
+	maxContractMsgSizeKey  = "max_contract_msg_size"
+	maxContractDataSizeKey = "max_contract_data_size"
+	EventParamsKey         = "event_params"
 )
 
 // GenMaxContractSize randomized MaxContractSize
@@ -34,9 +36,9 @@ func GenMaxContractMsgSize(r *rand.Rand) uint64 {
 	return uint64(128 + r.Intn(9*1024))
 }
 
-// GenGasMultiplier randomized GasMultiplier
-func GenGasMultiplier(r *rand.Rand) uint64 {
-	return uint64(1 + r.Intn(99))
+// GenMaxContractDataSize randomized MaxContractDataSize
+func GenMaxContractDataSize(r *rand.Rand) uint64 {
+	return uint64(256 + r.Intn(512))
 }
 
 // RandomizedGenState generates a random GenesisState for wasm
@@ -60,10 +62,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { maxContractMsgSize = GenMaxContractMsgSize(r) },
 	)
 
-	var gasMultiplier uint64
+	var maxContractDataSize uint64
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, gasMultiplierKey, &gasMultiplier, simState.Rand,
-		func(r *rand.Rand) { gasMultiplier = GenGasMultiplier(r) },
+		simState.Cdc, maxContractDataSizeKey, &maxContractDataSize, simState.Rand,
+		func(r *rand.Rand) { maxContractDataSize = GenMaxContractDataSize(r) },
 	)
 
 	wasmGenesis := types.NewGenesisState(
@@ -78,6 +80,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.Contract{},
 	)
 
-	fmt.Printf("Selected randomly generated wasm parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, wasmGenesis))
+	bz, err := json.MarshalIndent(&wasmGenesis.Params, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Selected randomly generated wasm parameters:\n%s\n", bz)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(wasmGenesis)
 }

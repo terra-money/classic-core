@@ -5,7 +5,12 @@ VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
-CORE_PACK := $(shell go list -m github.com/terra-project/core | sed  's/ /\@/g')
+BUILDDIR ?= $(CURDIR)/build
+SIMAPP = ./app
+HTTPS_GIT := https://github.com/terra-money/core.git
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+
 ifneq ($(OS),Windows_NT)
   UNAME_S = $(shell uname -s)
 endif
@@ -37,7 +42,7 @@ ifeq ($(LEDGER_ENABLED),true)
   endif
 endif
 
-ifeq ($(WITH_CLEVELDB),yes)
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
   build_tags += gcc
 endif
 build_tags += $(BUILD_TAGS)
@@ -51,64 +56,82 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 # process linker flags
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=terra \
-		  -X github.com/cosmos/cosmos-sdk/version.ServerName=terrad \
-		  -X github.com/cosmos/cosmos-sdk/version.ClientName=terracli \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=terrad \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
-ifeq ($(WITH_CLEVELDB),yes)
+# DB backend selection
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
+endif
+ifeq (badgerdb,$(findstring badgerdb,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb
+endif
+# handle rocksdb
+ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
+  CGO_ENABLED=1
+  BUILD_TAGS += rocksdb
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+endif
+# handle boltdb
+ifeq (boltdb,$(findstring boltdb,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_TAGS += boltdb
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
+endif
+
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -w -s
 endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -trimpath
+endif
 
-# The below include contains the tools target.
+# The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
 
-all: install lint test
+all: tools install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	go build -mod=readonly $(BUILD_FLAGS) -o build/terrad.exe ./cmd/terrad
-	go build -mod=readonly $(BUILD_FLAGS) -o build/terracli.exe ./cmd/terracli
+	exit 1
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/terrad ./cmd/terrad
-	go build -mod=readonly $(BUILD_FLAGS) -o build/terracli ./cmd/terracli
 endif
 
 build-linux:
-	mkdir -p ./build
-	docker build --tag terramoney/core ./
+	mkdir -p $(BUILDDIR)
+	docker build --no-cache --tag terramoney/core ./
 	docker create --name temp terramoney/core:latest
-	docker cp temp:/usr/local/bin/terrad ./build/
-	docker cp temp:/usr/local/bin/terracli ./build/
+	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
 
-build-contract-tests-hooks:
-ifeq ($(OS),Windows_NT)
-	go build -mod=readonly $(BUILD_FLAGS) -o build/contract_tests.exe ./cmd/contract_tests
-else
-	go build -mod=readonly $(BUILD_FLAGS) -o build/contract_tests ./cmd/contract_tests
-endif
+build-linux-with-shared-library:
+	mkdir -p $(BUILDDIR)
+	docker build --tag terramoney/core-shared ./ -f ./shared.Dockerfile
+	docker create --name temp terramoney/core-shared:latest
+	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
+	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
+	docker rm temp
 
 install: go.sum 
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terracli
-
-install-debug: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terradebug
 
 update-swagger-docs: statik
-	$(BINDIR)/statik -src=client/lcd/swagger-ui -dest=client/lcd -f -m
+	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
         echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
         exit 1;\
     else \
-    	echo "\033[92mSwagger docs are in sync\033[0m";\
+        echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
+
+.PHONY: build build-linux install update-swagger-docs
 
 ########################################
 ### Tools & dependencies
@@ -126,22 +149,24 @@ draw-deps:
 	go get github.com/RobotsAndPencils/goviz
 	@goviz -i ./cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
 
+distclean: clean tools-clean
 clean:
-	rm -rf snapcraft-local.yaml build/
-
-distclean:
 	rm -rf \
-    gitian-build-darwin/ \
-    gitian-build-linux/ \
-    gitian-build-windows/ \
-    .gitian-builder-cache/
+    $(BUILDDIR)/ \
+    artifacts/ \
+    tmp-swagger-gen/
 
-########################################
-### Testing
+.PHONY: distclean clean
 
+###############################################################################
+###                           Tests & Simulation                            ###
+###############################################################################
 
-test: test-unit test-build
-test-all: test test-race test-cover
+include sims.mk
+
+test: test-unit
+
+test-all: test-unit test-race test-cover
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...
@@ -152,43 +177,73 @@ test-race:
 test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
-test-build: build
-	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags='cli_test skipsecretserviceintegrationtests' -v
-
-
-lint: golangci-lint
-	golangci-lint run
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
-
-format:
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
-
 benchmark:
 	@go test -mod=readonly -bench=. ./...
 
+.PHONY: test test-all test-cover test-unit test-race
 
-########################################
-### Local validator nodes using docker and docker-compose
-build-docker-terradnode: build-linux
-	$(MAKE) -C networks/local
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+lint:
+	golangci-lint run --out-format=tab
+
+lint-fix:
+	golangci-lint run --fix --out-format=tab --issues-exit-code=0
+.PHONY: lint lint-fix
+
+format:
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -path "./tests/mocks/*" -not -name '*.pb.go' | xargs gofmt -w -s
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -path "./tests/mocks/*" -not -name '*.pb.go' | xargs misspell -w
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -path "./tests/mocks/*" -not -name '*.pb.go' | xargs goimports -w -local github.com/cosmos/cosmos-sdk
+.PHONY: format
+
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
+
+proto-all: proto-format proto-lint proto-gen
+
+proto-gen:
+	@echo "Generating Protobuf files"
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen sh ./scripts/protocgen.sh
+
+proto-format:
+	@echo "Formatting Protobuf files"
+	$(DOCKER) run --rm -v $(CURDIR):/workspace \
+	--workdir /workspace tendermintdev/docker-build-proto \
+	find ./ -not -path "./third_party/*" -name *.proto -exec clang-format -i {} \;
+
+proto-swagger-gen:
+	@./scripts/protoc-swagger-gen.sh
+
+proto-lint:
+	@$(DOCKER_BUF) lint --error-format=json
+
+## TODO - change branch release/v0.5.x to master after columbus-5 merged
+proto-check-breaking:
+	@$(DOCKER_BUF) breaking --against-input $(HTTPS_GIT)#branch=master
+
+.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking 
+
+###############################################################################
+###                                Localnet                                 ###
+###############################################################################
 
 # Run a 4-node testnet locally
-
-localnet-start: localnet-stop
-	@if ! [ -f build/node0/terrad/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/terrad:Z terramoney/core testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
+localnet-start: build-linux localnet-stop
+	$(if $(shell $(DOCKER) inspect -f '{{ .Id }}' terramoney/terrad-env 2>/dev/null),$(info found image terramoney/terrad-env),$(MAKE) -C contrib/images terrad-env)
+	if ! [ -f build/node0/terrad/config/genesis.json ]; then $(DOCKER) run --rm \
+		--user $(shell id -u):$(shell id -g) \
+		-v $(BUILDDIR):/terrad:Z \
+		-v /etc/group:/etc/group:ro \
+		-v /etc/passwd:/etc/passwd:ro \
+		-v /etc/shadow:/etc/shadow:ro \
+		terramoney/terrad-env testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
 	docker-compose up -d
 
-# Stop testnet
 localnet-stop:
 	docker-compose down
 
-# include simulations
-include sims.mk
-
-.PHONY: all build-linux install install-debug format lint \
-	go-mod-cache draw-deps distclean build update-swagger-docs \
-	setup-transactions setup-contract-tests-data start-terra run-lcd-contract-tests contract-tests \
-	test test-all test-build test-cover test-unit test-race
+.PHONY: localnet-start localnet-stop

@@ -1,14 +1,15 @@
-package wasm
+package wasm_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-project/core/types"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/wasm"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -16,31 +17,24 @@ import (
 func TestInitGenesis(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	msg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
-	_, err := h(data.ctx, msg)
+	msg := types.NewMsgStoreCode(creator, testContract)
+	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	msg = MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: maskContract,
-	}
-	_, err = h(data.ctx, msg)
+	msg = types.NewMsgStoreCode(creator, reflectContract)
+	_, err = h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr := input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
@@ -52,14 +46,8 @@ func TestInitGenesis(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initMsgBz,
-		InitCoins:  deposit,
-		Migratable: true,
-	}
-	res, err := h(data.ctx, initCmd)
+	initCmd := types.NewMsgInstantiateContract(creator, creator, 1, initMsgBz, deposit)
+	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
 	// Check contract address
@@ -77,65 +65,59 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	require.False(t, contractAddr.Empty())
-	_, sdkErr = data.keeper.GetContractInfo(data.ctx, contractAddr)
+	_, sdkErr = input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, sdkErr)
 
-	execCmd := MsgExecuteContract{
-		Sender:     fred,
-		Contract:   contractAddr,
-		ExecuteMsg: []byte(`{"release":{}}`),
-		Coins:      topUp,
-	}
-	_, err = h(data.ctx, execCmd)
+	execCmd := types.NewMsgExecuteContract(fred, contractAddr, []byte(`{"release":{}}`), topUp)
+	_, err = h(input.Ctx, execCmd)
 	require.NoError(t, err)
 
 	// ensure all contract state is as after init
-	bytecode, sdkErr = data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr = input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
-	expectedContractInfo := NewContractInfo(1, contractAddr, creator, initMsgBz, true)
-	contractInfo, sdkErr := data.keeper.GetContractInfo(data.ctx, contractAddr)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, creator, initMsgBz)
+	contractInfo, sdkErr := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, sdkErr)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
-	iter := data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
-	var models []Model
+	iter := input.WasmKeeper.GetContractStoreIterator(input.Ctx, contractAddr)
+	var models []types.Model
 	for ; iter.Valid(); iter.Next() {
-		models = append(models, Model{Key: iter.Key(), Value: iter.Value()})
+		models = append(models, types.Model{Key: iter.Key(), Value: iter.Value()})
 	}
 
 	expectedConfigState := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigState)
 
 	// export into genstate
-	genState := ExportGenesis(data.ctx, data.keeper)
+	genState := wasm.ExportGenesis(input.Ctx, input.WasmKeeper)
 
 	// create new app to import genstate into
-	newData, newCleanup := setupTest(t)
-	defer newCleanup()
+	newInput := keeper.CreateTestInput(t)
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, newData.keeper, genState)
+	wasm.InitGenesis(newInput.Ctx, newInput.WasmKeeper, genState)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
-	bytecode, err = data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, err = newInput.WasmKeeper.GetByteCode(newInput.Ctx, 1)
 	require.NoError(t, err)
 	require.Equal(t, testContract, bytecode)
 
-	contractInfo, err = data.keeper.GetContractInfo(data.ctx, contractAddr)
+	contractInfo, err = newInput.WasmKeeper.GetContractInfo(newInput.Ctx, contractAddr)
 	require.NoError(t, err)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
-	iter = data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
-	models = []Model{}
+	iter = newInput.WasmKeeper.GetContractStoreIterator(newInput.Ctx, contractAddr)
+	models = []types.Model{}
 	for ; iter.Valid(); iter.Next() {
-		models = append(models, Model{Key: iter.Key(), Value: iter.Value()})
+		models = append(models, types.Model{Key: iter.Key(), Value: iter.Value()})
 	}
 
 	assertContractStore(t, models, expectedConfigState)

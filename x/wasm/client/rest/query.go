@@ -6,27 +6,27 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	"github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/client/utils"
+	"github.com/terra-money/core/x/wasm/types"
 
 	"github.com/gorilla/mux"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), queryCodeInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), queryContractInfoHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/parameters", queryParamsHandlerFn(cliCtx)).Methods("GET")
+func registerQueryRoutes(clientCtx client.Context, rtr *mux.Router) {
+	rtr.HandleFunc(fmt.Sprintf("/wasm/codes/{%s}", RestCodeID), queryCodeInfoHandlerFn(clientCtx)).Methods("GET")
+	rtr.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}", RestContractAddress), queryContractInfoHandlerFn(clientCtx)).Methods("GET")
+	rtr.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store", RestContractAddress), queryContractStoreHandlerFn(clientCtx)).Methods("GET")
+	rtr.HandleFunc(fmt.Sprintf("/wasm/contracts/{%s}/store/raw", RestContractAddress), queryRawStoreHandlerFn(clientCtx)).Methods("GET")
+	rtr.HandleFunc("/wasm/parameters", queryParamsHandlerFn(clientCtx)).Methods("GET")
 }
 
-func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryCodeInfoHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
@@ -41,25 +41,25 @@ func queryCodeInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		params := types.NewQueryCodeIDParams(codeID)
-		bz, err := cliCtx.Codec.MarshalJSON(params)
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetCodeInfo)
-		res, height, err := cliCtx.QueryWithData(route, bz)
+		res, height, err := clientCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }
 
-func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryContractInfoHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
@@ -74,27 +74,27 @@ func queryContractInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		params := types.NewQueryContractAddressParams(addr)
-		bz, err := cliCtx.Codec.MarshalJSON(params)
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryGetContractInfo)
-		res, height, err := cliCtx.QueryWithData(route, bz)
+		res, height, err := clientCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }
 
-func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryContractStoreHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
@@ -115,27 +115,27 @@ func queryContractStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		params := types.NewQueryContractParams(addr, queryMsgBz)
-		bz, err := cliCtx.Codec.MarshalJSON(params)
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryContractStore)
-		res, height, err := cliCtx.QueryWithData(route, bz)
+		res, height, err := clientCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }
 
-func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryRawStoreHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
@@ -153,14 +153,14 @@ func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
 		params := types.NewQueryRawStoreParams(addr, keyBz)
-		bz, err := cliCtx.Codec.MarshalJSON(params)
+		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRawStore)
-		res, height, err := cliCtx.QueryWithData(route, bz)
+		res, height, err := clientCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -171,25 +171,25 @@ func queryRawStoreHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			Value: res,
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, model)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, model)
 	}
 }
 
-func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
 		if !ok {
 			return
 		}
 
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters), nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
 	}
 }

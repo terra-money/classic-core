@@ -6,11 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-project/core/x/market/internal/keeper"
-	"github.com/terra-project/core/x/market/internal/types"
-	wasm "github.com/terra-project/core/x/wasm/exported"
+	"github.com/terra-money/core/x/market/keeper"
+	"github.com/terra-money/core/x/market/types"
+	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}
@@ -25,7 +25,7 @@ func NewWasmMsgParser() WasmMsgParser {
 }
 
 // Parse implements wasm staking msg parser
-func (WasmMsgParser) Parse(_ sdk.AccAddress, _ wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+func (WasmMsgParser) Parse(_ sdk.AccAddress, _ wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	return nil, nil
 }
 
@@ -36,7 +36,7 @@ type CosmosMsg struct {
 }
 
 // ParseCustom implements custom parser
-func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) ([]sdk.Msg, error) {
+func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	var sdkMsg CosmosMsg
 	err := json.Unmarshal(data, &sdkMsg)
 	if err != nil {
@@ -44,9 +44,11 @@ func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessa
 	}
 
 	if sdkMsg.Swap != nil {
-		return []sdk.Msg{*sdkMsg.Swap}, sdkMsg.Swap.ValidateBasic()
+		sdkMsg.Swap.Trader = contractAddr.String()
+		return sdkMsg.Swap, sdkMsg.Swap.ValidateBasic()
 	} else if sdkMsg.SwapSend != nil {
-		return []sdk.Msg{*sdkMsg.SwapSend}, sdkMsg.SwapSend.ValidateBasic()
+		sdkMsg.SwapSend.FromAddress = contractAddr.String()
+		return sdkMsg.SwapSend, sdkMsg.SwapSend.ValidateBasic()
 	}
 
 	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Market")
@@ -63,16 +65,18 @@ func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmTypes.QueryRequest) ([]byte, error) { return nil, nil }
+func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+	return nil, nil
+}
 
 // CosmosQuery only contains swap simulation
 type CosmosQuery struct {
-	Swap types.QuerySwapParams `json:"swap"`
+	Swap *types.QuerySwapParams `json:"swap,omitempty"`
 }
 
 // SwapQueryResponse - swap simulation query response for wasm module
 type SwapQueryResponse struct {
-	Receive wasmTypes.Coin `json:"receive"`
+	Receive wasmvmtypes.Coin `json:"receive"`
 }
 
 // QueryCustom implements custom query interface
@@ -84,15 +88,23 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	retCoin, err := keeper.QuerySwap(ctx, params.Swap, querier.keeper)
-	if err != nil {
-		return nil, err
+	q := keeper.NewQuerier(querier.keeper)
+	if params.Swap != nil {
+		res, err := q.Swap(sdk.WrapSDKContext(ctx), &types.QuerySwapRequest{
+			OfferCoin: params.Swap.OfferCoin.String(),
+			AskDenom:  params.Swap.AskDenom,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		bz, err := json.Marshal(SwapQueryResponse{Receive: wasm.EncodeSdkCoin(res.ReturnCoin)})
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		}
+
+		return bz, err
 	}
 
-	bz, err := json.Marshal(SwapQueryResponse{Receive: wasm.EncodeSdkCoin(retCoin)})
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return bz, err
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Market variant"}
 }

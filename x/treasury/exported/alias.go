@@ -1,14 +1,16 @@
-// nolint:deadcode unused DONTCOVER
+//nolint:deadcode,unused
+//DONTCOVER
 package exported
 
 import (
-	"github.com/terra-project/core/x/treasury/internal/types"
+	"github.com/terra-money/core/x/treasury/types"
 )
 
 var (
-	NewQueryTaxCapParams = types.NewQueryTaxCapParams
+	NewQueryClient = types.NewQueryClient
+)
 
-	QuerierRoute = types.QuerierRoute
-	QueryTaxRate = types.QueryTaxRate
-	QueryTaxCap  = types.QueryTaxCap
+type (
+	QueryTaxRateRequest = types.QueryTaxRateRequest
+	QueryTaxCapRequest  = types.QueryTaxCapRequest
 )

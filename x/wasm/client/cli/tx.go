@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,29 +9,26 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	wasmUtils "github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	wasmUtils "github.com/terra-money/core/x/wasm/client/utils"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 const (
-	flagTo         = "to"
-	flagAmount     = "amount"
-	flagMigratable = "migratable"
+	flagTo            = "to"
+	flagAmount        = "amount"
+	flagAdmin         = "admin"
+	flagMigrateCodeID = "migrate-code-id"
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Wasm transaction subcommands",
@@ -40,28 +36,37 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	txCmd.AddCommand(flags.PostCommands(
-		StoreCodeCmd(cdc),
-		InstantiateContractCmd(cdc),
-		ExecuteContractCmd(cdc),
-		MigrateContractCmd(cdc),
-		UpdateContractOwnerCmd(cdc),
-	)...)
+	txCmd.AddCommand(
+		StoreCodeCmd(),
+		InstantiateContractCmd(),
+		ExecuteContractCmd(),
+		MigrateContractCmd(),
+		UpdateContractAdminCmd(),
+		ClearContractAdminCmd(),
+	)
 	return txCmd
 }
 
 // StoreCodeCmd will upload code to be reused.
-func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
+func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store [wasm-file]",
 		Short: "Upload a wasm binary",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+		Long: `
+Contract developers can use store cmd to upload new wasm binary
+$ terrad tx store ./path-to-binary 
 
-			fromAddr := cliCtx.GetFromAddress()
+Or to migrate columbus-4 code to columbus-5 code
+$ terrad tx store ./path-to-binary --migrate-code-id 3
+`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
 			}
@@ -81,7 +86,6 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			// gzip the wasm file
 			if wasmUtils.IsWasm(wasmBytes) {
 				wasmBytes, err = wasmUtils.GzipIt(wasmBytes)
-
 				if err != nil {
 					return err
 				}
@@ -89,44 +93,71 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
 			}
 
+			var msg sdk.Msg
+			if codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID); err != nil {
+				return err
+			} else if codeID != 0 {
+				msg = types.NewMsgMigrateCode(codeID, fromAddr, wasmBytes)
+			} else {
+				msg = types.NewMsgStoreCode(fromAddr, wasmBytes)
+			}
+
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgStoreCode(fromAddr, wasmBytes)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().Uint64(flagMigrateCodeID, 0, "specifies the code ID to be migrated")
+
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
-func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
+func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instantiate [code-id-int64] [json-encoded-args] [coins]",
 		Short: "Instantiate a wasm contract",
 		Long: `
 Instantiate a wasm contract of the code which has the given id
 
-$ terracli instantiate 1 '{"arbiter": "terra~~"}'
+$ terrad instantiate 1 '{"arbiter": "terra~~"}'
 
 You can also instantiate it with funds
 
-$ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
+$ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 `,
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			fromAddr := cliCtx.GetFromAddress()
+			// Generate transaction factory for gas simulation
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+
+			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
 			}
 
-			migratable := viper.GetBool(flagMigratable)
+			admin, err := cmd.Flags().GetString(flagAdmin)
+			if err != nil {
+				return err
+			}
+
+			var adminAddr sdk.AccAddress
+			if len(admin) != 0 {
+				adminAddr, err = sdk.AccAddressFromBech32(admin)
+				if err != nil {
+					return err
+				}
+			}
 
 			// get the id of the code to instantiate
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
@@ -147,60 +178,59 @@ $ terracli instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 
 			var coins sdk.Coins
 			if len(args) == 3 {
-				coins, err = sdk.ParseCoins(args[2])
+				coins, err = sdk.ParseCoinsNormalized(args[2])
 				if err != nil {
 					return err
 				}
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgInstantiateContract(fromAddr, codeID, initMsgBz, coins, migratable)
+			msg := types.NewMsgInstantiateContract(fromAddr, adminAddr, codeID, initMsgBz, coins)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
-				// extimate tax and gas
-				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-					Memo:          txBldr.Memo(),
-					ChainID:       txBldr.ChainID(),
-					AccountNumber: txBldr.AccountNumber(),
-					Sequence:      txBldr.Sequence(),
-					GasPrices:     txBldr.GasPrices(),
-					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
-					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
-					Msgs:          []sdk.Msg{msg},
-				})
+			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
+				// estimate tax and gas
+				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
 
 				if err != nil {
 					return err
 				}
 
 				// override gas and fees
-				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
-					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+				txf = txf.
+					WithFees(stdFee.Amount.String()).
+					WithGas(stdFee.Gas).
+					WithSimulateAndExecute(false).
+					WithGasPrices("")
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
 
-	cmd.Flags().Bool(flagMigratable, false, "setting the flag will make the contract migratable")
+	cmd.Flags().String(flagAdmin, "", "the contract admin address which is previlaged to migrate contract")
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
-func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
+func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "execute [contract-addr-bech32] [json-encoded-args] [coins]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			fromAddr := cliCtx.GetFromAddress()
+			// Generate transaction factory for gas simulation
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+
+			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
 			}
@@ -224,7 +254,7 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			var coins sdk.Coins
 			if len(args) == 3 {
-				coins, err = sdk.ParseCoins(args[2])
+				coins, err = sdk.ParseCoinsNormalized(args[2])
 				if err != nil {
 					return err
 				}
@@ -236,37 +266,32 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			if !cliCtx.GenerateOnly && txBldr.Fees().IsZero() {
-				// extimate tax and gas
-				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-					Memo:          txBldr.Memo(),
-					ChainID:       txBldr.ChainID(),
-					AccountNumber: txBldr.AccountNumber(),
-					Sequence:      txBldr.Sequence(),
-					GasPrices:     txBldr.GasPrices(),
-					Gas:           fmt.Sprintf("%d", txBldr.Gas()),
-					GasAdjustment: fmt.Sprintf("%f", txBldr.GasAdjustment()),
-					Msgs:          []sdk.Msg{msg},
-				})
+			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
+				// estimate tax and gas
+				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
 
 				if err != nil {
 					return err
 				}
 
 				// override gas and fees
-				txBldr = auth.NewTxBuilder(txBldr.TxEncoder(), txBldr.AccountNumber(), txBldr.Sequence(),
-					gas, txBldr.GasAdjustment(), false, txBldr.ChainID(), txBldr.Memo(), fees, sdk.DecCoins{})
+				txf = txf.
+					WithFees(stdFee.Amount.String()).
+					WithGas(stdFee.Gas).
+					WithSimulateAndExecute(false).
+					WithGasPrices("")
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
 // MigrateContractCmd will instantiate a contract from previously uploaded code.
-func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
+func MigrateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate [contract-addr-bech32] [new-code-id] [json-encoded-args]",
 		Short: "Migrate a contract to new code base",
@@ -274,15 +299,16 @@ func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 Migrate a contract to new code by calling migrate function of 
 the new code.
 
-$ terracli tx wasm migrate terra... 10 '{"verifier": "terra..."}'
+$ terrad tx wasm migrate terra... 10 '{"verifier": "terra..."}'
 		`),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			fromAddr := cliCtx.GetFromAddress()
+			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
 			}
@@ -312,30 +338,32 @@ $ terracli tx wasm migrate terra... 10 '{"verifier": "terra..."}'
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
-// UpdateContractOwnerCmd will instantiate a contract from previously uploaded code.
-func UpdateContractOwnerCmd(cdc *codec.Codec) *cobra.Command {
+// UpdateContractAdminCmd will instantiate a contract from previously uploaded code.
+func UpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-owner [contract-addr-bech32] [new-owner]",
-		Short: "update a contract owner",
+		Use:   "update-admin [contract-addr-bech32] [new-admin]",
+		Short: "update a contract admin",
 		Long: strings.TrimSpace(`
-Update a contract owner to a new address
+Update a contract admin to a new address
 
-$ terracli tx wasm update-owner terra... terra...
+$ terrad tx wasm update-admin terra... terra...
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-			fromAddr := cliCtx.GetFromAddress()
+			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
 			}
@@ -345,20 +373,62 @@ $ terracli tx wasm update-owner terra... terra...
 				return err
 			}
 
-			newOwnerAddr, err := sdk.AccAddressFromBech32(args[1])
+			newAdminAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgUpdateContractOwner(fromAddr, newOwnerAddr, contractAddr)
+			msg := types.NewMsgUpdateContractAdmin(fromAddr, newAdminAddr, contractAddr)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// ClearContractAdminCmd will instantiate a contract from previously uploaded code.
+func ClearContractAdminCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clear-admin [contract-addr-bech32]",
+		Short: "clear a contract admin",
+		Long: strings.TrimSpace(`
+Clear a contract admin to make the contract un-migratable
+
+$ terrad tx wasm clear-admin terra... 
+		`),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			fromAddr := clientCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("must specify flag --from")
+			}
+
+			contractAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			// build and sign the transaction, then broadcast to Tendermint
+			msg := types.NewMsgClearContractAdmin(fromAddr, contractAddr)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

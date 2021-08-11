@@ -1,18 +1,19 @@
-package wasm
+package wasm_test
 
 import (
 	"encoding/json"
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm"
+	"github.com/terra-money/core/x/wasm/keeper"
+	"github.com/terra-money/core/x/wasm/types"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-project/core/types"
+	core "github.com/terra-money/core/types"
 )
 
 func TestHandleStore(t *testing.T) {
@@ -23,34 +24,34 @@ func TestHandleStore(t *testing.T) {
 		isValid bool
 	}{
 		"empty": {
-			msg:     MsgStoreCode{},
+			msg:     &types.MsgStoreCode{},
 			isValid: false,
 		},
 		"invalid wasm": {
-			msg: MsgStoreCode{
-				Sender:       addr1,
+			msg: &types.MsgStoreCode{
+				Sender:       addr1.String(),
 				WASMByteCode: []byte("foobar"),
 			},
 			isValid: false,
 		},
 		"old wasm": {
-			msg: MsgStoreCode{
-				Sender:       addr1,
+			msg: &types.MsgStoreCode{
+				Sender:       addr1.String(),
 				WASMByteCode: oldEscrowContract,
 			},
 			isValid: false,
 		},
 		"valid wasm": {
-			msg: MsgStoreCode{
-				Sender:       addr1,
+			msg: &types.MsgStoreCode{
+				Sender:       addr1.String(),
 				WASMByteCode: testContract,
 			},
 			isValid: true,
 		},
 		"other valid wasm": {
-			msg: MsgStoreCode{
-				Sender:       addr1,
-				WASMByteCode: maskContract,
+			msg: &types.MsgStoreCode{
+				Sender:       addr1.String(),
+				WASMByteCode: reflectContract,
 			},
 			isValid: true,
 		},
@@ -59,20 +60,19 @@ func TestHandleStore(t *testing.T) {
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			data, cleanup := setupTest(t)
-			defer cleanup()
+			input := keeper.CreateTestInput(t)
 
-			h := data.module.NewHandler()
+			h := wasm.NewHandler(input.WasmKeeper)
 
-			res, err := h(data.ctx, tc.msg)
+			res, err := h(input.Ctx, tc.msg)
 			if !tc.isValid {
 				require.Error(t, err, "%#v", res)
-				_, err := data.keeper.GetCodeInfo(data.ctx, 1)
+				_, err := input.WasmKeeper.GetCodeInfo(input.Ctx, 1)
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err, "%#v", res)
-			_, err = data.keeper.GetCodeInfo(data.ctx, 1)
+			_, err = input.WasmKeeper.GetCodeInfo(input.Ctx, 1)
 			require.NoError(t, err)
 		})
 	}
@@ -80,22 +80,18 @@ func TestHandleStore(t *testing.T) {
 func TestHandleInstantiate(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	msg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
-	_, err := h(data.ctx, msg)
+	msg := types.NewMsgStoreCode(creator, testContract)
+	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr := input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
@@ -111,14 +107,8 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 
 	// create with no balance is also legal
-	initCmd := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initMsgBz,
-		InitCoins:  nil,
-		Migratable: true,
-	}
-	res, err := h(data.ctx, initCmd)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, nil)
+	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
 	var contractAddr sdk.AccAddress
@@ -136,20 +126,20 @@ func TestHandleInstantiate(t *testing.T) {
 
 	require.False(t, contractAddr.Empty())
 
-	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
-	iter := data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
-	var models []Model
+	iter := input.WasmKeeper.GetContractStoreIterator(input.Ctx, contractAddr)
+	var models []types.Model
 	for ; iter.Valid(); iter.Next() {
-		models = append(models, Model{Key: iter.Key(), Value: iter.Value()})
+		models = append(models, types.Model{Key: iter.Key(), Value: iter.Value()})
 	}
 
 	expectedConfigStore := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigStore)
@@ -158,24 +148,20 @@ func TestHandleInstantiate(t *testing.T) {
 func TestHandleExecute(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	msg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
-	_, err := h(data.ctx, msg)
+	msg := types.NewMsgStoreCode(creator, testContract)
+	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr := input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
@@ -187,14 +173,8 @@ func TestHandleExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initMsgBz,
-		InitCoins:  deposit,
-		Migratable: true,
-	}
-	res, err := h(data.ctx, initCmd)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, deposit)
+	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
 	var contractAddr sdk.AccAddress
@@ -212,55 +192,49 @@ func TestHandleExecute(t *testing.T) {
 
 	require.False(t, contractAddr.Empty())
 
-	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	// ensure bob doesn't exist
-	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
+	bobAcct := input.AccKeeper.GetAccount(input.Ctx, bob)
 	require.Nil(t, bobAcct)
 
 	// ensure funder has reduced balance
-	creatorAcct := data.acctKeeper.GetAccount(data.ctx, creator)
+	creatorAcct := input.AccKeeper.GetAccount(input.Ctx, creator)
 	require.NotNil(t, creatorAcct)
 	// we started at 2*deposit, should have spent one above
-	assert.Equal(t, deposit, creatorAcct.GetCoins())
+	assert.Equal(t, deposit, input.BankKeeper.GetAllBalances(input.Ctx, creator))
 
 	// ensure contract has updated balance
-	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
+	contractAcct := input.AccKeeper.GetAccount(input.Ctx, contractAddr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, deposit, contractAcct.GetCoins())
+	assert.Equal(t, deposit, input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
 
-	execCmd := MsgExecuteContract{
-		Sender:     fred,
-		Contract:   contractAddr,
-		ExecuteMsg: []byte(`{"release":{}}`),
-		Coins:      topUp,
-	}
-	_, err = h(data.ctx, execCmd)
+	execCmd := types.NewMsgExecuteContract(fred, contractAddr, []byte(`{"release":{}}`), topUp)
+	_, err = h(input.Ctx, execCmd)
 	require.NoError(t, err)
 
 	// ensure bob now exists and got both payments released
-	bobAcct = data.acctKeeper.GetAccount(data.ctx, bob)
+	bobAcct = input.AccKeeper.GetAccount(input.Ctx, bob)
 	require.NotNil(t, bobAcct)
-	balance := bobAcct.GetCoins()
-	assert.Equal(t, deposit.Add(topUp...), balance)
+	assert.Equal(t, deposit.Add(topUp...), input.BankKeeper.GetAllBalances(input.Ctx, bob))
 
 	// ensure contract has updated balance
-	contractAcct = data.acctKeeper.GetAccount(data.ctx, contractAddr)
+	contractAcct = input.AccKeeper.GetAccount(input.Ctx, contractAddr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
+	assert.Equal(t, sdk.Coins{}, input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
 
-	iter := data.keeper.GetContractStoreIterator(data.ctx, contractAddr)
-	var models []Model
+	iter := input.WasmKeeper.GetContractStoreIterator(input.Ctx, contractAddr)
+	var models []types.Model
 	for ; iter.Valid(); iter.Next() {
-		models = append(models, Model{Key: iter.Key(), Value: iter.Value()})
+		models = append(models, types.Model{Key: iter.Key(), Value: iter.Value()})
 	}
 
 	expectedConfigStore := state{
-		Verifier:    wasmTypes.CanonicalAddress(fred),
-		Beneficiary: wasmTypes.CanonicalAddress(bob),
-		Funder:      wasmTypes.CanonicalAddress(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	}
 
 	assertContractStore(t, models, expectedConfigStore)
@@ -269,24 +243,20 @@ func TestHandleExecute(t *testing.T) {
 func TestHandleExecuteEscrow(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	msg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
-	_, err := h(data.ctx, msg)
+	msg := types.NewMsgStoreCode(creator, testContract)
+	_, err := h(input.Ctx, msg)
 	require.NoError(t, err)
 
-	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr := input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
@@ -298,14 +268,8 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initMsgBz,
-		InitCoins:  deposit,
-		Migratable: true,
-	}
-	res, err := h(data.ctx, initCmd)
+	initCmd := types.NewMsgInstantiateContract(creator, sdk.AccAddress{}, 1, initMsgBz, deposit)
+	res, err := h(input.Ctx, initCmd)
 	require.NoError(t, err)
 
 	// Retrieve contract address from events
@@ -324,8 +288,8 @@ func TestHandleExecuteEscrow(t *testing.T) {
 
 	require.False(t, contractAddr.Empty())
 
-	contractInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
-	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, initMsgBz, true)
+	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
 	handleMsg := map[string]interface{}{
@@ -335,50 +299,40 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	handleMsgBz, err := json.Marshal(handleMsg)
 	require.NoError(t, err)
 
-	execCmd := MsgExecuteContract{
-		Sender:     fred,
-		Contract:   contractAddr,
-		ExecuteMsg: handleMsgBz,
-		Coins:      topUp,
-	}
+	execCmd := types.NewMsgExecuteContract(fred, contractAddr, handleMsgBz, topUp)
 
-	res, err = h(data.ctx, execCmd)
+	res, err = h(input.Ctx, execCmd)
 	require.NoError(t, err)
 
 	// ensure bob now exists and got both payments released
-	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
+	bobAcct := input.AccKeeper.GetAccount(input.Ctx, bob)
 	require.NotNil(t, bobAcct)
-	balance := bobAcct.GetCoins()
-	assert.Equal(t, deposit.Add(topUp...), balance)
+	assert.Equal(t, deposit.Add(topUp...), input.BankKeeper.GetAllBalances(input.Ctx, bob))
 
 	// ensure contract has updated balance
-	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
+	contractAcct := input.AccKeeper.GetAccount(input.Ctx, contractAddr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
+	assert.Equal(t, sdk.Coins{}, input.BankKeeper.GetAllBalances(input.Ctx, contractAddr))
 }
 
 func TestHandleMigrate(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	storeMsg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
+	storeMsg := types.NewMsgStoreCode(creator, testContract)
 
 	// store two same code
-	_, err := h(data.ctx, storeMsg)
+	_, err := h(input.Ctx, storeMsg)
 	require.NoError(t, err)
-	res, err := h(data.ctx, storeMsg)
+	res, err := h(input.Ctx, storeMsg)
 	require.NoError(t, err)
 
 	var newCodeID uint64
@@ -394,7 +348,7 @@ func TestHandleMigrate(t *testing.T) {
 		}
 	}
 
-	bytecode, sdkErr := data.keeper.GetByteCode(data.ctx, 1)
+	bytecode, sdkErr := input.WasmKeeper.GetByteCode(input.Ctx, 1)
 	require.NoError(t, sdkErr)
 	require.Equal(t, testContract, bytecode)
 
@@ -406,14 +360,8 @@ func TestHandleMigrate(t *testing.T) {
 	initDataBz, err := json.Marshal(initData)
 	require.NoError(t, err)
 
-	initMsg := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initDataBz,
-		InitCoins:  deposit,
-		Migratable: true,
-	}
-	res, err = h(data.ctx, initMsg)
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
+	res, err = h(input.Ctx, initMsg)
 	require.NoError(t, err)
 
 	// Retrieve contract address from events
@@ -438,35 +386,31 @@ func TestHandleMigrate(t *testing.T) {
 	migDataBz, err := json.Marshal(migData)
 	require.NoError(t, err)
 
-	migrateMsg := NewMsgMigrateContract(creator, contractAddr, newCodeID, migDataBz)
-	_, err = h(data.ctx, migrateMsg)
+	migrateMsg := types.NewMsgMigrateContract(creator, contractAddr, newCodeID, migDataBz)
+	_, err = h(input.Ctx, migrateMsg)
 	require.NoError(t, err)
 
-	cInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
+	cInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, err)
 	assert.Equal(t, newCodeID, cInfo.CodeID)
 }
 
-func TestHandleUpdateOwner(t *testing.T) {
+func TestHandleUpdateAdmin(t *testing.T) {
 	loadContracts()
 
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	input := keeper.CreateTestInput(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := wasm.NewHandler(input.WasmKeeper)
 
-	storeMsg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-	}
+	storeMsg := types.NewMsgStoreCode(creator, testContract)
 
 	// store two same code
-	_, err := h(data.ctx, storeMsg)
+	_, err := h(input.Ctx, storeMsg)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -477,14 +421,8 @@ func TestHandleUpdateOwner(t *testing.T) {
 	initDataBz, err := json.Marshal(initData)
 	require.NoError(t, err)
 
-	initMsg := MsgInstantiateContract{
-		Owner:      creator,
-		CodeID:     1,
-		InitMsg:    initDataBz,
-		InitCoins:  deposit,
-		Migratable: true,
-	}
-	res, err := h(data.ctx, initMsg)
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
+	res, err := h(input.Ctx, initMsg)
 	require.NoError(t, err)
 
 	// Retrieve contract address from events
@@ -503,11 +441,66 @@ func TestHandleUpdateOwner(t *testing.T) {
 
 	require.False(t, contractAddr.Empty())
 
-	updateOwnerMsg := NewMsgUpdateContractOwner(creator, fred, contractAddr)
-	_, err = h(data.ctx, updateOwnerMsg)
+	updateAdminMsg := types.NewMsgUpdateContractAdmin(creator, fred, contractAddr)
+	_, err = h(input.Ctx, updateAdminMsg)
 	require.NoError(t, err)
 
-	cInfo, err := data.keeper.GetContractInfo(data.ctx, contractAddr)
+	cInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
 	require.NoError(t, err)
-	require.Equal(t, fred, cInfo.Owner)
+	require.Equal(t, fred.String(), cInfo.Admin)
+}
+
+func TestHandleClearAdmin(t *testing.T) {
+	loadContracts()
+
+	input := keeper.CreateTestInput(t)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
+	creator := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(input.Ctx, input.AccKeeper, input.BankKeeper, topUp)
+
+	h := wasm.NewHandler(input.WasmKeeper)
+
+	storeMsg := types.NewMsgStoreCode(creator, testContract)
+
+	// store two same code
+	_, err := h(input.Ctx, storeMsg)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initData := map[string]interface{}{
+		"verifier":    fred.String(),
+		"beneficiary": bob.String(),
+	}
+	initDataBz, err := json.Marshal(initData)
+	require.NoError(t, err)
+
+	initMsg := types.NewMsgInstantiateContract(creator, creator, 1, initDataBz, deposit)
+	res, err := h(input.Ctx, initMsg)
+	require.NoError(t, err)
+
+	// Retrieve contract address from events
+	var contractAddr sdk.AccAddress
+	for _, event := range res.Events {
+		if event.Type == types.EventTypeInstantiateContract {
+			for _, attr := range event.Attributes {
+				if string(attr.GetKey()) == types.AttributeKeyContractAddress {
+					contractAddr, err = sdk.AccAddressFromBech32(string(attr.GetValue()))
+					require.NoError(t, err)
+					break
+				}
+			}
+		}
+	}
+
+	require.False(t, contractAddr.Empty())
+
+	clearAdminMsg := types.NewMsgClearContractAdmin(creator, contractAddr)
+	_, err = h(input.Ctx, clearAdminMsg)
+	require.NoError(t, err)
+
+	cInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	require.NoError(t, err)
+	require.True(t, len(cInfo.Admin) == 0)
 }

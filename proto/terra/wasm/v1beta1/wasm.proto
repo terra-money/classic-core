@@ -1,0 +1,43 @@
+syntax = "proto3";
+package terra.wasm.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/types";
+
+// Params defines the parameters for the wasm module.
+message Params {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  uint64      max_contract_size      = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
+  uint64      max_contract_gas       = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
+  uint64      max_contract_msg_size  = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
+}
+
+// CodeInfo is data for the uploaded contract WASM code
+message CodeInfo {
+  // CodeID is the sequentially increasing unique identifier
+  uint64 code_id = 1 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
+  // CodeHash is the unique identifier created by wasmvm
+  bytes code_hash = 2 [(gogoproto.moretags) = "yaml:\"code_hash\""];
+  // Creator address who initially stored the code
+  string creator = 3 [(gogoproto.moretags) = "yaml:\"creator\""];
+}
+
+// ContractInfo stores a WASM contract instance
+message ContractInfo {
+  option (gogoproto.equal) = true;
+
+  // Address is the address of the contract
+  string address = 1 [(gogoproto.moretags) = "yaml:\"address\""];
+  // Creator is the contract creator address
+  string creator = 2 [(gogoproto.moretags) = "yaml:\"creator\""];
+  // Admin is who can execute the contract migration
+  string admin = 3 [(gogoproto.moretags) = "yaml:\"admin\""];
+  // CodeID is the reference to the stored Wasm code
+  uint64 code_id = 4 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
+  // InitMsg is the raw message used when instantiating a contract
+  bytes init_msg = 5 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
+}

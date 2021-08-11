@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,19 +11,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-project/core/x/wasm/client/utils"
-	"github.com/terra-project/core/x/wasm/internal/types"
+	"github.com/terra-money/core/x/wasm/types"
 )
 
 const flagRaw = "raw"
 
 // GetQueryCmd returns the cli query commands for wasm   module
-func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the wasm module",
@@ -30,142 +28,139 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	queryCmd.AddCommand(flags.GetCommands(
-		GetCmdQueryByteCode(queryRoute, cdc),
-		GetCmdQueryCodeInfo(queryRoute, cdc),
-		GetCmdGetContractInfo(queryRoute, cdc),
-		GetCmdGetContractStore(queryRoute, cdc),
-		GetCmdGetRawStore(queryRoute, cdc),
-		GetCmdQueryParams(queryRoute, cdc),
-	)...)
+	queryCmd.AddCommand(
+		GetCmdQueryByteCode(),
+		GetCmdQueryCodeInfo(),
+		GetCmdGetContractInfo(),
+		GetCmdGetContractStore(),
+		GetCmdGetRawStore(),
+		GetCmdQueryParams(),
+	)
 	return queryCmd
 }
 
 // GetCmdQueryCodeInfo is for querying code information
-func GetCmdQueryCodeInfo(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+func GetCmdQueryCodeInfo() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "code [code-id]",
 		Short: "query code information",
 		Long:  "query code information",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			params := types.NewQueryCodeIDParams(codeID)
-			bz, err := cliCtx.Codec.MarshalJSON(params)
+			res, err := queryClient.CodeInfo(context.Background(), &types.QueryCodeInfoRequest{CodeId: codeID})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetCodeInfo)
-			res, _, err := cliCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var codeInfo types.CodeInfo
-			cdc.MustUnmarshalJSON(res, &codeInfo)
-			return cliCtx.PrintOutput(codeInfo)
+			return clientCtx.PrintProto(res)
 		},
 	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdQueryByteCode returns the bytecode for a given contract
-func GetCmdQueryByteCode(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+func GetCmdQueryByteCode() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "bytecode [code-id] [output-filename]",
 		Short: "Downloads wasm bytecode for given code id",
 		Long:  "Downloads wasm bytecode for given code id",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			params := types.NewQueryCodeIDParams(codeID)
-			bz, err := cliCtx.Codec.MarshalJSON(params)
+			res, err := queryClient.ByteCode(context.Background(), &types.QueryByteCodeRequest{CodeId: codeID})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetByteCode)
-			res, _, err := cliCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			if len(res) == 0 {
-				return fmt.Errorf("contract not found")
-			}
 			var bytecode []byte
-			err = json.Unmarshal(res, &bytecode)
+			err = json.Unmarshal(res.ByteCode, &bytecode)
 			if err != nil {
 				return err
-			}
-
-			if len(bytecode) == 0 {
-				return fmt.Errorf("contract not found")
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
 			return ioutil.WriteFile(args[1], bytecode, 0600)
 		},
 	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdGetContractInfo gets details about a given contract
-func GetCmdGetContractInfo(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+func GetCmdGetContractInfo() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "contract [contract-address]",
 		Short: "Prints out metadata of a contract given its address",
 		Long:  "Prints out metadata of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			addr := args[0]
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			params := types.NewQueryContractAddressParams(addr)
-			bz, err := cliCtx.Codec.MarshalJSON(params)
+			res, err := queryClient.ContractInfo(context.Background(), &types.QueryContractInfoRequest{
+				ContractAddress: addr,
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryGetContractInfo)
-			res, _, err := cliCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var contractInfo types.ContractInfo
-			cdc.MustUnmarshalJSON(res, &contractInfo)
-			return cliCtx.PrintOutput(contractInfo)
+			return clientCtx.PrintProto(res)
 		},
 	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdGetContractStore send query msg to a given contract
-func GetCmdGetContractStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+func GetCmdGetContractStore() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "contract-store [bech32-address] [msg]",
 		Short: "Query contract store of the address with query data and prints the returned result",
 		Long:  "Query contract store of the address with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			addr := args[0]
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
@@ -176,88 +171,82 @@ func GetCmdGetContractStore(queryRoute string, cdc *codec.Codec) *cobra.Command 
 				return errors.New("msg must be a json string format")
 			}
 
-			params := types.NewQueryContractParams(addr, msgBz)
-			bz, err := cliCtx.Codec.MarshalJSON(params)
+			res, err := queryClient.ContractStore(context.Background(), &types.QueryContractStoreRequest{
+				ContractAddress: addr,
+				QueryMsg:        msgBz,
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryContractStore)
-			res, _, err := cliCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(string(res))
-			return nil
+			return clientCtx.PrintProto(res)
 		},
 	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdGetRawStore dumps full internal state of a given contract
-func GetCmdGetRawStore(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "raw-store [bech32-address] [key] [subkey]",
+func GetCmdGetRawStore() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "raw-store [bech32-address] [base64-raw-key]",
 		Short: "Prints out raw store of a contract",
 		Long:  "Prints out raw store of a contract",
-		Args:  cobra.RangeArgs(2, 3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			addr := args[0]
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			// need to extend key with prefix of its length
 			key := args[1]
-			subkey := ""
-			if len(args) == 3 {
-				subkey = args[2]
-			}
-
-			keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
-			params := types.NewQueryRawStoreParams(addr, keyBz)
-			bz, err := cliCtx.Codec.MarshalJSON(params)
+			keyBz := []byte(key)
+			res, err := queryClient.RawStore(context.Background(), &types.QueryRawStoreRequest{
+				ContractAddress: addr,
+				Key:             keyBz,
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRawStore)
-			res, _, err := cliCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			model := types.Model{
-				Key:   keyBz,
-				Value: res,
-			}
-
-			return cliCtx.PrintOutput(model)
+			return clientCtx.PrintProto(res)
 		},
 	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
 		Short: "Query the current wasm params",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters), nil)
+			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
 
-			var params types.Params
-			cdc.MustUnmarshalJSON(res, &params)
-			return cliCtx.PrintOutput(params)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

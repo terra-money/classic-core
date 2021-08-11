@@ -1,16 +1,16 @@
 package simulation
 
-// DONTCOVER
+//DONTCOVER
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/terra-project/core/x/market/internal/types"
+	"github.com/terra-money/core/x/market/types"
 )
 
 // Simulation parameter constants
@@ -20,14 +20,14 @@ const (
 	minStabilitySpreadKey = "min_spread"
 )
 
-// GenBasePool randomized BasePool
+// GenBasePool randomized MintBasePool
 func GenBasePool(r *rand.Rand) sdk.Dec {
 	return sdk.NewDec(50000000000000).Add(sdk.NewDec(int64(r.Intn(10000000000))))
 }
 
 // GenPoolRecoveryPeriod randomized PoolRecoveryPeriod
-func GenPoolRecoveryPeriod(r *rand.Rand) int64 {
-	return int64(100 + r.Intn(10000000000))
+func GenPoolRecoveryPeriod(r *rand.Rand) uint64 {
+	return uint64(100 + r.Intn(10000000000))
 }
 
 // GenMinSpread randomized MinSpread
@@ -44,7 +44,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { basePool = GenBasePool(r) },
 	)
 
-	var poolRecoveryPeriod int64
+	var poolRecoveryPeriod uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, poolRecoveryPeriodKey, &poolRecoveryPeriod, simState.Rand,
 		func(r *rand.Rand) { poolRecoveryPeriod = GenPoolRecoveryPeriod(r) },
@@ -65,6 +65,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 		},
 	)
 
-	fmt.Printf("Selected randomly generated market parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, marketGenesis))
+	bz, err := json.MarshalIndent(&marketGenesis.Params, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Selected randomly generated market parameters:\n%s\n", bz)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(marketGenesis)
 }

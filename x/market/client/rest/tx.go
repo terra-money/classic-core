@@ -6,32 +6,33 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
-	feeutils "github.com/terra-project/core/x/auth/client/utils"
-	"github.com/terra-project/core/x/market/internal/types"
+	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	"github.com/terra-money/core/x/market/types"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/market/swap", submitSwapHandlerFn(cliCtx)).Methods("POST")
+func registerTxHandlers(clientCtx client.Context, rtr *mux.Router) {
+	rtr.HandleFunc("/market/swap", submitSwapHandlerFn(clientCtx)).Methods("POST")
 }
 
-// SwapReq defines request body for swap operation
-type SwapReq struct {
-	BaseReq   rest.BaseReq `json:"base_req"`
-	OfferCoin sdk.Coin     `json:"offer_coin"`
-	AskDenom  string       `json:"ask_denom"`
-	Receiver  string       `json:"receiver,omitempty"`
-}
+type (
+	swapReq struct {
+		BaseReq   rest.BaseReq `json:"base_req"`
+		OfferCoin sdk.Coin     `json:"offer_coin"`
+		AskDenom  string       `json:"ask_denom"`
+		Receiver  string       `json:"receiver,omitempty"`
+	}
+)
 
 // submitSwapHandlerFn handles a POST vote request
-func submitSwapHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func submitSwapHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req SwapReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		var req swapReq
+		if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 			return
 		}
 
@@ -41,53 +42,41 @@ func submitSwapHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		fromAddress, err := sdk.AccAddressFromBech32(req.BaseReq.From)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		if rest.CheckBadRequestError(w, err) {
 			return
 		}
 
+		// create the message depends on the toAddress existence
 		var msg sdk.Msg
 		if req.Receiver == "" {
 			msg = types.NewMsgSwap(fromAddress, req.OfferCoin, req.AskDenom)
+			if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
+				return
+			}
 		} else {
 			toAddress, err := sdk.AccAddressFromBech32(req.Receiver)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			if rest.CheckBadRequestError(w, err) {
 				return
 			}
 
 			msg := types.NewMsgSwapSend(fromAddress, toAddress, req.OfferCoin, req.AskDenom)
-			if req.BaseReq.Fees.IsZero() {
-				fees, gas, err := feeutils.ComputeFees(cliCtx, feeutils.ComputeReqParams{
-					Memo:          req.BaseReq.Memo,
-					ChainID:       req.BaseReq.ChainID,
-					AccountNumber: req.BaseReq.AccountNumber,
-					Sequence:      req.BaseReq.Sequence,
-					GasPrices:     req.BaseReq.GasPrices,
-					Gas:           req.BaseReq.Gas,
-					GasAdjustment: req.BaseReq.GasAdjustment,
-					Msgs:          []sdk.Msg{msg},
-				})
+			if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
+				return
+			}
 
-				if err != nil {
-					rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			if req.BaseReq.Fees.IsZero() {
+				stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
+				if rest.CheckBadRequestError(w, err) {
 					return
 				}
 
 				// override gas and fees
-				req.BaseReq.Gas = strconv.FormatUint(gas, 10)
-				req.BaseReq.Fees = fees
+				req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
+				req.BaseReq.Fees = stdFee.Amount
 				req.BaseReq.GasPrices = sdk.DecCoins{}
 			}
 		}
 
-		// create the message
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
 	}
 }

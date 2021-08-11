@@ -1,0 +1,72 @@
+syntax = "proto3";
+package terra.treasury.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/treasury/types";
+
+// Params defines the parameters for the oracle module.
+message Params {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  PolicyConstraints tax_policy    = 1 [(gogoproto.moretags) = "yaml:\"tax_policy\"", (gogoproto.nullable) = false];
+  PolicyConstraints reward_policy = 2 [(gogoproto.moretags) = "yaml:\"reward_policy\"", (gogoproto.nullable) = false];
+  string            seigniorage_burden_target = 3 [
+    (gogoproto.moretags)   = "yaml:\"seigniorage_burden_target\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  string mining_increment = 4 [
+    (gogoproto.moretags)   = "yaml:\"mining_increment\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  uint64 window_short     = 5 [(gogoproto.moretags) = "yaml:\"window_short\""];
+  uint64 window_long      = 6 [(gogoproto.moretags) = "yaml:\"window_long\""];
+  uint64 window_probation = 7 [(gogoproto.moretags) = "yaml:\"window_probation\""];
+}
+
+// PolicyConstraints - defines policy constraints can be applied in tax & reward policies
+message PolicyConstraints {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  string rate_min = 1 [
+    (gogoproto.moretags)   = "yaml:\"rate_min\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  string rate_max = 2 [
+    (gogoproto.moretags)   = "yaml:\"rate_max\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  cosmos.base.v1beta1.Coin cap             = 3 [(gogoproto.moretags) = "yaml:\"cap\"", (gogoproto.nullable) = false];
+  string                   change_rate_max = 4 [
+    (gogoproto.moretags)   = "yaml:\"change_rate_max\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// EpochTaxProceeds represents the tax amount
+// collected at the current epoch
+message EpochTaxProceeds {
+  repeated cosmos.base.v1beta1.Coin tax_proceeds = 1 [
+    (gogoproto.moretags)     = "yaml:\"tax_proceeds\"",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable)     = false
+  ];
+}
+
+// EpochInitialIssuance represents initial issuance
+// of the currrent epoch
+message EpochInitialIssuance {
+  repeated cosmos.base.v1beta1.Coin issuance = 1 [
+    (gogoproto.moretags)     = "yaml:\"issuance\"",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable)     = false
+  ];
+}

@@ -4,17 +4,20 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	core "github.com/terra-project/core/types"
+
+	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/treasury/keeper"
+	"github.com/terra-money/core/x/treasury/types"
 )
 
 // InitGenesis initializes default parameters
 // and the keeper's address to pubkey map
-func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 
 	keeper.SetTaxRate(ctx, data.TaxRate)
 	keeper.SetRewardWeight(ctx, data.RewardWeight)
-	keeper.SetEpochTaxProceeds(ctx, data.TaxProceed)
+	keeper.SetEpochTaxProceeds(ctx, data.TaxProceeds)
 
 	// If EpochInitialIssuance is empty, we use current supply as epoch initial issuance
 	if data.EpochInitialIssuance.IsZero() {
@@ -24,34 +27,33 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	}
 
 	// store tax caps
-	for denom, taxCap := range data.TaxCaps {
-		keeper.SetTaxCap(ctx, denom, taxCap)
+	for _, cap := range data.TaxCaps {
+		keeper.SetTaxCap(ctx, cap.Denom, cap.TaxCap)
 	}
 
-	// store cumulated block height of past chains
-	keeper.SetCumulativeHeight(ctx, data.CumulativeHeight)
-
-	for epoch, TR := range data.TRs {
-		keeper.SetTR(ctx, int64(epoch), TR)
-	}
-	for epoch, SR := range data.SRs {
-		keeper.SetSR(ctx, int64(epoch), SR)
-	}
-	for epoch, TSL := range data.TSLs {
-		keeper.SetTSL(ctx, int64(epoch), TSL)
+	for _, epochState := range data.EpochStates {
+		keeper.SetTR(ctx, int64(epochState.Epoch), epochState.TaxReward)
+		keeper.SetSR(ctx, int64(epochState.Epoch), epochState.SeigniorageReward)
+		keeper.SetTSL(ctx, int64(epochState.Epoch), epochState.TotalStakedLuna)
 	}
 
 	// check if the module account exists
-	moduleAcc := keeper.GetTreasuryAccount(ctx)
+	moduleAcc := keeper.GetTreasuryModuleAccount(ctx)
 	if moduleAcc == nil {
-		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
+		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
+	}
+
+	// check if the burn module account exists
+	burnModuleAcc := keeper.GetBurnModuleAccount(ctx)
+	if burnModuleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.BurnModuleName))
 	}
 }
 
 // ExportGenesis writes the current store values
 // to a genesis file, which can be imported again
 // with InitGenesis
-func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
+func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) (data *types.GenesisState) {
 	params := keeper.GetParams(ctx)
 
 	taxRate := keeper.GetTaxRate(ctx)
@@ -59,28 +61,28 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) (data GenesisState) {
 	taxProceeds := keeper.PeekEpochTaxProceeds(ctx)
 	epochInitialIssuance := keeper.GetEpochInitialIssuance(ctx)
 
-	taxCaps := make(map[string]sdk.Int)
+	var taxCaps []types.TaxCap
 	keeper.IterateTaxCap(ctx, func(denom string, taxCap sdk.Int) bool {
-		taxCaps[denom] = taxCap
+		taxCaps = append(taxCaps, types.TaxCap{
+			Denom:  denom,
+			TaxCap: taxCap,
+		})
 		return false
 	})
 
-	cumulatedHeight := keeper.GetCumulativeHeight(ctx)
-
-	var TRs []sdk.Dec
-	var SRs []sdk.Dec
-	var TSLs []sdk.Int
+	var epochStates []types.EpochState
 
 	curEpoch := keeper.GetEpoch(ctx)
 	for e := int64(0); e < curEpoch ||
 		(e == curEpoch && core.IsPeriodLastBlock(ctx, core.BlocksPerWeek)); e++ {
-
-		TRs = append(TRs, keeper.GetTR(ctx, e))
-		SRs = append(SRs, keeper.GetSR(ctx, e))
-		TSLs = append(TSLs, keeper.GetTSL(ctx, e))
+		epochStates = append(epochStates, types.EpochState{
+			Epoch:             uint64(e),
+			TaxReward:         keeper.GetTR(ctx, e),
+			SeigniorageReward: keeper.GetSR(ctx, e),
+			TotalStakedLuna:   keeper.GetTSL(ctx, e),
+		})
 	}
 
-	return NewGenesisState(params, taxRate, rewardWeight,
-		taxCaps, taxProceeds, epochInitialIssuance,
-		cumulatedHeight, TRs, SRs, TSLs)
+	return types.NewGenesisState(params, taxRate, rewardWeight,
+		taxCaps, taxProceeds, epochInitialIssuance, epochStates)
 }
