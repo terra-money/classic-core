@@ -1,3 +1,8 @@
+## 0.5.1
+
+### Bug Fixes
+- [\#536](https://github.com/terra-money/core/pull/536) Sort migrated map array with key to generate deterministic result
+
 ## 0.5.0
 
 ### Improvements
