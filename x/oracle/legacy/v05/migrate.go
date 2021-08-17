@@ -1,6 +1,8 @@
 package v05
 
 import (
+	"sort"
+
 	v04oracle "github.com/terra-money/core/x/oracle/legacy/v04"
 	v05oracle "github.com/terra-money/core/x/oracle/types"
 )
@@ -45,23 +47,14 @@ func Migrate(
 		}
 	}
 
+	// Note that the four following `for` loop over a map's keys, so are not
+	// deterministic.
 	i := 0
 	missCounters := make([]v05oracle.MissCounter, len(oracleGenState.MissCounters))
 	for validatorAddress, missCounter := range oracleGenState.MissCounters {
 		missCounters[i] = v05oracle.MissCounter{
 			ValidatorAddress: validatorAddress,
 			MissCounter:      uint64(missCounter),
-		}
-
-		i++
-	}
-
-	i = 0
-	exchangeRates := make([]v05oracle.ExchangeRateTuple, len(oracleGenState.ExchangeRates))
-	for denom, exchangeRate := range oracleGenState.ExchangeRates {
-		exchangeRates[i] = v05oracle.ExchangeRateTuple{
-			Denom:        denom,
-			ExchangeRate: exchangeRate,
 		}
 
 		i++
@@ -79,6 +72,17 @@ func Migrate(
 	}
 
 	i = 0
+	exchangeRates := make([]v05oracle.ExchangeRateTuple, len(oracleGenState.ExchangeRates))
+	for denom, exchangeRate := range oracleGenState.ExchangeRates {
+		exchangeRates[i] = v05oracle.ExchangeRateTuple{
+			Denom:        denom,
+			ExchangeRate: exchangeRate,
+		}
+
+		i++
+	}
+
+	i = 0
 	tobinTaxes := make([]v05oracle.TobinTax, len(oracleGenState.TobinTaxes))
 	for denom, tobinTax := range oracleGenState.TobinTaxes {
 		tobinTaxes[i] = v05oracle.TobinTax{
@@ -88,6 +92,14 @@ func Migrate(
 
 		i++
 	}
+
+	// We sort these four arrays by validator address and denom, so that we get determinstic states.
+	sort.Slice(missCounters, func(i, j int) bool { return missCounters[i].ValidatorAddress < missCounters[j].ValidatorAddress })
+	sort.Slice(feederDelegations, func(i, j int) bool {
+		return feederDelegations[i].ValidatorAddress < feederDelegations[j].ValidatorAddress
+	})
+	sort.Slice(exchangeRates, func(i, j int) bool { return exchangeRates[i].Denom < exchangeRates[j].Denom })
+	sort.Slice(tobinTaxes, func(i, j int) bool { return tobinTaxes[i].Denom < tobinTaxes[j].Denom })
 
 	return &v05oracle.GenesisState{
 		AggregateExchangeRatePrevotes: aggregateExchangeRatePrevote,
