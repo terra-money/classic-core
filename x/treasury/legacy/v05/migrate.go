@@ -1,6 +1,8 @@
 package v05
 
 import (
+	"sort"
+
 	v04treasury "github.com/terra-money/core/x/treasury/legacy/v04"
 	v05treasury "github.com/terra-money/core/x/treasury/types"
 
@@ -17,6 +19,8 @@ import (
 func Migrate(
 	treasuryGenState v04treasury.GenesisState,
 ) *v05treasury.GenesisState {
+	// Note that the following `for` loop over a map's keys, so are not
+	// deterministic.
 	i := 0
 	taxCaps := make([]v05treasury.TaxCap, len(treasuryGenState.TaxCaps))
 	for denom, cap := range treasuryGenState.TaxCaps {
@@ -27,6 +31,9 @@ func Migrate(
 
 		i++
 	}
+
+	// We sort this array by denom, so that we get determinstic states.
+	sort.Slice(taxCaps, func(i, j int) bool { return taxCaps[i].Denom < taxCaps[j].Denom })
 
 	// Remove cumulative height dependencies
 	cumulativeEpochs := int(treasuryGenState.CumulativeHeight / int64(v04treasury.BlocksPerWeek))
