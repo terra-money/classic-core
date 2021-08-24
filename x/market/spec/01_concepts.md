@@ -52,7 +52,8 @@ The size of the Terra and Luna liquidity pools can be generated from  using the 
 
 ```
 TerraPool = BasePool + delta
-LunaPool = (BasePool * BasePool) / TerraPool
+LunaPool * LunaPice / SDRPrice = (BasePool * BasePool) / TerraPool
+LunaPool = (SDRPrice / LunaPrice) * (BasePool * BasePool) / TerraPool
 ```
 
 At the end of each block, the market module will attempt to "replenish" the pools by decreasing the magnitude of  between the Terra and Luna pools. The rate at which the pools will be replenished toward equilibrium is set by the parameter `PoolRecoveryPeriod`, with lower periods meaning lower sensitivity to trades, meaning previous trades are more quickly forgotten and the market is able to offer more liquidity.
