@@ -78,7 +78,7 @@ The easiest way to get started is by downloading a pre-built binary for your ope
 
 **Step 1. Install Golang**
 
-Go v1.14+ or higher is required for Terra Core.
+Go v1.16+ or higher is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
@@ -89,7 +89,7 @@ Use `git` to retrieve Terra Core from the [official repo](https://github.com/ter
 ```bash
 git clone https://github.com/terra-money/core/
 cd core
-git checkout master
+git checkout main
 ```
 
 **Step 3: Build from source**
