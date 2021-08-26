@@ -22,6 +22,8 @@ COPY --from=go-builder /lib/libwasmvm.so /lib/libwasmvm.so
 
 # rest server
 EXPOSE 1317
+# grpc
+EXPOSE 9090
 # tendermint p2p
 EXPOSE 26656
 # tendermint rpc
