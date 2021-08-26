@@ -1,3 +1,6 @@
+## 0.5.2
+- [\#539](https://github.com/terra-money/core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
+
 ## 0.5.1
 
 ### Bug Fixes
