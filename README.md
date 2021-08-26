@@ -44,9 +44,9 @@ Full-node software implementing the Terra protocol<br/><br/>
   - [From Source](#from-source)
 - [`terrad`](#terrad)
 - [Node Setup](#node-setup)
-  - [Running a local testnet](#running-a-local-testnet)
   - [Joining the mainnet](#joining-the-mainnet)
   - [Joining a testnet](#joining-a-testnet)
+  - [Running a local testnet](#running-a-local-testnet)
 - [Production Environment](#production-environment)
   - [Increase Maximum Open Files](#increase-maximum-open-files)
   - [Create a Dedicated User](#create-a-dedicated-user)
@@ -163,11 +163,29 @@ go: go version go1.16.5 darwin/amd64
 
 ## Node Setup
 
+Once you have the node software installed, you will need to set up your node to be part of a network.
+
+### Joining the mainnet
+
+If you want to join the `columbus-5` mainnet, we strongly recommend the following:
+
+- **2 or more** CPU cores
+- At least **500GB** of disk storage
+- At least **5 - 10mbps** network bandwidth
+
+[The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
+
+### Joining a testnet
+
+**NOTE:** There may be several testnets that exist simultaneously. Make sure that your version of `terrad` is compatible for the network you wish to join.
+
+[The testnet repo](https://github.com/terra-money/testnet) contains configuration instructions for setting a node for the latest testnet.
+
 ### Running a local testnet
 
 **NOTE:** The easiest way to set get started with a local Terra network for testing is with [LocalTerra](https://github.com/terra-money/LocalTerra), which automatically orchestrates a whole environment suited for development with zero configuration.
 
-The simplest Terra network you can set up will be a local testnet with just a single node. You will create one account and be the sole validator signing blocks for the network.
+You can also set up a local testnet with just a single node. You will create one account and be the sole validator signing blocks for the network.
 
 **Step 1. Create network and account**
 
@@ -202,25 +220,6 @@ terrad start
 ```
 
 Your `terrad` node should now be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks. You've successfully set up your local Terra network!
-
-### Joining the mainnet
-
-The current mainnet is `columbus-5`.
-
-We recommend the following for running Terra Core:
-
-- **2 or more** CPU cores
-- At least **300GB** of disk storage
-- At least **2.5 - 5mbps** network bandwidth
-
-[The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
-
-### Joining a testnet
-
-Depending on core development, there may be several testnets that exist simultaneously.
-Make sure that you've installed the correct version of the `terrad` node software for the network you wish to join.
-
-[The testnet repo](https://github.com/terra-money/testnet) contains configuration instructions for setting a node for the latest testnet.
 
 ## Production Environment
 
