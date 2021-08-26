@@ -5,6 +5,7 @@ services:
     container_name: terradnode0
     image: "terramoney/terrad-env"
     ports:
+      - "9090:9090"
       - "26656-26657:26656-26657"
     environment:
       - ID=0
@@ -19,6 +20,7 @@ services:
     container_name: terradnode1
     image: "terramoney/terrad-env"
     ports:
+      - "9090:9090"
       - "26659-26660:26656-26657"
     environment:
       - ID=1
@@ -36,6 +38,7 @@ services:
       - ID=2
       - LOG=$${LOG:-terrad.log}
     ports:
+      - "9090:9090"
       - "26661-26662:26656-26657"
     volumes:
       - ./build:/terrad:Z
@@ -50,6 +53,7 @@ services:
       - ID=3
       - LOG=$${LOG:-terrad.log}
     ports:
+      - "9090:9090"
       - "26663-26664:26656-26657"
     volumes:
       - ./build:/terrad:Z
@@ -65,4 +69,3 @@ networks:
       config:
       -
         subnet: 192.168.10.0/16
-
