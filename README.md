@@ -36,11 +36,35 @@ Full-node software implementing the Terra protocol<br/><br/>
 
 <br/>
 
+## Table of Contents <!-- omit in toc -->
+
+- [What is Terra?](#what-is-terra)
+- [Installation](#installation)
+  - [Binaries](#binaries)
+  - [From Source](#from-source)
+- [`terrad`](#terrad)
+- [Node Setup](#node-setup)
+  - [Joining the mainnet](#joining-the-mainnet)
+  - [Joining a testnet](#joining-a-testnet)
+  - [Running a local testnet](#running-a-local-testnet)
+- [Production Environment](#production-environment)
+  - [Increase Maximum Open Files](#increase-maximum-open-files)
+  - [Create a Dedicated User](#create-a-dedicated-user)
+  - [Firewall Configuration](#firewall-configuration)
+  - [Running Server as a Daemon](#running-server-as-a-daemon)
+  - [Register terrad as a service](#register-terrad-as-a-service)
+  - [Controlling the service](#controlling-the-service)
+  - [Accessing logs](#accessing-logs)
+- [Resources](#resources)
+- [Community](#community)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## What is Terra?
 
 **[Terra](https://terra.money)** is a blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
 
-The Terra blockchain is secured through distributed consensus over native staked asset Luna, and supports the issuance of price-tracking stablecoins (TerraKRW, TerraUSD, etc.) that are pegged to major world currencies. Smart contracts on Terra run on WebAssembly and can take advantage of core modules like on-chain swaps, price oracle, and staking rewards to power modern DeFi apps. Through fiscal policy managed by community governance, Terra is a democratized economy regulated by its users.
+The Terra blockchain is secured by distributed consensus on staked asset Luna, and natively supports the issuance of price-tracking stablecoins (TerraKRW, TerraUSD, etc.) algorithmically pegged to major world currencies. Smart contracts on Terra run on WebAssembly and can take advantage of core modules like on-chain swaps, price oracle, and staking rewards to power modern DeFi apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
 
 **Terra Core** is the reference implementation of the Terra protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
 
@@ -48,33 +72,27 @@ The Terra blockchain is secured through distributed consensus over native staked
 
 ### Binaries
 
-You can find the latest binaries on our [releases](https://github.com/terra-money/core/releases) page.
+The easiest way to get started is by downloading a pre-built binary for your operating system. You can find the latest binaries on the [releases](https://github.com/terra-money/core/releases) page.
 
 ### From Source
 
-We recommend the following for running Terra Core:
+**Step 1. Install Golang**
 
-- **2 or more** CPU cores
-- At least **300GB** of disk storage
-- At least **2.5 - 5mbps** network bandwidth
-
-#### Step 1. Install Golang
-
-Go v1.14+ or higher is required for Terra Core.
+Go v1.16+ or higher is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
-#### Step 2: Get Terra Core source code
+**Step 2: Get Terra Core source code**
 
 Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` binary.
 
 ```bash
 git clone https://github.com/terra-money/core/
 cd core
-git checkout master
+git checkout main
 ```
 
-#### Step 3: Build from source
+**Step 3: Build from source**
 
 You can now build Terra Core. Running the following command will install executable `terrad` (Terra node daemon and CLI for interacting with the node) to your `GOPATH`.
 
@@ -82,7 +100,7 @@ You can now build Terra Core. Running the following command will install executa
 make install
 ```
 
-#### Step 4: Verify your installation
+**Step 4: Verify your installation**
 
 Verify that everything is OK. If you get something like the following, you've successfully installed Terra Core on your system.
 
@@ -96,15 +114,17 @@ build_tags: netgo,ledger
 go: go version go1.16.5 darwin/amd64
 ```
 
-### CLI
+## `terrad`
 
-`terrad` provides you a command-line interface to a running node, communicating over RPC. You can find comprehensive coverage on how to use the CMD on our [official docs](https://docs.terra.money/terracli). The various subcommands and their expected arguments can also be discovered by issuing:
+**NOTE:** `terracli` has been deprecated and all of its functionalities have been merged into `terrad`.
+
+`terrad` is the all-in-one command for operating and interacting with a running Terra node. You can find comprehensive coverage on each of the available functions on our [official docs](https://docs.terra.money/terrad). The various subcommands and their expected arguments can also be interactively discovered by issuing the following command:
 
 <pre>
         <div align="left">
         <b>$ terrad --help</b>
 
-        Command line interface for interacting with terrad
+        Stargate Terra App
 
         Usage:
           terrad [command]
@@ -132,30 +152,42 @@ go: go version go1.16.5 darwin/amd64
 
         Flags:
           -h, --help                help for terrad
-              --home string         directory for config and data (default "/Users/yeoyunseog/.terra")
+              --home string         directory for config and data (default "/Users/$HOME/.terra")
               --log_format string   The logging format (json|plain) (default "plain")
               --log_level string    The logging level (trace|debug|info|warn|error|fatal|panic) (default "info")
               --trace               print out full stack trace on errors
 
-        <b>Use "terracli [command] --help" for more information about a command.</b>
+        <b>Use "terrad [command] --help" for more information about a command.</b>
         </div>
 </pre>
 
 ## Node Setup
 
-#### Active Networks
+Once you have the node software installed, you will need to set up your node to be part of a network.
 
-| Chain ID       | Description        | Public Node (LCD)             |
-| -------------- | ------------------ | ----------------------------- |
-| `columbus-4`   | Mainnet            | https://lcd.terra.dev         |
-| `tequila-0004` | Columbus-4 Testnet | https://tequila-lcd.terra.dev |
-| `bombay-0008`  | Columbus-5 Testnet | https://bombay-lcd.terra.dev  |
+### Joining the mainnet
 
-### Running a Local Testnet
+If you want to join the `columbus-5` mainnet, we strongly recommend the following:
 
-The simplest Terra network you can set up will be a local testnet with just a single node. You will create one account and be the sole validator signing blocks for the network.
+- **2 or more** CPU cores
+- At least **500GB** of disk storage
+- At least **5 - 10mbps** network bandwidth
 
-#### Step 1. Create network and account
+[The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
+
+### Joining a testnet
+
+**NOTE:** There may be several testnets that exist simultaneously. Make sure that your version of `terrad` is compatible for the network you wish to join.
+
+[The testnet repo](https://github.com/terra-money/testnet) contains configuration instructions for setting a node for the latest testnet.
+
+### Running a local testnet
+
+**NOTE:** The easiest way to set get started with a local Terra network for testing is with [LocalTerra](https://github.com/terra-money/LocalTerra), which automatically orchestrates a whole environment suited for development with zero configuration.
+
+You can also set up a local testnet with just a single node. You will create one account and be the sole validator signing blocks for the network.
+
+**Step 1. Create network and account**
 
 First, initialize your genesis file that will bootstrap the network. Set a name for your local testnet, and provide a moniker to refer to your node.
 
@@ -169,7 +201,7 @@ You will need a Terra account to start. You can generate one with:
 terrad keys add <account_name>
 ```
 
-#### Step 2. Add account to genesis
+**Step 2. Add account to genesis**
 
 Next, you need to add your account to the genesis. The following commands add your account and set the initial balance:
 
@@ -179,7 +211,7 @@ terrad gentx --name my_account --amount 10000000uluna
 terrad collect-gentxs
 ```
 
-#### Step 3. Run Terra daemon
+**Step 3. Run Terra daemon**
 
 Now, you can start your private Terra network:
 
@@ -188,14 +220,6 @@ terrad start
 ```
 
 Your `terrad` node should now be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks. You've successfully set up your local Terra network!
-
-### Joining the mainnet
-
-[The mainnet repo](https://github.com/terra-money/mainnet) contains snapshot of the launch as well as network updates.
-
-### Joining a testnet
-
-[Our testnet repo](https://github.com/terra-money/testnet) contains latest configuration files for the testnet.
 
 ## Production Environment
 
@@ -239,7 +263,7 @@ It is important to keep `terrad` running at all times. There are several ways to
 
 First, create a service definition file in `/etc/systemd/system`.
 
-#### Sample file: `/etc/systemd/system/terrad.service`
+**Sample file: `/etc/systemd/system/terrad.service`**
 
 ```
 [Unit]
@@ -294,19 +318,23 @@ journalctl -t terrad -f
 
   - SDKs
     - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
-    - [Jigu](https://www.github.com/terra-money/jigu) for Python
+    - [terra-sdk-python](https://www.github.com/terra-money/terra-sdk-python) for Python
   - [Faucet](https://faucet.terra.money) can be used to get tokens for testnets
   - [LocalTerra](https://www.github.com/terra-money/LocalTerra) can be used to set up a private local testnet with configurable world state
 
 - Block Explorers
 
-  - [Terra Finder](https://finder.terra.money)
-  - [Figment Hubble](https://hubble.figment.network/terra/chains/columbus-3)
-  - [Stake ID by StakingFund](https://terra.stake.id)
+  - [Terra Finder](https://finder.terra.money) - basic block explorer from Terraform Labs
+  - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - community-run fork of Finder with extra features
+  - [Stake ID](https://terra.stake.id) - by Staking Fund
+  - [Hubble](https://hubble.figment.network/terra/chains/columbus-3) - by Figment
 
 - Wallets
 
-  - [Terra Station](https://station.terra.money)
+  - [Terra Station](https://station.terra.money) - official wallet from Terraform Labs
+  - Terra Station Mobile - Mobile version of Terra Station
+    - [iOS](https://apps.apple.com/us/app/terra-station/id1548434735)
+    - [Android](https://play.google.com/store/apps/details?id=money.terra.station&hl=en_US&gl=US)
   - [Lunie](https://lunie.io/)
 
 - Research
@@ -324,7 +352,7 @@ journalctl -t terrad -f
 
 ## Contributing
 
-We are currently finalizing contribution standards and guidelines. In the meanwhile, if you are interested in contributing to the Terra Project, please contact our [admin](mailto:core@terra.money).
+If you are interested in contributing to Terra Core source, please review our [code of conduct](./CODE_OF_CONDUCT.md).
 
 ## License
 
