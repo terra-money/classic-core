@@ -98,6 +98,8 @@ You can now build Terra Core. Running the following command will install executa
 
 ```bash
 make install
+# Install it using GOBIN for system-wide usage
+# sudo GOBIN=/usr/local/bin make install
 ```
 
 **Step 4: Verify your installation**
