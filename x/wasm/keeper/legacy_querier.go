@@ -116,8 +116,12 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
+	wasmVM := k.getWasmVM(sdk.WrapSDKContext(ctx))
+
 	// recover from out-of-gas panic
 	defer func() {
+		k.putWasmVM(wasmVM)
+
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
@@ -140,7 +144,7 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		}
 	}()
 
-	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg)
+	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg, wasmVM)
 
 	return
 }

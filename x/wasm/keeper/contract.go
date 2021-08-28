@@ -420,7 +420,7 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 	return prefixStore.Get(key)
 }
 
-func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte) ([]byte, error) {
+func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte, wasmVMs ...types.WasmerEngine) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(queryMsg)), "Loading CosmWasm module: query")
 
@@ -430,7 +430,14 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
-	queryResult, gasUsed, err := k.wasmVM.Query(
+
+	// when the vm is given, use that given vm
+	wasmVM := k.wasmVM
+	if len(wasmVMs) != 0 {
+		wasmVM = wasmVMs[0]
+	}
+
+	queryResult, gasUsed, err := wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
 		queryMsg,

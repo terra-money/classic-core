@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/tendermint/tendermint/libs/log"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -32,7 +33,10 @@ type Keeper struct {
 	serviceRouter types.MsgServiceRouter
 	queryRouter   types.GRPCQueryRouter
 
-	wasmVM    types.WasmerEngine
+	wasmVM              types.WasmerEngine
+	wasmReadVMPool      []types.WasmerEngine
+	wasmReadVMSemaphore *semaphore.Weighted
+
 	querier   types.Querier
 	msgParser types.MsgParser
 
@@ -53,35 +57,55 @@ func NewKeeper(
 	supportedFeatures string,
 	homePath string,
 	wasmConfig *config.Config) Keeper {
-	wasmVM, err := wasmvm.NewVM(
-		filepath.Join(homePath, config.DBDir),
-		supportedFeatures,
-		types.ContractMemoryLimit,
-		wasmConfig.ContractDebugMode,
-		wasmConfig.ContractMemoryCacheSize,
-	)
-	if err != nil {
-		panic(err)
-	}
 
 	// set KeyTable if it has not already been set
 	if !paramspace.HasKeyTable() {
 		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	writeWasmVM, err := wasmvm.NewVM(
+		filepath.Join(homePath, config.DBDir),
+		supportedFeatures,
+		types.ContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.WriteVMMemoryCacheSize,
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	numReadVms := wasmConfig.NumReadVMs
+	wasmReadVMPool := make([]types.WasmerEngine, numReadVms)
+	for i := uint32(0); i < numReadVms; i++ {
+		wasmReadVMPool[i], err = wasmvm.NewVM(
+			filepath.Join(homePath, config.DBDir),
+			supportedFeatures,
+			types.ContractMemoryLimit,
+			wasmConfig.ContractDebugMode,
+			wasmConfig.ReadVMMemoryCacheSize,
+		)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return Keeper{
-		storeKey:       storeKey,
-		cdc:            cdc,
-		paramSpace:     paramspace,
-		wasmVM:         wasmVM,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		treasuryKeeper: treasuryKeeper,
-		serviceRouter:  serviceRouter,
-		queryRouter:    queryRouter,
-		wasmConfig:     wasmConfig,
-		msgParser:      types.NewWasmMsgParser(),
-		querier:        types.NewWasmQuerier(),
+		storeKey:            storeKey,
+		cdc:                 cdc,
+		paramSpace:          paramspace,
+		wasmVM:              writeWasmVM,
+		wasmReadVMPool:      wasmReadVMPool,
+		wasmReadVMSemaphore: semaphore.NewWeighted(int64(numReadVms)),
+		accountKeeper:       accountKeeper,
+		bankKeeper:          bankKeeper,
+		treasuryKeeper:      treasuryKeeper,
+		serviceRouter:       serviceRouter,
+		queryRouter:         queryRouter,
+		wasmConfig:          wasmConfig,
+		msgParser:           types.NewWasmMsgParser(),
+		querier:             types.NewWasmQuerier(),
 	}
 }
 

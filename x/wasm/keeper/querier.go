@@ -87,8 +87,12 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	wasmVM := q.getWasmVM(c)
+
 	// recover from out-of-gas panic
 	defer func() {
+		q.putWasmVM(wasmVM)
+
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us
@@ -114,7 +118,7 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 	}()
 
 	var bz []byte
-	bz, err = q.queryToContract(ctx, contractAddr, req.QueryMsg)
+	bz, err = q.queryToContract(ctx, contractAddr, req.QueryMsg, wasmVM)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
