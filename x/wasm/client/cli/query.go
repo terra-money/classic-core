@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -208,7 +209,11 @@ func GetCmdGetRawStore() *cobra.Command {
 			}
 
 			key := args[1]
-			keyBz := []byte(key)
+			keyBz, err := base64.StdEncoding.DecodeString(key)
+			if err != nil {
+				return err
+			}
+
 			res, err := queryClient.RawStore(context.Background(), &types.QueryRawStoreRequest{
 				ContractAddress: addr,
 				Key:             keyBz,
