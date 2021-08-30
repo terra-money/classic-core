@@ -63,9 +63,3 @@ func TestGzipIt(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, originalGzipData, strToGzip)
 }
-
-func TestEncodeKey(t *testing.T) {
-	key := "config"
-	expected := []byte{0x00, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67}
-	require.Equal(t, expected, EncodeKey(key))
-}
