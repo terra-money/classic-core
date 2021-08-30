@@ -131,32 +131,16 @@ func TestLegacyMultipleGoroutines(t *testing.T) {
 
 	querier := NewLegacyQuerier(keeper, input.Cdc)
 
-	// query store []byte("foo")
-	bz, err := input.Cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte("foo")))
-	require.NoError(t, err)
-
-	res, err := querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)})
-	require.NoError(t, err)
-	require.Equal(t, []byte(`"bar"`), res)
-
-	// query store []byte{0x0, 0x1}
-	bz, err = input.Cdc.MarshalJSON(types.NewQueryRawStoreParams(addr, []byte{0x0, 0x1}))
-	require.NoError(t, err)
-
-	res, err = querier(ctx, []string{types.QueryRawStore}, abci.RequestQuery{Data: []byte(bz)})
-	require.NoError(t, err)
-	require.Equal(t, []byte(`{"count":8}`), res)
-
 	wg := &sync.WaitGroup{}
-	testCases := 1000
+	testCases := 100
 	wg.Add(testCases)
 	for n := 0; n < testCases; n++ {
 		go func() {
 			// query contract []byte(`{"verifier":{}}`)
-			bz, err = input.Cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"verifier":{}}`)))
+			bz, err := input.Cdc.MarshalJSON(types.NewQueryContractParams(addr, []byte(`{"verifier":{}}`)))
 			require.NoError(t, err)
 
-			res, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
+			res, err := querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 			require.NoError(t, err)
 			require.Equal(t, fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String()), string(res))
 

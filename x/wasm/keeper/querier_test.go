@@ -116,7 +116,7 @@ func TestQueryMultipleGoroutines(t *testing.T) {
 	querier := NewQuerier(keeper)
 
 	wg := &sync.WaitGroup{}
-	testCases := 1000
+	testCases := 100
 	wg.Add(testCases)
 	for n := 0; n < testCases; n++ {
 		go func() {
