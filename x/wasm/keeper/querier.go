@@ -87,7 +87,10 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	wasmVM := q.getWasmVM(c)
+	wasmVM, err := q.getWasmVM(c)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
 	// recover from out-of-gas panic
 	defer func() {

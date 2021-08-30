@@ -116,7 +116,10 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	wasmVM := k.getWasmVM(sdk.WrapSDKContext(ctx))
+	wasmVM, err := k.getWasmVM(sdk.WrapSDKContext(ctx))
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
+	}
 
 	// recover from out-of-gas panic
 	defer func() {
