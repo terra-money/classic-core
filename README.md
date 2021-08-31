@@ -169,9 +169,9 @@ Once you have the node software installed, you will need to set up your node to 
 
 If you want to join the `columbus-5` mainnet, we strongly recommend the following:
 
-- **2 or more** CPU cores
-- At least **500GB** of disk storage
-- At least **5 - 10mbps** network bandwidth
+- **4 or more** CPU cores
+- At least **2TB** of disk storage
+- At least **100mbps** network bandwidth
 
 [The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
 
