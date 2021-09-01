@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/tendermint/tendermint/libs/log"
 	"golang.org/x/sync/semaphore"
@@ -36,6 +37,7 @@ type Keeper struct {
 	wasmVM              types.WasmerEngine
 	wasmReadVMPool      []types.WasmerEngine
 	wasmReadVMSemaphore *semaphore.Weighted
+	wasmReadVMMutex     *sync.Mutex
 
 	querier   types.Querier
 	msgParser types.MsgParser
@@ -98,6 +100,7 @@ func NewKeeper(
 		wasmVM:              writeWasmVM,
 		wasmReadVMPool:      wasmReadVMPool,
 		wasmReadVMSemaphore: semaphore.NewWeighted(int64(numReadVms)),
+		wasmReadVMMutex:     &sync.Mutex{},
 		accountKeeper:       accountKeeper,
 		bankKeeper:          bankKeeper,
 		treasuryKeeper:      treasuryKeeper,
