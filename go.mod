@@ -4,7 +4,7 @@ module github.com/terra-money/core
 
 require (
 	github.com/CosmWasm/wasmvm v0.16.0
-	github.com/cosmos/cosmos-sdk v0.43.0
+	github.com/cosmos/cosmos-sdk v0.44.0
 	github.com/cosmos/ibc-go v1.0.1
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
