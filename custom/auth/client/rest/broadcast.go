@@ -58,7 +58,10 @@ func BroadcastTxRequest(clientCtx client.Context) http.HandlerFunc {
 		txBuilder.SetFeeAmount(req.Tx.GetFee())
 		txBuilder.SetGasLimit(req.Tx.GetGas())
 		txBuilder.SetMemo(req.Tx.GetMemo())
-		txBuilder.SetMsgs(req.Tx.GetMsgs()...)
+		if err := txBuilder.SetMsgs(req.Tx.GetMsgs()...); rest.CheckBadRequestError(w, err) {
+			return
+		}
+
 		txBuilder.SetTimeoutHeight(req.Tx.GetTimeoutHeight())
 		if req.FeeGranter != "" {
 			addr, err := sdk.AccAddressFromBech32(req.FeeGranter)
@@ -96,7 +99,9 @@ func BroadcastTxRequest(clientCtx client.Context) http.HandlerFunc {
 			signatures[i].Sequence = seq
 		}
 
-		txBuilder.SetSignatures(signatures...)
+		if err := txBuilder.SetSignatures(signatures...); rest.CheckBadRequestError(w, err) {
+			return
+		}
 
 		// compute signature bytes
 		txBytes, err := clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
