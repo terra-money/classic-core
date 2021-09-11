@@ -313,10 +313,25 @@ paths:
             type: object
             properties:
               tx:
+                required: true
                 $ref: "#/definitions/StdTx"
               mode:
+                required: true
                 type: string
                 example: block
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: "1"
+              fee_granter:
+                required: false
+                $ref: "#/definitions/Address"
+              timeout_height:
+                required: false
+                type: string
+                example: "100"
       responses:
         200:
           description: Tx broadcasting result
