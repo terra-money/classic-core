@@ -11,8 +11,8 @@ const (
 	DefaultContractQueryGasLimit  = uint64(3000000)
 	DefaultContractDebugMode      = false
 	DefaultWriteVMMemoryCacheSize = uint32(500)
-	DefaultReadVMMemoryCacheSize  = uint32(30)
-	DefaultNumReadVM              = uint32(5)
+	DefaultReadVMMemoryCacheSize  = uint32(300)
+	DefaultNumReadVM              = uint32(1)
 )
 
 // DBDir used to store wasm data to

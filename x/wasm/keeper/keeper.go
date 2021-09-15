@@ -77,6 +77,16 @@ func NewKeeper(
 		panic(err)
 	}
 
+	// prevent zero read vm
+	if wasmConfig.NumReadVMs == 0 {
+		wasmConfig.NumReadVMs = config.DefaultNumReadVM
+	}
+
+	// prevent zero read vm cache
+	if wasmConfig.ReadVMMemoryCacheSize == 0 {
+		wasmConfig.ReadVMMemoryCacheSize = config.DefaultReadVMMemoryCacheSize
+	}
+
 	numReadVms := wasmConfig.NumReadVMs
 	wasmReadVMPool := make([]types.WasmerEngine, numReadVms)
 	for i := uint32(0); i < numReadVms; i++ {
