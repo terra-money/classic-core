@@ -652,9 +652,9 @@ var (
 
 	pattern_Query_ContractInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"terra", "wasm", "v1beta1", "contracts", "contract_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ContractStore_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "wasm", "v1beta1", "contract", "contract_address", "store"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ContractStore_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "wasm", "v1beta1", "contracts", "contract_address", "store"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_RawStore_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 2, 6}, []string{"terra", "wasm", "v1beta1", "contract", "contract_address", "store", "raw"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_RawStore_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 2, 6}, []string{"terra", "wasm", "v1beta1", "contracts", "contract_address", "store", "raw"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"terra", "wasm", "v1beta1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 )

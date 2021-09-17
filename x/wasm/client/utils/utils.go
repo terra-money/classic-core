@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/binary"
 )
 
 var (
@@ -36,20 +35,4 @@ func GzipIt(input []byte) ([]byte, error) {
 	}
 
 	return b.Bytes(), nil
-}
-
-//EncodeKey encode given key with prefix of key's length
-func EncodeKey(key string) []byte {
-	keyLength := uint64(len(key))
-	keyBz := make([]byte, 2, 2+keyLength)
-
-	bz := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bz, keyLength)
-
-	keyBz[0] = bz[1]
-	keyBz[1] = bz[0]
-
-	keyBz = append(keyBz, []byte(key)...)
-
-	return keyBz
 }

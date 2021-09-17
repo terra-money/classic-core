@@ -1,3 +1,8 @@
+## [Unreleased]
+
+### Bug Fixes
+- [\#544](https://github.com/terra-money/core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
+
 ## 0.5.2
 - [\#539](https://github.com/terra-money/core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
 
