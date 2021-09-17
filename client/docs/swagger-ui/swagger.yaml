@@ -26330,7 +26330,7 @@ paths:
                       format: byte
       tags:
         - Query
-  '/terra/oracle/v1beta1/valdiator/{validator_addr}/aggregate_vote':
+  '/terra/oracle/v1beta1/valdiators/{validator_addr}/aggregate_vote':
     get:
       summary: AggregateVote returns an aggregate vote of a validator
       operationId: AggregateVote
@@ -27198,107 +27198,6 @@ paths:
           format: uint64
       tags:
         - Query
-  '/terra/wasm/v1beta1/contract/{contract_address}/store':
-    get:
-      summary: ContractStore return smart query result from the contract
-      operationId: ContractStore
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              query_result:
-                type: string
-                format: byte
-            description: |-
-              QueryContractStoreResponse is response type for the
-              Query/ContractStore RPC method.
-        default:
-          description: An unexpected error response
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: contract_address
-          in: path
-          required: true
-          type: string
-        - name: query_msg
-          in: query
-          required: false
-          type: string
-          format: byte
-      tags:
-        - Query
-  '/terra/wasm/v1beta1/contract/{contract_address}/store/raw':
-    get:
-      summary: RawStore return single key from the raw store data of a contract
-      operationId: RawStore
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              data:
-                type: string
-                format: byte
-                title: Data contains the raw store data
-            description: |-
-              QueryRawStoreResponse is response type for the
-              Query/RawStore RPC method.
-        default:
-          description: An unexpected error response
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: contract_address
-          in: path
-          required: true
-          type: string
-        - name: key
-          in: query
-          required: false
-          type: string
-          format: byte
-      tags:
-        - Query
   '/terra/wasm/v1beta1/contracts/{contract_address}':
     get:
       summary: ContractInfo returns the stored contract info
@@ -27362,6 +27261,107 @@ paths:
           in: path
           required: true
           type: string
+      tags:
+        - Query
+  '/terra/wasm/v1beta1/contracts/{contract_address}/store':
+    get:
+      summary: ContractStore return smart query result from the contract
+      operationId: ContractStore
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              query_result:
+                type: string
+                format: byte
+            description: |-
+              QueryContractStoreResponse is response type for the
+              Query/ContractStore RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: query_msg
+          in: query
+          required: false
+          type: string
+          format: byte
+      tags:
+        - Query
+  '/terra/wasm/v1beta1/contracts/{contract_address}/store/raw':
+    get:
+      summary: RawStore return single key from the raw store data of a contract
+      operationId: RawStore
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+                format: byte
+                title: Data contains the raw store data
+            description: |-
+              QueryRawStoreResponse is response type for the
+              Query/RawStore RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: key
+          in: query
+          required: false
+          type: string
+          format: byte
       tags:
         - Query
   /terra/wasm/v1beta1/params:
