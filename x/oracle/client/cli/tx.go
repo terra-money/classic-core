@@ -46,7 +46,7 @@ Delegate the permission to submit exchange rate votes for the oracle to an addre
 
 Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terradx oracle set-feeder terra1...
+$ terrad tx oracle set-feeder terra1...
 
 where "terra1..." is the address you want to delegate your voting rights to.
 `),
@@ -96,12 +96,12 @@ The purpose of aggregate prevote is to hide aggregate exchange rate vote with ha
 as hex string in SHA256("{salt}:{exchange_rate}{denom},...,{exchange_rate}{denom}:{voter}")
 
 # Aggregate Prevote
-$ terradx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr 
+$ terrad tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr 
 
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terradx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
+$ terrad tx oracle aggregate-prevote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -157,14 +157,14 @@ func GetCmdAggregateExchangeRateVote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit a aggregate vote for the exchange_rates of Luna w.r.t the input denom. Companion to a prevote submitted in the previous vote period. 
 
-$ terradx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr 
+$ terrad tx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr 
 
 where "ukrw,uusd,usdr" is the denominating currencies, and "8888.0,1.243,0.99" is the exchange rates of micro Luna in micro denoms from the voter's point of view.
 
 "salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terradx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
+$ terrad tx oracle aggregate-vote 1234 8888.0ukrw,1.243uusd,0.99usdr terravaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

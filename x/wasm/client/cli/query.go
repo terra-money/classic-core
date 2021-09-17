@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -95,14 +96,8 @@ func GetCmdQueryByteCode() *cobra.Command {
 				return err
 			}
 
-			var bytecode []byte
-			err = json.Unmarshal(res.ByteCode, &bytecode)
-			if err != nil {
-				return err
-			}
-
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], bytecode, 0600)
+			return ioutil.WriteFile(args[1], res.ByteCode, 0600)
 		},
 	}
 
@@ -208,7 +203,11 @@ func GetCmdGetRawStore() *cobra.Command {
 			}
 
 			key := args[1]
-			keyBz := []byte(key)
+			keyBz, err := base64.StdEncoding.DecodeString(key)
+			if err != nil {
+				return err
+			}
+
 			res, err := queryClient.RawStore(context.Background(), &types.QueryRawStoreRequest{
 				ContractAddress: addr,
 				Key:             keyBz,

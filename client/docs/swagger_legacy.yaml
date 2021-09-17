@@ -2714,13 +2714,8 @@ paths:
           type: string
         - in: query
           name: key
-          description: raw key you want to query
+          description: base64 encoded raw key to access
           required: true
-          type: string
-        - in: query
-          name: subkey
-          description: raw subkey attached to the key
-          required: false
           type: string
       produces:
         - application/json
