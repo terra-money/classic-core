@@ -16,11 +16,10 @@ import (
 
 // BroadcastReq defines a tx broadcasting request.
 type BroadcastReq struct {
-	Tx            legacytx.StdTx `json:"tx" yaml:"tx"`
-	Mode          string         `json:"mode" yaml:"mode"`
-	Sequences     []uint64       `json:"sequences" yaml:"sequences"`
-	TimeoutHeight uint64         `json:"timeout_height" yaml:"timeout_height"`
-	FeeGranter    string         `json:"fee_granter" yaml:"fee_granter"`
+	Tx         legacytx.StdTx `json:"tx" yaml:"tx"`
+	Mode       string         `json:"mode" yaml:"mode"`
+	Sequences  []uint64       `json:"sequences" yaml:"sequences"`
+	FeeGranter string         `json:"fee_granter" yaml:"fee_granter"`
 }
 
 var _ codectypes.UnpackInterfacesMessage = BroadcastReq{}

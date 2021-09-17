@@ -1012,10 +1012,6 @@ paths:
                 description: bech32 encoded address
                 example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
                 required: false
-              timeout_height:
-                required: false
-                type: string
-                example: '100'
       responses:
         '200':
           description: Tx broadcasting result

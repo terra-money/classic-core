@@ -328,10 +328,6 @@ paths:
               fee_granter:
                 required: false
                 $ref: "#/definitions/Address"
-              timeout_height:
-                required: false
-                type: string
-                example: "100"
       responses:
         200:
           description: Tx broadcasting result
