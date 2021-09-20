@@ -1,7 +1,11 @@
-## [Unreleased]
+## [v0.5.3]
 
+### Improvement
+- [\#551](https://github.com/terra-money/core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
+  
 ### Bug Fixes
 - [\#544](https://github.com/terra-money/core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
+- [\#557](https://github.com/terra-money/core/pull/557) fix proto urls
 
 ## 0.5.2
 - [\#539](https://github.com/terra-money/core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
