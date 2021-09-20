@@ -11,4 +11,5 @@ import (
 func RegisterTxRoutes(clientCtx client.Context, rtr *mux.Router) {
 	r := clientrest.WithHTTPDeprecationHeaders(rtr)
 	r.HandleFunc("/txs/estimate_fee", EstimateTxFeeRequestHandlerFn(clientCtx)).Methods("POST")
+	r.HandleFunc("/txs", BroadcastTxRequest(clientCtx)).Methods("POST")
 }
