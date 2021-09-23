@@ -2,6 +2,8 @@ package v040
 
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	v039auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v039"
@@ -17,11 +19,19 @@ import (
 // convertBaseAccount converts a 0.39 BaseAccount to a 0.40 BaseAccount.
 func convertBaseAccount(old *v039auth.BaseAccount) *v040auth.BaseAccount {
 	var any *codectypes.Any
+
 	// If the old genesis had a pubkey, we pack it inside an Any. Or else, we
 	// just leave it nil.
 	if old.PubKey != nil {
+		var pk cryptotypes.PubKey
+		if mpk, ok := old.PubKey.(*v039authcustom.LegacyAminoPubKey); ok {
+			pk = multisig.NewLegacyAminoPubKey(int(mpk.Threshold.Int64()), mpk.PubKeys)
+		} else {
+			pk = old.PubKey
+		}
+
 		var err error
-		any, err = codectypes.NewAnyWithValue(old.PubKey)
+		any, err = codectypes.NewAnyWithValue(pk)
 		if err != nil {
 			panic(err)
 		}
