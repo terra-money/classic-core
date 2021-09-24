@@ -98,6 +98,7 @@ import (
 	customauth "github.com/terra-money/core/custom/auth"
 	customante "github.com/terra-money/core/custom/auth/ante"
 	customauthrest "github.com/terra-money/core/custom/auth/client/rest"
+	customlegacyauthv040 "github.com/terra-money/core/custom/auth/legacy/v040"
 	customauthsim "github.com/terra-money/core/custom/auth/simulation"
 	customauthtx "github.com/terra-money/core/custom/auth/tx"
 	customauthz "github.com/terra-money/core/custom/authz"
@@ -349,12 +350,6 @@ func NewTerraApp(
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
-	// clear SoftwareUpgradeProposal
-	app.UpgradeKeeper.SetUpgradeHandler("v0.5.0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		// Just pass current version map, no migration required
-		return app.mm.RunMigrations(ctx, app.configurator, app.mm.GetVersionMap())
-	})
-
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
@@ -587,8 +582,37 @@ func NewTerraApp(
 // Name returns the name of the App
 func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
+// MultiSigPubKeyMigrationPlanName upgrade plan name to fix multisig pubkey migration problem
+const MultiSigPubKeyMigrationPlanName = "multisig-pubkey-migration"
+
+// MultiSigPubKeyMigrationChainID target chain-id to apply multisig pubkey migration fix
+const MultiSigPubKeyMigrationChainID = "bombay-11"
+
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
+	// NOTE: this handler is only for bombay-11, due to pubkey migration had problem
+	if ctx.ChainID() == MultiSigPubKeyMigrationChainID {
+		if plan, found := app.UpgradeKeeper.GetUpgradePlan(ctx); found {
+			if plan.Name == MultiSigPubKeyMigrationPlanName && plan.Height == ctx.BlockHeight() {
+				app.UpgradeKeeper.SetUpgradeHandler(MultiSigPubKeyMigrationPlanName, func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+					var err error
+					app.AccountKeeper.IterateAccounts(ctx, func(account authtypes.AccountI) bool {
+						if account, err = customlegacyauthv040.MigrateAccount(account); err != nil {
+							return true
+						} else if account != nil {
+							app.AccountKeeper.SetAccount(ctx, account)
+						}
+
+						return false
+					})
+
+					return vm, err
+				})
+			}
+		}
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
