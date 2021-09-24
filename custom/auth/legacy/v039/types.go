@@ -7,7 +7,6 @@ import (
 	"errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -149,13 +148,13 @@ func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
 		VestingSchedules: lgva.VestingSchedules,
 	}
 
-	return legacy.Cdc.MarshalJSON(alias)
+	return internalCdc.MarshalJSON(alias)
 }
 
 // UnmarshalJSON unmarshals raw JSON bytes into a LazyGradedVestingAccount.
 func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
 	var alias vestingAccountJSON
-	if err := legacy.Cdc.UnmarshalJSON(bz, &alias); err != nil {
+	if err := internalCdc.UnmarshalJSON(bz, &alias); err != nil {
 		return err
 	}
 
@@ -190,7 +189,7 @@ func (*LegacyAminoPubKey) ProtoMessage() {}
 func (*LegacyAminoPubKey) Reset() {}
 
 // String no-lint
-func (*LegacyAminoPubKey) String() string { return "TODO" }
+func (*LegacyAminoPubKey) String() string { return "not implemented" }
 
 // Type no-lint
 func (*LegacyAminoPubKey) Type() string { return "PubKeyMultisigThreshold" }
@@ -198,6 +197,13 @@ func (*LegacyAminoPubKey) Type() string { return "PubKeyMultisigThreshold" }
 // VerifySignature no-lint
 func (*LegacyAminoPubKey) VerifySignature(msg []byte, sig []byte) bool {
 	panic("not implemented")
+}
+
+var internalCdc *codec.LegacyAmino
+
+func init() {
+	internalCdc = codec.NewLegacyAmino()
+	RegisterLegacyAminoCodec(internalCdc)
 }
 
 // RegisterLegacyAminoCodec nonlint

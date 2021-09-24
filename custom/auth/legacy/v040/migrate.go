@@ -2,7 +2,7 @@ package v040
 
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,7 +25,7 @@ func convertBaseAccount(old *v039auth.BaseAccount) *v040auth.BaseAccount {
 	if old.PubKey != nil {
 		var pk cryptotypes.PubKey
 		if mpk, ok := old.PubKey.(*v039authcustom.LegacyAminoPubKey); ok {
-			pk = multisig.NewLegacyAminoPubKey(int(mpk.Threshold.Int64()), mpk.PubKeys)
+			pk = kmultisig.NewLegacyAminoPubKey(int(mpk.Threshold.Int64()), mpk.PubKeys)
 		} else {
 			pk = old.PubKey
 		}
