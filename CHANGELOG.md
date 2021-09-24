@@ -1,3 +1,8 @@
+## [v0.5.4]
+
+### Bug Fixes
+- [\#560](https://github.com/terra-money/core/pull/560) Fix migration bug of multisig pubkey which was in v040 auth module migration.
+
 ## [v0.5.3]
 
 ### Improvement
