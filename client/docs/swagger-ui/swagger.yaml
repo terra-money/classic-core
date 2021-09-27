@@ -1098,10 +1098,10 @@ paths:
       deprecated: true
       tags:
         - Transactions
-      summary: Encode a transaction to the Amino wire format
+      summary: Encode a legacy transaction to the Proto wire format
       description: >-
-        Encode a transaction (signed or not) from JSON to base64-encoded Amino
-        serialized bytes
+        Encode a legacy transaction (signed or not) from JSON to base64-encoded
+        Proto serialized bytes
       consumes:
         - application/json
       produces:
@@ -1161,6 +1161,17 @@ paths:
                       sequence:
                         type: string
                         example: '0'
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: '1'
+              fee_granter:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                required: false
       responses:
         '200':
           description: The tx was successfully decoded and re-encoded
@@ -1169,7 +1180,7 @@ paths:
             properties:
               tx:
                 type: string
-                example: The base64-encoded Amino-serialized bytes for the tx
+                example: The base64-encoded Proto-serialized bytes for the tx
         '400':
           description: The tx was malformed
         '500':

@@ -102,7 +102,7 @@ func BroadcastTxRequest(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		// compute signature bytes
+		// compute tx bytes
 		txBytes, err := clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
 		if rest.CheckInternalServerError(w, err) {
 			return

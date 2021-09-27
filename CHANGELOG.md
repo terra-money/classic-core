@@ -1,3 +1,11 @@
+## [v0.5.5]
+
+### Improvements
+- [\#564](https://github.com/terra-money/core/pull/564) Legacy tx encode support
+
+### Bug Fixes
+- [\#566](https://github.com/terra-money/core/pull/566) Emit missing wasm tax events.
+  
 ## [v0.5.4]
 
 ### Bug Fixes
