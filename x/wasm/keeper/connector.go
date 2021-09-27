@@ -132,10 +132,13 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	// Charge tax on result msg
 	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsg)
 	if !taxes.IsZero() {
+		eventManager := sdk.NewEventManager()
 		contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
-		if err := cosmosante.DeductFees(k.bankKeeper, ctx, contractAcc, taxes); err != nil {
+		if err := cosmosante.DeductFees(k.bankKeeper, ctx.WithEventManager(eventManager), contractAcc, taxes); err != nil {
 			return nil, nil, err
 		}
+
+		events = eventManager.Events()
 	}
 
 	res, err := k.handleSdkMessage(ctx, contractAddr, sdkMsg)
