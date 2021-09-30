@@ -313,10 +313,21 @@ paths:
             type: object
             properties:
               tx:
+                required: true
                 $ref: "#/definitions/StdTx"
               mode:
+                required: true
                 type: string
                 example: block
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: "1"
+              fee_granter:
+                required: false
+                $ref: "#/definitions/Address"
       responses:
         200:
           description: Tx broadcasting result
@@ -329,8 +340,8 @@ paths:
       deprecated: true
       tags:
         - Transactions
-      summary: Encode a transaction to the Amino wire format
-      description: Encode a transaction (signed or not) from JSON to base64-encoded Amino serialized bytes
+      summary: Encode a legacy transaction to the Proto wire format
+      description: Encode a legacy transaction (signed or not) from JSON to base64-encoded Proto serialized bytes
       consumes:
         - application/json
       produces:
@@ -345,6 +356,15 @@ paths:
             properties:
               tx:
                 $ref: "#/definitions/StdTx"
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: "1"
+              fee_granter:
+                required: false
+                $ref: "#/definitions/Address"
       responses:
         200:
           description: The tx was successfully decoded and re-encoded
@@ -353,7 +373,7 @@ paths:
             properties:
               tx:
                 type: string
-                example: The base64-encoded Amino-serialized bytes for the tx
+                example: The base64-encoded Proto-serialized bytes for the tx
         400:
           description: The tx was malformed
         500:
@@ -2714,13 +2734,8 @@ paths:
           type: string
         - in: query
           name: key
-          description: raw key you want to query
+          description: base64 encoded raw key to access
           required: true
-          type: string
-        - in: query
-          name: subkey
-          description: raw subkey attached to the key
-          required: false
           type: string
       produces:
         - application/json

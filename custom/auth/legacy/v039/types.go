@@ -7,12 +7,15 @@ import (
 	"errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	v038auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v038"
 	v039auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v039"
+
+	"github.com/tendermint/tendermint/crypto/sr25519"
 )
 
 type (
@@ -56,7 +59,17 @@ type (
 
 	// VestingSchedules nolint
 	VestingSchedules []VestingSchedule
+
+	// LegacyAminoPubKey specifies a public key type
+	// which nests multiple public keys and a threshold,
+	// it uses legacy amino address rules.
+	LegacyAminoPubKey struct {
+		Threshold sdk.Int              `json:"threshold"`
+		PubKeys   []cryptotypes.PubKey `json:"pubkeys"`
+	}
 )
+
+var _ cryptotypes.PubKey = &LegacyAminoPubKey{}
 
 // NewLazyGradedVestingAccountRaw nolint
 func NewLazyGradedVestingAccountRaw(baseVestingAcc *v039auth.BaseVestingAccount, lazyVestingSchedules VestingSchedules) *LazyGradedVestingAccount {
@@ -135,13 +148,13 @@ func (lgva LazyGradedVestingAccount) MarshalJSON() ([]byte, error) {
 		VestingSchedules: lgva.VestingSchedules,
 	}
 
-	return legacy.Cdc.MarshalJSON(alias)
+	return internalCdc.MarshalJSON(alias)
 }
 
 // UnmarshalJSON unmarshals raw JSON bytes into a LazyGradedVestingAccount.
 func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
 	var alias vestingAccountJSON
-	if err := legacy.Cdc.UnmarshalJSON(bz, &alias); err != nil {
+	if err := internalCdc.UnmarshalJSON(bz, &alias); err != nil {
 		return err
 	}
 
@@ -158,13 +171,70 @@ func (lgva *LazyGradedVestingAccount) UnmarshalJSON(bz []byte) error {
 	return nil
 }
 
+// Address implements cryptotypes.PubKey Address method
+func (*LegacyAminoPubKey) Address() cryptotypes.Address {
+	return nil
+}
+
+// Bytes no-lint
+func (*LegacyAminoPubKey) Bytes() []byte { return nil }
+
+// Equals no-lint
+func (*LegacyAminoPubKey) Equals(key cryptotypes.PubKey) bool { return false }
+
+// ProtoMessage no-lint
+func (*LegacyAminoPubKey) ProtoMessage() {}
+
+// Reset no-lint
+func (*LegacyAminoPubKey) Reset() {}
+
+// String no-lint
+func (*LegacyAminoPubKey) String() string { return "not implemented" }
+
+// Type no-lint
+func (*LegacyAminoPubKey) Type() string { return "PubKeyMultisigThreshold" }
+
+// VerifySignature no-lint
+func (*LegacyAminoPubKey) VerifySignature(msg []byte, sig []byte) bool {
+	panic("not implemented")
+}
+
+var internalCdc *codec.LegacyAmino
+
+func init() {
+	internalCdc = codec.NewLegacyAmino()
+	RegisterLegacyAminoCodec(internalCdc)
+}
+
 // RegisterLegacyAminoCodec nonlint
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cryptocodec.RegisterCrypto(cdc)
+	registerCrypto(cdc)
 	cdc.RegisterInterface((*v038auth.GenesisAccount)(nil), nil)
 	cdc.RegisterInterface((*v038auth.Account)(nil), nil)
 	cdc.RegisterConcrete(&v039auth.BaseAccount{}, "core/Account", nil)
 	cdc.RegisterConcrete(&v039auth.BaseVestingAccount{}, "core/BaseVestingAccount", nil)
 	cdc.RegisterConcrete(&LazyGradedVestingAccount{}, "core/LazyGradedVestingAccount", nil)
 	cdc.RegisterConcrete(&v039auth.ModuleAccount{}, "supply/ModuleAccount", nil)
+}
+
+// registerCrypto registers all crypto dependency types with the provided Amino
+// codec.
+func registerCrypto(cdc *codec.LegacyAmino) {
+	cdc.RegisterInterface((*cryptotypes.PubKey)(nil), nil)
+	cdc.RegisterConcrete(sr25519.PubKey{},
+		sr25519.PubKeyName, nil)
+	cdc.RegisterConcrete(&ed25519.PubKey{},
+		ed25519.PubKeyName, nil)
+	cdc.RegisterConcrete(&secp256k1.PubKey{},
+		secp256k1.PubKeyName, nil)
+	cdc.RegisterConcrete(&LegacyAminoPubKey{},
+		kmultisig.PubKeyAminoRoute, nil)
+
+	cdc.RegisterInterface((*cryptotypes.PrivKey)(nil), nil)
+	cdc.RegisterConcrete(sr25519.PrivKey{},
+		sr25519.PrivKeyName, nil)
+	cdc.RegisterConcrete(&ed25519.PrivKey{}, //nolint:staticcheck
+		ed25519.PrivKeyName, nil)
+	cdc.RegisterConcrete(&secp256k1.PrivKey{},
+		secp256k1.PrivKeyName, nil)
 }

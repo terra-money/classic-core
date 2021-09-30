@@ -996,9 +996,22 @@ paths:
                       sequence:
                         type: string
                         example: '0'
+                required: true
               mode:
+                required: true
                 type: string
                 example: block
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: '1'
+              fee_granter:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                required: false
       responses:
         '200':
           description: Tx broadcasting result
@@ -1085,10 +1098,10 @@ paths:
       deprecated: true
       tags:
         - Transactions
-      summary: Encode a transaction to the Amino wire format
+      summary: Encode a legacy transaction to the Proto wire format
       description: >-
-        Encode a transaction (signed or not) from JSON to base64-encoded Amino
-        serialized bytes
+        Encode a legacy transaction (signed or not) from JSON to base64-encoded
+        Proto serialized bytes
       consumes:
         - application/json
       produces:
@@ -1148,6 +1161,17 @@ paths:
                       sequence:
                         type: string
                         example: '0'
+              sequences:
+                required: false
+                type: array
+                items:
+                  type: string
+                  example: '1'
+              fee_granter:
+                type: string
+                description: bech32 encoded address
+                example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
+                required: false
       responses:
         '200':
           description: The tx was successfully decoded and re-encoded
@@ -1156,7 +1180,7 @@ paths:
             properties:
               tx:
                 type: string
-                example: The base64-encoded Amino-serialized bytes for the tx
+                example: The base64-encoded Proto-serialized bytes for the tx
         '400':
           description: The tx was malformed
         '500':
@@ -6913,13 +6937,8 @@ paths:
           type: string
         - in: query
           name: key
-          description: raw key you want to query
+          description: base64 encoded raw key to access
           required: true
-          type: string
-        - in: query
-          name: subkey
-          description: raw subkey attached to the key
-          required: false
           type: string
       produces:
         - application/json
@@ -25376,11 +25395,18 @@ paths:
         - Query
   '/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height}':
     get:
-      summary: |-
+      summary: >-
         UpgradedConsensusState queries the consensus state that will serve
+
         as a trusted kernel for the next version of this chain. It will only be
+
         stored at the last height of this chain.
+
         UpgradedConsensusState RPC not supported with legacy querier
+
+        This rpc is deprecated now that IBC has its own replacement
+
+        (https://github.com/cosmos/ibc-go/blob/2c880a22e9f9cc75f62b527ca94aa75ce1106001/proto/ibc/core/client/v1/query.proto#L54)
       operationId: UpgradedConsensusState
       responses:
         '200':
@@ -26335,7 +26361,7 @@ paths:
                       format: byte
       tags:
         - Query
-  '/terra/oracle/v1beta1/valdiator/{validator_addr}/aggregate_vote':
+  '/terra/oracle/v1beta1/valdiators/{validator_addr}/aggregate_vote':
     get:
       summary: AggregateVote returns an aggregate vote of a validator
       operationId: AggregateVote
@@ -27203,107 +27229,6 @@ paths:
           format: uint64
       tags:
         - Query
-  '/terra/wasm/v1beta1/contract/{contract_address}/store':
-    get:
-      summary: ContractStore return smart query result from the contract
-      operationId: ContractStore
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              query_result:
-                type: string
-                format: byte
-            description: |-
-              QueryContractStoreResponse is response type for the
-              Query/ContractStore RPC method.
-        default:
-          description: An unexpected error response
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: contract_address
-          in: path
-          required: true
-          type: string
-        - name: query_msg
-          in: query
-          required: false
-          type: string
-          format: byte
-      tags:
-        - Query
-  '/terra/wasm/v1beta1/contract/{contract_address}/store/raw':
-    get:
-      summary: RawStore return single key from the raw store data of a contract
-      operationId: RawStore
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              data:
-                type: string
-                format: byte
-                title: Data contains the raw store data
-            description: |-
-              QueryRawStoreResponse is response type for the
-              Query/RawStore RPC method.
-        default:
-          description: An unexpected error response
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: contract_address
-          in: path
-          required: true
-          type: string
-        - name: key
-          in: query
-          required: false
-          type: string
-          format: byte
-      tags:
-        - Query
   '/terra/wasm/v1beta1/contracts/{contract_address}':
     get:
       summary: ContractInfo returns the stored contract info
@@ -27367,6 +27292,107 @@ paths:
           in: path
           required: true
           type: string
+      tags:
+        - Query
+  '/terra/wasm/v1beta1/contracts/{contract_address}/store':
+    get:
+      summary: ContractStore return smart query result from the contract
+      operationId: ContractStore
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              query_result:
+                type: string
+                format: byte
+            description: |-
+              QueryContractStoreResponse is response type for the
+              Query/ContractStore RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: query_msg
+          in: query
+          required: false
+          type: string
+          format: byte
+      tags:
+        - Query
+  '/terra/wasm/v1beta1/contracts/{contract_address}/store/raw':
+    get:
+      summary: RawStore return single key from the raw store data of a contract
+      operationId: RawStore
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+                format: byte
+                title: Data contains the raw store data
+            description: |-
+              QueryRawStoreResponse is response type for the
+              Query/RawStore RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: key
+          in: query
+          required: false
+          type: string
+          format: byte
       tags:
         - Query
   /terra/wasm/v1beta1/params:
@@ -54887,7 +54913,13 @@ definitions:
     properties:
       tx:
         $ref: '#/definitions/cosmos.tx.v1beta1.Tx'
-        description: tx is the transaction to simulate.
+        description: |-
+          tx is the transaction to simulate.
+          Deprecated. Send raw tx bytes instead.
+      tx_bytes:
+        type: string
+        format: byte
+        description: tx_bytes is the raw transaction.
     description: |-
       ComputeTaxRequest is the request type for the Service.ComputeTax
       RPC method.

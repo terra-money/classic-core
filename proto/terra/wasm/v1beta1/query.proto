@@ -27,12 +27,12 @@ service Query {
 
   // ContractStore return smart query result from the contract
   rpc ContractStore(QueryContractStoreRequest) returns (QueryContractStoreResponse) {
-    option (google.api.http).get = "/terra/wasm/v1beta1/contract/{contract_address}/store";
+    option (google.api.http).get = "/terra/wasm/v1beta1/contracts/{contract_address}/store";
   }
 
   // RawStore return single key from the raw store data of a contract
   rpc RawStore(QueryRawStoreRequest) returns (QueryRawStoreResponse) {
-    option (google.api.http).get = "/terra/wasm/v1beta1/contract/{contract_address}/store/raw";
+    option (google.api.http).get = "/terra/wasm/v1beta1/contracts/{contract_address}/store/raw";
   }
 
   // Params queries all parameters.

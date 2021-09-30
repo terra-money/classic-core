@@ -8448,7 +8448,7 @@ Query defines the gRPC upgrade querier service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `CurrentPlan` | [QueryCurrentPlanRequest](#cosmos.upgrade.v1beta1.QueryCurrentPlanRequest) | [QueryCurrentPlanResponse](#cosmos.upgrade.v1beta1.QueryCurrentPlanResponse) | CurrentPlan queries the current upgrade plan. | GET|/cosmos/upgrade/v1beta1/current_plan|
 | `AppliedPlan` | [QueryAppliedPlanRequest](#cosmos.upgrade.v1beta1.QueryAppliedPlanRequest) | [QueryAppliedPlanResponse](#cosmos.upgrade.v1beta1.QueryAppliedPlanResponse) | AppliedPlan queries a previously applied upgrade plan by its name. | GET|/cosmos/upgrade/v1beta1/applied_plan/{name}|
-| `UpgradedConsensusState` | [QueryUpgradedConsensusStateRequest](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateRequest) | [QueryUpgradedConsensusStateResponse](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse) | UpgradedConsensusState queries the consensus state that will serve as a trusted kernel for the next version of this chain. It will only be stored at the last height of this chain. UpgradedConsensusState RPC not supported with legacy querier | GET|/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height}|
+| `UpgradedConsensusState` | [QueryUpgradedConsensusStateRequest](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateRequest) | [QueryUpgradedConsensusStateResponse](#cosmos.upgrade.v1beta1.QueryUpgradedConsensusStateResponse) | UpgradedConsensusState queries the consensus state that will serve as a trusted kernel for the next version of this chain. It will only be stored at the last height of this chain. UpgradedConsensusState RPC not supported with legacy querier This rpc is deprecated now that IBC has its own replacement (https://github.com/cosmos/ibc-go/blob/2c880a22e9f9cc75f62b527ca94aa75ce1106001/proto/ibc/core/client/v1/query.proto#L54) | GET|/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height}|
 | `ModuleVersions` | [QueryModuleVersionsRequest](#cosmos.upgrade.v1beta1.QueryModuleVersionsRequest) | [QueryModuleVersionsResponse](#cosmos.upgrade.v1beta1.QueryModuleVersionsResponse) | ModuleVersions queries the list of module versions from state. | GET|/cosmos/upgrade/v1beta1/module_versions|
 
  <!-- end services -->
@@ -12803,7 +12803,7 @@ Query defines the gRPC querier service.
 | `MissCounter` | [QueryMissCounterRequest](#terra.oracle.v1beta1.QueryMissCounterRequest) | [QueryMissCounterResponse](#terra.oracle.v1beta1.QueryMissCounterResponse) | MissCounter returns oracle miss counter of a validator | GET|/terra/oracle/v1beta1/validators/{validator_addr}/miss|
 | `AggregatePrevote` | [QueryAggregatePrevoteRequest](#terra.oracle.v1beta1.QueryAggregatePrevoteRequest) | [QueryAggregatePrevoteResponse](#terra.oracle.v1beta1.QueryAggregatePrevoteResponse) | AggregatePrevote returns an aggregate prevote of a validator | GET|/terra/oracle/v1beta1/validators/{validator_addr}/aggregate_prevote|
 | `AggregatePrevotes` | [QueryAggregatePrevotesRequest](#terra.oracle.v1beta1.QueryAggregatePrevotesRequest) | [QueryAggregatePrevotesResponse](#terra.oracle.v1beta1.QueryAggregatePrevotesResponse) | AggregatePrevotes returns aggregate prevotes of all validators | GET|/terra/oracle/v1beta1/validators/aggregate_prevotes|
-| `AggregateVote` | [QueryAggregateVoteRequest](#terra.oracle.v1beta1.QueryAggregateVoteRequest) | [QueryAggregateVoteResponse](#terra.oracle.v1beta1.QueryAggregateVoteResponse) | AggregateVote returns an aggregate vote of a validator | GET|/terra/oracle/v1beta1/valdiator/{validator_addr}/aggregate_vote|
+| `AggregateVote` | [QueryAggregateVoteRequest](#terra.oracle.v1beta1.QueryAggregateVoteRequest) | [QueryAggregateVoteResponse](#terra.oracle.v1beta1.QueryAggregateVoteResponse) | AggregateVote returns an aggregate vote of a validator | GET|/terra/oracle/v1beta1/valdiators/{validator_addr}/aggregate_vote|
 | `AggregateVotes` | [QueryAggregateVotesRequest](#terra.oracle.v1beta1.QueryAggregateVotesRequest) | [QueryAggregateVotesResponse](#terra.oracle.v1beta1.QueryAggregateVotesResponse) | AggregateVotes returns aggregate votes of all validators | GET|/terra/oracle/v1beta1/validators/aggregate_votes|
 | `Params` | [QueryParamsRequest](#terra.oracle.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.oracle.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/oracle/v1beta1/params|
 
@@ -13360,7 +13360,8 @@ RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `tx` | [cosmos.tx.v1beta1.Tx](#cosmos.tx.v1beta1.Tx) |  | tx is the transaction to simulate. |
+| `tx` | [cosmos.tx.v1beta1.Tx](#cosmos.tx.v1beta1.Tx) |  | **Deprecated.** tx is the transaction to simulate. Deprecated. Send raw tx bytes instead. |
+| `tx_bytes` | [bytes](#bytes) |  | tx_bytes is the raw transaction. |
 
 
 
@@ -13825,8 +13826,8 @@ Query defines the gRPC querier service.
 | `CodeInfo` | [QueryCodeInfoRequest](#terra.wasm.v1beta1.QueryCodeInfoRequest) | [QueryCodeInfoResponse](#terra.wasm.v1beta1.QueryCodeInfoResponse) | CodeInfo returns the stored code info | GET|/terra/wasm/v1beta1/codes/{code_id}|
 | `ByteCode` | [QueryByteCodeRequest](#terra.wasm.v1beta1.QueryByteCodeRequest) | [QueryByteCodeResponse](#terra.wasm.v1beta1.QueryByteCodeResponse) | ByteCode returns the stored byte code | GET|/terra/wasm/v1beta1/codes/{code_id}/byte_code|
 | `ContractInfo` | [QueryContractInfoRequest](#terra.wasm.v1beta1.QueryContractInfoRequest) | [QueryContractInfoResponse](#terra.wasm.v1beta1.QueryContractInfoResponse) | ContractInfo returns the stored contract info | GET|/terra/wasm/v1beta1/contracts/{contract_address}|
-| `ContractStore` | [QueryContractStoreRequest](#terra.wasm.v1beta1.QueryContractStoreRequest) | [QueryContractStoreResponse](#terra.wasm.v1beta1.QueryContractStoreResponse) | ContractStore return smart query result from the contract | GET|/terra/wasm/v1beta1/contract/{contract_address}/store|
-| `RawStore` | [QueryRawStoreRequest](#terra.wasm.v1beta1.QueryRawStoreRequest) | [QueryRawStoreResponse](#terra.wasm.v1beta1.QueryRawStoreResponse) | RawStore return single key from the raw store data of a contract | GET|/terra/wasm/v1beta1/contract/{contract_address}/store/raw|
+| `ContractStore` | [QueryContractStoreRequest](#terra.wasm.v1beta1.QueryContractStoreRequest) | [QueryContractStoreResponse](#terra.wasm.v1beta1.QueryContractStoreResponse) | ContractStore return smart query result from the contract | GET|/terra/wasm/v1beta1/contracts/{contract_address}/store|
+| `RawStore` | [QueryRawStoreRequest](#terra.wasm.v1beta1.QueryRawStoreRequest) | [QueryRawStoreResponse](#terra.wasm.v1beta1.QueryRawStoreResponse) | RawStore return single key from the raw store data of a contract | GET|/terra/wasm/v1beta1/contracts/{contract_address}/store/raw|
 | `Params` | [QueryParamsRequest](#terra.wasm.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.wasm.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/wasm/v1beta1/params|
 
  <!-- end services -->

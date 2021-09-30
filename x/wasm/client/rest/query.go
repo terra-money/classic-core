@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	"github.com/terra-money/core/x/wasm/client/utils"
 	"github.com/terra-money/core/x/wasm/types"
 
 	"github.com/gorilla/mux"
@@ -142,16 +142,18 @@ func queryRawStoreHandlerFn(clientCtx client.Context) http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		contractAddrStr := vars[RestContractAddress]
-		key := r.URL.Query().Get("key")
-		subkey := r.URL.Query().Get("subkey")
-
-		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
+		keyBz, err := base64.StdEncoding.DecodeString(r.URL.Query().Get("key"))
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		keyBz := append(utils.EncodeKey(key), []byte(subkey)...)
+		addr, err := sdk.AccAddressFromBech32(contractAddrStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		params := types.NewQueryRawStoreParams(addr, keyBz)
 		bz, err := clientCtx.LegacyAmino.MarshalJSON(params)
 		if err != nil {
