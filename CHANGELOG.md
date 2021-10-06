@@ -1,3 +1,14 @@
+## [v0.5.6]
+
+This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation. 
+
+* Bump cosmos-sdk to [v0.44.1](https://github.com/cosmos/cosmos-sdk/releases/tags/v0.44.1)
+* Bump tendermint to [v0.44.1](https://github.com/tendermint/tendermint/releases/tags/v0.34.13)
+* Bump CosmWasm to [v0.16.2](https://github.com/CosmWasm/cosmwasm/releases/tags/v0.16.2)
+
+### Improvements
+- [\#546](https://github.com/terra-money/core/pull/546) Implement read VM pool
+
 ## [v0.5.5]
 
 ### Improvements

@@ -66,8 +66,8 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 
 // MigrateCode uploads and compiles a WASM contract bytecode for the existing code id.
 // After columbus-5 update, all contract code will be removed from the store
-// due to in-compatibility between CosmWasm@v0.10.x and CosmWasm@v0.14.x
-// The migration only can be executed by once after columbus-5 update.
+// due to in-compatibility between CosmWasm@v0.10.x and CosmWasm@v0.16.x
+// The migration can be executed by once after columbus-5 update.
 // TODO - remove after columbus-5 update
 func (k Keeper) MigrateCode(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, wasmCode []byte) error {
 	codeInfo, err := k.GetCodeInfo(ctx, codeID)
@@ -420,7 +420,7 @@ func (k Keeper) queryToStore(ctx sdk.Context, contractAddress sdk.AccAddress, ke
 	return prefixStore.Get(key)
 }
 
-func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte) ([]byte, error) {
+func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte, wasmVMs ...types.WasmerEngine) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(queryMsg)), "Loading CosmWasm module: query")
 
@@ -430,7 +430,14 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
-	queryResult, gasUsed, err := k.wasmVM.Query(
+
+	// when the vm is given, use that given vm
+	wasmVM := k.wasmVM
+	if len(wasmVMs) != 0 {
+		wasmVM = wasmVMs[0]
+	}
+
+	queryResult, gasUsed, err := wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
 		queryMsg,
