@@ -75,7 +75,7 @@ contract-debug-mode = "{{ .WASMConfig.ContractDebugMode }}"
 write-vm-memory-cache-size = "{{ .WASMConfig.WriteVMMemoryCacheSize }}"
 
 # The read WASM VM memory cache size in MiB not bytes
-read-vm-memory-cache-size = "{{ .WASMConfig.WriteVMMemoryCacheSize }}"
+read-vm-memory-cache-size = "{{ .WASMConfig.ReadVMMemoryCacheSize }}"
 
 # The number of read WASM VMs
 num-read-vms = "{{ .WASMConfig.NumReadVMs }}"
