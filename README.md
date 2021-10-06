@@ -21,13 +21,15 @@ Full-node software implementing the Terra protocol<br/><br/>
   <a href="https://docs.terra.money/"><strong>Explore the Docs »</strong></a>
   <br />
   <br/>
-  <a href="https://docs.terra.money/dev">Dev Guide</a>
+  <a href="https://docs.terra.money/Reference/">Terra Core reference</a>
   ·
   <a href="https://pkg.go.dev/github.com/terra-money/core?tab=subdirectories">Go API</a>
   ·
-  <a href="https://swagger.terra.money/">REST API</a>
+  <a href="https://lcd.terra.dev/swagger-ui/">Rest API</a>
   ·
-  <a href="https://docs.terra.money/#sdks-for-developers">SDKs</a>
+  <a href="https://terra-money.github.io/terra-sdk-python/">Python SDK</a>
+  ·
+  <a href="https://terra-money.github.io/terra.js/">Terra.js</a>
   ·
   <a href="https://finder.terra.money/">Finder</a>
   ·
