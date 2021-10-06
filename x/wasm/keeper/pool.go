@@ -8,7 +8,7 @@ import (
 
 var n = 0
 
-func (k Keeper) getWasmVM(ctx context.Context) (types.WasmerEngine, error) {
+func (k Keeper) acquireWasmVM(ctx context.Context) (types.WasmerEngine, error) {
 	err := k.wasmReadVMSemaphore.Acquire(ctx, 1)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func (k Keeper) getWasmVM(ctx context.Context) (types.WasmerEngine, error) {
 	return wasmVM, nil
 }
 
-func (k Keeper) putWasmVM(wasmVM types.WasmerEngine) {
+func (k Keeper) releaseWasmVM(wasmVM types.WasmerEngine) {
 	k.wasmReadVMMutex.Lock()
 	k.wasmReadVMPool = append(k.wasmReadVMPool, wasmVM)
 	k.wasmReadVMMutex.Unlock()
