@@ -17,6 +17,7 @@ var (
 	KeyVoteThreshold            = []byte("VoteThreshold")
 	KeyRewardBand               = []byte("RewardBand")
 	KeyRewardDistributionWindow = []byte("RewardDistributionWindow")
+	KeyRewardDenoms             = []byte("RewardDenoms")
 	KeyWhitelist                = []byte("Whitelist")
 	KeySlashFraction            = []byte("SlashFraction")
 	KeySlashWindow              = []byte("SlashWindow")
@@ -42,6 +43,7 @@ var (
 		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)}}
 	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
 	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2) // 5%
+	DefaultRewardDenoms      = []string{core.MicroLunaDenom, core.MicroUSDDenom}
 )
 
 var _ paramstypes.ParamSet = &Params{}
