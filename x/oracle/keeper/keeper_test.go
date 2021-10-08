@@ -97,8 +97,8 @@ func TestRewardPool(t *testing.T) {
 		panic(err) // never occurs
 	}
 
-	KFees := input.OracleKeeper.GetRewardPool(input.Ctx)
-	require.Equal(t, fees, KFees)
+	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, core.MicroSDRDenom)
+	require.Equal(t, fees[0], KFees)
 }
 
 func TestParams(t *testing.T) {
