@@ -65,6 +65,11 @@ func NewKeeper(
 		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	// prevent zero write vm cache
+	if wasmConfig.WriteVMMemoryCacheSize == 0 {
+		wasmConfig.WriteVMMemoryCacheSize = config.DefaultWriteVMMemoryCacheSize
+	}
+
 	writeWasmVM, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
@@ -85,11 +90,6 @@ func NewKeeper(
 	// prevent zero read vm cache
 	if wasmConfig.ReadVMMemoryCacheSize == 0 {
 		wasmConfig.ReadVMMemoryCacheSize = config.DefaultReadVMMemoryCacheSize
-	}
-
-	// prevent zero write vm cache
-	if wasmConfig.WriteVMMemoryCacheSize == 0 {
-		wasmConfig.WriteVMMemoryCacheSize = config.DefaultWriteVMMemoryCacheSize
 	}
 
 	numReadVms := wasmConfig.NumReadVMs
