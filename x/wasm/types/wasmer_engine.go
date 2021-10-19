@@ -5,6 +5,39 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
 
+const maxQueryDepth = 20
+
+var _ WasmerEngine = &WasmerEngineWithQueryDepth{}
+
+// WasmerEngineWithQueryDepth VM wrapper with depth counter to prevent
+// stack overflow
+type WasmerEngineWithQueryDepth struct {
+	*wasmvm.VM
+	QueryDepth uint8
+}
+
+// NewWasmerEngineWithQueryDepth wrap wasmer engine with query depth checker
+func NewWasmerEngineWithQueryDepth(wasmVM *wasmvm.VM) *WasmerEngineWithQueryDepth {
+	wasmerEngine := WasmerEngineWithQueryDepth{VM: wasmVM}
+	return &wasmerEngine
+}
+
+// IncreaseQueryDepth increase execution depth by 1 and check whether
+// the depth exceeds max one or not
+func (wasmer *WasmerEngineWithQueryDepth) IncreaseQueryDepth() error {
+	if wasmer.QueryDepth >= maxQueryDepth {
+		return ErrExceedMaxQueryDepth
+	}
+
+	wasmer.QueryDepth++
+	return nil
+}
+
+// DecreaseQueryDepth decrease execution depth by 1
+func (wasmer *WasmerEngineWithQueryDepth) DecreaseQueryDepth() {
+	wasmer.QueryDepth--
+}
+
 // WasmerEngine defines the WASM contract runtime engine.
 type WasmerEngine interface {
 
@@ -119,4 +152,11 @@ type WasmerEngine interface {
 
 	// Cleanup should be called when no longer using this to free resources on the rust-side
 	Cleanup()
+
+	// IncreaseQueryDepth will increase query depth by 1 and assert the current depth
+	// reached out the maximum
+	IncreaseQueryDepth() error
+
+	// DecreaseQueryDepth will decrease query depth by 1
+	DecreaseQueryDepth()
 }

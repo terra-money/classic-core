@@ -437,6 +437,12 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 		wasmVM = wasmVMs[0]
 	}
 
+	// assert max depth to prevent stack overflow
+	if err := wasmVM.IncreaseQueryDepth(); err != nil {
+		return nil, err
+	}
+	defer wasmVM.DecreaseQueryDepth()
+
 	queryResult, gasUsed, err := wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
