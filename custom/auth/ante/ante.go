@@ -1,6 +1,9 @@
 package ante
 
 import (
+	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
+	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -10,13 +13,14 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	AccountKeeper   cosmosante.AccountKeeper
-	BankKeeper      types.BankKeeper
-	FeegrantKeeper  cosmosante.FeegrantKeeper
-	OracleKeeper    OracleKeeper
-	TreasuryKeeper  TreasuryKeeper
-	SignModeHandler signing.SignModeHandler
-	SigGasConsumer  cosmosante.SignatureVerificationGasConsumer
+	AccountKeeper    cosmosante.AccountKeeper
+	BankKeeper       types.BankKeeper
+	FeegrantKeeper   cosmosante.FeegrantKeeper
+	OracleKeeper     OracleKeeper
+	TreasuryKeeper   TreasuryKeeper
+	SignModeHandler  signing.SignModeHandler
+	SigGasConsumer   cosmosante.SignatureVerificationGasConsumer
+	IBCChannelKeeper channelkeeper.Keeper
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -63,5 +67,6 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		cosmosante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		cosmosante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		cosmosante.NewIncrementSequenceDecorator(options.AccountKeeper),
+		ibcante.NewAnteDecorator(options.IBCChannelKeeper),
 	), nil
 }
