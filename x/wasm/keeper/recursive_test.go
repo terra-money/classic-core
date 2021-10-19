@@ -342,3 +342,20 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		})
 	}
 }
+
+func TestLimitRecursiveQueryDepth(t *testing.T) {
+
+	contractAddr, _, ctx, keeper, _ := initRecurseContract(t)
+	msg := buildQuery(t, Recurse{
+		Depth: types.ContractMaxQueryDepth - 1, // need to exclude first query
+	})
+
+	_, err := keeper.queryToContract(ctx, contractAddr, msg)
+	require.NoError(t, err)
+
+	msg = buildQuery(t, Recurse{
+		Depth: types.ContractMaxQueryDepth,
+	})
+	_, err = keeper.queryToContract(ctx, contractAddr, msg)
+	require.Error(t, err)
+}

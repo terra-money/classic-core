@@ -5,7 +5,8 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
 
-const maxQueryDepth = 20
+// ContractMaxQueryDepth maximum recursive query depth allowed
+const ContractMaxQueryDepth = 20
 
 var _ WasmerEngine = &WasmerEngineWithQueryDepth{}
 
@@ -25,7 +26,7 @@ func NewWasmerEngineWithQueryDepth(wasmVM *wasmvm.VM) *WasmerEngineWithQueryDept
 // IncreaseQueryDepth increase execution depth by 1 and check whether
 // the depth exceeds max one or not
 func (wasmer *WasmerEngineWithQueryDepth) IncreaseQueryDepth() error {
-	if wasmer.QueryDepth >= maxQueryDepth {
+	if wasmer.QueryDepth >= ContractMaxQueryDepth {
 		return ErrExceedMaxQueryDepth
 	}
 
