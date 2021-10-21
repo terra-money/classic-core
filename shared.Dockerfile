@@ -11,7 +11,7 @@ COPY . /code/
 
 RUN LEDGER_ENABLED=false make build
 
-RUN cp /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm@v*/api/libwasmvm.so /lib/libwasmvm.so
+RUN cp /go/pkg/mod/github.com/terra-money/wasmvm@v*/api/libwasmvm.so /lib/libwasmvm.so
 
 FROM ubuntu:20.04
 
