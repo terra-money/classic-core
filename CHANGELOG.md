@@ -1,10 +1,10 @@
 ## [v0.5.6]
 
-This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation. 
+This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation.
 
-* Bump cosmos-sdk to [v0.44.1](https://github.com/cosmos/cosmos-sdk/releases/tags/v0.44.1)
-* Bump tendermint to [v0.44.1](https://github.com/tendermint/tendermint/releases/tags/v0.34.13)
-* Bump CosmWasm to [v0.16.2](https://github.com/CosmWasm/cosmwasm/releases/tags/v0.16.2)
+* Bump cosmos-sdk to [v0.44.1](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.1)
+* Bump tendermint to [v0.44.1](https://github.com/tendermint/tendermint/releases/tag/v0.34.13)
+* Bump CosmWasm to [v0.16.2](https://github.com/CosmWasm/cosmwasm/releases/tag/v0.16.2)
 
 ### Improvements
 - [\#546](https://github.com/terra-money/core/pull/546) Implement read VM pool
@@ -16,7 +16,7 @@ This release contains updates for multi-reader thread implementation with necess
 
 ### Bug Fixes
 - [\#566](https://github.com/terra-money/core/pull/566) Emit missing wasm tax events.
-  
+
 ## [v0.5.4]
 
 ### Bug Fixes
@@ -26,7 +26,7 @@ This release contains updates for multi-reader thread implementation with necess
 
 ### Improvement
 - [\#551](https://github.com/terra-money/core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
-  
+
 ### Bug Fixes
 - [\#544](https://github.com/terra-money/core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
 - [\#557](https://github.com/terra-money/core/pull/557) fix proto urls
@@ -48,12 +48,12 @@ This release contains updates for multi-reader thread implementation with necess
 - [\#520](https://github.com/terra-money/core/pull/520) Implement ContractInfo wasm query interface for the contracts
 - [\#518](https://github.com/terra-money/core/pull/518) Rollback market base pool split
 - [\#507](https://github.com/terra-money/core/pull/507) Bump SDK to [v0.43.0-rc0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc0).
-- [\#507](https://github.com/terra-money/core/pull/507) Bump Tendermint to [v0.34.11](https://github.com/tendermint/tendermint/releases/tag/v0.34.11). 
+- [\#507](https://github.com/terra-money/core/pull/507) Bump Tendermint to [v0.34.11](https://github.com/tendermint/tendermint/releases/tag/v0.34.11).
 - [\#509](https://github.com/terra-money/core/pull/509) Bump cosmwasm to [v0.15.1](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.1).
 - [\#467](https://github.com/terra-money/core/pull/467) Split market base pool into mint & burn base pool
 - [\#465](https://github.com/terra-money/core/pull/465) [\#472](https://github.com/terra-money/core/pull/472)  Bump cosmwasm to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
 - [\#477](https://github.com/terra-money/core/pull/477) Burn `reward_weight` ratio of seigniorage instead of redirecting to oracle rewards
-- [260b41a](https://github.com/terra-money/core/blob/471cd878b11b21f10511e272621b850a690eb6f3/x/market/keeper/msg_server.go#L121-L127) Redirect swap fees to oracle rewards (distributed over 3 years) 
+- [260b41a](https://github.com/terra-money/core/blob/471cd878b11b21f10511e272621b850a690eb6f3/x/market/keeper/msg_server.go#L121-L127) Redirect swap fees to oracle rewards (distributed over 3 years)
 - Bump golang prerequisite from 1.15 to 1.16.
 
 ### Bug Fixes
@@ -114,12 +114,12 @@ Tue Mar 25 2021 18:00:00 GMT+0900 (KST)
 ### Release Note
 
 This release is a hotfix for two high-severity issues in the currently live Terra Core@0.4.1.
-* [\#440](https://github.com/terra-project/core/pull/440) go-cosmwasm iterator memory leak 
+* [\#440](https://github.com/terra-project/core/pull/440) go-cosmwasm iterator memory leak
 * [\#445](https://github.com/terra-project/core/pull/445) treasury division by zero protection
 
 
 ### How to Upgrade
-You can stop, update and restart terrad anytime before the upgrade time. 
+You can stop, update and restart terrad anytime before the upgrade time.
 
 [Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
 
@@ -141,8 +141,8 @@ Mon Feb 22 2021 18:27:50 GMT-0800 (PST)
 ## 0.4.1
 
 ### Release Notes
-**This upgrade contains softfork** 
-Please understand the details and apply it before the target height. 
+**This upgrade contains softfork**
+Please understand the details and apply it before the target height.
 
 [Upgrade Details](https://agora.terra.money/t/terra-core-v0-4-1-soft-fork-upgrade-recommendation/262)
 [Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
@@ -177,11 +177,11 @@ $ make install
 * [\#413](https://github.com/terra-project/core/pull/413) CosmWasm Logging Whitelist
 
 ### Bug Fixes
-* [\#427](https://github.com/terra-project/core/pull/427) CosmWasm Staking Query 
+* [\#427](https://github.com/terra-project/core/pull/427) CosmWasm Staking Query
 
 ### Param Changes
 * [\#433](https://github.com/terra-project/core/pull/433) Increase ExecuteMsgSize limit to 4096 from 1024
- 
+
 ## 0.4.0
 
 ### Release Notes
@@ -205,7 +205,7 @@ $ make install
 * [\#343](https://github.com/terra-money/core/pull/343) Burn Address
 * [\#335](https://github.com/terra-money/core/pull/335) CosmWasm integration
 * [\#325](https://github.com/terra-money/core/pull/325) New oracle msgs for vote process optimization
-* [\#324](https://github.com/terra-money/core/pull/324) Update to emit events at proposal handler 
+* [\#324](https://github.com/terra-money/core/pull/324) Update to emit events at proposal handler
 * [\#323](https://github.com/terra-money/core/pull/323) Bump SDK version to v0.38.x
 
 ### Bug Fixes
@@ -232,7 +232,7 @@ options: `default`, `everything`, `nothing`, `custom` - see the [PR](https://git
 - `pruning-interval`
 
 The former two options dictate how many recent versions are kept on disk and the offset of what versions are kept after that
-respectively, and the latter defines the height interval in which versions are deleted in a batch. 
+respectively, and the latter defines the height interval in which versions are deleted in a batch.
 
 **The operator, who wants to upgrade the node from v0.3 to v0.4, must change pruning option in `app.toml` to one of above options.**
 
@@ -248,7 +248,7 @@ respectively, and the latter defines the height interval in which versions are d
 ## 0.3.5
 
 ### Improvements
-#### [654b5cb](https://github.com/terra-money/core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11 
+#### [654b5cb](https://github.com/terra-money/core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11
 
 ### Bug Fixes
 #### [7a3d01c](https://github.com/terra-money/core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
@@ -309,7 +309,7 @@ A validator get slashed `SlashFraction`% if the one perform any of the following
 ```
 Price sdk.Dec `json:"price"`
 ```
-has been changed to 
+has been changed to
 ```
 ExchangeRate sdk.Dec `json:"exchange_rate"`
 ```
@@ -323,12 +323,12 @@ ExchangeRate sdk.Dec `json:"exchange_rate"`
 ```
 
 #### [\#250](https://github.com/terra-money/core/pull/250) Oracle whitelist & Reward distribution update
-* Create a whitelist param that stores an array of denoms that are whitelisted by the protocol. 
-* Edit the oracle `Reward Pool of a VotePeriod = oracle module account / (n vote periods)`. 
+* Create a whitelist param that stores an array of denoms that are whitelisted by the protocol.
+* Edit the oracle `Reward Pool of a VotePeriod = oracle module account / (n vote periods)`.
 * Oracle module account is whitelisted in the bank module such that users can donate funds to the oracle module account
 
 #### [\#234](https://github.com/terra-money/core/pull/234) Adopt gov module
-`distribution` module already contains `community-pool-spend` proposal suitable for `budget` so budget module is removed. There are two custom governance proposals from `treasury` module; `tax-rate-update` & `reward-weight-update` proposals. 
+`distribution` module already contains `community-pool-spend` proposal suitable for `budget` so budget module is removed. There are two custom governance proposals from `treasury` module; `tax-rate-update` & `reward-weight-update` proposals.
 
 ##### New EndPoints
 ```
@@ -350,7 +350,7 @@ ExchangeRate sdk.Dec `json:"exchange_rate"`
 ```
 
 #### [\#233](https://github.com/terra-money/core/pull/233) Swap constant product
-As proposed [here](https://agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature. 
+As proposed [here](https://agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature.
 
 ##### Compute Pools
 ```
@@ -484,7 +484,7 @@ tmp   local	terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs	terrapub1addwnpepqv6tse
 
 ### Changes
 #### [\#187](https://github.com/terra-money/core/pull/187) Bugfix/fix-time-zone
-In update_230000.go, we change genesis time derivation from 
+In update_230000.go, we change genesis time derivation from
 ```
 genesisTime := time.Unix(genesisUnixTime, 0)
 ```
@@ -498,17 +498,17 @@ genesisTime := time.Unix(genesisUnixTime, 0).UTC()
 - [\#185](https://github.com/terra-money/core/pull/185): Improve oracle specs
 - [\#184](https://github.com/terra-money/core/pull/184): Fix `terracli` docs
 - [\#183](https://github.com/terra-money/core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
-- [\#179](https://github.com/terra-money/core/pull/179): Conform querier responses to be returned in JSON format 
+- [\#179](https://github.com/terra-money/core/pull/179): Conform querier responses to be returned in JSON format
 - [\#178](https://github.com/terra-money/core/pull/178): Change BIP44 PATH to 330
 
 ### Changes
 #### [\#185](https://github.com/terra-money/core/pull/185) Oracle `MsgFeederDelegatePermission` specs
 Added docs for using `MsgFeederDelegatePermission` to oracle specs
 
-#### [\#185](https://github.com/terra-money/core/pull/185) Oracle price vote denom error fix 
-Oracle specs now specify micro units `uluna` and `uusd` for correct denominations for price prevotes and votes 
+#### [\#185](https://github.com/terra-money/core/pull/185) Oracle price vote denom error fix
+Oracle specs now specify micro units `uluna` and `uusd` for correct denominations for price prevotes and votes
 
-#### [\#184](https://github.com/terra-money/core/pull/184) Minor terracli fix 
+#### [\#184](https://github.com/terra-money/core/pull/184) Minor terracli fix
 
 #### [\#183](https://github.com/terra-money/core/pull/183) Oracle param update
 ```
@@ -530,12 +530,12 @@ DailyLunaDeltaCap: 0.5% => 0.1%
 
 #### [\#178](https://github.com/terra-money/core/pull/178) Correctly use 330 as the coin type field in BIP 44 PATH
 
-* We were previously using the Cosmos coin type field for the BIP44 path. Changed to Terra's own 330. 
+* We were previously using the Cosmos coin type field for the BIP44 path. Changed to Terra's own 330.
 
 
 ## 0.2.1
 
-- [\#166](https://github.com/terra-money/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed. 
+- [\#166](https://github.com/terra-money/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed.
 
 ## 0.2.0
 
@@ -566,7 +566,7 @@ cosmos-sdk/MsgModifyWithdrawAddress => distribution/MsgModifyWithdrawAddress
 
 cosmos-sdk/MsgUnjail => slashing/MsgUnjail
 ```
-  
+
 #### [\#140](https://github.com/terra-money/core/pull/140) Oracle updates prevoting/voting
 MsgPriceFeed is split into ```MsgPricePrevote``` and ```MsgPriceVote```
 ```
@@ -646,11 +646,11 @@ Add **swap_coin** log to swap transaction for recording the amount of swapped co
 
 #### [\#150](https://github.com/terra-money/core/pull/150) Market Swap protections
 
-##### Add bidirectional Luna supply change cap on market swaps. 
-A daily trading cap (luna supply change cap) protects excessive luna volatility. Capping Luna deflation prevents divesting attacks (attacker swaps large amount into terra to avoid slippage) and consensus attacks by limiting access to staking tokens. Early parameters are 2% - 10% on both sides of the trade. 
+##### Add bidirectional Luna supply change cap on market swaps.
+A daily trading cap (luna supply change cap) protects excessive luna volatility. Capping Luna deflation prevents divesting attacks (attacker swaps large amount into terra to avoid slippage) and consensus attacks by limiting access to staking tokens. Early parameters are 2% - 10% on both sides of the trade.
 
-##### Add bidirectional Luna spread fees on market swaps 
-To protect against short term price deviations between the open market and the on-chain oracle, we now charge a 2-10% spread on swaps that involve luna. 
+##### Add bidirectional Luna spread fees on market swaps
+To protect against short term price deviations between the open market and the on-chain oracle, we now charge a 2-10% spread on swaps that involve luna.
 
 ##### Change oracle reward scheme from monthly seigniorage to validators to minute distribution
 Swap spreads are distributed to oracle ballot winners on the oracle VotePeriod; this vastly shortens distribution periods. Also, all stakeholders receive oracle rewards (includes delegators).
@@ -659,8 +659,8 @@ Swap spreads are distributed to oracle ballot winners on the oracle VotePeriod; 
 Previously we facilitated swaps for 10 VotePeriods after the last valid oracle ballot. We now stop swaps immediately to prevent arbitrage attacks from price drift.
 
 
-### Parameter Changes 
+### Parameter Changes
 
-#### [\#150](https://github.com/terra-money/core/pull/150) Change MiningRewardWeight.Max from 20% to 90%. This is to reduce volatility in fees at network infancy. 
+#### [\#150](https://github.com/terra-money/core/pull/150) Change MiningRewardWeight.Max from 20% to 90%. This is to reduce volatility in fees at network infancy.
 
 #### Changed BlocksPerMinute from 12 to 5 to more accurately reflect Columbus block times.

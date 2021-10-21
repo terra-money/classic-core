@@ -70,16 +70,17 @@ func NewKeeper(
 		wasmConfig.WriteVMMemoryCacheSize = config.DefaultWriteVMMemoryCacheSize
 	}
 
-	writeWasmVM, err := wasmvm.NewVM(
+	var writeWasmVM types.WasmerEngine
+	if vm, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
 		types.ContractMemoryLimit,
 		wasmConfig.ContractDebugMode,
 		wasmConfig.WriteVMMemoryCacheSize,
-	)
-
-	if err != nil {
+	); err != nil {
 		panic(err)
+	} else {
+		writeWasmVM = types.NewWasmerEngineWithQueryDepth(vm)
 	}
 
 	// prevent zero read vm
@@ -95,16 +96,16 @@ func NewKeeper(
 	numReadVms := wasmConfig.NumReadVMs
 	wasmReadVMPool := make([]types.WasmerEngine, numReadVms)
 	for i := uint32(0); i < numReadVms; i++ {
-		wasmReadVMPool[i], err = wasmvm.NewVM(
+		if vm, err := wasmvm.NewVM(
 			filepath.Join(homePath, config.DBDir),
 			supportedFeatures,
 			types.ContractMemoryLimit,
 			wasmConfig.ContractDebugMode,
 			wasmConfig.ReadVMMemoryCacheSize,
-		)
-
-		if err != nil {
+		); err != nil {
 			panic(err)
+		} else {
+			wasmReadVMPool[i] = types.NewWasmerEngineWithQueryDepth(vm)
 		}
 	}
 
