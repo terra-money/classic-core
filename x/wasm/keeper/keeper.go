@@ -35,7 +35,7 @@ type Keeper struct {
 	queryRouter   types.GRPCQueryRouter
 
 	wasmVM              types.WasmerEngine
-	wasmReadVMPool      []types.WasmerEngine
+	wasmReadVMPool      *[]types.WasmerEngine
 	wasmReadVMSemaphore *semaphore.Weighted
 	wasmReadVMMutex     *sync.Mutex
 
@@ -114,7 +114,7 @@ func NewKeeper(
 		cdc:                 cdc,
 		paramSpace:          paramspace,
 		wasmVM:              writeWasmVM,
-		wasmReadVMPool:      wasmReadVMPool,
+		wasmReadVMPool:      &wasmReadVMPool,
 		wasmReadVMSemaphore: semaphore.NewWeighted(int64(numReadVms)),
 		wasmReadVMMutex:     &sync.Mutex{},
 		accountKeeper:       accountKeeper,

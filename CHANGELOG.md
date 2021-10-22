@@ -1,3 +1,24 @@
+## [v0.5.9]
+
+### Bug Fixes
+- [\#588](https://github.com/terra-money/core/pull/588) - fix wasm external querier to use single wasmvm with context value
+
+## [v0.5.8]
+
+### Bug Fixes
+- [\#584](https://github.com/terra-money/core/pull/584) - security update
+- [\#586](https://github.com/terra-money/core/pull/586) - memory leak fix
+- [\#583](https://github.com/terra-money/core/pull/583) - ibc ante handler to prevent duplicated packet relaying
+
+## [v0.5.7]
+
+This release mainly contains CosmosSDK security updates
+
+### Bug Fixes
+- [\#578](https://github.com/terra-money/core/pull/578) Bump CosmosSDK to v0.44.2
+- [\#576](https://github.com/terra-money/core/pull/576) Change write-vm-memory-cache-size default config replace location
+- [\#573](https://github.com/terra-money/core/pull/573) Fix to distribute oracle rewards for all whitelist denoms
+
 ## [v0.5.6]
 
 This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation.
