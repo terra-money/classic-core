@@ -20,6 +20,9 @@ const (
 
 	// RouterKey is the msg router key for the wasm module
 	RouterKey = ModuleName
+
+	// QueryWasmVMContextKey is the context key to store wasmvm in query context
+	QueryWasmVMContextKey = "wasmvm"
 )
 
 // Keys for wasm store
