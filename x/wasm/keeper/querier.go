@@ -120,8 +120,9 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 		}
 	}()
 
-	var bz []byte
-	bz, err = q.queryToContract(ctx, contractAddr, req.QueryMsg, wasmVM)
+	// store query wasmvm in the context
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.QueryWasmVMContextKey, wasmVM))
+	bz, err := q.queryToContract(ctx, contractAddr, req.QueryMsg)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

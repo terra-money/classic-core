@@ -1,3 +1,8 @@
+## [v0.5.9]
+
+### Bug Fixes
+- [\#588](https://github.com/terra-money/core/pull/588) - fix wasm external querier to use single wasmvm with context value
+
 ## [v0.5.8]
 
 ### Bug Fixes
