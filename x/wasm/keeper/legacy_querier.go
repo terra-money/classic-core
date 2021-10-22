@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
 
@@ -147,7 +148,9 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		}
 	}()
 
-	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg, wasmVM)
+	// store query wasmvm in the context
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.QueryWasmVMContextKey, wasmVM))
+	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg)
 
 	return
 }

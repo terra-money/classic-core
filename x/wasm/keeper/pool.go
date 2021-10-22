@@ -6,8 +6,6 @@ import (
 	"github.com/terra-money/core/x/wasm/types"
 )
 
-var n = 0
-
 func (k Keeper) acquireWasmVM(ctx context.Context) (types.WasmerEngine, error) {
 	err := k.wasmReadVMSemaphore.Acquire(ctx, 1)
 	if err != nil {
@@ -15,8 +13,8 @@ func (k Keeper) acquireWasmVM(ctx context.Context) (types.WasmerEngine, error) {
 	}
 
 	k.wasmReadVMMutex.Lock()
-	wasmVM := k.wasmReadVMPool[0]
-	k.wasmReadVMPool = k.wasmReadVMPool[1:]
+	wasmVM := (*k.wasmReadVMPool)[0]
+	*k.wasmReadVMPool = (*k.wasmReadVMPool)[1:]
 	k.wasmReadVMMutex.Unlock()
 
 	return wasmVM, nil
@@ -24,7 +22,7 @@ func (k Keeper) acquireWasmVM(ctx context.Context) (types.WasmerEngine, error) {
 
 func (k Keeper) releaseWasmVM(wasmVM types.WasmerEngine) {
 	k.wasmReadVMMutex.Lock()
-	k.wasmReadVMPool = append(k.wasmReadVMPool, wasmVM)
+	*k.wasmReadVMPool = append(*k.wasmReadVMPool, wasmVM)
 	k.wasmReadVMMutex.Unlock()
 
 	k.wasmReadVMSemaphore.Release(1)
