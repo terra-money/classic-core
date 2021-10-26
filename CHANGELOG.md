@@ -1,3 +1,8 @@
+## [unreleased]
+
+### Improvements
+- [\#593](https://github.com/terra-money/core/pull/588) revert jemalloc integration from wasmvm & add troubleshoot section to docs
+
 ## [v0.5.9]
 
 ### Bug Fixes
