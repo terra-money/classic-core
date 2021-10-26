@@ -1,4 +1,4 @@
-## [v0.5.10]
+## [unreleased]
 
 ### Improvements
 - [\#594](https://github.com/terra-money/core/pull/594) - bump SDK to v0.44.3 and Tendermint to v0.34.14
