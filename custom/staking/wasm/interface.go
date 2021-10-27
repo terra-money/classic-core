@@ -101,6 +101,10 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 	return nil, sdkerrors.Wrap(wasm.ErrInvalidMsg, "Unknown variant of Staking")
 }
 
+type CosmosQuery struct {
+	Parameters *struct{} `json:"parameters,omitempty"`
+}
+
 // ParseCustom implements custom parser
 func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	return nil, nil
@@ -217,9 +221,44 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Staking variant"}
 }
 
+type StakingParametersResponse struct {
+	// unbonding_time is the time duration of unbonding in a seconds.
+	UnbondingTime uint64 `json:"unbonding_time"`
+	// max_validators is the maximum number of validators.
+	MaxValidators uint32 `json:"max_validators,omitempty"`
+	// max_entries is the max entries for either unbonding delegation or redelegation (per pair/trio).
+	MaxEntries uint32 `json:"max_entries,omitempty"`
+	// historical_entries is the number of historical entries to persist.
+	HistoricalEntries uint32 `json:"historical_entries,omitempty"`
+	// bond_denom defines the bondable coin denomination.
+	BondDenom string `json:"bond_denom,omitempty"`
+}
+
 // QueryCustom implements custom query interface
-func (WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
-	return nil, nil
+func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+	var query CosmosQuery
+	var bz []byte
+	err := json.Unmarshal(data, &query)
+
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+	if query.Parameters != nil {
+		parameters := querier.stakingKeeper.GetParams(ctx)
+		bz, err = json.Marshal(StakingParametersResponse{
+			UnbondingTime:     uint64(parameters.UnbondingTime.Seconds()),
+			MaxValidators:     parameters.MaxValidators,
+			MaxEntries:        parameters.MaxEntries,
+			HistoricalEntries: parameters.HistoricalEntries,
+			BondDenom:         parameters.BondDenom,
+		})
+	}
+
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
 }
 
 // encdoe cosmos delegations to wasm delegations

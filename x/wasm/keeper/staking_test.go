@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -24,6 +25,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
+	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
 	core "github.com/terra-money/core/types"
 )
 
@@ -686,4 +688,45 @@ func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Acc
 	require.NoError(t, err)
 	assert.Equal(t, expectedIssued, invest.TokenSupply)
 	assert.Equal(t, expectedBonded, invest.StakedTokens)
+}
+
+func TestQueryParameters(t *testing.T) {
+	input := CreateTestInput(t)
+
+	params := stakingtypes.Params{
+		UnbondingTime:     time.Duration(10 * time.Second),
+		MaxValidators:     10,
+		MaxEntries:        1000,
+		HistoricalEntries: 1,
+		BondDenom:         "fakeluna",
+	}
+	input.StakingKeeper.SetParams(input.Ctx, params)
+
+	querier := stakingwasm.NewWasmQuerier(input.StakingKeeper, input.DistributionKeeper)
+	var err error
+
+	// empty data will occur error
+	_, err = querier.QueryCustom(input.Ctx, []byte{})
+	require.Error(t, err)
+
+	// stacking parameters query
+	bz, err := json.Marshal(stakingwasm.CosmosQuery{
+		Parameters: &struct{}{},
+	})
+
+	require.NoError(t, err)
+
+	res, err := querier.QueryCustom(input.Ctx, bz)
+	require.NoError(t, err)
+
+	var stackingParametersResponse stakingwasm.StakingParametersResponse
+	expectedResponse := stakingwasm.StakingParametersResponse{
+		UnbondingTime:     10,
+		MaxValidators:     10,
+		MaxEntries:        1000,
+		HistoricalEntries: 1,
+		BondDenom:         "fakeluna",
+	}
+	require.NoError(t, json.Unmarshal(res, &stackingParametersResponse))
+	require.Equal(t, expectedResponse, stackingParametersResponse)
 }
