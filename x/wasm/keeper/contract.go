@@ -14,15 +14,15 @@ import (
 )
 
 // CompileCode uncompress the wasm code bytes and store the code to local file system
-func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, report *wasmvmtypes.AnalysisReport, err error) {
+func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, err error) {
 	maxContractSize := k.MaxContractSize(ctx)
 	if uint64(len(wasmCode)) > maxContractSize {
-		return nil, nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
+		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, "contract size is too huge")
 	}
 
 	wasmCode, err = k.uncompress(wasmCode, maxContractSize)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
 	// consume gas for compile cost
@@ -31,12 +31,7 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 
 	codeHash, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
-	}
-
-	report, err = k.wasmVM.AnalyzeCode(codeHash)
-	if err != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrStoreCodeFailed, err.Error())
 	}
 
 	return
@@ -44,7 +39,7 @@ func (k Keeper) CompileCode(ctx sdk.Context, wasmCode []byte) (codeHash []byte, 
 
 // StoreCode uploads and compiles a WASM contract bytecode, returning a short identifier for the stored code
 func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
-	codeHash, report, err := k.CompileCode(ctx, wasmCode)
+	codeHash, err := k.CompileCode(ctx, wasmCode)
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +54,7 @@ func (k Keeper) StoreCode(ctx sdk.Context, creator sdk.AccAddress, wasmCode []by
 
 	k.SetLastCodeID(ctx, codeID)
 	k.SetCodeInfo(ctx, codeID, codeInfo)
-	k.Logger(ctx).Debug("storing new contract", "features", report.RequiredFeatures, "code_id", codeID)
+	k.Logger(ctx).Debug("storing new contract", "code_id", codeID)
 
 	return codeID, nil
 }
@@ -79,14 +74,14 @@ func (k Keeper) MigrateCode(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
 
-	codeHash, report, err := k.CompileCode(ctx, wasmCode)
+	codeHash, err := k.CompileCode(ctx, wasmCode)
 	if err != nil {
 		return err
 	}
 
 	codeInfo.CodeHash = codeHash
 	k.SetCodeInfo(ctx, codeID, codeInfo)
-	k.Logger(ctx).Debug("storing new contract", "features", report.RequiredFeatures, "code_id", codeID)
+	k.Logger(ctx).Debug("storing new contract", "code_id", codeID)
 
 	return nil
 }
