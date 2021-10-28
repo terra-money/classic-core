@@ -53,6 +53,7 @@ Full-node software implementing the Terra protocol<br/><br/>
   - [Increase Maximum Open Files](#increase-maximum-open-files)
   - [Create a Dedicated User](#create-a-dedicated-user)
   - [Firewall Configuration](#firewall-configuration)
+  - [Install Jemalloc](#install-jemalloc)
   - [Running Server as a Daemon](#running-server-as-a-daemon)
   - [Register terrad as a service](#register-terrad-as-a-service)
   - [Controlling the service](#controlling-the-service)
@@ -110,8 +111,8 @@ Verify that everything is OK. If you get something like the following, you've su
 terrad version --long
 name: terra
 server_name: terrad
-version: 0.5.0-rc0-9-g640fd0ed
-commit: 640fd0ed921d029f4d1c3d88435bd5dbd67d14cd
+version: 0.5.9
+commit: 6235f92a101d203fddd26abc6c64799c546f7716
 build_tags: netgo,ledger
 go: go version go1.16.5 darwin/amd64
 ```
@@ -257,6 +258,21 @@ Modify `/etc/security/limits.conf` to raise the `nofile` capability.
 
 - `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database which can be used for monitoring the environment. This port is not opened in the default configuration.
 
+### Install Jemalloc
+
+```bash
+JEMALLOC_VERSION=5.2.1
+wget https://github.com/jemalloc/jemalloc/releases/download/$JEMALLOC_VERSION/jemalloc-$JEMALLOC_VERSION.tar.bz2 
+tar -xf ./jemalloc-$JEMALLOC_VERSION.tar.bz2 
+cd jemalloc-$JEMALLOC_VERSION
+
+# for query node, we recommend to use below configuration
+# ./configure --with-malloc-conf=background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000
+./configure --with-malloc-conf=background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000
+make
+sudo make install
+```
+
 ### Running Server as a Daemon
 
 It is important to keep `terrad` running at all times. There are several ways to achieve this, and the simplest solution we recommend is to register `terrad` as a `systemd` service so that it will automatically get started upon system reboots and other events.
@@ -283,6 +299,7 @@ WantedBy=multi-user.target
 
 [Service]
 LimitNOFILE=65535
+Environment="LD_PRELOAD=/usr/local/lib/libjemalloc.so"
 ```
 
 Modify the `Service` section from the given sample above to suit your settings.
