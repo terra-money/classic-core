@@ -6,16 +6,18 @@ set -uxe
 #export GOPATH=~/go
 #export PATH=$PATH:~/go/bin
 export NODE=65.21.202.37:2161
-export APPNAME=TERRAD
-
+export ENVNAME=TERRAD
+export APPNAME=terrad
+export $(echo $ENVNAME)$(echo "_HOME")=/plotting/terradata
+export GENESIS=QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
 
 # Install Gaia
 # go install ./...
 
 
 # MAKE HOME FOLDER AND GET GENESIS
-gaiad init test 
-wget -O ~/.gaia/config/genesis.json https://cloudflare-ipfs.com/ipfs/Qmc54DreioPpPDUdJW6bBTYUKepmcPsscfqsfFcFmTaVig
+$APPNAME init test 
+wget -O ~/$(echo $ENVNAME)$(echo "_HOME")/config/genesis.json https://cloudflare-ipfs.com/ipfs/$GENESIS
 
 INTERVAL=1000
 
@@ -31,14 +33,14 @@ TRUST_HASH=$(curl -s "$NODE/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id
 echo "TRUST HEIGHT: $BLOCK_HEIGHT"
 echo "TRUST HASH: $TRUST_HASH"
 echo "NODE ID: $NODE_ID"
-
+echo "HOME: $HOMEDIR"
 
 # export state sync ars
-export $($APPNAME)_STATESYNC_ENABLE=true
-export $($APPNAME)_P2P_MAX_NUM_OUTBOUND_PEERS=200
-export $($APPNAME)_STATESYNC_RPC_SERVERS="$NODE,https://columbus-5.technofractal.com:443"
-export $($APPNAME)_STATESYNC_TRUST_HEIGHT=$BLOCK_HEIGHT
-export $($APPNAME)_STATESYNC_TRUST_HASH=$TRUST_HASH
-export $($APPNAME)_P2P_PERSISTENT_PEERS="$NODE_ID@$NODE"
+export $(echo $ENVNAME)_STATESYNC_ENABLE=true
+export $(echo $ENVNAME)_P2P_MAX_NUM_OUTBOUND_PEERS=200
+export $(echo $ENVNAME)_STATESYNC_RPC_SERVERS="$NODE,https://columbus-5.technofractal.com:443"
+export $(echo $ENVNAME)_STATESYNC_TRUST_HEIGHT=$BLOCK_HEIGHT
+export $(echo $ENVNAME)_STATESYNC_TRUST_HASH=$TRUST_HASH
+export $(echo $ENVNAME)_P2P_PERSISTENT_PEERS="$NODE_ID@$NODE"
 
 terrad start
