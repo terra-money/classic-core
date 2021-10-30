@@ -17,7 +17,7 @@ export GENESIS=QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
 
 # MAKE HOME FOLDER AND GET GENESIS
 $APPNAME init test 
-wget -O ~/$(echo $ENVNAME)$(echo "_HOME")/config/genesis.json https://cloudflare-ipfs.com/ipfs/$GENESIS
+wget -O $TERRAD_HOME/config/genesis.json https://ipfs.io/ipfs/$GENESIS
 
 INTERVAL=1000
 
@@ -25,7 +25,7 @@ INTERVAL=1000
 
 LATEST_HEIGHT=$(curl -s $NODE/height | jq -r .result.block.header.height);
 BLOCK_HEIGHT=$(($LATEST_HEIGHT-$INTERVAL))
-NODE_ID=$(curl -s "$NODE/block?height=$BLOCK_HEIGHT" | jq -r .result.node_info.id)
+NODE_ID=$(curl -s "$NODE/status" | jq -r .result.node_info.id)
 TRUST_HASH=$(curl -s "$NODE/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
 
 
