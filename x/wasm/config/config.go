@@ -8,11 +8,9 @@ import (
 
 // config default values
 const (
-	DefaultContractQueryGasLimit  = uint64(3000000)
-	DefaultContractDebugMode      = false
-	DefaultWriteVMMemoryCacheSize = uint32(500)
-	DefaultReadVMMemoryCacheSize  = uint32(300)
-	DefaultNumReadVM              = uint32(1)
+	DefaultContractQueryGasLimit   = uint64(3000000)
+	DefaultContractDebugMode       = false
+	DefaultContractMemoryCacheSize = uint32(100)
 )
 
 // DBDir used to store wasm data to
@@ -28,35 +26,25 @@ type Config struct {
 	// The flag to specify whether print contract logs or not
 	ContractDebugMode bool `mapstructure:"contract-debug-mode"`
 
-	// The write WASM VM memory cache size in MiB not bytes
-	WriteVMMemoryCacheSize uint32 `mapstructure:"write-vm-memory-cache-size"`
-
-	// The read WASM VM memory cache size in MiB not bytes
-	ReadVMMemoryCacheSize uint32 `mapstructure:"read-vm-memory-cache-size"`
-
-	// The number of read WASM VMs
-	NumReadVMs uint32 `mapstructure:"num-read-vms"`
+	// The WASM VM memory cache size in MiB not bytes
+	ContractMemoryCacheSize uint32 `mapstructure:"contract-memory-cache-size"`
 }
 
 // DefaultConfig returns the default settings for WasmConfig
 func DefaultConfig() *Config {
 	return &Config{
-		ContractQueryGasLimit:  DefaultContractQueryGasLimit,
-		ContractDebugMode:      DefaultContractDebugMode,
-		WriteVMMemoryCacheSize: DefaultWriteVMMemoryCacheSize,
-		ReadVMMemoryCacheSize:  DefaultReadVMMemoryCacheSize,
-		NumReadVMs:             DefaultNumReadVM,
+		ContractQueryGasLimit:   DefaultContractQueryGasLimit,
+		ContractDebugMode:       DefaultContractDebugMode,
+		ContractMemoryCacheSize: DefaultContractMemoryCacheSize,
 	}
 }
 
 // GetConfig load config values from the app options
 func GetConfig(appOpts servertypes.AppOptions) *Config {
 	return &Config{
-		ContractQueryGasLimit:  cast.ToUint64(appOpts.Get("wasm.contract-query-gas-limit")),
-		ContractDebugMode:      cast.ToBool(appOpts.Get("wasm.contract-debug-mode")),
-		WriteVMMemoryCacheSize: cast.ToUint32(appOpts.Get("wasm.write-vm-memory-cache-size")),
-		ReadVMMemoryCacheSize:  cast.ToUint32(appOpts.Get("wasm.read-vm-memory-cache-size")),
-		NumReadVMs:             cast.ToUint32(appOpts.Get("wasm.num-read-vms")),
+		ContractQueryGasLimit:   cast.ToUint64(appOpts.Get("wasm.contract-query-gas-limit")),
+		ContractDebugMode:       cast.ToBool(appOpts.Get("wasm.contract-debug-mode")),
+		ContractMemoryCacheSize: cast.ToUint32(appOpts.Get("wasm.contract-memory-cache-size")),
 	}
 }
 

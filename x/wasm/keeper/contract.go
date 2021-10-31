@@ -426,21 +426,13 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 
 	env := types.NewEnv(ctx, contractAddress)
 
-	// when the vm is given, use that given vm
-	var wasmVM types.WasmerEngine
-	if vm := ctx.Context().Value(types.QueryWasmVMContextKey); vm != nil {
-		wasmVM = vm.(types.WasmerEngine)
-	} else {
-		wasmVM = k.wasmVM
-	}
-
 	// assert max depth to prevent stack overflow
-	if err := wasmVM.IncreaseQueryDepth(); err != nil {
+	if err := k.wasmVM.IncreaseQueryDepth(); err != nil {
 		return nil, err
 	}
-	defer wasmVM.DecreaseQueryDepth()
+	defer k.wasmVM.DecreaseQueryDepth()
 
-	queryResult, gasUsed, err := wasmVM.Query(
+	queryResult, gasUsed, err := k.wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
 		queryMsg,
