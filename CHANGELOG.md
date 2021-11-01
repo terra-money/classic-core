@@ -1,7 +1,9 @@
 ## [unreleased]
 
 ### Improvements
-- [\#594](https://github.com/terra-money/core/pull/594) - bump SDK to v0.44.3 and Tendermint to v0.34.14
+- [\#601](https://github.com/terra-money/core/pull/601) revert readvm-pool feature
+- [\#594](https://github.com/terra-money/core/pull/594) bump SDK to v0.44.3 and Tendermint to v0.34.14
+- [\#593](https://github.com/terra-money/core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
 
 ## [v0.5.9]
 

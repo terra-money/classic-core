@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 	"runtime/debug"
 
@@ -117,15 +116,8 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	wasmVM, err := k.acquireWasmVM(sdk.WrapSDKContext(ctx))
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrContractQueryFailed, err.Error())
-	}
-
 	// recover from out-of-gas panic
 	defer func() {
-		k.releaseWasmVM(wasmVM)
-
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
@@ -148,8 +140,6 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 		}
 	}()
 
-	// store query wasmvm in the context
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.QueryWasmVMContextKey, wasmVM))
 	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg)
 
 	return

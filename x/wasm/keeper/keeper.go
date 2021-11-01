@@ -4,10 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"path/filepath"
-	"sync"
 
 	"github.com/tendermint/tendermint/libs/log"
-	"golang.org/x/sync/semaphore"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -34,10 +32,7 @@ type Keeper struct {
 	serviceRouter types.MsgServiceRouter
 	queryRouter   types.GRPCQueryRouter
 
-	wasmVM              types.WasmerEngine
-	wasmReadVMPool      *[]types.WasmerEngine
-	wasmReadVMSemaphore *semaphore.Weighted
-	wasmReadVMMutex     *sync.Mutex
+	wasmVM types.WasmerEngine
 
 	querier   types.Querier
 	msgParser types.MsgParser
@@ -66,65 +61,35 @@ func NewKeeper(
 	}
 
 	// prevent zero write vm cache
-	if wasmConfig.WriteVMMemoryCacheSize == 0 {
-		wasmConfig.WriteVMMemoryCacheSize = config.DefaultWriteVMMemoryCacheSize
+	if wasmConfig.ContractMemoryCacheSize == 0 {
+		wasmConfig.ContractMemoryCacheSize = config.DefaultContractMemoryCacheSize
 	}
 
-	var writeWasmVM types.WasmerEngine
-	if vm, err := wasmvm.NewVM(
+	vm, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
 		types.ContractMemoryLimit,
 		wasmConfig.ContractDebugMode,
-		wasmConfig.WriteVMMemoryCacheSize,
-	); err != nil {
+		wasmConfig.ContractMemoryCacheSize,
+	)
+
+	if err != nil {
 		panic(err)
-	} else {
-		writeWasmVM = types.NewWasmerEngineWithQueryDepth(vm)
-	}
-
-	// prevent zero read vm
-	if wasmConfig.NumReadVMs == 0 {
-		wasmConfig.NumReadVMs = config.DefaultNumReadVM
-	}
-
-	// prevent zero read vm cache
-	if wasmConfig.ReadVMMemoryCacheSize == 0 {
-		wasmConfig.ReadVMMemoryCacheSize = config.DefaultReadVMMemoryCacheSize
-	}
-
-	numReadVms := wasmConfig.NumReadVMs
-	wasmReadVMPool := make([]types.WasmerEngine, numReadVms)
-	for i := uint32(0); i < numReadVms; i++ {
-		if vm, err := wasmvm.NewVM(
-			filepath.Join(homePath, config.DBDir),
-			supportedFeatures,
-			types.ContractMemoryLimit,
-			wasmConfig.ContractDebugMode,
-			wasmConfig.ReadVMMemoryCacheSize,
-		); err != nil {
-			panic(err)
-		} else {
-			wasmReadVMPool[i] = types.NewWasmerEngineWithQueryDepth(vm)
-		}
 	}
 
 	return Keeper{
-		storeKey:            storeKey,
-		cdc:                 cdc,
-		paramSpace:          paramspace,
-		wasmVM:              writeWasmVM,
-		wasmReadVMPool:      &wasmReadVMPool,
-		wasmReadVMSemaphore: semaphore.NewWeighted(int64(numReadVms)),
-		wasmReadVMMutex:     &sync.Mutex{},
-		accountKeeper:       accountKeeper,
-		bankKeeper:          bankKeeper,
-		treasuryKeeper:      treasuryKeeper,
-		serviceRouter:       serviceRouter,
-		queryRouter:         queryRouter,
-		wasmConfig:          wasmConfig,
-		msgParser:           types.NewWasmMsgParser(),
-		querier:             types.NewWasmQuerier(),
+		storeKey:       storeKey,
+		cdc:            cdc,
+		paramSpace:     paramspace,
+		wasmVM:         vm,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
+		treasuryKeeper: treasuryKeeper,
+		serviceRouter:  serviceRouter,
+		queryRouter:    queryRouter,
+		wasmConfig:     wasmConfig,
+		msgParser:      types.NewWasmMsgParser(),
+		querier:        types.NewWasmQuerier(),
 	}
 }
 

@@ -14,9 +14,9 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/terra-money/wasmvm/releases
-ADD https://github.com/terra-money/wasmvm/releases/download/v0.16.1/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep 7a44ca40fbd1e4b27325fa5053c4699b2b7a5dcb043a8763792acfa8f2adae70
+# See https://github.com/CosmWasm/wasmvm/releases
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.16.1/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep 0e62296b9f24cf3a05f8513f99cee536c7087079855ea6ffb4f89b35eccdaa66
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
