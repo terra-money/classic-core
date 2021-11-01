@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -426,21 +427,13 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 
 	env := types.NewEnv(ctx, contractAddress)
 
-	// when the vm is given, use that given vm
-	var wasmVM types.WasmerEngine
-	if vm := ctx.Context().Value(types.QueryWasmVMContextKey); vm != nil {
-		wasmVM = vm.(types.WasmerEngine)
-	} else {
-		wasmVM = k.wasmVM
-	}
-
-	// assert max depth to prevent stack overflow
-	if err := wasmVM.IncreaseQueryDepth(); err != nil {
+	// assert and increase query depth
+	ctx, err = assertAndIncreaseQueryDepth(ctx)
+	if err != nil {
 		return nil, err
 	}
-	defer wasmVM.DecreaseQueryDepth()
 
-	queryResult, gasUsed, err := wasmVM.Query(
+	queryResult, gasUsed, err := k.wasmVM.Query(
 		codeInfo.CodeHash,
 		env,
 		queryMsg,
@@ -459,6 +452,24 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	}
 
 	return queryResult, err
+}
+
+func assertAndIncreaseQueryDepth(ctx sdk.Context) (sdk.Context, error) {
+	var queryDepth uint8
+	if depth := ctx.Context().Value(types.WasmVMQueryDepthContextKey); depth != nil {
+		queryDepth = depth.(uint8)
+	} else {
+		queryDepth = 1
+	}
+
+	if queryDepth > types.ContractMaxQueryDepth {
+		return ctx, types.ErrExceedMaxQueryDepth
+	}
+
+	// set next query depth
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.WasmVMQueryDepthContextKey, queryDepth+1))
+
+	return ctx, nil
 }
 
 func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractStorePrefix prefix.Store, err error) {
