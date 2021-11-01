@@ -59,6 +59,6 @@ contract-query-gas-limit = "{{ .WASMConfig.ContractQueryGasLimit }}"
 # The flag to specify whether print contract logs or not
 contract-debug-mode = "{{ .WASMConfig.ContractDebugMode }}"
 
-# The write WASM VM memory cache size in MiB not bytes
+# The WASM VM memory cache size in MiB not bytes
 contract-memory-cache-size = "{{ .WASMConfig.ContractMemoryCacheSize }}"
 `
