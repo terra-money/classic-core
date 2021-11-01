@@ -60,5 +60,5 @@ contract-query-gas-limit = "{{ .WASMConfig.ContractQueryGasLimit }}"
 contract-debug-mode = "{{ .WASMConfig.ContractDebugMode }}"
 
 # The write WASM VM memory cache size in MiB not bytes
-write-vm-memory-cache-size = "{{ .WASMConfig.ContractMemoryCacheSize }}"
+contract-memory-cache-size = "{{ .WASMConfig.ContractMemoryCacheSize }}"
 `
