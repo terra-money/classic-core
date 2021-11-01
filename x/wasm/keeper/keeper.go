@@ -65,24 +65,23 @@ func NewKeeper(
 		wasmConfig.ContractMemoryCacheSize = config.DefaultContractMemoryCacheSize
 	}
 
-	var writeWasmVM types.WasmerEngine
-	if vm, err := wasmvm.NewVM(
+	vm, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
 		types.ContractMemoryLimit,
 		wasmConfig.ContractDebugMode,
 		wasmConfig.ContractMemoryCacheSize,
-	); err != nil {
+	)
+
+	if err != nil {
 		panic(err)
-	} else {
-		writeWasmVM = types.NewWasmerEngineWithQueryDepth(vm)
 	}
 
 	return Keeper{
 		storeKey:       storeKey,
 		cdc:            cdc,
 		paramSpace:     paramspace,
-		wasmVM:         writeWasmVM,
+		wasmVM:         vm,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
 		treasuryKeeper: treasuryKeeper,
