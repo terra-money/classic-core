@@ -1,4 +1,4 @@
-## [unreleased]
+## v0.5.10
 
 ### Improvements
 - [\#601](https://github.com/terra-money/core/pull/601) revert readvm-pool feature
