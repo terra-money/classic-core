@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -346,19 +345,13 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 func TestLimitRecursiveQueryDepth(t *testing.T) {
 	contractAddr, _, ctx, keeper, _ := initRecurseContract(t)
-	// pick query wasmvm
-	wasmvm, err := keeper.acquireWasmVM(ctx.Context())
-	require.NoError(t, err)
-	defer keeper.releaseWasmVM(wasmvm)
-
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.QueryWasmVMContextKey, wasmvm))
 
 	// exceed max query depth
 	msg := buildQuery(t, Recurse{
 		Depth: types.ContractMaxQueryDepth,
 	})
 
-	_, err = keeper.queryToContract(ctx, contractAddr, msg)
+	_, err := keeper.queryToContract(ctx, contractAddr, msg)
 	require.Error(t, err)
 
 	msg = buildQuery(t, Recurse{

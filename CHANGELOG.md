@@ -1,3 +1,9 @@
+## v0.5.10
+
+### Improvements
+- [\#601](https://github.com/terra-money/core/pull/601) revert readvm-pool feature
+- [\#593](https://github.com/terra-money/core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
+
 ## [v0.5.9]
 
 ### Bug Fixes
