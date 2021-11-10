@@ -1,3 +1,8 @@
+## v0.5.11
+
+### Bug Fixes
+- [\#603](https://github.com/terra-money/core/pull/603) bump CosmWasm/wasmvm to v0.16.2 to fix cache position error
+
 ## v0.5.10
 
 ### Improvements
