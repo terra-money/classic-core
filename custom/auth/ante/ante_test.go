@@ -39,7 +39,7 @@ type AnteTestSuite struct {
 func createTestApp(isCheckTx bool, tempDir string) (*terraapp.TerraApp, sdk.Context) {
 	app := terraapp.NewTerraApp(
 		log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{},
-		tempDir, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+		tempDir, simapp.FlagPeriodValue, false, terraapp.MakeEncodingConfig(),
 		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(),
 	)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
