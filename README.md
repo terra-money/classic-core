@@ -126,7 +126,13 @@ go: go version go1.16.5 darwin/amd64
         <div align="left">
         <b>$ terrad --help</b>
 
-        Stargate Terra App
+        Stargate Terra App```
+terrad init nodename
+wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
+curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
+terrad start
+```
+
 
         Usage:
           terrad [command]
@@ -176,6 +182,14 @@ If you want to join the `columbus-5` mainnet, we strongly recommend the followin
 - At least **100mbps** network bandwidth
 
 [The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
+
+**Terra Node Quick Start**
+```
+terrad init nodename
+wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
+curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
+terrad start
+```
 
 ### Joining a testnet
 
