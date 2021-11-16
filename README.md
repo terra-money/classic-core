@@ -126,13 +126,7 @@ go: go version go1.16.5 darwin/amd64
         <div align="left">
         <b>$ terrad --help</b>
 
-        Stargate Terra App```
-terrad init nodename
-wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
-curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
-terrad start
-```
-
+        Stargate Terra App
 
         Usage:
           terrad [command]
