@@ -182,7 +182,7 @@ If you want to join the `columbus-5` mainnet, we strongly recommend the followin
 terrad init nodename
 wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
 curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
-terrad start
+terrad start --p2p.seeds e999fc20aa5b87c1acef8677cf495ad85061cfb9@seed.terra.delightlabs.io:26656,6d8e943c049a80c161a889cb5fcf3d184215023e@public-seed2.terra.dev:26656,87048bf71526fb92d73733ba3ddb79b7a83ca11e@public-seed.terra.dev:26656
 ```
 
 ### Joining a testnet
