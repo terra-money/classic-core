@@ -32,19 +32,14 @@ if [ "$CHAINID" = "columbus-5" ] && [[ ! -z "$SNAPSHOT_NAME" ]] ; then
       mkdir -p $DATADIR
       cd $DATADIR
       FILENAME="$SNAPSHOT_NAME"
-      aria2c -x5 $SNAPSHOT_BASE_URL/$FILENAME
-      wget https://raw.githubusercontent.com/chainlayer/quicksync-playbooks/master/roles/quicksync/files/checksum.sh
-      wget https://get.quicksync.io/$FILENAME.checksum
-      # Compare checksum with onchain version. Hash can be found at https://get.quicksync.io/columbus-3-pruned.DATE.TIME.tar.lz4.hash
-      curl -s https://lcd.terra.dev/txs/`curl -s https://get.quicksync.io/$FILENAME.hash`|jq -r '.tx.value.memo'|sha512sum -c
-      sh ./checksum.sh $FILENAME
 
+      # Download
+      aria2c -x5 $SNAPSHOT_BASE_URL/$FILENAME
+      # Extract
       lz4 -d $FILENAME | tar xf -
 
       # # cleanup
       rm $FILENAME
-      rm checksum.sh
-      rm $FILENAME.checksum
   fi
 fi
 
