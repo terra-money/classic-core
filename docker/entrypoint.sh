@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # Default to "data".
-DATADIR="${DATADIR:-data}"
+DATADIR="${DATADIR:-/root/.terra/data}"
 MONIKER="${MONIKER:-docker-node}"
 ENABLE_LCD="${ENABLE_LCD:-true}"
 MINIMUM_GAS_PRICES=${MINIMUM_GAS_PRICES-0.01133uluna,0.15uusd,0.104938usdr,169.77ukrw,428.571umnt,0.125ueur,0.98ucny,16.37ujpy,0.11ugbp,10.88uinr,0.19ucad,0.14uchf,0.19uaud,0.2usgd,4.62uthb,1.25usek,1.25unok,0.9udkk,2180.0uidr,7.6uphp,1.17uhkd}
-SNAPSHOT_NAME="${SNAPSHOT_NAME:-columbus-5-pruned.20211024.0410.tar.lz4}"
+SNAPSHOT_NAME="${SNAPSHOT_NAME}"
 SNAPSHOT_BASE_URL="${SNAPSHOT_BASE_URL:-https://get.quicksync.io}"
 
 # First sed gets the app.toml moved into place.
@@ -18,26 +18,29 @@ if [ "$ENABLE_LCD" = true ] ; then
 fi
 
 # config.toml updates
-sed 's/db_dir = "data"/db_dir = "'"$DATADIR"'"/g' ~/config.toml > ~/.terra/config/config.toml
-sed -i 's/moniker = "moniker"/moniker = "'"$MONIKER"'"/g' ~/.terra/config/config.toml
+
+sed 's/moniker = "moniker"/moniker = "'"$MONIKER"'"/g' ~/config.toml > ~/.terra/config/config.toml
 sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' ~/.terra/config/config.toml
-if [ "$CHAINID" = "columbus-5" ] ; then 
+
+if [ "$CHAINID" = "columbus-5" ] && [[ ! -z "$SNAPSHOT_NAME" ]] ; then 
   # Download the snapshot if data directory is empty.
-  path=$(ls -A '~/.terra/data')
+  path=$(ls -A $DATADIR)
   if [[ ! -z "$path" ]]; then
       echo "data directory is NOT empty, skipping quicksync"
   else
       echo "starting snapshot download"
-      cd ~/.terra/
+      mkdir -p $DATADIR
+      cd $DATADIR
       FILENAME="$SNAPSHOT_NAME"
+
+      # Download
       aria2c -x5 $SNAPSHOT_BASE_URL/$FILENAME
-      wget https://raw.githubusercontent.com/chainlayer/quicksync-playbooks/master/roles/quicksync/files/checksum.sh
-      wget https://get.quicksync.io/$FILENAME.checksum
-      # Compare checksum with onchain version. Hash can be found at https://get.quicksync.io/columbus-3-pruned.DATE.TIME.tar.lz4.hash
-      curl -s https://lcd.terra.dev/txs/`curl -s https://get.quicksync.io/$FILENAME.hash`|jq -r '.tx.value.memo'|sha512sum -c
-      chmod +x ./checksum.sh
-      ./checksum.sh $FILENAME
+      # Extract
       lz4 -d $FILENAME | tar xf -
+
+      # # cleanup
+      rm $FILENAME
   fi
 fi
-exec "$@"
+
+exec "$@" --db_dir $DATADIR
