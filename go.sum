@@ -806,8 +806,8 @@ github.com/tendermint/tm-db v0.5.1/go.mod h1:g92zWjHpCYlEvQXvy9M168Su8V1IBEeawpX
 github.com/tendermint/tm-db v0.6.3/go.mod h1:lfA1dL9/Y/Y8wwyPp2NMLyn5P5Ptr/gvDFNWtrCWSf8=
 github.com/tendermint/tm-db v0.6.4 h1:3N2jlnYQkXNQclQwd/eKV/NzlqPlfK21cpRRIx80XXQ=
 github.com/tendermint/tm-db v0.6.4/go.mod h1:dptYhIpJ2M5kUuenLr+Yyf3zQOv1SgBZcl8/BmWlMBw=
-github.com/terra-money/cosmos-sdk v0.44.2-public h1:SkUXjtiqJRnX8GYMJ9MoOS8RcMdaBFoO9Qjqzj50qKE=
-github.com/terra-money/cosmos-sdk v0.44.2-public/go.mod h1:LTfo0q/bZF7m6dfAK1Mgl8onrk7HYetjAPIqiJtRNzA=
+github.com/terra-money/cosmos-sdk v0.44.2-public.2 h1:uF46jbA7i2Ge/4Bq1mOJZSOlns367jQ8yBq7jIgYB4M=
+github.com/terra-money/cosmos-sdk v0.44.2-public.2/go.mod h1:LTfo0q/bZF7m6dfAK1Mgl8onrk7HYetjAPIqiJtRNzA=
 github.com/terra-money/ledger-terra-go v0.11.2 h1:BVXZl+OhJOri6vFNjjVaTabRLApw9MuG7mxWL4V718c=
 github.com/terra-money/ledger-terra-go v0.11.2/go.mod h1:ClJ2XMj1ptcnONzKH+GhVPi7Y8pXIT+UzJ0TNt0tfZE=
 github.com/terra-money/tendermint v0.34.13 h1:QCjKMTntyieomtmiWlvgvvoE7eMrrDCJlYV6m7vbQKI=
