@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="${1:-v0.5.9-oracle}"
+VERSION="${1:-v0.5.11-oracle}"
 
 pushd .. 
 

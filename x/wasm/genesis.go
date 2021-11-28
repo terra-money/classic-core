@@ -62,14 +62,17 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	for i := uint64(1); i <= lastCodeID; i++ {
-		bytecode, err := keeper.GetByteCode(ctx, i)
+		codeInfo, err := keeper.GetCodeInfo(ctx, i)
 		if err != nil {
 			panic(err)
 		}
 
-		codeInfo, err := keeper.GetCodeInfo(ctx, i)
-		if err != nil {
-			panic(err)
+		var bytecode []byte
+		if len(codeInfo.CodeHash) != 0 {
+			bytecode, err = keeper.GetByteCode(ctx, i)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		codes = append(codes, types.Code{

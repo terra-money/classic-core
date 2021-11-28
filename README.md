@@ -177,6 +177,14 @@ If you want to join the `columbus-5` mainnet, we strongly recommend the followin
 
 [The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
 
+**Terra Node Quick Start**
+```
+terrad init nodename
+wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
+curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
+terrad start 
+```
+
 ### Joining a testnet
 
 **NOTE:** There may be several testnets that exist simultaneously. Make sure that your version of `terrad` is compatible for the network you wish to join.
