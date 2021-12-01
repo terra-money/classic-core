@@ -25,9 +25,9 @@ Full-node software implementing the Terra protocol<br/><br/>
   ·
   <a href="https://pkg.go.dev/github.com/terra-money/core?tab=subdirectories">Go API</a>
   ·
-  <a href="https://lcd.terra.dev/swagger-ui/">Rest API</a>
+  <a href="https://lcd.terra.dev/swagger/#/">Rest API</a>
   ·
-  <a href="https://terra-money.github.io/terra-sdk-python/">Python SDK</a>
+  <a href="https://github.com/terra-money/terra.py">Python SDK</a>
   ·
   <a href="https://terra-money.github.io/terra.js/">Terra.js</a>
   ·
@@ -46,8 +46,8 @@ Full-node software implementing the Terra protocol<br/><br/>
   - [From Source](#from-source)
 - [`terrad`](#terrad)
 - [Node Setup](#node-setup)
-  - [Joining the mainnet](#joining-the-mainnet)
-  - [Joining a testnet](#joining-a-testnet)
+  - [Joining the mainnet](#join-the-mainnet)
+  - [Joining a testnet](#join-a-testnet)
   - [Running a local testnet](#running-a-local-testnet)
 - [Production Environment](#production-environment)
   - [Increase Maximum Open Files](#increase-maximum-open-files)
@@ -120,7 +120,7 @@ go: go version go1.16.5 darwin/amd64
 
 **NOTE:** `terracli` has been deprecated and all of its functionalities have been merged into `terrad`.
 
-`terrad` is the all-in-one command for operating and interacting with a running Terra node. You can find comprehensive coverage on each of the available functions on our [official docs](https://docs.terra.money/terrad). The various subcommands and their expected arguments can also be interactively discovered by issuing the following command:
+`terrad` is the all-in-one command for operating and interacting with a running Terra node. You can find comprehensive coverage on each of the available functions on our [official docs](https://docs.terra.money/Reference/terrad/). The various subcommands and their expected arguments can also be interactively discovered by issuing the following command:
 
 <pre>
         <div align="left">
@@ -197,7 +197,7 @@ The easiest way to set up a local testing environment is to run [LocalTerra](htt
 
 ### Run a single node testnet
 
-You can also run a local testnet using a single node. Follow these steps to create an account and be the sole validator signing blocks for the your local testnet.
+You can also run a local testnet using a single node. In a local testnet, you will be the sole validator signing blocks.
 
 **Step 1. Create network and account**
 
@@ -341,6 +341,7 @@ journalctl -t terrad -f
   - [Terra Finder](https://finder.terra.money) - Terra's basic block explorer.
   - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - A community-run fork of Finder with extra features.
   - [Stake ID](https://terra.stake.id) - A block explorer made by Staking Fund
+  - [Hubble](https://hubble.figment.network/terra/chains/columbus-5) - by Figment
 
 - Wallets
 
@@ -376,7 +377,7 @@ This software is licensed under the Apache 2.0 license. Read more about it [here
 
 <p>&nbsp;</p>
 <p align="center">
-    <a href="https://terra.money/"><img src="http://terra.money/logos/terra_logo.svg" align="center" width=200/></a>
+    <a href="https://terra.money/"><img src="https://assets.website-files.com/611153e7af981472d8da199c/61794f2b6b1c7a1cb9444489_symbol-terra-blue.svg" align="center" width=200/></a>
 </p>
 <div align="center">
   <sub><em>Powering the innovation of money.</em></sub>
