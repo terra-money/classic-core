@@ -56,7 +56,7 @@ Full-node software implementing the Terra protocol<br/><br/>
   - [Port configuration](#port-configuration)
   - [Run the server as a daemon](#run-the-server-as-a-daemon)
   - [Register terrad as a service](#register-terrad-as-a-service)
-  - [Start, stop, or restart terrad service](#start-stop, or restart terrad service)
+  - [Start, stop, or restart service](#start-stop-or-restart-service)
   - [Accessing logs](#accessing-logs)
 - [Resources](#resources)
 - [Community](#community)
@@ -302,7 +302,7 @@ Note that even if we raised the number of open files for a process, we still nee
 
 After creating a service definition file, you should execute `systemctl daemon-reload`.
 
-### Start, stop, or restart terrad service
+### Start, stop, or restart service
 
 Use `systemctl` to control (start, stop, restart)
 
