@@ -48,7 +48,8 @@ Full-node software implementing the Terra protocol<br/><br/>
 - [Node Setup](#node-setup)
   - [Joining the mainnet](#join-the-mainnet)
   - [Joining a testnet](#join-a-testnet)
-  - [Running a local testnet](#running-a-local-testnet)
+  - [Running a local testnet](#run-a-local-testnet)
+  - [Run a single node testnet](#run-a-local-testnet)
 - [Production Environment](#production-environment)
   - [Increase Maximum Open Files](#increase-maximum-open-files)
   - [Create a Dedicated User](#create-a-dedicated-user)
@@ -235,13 +236,13 @@ Your `terrad` node should now be running a node on `tcp://localhost:26656`, list
 
 Congratulations, you've successfully set up your local Terra network!
 
-## Production Environment
+## Set up a production environment
 
 **NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html)
 
 This guide has only been tested against RPM-based Linux distributions.
 
-### Increase Maximum Open Files
+### Increase maximum open files
 
 `terrad` can't open more than 1024 files (the default maximum) concurrently.
 
@@ -252,11 +253,11 @@ You can increase this limit by modifying `/etc/security/limits.conf` and raising
 *                hard    nofile          65535
 ```
 
-### Create a Dedicated User
+### Create a dedicated user
 
 `terrad` does not require a super user account. Although you may need super user permission to create and modify files during detup, We **strongly** recommend running `terrad` as a normal user.
 
-### Firewall Configuration
+### Port configuration
 
 `terrad` uses several TCP ports for different purposes.
 
@@ -268,7 +269,7 @@ You can increase this limit by modifying `/etc/security/limits.conf` and raising
 
 - `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
 
-### Running Server as a Daemon
+### Run the server as a daemon
 
 It is important to keep `terrad` running at all times. There are several ways to achieve this, and the simplest solution we recommend is to register `terrad` as a `systemd` service so that it automatically starts after system reboots and other events.
 
@@ -301,7 +302,7 @@ Note that even if we raised the number of open files for a process, we still nee
 
 After creating a service definition file, you should execute `systemctl daemon-reload`.
 
-### Controlling the service
+### Control the service
 
 Use `systemctl` to control (start, stop, restart)
 
@@ -314,7 +315,7 @@ systemctl stop terrad
 systemctl restart terrad
 ```
 
-### Accessing logs
+### Access logs
 
 ```bash
 # Entire log
