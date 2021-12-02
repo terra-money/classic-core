@@ -43,20 +43,20 @@ Full-node software implementing the Terra protocol<br/><br/>
 - [What is Terra?](#what-is-terra)
 - [Installation](#installation)
   - [Binaries](#binaries)
-  - [From Source](#from-source)
+  - [From source](#from-source)
 - [`terrad`](#terrad)
-- [Node Setup](#node-setup)
+- [Node setup](#node-setup)
   - [Joining the mainnet](#join-the-mainnet)
   - [Joining a testnet](#join-a-testnet)
   - [Running a local testnet](#run-a-local-testnet)
   - [Run a single node testnet](#run-a-local-testnet)
-- [Production Environment](#production-environment)
-  - [Increase Maximum Open Files](#increase-maximum-open-files)
-  - [Create a Dedicated User](#create-a-dedicated-user)
-  - [Firewall Configuration](#firewall-configuration)
-  - [Running Server as a Daemon](#running-server-as-a-daemon)
+- [Production environment](#production-environment)
+  - [Increase maximum open files](#increase-maximum-open-files)
+  - [Create a dedicated user](#create-a-dedicated-user)
+  - [Port configuration](#port-configuration)
+  - [Run the server as a daemon](#run-the-server-as-a-daemon)
   - [Register terrad as a service](#register-terrad-as-a-service)
-  - [Controlling the service](#controlling-the-service)
+  - [Start, stop, or restart terrad service](#start-stop, or restart terrad service)
   - [Accessing logs](#accessing-logs)
 - [Resources](#resources)
 - [Community](#community)
@@ -302,7 +302,7 @@ Note that even if we raised the number of open files for a process, we still nee
 
 After creating a service definition file, you should execute `systemctl daemon-reload`.
 
-### Control the service
+### Start, stop, or restart terrad service
 
 Use `systemctl` to control (start, stop, restart)
 
