@@ -57,7 +57,7 @@ Full-node software implementing the Terra protocol<br/><br/>
   - [Run the server as a daemon](#run-the-server-as-a-daemon)
   - [Register terrad as a service](#register-terrad-as-a-service)
   - [Start, stop, or restart service](#start-stop-or-restart-service)
-  - [Accessing logs](#accessing-logs)
+  - [Access logs](#access-logs)
 - [Resources](#resources)
 - [Community](#community)
 - [Contributing](#contributing)
