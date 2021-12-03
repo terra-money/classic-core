@@ -67,7 +67,7 @@ Full-node software implementing the Terra protocol<br/><br/>
 
 **[Terra](https://terra.money)** is a public, open-source blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
 
-The Terra blockchain is secured by distributed consensus on staked asset Luna, and natively supports the issuance of price-tracking stablecoins (TerraKRW, TerraUSD, etc.) algorithmically pegged to major world currencies. Smart contracts on Terra run on WebAssembly and take advantage of core modules such as on-chain swaps, price oracle, and staking rewards to power modern DeFi apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
+The Terra blockchain is secured by distributed consensus on staked asset Luna and natively supports the issuance of price-tracking stablecoins that are algorithmically pegged to major world currencies. Smart contracts on Terra run on WebAssembly and take advantage of core modules, such as on-chain swaps, price oracle, and staking rewards, to power modern DeFi apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
 
 **Terra Core** is the reference implementation of the Terra protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
 
@@ -87,7 +87,7 @@ If you haven't already, install Golang by following the [official docs](https://
 
 **Step 2: Get Terra Core source code**
 
-Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `main` branch, which contains the latest stable release. That should install the `terrad` binary.
+Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/) and checkout the `main` branch. This branch contains the latest stable release, which will install the `terrad` binary.
 
 ```bash
 git clone https://github.com/terra-money/core/
@@ -95,9 +95,9 @@ cd core
 git checkout main
 ```
 
-**Step 3: Build from source**
+**Step 3: Build Terra core**
 
-You can now build Terra Core. Running the following command will install executable `terrad` to your `GOPATH`. `terrad` is the node daemon and CLI for interacting with a Terra node.
+Run the following command to install the executable `terrad` to your `GOPATH` and build Terra Core. `terrad` is the node daemon and CLI for interacting with a Terra node.
 
 ```bash
 make install
@@ -105,10 +105,15 @@ make install
 
 **Step 4: Verify your installation**
 
-A successful installation will return something similar to the following:
+Verify that you've installed terrad successfully by running the following command:
 
 ```bash
 terrad version --long
+```
+
+If terrad is installed correctly, the following information is returned:
+
+```bash
 name: terra
 server_name: terrad
 version: 0.5.0-rc0-9-g640fd0ed
@@ -121,7 +126,7 @@ go: go version go1.16.5 darwin/amd64
 
 **NOTE:** `terracli` has been deprecated and all of its functionalities have been merged into `terrad`.
 
-`terrad` is the all-in-one command for operating and interacting with a running Terra node. You can find comprehensive coverage on each of the available functions on our [official docs](https://docs.terra.money/Reference/terrad/). The various subcommands and their expected arguments can also be interactively discovered by issuing the following command:
+`terrad` is the all-in-one command for operating and interacting with a running Terra node. For comprehensive coverage on each of the available functions, see [the terrad reference information](https://docs.terra.money/Reference/terrad/). To view various subcommands and their expected arguments, use the `$ terrad --help` command:
 
 <pre>
         <div align="left">
@@ -170,13 +175,14 @@ Once you have `terrad` installed, you will need to set up your node to be part o
 
 ### Join the mainnet
 
-If you want to join the `columbus-5` mainnet, we strongly recommend the following:
+The following requirements are recommended for running a `columbus-5` mainnet node:
 
 - **4 or more** CPU cores
 - At least **2TB** of disk storage
 - At least **100mbps** network bandwidth
+- An RPM-based Linux distribution
 
-[The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
+For configuration and migration instructions for setting up a Columbus-5 mainnet node, visit [The mainnet repo](https://github.com/terra-money/mainnet).
 
 **Terra Node Quick Start**
 ```
@@ -188,7 +194,7 @@ terrad start
 
 ### Join a testnet
 
-There may be several testnets that exist simultaneously. Make sure that your version of `terrad` is compatible with the network you wish to join.
+Several testnets might exist simultaneously. Ensure that your version of `terrad` is compatible with the network you want to join.
 
 To set up a node on the latest testnet, visit [the testnet repo](https://github.com/terra-money/testnet).
 
@@ -198,7 +204,8 @@ The easiest way to set up a local testing environment is to run [LocalTerra](htt
 
 ### Run a single node testnet
 
-You can also run a local testnet using a single node. In a local testnet, you will be the sole validator signing blocks.
+You can also run a local testnet using a single node. On a local testnet, you will be the sole validator signing blocks.
+
 
 **Step 1. Create network and account**
 
@@ -208,7 +215,7 @@ First, initialize your genesis file to bootstrap your network. Create a name for
 terrad init --chain-id=<testnet_name> <node_moniker>
 ```
 
-You will also need to create a Terra account. Generate an account by creating an account name:
+Next, create a Terra account by running the following command:
 
 ```bash
 terrad keys add <account_name>
@@ -216,7 +223,7 @@ terrad keys add <account_name>
 
 **Step 2. Add account to genesis**
 
-Next, you will need to add your account to genesis. Your account will also need an initial balance to start. The following commands add your account and set the initial balance:
+Next, add your account to genesis and set an initial balance to start. Run the following commands to add your account and set the initial balance:
 
 ```bash
 terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
@@ -232,7 +239,7 @@ Now you can start your private Terra network:
 terrad start
 ```
 
-Your `terrad` node should now be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks.
+Your `terrad` node will be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks.
 
 Congratulations, you've successfully set up your local Terra network!
 
@@ -255,23 +262,26 @@ You can increase this limit by modifying `/etc/security/limits.conf` and raising
 
 ### Create a dedicated user
 
-`terrad` does not require a super user account. Although you may need super user permission to create and modify files during detup, We **strongly** recommend running `terrad` as a normal user.
+It is recommended that you run `terrad` as a normal user. Super-user accounts are only recommended during setup to create and modify files.
 
 ### Port configuration
 
 `terrad` uses several TCP ports for different purposes.
 
-- `26656`: the default port for the P2P protocol. Use this port to communicate with other nodes. While this port must be open to join a network, it does not have to be open to the public. For validator nodes, we recommend configuring `persistent_peers` and closing this port to the public.
+- `26656`: The default port for the P2P protocol. Use this port to communicate with other nodes. While this port must be open to join a network, it does not have to be open to the public. Validator nodes should configure `persistent_peers` and close this port to the public.
 
-- `26657`: the default port for the RPC protocol. This port is used for querying / sending transactions and must be open to serve queries from `terrad`. **DO NOT** open this port to the public unless you are planning to run a public node.
+- `26657`: The default port for the RPC protocol. This port is used for querying / sending transactions and must be open to serve queries from `terrad`. **DO NOT** open this port to the public unless you are planning to run a public node.
 
-- `1317`: the default port for [Lite Client Daemon](https://docs.terra.money/How-to/Start-LCD.html#start-the-light-client-daemon-lcd) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
+- `1317`: The default port for [Lite Client Daemon](https://docs.terra.money/How-to/Start-LCD.html#start-the-light-client-daemon-lcd) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
 
-- `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
+- `26660`: The default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
 
 ### Run the server as a daemon
 
-It is important to keep `terrad` running at all times. There are several ways to achieve this, and the simplest solution we recommend is to register `terrad` as a `systemd` service so that it automatically starts after system reboots and other events.
+**Important**:
+
+Keep `terrad` running at all times. The simplest solution is to register `terrad` as a `systemd` service so that it automatically starts after system reboots and other events.
+
 
 ### Register terrad as a service
 
@@ -298,7 +308,7 @@ LimitNOFILE=65535
 ```
 
 Modify the `Service` section from the given sample above to suit your settings.
-Note that even if we raised the number of open files for a process, we still need to include `LimitNOFILE`.
+Note that even if you raised the number of open files for a process, you still need to include `LimitNOFILE`.
 
 After creating a service definition file, you should execute `systemctl daemon-reload`.
 
