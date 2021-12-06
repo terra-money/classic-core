@@ -1,3 +1,14 @@
+## v0.5.12
+
+This release contains [IAVL bugfix](https://github.com/cosmos/iavl/pull/449)
+
+### Improvements
+- [\#620](https://github.com/terra-money/core/pull/620) bump SDK to v0.44.5
+
+### Bug Fixes
+- [\#621](https://github.com/terra-money/core/pull/621) fix iterator key on export for zero height
+- [\#607](https://github.com/terra-money/core/pull/607) skip GetBytes when exporting not migrated code
+
 ## v0.5.11
 
 ### Bug Fixes
