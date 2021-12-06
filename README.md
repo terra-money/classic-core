@@ -25,9 +25,9 @@ Full-node software implementing the Terra protocol<br/><br/>
   ·
   <a href="https://pkg.go.dev/github.com/terra-money/core?tab=subdirectories">Go API</a>
   ·
-  <a href="https://lcd.terra.dev/swagger-ui/">Rest API</a>
+  <a href="https://lcd.terra.dev/swagger/#/">Rest API</a>
   ·
-  <a href="https://terra-money.github.io/terra-sdk-python/">Python SDK</a>
+  <a href="https://github.com/terra-money/terra.py">Python SDK</a>
   ·
   <a href="https://terra-money.github.io/terra.js/">Terra.js</a>
   ·
@@ -43,20 +43,21 @@ Full-node software implementing the Terra protocol<br/><br/>
 - [What is Terra?](#what-is-terra)
 - [Installation](#installation)
   - [Binaries](#binaries)
-  - [From Source](#from-source)
+  - [From source](#from-source)
 - [`terrad`](#terrad)
-- [Node Setup](#node-setup)
-  - [Joining the mainnet](#joining-the-mainnet)
-  - [Joining a testnet](#joining-a-testnet)
-  - [Running a local testnet](#running-a-local-testnet)
-- [Production Environment](#production-environment)
-  - [Increase Maximum Open Files](#increase-maximum-open-files)
-  - [Create a Dedicated User](#create-a-dedicated-user)
-  - [Firewall Configuration](#firewall-configuration)
-  - [Running Server as a Daemon](#running-server-as-a-daemon)
+- [Node setup](#node-setup)
+  - [Joining the mainnet](#join-the-mainnet)
+  - [Joining a testnet](#join-a-testnet)
+  - [Running a local testnet](#run-a-local-testnet)
+  - [Run a single node testnet](#run-a-local-testnet)
+- [Production environment](#production-environment)
+  - [Increase maximum open files](#increase-maximum-open-files)
+  - [Create a dedicated user](#create-a-dedicated-user)
+  - [Port configuration](#port-configuration)
+  - [Run the server as a daemon](#run-the-server-as-a-daemon)
   - [Register terrad as a service](#register-terrad-as-a-service)
-  - [Controlling the service](#controlling-the-service)
-  - [Accessing logs](#accessing-logs)
+  - [Start, stop, or restart service](#start-stop-or-restart-service)
+  - [Access logs](#access-logs)
 - [Resources](#resources)
 - [Community](#community)
 - [Contributing](#contributing)
@@ -64,9 +65,9 @@ Full-node software implementing the Terra protocol<br/><br/>
 
 ## What is Terra?
 
-**[Terra](https://terra.money)** is a blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
+**[Terra](https://terra.money)** is a public, open-source blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
 
-The Terra blockchain is secured by distributed consensus on staked asset Luna, and natively supports the issuance of price-tracking stablecoins (TerraKRW, TerraUSD, etc.) algorithmically pegged to major world currencies. Smart contracts on Terra run on WebAssembly and can take advantage of core modules like on-chain swaps, price oracle, and staking rewards to power modern DeFi apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
+The Terra blockchain is secured by distributed consensus on staked asset Luna and natively supports the issuance of [price-tracking stablecoins](https://docs.terra.money/Concepts/glossary.html#algorithmic-stablecoin) that are algorithmically pegged to major world currencies, such as UST, KRT, and SDT. Smart contracts on Terra run on WebAssembly and take advantage of core modules, such as on-chain swaps, price oracle, and staking rewards, to power modern [DeFi](https://docs.terra.money/Concepts/glossary.html#defi) apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
 
 **Terra Core** is the reference implementation of the Terra protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
 
@@ -80,13 +81,13 @@ The easiest way to get started is by downloading a pre-built binary for your ope
 
 **Step 1. Install Golang**
 
-Go v1.16+ or higher is required for Terra Core.
+Go v1.17+ or higher is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
 **Step 2: Get Terra Core source code**
 
-Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/), and checkout the `master` branch, which contains the latest stable release. That should install the `terrad` binary.
+Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/) and checkout the `main` branch. This branch contains the latest stable release, which will install the `terrad` binary.
 
 ```bash
 git clone https://github.com/terra-money/core/
@@ -94,9 +95,9 @@ cd core
 git checkout main
 ```
 
-**Step 3: Build from source**
+**Step 3: Build Terra core**
 
-You can now build Terra Core. Running the following command will install executable `terrad` (Terra node daemon and CLI for interacting with the node) to your `GOPATH`.
+Run the following command to install the executable `terrad` to your `GOPATH` and build Terra Core. `terrad` is the node daemon and CLI for interacting with a Terra node.
 
 ```bash
 make install
@@ -104,23 +105,28 @@ make install
 
 **Step 4: Verify your installation**
 
-Verify that everything is OK. If you get something like the following, you've successfully installed Terra Core on your system.
+Verify that you've installed terrad successfully by running the following command:
 
 ```bash
 terrad version --long
+```
+
+If terrad is installed correctly, the following information is returned:
+
+```bash
 name: terra
 server_name: terrad
 version: 0.5.0-rc0-9-g640fd0ed
 commit: 640fd0ed921d029f4d1c3d88435bd5dbd67d14cd
 build_tags: netgo,ledger
-go: go version go1.16.5 darwin/amd64
+go: go version go1.17.2 darwin/amd64
 ```
 
 ## `terrad`
 
 **NOTE:** `terracli` has been deprecated and all of its functionalities have been merged into `terrad`.
 
-`terrad` is the all-in-one command for operating and interacting with a running Terra node. You can find comprehensive coverage on each of the available functions on our [official docs](https://docs.terra.money/terrad). The various subcommands and their expected arguments can also be interactively discovered by issuing the following command:
+`terrad` is the all-in-one command for operating and interacting with a running Terra node. For comprehensive coverage on each of the available functions, see [the terrad reference information](https://docs.terra.money/Reference/terrad/). To view various subcommands and their expected arguments, use the `$ terrad --help` command:
 
 <pre>
         <div align="left">
@@ -165,39 +171,51 @@ go: go version go1.16.5 darwin/amd64
 
 ## Node Setup
 
-Once you have the node software installed, you will need to set up your node to be part of a network.
+Once you have `terrad` installed, you will need to set up your node to be part of the network.
 
-### Joining the mainnet
+### Join the mainnet
 
-If you want to join the `columbus-5` mainnet, we strongly recommend the following:
+The following requirements are recommended for running a `columbus-5` mainnet node:
 
 - **4 or more** CPU cores
 - At least **2TB** of disk storage
 - At least **100mbps** network bandwidth
+- An RPM-based Linux distribution
 
-[The mainnet repo](https://github.com/terra-money/mainnet) contains configuration and migration instructions for setting up a Columbus-5 mainnet node.
+For configuration and migration instructions for setting up a Columbus-5 mainnet node, visit [The mainnet repo](https://github.com/terra-money/mainnet).
 
-### Joining a testnet
+**Terra Node Quick Start**
+```
+terrad init nodename
+wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85Qr8saFuNpL9VaxVqqLGWNAs72RVFhchL9jWs
+curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
+terrad start
+```
 
-**NOTE:** There may be several testnets that exist simultaneously. Make sure that your version of `terrad` is compatible for the network you wish to join.
+### Join a testnet
 
-[The testnet repo](https://github.com/terra-money/testnet) contains configuration instructions for setting a node for the latest testnet.
+Several testnets might exist simultaneously. Ensure that your version of `terrad` is compatible with the network you want to join.
 
-### Running a local testnet
+To set up a node on the latest testnet, visit [the testnet repo](https://github.com/terra-money/testnet).
 
-**NOTE:** The easiest way to set get started with a local Terra network for testing is with [LocalTerra](https://github.com/terra-money/LocalTerra), which automatically orchestrates a whole environment suited for development with zero configuration.
+### Run a local testnet
 
-You can also set up a local testnet with just a single node. You will create one account and be the sole validator signing blocks for the network.
+The easiest way to set up a local testing environment is to run [LocalTerra](https://github.com/terra-money/LocalTerra), which automatically orchestrates a complete testing environment suited for development with zero configuration.
+
+### Run a single node testnet
+
+You can also run a local testnet using a single node. On a local testnet, you will be the sole validator signing blocks.
+
 
 **Step 1. Create network and account**
 
-First, initialize your genesis file that will bootstrap the network. Set a name for your local testnet, and provide a moniker to refer to your node.
+First, initialize your genesis file to bootstrap your network. Create a name for your local testnet and provide a moniker to refer to your node:
 
 ```bash
 terrad init --chain-id=<testnet_name> <node_moniker>
 ```
 
-You will need a Terra account to start. You can generate one with:
+Next, create a Terra account by running the following command:
 
 ```bash
 terrad keys add <account_name>
@@ -205,7 +223,7 @@ terrad keys add <account_name>
 
 **Step 2. Add account to genesis**
 
-Next, you need to add your account to the genesis. The following commands add your account and set the initial balance:
+Next, add your account to genesis and set an initial balance to start. Run the following commands to add your account and set the initial balance:
 
 ```bash
 terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
@@ -215,51 +233,55 @@ terrad collect-gentxs
 
 **Step 3. Run Terra daemon**
 
-Now, you can start your private Terra network:
+Now you can start your private Terra network:
 
 ```bash
 terrad start
 ```
 
-Your `terrad` node should now be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks. You've successfully set up your local Terra network!
+Your `terrad` node will be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks.
 
-## Production Environment
+Congratulations, you've successfully set up your local Terra network!
 
-**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node in our [Validator Guide](https://docs.terra.money/validator/)
+## Set up a production environment
 
-For the moment, this guide has only been tested against RPM-based Linux distributions.
+**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html)
 
-### Increase Maximum Open Files
+This guide has only been tested against RPM-based Linux distributions.
 
-`terrad` can open more than 1024 files (which is default maximum) concurrently.
-You will want to increase this limit.
+### Increase maximum open files
 
-Modify `/etc/security/limits.conf` to raise the `nofile` capability.
+`terrad` can't open more than 1024 files (the default maximum) concurrently.
+
+You can increase this limit by modifying `/etc/security/limits.conf` and raising the `nofile` capability.
 
 ```
 *                soft    nofile          65535
 *                hard    nofile          65535
 ```
 
-### Create a Dedicated User
+### Create a dedicated user
 
-`terrad` does not require the super user account. We **strongly** recommend using a normal user to run `terrad`. However, during the setup process you'll need super user permission to create and modify some files.
+It is recommended that you run `terrad` as a normal user. Super-user accounts are only recommended during setup to create and modify files.
 
-### Firewall Configuration
+### Port configuration
 
 `terrad` uses several TCP ports for different purposes.
 
-- `26656` is the default port for the P2P protocol. This port is opened in order to communicate with other nodes, and must be open to join a network. **However,** it does not have to be open to the public. For validator nodes, we recommend configuring `persistent_peers` and closing this port to the public.
+- `26656`: The default port for the P2P protocol. Use this port to communicate with other nodes. While this port must be open to join a network, it does not have to be open to the public. Validator nodes should configure `persistent_peers` and close this port to the public.
 
-- `26657` is the default port for the RPC protocol. This port is used for querying / sending transactions. In other words, this port needs to be opened for serving queries from `terracli`. It is safe to _NOT_ to open this port to the public unless you are planning to run a public node.
+- `26657`: The default port for the RPC protocol. This port is used for querying / sending transactions and must be open to serve queries from `terrad`. **DO NOT** open this port to the public unless you are planning to run a public node.
 
-- `1317` is the default port for [Lite Client Daemon](https://docs.terra.money/terracli/lcd.html) (LCD), which can be enabled at `~/.terra/config/app.toml`. LCD provides HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://swagger.terra.money) for usage examples. You don't need to open this port unless you have use of it.
+- `1317`: The default port for [Lite Client Daemon](https://docs.terra.money/How-to/Start-LCD.html#start-the-light-client-daemon-lcd) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
 
-- `26660` is the default port for interacting with the [Prometheus](https://prometheus.io) database which can be used for monitoring the environment. This port is not opened in the default configuration.
+- `26660`: The default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
 
-### Running Server as a Daemon
+### Run the server as a daemon
 
-It is important to keep `terrad` running at all times. There are several ways to achieve this, and the simplest solution we recommend is to register `terrad` as a `systemd` service so that it will automatically get started upon system reboots and other events.
+**Important**:
+
+Keep `terrad` running at all times. The simplest solution is to register `terrad` as a `systemd` service so that it automatically starts after system reboots and other events.
+
 
 ### Register terrad as a service
 
@@ -286,11 +308,11 @@ LimitNOFILE=65535
 ```
 
 Modify the `Service` section from the given sample above to suit your settings.
-Note that even if we raised the number of open files for a process, we still need to include `LimitNOFILE`.
+Note that even if you raised the number of open files for a process, you still need to include `LimitNOFILE`.
 
 After creating a service definition file, you should execute `systemctl daemon-reload`.
 
-### Controlling the service
+### Start, stop, or restart service
 
 Use `systemctl` to control (start, stop, restart)
 
@@ -303,7 +325,7 @@ systemctl stop terrad
 systemctl restart terrad
 ```
 
-### Accessing logs
+### Access logs
 
 ```bash
 # Entire log
@@ -318,6 +340,7 @@ journalctl -t terrad -f
 
 - Developer Tools
 
+  - Terra developer documentation(https://docs.terra.money)
   - SDKs
     - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
     - [terra-sdk-python](https://www.github.com/terra-money/terra-sdk-python) for Python
@@ -326,23 +349,22 @@ journalctl -t terrad -f
 
 - Block Explorers
 
-  - [Terra Finder](https://finder.terra.money) - basic block explorer from Terraform Labs
-  - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - community-run fork of Finder with extra features
-  - [Stake ID](https://terra.stake.id) - by Staking Fund
-  - [Hubble](https://hubble.figment.network/terra/chains/columbus-3) - by Figment
+  - [Terra Finder](https://finder.terra.money) - Terra's basic block explorer.
+  - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - A community-run fork of Finder with extra features.
+  - [Stake ID](https://terra.stake.id) - A block explorer made by Staking Fund
+  - [Hubble](https://hubble.figment.network/terra/chains/columbus-5) - by Figment
 
 - Wallets
 
-  - [Terra Station](https://station.terra.money) - official wallet from Terraform Labs
-  - Terra Station Mobile - Mobile version of Terra Station
+  - [Terra Station](https://station.terra.money) - The official Terra wallet.
+  - Terra Station Mobile
     - [iOS](https://apps.apple.com/us/app/terra-station/id1548434735)
     - [Android](https://play.google.com/store/apps/details?id=money.terra.station&hl=en_US&gl=US)
-  - [Lunie](https://lunie.io/)
 
 - Research
 
   - [Agora](https://agora.terra.money) - Research forum
-  - [White Paper](https://terra.money/static/Terra_White_Paper.pdf)
+  - [White Paper](https://assets.website-files.com/611153e7af981472d8da199c/618b02d13e938ae1f8ad1e45_Terra_White_paper.pdf)
 
 ## Community
 
@@ -360,13 +382,13 @@ If you are interested in contributing to Terra Core source, please review our [c
 
 This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
 
-© 2020 Terraform Labs, PTE LTD
+© 2021 Terraform Labs, PTE LTD
 
 <hr/>
 
 <p>&nbsp;</p>
 <p align="center">
-    <a href="https://terra.money/"><img src="http://terra.money/logos/terra_logo.svg" align="center" width=200/></a>
+    <a href="https://terra.money/"><img src="https://assets.website-files.com/611153e7af981472d8da199c/61794f2b6b1c7a1cb9444489_symbol-terra-blue.svg" align="center" width=200/></a>
 </p>
 <div align="center">
   <sub><em>Powering the innovation of money.</em></sub>
