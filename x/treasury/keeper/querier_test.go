@@ -62,6 +62,25 @@ func TestQueryTaxCap(t *testing.T) {
 	require.Equal(t, input.TreasuryKeeper.GetTaxCap(input.Ctx, core.MicroKRWDenom), res.TaxCap)
 }
 
+func TestQueryEncodedIbcTaxCap(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+
+	ibcDenomTrace := "ibc%2F28DECFA7FB7E3AB58DC3B3AEA9B11C6C6B6E46356DCC26505205DAD3379984F5"
+
+	taxCap := types.DefaultTaxPolicy.Cap.Amount
+	//input.TreasuryKeeper.SetTaxCap(input.Ctx, ibcDenomTrace, taxCap) // don't set to use default value
+
+	querier := NewQuerier(input.TreasuryKeeper)
+	res, err := querier.TaxCap(ctx, &types.QueryTaxCapRequest{
+		Denom: ibcDenomTrace,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, taxCap, res.TaxCap)
+	require.Equal(t, input.TreasuryKeeper.GetTaxCap(input.Ctx, ibcDenomTrace), res.TaxCap)
+}
+
 func TestQueryTaxCaps(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)

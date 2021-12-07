@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"math"
+	"net/url"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,12 +45,17 @@ func (q querier) TaxCap(c context.Context, req *types.QueryTaxCapRequest) (*type
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if err := sdk.ValidateDenom(req.Denom); err != nil {
+	denom, err := url.QueryUnescape(req.Denom)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "failed to unescape denom")
+	}
+
+	if err := sdk.ValidateDenom(denom); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid denom")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryTaxCapResponse{TaxCap: q.GetTaxCap(ctx, req.Denom)}, nil
+	return &types.QueryTaxCapResponse{TaxCap: q.GetTaxCap(ctx, denom)}, nil
 }
 
 // TaxCaps returns the all tax caps
