@@ -125,6 +125,7 @@ replace (
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	github.com/tecbot/gorocksdb => github.com/cosmos/gorocksdb v0.0.0-20211202124722-2c356d6d98e4
 	github.com/tendermint/tendermint => github.com/tendermint/tendermint v0.34.14
 	github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.6.4
 	go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.5
