@@ -107,7 +107,7 @@ func TestToCrossRate(t *testing.T) {
 	sort.Sort(cb)
 
 	baseMapBallot := pbBase.ToMap()
-	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
+	require.Equal(t, cb, pbQuote.ToCrossRateWithSort(baseMapBallot))
 }
 
 func TestSqrt(t *testing.T) {
@@ -218,7 +218,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			pb = append(pb, vote)
 		}
 
-		require.Equal(t, tc.median, pb.WeightedMedian())
+		require.Equal(t, tc.median, pb.WeightedMedianWithAssertion())
 	}
 }
 
@@ -280,6 +280,6 @@ func TestPBStandardDeviation(t *testing.T) {
 			pb = append(pb, vote)
 		}
 
-		require.Equal(t, tc.standardDeviation, pb.StandardDeviation())
+		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
 	}
 }
