@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -169,8 +170,8 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 	sort.Sort(ballot)
-	weightedMedian := ballot.WeightedMedian()
-	standardDeviation := ballot.StandardDeviation()
+	weightedMedian := ballot.WeightedMedianWithAssertion()
+	standardDeviation := ballot.StandardDeviation(weightedMedian)
 	maxSpread := weightedMedian.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
 	if standardDeviation.GT(maxSpread) {
@@ -335,14 +336,14 @@ func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
 
 	krwRandomExchangeRate := sdk.NewDecWithPrec(1000000000, int64(6)).MulInt64(core.MicroUnit)
-	uswRandomExchangeRate := sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(core.MicroUnit)
+	usdRandomExchangeRate := sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(core.MicroUnit)
 
 	// KRW has been chosen as referenceTerra by highest voting power
 	// Account 1, USD, KRW
-	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: uswRandomExchangeRate}, {Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: usdRandomExchangeRate}, {Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}}, 0)
 
 	// Account 2, USD, KRW
-	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: uswRandomExchangeRate}, {Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: usdRandomExchangeRate}, {Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}}, 1)
 
 	// Account 3, KRW, SDR
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroKRWDenom, Amount: krwRandomExchangeRate}, {Denom: core.MicroSDRDenom, Amount: randomExchangeRate}}, 2)
@@ -362,6 +363,34 @@ func TestOracleExchangeRate(t *testing.T) {
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
 	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
+}
+
+func TestOracleEnsureSorted(t *testing.T) {
+	input, h := setup(t)
+
+	for i := 0; i < 100; i++ {
+		krwExchangeRate1 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+		usdExchangeRate1 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+
+		krwExchangeRate2 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+		usdExchangeRate2 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+
+		krwExchangeRate3 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+		usdExchangeRate3 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(core.MicroUnit)
+
+		// Account 1, USD, KRW
+		makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: usdExchangeRate1}, {Denom: core.MicroKRWDenom, Amount: krwExchangeRate1}}, 0)
+
+		// Account 2, USD, KRW
+		makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: usdExchangeRate2}, {Denom: core.MicroKRWDenom, Amount: krwExchangeRate2}}, 1)
+
+		// Account 3, USD, KRW
+		makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroUSDDenom, Amount: krwExchangeRate3}, {Denom: core.MicroKRWDenom, Amount: usdExchangeRate3}}, 2)
+
+		require.NotPanics(t, func() {
+			oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
+		})
+	}
 }
 
 func TestOracleExchangeRateVal5(t *testing.T) {

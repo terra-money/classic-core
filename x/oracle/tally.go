@@ -11,8 +11,15 @@ import (
 // a reasonable spread from the weighted median to the store
 // CONTRACT: pb must be sorted
 func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
-	weightedMedian = pb.WeightedMedian()
-	standardDeviation := pb.StandardDeviation()
+	// softfork
+	if (ctx.ChainID() == "columbus-5" && ctx.BlockHeight() < int64(5_701_000)) ||
+		(ctx.ChainID() == "bombay-12" && ctx.BlockHeight() < int64(7_000_000)) {
+		weightedMedian = pb.WeightedMedian()
+	} else {
+		weightedMedian = pb.WeightedMedianWithAssertion()
+	}
+
+	standardDeviation := pb.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
 	if standardDeviation.GT(rewardSpread) {

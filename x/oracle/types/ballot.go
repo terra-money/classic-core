@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,6 +64,26 @@ func (pb ExchangeRateBallot) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeR
 	return
 }
 
+// ToCrossRateWithSort return cross_rate(base/exchange_rate) ballot
+func (pb ExchangeRateBallot) ToCrossRateWithSort(bases map[string]sdk.Dec) (cb ExchangeRateBallot) {
+	for i := range pb {
+		vote := pb[i]
+
+		if exchangeRateRT, ok := bases[string(vote.Voter)]; ok && vote.ExchangeRate.IsPositive() {
+			vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
+		} else {
+			// If we can't get reference terra exchange rate, we just convert the vote as abstain vote
+			vote.ExchangeRate = sdk.ZeroDec()
+			vote.Power = 0
+		}
+
+		cb = append(cb, vote)
+	}
+
+	sort.Sort(cb)
+	return
+}
+
 // Power returns the total amount of voting power in the ballot
 func (pb ExchangeRateBallot) Power() int64 {
 	totalPower := int64(0)
@@ -91,13 +112,33 @@ func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
 	return sdk.ZeroDec()
 }
 
+// WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
+// CONTRACT: ballot must be sorted
+func (pb ExchangeRateBallot) WeightedMedianWithAssertion() sdk.Dec {
+	if !sort.IsSorted(pb) {
+		panic("ballot must be sorted")
+	}
+
+	totalPower := pb.Power()
+	if pb.Len() > 0 {
+		pivot := int64(0)
+		for _, v := range pb {
+			votePower := v.Power
+
+			pivot += votePower
+			if pivot >= (totalPower / 2) {
+				return v.ExchangeRate
+			}
+		}
+	}
+	return sdk.ZeroDec()
+}
+
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallot) StandardDeviation() (standardDeviation sdk.Dec) {
+func (pb ExchangeRateBallot) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
-
-	median := pb.WeightedMedian()
 
 	sum := sdk.ZeroDec()
 	for _, v := range pb {
