@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 
 	"testing"
@@ -102,6 +103,8 @@ func TestToCrossRate(t *testing.T) {
 			cb = append(cb, NewVoteForTally(sdk.ZeroDec(), core.MicroKRWDenom, valAddr, 0))
 		}
 	}
+
+	sort.Sort(cb)
 
 	baseMapBallot := pbBase.ToMap()
 	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))

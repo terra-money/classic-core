@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,6 +61,7 @@ func (pb ExchangeRateBallot) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeR
 		cb = append(cb, vote)
 	}
 
+	sort.Sort(cb)
 	return
 }
 
@@ -76,6 +78,10 @@ func (pb ExchangeRateBallot) Power() int64 {
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
 // CONTRACT: ballot must be sorted
 func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
+	if !sort.IsSorted(pb) {
+		panic("ballot must be sorted")
+	}
+
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		pivot := int64(0)
