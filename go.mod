@@ -5,7 +5,7 @@ module github.com/terra-money/core
 require (
 	github.com/CosmWasm/wasmvm v0.16.2 // <- it's this one, specifically its dependency on tm-db.
 	github.com/cosmos/cosmos-sdk v0.44.5
-	github.com/cosmos/ibc-go v1.1.3
+	github.com/cosmos/ibc-go v1.1.4
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -124,5 +124,6 @@ replace (
 	github.com/CosmWasm/wasmvm => github.com/notional-labs/wasmvm v0.16.2-0.20211211192443-63e000d9f8c3
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	github.com/tendermint/tendermint => github.com/tendermint/tendermint v0.34.15
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
