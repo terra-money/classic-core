@@ -8,7 +8,7 @@ import (
 
 // Constant gas parameters
 const (
-	GasMultiplier = uint64(100) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
+	GasMultiplier = uint64(150_000) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
 
 	compileCostPerByte             = uint64(2)       // sdk gas cost per bytes
 	instantiateCost                = uint64(40_000)  // sdk gas cost for executing wasmVM engine
