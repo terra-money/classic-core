@@ -20,8 +20,8 @@ func (k Keeper) RewardBallotWinners(
 	ballotWinners map[string]types.Claim,
 ) {
 	// softfork for reward distribution
-	if (ctx.ChainID() == "columbus-5" && ctx.BlockHeight() < int64(5_100_000)) ||
-		(ctx.ChainID() == "bombay-12" && ctx.BlockHeight() < int64(6_200_000)) {
+	if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_100_000)) ||
+		(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(6_200_000)) {
 		k.RewardBallotWinnersLegacy(ctx, votePeriod, rewardDistributionWindow, ballotWinners)
 		return
 	}
