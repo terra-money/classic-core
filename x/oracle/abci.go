@@ -65,8 +65,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			var exchangeRateRT sdk.Dec
 
 			// softfork
-			if (ctx.ChainID() == "columbus-5" && ctx.BlockHeight() < int64(5_701_000)) ||
-				(ctx.ChainID() == "bombay-12" && ctx.BlockHeight() < int64(7_000_000)) {
+			if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
+				(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
 				exchangeRateRT = ballotRT.WeightedMedian()
 			} else {
 				exchangeRateRT = ballotRT.WeightedMedianWithAssertion()
@@ -79,8 +79,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				if denom != referenceTerra {
 
 					// softfork
-					if (ctx.ChainID() == "columbus-5" && ctx.BlockHeight() < int64(5_701_000)) ||
-						(ctx.ChainID() == "bombay-12" && ctx.BlockHeight() < int64(7_000_000)) {
+					if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
+						(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
 						ballot = ballot.ToCrossRate(voteMapRT)
 					} else {
 						ballot = ballot.ToCrossRateWithSort(voteMapRT)
