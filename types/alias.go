@@ -35,6 +35,8 @@ const (
 	Bech32PrefixValPub   = util.Bech32PrefixValPub
 	Bech32PrefixConsAddr = util.Bech32PrefixConsAddr
 	Bech32PrefixConsPub  = util.Bech32PrefixConsPub
+	ColumbusChainID      = "columbus-5"
+	BombayChainID        = "bombay-12"
 )
 
 // functions aliases
