@@ -5,6 +5,9 @@ import (
 	"github.com/terra-money/core/custom/auth/ante"
 	"github.com/terra-money/core/x/wasm/types"
 
+	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/modules/core/24-host"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -13,7 +16,7 @@ import (
 // dispatchMessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
 // returns ReplyData only when the reply returns non-nil data
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.SubMsg) ([]byte, error) {
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.SubMsg) ([]byte, error) {
 	var respReplyData []byte
 	for _, msg := range msgs {
 		switch msg.ReplyOn {
@@ -33,9 +36,9 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 		var events sdk.Events
 		var data []byte
 		if limitGas {
-			events, data, err = k.dispatchMessageWithGasLimit(subCtx, contractAddr, msg.Msg, *msg.GasLimit)
+			events, data, err = k.dispatchMessageWithGasLimit(subCtx, contractAddr, contractIBCPortID, msg.Msg, *msg.GasLimit)
 		} else {
-			events, data, err = k.dispatchMessage(subCtx, contractAddr, msg.Msg)
+			events, data, err = k.dispatchMessage(subCtx, contractAddr, contractIBCPortID, msg.Msg)
 		}
 
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
@@ -91,7 +94,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 }
 
 // dispatchMessageWithGasLimit does not emit events to prevent duplicate emission
-func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events sdk.Events, data []byte, err error) {
+func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events sdk.Events, data []byte, err error) {
 	subCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 
 	// catch out of gas panic and just charge the entire gas limit
@@ -109,7 +112,7 @@ func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.Ac
 		}
 	}()
 
-	events, data, err = k.dispatchMessage(subCtx, contractAddr, msg)
+	events, data, err = k.dispatchMessage(subCtx, contractAddr, contractIBCPortID, msg)
 
 	// make sure we charge the parent what was spent
 	spent := subCtx.GasMeter().GasConsumed()
@@ -119,7 +122,18 @@ func (k Keeper) dispatchMessageWithGasLimit(ctx sdk.Context, contractAddr sdk.Ac
 }
 
 // dispatchMessage does not emit events to prevent duplicate emission
-func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (events sdk.Events, data []byte, err error) {
+func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events sdk.Events, data []byte, err error) {
+
+	// only contract itself can send packet with its ibc port ID
+	if msg.IBC != nil && msg.IBC.SendPacket != nil {
+		ibcEvents, err := k.messenger.HandleIBCSendPacket(ctx, contractIBCPortID, msg)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return ibcEvents, nil, nil
+	}
+
 	sdkMsg, err := k.msgParser.Parse(ctx, contractAddr, msg)
 	if err != nil {
 		return nil, nil, err
@@ -141,7 +155,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 		events = eventManager.Events()
 	}
 
-	res, err := k.handleSdkMessage(ctx, contractAddr, sdkMsg)
+	res, err := k.messenger.HandleSdkMessage(ctx, contractAddr, sdkMsg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -157,12 +171,82 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	}
 
 	// append message action attribute
-	events = append(events, sdkEvents...)
-
+	events = events.AppendEvents(sdkEvents)
 	return
 }
 
-func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) (*sdk.Result, error) {
+// Messenger handles SDK messages and IBC.SendPacket messages which are published to an IBC channel.
+type Messenger struct {
+	serviceRouter    types.MsgServiceRouter
+	channelKeeper    types.ChannelKeeper
+	capabilityKeeper types.CapabilityKeeper
+}
+
+// NewMessenger create Messenger instance
+func NewMessenger(serviceRouter types.MsgServiceRouter, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) Messenger {
+	return Messenger{
+		serviceRouter,
+		channelKeeper,
+		capabilityKeeper,
+	}
+}
+
+var _ types.Messenger = Messenger{}
+
+// HandleIBCSendPacket implement Messeger
+func (messenger Messenger) HandleIBCSendPacket(ctx sdk.Context, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (sdk.Events, error) {
+	if msg.IBC == nil || msg.IBC.SendPacket == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of IBC")
+	}
+
+	if contractIBCPortID == "" {
+		return nil, sdkerrors.Wrap(types.ErrUnsupportedForContract, "ibc not supported")
+	}
+
+	sendPacket := msg.IBC.SendPacket
+	contractIBCChannelID := sendPacket.ChannelID
+	if contractIBCChannelID == "" {
+		return nil, sdkerrors.Wrap(types.ErrEmpty, "ibc channel")
+	}
+
+	sequence, found := messenger.channelKeeper.GetNextSequenceSend(ctx, contractIBCPortID, contractIBCChannelID)
+	if !found {
+		return nil, sdkerrors.Wrapf(channeltypes.ErrSequenceSendNotFound,
+			"source port: %s, source channel: %s", contractIBCPortID, contractIBCChannelID,
+		)
+	}
+
+	channelInfo, ok := messenger.channelKeeper.GetChannel(ctx, contractIBCPortID, contractIBCChannelID)
+	if !ok {
+		return nil, sdkerrors.Wrap(channeltypes.ErrInvalidChannel, "not found")
+	}
+
+	channelCap, ok := messenger.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
+	if !ok {
+		return nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+	}
+
+	packet := channeltypes.NewPacket(
+		msg.IBC.SendPacket.Data,
+		sequence,
+		contractIBCPortID,
+		contractIBCChannelID,
+		channelInfo.Counterparty.PortId,
+		channelInfo.Counterparty.ChannelId,
+		types.ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block),
+		msg.IBC.SendPacket.Timeout.Timestamp,
+	)
+
+	err := messenger.channelKeeper.SendPacket(ctx, channelCap, packet)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx.EventManager().Events(), nil
+}
+
+// HandleSdkMessage implement Messeger
+func (messenger Messenger) HandleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) (*sdk.Result, error) {
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
@@ -171,7 +255,7 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, m
 	}
 
 	// find the handler and execute it
-	h := k.serviceRouter.Handler(msg)
+	h := messenger.serviceRouter.Handler(msg)
 	if h == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, sdk.MsgTypeURL(msg))
 	}

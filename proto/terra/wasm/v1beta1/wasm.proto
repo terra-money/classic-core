@@ -40,4 +40,6 @@ message ContractInfo {
   uint64 code_id = 4 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // InitMsg is the raw message used when instantiating a contract
   bytes init_msg = 5 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
+  // IBCPortID is the assigned IBC port ID only can be used in a contract
+  string ibc_port_id = 6 [(gogoproto.moretags) = "yaml:\"ibc_port_id\"", (gogoproto.customname) = "IBCPortID" ];
 }

@@ -50,17 +50,17 @@ func (parser StargateWasmMsgParser) Parse(wasmMsg wasmvmtypes.CosmosMsg) (sdk.Ms
 
 // StargateWasmQuerier - wasm query interface for wasm contract
 type StargateWasmQuerier struct {
-	keeper Keeper
+	queryRouter types.GRPCQueryRouter
 }
 
 // NewStargateWasmQuerier returns stargate wasm querier
-func NewStargateWasmQuerier(keeper Keeper) StargateWasmQuerier {
-	return StargateWasmQuerier{keeper}
+func NewStargateWasmQuerier(queryRouter types.GRPCQueryRouter) StargateWasmQuerier {
+	return StargateWasmQuerier{queryRouter}
 }
 
 // Query - implement query function
 func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
-	route := querier.keeper.queryRouter.Route(request.Stargate.Path)
+	route := querier.queryRouter.Route(request.Stargate.Path)
 	if route == nil {
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Stargate.Path)}
 	}

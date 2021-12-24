@@ -30,6 +30,11 @@ type StargateWasmMsgParserInterface interface {
 	Parse(msg wasmvmtypes.CosmosMsg) (sdk.Msg, error)
 }
 
+// IBCWasmMsgParserInterface - stargate msg parsers
+type IBCWasmMsgParserInterface interface {
+	Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.CosmosMsg) (sdk.Msg, error)
+}
+
 // WasmCustomMsg - wasm custom msg parser
 type WasmCustomMsg struct {
 	Route   string          `json:"route"`
@@ -39,6 +44,7 @@ type WasmCustomMsg struct {
 // MsgParser - holds multiple module msg parsers
 type MsgParser struct {
 	Parsers        map[string]WasmMsgParserInterface
+	IBCParser      IBCWasmMsgParserInterface
 	StargateParser StargateWasmMsgParserInterface
 }
 
@@ -105,7 +111,11 @@ func (p MsgParser) Parse(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmv
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "stargate")
 	case msg.IBC != nil:
-		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "IBC not supported")
+		if p.IBCParser != nil {
+			return p.IBCParser.Parse(ctx, contractAddr, msg)
+		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredParser, "IBC")
 	}
 
 	return nil, sdkerrors.Wrap(ErrInvalidMsg, "failed to parse empty msg")

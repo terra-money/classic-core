@@ -13506,6 +13506,7 @@ ContractInfo stores a WASM contract instance
 | `admin` | [string](#string) |  | Admin is who can execute the contract migration |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
+| `ibc_port_id` | [string](#string) |  | IBCPortID is the assigned IBC port ID only can be used in a contract |
 
 
 

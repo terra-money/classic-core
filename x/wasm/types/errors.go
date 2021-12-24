@@ -24,4 +24,7 @@ var (
 	ErrExceedMaxContractDataSize = sdkerrors.Register(ModuleName, 17, "exceeds max contract data size limit")
 	ErrReplyFailed               = sdkerrors.Register(ModuleName, 18, "reply wasm contract failed")
 	ErrExceedMaxQueryDepth       = sdkerrors.Register(ModuleName, 19, "exceed max query depth")
+	ErrEmpty                     = sdkerrors.Register(ModuleName, 20, "empty")
+	ErrUnsupportedForContract    = sdkerrors.Register(ModuleName, 21, "unsupported for this contract")
+	ErrInvalid                   = sdkerrors.Register(ModuleName, 22, "invalid")
 )

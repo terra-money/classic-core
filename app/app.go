@@ -250,6 +250,7 @@ type TerraApp struct { // nolint: golint
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -316,6 +317,7 @@ func NewTerraApp(
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -404,8 +406,11 @@ func NewTerraApp(
 		appCodec, keys[wasmtypes.StoreKey],
 		app.GetSubspace(wasmtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper,
-		app.TreasuryKeeper, bApp.MsgServiceRouter(),
-		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
+		app.TreasuryKeeper, app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		bApp.MsgServiceRouter(),
+		wasmtypes.DefaultFeatures,
 		homePath, wasmConfig,
 	)
 
@@ -417,7 +422,7 @@ func NewTerraApp(
 		wasmtypes.WasmMsgParserRouteWasm:         wasmkeeper.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
-	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
+	}, wasmkeeper.NewStargateWasmMsgParser(appCodec), wasmkeeper.NewIBCMsgParser(app.TransferKeeper))
 	app.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
 		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.BankKeeper),
 		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
@@ -425,7 +430,7 @@ func NewTerraApp(
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
 		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.TreasuryKeeper),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
-	}, wasmkeeper.NewStargateWasmQuerier(app.WasmKeeper))
+	}, wasmkeeper.NewStargateWasmQuerier(app.GRPCQueryRouter()), wasmkeeper.NewIBCQuerier(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
@@ -575,6 +580,7 @@ func NewTerraApp(
 	}
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
+	app.ScopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }

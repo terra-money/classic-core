@@ -16,9 +16,6 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/cosmos/ibc-go/modules/apps/transfer"
-	ibc "github.com/cosmos/ibc-go/modules/core"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -26,6 +23,7 @@ import (
 	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -34,12 +32,21 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	"github.com/cosmos/ibc-go/modules/apps/transfer"
+	ibc "github.com/cosmos/ibc-go/modules/core"
+	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
 
 	customauth "github.com/terra-money/core/custom/auth"
 	custombank "github.com/terra-money/core/custom/bank"
@@ -63,6 +70,7 @@ import (
 	treasurytypes "github.com/terra-money/core/x/treasury/types"
 	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
 	"github.com/terra-money/core/x/wasm/config"
+	"github.com/terra-money/core/x/wasm/keeper/wasmtesting"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -164,6 +172,10 @@ func CreateTestInput(t *testing.T) TestInput {
 	keyOracle := sdk.NewKVStoreKey(oracletypes.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(markettypes.StoreKey)
 	keyTreasury := sdk.NewKVStoreKey(treasurytypes.StoreKey)
+	keyUpgrade := sdk.NewKVStoreKey(upgradetypes.StoreKey)
+	keyIBC := sdk.NewKVStoreKey(ibchost.StoreKey)
+	keyCapability := sdk.NewKVStoreKey(capabilitytypes.StoreKey)
+	keyCapabilityTransient := storetypes.NewMemoryStoreKey(capabilitytypes.MemStoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -181,6 +193,10 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyUpgrade, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyIBC, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyCapability, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyCapabilityTransient, sdk.StoreTypeMemory, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -300,6 +316,21 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	treasuryKeeper.SetParams(ctx, treasurytypes.DefaultParams())
 
+	upgradeKeeper := upgradekeeper.NewKeeper(
+		make(map[int64]bool, 0), keyUpgrade, appCodec, tempDir, nil)
+
+	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, keyCapability, keyCapabilityTransient)
+	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
+
+	ibcKeeper := ibckeeper.NewKeeper(
+		appCodec,
+		keyIBC, paramsKeeper.Subspace(ibchost.ModuleName),
+		stakingKeeper,
+		upgradeKeeper,
+		scopedIBCKeeper,
+	)
+
 	router := baseapp.NewMsgServiceRouter()
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
@@ -313,8 +344,10 @@ func CreateTestInput(t *testing.T) TestInput {
 		accountKeeper,
 		bankKeeper,
 		treasuryKeeper,
+		ibcKeeper.ChannelKeeper,
+		&ibcKeeper.PortKeeper,
+		scopedWasmKeeper,
 		router,
-		querier,
 		types.DefaultFeatures,
 		tempDir,
 		config.DefaultConfig(),
@@ -341,7 +374,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
 		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
 		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
-	}, NewStargateWasmQuerier(keeper))
+	}, NewStargateWasmQuerier(querier), NewIBCQuerier(keeper, ibcKeeper.ChannelKeeper))
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
@@ -349,7 +382,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteWasm:         NewWasmMsgParser(),
-	}, NewStargateWasmMsgParser(legacyAmino))
+	}, NewStargateWasmMsgParser(legacyAmino), NewIBCMsgParser(wasmtesting.MockIBCTransferKeeper{}))
 
 	keeper.SetLastCodeID(ctx, 0)
 	keeper.SetLastInstanceID(ctx, 0)

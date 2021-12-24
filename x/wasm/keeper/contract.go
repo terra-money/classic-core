@@ -172,6 +172,22 @@ func (k Keeper) InstantiateContract(
 	// Must store contract info first, so last part can use it
 	contractInfo := types.NewContractInfo(codeID, contractAddress, creator, admin, initMsg)
 
+	// check for IBC flag
+	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
+	}
+
+	// register IBC port
+	if report.HasIBCEntryPoints {
+		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		contractInfo.IBCPortID = ibcPort
+	}
+
 	k.SetLastInstanceID(ctx, instanceID)
 	k.SetContractInfo(ctx, contractAddress, contractInfo)
 
@@ -186,7 +202,7 @@ func (k Keeper) InstantiateContract(
 
 	// dispatch submessages and messages
 	respData := res.Data
-	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages...); err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
 	} else if replyData != nil {
 		respData = replyData
@@ -209,7 +225,7 @@ func (k Keeper) ExecuteContract(
 		return nil, sdkerrors.Wrap(types.ErrExceedMaxContractMsgSize, "execute msg size is too huge")
 	}
 
-	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
+	codeInfo, contractInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +273,7 @@ func (k Keeper) ExecuteContract(
 
 	// dispatch submessages and messages
 	respData := res.Data
-	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	} else if replyData != nil {
 		respData = replyData
@@ -339,7 +355,7 @@ func (k Keeper) MigrateContract(
 
 	// dispatch submessages and messages
 	respData := res.Data
-	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	} else if replyData != nil {
 		respData = replyData
@@ -357,7 +373,7 @@ func (k Keeper) reply(
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "reply")
 	ctx.GasMeter().ConsumeGas(types.ReplyCosts(reply), "Loading CosmWasm module: reply")
 
-	codeInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
+	codeInfo, contractInfo, storePrefix, err := k.getContractDetails(ctx, contractAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +411,7 @@ func (k Keeper) reply(
 
 	// dispatch submessages and messages
 	respData := res.Data
-	if replyData, err := k.dispatchMessages(ctx, contractAddress, res.Messages...); err != nil {
+	if replyData, err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages...); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	} else if replyData != nil {
 		respData = replyData
@@ -420,7 +436,7 @@ func (k Keeper) queryToContract(ctx sdk.Context, contractAddress sdk.AccAddress,
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(queryMsg)), "Loading CosmWasm module: query")
 
-	codeInfo, contractStorePrefix, err := k.getContractDetails(ctx, contractAddress)
+	codeInfo, _, contractStorePrefix, err := k.getContractDetails(ctx, contractAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +488,7 @@ func assertAndIncreaseQueryDepth(ctx sdk.Context) (sdk.Context, error) {
 	return ctx, nil
 }
 
-func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractStorePrefix prefix.Store, err error) {
+func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddress) (codeInfo types.CodeInfo, contractInfo types.ContractInfo, contractStorePrefix prefix.Store, err error) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.GetContractInfoKey(contractAddress))
@@ -480,8 +496,6 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 		err = sdkerrors.Wrapf(types.ErrNotFound, "contract %s", contractAddress)
 		return
 	}
-
-	var contractInfo types.ContractInfo
 	k.cdc.MustUnmarshal(bz, &contractInfo)
 
 	bz = store.Get(types.GetCodeInfoKey(contractInfo.CodeID))
@@ -489,8 +503,8 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 		err = sdkerrors.Wrapf(types.ErrNotFound, "codeID %d", contractInfo.CodeID)
 		return
 	}
-
 	k.cdc.MustUnmarshal(bz, &codeInfo)
+
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
 	contractStorePrefix = prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
 	return

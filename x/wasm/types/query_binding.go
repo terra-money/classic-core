@@ -15,6 +15,11 @@ type WasmQuerierInterface interface {
 	QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error)
 }
 
+// IBCWasmQuerierInterface - query registration interface for ibc querier
+type IBCWasmQuerierInterface interface {
+	Query(ctx sdk.Context, contractAddr sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
+}
+
 // StargateWasmQuerierInterface - query registration interface for stargate querier
 type StargateWasmQuerierInterface interface {
 	Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error)
@@ -26,6 +31,7 @@ type Querier struct {
 	ContractAddr    sdk.AccAddress
 	Queriers        map[string]WasmQuerierInterface
 	StargateQuerier StargateWasmQuerierInterface
+	IBCQuerier      IBCWasmQuerierInterface
 }
 
 // NewWasmQuerier return wasm querier
@@ -121,7 +127,11 @@ func (q Querier) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byt
 
 		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, "stargate")
 	case request.IBC != nil:
-		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, "IBC not supported")
+		if q.IBCQuerier != nil {
+			return q.IBCQuerier.Query(ctx, q.ContractAddr, request)
+		}
+
+		return nil, sdkerrors.Wrap(ErrNoRegisteredQuerier, "IBC")
 	}
 
 	return nil, wasmvmtypes.Unknown{}

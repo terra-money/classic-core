@@ -68,7 +68,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	ctx, cdc, accKeeper, bankKeeper, keeper := input.Ctx, input.Cdc, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		types.WasmQueryRouteWasm: newWasmQuerierWithCounter(keeper),
-	}, nil)
+	}, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator = createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
