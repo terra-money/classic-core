@@ -180,7 +180,7 @@ The following requirements are recommended for running a `columbus-5` mainnet no
 - **4 or more** CPU cores
 - At least **2TB** of disk storage
 - At least **100mbps** network bandwidth
-- An RPM-based Linux distribution
+- An Linux distribution
 
 For configuration and migration instructions for setting up a Columbus-5 mainnet node, visit [The mainnet repo](https://github.com/terra-money/mainnet).
 
@@ -245,9 +245,9 @@ Congratulations, you've successfully set up your local Terra network!
 
 ## Set up a production environment
 
-**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html)
+**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html).
 
-This guide has only been tested against RPM-based Linux distributions.
+This guide has been tested against Linux distributions only. To ensure you successfully set up your production environment, consider setting it up on an Linux system.
 
 ### Increase maximum open files
 
