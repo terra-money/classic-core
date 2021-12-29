@@ -1,12 +1,12 @@
 syntax = "proto3";
-package terra.wasm.v1beta1;
+package terra.wasm.v1beta2;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "terra/wasm/v1beta1/wasm.proto";
+import "terra/wasm/v1beta2/wasm.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/terra-money/core/x/wasm/legacy/v05";
+option go_package = "github.com/terra-money/core/x/wasm/types";
 
 // Query defines the gRPC querier service.
 service Query {

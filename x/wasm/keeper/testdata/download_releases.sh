@@ -18,3 +18,6 @@ done
 # create the zip variant
 gzip -k hackatom.wasm
 mv hackatom.wasm.gz hackatom.wasm.gzip
+
+rm -f version.txt
+echo "$tag" >version.txt

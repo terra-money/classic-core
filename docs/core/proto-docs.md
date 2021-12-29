@@ -977,6 +977,51 @@
   
     - [Msg](#terra.wasm.v1beta1.Msg)
   
+- [terra/wasm/v1beta2/wasm.proto](#terra/wasm/v1beta2/wasm.proto)
+    - [CodeInfo](#terra.wasm.v1beta2.CodeInfo)
+    - [ContractInfo](#terra.wasm.v1beta2.ContractInfo)
+    - [Params](#terra.wasm.v1beta2.Params)
+  
+- [terra/wasm/v1beta2/genesis.proto](#terra/wasm/v1beta2/genesis.proto)
+    - [Code](#terra.wasm.v1beta2.Code)
+    - [Contract](#terra.wasm.v1beta2.Contract)
+    - [GenesisState](#terra.wasm.v1beta2.GenesisState)
+    - [Model](#terra.wasm.v1beta2.Model)
+  
+- [terra/wasm/v1beta2/query.proto](#terra/wasm/v1beta2/query.proto)
+    - [QueryByteCodeRequest](#terra.wasm.v1beta2.QueryByteCodeRequest)
+    - [QueryByteCodeResponse](#terra.wasm.v1beta2.QueryByteCodeResponse)
+    - [QueryCodeInfoRequest](#terra.wasm.v1beta2.QueryCodeInfoRequest)
+    - [QueryCodeInfoResponse](#terra.wasm.v1beta2.QueryCodeInfoResponse)
+    - [QueryContractInfoRequest](#terra.wasm.v1beta2.QueryContractInfoRequest)
+    - [QueryContractInfoResponse](#terra.wasm.v1beta2.QueryContractInfoResponse)
+    - [QueryContractStoreRequest](#terra.wasm.v1beta2.QueryContractStoreRequest)
+    - [QueryContractStoreResponse](#terra.wasm.v1beta2.QueryContractStoreResponse)
+    - [QueryParamsRequest](#terra.wasm.v1beta2.QueryParamsRequest)
+    - [QueryParamsResponse](#terra.wasm.v1beta2.QueryParamsResponse)
+    - [QueryRawStoreRequest](#terra.wasm.v1beta2.QueryRawStoreRequest)
+    - [QueryRawStoreResponse](#terra.wasm.v1beta2.QueryRawStoreResponse)
+  
+    - [Query](#terra.wasm.v1beta2.Query)
+  
+- [terra/wasm/v1beta2/tx.proto](#terra/wasm/v1beta2/tx.proto)
+    - [MsgClearContractAdmin](#terra.wasm.v1beta2.MsgClearContractAdmin)
+    - [MsgClearContractAdminResponse](#terra.wasm.v1beta2.MsgClearContractAdminResponse)
+    - [MsgExecuteContract](#terra.wasm.v1beta2.MsgExecuteContract)
+    - [MsgExecuteContractResponse](#terra.wasm.v1beta2.MsgExecuteContractResponse)
+    - [MsgInstantiateContract](#terra.wasm.v1beta2.MsgInstantiateContract)
+    - [MsgInstantiateContractResponse](#terra.wasm.v1beta2.MsgInstantiateContractResponse)
+    - [MsgMigrateCode](#terra.wasm.v1beta2.MsgMigrateCode)
+    - [MsgMigrateCodeResponse](#terra.wasm.v1beta2.MsgMigrateCodeResponse)
+    - [MsgMigrateContract](#terra.wasm.v1beta2.MsgMigrateContract)
+    - [MsgMigrateContractResponse](#terra.wasm.v1beta2.MsgMigrateContractResponse)
+    - [MsgStoreCode](#terra.wasm.v1beta2.MsgStoreCode)
+    - [MsgStoreCodeResponse](#terra.wasm.v1beta2.MsgStoreCodeResponse)
+    - [MsgUpdateContractAdmin](#terra.wasm.v1beta2.MsgUpdateContractAdmin)
+    - [MsgUpdateContractAdminResponse](#terra.wasm.v1beta2.MsgUpdateContractAdminResponse)
+  
+    - [Msg](#terra.wasm.v1beta2.Msg)
+  
 - [Scalar Value Types](#scalar-value-types)
 
 
@@ -13506,7 +13551,6 @@ ContractInfo stores a WASM contract instance
 | `admin` | [string](#string) |  | Admin is who can execute the contract migration |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
 | `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
-| `ibc_port_id` | [string](#string) |  | IBCPortID is the assigned IBC port ID only can be used in a contract |
 
 
 
@@ -14082,6 +14126,624 @@ Msg defines the oracle Msg service.
 | `MigrateContract` | [MsgMigrateContract](#terra.wasm.v1beta1.MsgMigrateContract) | [MsgMigrateContractResponse](#terra.wasm.v1beta1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
 | `UpdateContractAdmin` | [MsgUpdateContractAdmin](#terra.wasm.v1beta1.MsgUpdateContractAdmin) | [MsgUpdateContractAdminResponse](#terra.wasm.v1beta1.MsgUpdateContractAdminResponse) | UpdateContractAdmin sets a new admin for a smart contract | |
 | `ClearContractAdmin` | [MsgClearContractAdmin](#terra.wasm.v1beta1.MsgClearContractAdmin) | [MsgClearContractAdminResponse](#terra.wasm.v1beta1.MsgClearContractAdminResponse) | ClearContractAdmin remove admin flag from a smart contract | |
+
+ <!-- end services -->
+
+
+
+<a name="terra/wasm/v1beta2/wasm.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/wasm/v1beta2/wasm.proto
+
+
+
+<a name="terra.wasm.v1beta2.CodeInfo"></a>
+
+### CodeInfo
+CodeInfo is data for the uploaded contract WASM code
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the sequentially increasing unique identifier |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm |
+| `creator` | [string](#string) |  | Creator address who initially stored the code |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.ContractInfo"></a>
+
+### ContractInfo
+ContractInfo stores a WASM contract instance
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the address of the contract |
+| `creator` | [string](#string) |  | Creator is the contract creator address |
+| `admin` | [string](#string) |  | Admin is who can execute the contract migration |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored Wasm code |
+| `init_msg` | [bytes](#bytes) |  | InitMsg is the raw message used when instantiating a contract |
+| `ibc_port_id` | [string](#string) |  | IBCPortID is the assigned IBC port ID only can be used in a contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.Params"></a>
+
+### Params
+Params defines the parameters for the wasm module.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `max_contract_size` | [uint64](#uint64) |  |  |
+| `max_contract_gas` | [uint64](#uint64) |  |  |
+| `max_contract_msg_size` | [uint64](#uint64) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="terra/wasm/v1beta2/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/wasm/v1beta2/genesis.proto
+
+
+
+<a name="terra.wasm.v1beta2.Code"></a>
+
+### Code
+Code struct encompasses CodeInfo and CodeBytes
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_info` | [CodeInfo](#terra.wasm.v1beta2.CodeInfo) |  |  |
+| `code_bytes` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.Contract"></a>
+
+### Contract
+Contract struct encompasses ContractAddress, ContractInfo, and ContractState
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_info` | [ContractInfo](#terra.wasm.v1beta2.ContractInfo) |  |  |
+| `contract_store` | [Model](#terra.wasm.v1beta2.Model) | repeated |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.GenesisState"></a>
+
+### GenesisState
+GenesisState defines the oracle module's genesis state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#terra.wasm.v1beta2.Params) |  |  |
+| `last_code_id` | [uint64](#uint64) |  |  |
+| `last_instance_id` | [uint64](#uint64) |  |  |
+| `codes` | [Code](#terra.wasm.v1beta2.Code) | repeated |  |
+| `contracts` | [Contract](#terra.wasm.v1beta2.Contract) | repeated |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.Model"></a>
+
+### Model
+Model is a struct that holds a KV pair
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key` | [bytes](#bytes) |  |  |
+| `value` | [bytes](#bytes) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="terra/wasm/v1beta2/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/wasm/v1beta2/query.proto
+
+
+
+<a name="terra.wasm.v1beta2.QueryByteCodeRequest"></a>
+
+### QueryByteCodeRequest
+QueryByteCodeRequest is the request type for the QueryyByteCode RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryByteCodeResponse"></a>
+
+### QueryByteCodeResponse
+QueryByteCodeResponse is response type for the
+QueryyByteCode RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `byte_code` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryCodeInfoRequest"></a>
+
+### QueryCodeInfoRequest
+QueryCodeInfoRequest is the request type for the QueryyCodeInfo RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryCodeInfoResponse"></a>
+
+### QueryCodeInfoResponse
+QueryCodeInfoResponse is response type for the
+QueryyCodeInfo RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_info` | [CodeInfo](#terra.wasm.v1beta2.CodeInfo) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryContractInfoRequest"></a>
+
+### QueryContractInfoRequest
+QueryContractInfoRequest is the request type for the Query/ContractInfo RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryContractInfoResponse"></a>
+
+### QueryContractInfoResponse
+QueryContractInfoResponse is response type for the
+Query/ContractInfo RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_info` | [ContractInfo](#terra.wasm.v1beta2.ContractInfo) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryContractStoreRequest"></a>
+
+### QueryContractStoreRequest
+QueryContractStoreRequest is the request type for the Query/ContractStore RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  |  |
+| `query_msg` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryContractStoreResponse"></a>
+
+### QueryContractStoreResponse
+QueryContractStoreResponse is response type for the
+Query/ContractStore RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `query_result` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest is the request type for the Query/Params RPC method.
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse is the response type for the Query/Params RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#terra.wasm.v1beta2.Params) |  | params defines the parameters of the module. |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryRawStoreRequest"></a>
+
+### QueryRawStoreRequest
+QueryRawStoreRequest is the request type for the Query/RawStore RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  |  |
+| `key` | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.QueryRawStoreResponse"></a>
+
+### QueryRawStoreResponse
+QueryRawStoreResponse is response type for the
+Query/RawStore RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains the raw store data |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="terra.wasm.v1beta2.Query"></a>
+
+### Query
+Query defines the gRPC querier service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `CodeInfo` | [QueryCodeInfoRequest](#terra.wasm.v1beta2.QueryCodeInfoRequest) | [QueryCodeInfoResponse](#terra.wasm.v1beta2.QueryCodeInfoResponse) | CodeInfo returns the stored code info | GET|/terra/wasm/v1beta1/codes/{code_id}|
+| `ByteCode` | [QueryByteCodeRequest](#terra.wasm.v1beta2.QueryByteCodeRequest) | [QueryByteCodeResponse](#terra.wasm.v1beta2.QueryByteCodeResponse) | ByteCode returns the stored byte code | GET|/terra/wasm/v1beta1/codes/{code_id}/byte_code|
+| `ContractInfo` | [QueryContractInfoRequest](#terra.wasm.v1beta2.QueryContractInfoRequest) | [QueryContractInfoResponse](#terra.wasm.v1beta2.QueryContractInfoResponse) | ContractInfo returns the stored contract info | GET|/terra/wasm/v1beta1/contracts/{contract_address}|
+| `ContractStore` | [QueryContractStoreRequest](#terra.wasm.v1beta2.QueryContractStoreRequest) | [QueryContractStoreResponse](#terra.wasm.v1beta2.QueryContractStoreResponse) | ContractStore return smart query result from the contract | GET|/terra/wasm/v1beta1/contracts/{contract_address}/store|
+| `RawStore` | [QueryRawStoreRequest](#terra.wasm.v1beta2.QueryRawStoreRequest) | [QueryRawStoreResponse](#terra.wasm.v1beta2.QueryRawStoreResponse) | RawStore return single key from the raw store data of a contract | GET|/terra/wasm/v1beta1/contracts/{contract_address}/store/raw|
+| `Params` | [QueryParamsRequest](#terra.wasm.v1beta2.QueryParamsRequest) | [QueryParamsResponse](#terra.wasm.v1beta2.QueryParamsResponse) | Params queries all parameters. | GET|/terra/wasm/v1beta1/params|
+
+ <!-- end services -->
+
+
+
+<a name="terra/wasm/v1beta2/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/wasm/v1beta2/tx.proto
+
+
+
+<a name="terra.wasm.v1beta2.MsgClearContractAdmin"></a>
+
+### MsgClearContractAdmin
+MsgClearContractAdmin represents a message to
+clear admin address from a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgClearContractAdminResponse"></a>
+
+### MsgClearContractAdminResponse
+MsgClearContractAdminResponse defines the Msg/ClearContractAdmin response type.
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgExecuteContract"></a>
+
+### MsgExecuteContract
+MsgExecuteContract represents a message to
+submits the given message data to a smart contract.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `execute_msg` | [bytes](#bytes) |  | ExecuteMsg json encoded message to be passed to the contract |
+| `coins` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Coins that are transferred to the contract on execution |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgExecuteContractResponse"></a>
+
+### MsgExecuteContractResponse
+MsgExecuteContractResponse defines the Msg/ExecuteContract response type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgInstantiateContract"></a>
+
+### MsgInstantiateContract
+MsgInstantiateContract represents a message to create
+a new smart contract instance for the given
+code id.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is an sender address |
+| `admin` | [string](#string) |  | Admin is an optional admin address who can migrate the contract |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `init_msg` | [bytes](#bytes) |  | InitMsg json encoded message to be passed to the contract on instantiation |
+| `init_coins` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | InitCoins that are transferred to the contract on execution |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgInstantiateContractResponse"></a>
+
+### MsgInstantiateContractResponse
+MsgInstantiateContractResponse defines the Msg/InstantiateContract response type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  | ContractAddress is the bech32 address of the new contract instance. |
+| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgMigrateCode"></a>
+
+### MsgMigrateCode
+MsgMigrateCode represents a message to submit
+Wasm code to the system
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the migration target code id |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgMigrateCodeResponse"></a>
+
+### MsgMigrateCodeResponse
+MsgMigrateCodeResponse defines the Msg/MigrateCode response type.
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgMigrateContract"></a>
+
+### MsgMigrateContract
+MsgMigrateContract represents a message to
+runs a code upgrade/ downgrade for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `new_code_id` | [uint64](#uint64) |  | NewCodeID references the new WASM code |
+| `migrate_msg` | [bytes](#bytes) |  | MigrateMsg is json encoded message to be passed to the contract on migration |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgMigrateContractResponse"></a>
+
+### MsgMigrateContractResponse
+MsgMigrateContractResponse defines the Msg/MigrateContract response type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgStoreCode"></a>
+
+### MsgStoreCode
+MsgStoreCode represents a message to submit
+Wasm code to the system
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgStoreCodeResponse"></a>
+
+### MsgStoreCodeResponse
+MsgStoreCodeResponse defines the Msg/StoreCode response type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgUpdateContractAdmin"></a>
+
+### MsgUpdateContractAdmin
+MsgUpdateContractAdmin represents a message to
+sets a new admin for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `admin` | [string](#string) |  | Admin is the current contract admin |
+| `new_admin` | [string](#string) |  | NewAdmin is the new contract admin |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="terra.wasm.v1beta2.MsgUpdateContractAdminResponse"></a>
+
+### MsgUpdateContractAdminResponse
+MsgUpdateContractAdminResponse defines the Msg/UpdateContractAdmin response type.
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="terra.wasm.v1beta2.Msg"></a>
+
+### Msg
+Msg defines the oracle Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `StoreCode` | [MsgStoreCode](#terra.wasm.v1beta2.MsgStoreCode) | [MsgStoreCodeResponse](#terra.wasm.v1beta2.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system | |
+| `MigrateCode` | [MsgMigrateCode](#terra.wasm.v1beta2.MsgMigrateCode) | [MsgMigrateCodeResponse](#terra.wasm.v1beta2.MsgMigrateCodeResponse) | MigrateCode to submit new version Wasm code to the system | |
+| `InstantiateContract` | [MsgInstantiateContract](#terra.wasm.v1beta2.MsgInstantiateContract) | [MsgInstantiateContractResponse](#terra.wasm.v1beta2.MsgInstantiateContractResponse) | Instantiate creates a new smart contract instance for the given code id. | |
+| `ExecuteContract` | [MsgExecuteContract](#terra.wasm.v1beta2.MsgExecuteContract) | [MsgExecuteContractResponse](#terra.wasm.v1beta2.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
+| `MigrateContract` | [MsgMigrateContract](#terra.wasm.v1beta2.MsgMigrateContract) | [MsgMigrateContractResponse](#terra.wasm.v1beta2.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
+| `UpdateContractAdmin` | [MsgUpdateContractAdmin](#terra.wasm.v1beta2.MsgUpdateContractAdmin) | [MsgUpdateContractAdminResponse](#terra.wasm.v1beta2.MsgUpdateContractAdminResponse) | UpdateContractAdmin sets a new admin for a smart contract | |
+| `ClearContractAdmin` | [MsgClearContractAdmin](#terra.wasm.v1beta2.MsgClearContractAdmin) | [MsgClearContractAdminResponse](#terra.wasm.v1beta2.MsgClearContractAdminResponse) | ClearContractAdmin remove admin flag from a smart contract | |
 
  <!-- end services -->
 

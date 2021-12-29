@@ -2,7 +2,6 @@ package v05
 
 import (
 	v04wasm "github.com/terra-money/core/x/wasm/legacy/v04"
-	v05wasm "github.com/terra-money/core/x/wasm/types"
 )
 
 // Migrate accepts exported v0.4 x/wasm and
@@ -13,12 +12,12 @@ import (
 // - Re-encode in v0.5 GenesisState.
 func Migrate(
 	wasmGenState v04wasm.GenesisState,
-) *v05wasm.GenesisState {
+) *GenesisState {
 	// CosmWasm version is not compatible, so remove code bytes and code hash
-	codes := make([]v05wasm.Code, len(wasmGenState.Codes))
+	codes := make([]Code, len(wasmGenState.Codes))
 	for i, c := range wasmGenState.Codes {
-		codes[i] = v05wasm.Code{
-			CodeInfo: v05wasm.CodeInfo{
+		codes[i] = Code{
+			CodeInfo: CodeInfo{
 				CodeID:   c.CodeInfo.CodeID,
 				CodeHash: []byte{},
 				Creator:  c.CodeInfo.Creator.String(),
@@ -27,11 +26,11 @@ func Migrate(
 		}
 	}
 
-	contracts := make([]v05wasm.Contract, len(wasmGenState.Contracts))
+	contracts := make([]Contract, len(wasmGenState.Contracts))
 	for i, c := range wasmGenState.Contracts {
-		models := make([]v05wasm.Model, len(c.ContractStore))
+		models := make([]Model, len(c.ContractStore))
 		for j, m := range c.ContractStore {
-			models[j] = v05wasm.Model{
+			models[j] = Model{
 				Key:   m.Key,
 				Value: m.Value,
 			}
@@ -42,8 +41,8 @@ func Migrate(
 			adminAddr = c.ContractInfo.Owner.String()
 		}
 
-		contracts[i] = v05wasm.Contract{
-			ContractInfo: v05wasm.ContractInfo{
+		contracts[i] = Contract{
+			ContractInfo: ContractInfo{
 				CodeID:  c.ContractInfo.CodeID,
 				Address: c.ContractInfo.Address.String(),
 				Creator: c.ContractInfo.Owner.String(),
@@ -54,11 +53,11 @@ func Migrate(
 		}
 	}
 
-	return &v05wasm.GenesisState{
-		Params: v05wasm.Params{
-			MaxContractSize:    v05wasm.DefaultMaxContractSize,
-			MaxContractMsgSize: v05wasm.DefaultMaxContractMsgSize,
-			MaxContractGas:     v05wasm.DefaultMaxContractGas,
+	return &GenesisState{
+		Params: Params{
+			MaxContractSize:    defaultMaxContractSize,
+			MaxContractMsgSize: defaultMaxContractMsgSize,
+			MaxContractGas:     defaultMaxContractGas,
 		},
 		Codes:          codes,
 		Contracts:      contracts,

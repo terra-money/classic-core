@@ -8,11 +8,11 @@ import (
 
 // Constant gas parameters
 const (
-	GasMultiplier = uint64(150_000) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
+	GasMultiplier = uint64(140_000_000) // Please note that all gas prices returned to the wasmVM engine should have this multiplied
 
-	compileCostPerByte             = uint64(2)       // sdk gas cost per bytes
-	instantiateCost                = uint64(40_000)  // sdk gas cost for executing wasmVM engine
-	registerCost                   = uint64(160_000) // sdk gas cost for creating contract
+	compileCostPerByte             = uint64(3)       // sdk gas cost per bytes
+	instantiateCost                = uint64(60_000)  // sdk gas cost for executing wasmVM engine
+	registerCost                   = uint64(140_000) // sdk gas cost for creating contract
 	humanizeCost                   = uint64(5)       // sdk gas cost to convert canonical address to human address
 	canonicalizeCost               = uint64(4)       // sdk gas cost to convert human address to canonical address
 	deserializationCostPerByte     = uint64(1)       // sdk gas cost to deserialize data
