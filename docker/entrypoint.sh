@@ -24,8 +24,8 @@ sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' ~
 
 if [ "$CHAINID" = "columbus-5" ] && [[ ! -z "$SNAPSHOT_NAME" ]] ; then 
   # Download the snapshot if data directory is empty.
-  path=$(ls -A $DATADIR)
-  if [[ ! -z "$path" ]]; then
+  res=$(find "$DATADIR" -name "*.db")
+  if [ "$res" ]; then
       echo "data directory is NOT empty, skipping quicksync"
   else
       echo "starting snapshot download"
