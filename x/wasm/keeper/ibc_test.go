@@ -53,7 +53,28 @@ func TestDontBindPortNonIBCContract(t *testing.T) {
 	require.Empty(t, contractInfo.GetIBCPortID())
 }
 
-func TestBindAndEnsureIBCPort(t *testing.T) {
+func TestBindPort(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx, keeper := input.Ctx, input.WasmKeeper
+
+	// bind test
+	bindPort := "bindTest"
+	err := keeper.bindIbcPort(ctx, bindPort)
+	require.NoError(t, err)
+	// bind another port
+	bindPort2 := "bindTest2"
+	err = keeper.bindIbcPort(ctx, bindPort2)
+	require.NoError(t, err)
+	// bind with same port will panic
+	defer func() {
+		if r := recover(); r != nil {
+			require.Equal(t, "port bindTest is already bound", r)
+		}
+	}()
+	err = keeper.bindIbcPort(ctx, bindPort)
+}
+
+func TestEnsureIBCPort(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -91,19 +112,11 @@ func TestBindAndEnsureIBCPort(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, ibcReflectSendAddr)
 
-	// bind test
-	bindPort := "bindTest"
-	err = keeper.bindIbcPort(ctx, bindPort)
-	require.NoError(t, err)
-	bindPort2 := "bindTest2"
-	err = keeper.bindIbcPort(ctx, bindPort2)
-	require.NoError(t, err)
-
 	// check each ensured port always same for same contract
 	ensuredPort1, err := keeper.ensureIbcPort(ctx, ibcReflectSendAddr)
 	require.NoError(t, err)
 	require.NotEmpty(t, ensuredPort1)
-	require.Equal(t, "wasm.", ensuredPort1[:5]) // check prefix
+	require.Equal(t, "wasm."+ibcReflectSendAddr.String(), ensuredPort1)
 	ensuredPort2, err := keeper.ensureIbcPort(ctx, ibcReflectSendAddr)
 	require.NoError(t, err)
 	require.Equal(t, ensuredPort1, ensuredPort2)
@@ -111,11 +124,15 @@ func TestBindAndEnsureIBCPort(t *testing.T) {
 	// check ensured port is different for each contract
 	reflectEnsuredPort, err := keeper.ensureIbcPort(ctx, reflectAddr)
 	require.NoError(t, err)
-	require.Equal(t, "wasm.", reflectEnsuredPort[:5])
+	require.Equal(t, "wasm."+ibcReflectSendAddr.String(), ensuredPort2)
 	require.NotEmpty(t, reflectEnsuredPort)
 	require.NotEqual(t, reflectEnsuredPort, ensuredPort1)
 
-	contractInfo, err := keeper.GetContractInfo(ctx, ibcReflectSendAddr)
+	contractInfo, err := keeper.GetContractInfo(ctx, reflectAddr)
+	require.NoError(t, err)
+	require.Empty(t, contractInfo.GetIBCPortID())
+
+	contractInfo, err = keeper.GetContractInfo(ctx, ibcReflectSendAddr)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractInfo.GetIBCPortID())
 }

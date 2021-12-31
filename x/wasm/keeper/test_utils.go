@@ -155,6 +155,7 @@ type TestInput struct {
 	OracleKeeper       oraclekeeper.Keeper
 	MarketKeeper       marketkeeper.Keeper
 	TreasuryKeeper     treasurykeeper.Keeper
+	IBCKeeper          ibckeeper.Keeper
 	WasmKeeper         Keeper
 }
 
@@ -397,6 +398,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		oracleKeeper,
 		marketKeeper,
 		treasuryKeeper,
+		*ibcKeeper,
 		keeper}
 }
 
