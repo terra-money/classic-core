@@ -227,7 +227,7 @@ Next, add your account to genesis and set an initial balance to start. Run the f
 
 ```bash
 terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
-terrad gentx --name my_account --amount 10000000uluna
+terrad gentx <account_name> 10000000uluna --chain-id=<testnet_name>
 terrad collect-gentxs
 ```
 
