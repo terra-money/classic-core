@@ -43,14 +43,14 @@ Full-node software implementing the Terra protocol<br/><br/>
 - [What is Terra?](#what-is-terra)
 - [Installation](#installation)
   - [Binaries](#binaries)
-  - [From source](#from-source)
+  - [From Source](#from-source)
 - [`terrad`](#terrad)
-- [Node setup](#node-setup)
-  - [Joining the mainnet](#join-the-mainnet)
-  - [Joining a testnet](#join-a-testnet)
-  - [Running a local testnet](#run-a-local-testnet)
-  - [Run a single node testnet](#run-a-local-testnet)
-- [Production environment](#production-environment)
+- [Node Setup](#node-setup)
+  - [Join the mainnet](#join-the-mainnet)
+  - [Join a testnet](#join-a-testnet)
+  - [Run a local testnet](#run-a-local-testnet)
+  - [Run a single node testnet](#run-a-single-node-testnet)
+- [Set up a production environment](#set-up-a-production-environment)
   - [Increase maximum open files](#increase-maximum-open-files)
   - [Create a dedicated user](#create-a-dedicated-user)
   - [Port configuration](#port-configuration)
@@ -100,6 +100,7 @@ git checkout main
 Run the following command to install the executable `terrad` to your `GOPATH` and build Terra Core. `terrad` is the node daemon and CLI for interacting with a Terra node.
 
 ```bash
+# COSMOS_BUILD_OPTIONS=rocksdb make install
 make install
 ```
 
@@ -180,7 +181,7 @@ The following requirements are recommended for running a `columbus-5` mainnet no
 - **4 or more** CPU cores
 - At least **2TB** of disk storage
 - At least **100mbps** network bandwidth
-- An RPM-based Linux distribution
+- An Linux distribution
 
 For configuration and migration instructions for setting up a Columbus-5 mainnet node, visit [The mainnet repo](https://github.com/terra-money/mainnet).
 
@@ -227,7 +228,7 @@ Next, add your account to genesis and set an initial balance to start. Run the f
 
 ```bash
 terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
-terrad gentx --name my_account --amount 10000000uluna
+terrad gentx <account_name> 10000000uluna --chain-id=<testnet_name>
 terrad collect-gentxs
 ```
 
@@ -245,9 +246,9 @@ Congratulations, you've successfully set up your local Terra network!
 
 ## Set up a production environment
 
-**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html)
+**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html).
 
-This guide has only been tested against RPM-based Linux distributions.
+This guide has been tested against Linux distributions only. To ensure you successfully set up your production environment, consider setting it up on an Linux system.
 
 ### Increase maximum open files
 
