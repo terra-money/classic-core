@@ -193,6 +193,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
 		cache = store.NewCommitKVStoreCacheManager()
+		cache.SetCacheSize(cast.ToUint(appOpts.Get(server.FlagInterBlockCacheSize)))
 	}
 
 	skipUpgradeHeights := make(map[int64]bool)
@@ -206,6 +207,11 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	}
 
 	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
+	err = os.MkdirAll(snapshotDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
 	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
 	if err != nil {
 		panic(err)
@@ -233,6 +239,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		baseapp.SetSnapshotStore(snapshotStore),
 		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
 		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseapp.SetIAVLCacheSize(int(cast.ToUint64(appOpts.Get(server.FlagIAVLCacheSize)))),
 	)
 }
 

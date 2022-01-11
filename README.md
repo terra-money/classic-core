@@ -43,14 +43,14 @@ Full-node software implementing the Terra protocol<br/><br/>
 - [What is Terra?](#what-is-terra)
 - [Installation](#installation)
   - [Binaries](#binaries)
-  - [From source](#from-source)
+  - [From Source](#from-source)
 - [`terrad`](#terrad)
-- [Node setup](#node-setup)
-  - [Joining the mainnet](#join-the-mainnet)
-  - [Joining a testnet](#join-a-testnet)
-  - [Running a local testnet](#run-a-local-testnet)
-  - [Run a single node testnet](#run-a-local-testnet)
-- [Production environment](#production-environment)
+- [Node Setup](#node-setup)
+  - [Join the mainnet](#join-the-mainnet)
+  - [Join a testnet](#join-a-testnet)
+  - [Run a local testnet](#run-a-local-testnet)
+  - [Run a single node testnet](#run-a-single-node-testnet)
+- [Set up a production environment](#set-up-a-production-environment)
   - [Increase maximum open files](#increase-maximum-open-files)
   - [Create a dedicated user](#create-a-dedicated-user)
   - [Port configuration](#port-configuration)
@@ -100,6 +100,7 @@ git checkout main
 Run the following command to install the executable `terrad` to your `GOPATH` and build Terra Core. `terrad` is the node daemon and CLI for interacting with a Terra node.
 
 ```bash
+# COSMOS_BUILD_OPTIONS=rocksdb make install
 make install
 ```
 
@@ -227,7 +228,7 @@ Next, add your account to genesis and set an initial balance to start. Run the f
 
 ```bash
 terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
-terrad gentx --name my_account --amount 10000000uluna
+terrad gentx <account_name> 10000000uluna --chain-id=<testnet_name>
 terrad collect-gentxs
 ```
 
