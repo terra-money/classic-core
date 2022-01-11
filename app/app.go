@@ -582,6 +582,16 @@ func NewTerraApp(
 	app.ScopedTransferKeeper = scopedTransferKeeper
 	app.ScopedWasmKeeper = scopedWasmKeeper
 
+	app.UpgradeKeeper.SetUpgradeHandler("wasm1.0", func(ctx sdk.Context, plan upgradetypes.Plan, _ module.VersionMap) (module.VersionMap, error) {
+		// previously core does not store module versions.
+		// so the current version map should be passed instead of stored one.
+		// except the modules need migration.
+		vm := app.mm.GetVersionMap()
+		vm[wasmtypes.ModuleName] = 1
+
+		return app.mm.RunMigrations(ctx, app.configurator, vm)
+	})
+
 	return app
 }
 
@@ -605,6 +615,7 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 		panic(err)
 	}
 
+	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 

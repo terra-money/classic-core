@@ -140,6 +140,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	querier := keeper.NewQuerier(am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), querier)
+
+	m := keeper.NewMigrator(am.keeper)
+	cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 }
 
 // InitGenesis performs genesis initialization for the wasm module. It returns
@@ -160,7 +163,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock returns the begin blocker for the wasm module.
 func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
