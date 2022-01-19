@@ -46,6 +46,28 @@ func TestLegacyQueryParams(t *testing.T) {
 	require.Equal(t, input.OracleKeeper.GetParams(input.Ctx), params)
 }
 
+func TestLegacyQueryMissCounter(t *testing.T) {
+	input := CreateTestInput(t)
+	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)
+
+	queryParams := types.NewQueryMissCounterParams(ValAddrs[0])
+	bz, err := input.Cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryMissCounter}, req)
+	require.NoError(t, err)
+
+	var missCounter uint64
+	err = input.Cdc.UnmarshalJSON(res, &missCounter)
+	require.NoError(t, err)
+	require.Equal(t, input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0]), missCounter)
+}
+
 func TestLegacyQueryExchangeRate(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)

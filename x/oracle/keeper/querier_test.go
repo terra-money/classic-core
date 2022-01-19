@@ -40,6 +40,22 @@ func TestQueryExchangeRate(t *testing.T) {
 	require.Equal(t, rate, res.ExchangeRate)
 }
 
+func TestQueryMissCounter(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+	querier := NewQuerier(input.OracleKeeper)
+
+	missCounter := uint64(1)
+	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
+
+	// Query to grpc
+	res, err := querier.MissCounter(ctx, &types.QueryMissCounterRequest{
+		ValidatorAddr: ValAddrs[0].String(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, missCounter, res.MissCounter)
+}
+
 func TestQueryExchangeRates(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
