@@ -103,11 +103,7 @@ func eventAttributeCosts(attrs []wasmvmtypes.EventAttribute) sdk.Gas {
 
 // ToWasmVMGas converts from sdk gas to wasmvm gas
 func ToWasmVMGas(source sdk.Gas) uint64 {
-	x := source * GasMultiplier
-	if x < source {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
-	}
-	return x
+	return sdk.NewUint(source).MulUint64(GasMultiplier).Uint64()
 }
 
 // FromWasmVMGas converts from wasmvm gas to sdk gas
