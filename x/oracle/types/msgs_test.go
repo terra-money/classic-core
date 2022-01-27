@@ -73,9 +73,9 @@ func TestMsgAggregateExchangeRateVote(t *testing.T) {
 	}
 
 	invalidExchangeRates := "a,b"
-	exchangeRates := "1.0foo,1232.132bar"
+	exchangeRates := "18446744073709551615.0foo,1232.132bar"
 	abstainExchangeRates := "0.0foo,1232.132bar"
-	overFlowExchangeRates := "1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0foo,1232.132bar"
+	overFlowExchangeRates := "18446744073709551616.0foo,1232.132bar"
 
 	tests := []struct {
 		voter         sdk.AccAddress

@@ -136,8 +136,10 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 	}
 
 	for _, exchangeRate := range exchangeRates {
-		// Check overflow bit length
-		if exchangeRate.ExchangeRate.BigInt().BitLen() > 255+sdk.DecimalPrecisionBits {
+		// sdk.Decimal can handle up to 256bits(integer) + 60bits(decimal),
+		// so restrict integer part smaller than 64bits to avoid overflow
+		// error during computation
+		if !exchangeRate.ExchangeRate.TruncateInt().BigInt().IsUint64() {
 			return sdkerrors.Wrap(ErrInvalidExchangeRate, "overflow")
 		}
 	}
