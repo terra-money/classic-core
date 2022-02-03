@@ -324,3 +324,17 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 
 	require.Equal(t, sdk.ZeroDec(), pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
 }
+
+func TestNewClaim(t *testing.T) {
+	power := int64(10)
+	weight := int64(11)
+	winCount := int64(1)
+	addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
+	claim := types.NewClaim(power, weight, winCount, addr)
+	require.Equal(t, types.Claim{
+		Power:     power,
+		Weight:    weight,
+		WinCount:  winCount,
+		Recipient: addr,
+	}, claim)
+}

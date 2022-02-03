@@ -29,5 +29,6 @@ ignore:
   - "**/cli"
   - "**/rest"
   - "**/*.pb.go"
+  - "**/*.pb.gw.go"
   - "**/test_utils.go"
   - "**/module.go"
