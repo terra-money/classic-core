@@ -37,13 +37,13 @@ var (
 
 // CompileCosts costs to persist and "compile" a new wasm contract
 func CompileCosts(byteLength int) sdk.Gas {
-	return compileCostPerByte * uint64(byteLength)
+	return sdk.NewUint(compileCostPerByte).MulUint64(uint64(byteLength)).Uint64()
 }
 
 // InstantiateContractCosts costs when interacting with a wasm contract
 func InstantiateContractCosts(msgLen int) sdk.Gas {
-	dataCosts := sdk.Gas(msgLen) * contractMessageDataCostPerByte
-	return instantiateCost + dataCosts
+	dataCosts := sdk.NewUint(sdk.Gas(msgLen)).MulUint64(contractMessageDataCostPerByte)
+	return dataCosts.AddUint64(instantiateCost).Uint64()
 }
 
 // RegisterContractCosts costs when registering a new contract to the store
@@ -55,7 +55,7 @@ func RegisterContractCosts() sdk.Gas {
 func ReplyCosts(reply wasmvmtypes.Reply) sdk.Gas {
 	msgLen := len(reply.Result.Err)
 
-	var eventGas sdk.Gas
+	eventGas := sdk.NewUint(0)
 	if reply.Result.Ok != nil {
 		msgLen += len(reply.Result.Ok.Data)
 
@@ -65,20 +65,32 @@ func ReplyCosts(reply wasmvmtypes.Reply) sdk.Gas {
 			attrs = append(attrs, e.Attributes...)
 		}
 
-		eventGas += eventAttributeCosts(attrs)
+		eventGas = eventGas.AddUint64(eventAttributeCosts(attrs))
 	}
 
-	return eventGas + InstantiateContractCosts(msgLen)
+	return eventGas.AddUint64(InstantiateContractCosts(msgLen)).Uint64()
 }
 
 // EventCosts costs to persist an event
 func EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) sdk.Gas {
-	gas := eventAttributeCosts(attrs)
+	gas := sdk.NewUint(eventAttributeCosts(attrs))
+
 	for _, e := range events {
-		gas += customEventCost + sdk.Gas(len(e.Type))*eventAttributeDataCostPerByte
-		gas += eventAttributeCosts(e.Attributes)
+		typeCost := eventTypeCosts(e.Type)
+		attributeCost := eventAttributeCosts(e.Attributes)
+		eventCost := sdk.NewUint(customEventCost).AddUint64(typeCost).AddUint64(attributeCost)
+		gas = gas.Add(eventCost)
 	}
-	return gas
+
+	return gas.Uint64()
+}
+
+func eventTypeCosts(eventType string) sdk.Gas {
+	if len(eventType) == 0 {
+		return 0
+	}
+
+	return sdk.NewUint(uint64(len(eventType))).MulUint64(eventAttributeDataCostPerByte).Uint64()
 }
 
 func eventAttributeCosts(attrs []wasmvmtypes.EventAttribute) sdk.Gas {
@@ -86,28 +98,22 @@ func eventAttributeCosts(attrs []wasmvmtypes.EventAttribute) sdk.Gas {
 		return 0
 	}
 
-	var storedBytes uint64
+	storedBytes := sdk.NewUint(0)
 	for _, l := range attrs {
-		storedBytes += uint64(len(l.Key) + len(l.Value))
+		storedBytes = storedBytes.AddUint64(uint64(len(l.Key) + len(l.Value)))
 	}
 
 	// total Length * costs + attribute count * costs
-	r := sdk.NewIntFromUint64(eventAttributeDataCostPerByte).Mul(sdk.NewIntFromUint64(storedBytes)).
-		Add(sdk.NewIntFromUint64(eventAttributeCost).Mul(sdk.NewIntFromUint64(uint64(len(attrs)))))
-	if !r.IsUint64() {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
-	}
+	lengthCost := storedBytes.MulUint64(eventAttributeDataCostPerByte)
+	attributeCost := sdk.NewUint(eventAttributeCost).MulUint64(uint64(len(attrs)))
+	r := lengthCost.Add(attributeCost)
 
 	return r.Uint64()
 }
 
 // ToWasmVMGas converts from sdk gas to wasmvm gas
 func ToWasmVMGas(source sdk.Gas) uint64 {
-	x := source * GasMultiplier
-	if x < source {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
-	}
-	return x
+	return sdk.NewUint(source).MulUint64(GasMultiplier).Uint64()
 }
 
 // FromWasmVMGas converts from wasmvm gas to sdk gas
