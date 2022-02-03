@@ -310,12 +310,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
-	pb := ExchangeRateBallot{NewVoteForTally(
+	pb := types.ExchangeRateBallot{types.NewVoteForTally(
 		sdk.ZeroDec(),
 		core.MicroSDRDenom,
 		valAddr,
 		2,
-	), NewVoteForTally(
+	), types.NewVoteForTally(
 		exchangeRate,
 		core.MicroSDRDenom,
 		valAddr,
