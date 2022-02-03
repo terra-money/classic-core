@@ -283,3 +283,23 @@ func TestPBStandardDeviation(t *testing.T) {
 		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
 	}
 }
+
+func TestPBStandardDeviationOverflow(t *testing.T) {
+	valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
+	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
+	require.NoError(t, err)
+
+	pb := ExchangeRateBallot{NewVoteForTally(
+		sdk.ZeroDec(),
+		core.MicroSDRDenom,
+		valAddr,
+		2,
+	), NewVoteForTally(
+		exchangeRate,
+		core.MicroSDRDenom,
+		valAddr,
+		1,
+	)}
+
+	require.Equal(t, sdk.ZeroDec(), pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
+}

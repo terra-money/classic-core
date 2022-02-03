@@ -140,6 +140,12 @@ func (pb ExchangeRateBallot) StandardDeviation(median sdk.Dec) (standardDeviatio
 		return sdk.ZeroDec()
 	}
 
+	defer func() {
+		if e := recover(); e != nil {
+			standardDeviation = sdk.ZeroDec()
+		}
+	}()
+
 	sum := sdk.ZeroDec()
 	for _, v := range pb {
 		deviation := v.ExchangeRate.Sub(median)
