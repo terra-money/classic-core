@@ -1,6 +1,7 @@
 package oracle_test
 
 import (
+	"sort"
 	"testing"
 
 	fuzz "github.com/google/gofuzz"
@@ -14,17 +15,9 @@ import (
 )
 
 func TestFuzz_Tally(t *testing.T) {
-	denoms := []string{}
 	validators := map[string]int64{}
 
 	f := fuzz.New().NilChance(0).Funcs(
-		func(e *[]string, c fuzz.Continue) {
-			numStrings := c.Intn(100) + 5
-
-			for i := 0; i < numStrings; i++ {
-				*e = append(*e, c.RandString())
-			}
-		},
 		func(e *sdk.Dec, c fuzz.Continue) {
 			*e = sdk.NewDec(c.Int63())
 		},
@@ -42,26 +35,25 @@ func TestFuzz_Tally(t *testing.T) {
 				(*e)[validator] = types.NewClaim(power, 0, 0, addr)
 			}
 		},
-		func(e *map[string]types.ExchangeRateBallot, c fuzz.Continue) {
-			for _, denom := range denoms {
-				ballot := types.ExchangeRateBallot{}
+		func(e *types.ExchangeRateBallot, c fuzz.Continue) {
 
-				for addr, power := range validators {
-					addr, _ := sdk.ValAddressFromBech32(addr)
+			ballot := types.ExchangeRateBallot{}
+			for addr, power := range validators {
+				addr, _ := sdk.ValAddressFromBech32(addr)
 
-					var rate sdk.Dec
-					c.Fuzz(&rate)
+				var rate sdk.Dec
+				c.Fuzz(&rate)
 
-					ballot = append(ballot, types.NewVoteForTally(rate, denom, addr, power))
-				}
-
-				(*e)[denom] = ballot
+				ballot = append(ballot, types.NewVoteForTally(rate, c.RandString(), addr, power))
 			}
+
+			sort.Sort(ballot)
+
+			*e = ballot
 		},
 	)
 
 	// set random denoms and validators
-	f.Fuzz(&denoms)
 	f.Fuzz(&validators)
 
 	input, _ := setup(t)
@@ -124,6 +116,7 @@ func TestFuzz_PickReferenceTerra(t *testing.T) {
 					ballot = append(ballot, types.NewVoteForTally(rate, denom, addr, power))
 				}
 
+				sort.Sort(ballot)
 				(*e)[denom] = ballot
 			}
 		},
