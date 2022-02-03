@@ -55,13 +55,11 @@ func (k msgServer) SwapSend(goCtx context.Context, msg *types.MsgSwapSend) (*typ
 }
 
 // handleMsgSwap handles the logic of a MsgSwap
+// This function does not repeat checks that have already been performed in msg.ValidateBasic()
+// Ex) assert(offerCoin.Denom != askDenom)
 func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	trader sdk.AccAddress, receiver sdk.AccAddress,
 	offerCoin sdk.Coin, askDenom string) (*types.MsgSwapResponse, error) {
-	// Can't swap to the same coin
-	if offerCoin.Denom == askDenom {
-		return nil, types.ErrRecursiveSwap
-	}
 
 	// Compute exchange rates between the ask and offer
 	swapDecCoin, spread, err := k.ComputeSwap(ctx, offerCoin, askDenom)
