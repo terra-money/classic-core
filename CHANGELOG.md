@@ -1,3 +1,11 @@
+## v0.5.15
+
+This release contains mainly overflow checking enhancement including custom dependency updates.
+
+- [\#670](https://github.com/terra-money/core/pull/670) audit fix (overflow check)
+- [\#658](https://github.com/terra-money/core/pull/658) cosmos-sdk proto update
+- [\#655](https://github.com/terra-money/core/pull/655) use custom dependency for cosmos-sdk and tendermint
+
 ## v0.5.14
 
 This release contains wasmvm bugfix to prevent non-deterministic error messages comes out from wasmvm.
