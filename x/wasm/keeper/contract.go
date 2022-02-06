@@ -144,7 +144,7 @@ func (k Keeper) InstantiateContract(
 
 	// create prefixed data store
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
-	contractStore := prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
+	contractStore := prefix.NewStore(types.KVStore(ctx, k.storeKey), contractStoreKey)
 
 	// instantiate wasm contract
 	res, gasUsed, err := k.wasmVM.Instantiate(
@@ -302,7 +302,7 @@ func (k Keeper) MigrateContract(
 
 	// prepare necessary meta data
 	prefixStoreKey := types.GetContractStoreKey(contractAddress)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	prefixStore := prefix.NewStore(types.KVStore(ctx, k.storeKey), prefixStoreKey)
 
 	res, gasUsed, err := k.wasmVM.Migrate(
 		newCodeInfo.CodeHash,
@@ -492,6 +492,6 @@ func (k Keeper) getContractDetails(ctx sdk.Context, contractAddress sdk.AccAddre
 
 	k.cdc.MustUnmarshal(bz, &codeInfo)
 	contractStoreKey := types.GetContractStoreKey(contractAddress)
-	contractStorePrefix = prefix.NewStore(ctx.KVStore(k.storeKey), contractStoreKey)
+	contractStorePrefix = prefix.NewStore(types.KVStore(ctx, k.storeKey), contractStoreKey)
 	return
 }
