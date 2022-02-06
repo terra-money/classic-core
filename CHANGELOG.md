@@ -1,3 +1,16 @@
+## v0.5.16
+
+This release contains security update
+
+- [\#674](https://github.com/terra-money/core/pull/674) fix to charge gas cost for the key length in wasm execution
+
+### Softfork Schedule
+
+|               | columbus-5                | bombay-12                 |
+| ------------- | ------------------------- | ------------------------- |
+| Height        | 6,470,000                 | 7,800,000                 |
+| Expected Time | 2022-02-13T15:00:00 (UTC) | 2022-02-11T15:00:00 (UTC) |
+
 ## v0.5.15
 
 This release contains mainly overflow checking enhancement including custom dependency updates.
