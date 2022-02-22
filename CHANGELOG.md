@@ -1,3 +1,9 @@
+## v0.5.17
+
+This release contains security update.
+
+Details will be shared after checking the status of the validator update.
+
 ## v0.5.16
 
 This release contains security update
