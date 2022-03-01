@@ -5,10 +5,6 @@ import (
 
 	gogogrpc "github.com/gogo/protobuf/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	customante "github.com/terra-money/core/custom/auth/ante"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -19,42 +15,20 @@ var _ ServiceServer = txServer{}
 
 // txServer is the server for the protobuf Tx service.
 type txServer struct {
-	clientCtx      client.Context
-	treasuryKeeper customante.TreasuryKeeper
+	clientCtx client.Context
 }
 
 // NewTxServer creates a new Tx service server.
-func NewTxServer(clientCtx client.Context, treasuryKeeper customante.TreasuryKeeper) ServiceServer {
+func NewTxServer(clientCtx client.Context) ServiceServer {
 	return txServer{
-		clientCtx:      clientCtx,
-		treasuryKeeper: treasuryKeeper,
+		clientCtx: clientCtx,
 	}
 }
 
 // ComputeTax implements the ServiceServer.ComputeTax RPC method.
 func (ts txServer) ComputeTax(c context.Context, req *ComputeTaxRequest) (*ComputeTaxResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
-	}
-
-	var msgs []sdk.Msg
-	if len(req.TxBytes) != 0 {
-		tx, err := ts.clientCtx.TxConfig.TxDecoder()(req.TxBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		msgs = tx.GetMsgs()
-	} else if req.Tx != nil {
-		msgs = req.Tx.GetMsgs()
-	} else {
-		return nil, status.Errorf(codes.InvalidArgument, "empty txBytes is not allowed")
-	}
-
-	taxAmount := customante.FilterMsgAndComputeTax(ctx, ts.treasuryKeeper, msgs...)
 	return &ComputeTaxResponse{
-		TaxAmount: taxAmount,
+		TaxAmount: sdk.Coins{},
 	}, nil
 }
 
@@ -62,11 +36,10 @@ func (ts txServer) ComputeTax(c context.Context, req *ComputeTaxRequest) (*Compu
 func RegisterTxService(
 	qrt gogogrpc.Server,
 	clientCtx client.Context,
-	treasuryKeeper customante.TreasuryKeeper,
 ) {
 	RegisterServiceServer(
 		qrt,
-		NewTxServer(clientCtx, treasuryKeeper),
+		NewTxServer(clientCtx),
 	)
 }
 

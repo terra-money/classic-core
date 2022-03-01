@@ -48,7 +48,6 @@ func NewKeeper(
 	paramspace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	treasuryKeeper types.TreasuryKeeper,
 	serviceRouter types.MsgServiceRouter,
 	queryRouter types.GRPCQueryRouter,
 	supportedFeatures string,
@@ -78,18 +77,17 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		storeKey:       storeKey,
-		cdc:            cdc,
-		paramSpace:     paramspace,
-		wasmVM:         vm,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		treasuryKeeper: treasuryKeeper,
-		serviceRouter:  serviceRouter,
-		queryRouter:    queryRouter,
-		wasmConfig:     wasmConfig,
-		msgParser:      types.NewWasmMsgParser(),
-		querier:        types.NewWasmQuerier(),
+		storeKey:      storeKey,
+		cdc:           cdc,
+		paramSpace:    paramspace,
+		wasmVM:        vm,
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
+		serviceRouter: serviceRouter,
+		queryRouter:   queryRouter,
+		wasmConfig:    wasmConfig,
+		msgParser:     types.NewWasmMsgParser(),
+		querier:       types.NewWasmQuerier(),
 	}
 }
 

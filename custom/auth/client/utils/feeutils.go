@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/spf13/pflag"
@@ -13,15 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-	"github.com/cosmos/cosmos-sdk/x/authz"
-
-	core "github.com/terra-money/core/types"
-
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	marketexported "github.com/terra-money/core/x/market/exported"
-	treasuryexported "github.com/terra-money/core/x/treasury/exported"
-	wasmexported "github.com/terra-money/core/x/wasm/exported"
 )
 
 type (
@@ -100,13 +90,7 @@ func ComputeFeesWithBaseReq(
 		gas = adj
 	}
 
-	// Computes taxes of the msgs
-	taxes, err := FilterMsgAndComputeTax(clientCtx, msgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	fees := br.Fees.Add(taxes...)
+	fees := br.Fees
 	gasPrices := br.GasPrices
 
 	if !gasPrices.IsZero() {
@@ -162,13 +146,7 @@ func ComputeFeesWithCmd(
 		gas = adj
 	}
 
-	// Computes taxes of the msgs
-	taxes, err := FilterMsgAndComputeTax(clientCtx, msgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	fees := txf.Fees().Add(taxes...)
+	fees := txf.Fees()
 	gasPrices := txf.GasPrices()
 
 	if !gasPrices.IsZero() {
@@ -189,120 +167,6 @@ func ComputeFeesWithCmd(
 		Amount: fees,
 		Gas:    gas,
 	}, nil
-}
-
-// FilterMsgAndComputeTax computes the stability tax on MsgSend and MsgMultiSend.
-func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sdk.Coins, err error) {
-	taxRate, err := queryTaxRate(clientCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, msg := range msgs {
-		switch msg := msg.(type) {
-		case *banktypes.MsgSend:
-			tax, err := computeTax(clientCtx, taxRate, msg.Amount)
-			if err != nil {
-				return nil, err
-			}
-
-			taxes = taxes.Add(tax...)
-
-		case *banktypes.MsgMultiSend:
-			for _, input := range msg.Inputs {
-				tax, err := computeTax(clientCtx, taxRate, input.Coins)
-				if err != nil {
-					return nil, err
-				}
-
-				taxes = taxes.Add(tax...)
-			}
-
-		case *authz.MsgExec:
-			messages, err := msg.GetMessages()
-			if err != nil {
-				panic(err)
-			}
-
-			tax, err := FilterMsgAndComputeTax(clientCtx, messages...)
-			if err != nil {
-				return nil, err
-			}
-
-			taxes = taxes.Add(tax...)
-
-		case *marketexported.MsgSwapSend:
-			tax, err := computeTax(clientCtx, taxRate, sdk.NewCoins(msg.OfferCoin))
-			if err != nil {
-				return nil, err
-			}
-
-			taxes = taxes.Add(tax...)
-
-		case *wasmexported.MsgInstantiateContract:
-			tax, err := computeTax(clientCtx, taxRate, msg.InitCoins)
-			if err != nil {
-				return nil, err
-			}
-
-			taxes = taxes.Add(tax...)
-
-		case *wasmexported.MsgExecuteContract:
-			tax, err := computeTax(clientCtx, taxRate, msg.Coins)
-			if err != nil {
-				return nil, err
-			}
-
-			taxes = taxes.Add(tax...)
-		}
-	}
-
-	return
-}
-
-// computes the stability tax according to tax-rate and tax-cap
-func computeTax(clientCtx client.Context, taxRate sdk.Dec, principal sdk.Coins) (taxes sdk.Coins, err error) {
-
-	for _, coin := range principal {
-
-		if coin.Denom == core.MicroLunaDenom {
-			continue
-		}
-
-		taxCap, err := queryTaxCap(clientCtx, coin.Denom)
-		if err != nil {
-			return nil, err
-		}
-
-		taxDue := sdk.NewDecFromInt(coin.Amount).Mul(taxRate).TruncateInt()
-
-		// If tax due is greater than the tax cap, cap!
-		if taxDue.GT(taxCap) {
-			taxDue = taxCap
-		}
-
-		if taxDue.Equal(sdk.ZeroInt()) {
-			continue
-		}
-
-		taxes = taxes.Add(sdk.NewCoin(coin.Denom, taxDue))
-	}
-
-	return
-}
-
-func queryTaxRate(clientCtx client.Context) (sdk.Dec, error) {
-	queryClient := treasuryexported.NewQueryClient(clientCtx)
-
-	res, err := queryClient.TaxRate(context.Background(), &treasuryexported.QueryTaxRateRequest{})
-	return res.TaxRate, err
-}
-
-func queryTaxCap(clientCtx client.Context, denom string) (sdk.Int, error) {
-	queryClient := treasuryexported.NewQueryClient(clientCtx)
-
-	res, err := queryClient.TaxCap(context.Background(), &treasuryexported.QueryTaxCapRequest{Denom: denom})
-	return res.TaxCap, err
 }
 
 // ParseFloat64 parses string to float64

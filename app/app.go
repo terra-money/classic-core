@@ -119,9 +119,7 @@ import (
 	"github.com/terra-money/core/x/oracle"
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
-	"github.com/terra-money/core/x/treasury"
-	treasurykeeper "github.com/terra-money/core/x/treasury/keeper"
-	treasurytypes "github.com/terra-money/core/x/treasury/types"
+	treasurylegacy "github.com/terra-money/core/x/treasury/legacy/v05"
 	"github.com/terra-money/core/x/vesting"
 	"github.com/terra-money/core/x/wasm"
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
@@ -134,7 +132,6 @@ import (
 	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/terra-money/core/client/docs/statik"
@@ -177,19 +174,20 @@ var (
 		vesting.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
-		treasury.AppModuleBasic{},
+		treasurylegacy.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // just added to enable align fee
-		treasurytypes.BurnModuleName:   {authtypes.Burner},
+		authtypes.FeeCollectorName: nil, // just added to enable align fee
+		// TODO - place burn module account to other module like bank
+		// treasurylegacy.BurnModuleName:   {authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		markettypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         nil,
 		distrtypes.ModuleName:          nil,
-		treasurytypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		treasurylegacy.ModuleName:      {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -198,8 +196,9 @@ var (
 
 	// module accounts that are allowed to receive tokens
 	allowedReceivingModAcc = map[string]bool{
-		oracletypes.ModuleName:       true,
-		treasurytypes.BurnModuleName: true,
+		oracletypes.ModuleName: true,
+		// TODO - place burn module account to other module like bank
+		// treasurylegacy.BurnModuleName: true,
 	}
 )
 
@@ -244,7 +243,6 @@ type TerraApp struct { // nolint: golint
 	TransferKeeper   ibctransferkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	MarketKeeper     marketkeeper.Keeper
-	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
 
 	// make scoped keepers public for test purposes
@@ -290,7 +288,7 @@ func NewTerraApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		oracletypes.StoreKey, markettypes.StoreKey, treasurytypes.StoreKey,
+		oracletypes.StoreKey, markettypes.StoreKey, treasurylegacy.StoreKey,
 		wasmtypes.StoreKey, authzkeeper.StoreKey, feegrant.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -392,19 +390,12 @@ func NewTerraApp(
 		app.GetSubspace(markettypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
 	)
-	app.TreasuryKeeper = treasurykeeper.NewKeeper(
-		appCodec, keys[treasurytypes.StoreKey],
-		app.GetSubspace(treasurytypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper,
-		app.MarketKeeper, app.OracleKeeper,
-		app.StakingKeeper, app.DistrKeeper,
-		distrtypes.ModuleName)
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec, keys[wasmtypes.StoreKey],
 		app.GetSubspace(wasmtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper,
-		app.TreasuryKeeper, bApp.MsgServiceRouter(),
+		bApp.MsgServiceRouter(),
 		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
 		homePath, wasmConfig,
 	)
@@ -423,7 +414,7 @@ func NewTerraApp(
 		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
 		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.MarketKeeper),
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
-		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.TreasuryKeeper),
+		wasmtypes.WasmQueryRouteTreasury: treasurylegacy.NewWasmQuerier(),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
 	}, wasmkeeper.NewStargateWasmQuerier(app.WasmKeeper))
 
@@ -467,7 +458,7 @@ func NewTerraApp(
 		transferModule,
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
-		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
+		treasurylegacy.NewAppModule(appCodec),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 	)
 
@@ -484,8 +475,7 @@ func NewTerraApp(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName,
 		oracletypes.ModuleName, markettypes.ModuleName,
-		treasurytypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, stakingtypes.ModuleName,
+		authz.ModuleName, feegrant.ModuleName, stakingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -499,7 +489,7 @@ func NewTerraApp(
 		banktypes.ModuleName, distrtypes.ModuleName,
 		stakingtypes.ModuleName, slashingtypes.ModuleName,
 		govtypes.ModuleName, markettypes.ModuleName,
-		oracletypes.ModuleName, treasurytypes.ModuleName,
+		oracletypes.ModuleName, treasurylegacy.ModuleName,
 		wasmtypes.ModuleName, authz.ModuleName,
 		minttypes.ModuleName, crisistypes.ModuleName,
 		ibchost.ModuleName, genutiltypes.ModuleName,
@@ -534,7 +524,6 @@ func NewTerraApp(
 		transferModule,
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
-		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 	)
 
@@ -555,7 +544,6 @@ func NewTerraApp(
 			BankKeeper:       app.BankKeeper,
 			FeegrantKeeper:   app.FeeGrantKeeper,
 			OracleKeeper:     app.OracleKeeper,
-			TreasuryKeeper:   app.TreasuryKeeper,
 			SigGasConsumer:   ante.DefaultSigVerificationGasConsumer,
 			SignModeHandler:  encodingConfig.TxConfig.SignModeHandler(),
 			IBCChannelKeeper: app.IBCKeeper.ChannelKeeper,
@@ -711,7 +699,7 @@ func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIC
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *TerraApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
-	customauthtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.TreasuryKeeper)
+	customauthtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
@@ -755,7 +743,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(markettypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
-	paramsKeeper.Subspace(treasurytypes.ModuleName)
+	paramsKeeper.Subspace(treasurylegacy.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper

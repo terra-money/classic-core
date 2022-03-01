@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	v04treasury "github.com/terra-money/core/x/treasury/legacy/v04"
-	v05treasury "github.com/terra-money/core/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,13 +17,13 @@ import (
 // - Re-encode in v0.5 GenesisState.
 func Migrate(
 	treasuryGenState v04treasury.GenesisState,
-) *v05treasury.GenesisState {
+) *GenesisState {
 	// Note that the following `for` loop over a map's keys, so are not
 	// deterministic.
 	i := 0
-	taxCaps := make([]v05treasury.TaxCap, len(treasuryGenState.TaxCaps))
+	taxCaps := make([]TaxCap, len(treasuryGenState.TaxCaps))
 	for denom, cap := range treasuryGenState.TaxCaps {
-		taxCaps[i] = v05treasury.TaxCap{
+		taxCaps[i] = TaxCap{
 			Denom:  denom,
 			TaxCap: cap,
 		}
@@ -37,13 +36,13 @@ func Migrate(
 
 	// Remove cumulative height dependencies
 	cumulativeEpochs := int(treasuryGenState.CumulativeHeight / int64(v04treasury.BlocksPerWeek))
-	epochStates := make([]v05treasury.EpochState, len(treasuryGenState.TRs)-cumulativeEpochs)
+	epochStates := make([]EpochState, len(treasuryGenState.TRs)-cumulativeEpochs)
 	for i := range treasuryGenState.TRs {
 		if i < cumulativeEpochs {
 			continue
 		}
 
-		epochStates[i-cumulativeEpochs] = v05treasury.EpochState{
+		epochStates[i-cumulativeEpochs] = EpochState{
 			Epoch:             uint64(i - cumulativeEpochs),
 			TaxReward:         treasuryGenState.TRs[i],
 			SeigniorageReward: treasuryGenState.SRs[i],
@@ -51,21 +50,21 @@ func Migrate(
 		}
 	}
 
-	return &v05treasury.GenesisState{
+	return &GenesisState{
 		EpochInitialIssuance: treasuryGenState.EpochInitialIssuance,
 		EpochStates:          epochStates,
 		RewardWeight:         sdk.OneDec(),
 		TaxCaps:              taxCaps,
 		TaxProceeds:          treasuryGenState.TaxProceed,
 		TaxRate:              treasuryGenState.TaxRate,
-		Params: v05treasury.Params{
-			TaxPolicy: v05treasury.PolicyConstraints{
+		Params: Params{
+			TaxPolicy: PolicyConstraints{
 				RateMin:       treasuryGenState.Params.TaxPolicy.RateMin,
 				RateMax:       treasuryGenState.Params.TaxPolicy.RateMax,
 				Cap:           treasuryGenState.Params.TaxPolicy.Cap,
 				ChangeRateMax: treasuryGenState.Params.TaxPolicy.ChangeRateMax,
 			},
-			RewardPolicy: v05treasury.PolicyConstraints{
+			RewardPolicy: PolicyConstraints{
 				RateMin:       sdk.ZeroDec(),
 				RateMax:       sdk.OneDec(),
 				Cap:           treasuryGenState.Params.RewardPolicy.Cap,

@@ -12,7 +12,7 @@ import (
 	v40mint "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
-	v40treasury "github.com/terra-money/core/x/treasury/types"
+	v04treasury "github.com/terra-money/core/x/treasury/legacy/v04"
 	v040vesting "github.com/terra-money/core/x/vesting/types"
 )
 
@@ -65,7 +65,7 @@ func convertBaseVestingAccount(old *v039auth.BaseVestingAccount) *v040authvestin
 // - Re-encode in v0.40 GenesisState.
 func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
 	mintModuleAddress := v040auth.NewModuleAddress(v40mint.ModuleName)
-	treasuryModuleAddress := v040auth.NewModuleAddress(v40treasury.ModuleName)
+	treasuryModuleAddress := v040auth.NewModuleAddress(v04treasury.ModuleName)
 
 	// Convert v0.39 accounts to v0.40 ones.
 	var v040Accounts = make([]v040auth.GenesisAccount, len(authGenState.Accounts))

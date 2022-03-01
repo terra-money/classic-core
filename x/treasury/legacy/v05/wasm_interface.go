@@ -1,4 +1,4 @@
-package wasm
+package v05
 
 import (
 	"encoding/json"
@@ -8,21 +8,17 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-money/core/x/treasury/keeper"
-	"github.com/terra-money/core/x/treasury/types"
 	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
 var _ wasm.WasmQuerierInterface = WasmQuerier{}
 
 // WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
-	keeper keeper.Keeper
-}
+type WasmQuerier struct{}
 
 // NewWasmQuerier return bank wasm query interface
-func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
-	return WasmQuerier{keeper}
+func NewWasmQuerier() WasmQuerier {
+	return WasmQuerier{}
 }
 
 // Query - implement query function
@@ -32,8 +28,14 @@ func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, err
 
 // CosmosQuery contains various treasury queries
 type CosmosQuery struct {
-	TaxRate *struct{}                `json:"tax_rate,omitempty"`
-	TaxCap  *types.QueryTaxCapParams `json:"tax_cap,omitempty"`
+	TaxRate *struct{}          `json:"tax_rate,omitempty"`
+	TaxCap  *QueryTaxCapParams `json:"tax_cap,omitempty"`
+}
+
+// QueryTaxCapParams for query
+// - 'custom/treasury/taxRate
+type QueryTaxCapParams struct {
+	Denom string `json:"denom"`
 }
 
 // TaxRateQueryResponse - tax rate query response for wasm module
@@ -60,10 +62,10 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 	var bz []byte
 
 	if query.TaxRate != nil {
-		rate := querier.keeper.GetTaxRate(ctx)
+		rate := sdk.ZeroDec()
 		bz, err = json.Marshal(TaxRateQueryResponse{Rate: rate.String()})
 	} else if query.TaxCap != nil {
-		cap := querier.keeper.GetTaxCap(ctx, query.TaxCap.Denom)
+		cap := sdk.ZeroInt()
 		bz, err = json.Marshal(TaxCapQueryResponse{Cap: cap.String()})
 	} else {
 		return nil, sdkerrors.ErrInvalidRequest
