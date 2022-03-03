@@ -803,8 +803,8 @@ github.com/terra-money/ledger-terra-go v0.11.2 h1:BVXZl+OhJOri6vFNjjVaTabRLApw9M
 github.com/terra-money/ledger-terra-go v0.11.2/go.mod h1:ClJ2XMj1ptcnONzKH+GhVPi7Y8pXIT+UzJ0TNt0tfZE=
 github.com/terra-money/tendermint v0.34.14-terra.2 h1:UYDDCI001ZNhs+aX09HjKVldUcz084q3RwLHUOSSZQU=
 github.com/terra-money/tendermint v0.34.14-terra.2/go.mod h1:FrwVm3TvsVicI9Z7FlucHV6Znfd5KBc/Lpp69cCwtk0=
-github.com/terra-money/wasmvm v0.16.4-0.20220223064700-00b867119589 h1:0sA+UJS6NH0KTGuKlh3EU6zgIiAom7VIVhex2ymoITw=
-github.com/terra-money/wasmvm v0.16.4-0.20220223064700-00b867119589/go.mod h1:Id107qllDJyJjVQQsKMOy2YYF98sqPJ2t+jX1QES40A=
+github.com/terra-money/wasmvm v0.16.4-0.20220303060445-1ebe5807aa66 h1:d1kSz5gbRraD1UU3X51xT1kIeYTJnrd6waqv9501QXc=
+github.com/terra-money/wasmvm v0.16.4-0.20220303060445-1ebe5807aa66/go.mod h1:Id107qllDJyJjVQQsKMOy2YYF98sqPJ2t+jX1QES40A=
 github.com/tidwall/gjson v1.6.7/go.mod h1:zeFuBCIqD4sN/gmqBzZ4j7Jd6UcA2Fc56x7QFsv+8fI=
 github.com/tidwall/match v1.0.3/go.mod h1:eRSPERbgtNPcGhD8UCthc6PmLEQXEWd3PRB5JTxsfmM=
 github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
