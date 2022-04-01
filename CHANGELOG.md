@@ -1,3 +1,7 @@
+## [unreleased]
+
+- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order
+
 ## v0.5.17
 
 This release contains security update.
