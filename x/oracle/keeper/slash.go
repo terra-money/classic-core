@@ -1,7 +1,12 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+
+	"github.com/terra-money/core/x/oracle/types"
 )
 
 // SlashAndResetMissCounters do slash any operator who over criteria & clear all operators miss counter to zero
@@ -35,11 +40,30 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 					panic(err)
 				}
 
+				power := validator.GetConsensusPower(powerReduction)
+				ctx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						slashingtypes.EventTypeSlash,
+						sdk.NewAttribute(slashingtypes.AttributeKeyAddress, consAddr.String()),
+						sdk.NewAttribute(slashingtypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
+						sdk.NewAttribute(slashingtypes.AttributeKeyReason, types.AttributeValueMissingOracleVote),
+						sdk.NewAttribute(slashingtypes.AttributeKeyJailed, consAddr.String()),
+					),
+				)
+
 				k.StakingKeeper.Slash(
 					ctx, consAddr,
 					distributionHeight, validator.GetConsensusPower(powerReduction), slashFraction,
 				)
 				k.StakingKeeper.Jail(ctx, consAddr)
+
+				logger := k.Logger(ctx)
+				logger.Info(
+					"slashing and jailing validator due to oracle vote liveness fault",
+					"height", height,
+					"validator", consAddr.String(),
+					"slashed", slashFraction.String(),
+				)
 			}
 		}
 
