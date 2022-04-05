@@ -36,7 +36,9 @@ func ParseEvents(
 
 		// Deprecated: from_contract
 		sdkEvent.Type = EventTypeFromContract
-		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+		if sdkEvent != nil {
+			sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+		}
 	}
 
 	// append wasm prefix for the events
@@ -46,7 +48,9 @@ func ParseEvents(
 			return nil, err
 		}
 
-		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+		if sdkEvent != nil {
+			sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+		}
 	}
 
 	return sdkEvents, nil
