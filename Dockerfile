@@ -3,8 +3,8 @@
 FROM golang:1.17.8-alpine3.15 AS go-builder
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ENV LIBWASMVM_VERSION=0.16.6
-ENV LIBWASMVM_SHA256=fe63ff6bb75cad9116948d96344391d6786b6009d28e7016a85e1a268033d8f8
+ENV LIBWASMVM_VERSION=0.16.3
+ENV LIBWASMVM_SHA256=3fc6d5a239f3e97ac96c1a2df3006e4107ca461da4ca318bc71cfdc3e3593125
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -19,7 +19,7 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
 RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
@@ -29,8 +29,6 @@ FROM alpine:3.15.4
 
 RUN addgroup terra \
     && adduser -G terra -D -h /terra terra
-
-RUN apk add libgcc
 
 WORKDIR /terra
 
