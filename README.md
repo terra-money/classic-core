@@ -342,16 +342,22 @@ journalctl -t terrad -f
 - Developer Tools
 
   - Terra developer documentation(https://docs.terra.money)
+  - [TerraWiki.org](https://terrawiki.org) - The Terra community wiki.
   - SDKs
     - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
     - [terra-sdk-python](https://www.github.com/terra-money/terra-sdk-python) for Python
   - [Faucet](https://faucet.terra.money) can be used to get tokens for testnets
   - [LocalTerra](https://www.github.com/terra-money/LocalTerra) can be used to set up a private local testnet with configurable world state
 
+- Developer Forums
+  - [Terra Developer Discord](https://discord.com/channels/464241079042965516/591812948867940362)
+  - [Terra DEveloper Telegram room](https://t.me/+gCxCPohmVBkyNDRl)
+
+
 - Block Explorers
 
   - [Terra Finder](https://finder.terra.money) - Terra's basic block explorer.
-  - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - A community-run fork of Finder with extra features.
+  - [Terrascope](https://terrascope.info/) - A community-run block explorer with extra features.
   - [Stake ID](https://terra.stake.id) - A block explorer made by Staking Fund
   - [Hubble](https://hubble.figment.network/terra/chains/columbus-5) - by Figment
 
@@ -361,6 +367,11 @@ journalctl -t terrad -f
   - Terra Station Mobile
     - [iOS](https://apps.apple.com/us/app/terra-station/id1548434735)
     - [Android](https://play.google.com/store/apps/details?id=money.terra.station&hl=en_US&gl=US)
+    
+  - [Falcon Wallet](https://falconwallet.app/)
+  - [Leap Wallet](https://chrome.google.com/webstore/detail/leap-wallet/aijcbedoijmgnlmjeegjaglmepbmpkpi/?utm_source=Leap&utm_medium=Bio&utm_campaign=Leap)
+  - [XDeFi](https://chrome.google.com/webstore/detail/xdefi-wallet/hmeobnfnfcmdkdcmlblgagmfpfboieaf)
+  - [Liquality](https://liquality.io/)
 
 - Research
 
@@ -383,7 +394,7 @@ If you are interested in contributing to Terra Core source, please review our [c
 
 This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
 
-© 2021 Terraform Labs, PTE LTD
+© 2022 Terraform Labs, PTE LTD
 
 <hr/>
 
