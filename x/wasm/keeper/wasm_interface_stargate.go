@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -58,9 +59,20 @@ func NewStargateWasmQuerier(queryRouter types.GRPCQueryRouter) StargateWasmQueri
 	return StargateWasmQuerier{queryRouter}
 }
 
+var queryBlackList = []string{
+	"/cosmos.tx",
+	"/cosmos.base.tendermint",
+}
+
 // Query - implement query function
 func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 	route := querier.queryRouter.Route(request.Stargate.Path)
+	for _, b := range queryBlackList {
+		if strings.HasPrefix(request.Stargate.Path, b) {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
+		}
+	}
+
 	if route == nil {
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Stargate.Path)}
 	}
