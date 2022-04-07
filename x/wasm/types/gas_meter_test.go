@@ -13,11 +13,11 @@ import (
 
 func TestOverflow_ToWasmVM(t *testing.T) {
 	require.Panics(t,
-		func() { ToWasmVMGas(uint64(0x7f_ff_ff_ff_ff_ff_ff_ff)) },
+		func() { ToWasmVMGas(uint64(0xff_ff_ff_ff_ff_ff_ff_ff)) },
 	)
 
 	require.NotPanics(t, func() {
-		ToWasmVMGas(uint64(0x7f_ff_ff_ff_ff_ff_ff))
+		ToWasmVMGas(uint64(0xff_ff_ff_ff))
 	})
 }
 

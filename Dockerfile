@@ -2,7 +2,7 @@
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
 FROM golang:1.17.8-alpine3.15 AS go-builder
 
-# See https://github.com/CosmWasm/wasmvm/releases
+# See https://github.com/terra-money/wasmvm/releases
 ENV LIBWASMVM_VERSION=v1.0.0-beta10
 ENV LIBWASMVM_SHA256=d1be6826066e9d292cefc71ba7ca8107a7c7fbf5a241b3d7a5c5ee4fa60cb799
 
