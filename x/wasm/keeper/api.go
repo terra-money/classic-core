@@ -15,7 +15,7 @@ func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
 		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
 			err = sdk.VerifyAddressFormat(canon)
 			if err != nil {
-				return "", types.HumanizeWasmGasCost, nil
+				return "", types.HumanizeWasmGasCost, err
 			}
 
 			return sdk.AccAddress(canon).String(), types.HumanizeWasmGasCost, nil
