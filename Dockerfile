@@ -1,6 +1,10 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.17.7-alpine3.15 AS go-builder
+FROM golang:1.17.8-alpine3.15 AS go-builder
+
+# See https://github.com/CosmWasm/wasmvm/releases
+ENV LIBWASMVM_VERSION=v1.0.0-beta10
+ENV LIBWASMVM_SHA256=d1be6826066e9d292cefc71ba7ca8107a7c7fbf5a241b3d7a5c5ee4fa60cb799
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -15,13 +19,13 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/terra-money/wasmvm/releases
-ADD https://github.com/terra-money/wasmvm/releases/download/v1.0.0-beta4/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep 3c3d18d43b57d0115053fccfe4a59875824fac6921e7aa90126b4f91f80395ff
+ADD https://github.com/terra-money/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
 
-FROM alpine:3.15.0
+FROM alpine:3.15.4
 
 RUN addgroup terra \
     && adduser -G terra -D -h /terra terra
