@@ -62,7 +62,7 @@ service Query {
 
   // AggregateVote returns an aggregate vote of a validator
   rpc AggregateVote(QueryAggregateVoteRequest) returns (QueryAggregateVoteResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/valdiators/{validator_addr}/aggregate_vote";
+    option (google.api.http).get = "/terra/oracle/v1beta1/validators/{validator_addr}/aggregate_vote";
   }
 
   // AggregateVotes returns aggregate votes of all validators
