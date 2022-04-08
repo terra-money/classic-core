@@ -1,4 +1,14 @@
-## [unreleased]
+## v0.5.18
+
+This release contains wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these
+two versions are not compatible, so the node operators are highly recommended to rebuild wasm 
+cache before upgrade with https://github.com/YunSuk-Yeo/wasm-cache-rebuilder. Your node may 
+undergo sync delay due to compilation overhead of wasm binary, if you do not proceed cache rebuild.
+
+You can run cache rebuilder simultaneously with terrad, so do not turn off terrad and run
+rebuilder. Please update terrad binary after rebuilder process finished.
+> sometimes rebuilder process can be panicked with file already open exception, 
+> but you can ignore that error.
 
 - [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order
 
