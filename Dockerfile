@@ -3,8 +3,8 @@
 FROM golang:1.17.8-alpine3.15 AS go-builder
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ENV LIBWASMVM_VERSION=0.16.7
-ENV LIBWASMVM_SHA256=253770eb61737f8a0836edc581a344d1ead2fff1939f81a6d12f3278f599b6bb
+ENV LIBWASMVM_VERSION=0.16.6
+ENV LIBWASMVM_SHA256=fe63ff6bb75cad9116948d96344391d6786b6009d28e7016a85e1a268033d8f8
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
