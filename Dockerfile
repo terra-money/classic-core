@@ -27,7 +27,7 @@ ADD https://github.com/CosmWasm/wasmvm/releases/download/v${LIBWASMVM_VERSION}/l
 RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-extldflags \"-L/code/mimalloc/build -lmimalloc -static\"" make build
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-linkmode=external -extldflags \"-L/code/mimalloc/build -lmimalloc -Wl,-z,muldefs -static\"" make build
 
 FROM alpine:3.15.4
 
