@@ -180,9 +180,8 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName: nil, // just added to enable align fee
-		// TODO - place burn module account to other module like bank
-		// legacytreasury.BurnModuleName:   {authtypes.Burner},
+		authtypes.FeeCollectorName:     nil, // just added to enable align fee
+		markettypes.BurnModuleName:     {authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		markettypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         nil,
@@ -195,9 +194,8 @@ var (
 
 	// module accounts that are allowed to receive tokens
 	allowedReceivingModAcc = map[string]bool{
-		oracletypes.ModuleName: true,
-		// TODO - place burn module account to other module like bank
-		// legacytreasury.BurnModuleName: true,
+		oracletypes.ModuleName:     true,
+		markettypes.BurnModuleName: true,
 	}
 )
 

@@ -12,6 +12,10 @@ const (
 
 	// QuerierRoute is the query router key for the market module
 	QuerierRoute = ModuleName
+
+	// BurnModuleName is special purpose module name to perform burn coins
+	// burn address = terra1sk06e3dyexuq4shw77y3dsv480xv42mq73anxu
+	BurnModuleName = "burn"
 )
 
 // Keys for market store

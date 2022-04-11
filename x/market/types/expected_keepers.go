@@ -24,6 +24,7 @@ type BankKeeper interface {
 	// only used for simulation
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
 }
 
