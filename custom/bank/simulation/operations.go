@@ -17,6 +17,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
+// nolint
 // Simulation operation weights constants
 const (
 	OpWeightMsgSend      = "op_weight_msg_send"

@@ -19,6 +19,7 @@ import (
 	"github.com/terra-money/core/x/oracle/types"
 )
 
+// nolint
 // Simulation operation weights constants
 const (
 	OpWeightMsgAggregateExchangeRatePrevote = "op_weight_msg_exchange_rate_aggregate_prevote"

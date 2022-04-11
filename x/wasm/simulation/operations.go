@@ -24,6 +24,7 @@ import (
 	"github.com/terra-money/core/x/wasm/types"
 )
 
+// nolint
 const (
 	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
