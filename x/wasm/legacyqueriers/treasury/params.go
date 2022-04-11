@@ -1,4 +1,4 @@
-package v05
+package treasury
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

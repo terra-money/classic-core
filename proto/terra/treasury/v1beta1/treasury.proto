@@ -4,7 +4,7 @@ package terra.treasury.v1beta1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/terra-money/core/x/treasury/legacy/v05";
+option go_package = "github.com/terra-money/core/x/wasm/legacyqueriers/treasury";
 
 // Params defines the parameters for the oracle module.
 message Params {

@@ -119,11 +119,11 @@ import (
 	"github.com/terra-money/core/x/oracle"
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
-	treasurylegacy "github.com/terra-money/core/x/treasury/legacy/v05"
 	"github.com/terra-money/core/x/vesting"
 	"github.com/terra-money/core/x/wasm"
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
 	wasmkeeper "github.com/terra-money/core/x/wasm/keeper"
+	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	wasmtypes "github.com/terra-money/core/x/wasm/types"
 
 	bankwasm "github.com/terra-money/core/custom/bank/wasm"
@@ -175,7 +175,6 @@ var (
 		vesting.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
-		treasurylegacy.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 	)
 
@@ -183,12 +182,11 @@ var (
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName: nil, // just added to enable align fee
 		// TODO - place burn module account to other module like bank
-		// treasurylegacy.BurnModuleName:   {authtypes.Burner},
+		// legacytreasury.BurnModuleName:   {authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		markettypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         nil,
 		distrtypes.ModuleName:          nil,
-		treasurylegacy.ModuleName:      {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -199,7 +197,7 @@ var (
 	allowedReceivingModAcc = map[string]bool{
 		oracletypes.ModuleName: true,
 		// TODO - place burn module account to other module like bank
-		// treasurylegacy.BurnModuleName: true,
+		// legacytreasury.BurnModuleName: true,
 	}
 )
 
@@ -289,8 +287,8 @@ func NewTerraApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		oracletypes.StoreKey, markettypes.StoreKey, treasurylegacy.StoreKey,
-		wasmtypes.StoreKey, authzkeeper.StoreKey, feegrant.StoreKey,
+		oracletypes.StoreKey, markettypes.StoreKey, wasmtypes.StoreKey, authzkeeper.StoreKey,
+		feegrant.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -415,7 +413,7 @@ func NewTerraApp(
 		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
 		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.MarketKeeper),
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
-		wasmtypes.WasmQueryRouteTreasury: treasurylegacy.NewWasmQuerier(),
+		wasmtypes.WasmQueryRouteTreasury: legacytreasury.NewWasmQuerier(),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
 	}, wasmkeeper.NewStargateWasmQuerier(app.WasmKeeper))
 
@@ -459,7 +457,6 @@ func NewTerraApp(
 		transferModule,
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
-		treasurylegacy.NewAppModule(appCodec),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 	)
 
@@ -490,12 +487,11 @@ func NewTerraApp(
 		banktypes.ModuleName, distrtypes.ModuleName,
 		stakingtypes.ModuleName, slashingtypes.ModuleName,
 		govtypes.ModuleName, markettypes.ModuleName,
-		oracletypes.ModuleName, treasurylegacy.ModuleName,
-		wasmtypes.ModuleName, authz.ModuleName,
-		minttypes.ModuleName, crisistypes.ModuleName,
-		ibchost.ModuleName, genutiltypes.ModuleName,
-		evidencetypes.ModuleName, ibctransfertypes.ModuleName,
-		feegrant.ModuleName,
+		oracletypes.ModuleName, wasmtypes.ModuleName,
+		authz.ModuleName, minttypes.ModuleName,
+		crisistypes.ModuleName, ibchost.ModuleName,
+		genutiltypes.ModuleName, evidencetypes.ModuleName,
+		ibctransfertypes.ModuleName, feegrant.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -564,7 +560,7 @@ func NewTerraApp(
 
 	if upgradeInfo.Name == upgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := store.StoreUpgrades{
-			Deleted: []string{treasurylegacy.ModuleName},
+			Deleted: []string{"treasury"},
 		}
 
 		// configure store loader that checks if version == upgradeHeight and applies store upgrades
@@ -753,7 +749,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(markettypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
-	paramsKeeper.Subspace(treasurylegacy.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper

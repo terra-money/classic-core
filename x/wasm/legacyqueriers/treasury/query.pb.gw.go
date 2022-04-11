@@ -2,11 +2,11 @@
 // source: terra/treasury/v1beta1/query.proto
 
 /*
-Package v06 is a reverse proxy.
+Package treasury is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package v05
+package treasury
 
 import (
 	"context"

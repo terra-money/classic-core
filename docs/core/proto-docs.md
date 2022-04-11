@@ -895,11 +895,6 @@
     - [Params](#terra.treasury.v1beta1.Params)
     - [PolicyConstraints](#terra.treasury.v1beta1.PolicyConstraints)
   
-- [terra/treasury/v1beta1/genesis.proto](#terra/treasury/v1beta1/genesis.proto)
-    - [EpochState](#terra.treasury.v1beta1.EpochState)
-    - [GenesisState](#terra.treasury.v1beta1.GenesisState)
-    - [TaxCap](#terra.treasury.v1beta1.TaxCap)
-  
 - [terra/treasury/v1beta1/query.proto](#terra/treasury/v1beta1/query.proto)
     - [QueryIndicatorsRequest](#terra.treasury.v1beta1.QueryIndicatorsRequest)
     - [QueryIndicatorsResponse](#terra.treasury.v1beta1.QueryIndicatorsResponse)
@@ -920,12 +915,6 @@
     - [QueryTaxRateResponse](#terra.treasury.v1beta1.QueryTaxRateResponse)
   
     - [Query](#terra.treasury.v1beta1.Query)
-  
-- [terra/tx/v1beta1/service.proto](#terra/tx/v1beta1/service.proto)
-    - [ComputeTaxRequest](#terra.tx.v1beta1.ComputeTaxRequest)
-    - [ComputeTaxResponse](#terra.tx.v1beta1.ComputeTaxResponse)
-  
-    - [Service](#terra.tx.v1beta1.Service)
   
 - [terra/vesting/v1beta1/vesting.proto](#terra/vesting/v1beta1/vesting.proto)
     - [LazyGradedVestingAccount](#terra.vesting.v1beta1.LazyGradedVestingAccount)
@@ -13055,77 +13044,6 @@ PolicyConstraints - defines policy constraints can be applied in tax & reward po
 
 
 
-<a name="terra/treasury/v1beta1/genesis.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## terra/treasury/v1beta1/genesis.proto
-
-
-
-<a name="terra.treasury.v1beta1.EpochState"></a>
-
-### EpochState
-EpochState is the record for each epoch state
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `epoch` | [uint64](#uint64) |  |  |
-| `tax_reward` | [string](#string) |  |  |
-| `seigniorage_reward` | [string](#string) |  |  |
-| `total_staked_luna` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="terra.treasury.v1beta1.GenesisState"></a>
-
-### GenesisState
-GenesisState defines the oracle module's genesis state.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `params` | [Params](#terra.treasury.v1beta1.Params) |  |  |
-| `tax_rate` | [string](#string) |  |  |
-| `reward_weight` | [string](#string) |  |  |
-| `tax_caps` | [TaxCap](#terra.treasury.v1beta1.TaxCap) | repeated |  |
-| `tax_proceeds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
-| `epoch_initial_issuance` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
-| `epoch_states` | [EpochState](#terra.treasury.v1beta1.EpochState) | repeated |  |
-
-
-
-
-
-
-<a name="terra.treasury.v1beta1.TaxCap"></a>
-
-### TaxCap
-TaxCap is the max tax amount can be charged for the given denom
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `denom` | [string](#string) |  |  |
-| `tax_cap` | [string](#string) |  |  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
 <a name="terra/treasury/v1beta1/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -13384,65 +13302,6 @@ Query defines the gRPC querier service.
 | `TaxProceeds` | [QueryTaxProceedsRequest](#terra.treasury.v1beta1.QueryTaxProceedsRequest) | [QueryTaxProceedsResponse](#terra.treasury.v1beta1.QueryTaxProceedsResponse) | TaxProceeds return the current tax proceeds | GET|/terra/treasury/v1beta1/tax_proceeds|
 | `Indicators` | [QueryIndicatorsRequest](#terra.treasury.v1beta1.QueryIndicatorsRequest) | [QueryIndicatorsResponse](#terra.treasury.v1beta1.QueryIndicatorsResponse) | Indicators return the current trl informations | GET|/terra/treasury/v1beta1/indicators|
 | `Params` | [QueryParamsRequest](#terra.treasury.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.treasury.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/treasury/v1beta1/params|
-
- <!-- end services -->
-
-
-
-<a name="terra/tx/v1beta1/service.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## terra/tx/v1beta1/service.proto
-
-
-
-<a name="terra.tx.v1beta1.ComputeTaxRequest"></a>
-
-### ComputeTaxRequest
-ComputeTaxRequest is the request type for the Service.ComputeTax
-RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `tx` | [cosmos.tx.v1beta1.Tx](#cosmos.tx.v1beta1.Tx) |  | **Deprecated.** tx is the transaction to simulate. Deprecated. Send raw tx bytes instead. |
-| `tx_bytes` | [bytes](#bytes) |  | tx_bytes is the raw transaction. |
-
-
-
-
-
-
-<a name="terra.tx.v1beta1.ComputeTaxResponse"></a>
-
-### ComputeTaxResponse
-ComputeTaxResponse is the response type for the Service.ComputeTax
-RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `tax_amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | amount is the amount of coins to be paid as a fee |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="terra.tx.v1beta1.Service"></a>
-
-### Service
-Service defines a gRPC service for interacting with transactions.
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `ComputeTax` | [ComputeTaxRequest](#terra.tx.v1beta1.ComputeTaxRequest) | [ComputeTaxResponse](#terra.tx.v1beta1.ComputeTaxResponse) | EstimateFee simulates executing a transaction for estimating gas usage. | POST|/terra/tx/v1beta1/compute_tax|
 
  <!-- end services -->
 

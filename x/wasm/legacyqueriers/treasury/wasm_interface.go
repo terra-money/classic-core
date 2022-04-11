@@ -1,4 +1,4 @@
-package v05
+package treasury
 
 import (
 	"encoding/json"
