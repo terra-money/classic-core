@@ -99,9 +99,7 @@ import (
 
 	customauth "github.com/terra-money/core/custom/auth"
 	customante "github.com/terra-money/core/custom/auth/ante"
-	customauthrest "github.com/terra-money/core/custom/auth/client/rest"
 	customauthsim "github.com/terra-money/core/custom/auth/simulation"
-	customauthtx "github.com/terra-money/core/custom/auth/tx"
 	customauthz "github.com/terra-money/core/custom/authz"
 	custombank "github.com/terra-money/core/custom/bank"
 	customcrisis "github.com/terra-money/core/custom/crisis"
@@ -694,12 +692,8 @@ func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIC
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	// Register legacy tx routes.
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
-	// Register legacy custom tx routes.
-	customauthrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-	// Register custom tx routes from grpc-gateway.
-	customauthtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
@@ -716,7 +710,6 @@ func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIC
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *TerraApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
-	customauthtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
