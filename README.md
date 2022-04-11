@@ -9,7 +9,7 @@
 Full-node software implementing the Terra protocol<br/><br/>
 
 <a href="https://codecov.io/gh/terra-money/core">
-    <img src="https://codecov.io/gh/terra-money/core/branch/develop/graph/badge.svg">
+    <img src="https://codecov.io/gh/terra-money/core/branch/main/graph/badge.svg">
 </a>
 <a href="https://goreportcard.com/report/github.com/terra-money/core">
     <img src="https://goreportcard.com/badge/github.com/terra-money/core">
