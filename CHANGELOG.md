@@ -1,3 +1,34 @@
+## [unreleased]
+
+- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order
+
+## v0.5.17
+
+This release contains security update.
+
+Details will be shared after checking the status of the validator update.
+
+## v0.5.16
+
+This release contains security update
+
+- [\#674](https://github.com/terra-money/core/pull/674) fix to charge gas cost for the key length in wasm execution
+
+### Softfork Schedule
+
+|               | columbus-5                | bombay-12                 |
+| ------------- | ------------------------- | ------------------------- |
+| Height        | 6,470,000                 | 7,800,000                 |
+| Expected Time | 2022-02-13T15:00:00 (UTC) | 2022-02-11T15:00:00 (UTC) |
+
+## v0.5.15
+
+This release contains mainly overflow checking enhancement including custom dependency updates.
+
+- [\#670](https://github.com/terra-money/core/pull/670) audit fix (overflow check)
+- [\#658](https://github.com/terra-money/core/pull/658) cosmos-sdk proto update
+- [\#655](https://github.com/terra-money/core/pull/655) use custom dependency for cosmos-sdk and tendermint
+
 ## v0.5.14
 
 This release contains wasmvm bugfix to prevent non-deterministic error messages comes out from wasmvm.

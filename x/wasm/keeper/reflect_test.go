@@ -403,3 +403,58 @@ func toMaskRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
 	}
 	return res, nil
 }
+
+func TestReflectInvalidStargateQuery(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper, bankKeeper := input.Ctx, input.AccKeeper, input.WasmKeeper, input.BankKeeper
+
+	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, funds)
+
+	// upload code
+	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// now, try to build a protobuf query
+	protoRequest := wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.tx.v1beta1.Service/GetTx",
+			Data: []byte{},
+		},
+	}
+	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain
+	_, err = keeper.queryToContract(ctx, contractAddr, protoQueryBz)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "path is not allowed from the contract")
+
+	// now, try to build a protobuf query
+	protoRequest = wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.base.tendermint.v1beta1.Service/GetNodeInfo",
+			Data: []byte{},
+		},
+	}
+	protoQueryBz, err = json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain
+	_, err = keeper.queryToContract(ctx, contractAddr, protoQueryBz)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "path is not allowed from the contract")
+}
