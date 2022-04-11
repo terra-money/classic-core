@@ -59,8 +59,8 @@ import (
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurylegacy "github.com/terra-money/core/x/treasury/legacy/v05"
 	"github.com/terra-money/core/x/wasm/config"
+	treasurylegacy "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 

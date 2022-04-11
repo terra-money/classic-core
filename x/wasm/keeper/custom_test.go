@@ -15,7 +15,7 @@ import (
 	core "github.com/terra-money/core/types"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurylegacy "github.com/terra-money/core/x/treasury/legacy/v05"
+	treasurylegacy "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
