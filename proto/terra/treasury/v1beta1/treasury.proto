@@ -4,12 +4,12 @@ package terra.treasury.v1beta1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/terra-money/core/x/treasury/types";
+option go_package = "github.com/terra-money/core/x/wasm/legacyqueriers/treasury";
 
 // Params defines the parameters for the oracle module.
 message Params {
   option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_stringer) = true;
 
   PolicyConstraints tax_policy    = 1 [(gogoproto.moretags) = "yaml:\"tax_policy\"", (gogoproto.nullable) = false];
   PolicyConstraints reward_policy = 2 [(gogoproto.moretags) = "yaml:\"reward_policy\"", (gogoproto.nullable) = false];
@@ -31,7 +31,7 @@ message Params {
 // PolicyConstraints - defines policy constraints can be applied in tax & reward policies
 message PolicyConstraints {
   option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_stringer) = true;
 
   string rate_min = 1 [
     (gogoproto.moretags)   = "yaml:\"rate_min\"",
