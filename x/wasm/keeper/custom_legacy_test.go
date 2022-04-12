@@ -15,7 +15,7 @@ import (
 	core "github.com/terra-money/core/types"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
+	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -86,9 +86,9 @@ func TestLegacyMarketQuerier(t *testing.T) {
 
 func TestLegacyTreasuryQuerier(t *testing.T) {
 	input, _, testerAddr, _ := setupLegacyBindingsTesterContract(t)
-	ctx, keeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.TreasuryKeeper
+	ctx, keeper := input.Ctx, input.WasmKeeper
 
-	taxRate := treasuryKeeper.GetTaxRate(ctx)
+	taxRate := sdk.ZeroDec()
 	taxRateQueryMsg := bindingsTesterTaxRateQueryMsg{
 		TaxRate: taxRateQueryMsg{},
 	}
@@ -99,7 +99,7 @@ func TestLegacyTreasuryQuerier(t *testing.T) {
 	res, err := keeper.queryToContract(ctx, testerAddr, bz)
 	require.NoError(t, err)
 
-	var taxRateResponse treasurywasm.TaxRateQueryResponse
+	var taxRateResponse legacytreasury.TaxRateQueryResponse
 	err = json.Unmarshal(res, &taxRateResponse)
 	require.NoError(t, err)
 
@@ -107,7 +107,7 @@ func TestLegacyTreasuryQuerier(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, taxRate, taxRateDec)
 
-	taxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
+	taxCap := sdk.ZeroInt()
 	taxCapQueryMsg := bindingsTesterTaxCapQueryMsg{
 		TaxCap: taxCapQueryMsg{
 			Denom: core.MicroSDRDenom,
@@ -120,7 +120,7 @@ func TestLegacyTreasuryQuerier(t *testing.T) {
 	res, err = keeper.queryToContract(ctx, testerAddr, bz)
 	require.NoError(t, err)
 
-	var taxCapResponse treasurywasm.TaxCapQueryResponse
+	var taxCapResponse legacytreasury.TaxCapQueryResponse
 	err = json.Unmarshal(res, &taxCapResponse)
 	require.NoError(t, err)
 	require.Equal(t, taxCap.String(), taxCapResponse.Cap)
@@ -220,8 +220,7 @@ func TestLegacyBuyMsg(t *testing.T) {
 func TestLegacyBuyAndSendMsg(t *testing.T) {
 	input, creatorAddr, makerAddr, offerCoin := setupLegacyMakerContract(t)
 
-	ctx, keeper, accKeeper, bankKeeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.BankKeeper, input.TreasuryKeeper
-	treasuryKeeper.SetTaxRate(ctx, sdk.ZeroDec())
+	ctx, keeper, accKeeper, bankKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.BankKeeper
 
 	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
@@ -280,9 +279,7 @@ func TestLegacySendMsg(t *testing.T) {
 	input, creatorAddr, makerAddr, offerCoin := setupLegacyMakerContract(t)
 
 	// Check tax charging
-	ctx, keeper, accKeeper, bankKeeper, treasuryKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.BankKeeper, input.TreasuryKeeper
-	taxRate := treasuryKeeper.GetTaxRate(ctx)
-	taxCap := treasuryKeeper.GetTaxCap(ctx, core.MicroSDRDenom)
+	ctx, keeper, accKeeper, bankKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.BankKeeper
 
 	sendMsg := MakerHandleMsg{
 		Send: &sendPayload{
@@ -293,15 +290,10 @@ func TestLegacySendMsg(t *testing.T) {
 
 	bz, err := json.Marshal(&sendMsg)
 
-	expectedTaxAmount := taxRate.MulInt(offerCoin.Amount).TruncateInt()
-	if expectedTaxAmount.GT(taxCap) {
-		expectedTaxAmount = taxCap
-	}
-
 	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
 	require.NoError(t, err)
 
-	checkAccount(t, ctx, accKeeper, bankKeeper, creatorAddr, sdk.NewCoins(offerCoin.Sub(sdk.NewCoin(offerCoin.Denom, expectedTaxAmount))))
+	checkAccount(t, ctx, accKeeper, bankKeeper, creatorAddr, sdk.NewCoins(offerCoin))
 }
 
 func setupLegacyMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr sdk.AccAddress, initCoin sdk.Coin) {

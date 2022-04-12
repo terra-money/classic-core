@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 	wasmUtils "github.com/terra-money/core/x/wasm/client/utils"
 	"github.com/terra-money/core/x/wasm/types"
 )
@@ -138,9 +137,6 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return err
 			}
 
-			// Generate transaction factory for gas simulation
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-
 			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
 				return fmt.Errorf("must specify flag --from")
@@ -190,23 +186,8 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 				return err
 			}
 
-			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
-				// estimate tax and gas
-				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
-				if err != nil {
-					return err
-				}
-
-				// override gas and fees
-				txf = txf.
-					WithFees(stdFee.Amount.String()).
-					WithGas(stdFee.Gas).
-					WithSimulateAndExecute(false).
-					WithGasPrices("")
-			}
-
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			// build and sign the transaction, then broadcast to Tendermint
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -226,9 +207,6 @@ func ExecuteContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			// Generate transaction factory for gas simulation
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
 
 			fromAddr := clientCtx.GetFromAddress()
 			if fromAddr.Empty() {
@@ -266,23 +244,8 @@ func ExecuteContractCmd() *cobra.Command {
 				return err
 			}
 
-			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
-				// estimate tax and gas
-				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
-				if err != nil {
-					return err
-				}
-
-				// override gas and fees
-				txf = txf.
-					WithFees(stdFee.Amount.String()).
-					WithGas(stdFee.Gas).
-					WithSimulateAndExecute(false).
-					WithGasPrices("")
-			}
-
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			// build and sign the transaction, then broadcast to Tendermint
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -338,6 +301,7 @@ $ terrad tx wasm migrate terra... 10 '{"verifier": "terra..."}'
 				return err
 			}
 
+			// build and sign the transaction, then broadcast to Tendermint
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

@@ -2,7 +2,6 @@ package rest
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -11,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 	"github.com/terra-money/core/x/market/types"
 )
 
@@ -62,18 +60,6 @@ func submitSwapHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			msg := types.NewMsgSwapSend(fromAddress, toAddress, req.OfferCoin, req.AskDenom)
 			if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 				return
-			}
-
-			if req.BaseReq.Fees.IsZero() {
-				stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
-				if rest.CheckBadRequestError(w, err) {
-					return
-				}
-
-				// override gas and fees
-				req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
-				req.BaseReq.Fees = stdFee.Amount
-				req.BaseReq.GasPrices = sdk.DecCoins{}
 			}
 		}
 

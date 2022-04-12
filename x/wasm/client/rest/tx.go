@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 	wasmUtils "github.com/terra-money/core/x/wasm/client/utils"
 	"github.com/terra-money/core/x/wasm/types"
 )
@@ -220,18 +219,6 @@ func instantiateContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		if req.BaseReq.Fees.IsZero() {
-			stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
-			if rest.CheckBadRequestError(w, err) {
-				return
-			}
-
-			// override gas and fees
-			req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
-			req.BaseReq.Fees = stdFee.Amount
-			req.BaseReq.GasPrices = sdk.DecCoins{}
-		}
-
 		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
 	}
 }
@@ -279,18 +266,6 @@ func executeContractHandlerFn(clientCtx client.Context) http.HandlerFunc {
 		msg := types.NewMsgExecuteContract(fromAddr, contractAddress, execMsgBz, req.Amount)
 		if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
 			return
-		}
-
-		if req.BaseReq.Fees.IsZero() {
-			stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
-			if rest.CheckBadRequestError(w, err) {
-				return
-			}
-
-			// override gas and fees
-			req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
-			req.BaseReq.Fees = stdFee.Amount
-			req.BaseReq.GasPrices = sdk.DecCoins{}
 		}
 
 		tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)

@@ -20,6 +20,12 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	if moduleAcc == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
+
+	// check if the burn module account exists
+	burnModuleAcc := keeper.GetBurnModuleAccount(ctx)
+	if burnModuleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", types.BurnModuleName))
+	}
 }
 
 // ExportGenesis writes the current store values

@@ -12,6 +12,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
+	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -66,13 +67,18 @@ var queryBlackList = []string{
 
 // Query - implement query function
 func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
-	route := querier.queryRouter.Route(request.Stargate.Path)
 	for _, b := range queryBlackList {
 		if strings.HasPrefix(request.Stargate.Path, b) {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
 		}
 	}
 
+	// handle legacy queriers
+	if bz, err := legacytreasury.QueryLegacyTreasury(request.Stargate.Path); bz != nil || err != nil {
+		return bz, err
+	}
+
+	route := querier.queryRouter.Route(request.Stargate.Path)
 	if route == nil {
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Stargate.Path)}
 	}

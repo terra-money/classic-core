@@ -48,7 +48,6 @@ func NewKeeper(
 	paramspace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	treasuryKeeper types.TreasuryKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
@@ -86,7 +85,6 @@ func NewKeeper(
 		wasmVM:           vm,
 		accountKeeper:    accountKeeper,
 		bankKeeper:       bankKeeper,
-		treasuryKeeper:   treasuryKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
 		wasmConfig:       wasmConfig,
@@ -160,7 +158,7 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	store := ctx.KVStore(k.storeKey)
 	contractBz := store.Get(types.GetContractInfoKey(contractAddress))
 	if contractBz == nil {
-		return types.ContractInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "constractInfo %s", contractAddress.String())
+		return types.ContractInfo{}, sdkerrors.Wrapf(types.ErrNotFound, "contractInfo %s", contractAddress.String())
 	}
 	k.cdc.MustUnmarshal(contractBz, &contractInfo)
 	return contractInfo, nil

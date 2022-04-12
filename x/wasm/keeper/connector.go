@@ -2,7 +2,6 @@ package keeper
 
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/terra-money/core/custom/auth/ante"
 	"github.com/terra-money/core/x/wasm/types"
 
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
@@ -10,7 +9,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
 // dispatchMessages builds a sandbox to execute these messages and returns the execution result to the contract
@@ -141,18 +139,6 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, co
 
 	if sdkMsg == nil {
 		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to parse msg %v", msg)
-	}
-
-	// Charge tax on result msg
-	taxes := ante.FilterMsgAndComputeTax(ctx, k.treasuryKeeper, sdkMsg)
-	if !taxes.IsZero() {
-		eventManager := sdk.NewEventManager()
-		contractAcc := k.accountKeeper.GetAccount(ctx, contractAddr)
-		if err := cosmosante.DeductFees(k.bankKeeper, ctx.WithEventManager(eventManager), contractAcc, taxes); err != nil {
-			return nil, nil, err
-		}
-
-		events = eventManager.Events()
 	}
 
 	res, err := k.messenger.HandleSdkMessage(ctx, contractAddr, sdkMsg)
