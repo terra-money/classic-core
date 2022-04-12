@@ -57,7 +57,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// NOTE: **Make abstain votes to have zero vote power**
 		voteMap := k.OrganizeBallotByDenom(ctx, validatorClaimMap)
 
-		if referenceTerra := pickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
+		if referenceTerra := PickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
 			// make voteMap of Reference Terra to calculate cross exchange rates
 			ballotRT := voteMap[referenceTerra]
 			voteMapRT := ballotRT.ToMap()
