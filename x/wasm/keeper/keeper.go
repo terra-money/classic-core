@@ -65,18 +65,12 @@ func NewKeeper(
 		wasmConfig.ContractMemoryCacheSize = config.DefaultContractMemoryCacheSize
 	}
 
-	// prevent zero refresh thread
-	if wasmConfig.RefreshThreadNum == 0 {
-		wasmConfig.RefreshThreadNum = config.DefaultRefreshThreadNum
-	}
-
 	vm, err := wasmvm.NewVM(
 		filepath.Join(homePath, config.DBDir),
 		supportedFeatures,
 		types.ContractMemoryLimit,
 		wasmConfig.ContractDebugMode,
 		wasmConfig.ContractMemoryCacheSize,
-		wasmConfig.RefreshThreadNum,
 	)
 
 	if err != nil {
