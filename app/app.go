@@ -699,10 +699,42 @@ func NewTerraApp(
 	app.UpgradeKeeper.SetUpgradeHandler(
 		upgradeName,
 		func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			// no module upgrades - put current versions to skip migrations
+			fromVM[authtypes.ModuleName] = app.mm.Modules[authtypes.ModuleName].ConsensusVersion()
+			fromVM[authz.ModuleName] = app.mm.Modules[authz.ModuleName].ConsensusVersion()
+			fromVM[banktypes.ModuleName] = app.mm.Modules[banktypes.ModuleName].ConsensusVersion()
+			fromVM[capabilitytypes.ModuleName] = app.mm.Modules[capabilitytypes.ModuleName].ConsensusVersion()
+			fromVM[crisistypes.ModuleName] = app.mm.Modules[crisistypes.ModuleName].ConsensusVersion()
+			fromVM[distrtypes.ModuleName] = app.mm.Modules[distrtypes.ModuleName].ConsensusVersion()
+			fromVM[feegrant.ModuleName] = app.mm.Modules[feegrant.ModuleName].ConsensusVersion()
+			fromVM[stakingtypes.ModuleName] = app.mm.Modules[stakingtypes.ModuleName].ConsensusVersion()
+			fromVM[slashingtypes.ModuleName] = app.mm.Modules[slashingtypes.ModuleName].ConsensusVersion()
+			fromVM[govtypes.ModuleName] = app.mm.Modules[govtypes.ModuleName].ConsensusVersion()
+			fromVM[minttypes.ModuleName] = app.mm.Modules[minttypes.ModuleName].ConsensusVersion()
+			fromVM[evidencetypes.ModuleName] = app.mm.Modules[evidencetypes.ModuleName].ConsensusVersion()
+			fromVM[genutiltypes.ModuleName] = app.mm.Modules[genutiltypes.ModuleName].ConsensusVersion()
+			fromVM[paramstypes.ModuleName] = app.mm.Modules[paramstypes.ModuleName].ConsensusVersion()
+			fromVM[upgradetypes.ModuleName] = app.mm.Modules[upgradetypes.ModuleName].ConsensusVersion()
+			fromVM[vestingtypes.ModuleName] = app.mm.Modules[vestingtypes.ModuleName].ConsensusVersion()
+			fromVM[markettypes.ModuleName] = app.mm.Modules[markettypes.ModuleName].ConsensusVersion()
+			fromVM[oracletypes.ModuleName] = app.mm.Modules[oracletypes.ModuleName].ConsensusVersion()
+			fromVM[wasmtypes.ModuleName] = app.mm.Modules[wasmtypes.ModuleName].ConsensusVersion()
 
+			fromVM[ibctransfertypes.ModuleName] = app.mm.Modules[ibctransfertypes.ModuleName].ConsensusVersion()
+			fromVM[ibchost.ModuleName] = app.mm.Modules[ibchost.ModuleName].ConsensusVersion()
+
+			// new modules
+			// - router(packet-forward-middleware)
+			// - ica(inter-chain-accounts)
+
+			// ICS27 upgrade plan
+			// ica module initialized via initModule instead normal migration,
+			// so put current version to skip migration
 			fromVM[icatypes.ModuleName] = icaModule.ConsensusVersion()
+
 			// create ICS27 Controller submodule params
 			controllerParams := icacontrollertypes.Params{}
+
 			// create ICS27 Host submodule params
 			hostParams := icahosttypes.Params{
 				HostEnabled: true,
@@ -737,6 +769,7 @@ func NewTerraApp(
 			}
 
 			ctx.Logger().Info("start to init interchainaccount module...")
+
 			// initialize ICS27 module
 			icaModule.InitModule(ctx, controllerParams, hostParams)
 
@@ -753,8 +786,8 @@ func NewTerraApp(
 
 	if upgradeInfo.Name == upgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := store.StoreUpgrades{
-			Deleted: []string{"treasury"},
-			Added:   []string{icahosttypes.StoreKey},
+			Deleted: []string{legacytreasury.ModuleName},
+			Added:   []string{icahosttypes.StoreKey, routertypes.ModuleName},
 		}
 
 		// configure store loader that checks if version == upgradeHeight and applies store upgrades
