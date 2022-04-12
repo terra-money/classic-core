@@ -550,6 +550,7 @@ func NewTerraApp(
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
+	// NOTE: terra don't have vesting module
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
@@ -570,12 +571,13 @@ func NewTerraApp(
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		vestingtypes.ModuleName,
 		// no begin blockers
 		oracletypes.ModuleName,
 		markettypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
+
+	// NOTE: terra don't have vesting module
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
@@ -598,7 +600,6 @@ func NewTerraApp(
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
-		vestingtypes.ModuleName,
 		// no end blockers
 		wasmtypes.ModuleName,
 	)
@@ -608,7 +609,7 @@ func NewTerraApp(
 	// NOTE: Capability module must occur first so that it can initialize any capabilities
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
-	// NOTE: Treasury must occur after bank module so that initial supply is properly set
+	// NOTE: terra don't have vesting module
 	app.mm.SetOrderInitGenesis(
 		capabilitytypes.ModuleName,
 		banktypes.ModuleName,
@@ -629,7 +630,6 @@ func NewTerraApp(
 		routertypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
-		vestingtypes.ModuleName,
 		markettypes.ModuleName,
 		oracletypes.ModuleName,
 		wasmtypes.ModuleName,
