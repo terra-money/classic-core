@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package ibc.core.connection.v1;
 
-option go_package = "github.com/cosmos/ibc-go/modules/core/03-connection/types";
+option go_package = "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types";
 
 import "gogoproto/gogo.proto";
 import "ibc/core/commitment/v1/commitment.proto";
 
 // ICS03 - Connection Data Structures as defined in
-// https://github.com/cosmos/ics/tree/master/spec/ics-003-connection-semantics#data-structures
+// https://github.com/cosmos/ibc/blob/master/spec/core/ics-003-connection-semantics#data-structures
 
 // ConnectionEnd defines a stateful object on a chain connected to another
 // separate one.

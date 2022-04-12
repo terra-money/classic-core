@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ibc.applications.transfer.v1;
 
-option go_package = "github.com/cosmos/ibc-go/modules/apps/transfer/types";
+option go_package = "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types";
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -16,7 +16,7 @@ service Msg {
 
 // MsgTransfer defines a msg to transfer fungible tokens (i.e Coins) between
 // ICS20 enabled chains. See ICS Spec here:
-// https://github.com/cosmos/ics/tree/master/spec/ics-020-fungible-token-transfer#data-structures
+// https://github.com/cosmos/ibc/tree/master/spec/app/ics-020-fungible-token-transfer#data-structures
 message MsgTransfer {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
@@ -35,7 +35,7 @@ message MsgTransfer {
   // The timeout is disabled when set to 0.
   ibc.core.client.v1.Height timeout_height = 6
       [(gogoproto.moretags) = "yaml:\"timeout_height\"", (gogoproto.nullable) = false];
-  // Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+  // Timeout timestamp in absolute nanoseconds since unix epoch.
   // The timeout is disabled when set to 0.
   uint64 timeout_timestamp = 7 [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
 }
