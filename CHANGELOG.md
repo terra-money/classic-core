@@ -1,7 +1,7 @@
 ## v0.5.18
 
 This release contains wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
-For mitigating possible sync delay due to the runtime rebuilding overhead, the node operators are highly recommended to rebuild wasm cache with [wasm-cache-rebuilder](https://github.com/YunSuk-Yeo/wasm-cache-rebuilder) before the soft-fork height.
+For mitigating possible sync delay due to the runtime rebuilding overhead, the node operators are highly recommended to rebuild wasm cache with [wasm-cache-rebuilder](https://github.com/YunSuk-Yeo/wasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
 
 You don't have to shutdown terrad node before rebuilding it. `wasm-cache-rebuilder` can be run simultaneously with terrad. Please update terrad binary after rebuilding process is finished.
 > you may ignore _file already open_ error while rebuilding.
