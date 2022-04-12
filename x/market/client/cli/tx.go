@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
 	"github.com/terra-money/core/x/market/types"
 )
 
@@ -52,9 +51,6 @@ $ terrad market swap "1000ukrw" "uusd" "terra1..."
 				return err
 			}
 
-			// Generate transaction factory for gas simulation
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-
 			offerCoinStr := args[0]
 			offerCoin, err := sdk.ParseCoinNormalized(offerCoinStr)
 			if err != nil {
@@ -76,21 +72,6 @@ $ terrad market swap "1000ukrw" "uusd" "terra1..."
 					return err
 				}
 
-				if !clientCtx.GenerateOnly && txf.Fees().IsZero() {
-					// estimate tax and gas
-					stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
-					if err != nil {
-						return err
-					}
-
-					// override gas and fees
-					txf = txf.
-						WithFees(stdFee.Amount.String()).
-						WithGas(stdFee.Gas).
-						WithSimulateAndExecute(false).
-						WithGasPrices("")
-				}
 			} else {
 				msg = types.NewMsgSwap(fromAddress, offerCoin, askDenom)
 				if err = msg.ValidateBasic(); err != nil {
@@ -99,7 +80,7 @@ $ terrad market swap "1000ukrw" "uusd" "terra1..."
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

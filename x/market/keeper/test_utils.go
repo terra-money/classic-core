@@ -167,6 +167,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		distrtypes.ModuleName:          nil,
 		oracletypes.ModuleName:         nil,
 		types.ModuleName:               {authtypes.Burner, authtypes.Minter},
+		types.BurnModuleName:           {authtypes.Burner},
 	}
 
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tKeyParams)
@@ -226,6 +227,10 @@ func CreateTestInput(t *testing.T) TestInput {
 		require.NoError(t, err)
 		require.Equal(t, bankKeeper.GetAllBalances(ctx, addr), InitCoins)
 	}
+
+	// to test burn module account
+	err = bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, types.BurnModuleName, InitCoins)
+	require.NoError(t, err)
 
 	oracleKeeper := oraclekeeper.NewKeeper(
 		appCodec,

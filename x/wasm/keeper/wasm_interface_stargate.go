@@ -12,6 +12,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
+	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -70,6 +71,11 @@ func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.Qu
 		if strings.Contains(request.Stargate.Path, b) {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
 		}
+	}
+
+	// handle legacy queriers
+	if bz, err := legacytreasury.QueryLegacyTreasury(request.Stargate.Path); bz != nil || err != nil {
+		return bz, err
 	}
 
 	route := querier.keeper.queryRouter.Route(request.Stargate.Path)

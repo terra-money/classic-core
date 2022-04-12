@@ -11,3 +11,8 @@ import (
 func (k Keeper) GetMarketAccount(ctx sdk.Context) authtypes.ModuleAccountI {
 	return k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
+
+// GetBurnModuleAccount returns burn ModuleAccount
+func (k Keeper) GetBurnModuleAccount(ctx sdk.Context) authtypes.ModuleAccountI {
+	return k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
+}

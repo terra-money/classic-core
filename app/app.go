@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	stdlog "log"
 	"net/http"
@@ -38,6 +39,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -97,9 +99,7 @@ import (
 
 	customauth "github.com/terra-money/core/custom/auth"
 	customante "github.com/terra-money/core/custom/auth/ante"
-	customauthrest "github.com/terra-money/core/custom/auth/client/rest"
 	customauthsim "github.com/terra-money/core/custom/auth/simulation"
-	customauthtx "github.com/terra-money/core/custom/auth/tx"
 	customauthz "github.com/terra-money/core/custom/authz"
 	custombank "github.com/terra-money/core/custom/bank"
 	customcrisis "github.com/terra-money/core/custom/crisis"
@@ -119,13 +119,11 @@ import (
 	"github.com/terra-money/core/x/oracle"
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
-	"github.com/terra-money/core/x/treasury"
-	treasurykeeper "github.com/terra-money/core/x/treasury/keeper"
-	treasurytypes "github.com/terra-money/core/x/treasury/types"
 	"github.com/terra-money/core/x/vesting"
 	"github.com/terra-money/core/x/wasm"
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
 	wasmkeeper "github.com/terra-money/core/x/wasm/keeper"
+	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	wasmtypes "github.com/terra-money/core/x/wasm/types"
 
 	bankwasm "github.com/terra-money/core/custom/bank/wasm"
@@ -134,13 +132,13 @@ import (
 	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/terra-money/core/client/docs/statik"
 )
 
 const appName = "TerraApp"
+const upgradeName = "RM_TREASURY"
 
 var (
 	// DefaultNodeHome defines default home directories for terrad
@@ -177,19 +175,17 @@ var (
 		vesting.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
-		treasury.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil, // just added to enable align fee
-		treasurytypes.BurnModuleName:   {authtypes.Burner},
+		markettypes.BurnModuleName:     {authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		markettypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         nil,
 		distrtypes.ModuleName:          nil,
-		treasurytypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -198,8 +194,8 @@ var (
 
 	// module accounts that are allowed to receive tokens
 	allowedReceivingModAcc = map[string]bool{
-		oracletypes.ModuleName:       true,
-		treasurytypes.BurnModuleName: true,
+		oracletypes.ModuleName:     true,
+		markettypes.BurnModuleName: true,
 	}
 )
 
@@ -244,7 +240,6 @@ type TerraApp struct { // nolint: golint
 	TransferKeeper   ibctransferkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	MarketKeeper     marketkeeper.Keeper
-	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
 
 	// make scoped keepers public for test purposes
@@ -290,8 +285,8 @@ func NewTerraApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		oracletypes.StoreKey, markettypes.StoreKey, treasurytypes.StoreKey,
-		wasmtypes.StoreKey, authzkeeper.StoreKey, feegrant.StoreKey,
+		oracletypes.StoreKey, markettypes.StoreKey, wasmtypes.StoreKey, authzkeeper.StoreKey,
+		feegrant.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -392,19 +387,12 @@ func NewTerraApp(
 		app.GetSubspace(markettypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
 	)
-	app.TreasuryKeeper = treasurykeeper.NewKeeper(
-		appCodec, keys[treasurytypes.StoreKey],
-		app.GetSubspace(treasurytypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper,
-		app.MarketKeeper, app.OracleKeeper,
-		app.StakingKeeper, app.DistrKeeper,
-		distrtypes.ModuleName)
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec, keys[wasmtypes.StoreKey],
 		app.GetSubspace(wasmtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper,
-		app.TreasuryKeeper, bApp.MsgServiceRouter(),
+		bApp.MsgServiceRouter(),
 		app.GRPCQueryRouter(), wasmtypes.DefaultFeatures,
 		homePath, wasmConfig,
 	)
@@ -423,7 +411,7 @@ func NewTerraApp(
 		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
 		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.MarketKeeper),
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
-		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.TreasuryKeeper),
+		wasmtypes.WasmQueryRouteTreasury: legacytreasury.NewWasmQuerier(),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
 	}, wasmkeeper.NewStargateWasmQuerier(app.WasmKeeper))
 
@@ -467,7 +455,6 @@ func NewTerraApp(
 		transferModule,
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
-		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 	)
 
@@ -484,8 +471,7 @@ func NewTerraApp(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName,
 		oracletypes.ModuleName, markettypes.ModuleName,
-		treasurytypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, stakingtypes.ModuleName,
+		authz.ModuleName, feegrant.ModuleName, stakingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -499,12 +485,11 @@ func NewTerraApp(
 		banktypes.ModuleName, distrtypes.ModuleName,
 		stakingtypes.ModuleName, slashingtypes.ModuleName,
 		govtypes.ModuleName, markettypes.ModuleName,
-		oracletypes.ModuleName, treasurytypes.ModuleName,
-		wasmtypes.ModuleName, authz.ModuleName,
-		minttypes.ModuleName, crisistypes.ModuleName,
-		ibchost.ModuleName, genutiltypes.ModuleName,
-		evidencetypes.ModuleName, ibctransfertypes.ModuleName,
-		feegrant.ModuleName,
+		oracletypes.ModuleName, wasmtypes.ModuleName,
+		authz.ModuleName, minttypes.ModuleName,
+		crisistypes.ModuleName, ibchost.ModuleName,
+		genutiltypes.ModuleName, evidencetypes.ModuleName,
+		ibctransfertypes.ModuleName, feegrant.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -534,7 +519,6 @@ func NewTerraApp(
 		transferModule,
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
-		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
 		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 	)
 
@@ -555,7 +539,6 @@ func NewTerraApp(
 			BankKeeper:       app.BankKeeper,
 			FeegrantKeeper:   app.FeeGrantKeeper,
 			OracleKeeper:     app.OracleKeeper,
-			TreasuryKeeper:   app.TreasuryKeeper,
 			SigGasConsumer:   ante.DefaultSigVerificationGasConsumer,
 			SignModeHandler:  encodingConfig.TxConfig.SignModeHandler(),
 			IBCChannelKeeper: app.IBCKeeper.ChannelKeeper,
@@ -567,6 +550,20 @@ func NewTerraApp(
 
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if upgradeInfo.Name == upgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		storeUpgrades := store.StoreUpgrades{
+			Deleted: []string{"treasury"},
+		}
+
+		// configure store loader that checks if version == upgradeHeight and applies store upgrades
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -689,12 +686,8 @@ func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIC
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	// Register legacy tx routes.
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
-	// Register legacy custom tx routes.
-	customauthrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-	// Register custom tx routes from grpc-gateway.
-	customauthtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
@@ -711,7 +704,6 @@ func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIC
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *TerraApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
-	customauthtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.TreasuryKeeper)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
@@ -755,7 +747,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(markettypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
-	paramsKeeper.Subspace(treasurytypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper

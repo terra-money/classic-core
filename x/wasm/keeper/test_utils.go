@@ -59,10 +59,8 @@ import (
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 	oraclewasm "github.com/terra-money/core/x/oracle/wasm"
-	treasurykeeper "github.com/terra-money/core/x/treasury/keeper"
-	treasurytypes "github.com/terra-money/core/x/treasury/types"
-	treasurywasm "github.com/terra-money/core/x/treasury/wasm"
 	"github.com/terra-money/core/x/wasm/config"
+	treasurylegacy "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -146,7 +144,6 @@ type TestInput struct {
 	DistributionKeeper distrkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	MarketKeeper       marketkeeper.Keeper
-	TreasuryKeeper     treasurykeeper.Keeper
 	WasmKeeper         Keeper
 }
 
@@ -163,7 +160,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(oracletypes.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(markettypes.StoreKey)
-	keyTreasury := sdk.NewKVStoreKey(treasurytypes.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -180,7 +176,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -191,7 +186,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		stakingtypes.BondedPoolName:    true,
 		distrtypes.ModuleName:          true,
 		markettypes.ModuleName:         true,
-		treasurytypes.ModuleName:       true,
 	}
 
 	maccPerms := map[string][]string{
@@ -202,8 +196,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		distrtypes.ModuleName:          nil,
 		oracletypes.ModuleName:         nil,
 		markettypes.ModuleName:         {authtypes.Burner, authtypes.Minter},
-		treasurytypes.ModuleName:       {authtypes.Minter},
-		treasurytypes.BurnModuleName:   {authtypes.Burner},
 	}
 
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tkeyParams)
@@ -289,17 +281,6 @@ func CreateTestInput(t *testing.T) TestInput {
 	)
 	marketKeeper.SetParams(ctx, markettypes.DefaultParams())
 
-	treasuryKeeper := treasurykeeper.NewKeeper(
-		appCodec,
-		keyTreasury, paramsKeeper.Subspace(treasurytypes.ModuleName),
-		accountKeeper, bankKeeper,
-		marketKeeper, oracleKeeper,
-		stakingKeeper, distrKeeper,
-		distrtypes.ModuleName,
-	)
-
-	treasuryKeeper.SetParams(ctx, treasurytypes.DefaultParams())
-
 	router := baseapp.NewMsgServiceRouter()
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
@@ -312,7 +293,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		paramsKeeper.Subspace(types.ModuleName),
 		accountKeeper,
 		bankKeeper,
-		treasuryKeeper,
 		router,
 		querier,
 		types.DefaultFeatures,
@@ -338,7 +318,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(bankKeeper),
 		types.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(stakingKeeper, distrKeeper),
 		types.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(marketKeeper),
-		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
+		types.WasmQueryRouteTreasury: treasurylegacy.NewWasmQuerier(),
 		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
 		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
 	}, NewStargateWasmQuerier(keeper))
@@ -363,7 +343,6 @@ func CreateTestInput(t *testing.T) TestInput {
 		distrKeeper,
 		oracleKeeper,
 		marketKeeper,
-		treasuryKeeper,
 		keeper}
 }
 
