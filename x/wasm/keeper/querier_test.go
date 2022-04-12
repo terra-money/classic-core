@@ -129,3 +129,59 @@ func TestQueryMultipleGoroutines(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestQueryCodeAndContractInfo(t *testing.T) {
+	input := CreateTestInput(t)
+	goCtx := sdk.WrapSDKContext(input.Ctx)
+	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, _, err := keeper.InstantiateContract(ctx, contractID, creator, sdk.AccAddress{}, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	contractModel := []types.Model{
+		{Key: []byte("foo"), Value: []byte(`"bar"`)},
+		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+	}
+
+	keeper.SetContractStore(ctx, addr, contractModel)
+
+	querier := NewQuerier(keeper)
+
+	res, err := querier.CodeInfo(goCtx, &types.QueryCodeInfoRequest{CodeId: contractID})
+	require.NoError(t, err)
+	require.Equal(t, creator.String(), res.GetCodeInfo().Creator)
+	require.Equal(t, contractID, res.GetCodeInfo().CodeID)
+
+	res2, err := querier.ByteCode(goCtx, &types.QueryByteCodeRequest{CodeId: contractID})
+	require.NoError(t, err)
+	require.Equal(t, res2.GetByteCode(), wasmCode)
+
+	res3, err := querier.ContractInfo(goCtx, &types.QueryContractInfoRequest{ContractAddress: addr.String()})
+	require.NoError(t, err)
+	require.Equal(t, addr.String(), res3.GetContractInfo().Address)
+	require.Equal(t, "", res3.GetContractInfo().Admin)
+	require.Equal(t, creator.String(), res3.GetContractInfo().Creator)
+	require.Equal(t, contractID, res3.GetContractInfo().CodeID)
+	queriedInitMsg, err := res3.GetContractInfo().InitMsg.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, initMsgBz, queriedInitMsg)
+}

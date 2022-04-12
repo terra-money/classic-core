@@ -9,7 +9,7 @@
 Full-node software implementing the Terra protocol<br/><br/>
 
 <a href="https://codecov.io/gh/terra-money/core">
-    <img src="https://codecov.io/gh/terra-money/core/branch/develop/graph/badge.svg">
+    <img src="https://codecov.io/gh/terra-money/core/branch/main/graph/badge.svg">
 </a>
 <a href="https://goreportcard.com/report/github.com/terra-money/core">
     <img src="https://goreportcard.com/badge/github.com/terra-money/core">
@@ -21,7 +21,7 @@ Full-node software implementing the Terra protocol<br/><br/>
   <a href="https://docs.terra.money/"><strong>Explore the Docs »</strong></a>
   <br />
   <br/>
-  <a href="https://docs.terra.money/Reference/">Terra Core reference</a>
+  <a href="https://docs.terra.money/docs/develop/module-specifications/README.html">Terra Core reference</a>
   ·
   <a href="https://pkg.go.dev/github.com/terra-money/core?tab=subdirectories">Go API</a>
   ·
@@ -67,7 +67,7 @@ Full-node software implementing the Terra protocol<br/><br/>
 
 **[Terra](https://terra.money)** is a public, open-source blockchain protocol that provides fundamental infrastructure for a decentralized economy and enables open participation in the creation of new financial primitives to power the innovation of money.
 
-The Terra blockchain is secured by distributed consensus on staked asset Luna and natively supports the issuance of [price-tracking stablecoins](https://docs.terra.money/Concepts/glossary.html#algorithmic-stablecoin) that are algorithmically pegged to major world currencies, such as UST, KRT, and SDT. Smart contracts on Terra run on WebAssembly and take advantage of core modules, such as on-chain swaps, price oracle, and staking rewards, to power modern [DeFi](https://docs.terra.money/Concepts/glossary.html#defi) apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
+The Terra blockchain is secured by distributed consensus on staked asset Luna and natively supports the issuance of [price-tracking stablecoins](https://docs.terra.money/docs/learn/glossary.html#algorithmic-stablecoin) that are algorithmically pegged to major world currencies, such as UST, KRT, and SDT. Smart contracts on Terra run on WebAssembly and take advantage of core modules, such as on-chain swaps, price oracle, and staking rewards, to power modern [DeFi](https://docs.terra.money/docs/learn/glossary.html#defi) apps. Through dynamic fiscal policy managed by community governance, Terra is an evolving, democratized economy directed by its users.
 
 **Terra Core** is the reference implementation of the Terra protocol, written in Golang. Terra Core is built atop [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses [Tendermint](https://github.com/tendermint/tendermint) BFT consensus. If you intend to work on Terra Core source, it is recommended that you familiarize yourself with the concepts in those projects.
 
@@ -127,7 +127,7 @@ go: go version go1.17.2 darwin/amd64
 
 **NOTE:** `terracli` has been deprecated and all of its functionalities have been merged into `terrad`.
 
-`terrad` is the all-in-one command for operating and interacting with a running Terra node. For comprehensive coverage on each of the available functions, see [the terrad reference information](https://docs.terra.money/Reference/terrad/). To view various subcommands and their expected arguments, use the `$ terrad --help` command:
+`terrad` is the all-in-one command for operating and interacting with a running Terra node. For comprehensive coverage on each of the available functions, see [the terrad reference information](https://docs.terra.money/docs/develop/how-to/terrad/README.html). To view various subcommands and their expected arguments, use the `$ terrad --help` command:
 
 <pre>
         <div align="left">
@@ -246,7 +246,7 @@ Congratulations, you've successfully set up your local Terra network!
 
 ## Set up a production environment
 
-**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/How-to/Manage-a-Terra-validator/Overview.html).
+**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/docs/full-node/manage-a-terra-validator/README.html).
 
 This guide has been tested against Linux distributions only. To ensure you successfully set up your production environment, consider setting it up on an Linux system.
 
@@ -273,7 +273,7 @@ It is recommended that you run `terrad` as a normal user. Super-user accounts ar
 
 - `26657`: The default port for the RPC protocol. This port is used for querying / sending transactions and must be open to serve queries from `terrad`. **DO NOT** open this port to the public unless you are planning to run a public node.
 
-- `1317`: The default port for [Lite Client Daemon](https://docs.terra.money/How-to/Start-LCD.html#start-the-light-client-daemon-lcd) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
+- `1317`: The default port for [Lite Client Daemon](https://docs.terra.money/docs/develop/how-to/start-lcd.html) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
 
 - `26660`: The default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
 
@@ -342,16 +342,22 @@ journalctl -t terrad -f
 - Developer Tools
 
   - Terra developer documentation(https://docs.terra.money)
+  - [TerraWiki.org](https://terrawiki.org) - The Terra community wiki.
   - SDKs
     - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
     - [terra-sdk-python](https://www.github.com/terra-money/terra-sdk-python) for Python
   - [Faucet](https://faucet.terra.money) can be used to get tokens for testnets
   - [LocalTerra](https://www.github.com/terra-money/LocalTerra) can be used to set up a private local testnet with configurable world state
 
+- Developer Forums
+  - [Terra Developer Discord](https://discord.com/channels/464241079042965516/591812948867940362)
+  - [Terra DEveloper Telegram room](https://t.me/+gCxCPohmVBkyNDRl)
+
+
 - Block Explorers
 
   - [Terra Finder](https://finder.terra.money) - Terra's basic block explorer.
-  - [Extraterrestrial Finder](https://finder.extraterrestrial.money) - A community-run fork of Finder with extra features.
+  - [Terrascope](https://terrascope.info/) - A community-run block explorer with extra features.
   - [Stake ID](https://terra.stake.id) - A block explorer made by Staking Fund
   - [Hubble](https://hubble.figment.network/terra/chains/columbus-5) - by Figment
 
@@ -361,6 +367,11 @@ journalctl -t terrad -f
   - Terra Station Mobile
     - [iOS](https://apps.apple.com/us/app/terra-station/id1548434735)
     - [Android](https://play.google.com/store/apps/details?id=money.terra.station&hl=en_US&gl=US)
+    
+  - [Falcon Wallet](https://falconwallet.app/)
+  - [Leap Wallet](https://chrome.google.com/webstore/detail/leap-wallet/aijcbedoijmgnlmjeegjaglmepbmpkpi/?utm_source=Leap&utm_medium=Bio&utm_campaign=Leap)
+  - [XDeFi](https://chrome.google.com/webstore/detail/xdefi-wallet/hmeobnfnfcmdkdcmlblgagmfpfboieaf)
+  - [Liquality](https://liquality.io/)
 
 - Research
 
@@ -383,7 +394,7 @@ If you are interested in contributing to Terra Core source, please review our [c
 
 This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
 
-© 2021 Terraform Labs, PTE LTD
+© 2022 Terraform Labs, PTE LTD
 
 <hr/>
 

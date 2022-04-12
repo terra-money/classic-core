@@ -81,6 +81,20 @@ func TestLegacyContractState(t *testing.T) {
 
 	_, err = querier(ctx, []string{types.QueryContractStore}, abci.RequestQuery{Data: []byte(bz)})
 	require.Error(t, err)
+
+	bz, err = input.Cdc.MarshalJSON(types.NewQueryCodeIDParams(contractID))
+	_, err = querier(ctx, []string{types.QueryGetByteCode}, abci.RequestQuery{Data: []byte(bz)})
+	require.NoError(t, err)
+
+	_, err = querier(ctx, []string{types.QueryGetCodeInfo}, abci.RequestQuery{Data: []byte(bz)})
+	require.NoError(t, err)
+
+	bz, err = input.Cdc.MarshalJSON(types.NewQueryContractAddressParams(addr))
+	_, err = querier(ctx, []string{types.QueryGetContractInfo}, abci.RequestQuery{Data: []byte(bz)})
+	require.NoError(t, err)
+
+	_, err = querier(ctx, []string{types.QueryParameters}, abci.RequestQuery{})
+	require.NoError(t, err)
 }
 
 func TestLegacyParams(t *testing.T) {
