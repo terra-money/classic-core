@@ -1,15 +1,19 @@
 package cli
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/spf13/cobra"
 
+	marketcutils "github.com/terra-money/core/x/market/client/utils"
 	"github.com/terra-money/core/x/market/types"
 )
 
@@ -87,4 +91,71 @@ $ terrad market swap "1000ukrw" "uusd" "terra1..."
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// NewSubmitSeigniorageRouteChangeTxCmd returns a CLI command handler for creating
+// a seigniorage route change proposal governance transaction.
+func NewSubmitSeigniorageRouteChangeTxCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "seigniorage-route-change [proposal-file]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Submit a seigniorage route change proposal",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit a seigniorage route change proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file. For values that contains
+objects, only non-empty fields will be updated.
+
+Example:
+$ %s tx gov submit-proposal seigniorage-route-change <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+
+{
+  "title": "Staking Param Change",
+  "description": "Update max validators",
+  "routes": [
+    {
+      "address": "terra1...",
+      "weight": "0.1",
+    }
+  ],
+  "deposit": "1000uluna"
+}
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			proposal, err := marketcutils.ParseSeigniorageRouteChangeProposalJSON(clientCtx.LegacyAmino, args[0])
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
+			routes, err := proposal.Routes.ToSeigniorageRoutes()
+			if err != nil {
+				return err
+			}
+
+			content := types.NewSeigniorageRouteChangeProposal(
+				proposal.Title, proposal.Description, routes,
+			)
+
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
+			if err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
 }

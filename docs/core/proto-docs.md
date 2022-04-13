@@ -898,9 +898,14 @@
   
 - [terra/market/v1beta1/market.proto](#terra/market/v1beta1/market.proto)
     - [Params](#terra.market.v1beta1.Params)
+    - [SeigniorageRoute](#terra.market.v1beta1.SeigniorageRoute)
+    - [SeigniorageRoutes](#terra.market.v1beta1.SeigniorageRoutes)
   
 - [terra/market/v1beta1/genesis.proto](#terra/market/v1beta1/genesis.proto)
     - [GenesisState](#terra.market.v1beta1.GenesisState)
+  
+- [terra/market/v1beta1/proposal.proto](#terra/market/v1beta1/proposal.proto)
+    - [SeigniorageRouteChangeProposal](#terra.market.v1beta1.SeigniorageRouteChangeProposal)
   
 - [terra/market/v1beta1/query.proto](#terra/market/v1beta1/query.proto)
     - [QueryParamsRequest](#terra.market.v1beta1.QueryParamsRequest)
@@ -13252,6 +13257,38 @@ Params defines the parameters for the market module.
 
 
 
+
+<a name="terra.market.v1beta1.SeigniorageRoute"></a>
+
+### SeigniorageRoute
+SeigniorageRoute defines the wallet address with its weight
+to which seigniorage will be routed.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  |  |
+| `weight` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="terra.market.v1beta1.SeigniorageRoutes"></a>
+
+### SeigniorageRoutes
+SeigniorageRoutes defines the array of SeigniorageRoute objects.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `routes` | [SeigniorageRoute](#terra.market.v1beta1.SeigniorageRoute) | repeated |  |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -13279,6 +13316,39 @@ GenesisState defines the market module's genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#terra.market.v1beta1.Params) |  | params defines all the paramaters of the module. |
 | `terra_pool_delta` | [bytes](#bytes) |  | the gap between the TerraPool and the BasePool |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="terra/market/v1beta1/proposal.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/market/v1beta1/proposal.proto
+
+
+
+<a name="terra.market.v1beta1.SeigniorageRouteChangeProposal"></a>
+
+### SeigniorageRouteChangeProposal
+SeigniorageRouteChangeProposal defines a proposal to change one or more seigniorage route.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  |  |
+| `description` | [string](#string) |  |  |
+| `routes` | [SeigniorageRoute](#terra.market.v1beta1.SeigniorageRoute) | repeated |  |
 
 
 

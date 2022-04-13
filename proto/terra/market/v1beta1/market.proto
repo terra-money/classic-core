@@ -22,3 +22,24 @@ message Params {
     (gogoproto.nullable)   = false
   ];
 }
+
+// SeigniorageRoutes defines the array of SeigniorageRoute objects.
+message SeigniorageRoutes {
+  repeated SeigniorageRoute routes = 1 [(gogoproto.nullable) = false];
+}
+
+
+// SeigniorageRoute defines the wallet address with its weight
+// to which seigniorage will be routed.
+message SeigniorageRoute {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  string address = 1 [(gogoproto.moretags) = "yaml:\"address\""];
+  string weight  = 2 [
+    (gogoproto.moretags)   = "yaml:\"weight\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}

@@ -91,3 +91,26 @@ func (k Keeper) ReplenishPools(ctx sdk.Context) {
 
 	k.SetTerraPoolDelta(ctx, poolDelta)
 }
+
+// SetSeigniorageRoutes update SeigniorageRoutes to direct seigniorage
+// to various use cases such as building Bitcoin reserves
+func (k Keeper) SetSeigniorageRoutes(ctx sdk.Context, routes []types.SeigniorageRoute) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&types.SeigniorageRoutes{Routes: routes})
+	store.Set(types.SeigniorageRoutesKey, bz)
+}
+
+// GetSeigniorageRoutes return stored seigniorage routes
+func (k Keeper) GetSeigniorageRoutes(ctx sdk.Context) []types.SeigniorageRoute {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(types.SeigniorageRoutesKey)
+	if bz == nil {
+		return []types.SeigniorageRoute{}
+	}
+
+	routes := types.SeigniorageRoutes{}
+	k.cdc.MustUnmarshal(bz, &routes)
+
+	return routes.Routes
+}

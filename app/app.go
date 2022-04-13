@@ -123,6 +123,7 @@ import (
 	customupgrade "github.com/terra-money/core/custom/upgrade"
 
 	"github.com/terra-money/core/x/market"
+	marketclient "github.com/terra-money/core/x/market/client"
 	marketkeeper "github.com/terra-money/core/x/market/keeper"
 	markettypes "github.com/terra-money/core/x/market/types"
 	"github.com/terra-money/core/x/oracle"
@@ -170,6 +171,7 @@ var (
 			upgradeclient.CancelProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
+			marketclient.ProposalHandler,
 		),
 		customparams.AppModuleBasic{},
 		customcrisis.AppModuleBasic{},
@@ -507,7 +509,9 @@ func NewTerraApp(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(markettypes.RouterKey, market.NewSeigniorageRouteChangeProposalHandler(app.MarketKeeper))
+
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,

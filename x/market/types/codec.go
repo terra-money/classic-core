@@ -13,6 +13,7 @@ import (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSwap{}, "market/MsgSwap", nil)
 	cdc.RegisterConcrete(&MsgSwapSend{}, "market/MsgSwapSend", nil)
+	cdc.RegisterConcrete(&SeigniorageRouteChangeProposal{}, "market/SeigniorageRouteChangeProposal", nil)
 }
 
 // RegisterInterfaces registers the x/market interfaces types with the interface registry

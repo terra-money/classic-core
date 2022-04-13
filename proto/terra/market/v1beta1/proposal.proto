@@ -1,0 +1,18 @@
+syntax = "proto3";
+package terra.market.v1beta1;
+
+option go_package            = "github.com/terra-money/core/x/market/types";
+option (gogoproto.equal_all) = true;
+
+import "gogoproto/gogo.proto";
+import "terra/market/v1beta1/market.proto";
+
+// SeigniorageRouteChangeProposal defines a proposal to change one or more seigniorage route.
+message SeigniorageRouteChangeProposal {
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  string                    title       = 1;
+  string                    description = 2;
+  repeated SeigniorageRoute routes      = 3 [(gogoproto.nullable) = false];
+}

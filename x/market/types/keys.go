@@ -22,7 +22,10 @@ const (
 // Items are stored with the following key: values
 //
 // - 0x01: sdk.Dec
+//
+// - 0x02: SeigniorageRoutes
 var (
 	// Keys for store prefixed
-	TerraPoolDeltaKey = []byte{0x01} // key for terra pool delta which gap between MintPool from BasePool
+	TerraPoolDeltaKey    = []byte{0x01} // key for terra pool delta which gap between MintPool from BasePool
+	SeigniorageRoutesKey = []byte{0x02} // key for SeigniorageRoutes which seigniorage will be routed
 )
