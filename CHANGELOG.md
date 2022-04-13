@@ -3,7 +3,7 @@
 This release contains wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
 For mitigating possible sync delay due to the runtime rebuilding overhead, the node operators are highly recommended to rebuild wasm cache with [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
 
-News! :tada: Wasmer v2.2 supports much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means node can be run on any arm64 system such as Apple Silicon machines and AWS Graviton2 Arm64
+News! :tada: Wasmer v2.2 supports much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means node can be run on any arm64 system such as Apple Silicon and AWS Graviton2 Arm64
 
 ---
 **_NOTE for cosmwasm-cache-rebuilder:_** 
