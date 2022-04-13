@@ -129,7 +129,6 @@ import (
 	oraclekeeper "github.com/terra-money/core/x/oracle/keeper"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 	"github.com/terra-money/core/x/vesting"
-	vestingtypes "github.com/terra-money/core/x/vesting/types"
 	"github.com/terra-money/core/x/wasm"
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
 	wasmkeeper "github.com/terra-money/core/x/wasm/keeper"
@@ -715,7 +714,6 @@ func NewTerraApp(
 			fromVM[genutiltypes.ModuleName] = app.mm.Modules[genutiltypes.ModuleName].ConsensusVersion()
 			fromVM[paramstypes.ModuleName] = app.mm.Modules[paramstypes.ModuleName].ConsensusVersion()
 			fromVM[upgradetypes.ModuleName] = app.mm.Modules[upgradetypes.ModuleName].ConsensusVersion()
-			fromVM[vestingtypes.ModuleName] = app.mm.Modules[vestingtypes.ModuleName].ConsensusVersion()
 			fromVM[markettypes.ModuleName] = app.mm.Modules[markettypes.ModuleName].ConsensusVersion()
 			fromVM[oracletypes.ModuleName] = app.mm.Modules[oracletypes.ModuleName].ConsensusVersion()
 			fromVM[wasmtypes.ModuleName] = app.mm.Modules[wasmtypes.ModuleName].ConsensusVersion()
