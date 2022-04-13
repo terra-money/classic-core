@@ -1,38 +1,48 @@
+ARG ALPINE_VERSION=3.15
+ARG GO_VERSION=1.17.8
+
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.17.8-alpine3.15 AS go-builder
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS go-builder
 
-# See https://github.com/CosmWasm/wasmvm/releases
-ENV LIBWASMVM_VERSION=0.16.6
-ENV LIBWASMVM_SHA256=fe63ff6bb75cad9116948d96344391d6786b6009d28e7016a85e1a268033d8f8
-
-# this comes from standard alpine nightly file
-#  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
-# with some changes to support our toolchain, etc
-RUN set -eux; apk add --no-cache ca-certificates build-base;
-
-RUN apk add git cmake
-# NOTE: add these to run with LEDGER_ENABLED=true
-# RUN apk add libusb-dev linux-headers
+# install deps
+RUN set -eux; \
+    apk add --no-cache ca-certificates build-base git cmake
 
 WORKDIR /code
 COPY . /code/
 
-# Install mimalloc
-RUN git clone --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdir build; cd build; cmake ..; make -j$(nproc); make install
+# install mimalloc
+RUN git clone --depth 1 https://github.com/microsoft/mimalloc; \
+    cd mimalloc; \
+    mkdir build; \
+    cd build; \
+    cmake ..; \
+    make -j$(nproc); \
+    make install
 ENV MIMALLOC_RESERVE_HUGE_OS_PAGES=4
 
-# See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
+# install libwasmvm; see https://github.com/CosmWasm/wasmvm/releases
+ARG WASMVM_VERSION=0.16.6
+RUN case $(uname -m) in \
+        x86_64 | amd64) \
+            ARCH=x86_64 \
+            WASMVM_SHA256=fe63ff6bb75cad9116948d96344391d6786b6009d28e7016a85e1a268033d8f8;; \
+        aarch64 | arm64) \
+            ARCH=aarch64; \
+            WASMVM_SHA256=dda9376d437cc8e0b9f325621887454a29660627a61c93841689338557494b50;; \
+        *) echo "Unkown architecture" && exit 1;; \
+    esac; \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.${ARCH}.a -O /lib/libwasmvm_muslc.a; \
+    echo "${WASMVM_SHA256} */lib/libwasmvm_muslc.a" | sha256sum -c -
 
-# force it to use static lib (from above) not standard libgo_cosmwasm.so file
+# run build and force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-linkmode=external -extldflags \"-L/code/mimalloc/build -lmimalloc -Wl,-z,muldefs -static\"" make build
 
-FROM alpine:3.15.4
+FROM alpine:${ALPINE_VERSION} AS runtime
 
-RUN addgroup terra \
-    && adduser -G terra -D -h /terra terra
+RUN addgroup terra && \
+    adduser -G terra -D -h /terra terra
 
 WORKDIR /terra
 
