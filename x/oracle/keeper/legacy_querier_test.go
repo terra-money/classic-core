@@ -28,6 +28,20 @@ func TestLegacyNewLegacyQuerier(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestLegacyFilter(t *testing.T) {
+	input := CreateTestInput(t)
+
+	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)
+
+	query := abci.RequestQuery{
+		Path: "",
+		Data: []byte{},
+	}
+
+	_, err := querier(input.Ctx, []string{"invalid"}, query)
+	require.Error(t, err)
+}
+
 func TestLegacyQueryParams(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)
@@ -46,6 +60,31 @@ func TestLegacyQueryParams(t *testing.T) {
 	require.Equal(t, input.OracleKeeper.GetParams(input.Ctx), params)
 }
 
+func TestLegacyQueryMissCounter(t *testing.T) {
+	input := CreateTestInput(t)
+	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)
+
+	queryParams := types.NewQueryMissCounterParams(ValAddrs[0])
+	bz, err := input.Cdc.MarshalJSON(queryParams)
+	require.NoError(t, err)
+
+	_, err = querier(input.Ctx, []string{types.QueryMissCounter}, abci.RequestQuery{})
+	require.Error(t, err)
+
+	req := abci.RequestQuery{
+		Path: "",
+		Data: bz,
+	}
+
+	res, err := querier(input.Ctx, []string{types.QueryMissCounter}, req)
+	require.NoError(t, err)
+
+	var missCounter uint64
+	err = input.Cdc.UnmarshalJSON(res, &missCounter)
+	require.NoError(t, err)
+	require.Equal(t, input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0]), missCounter)
+}
+
 func TestLegacyQueryExchangeRate(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.OracleKeeper, input.Cdc)
@@ -57,6 +96,9 @@ func TestLegacyQueryExchangeRate(t *testing.T) {
 	queryParams := types.NewQueryExchangeRateParams(core.MicroSDRDenom)
 	bz, err := input.Cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
+
+	_, err = querier(input.Ctx, []string{types.QueryExchangeRate}, abci.RequestQuery{})
+	require.Error(t, err)
 
 	req := abci.RequestQuery{
 		Path: "",
@@ -126,6 +168,9 @@ func TestLegacyQueryFeederDelegation(t *testing.T) {
 	bz, err := input.Cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
 
+	_, err = querier(input.Ctx, []string{types.QueryFeederDelegation}, abci.RequestQuery{})
+	require.Error(t, err)
+
 	req := abci.RequestQuery{
 		Path: "",
 		Data: bz,
@@ -154,6 +199,9 @@ func TestLegacyQueryAggregatePrevote(t *testing.T) {
 	queryParams := types.NewQueryAggregatePrevoteParams(ValAddrs[0])
 	bz, err := input.Cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
+
+	_, err = querier(input.Ctx, []string{types.QueryAggregatePrevote}, abci.RequestQuery{})
+	require.Error(t, err)
 
 	req := abci.RequestQuery{
 		Path: "",
@@ -204,12 +252,7 @@ func TestLegacyQueryAggregatePrevotes(t *testing.T) {
 		return bytes.Compare(addr1, addr2) == -1
 	})
 
-	req := abci.RequestQuery{
-		Path: "",
-		Data: nil,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryAggregatePrevotes}, req)
+	res, err := querier(input.Ctx, []string{types.QueryAggregatePrevotes}, abci.RequestQuery{})
 	require.NoError(t, err)
 
 	var prevotes []types.AggregateExchangeRatePrevote
@@ -233,6 +276,9 @@ func TestLegacyQueryAggregateVote(t *testing.T) {
 	queryParams := types.NewQueryAggregateVoteParams(ValAddrs[0])
 	bz, err := input.Cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
+
+	_, err = querier(input.Ctx, []string{types.QueryAggregateVote}, abci.RequestQuery{})
+	require.Error(t, err)
 
 	req := abci.RequestQuery{
 		Path: "",
@@ -283,12 +329,7 @@ func TestLegacyQueryAggregateVotes(t *testing.T) {
 		return bytes.Compare(addr1, addr2) == -1
 	})
 
-	req := abci.RequestQuery{
-		Path: "",
-		Data: nil,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryAggregateVotes}, req)
+	res, err := querier(input.Ctx, []string{types.QueryAggregateVotes}, abci.RequestQuery{})
 	require.NoError(t, err)
 
 	var votes []types.AggregateExchangeRateVote
@@ -309,12 +350,7 @@ func TestLegacyQueryVoteTargets(t *testing.T) {
 		input.OracleKeeper.SetTobinTax(input.Ctx, target, sdk.OneDec())
 	}
 
-	req := abci.RequestQuery{
-		Path: "",
-		Data: nil,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryVoteTargets}, req)
+	res, err := querier(input.Ctx, []string{types.QueryVoteTargets}, abci.RequestQuery{})
 	require.NoError(t, err)
 
 	var voteTargetsRes []string
@@ -341,12 +377,7 @@ func TestLegacyQueryTobinTaxes(t *testing.T) {
 		input.OracleKeeper.SetTobinTax(input.Ctx, item.Name, item.TobinTax)
 	}
 
-	req := abci.RequestQuery{
-		Path: "",
-		Data: nil,
-	}
-
-	res, err := querier(input.Ctx, []string{types.QueryTobinTaxes}, req)
+	res, err := querier(input.Ctx, []string{types.QueryTobinTaxes}, abci.RequestQuery{})
 	require.NoError(t, err)
 
 	var tobinTaxesRes types.DenomList
@@ -365,6 +396,9 @@ func TestLegacyQueryTobinTax(t *testing.T) {
 	queryParams := types.NewQueryTobinTaxParams(core.MicroKRWDenom)
 	bz, err := input.Cdc.MarshalJSON(queryParams)
 	require.NoError(t, err)
+
+	_, err = querier(input.Ctx, []string{types.QueryTobinTax}, abci.RequestQuery{})
+	require.Error(t, err)
 
 	req := abci.RequestQuery{
 		Path: "",

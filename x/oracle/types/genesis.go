@@ -28,15 +28,13 @@ func NewGenesisState(
 
 // DefaultGenesisState - default GenesisState used by columbus-2
 func DefaultGenesisState() *GenesisState {
-	return &GenesisState{
-		Params:                        DefaultParams(),
-		ExchangeRates:                 []ExchangeRateTuple{},
-		FeederDelegations:             []FeederDelegation{},
-		MissCounters:                  []MissCounter{},
-		AggregateExchangeRatePrevotes: []AggregateExchangeRatePrevote{},
-		AggregateExchangeRateVotes:    []AggregateExchangeRateVote{},
-		TobinTaxes:                    []TobinTax{},
-	}
+	return NewGenesisState(DefaultParams(),
+		[]ExchangeRateTuple{},
+		[]FeederDelegation{},
+		[]MissCounter{},
+		[]AggregateExchangeRatePrevote{},
+		[]AggregateExchangeRateVote{},
+		[]TobinTax{})
 }
 
 // ValidateGenesis validates the oracle genesis state
