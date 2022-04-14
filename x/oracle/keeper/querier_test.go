@@ -32,12 +32,36 @@ func TestQueryExchangeRate(t *testing.T) {
 	rate := sdk.NewDec(1700)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, rate)
 
+	// empty request
+	_, err := querier.ExchangeRate(ctx, nil)
+	require.Error(t, err)
+
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
 		Denom: core.MicroSDRDenom,
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
+}
+
+func TestQueryMissCounter(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+	querier := NewQuerier(input.OracleKeeper)
+
+	missCounter := uint64(1)
+	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
+
+	// empty request
+	_, err := querier.MissCounter(ctx, nil)
+	require.Error(t, err)
+
+	// Query to grpc
+	res, err := querier.MissCounter(ctx, &types.QueryMissCounterRequest{
+		ValidatorAddr: ValAddrs[0].String(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, missCounter, res.MissCounter)
 }
 
 func TestQueryExchangeRates(t *testing.T) {
@@ -87,6 +111,10 @@ func TestQueryFeederDelegation(t *testing.T) {
 
 	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
 
+	// empty request
+	_, err := querier.FeederDelegation(ctx, nil)
+	require.Error(t, err)
+
 	res, err := querier.FeederDelegation(ctx, &types.QueryFeederDelegationRequest{
 		ValidatorAddr: ValAddrs[0].String(),
 	})
@@ -111,6 +139,10 @@ func TestQueryAggregatePrevote(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, prevote1, res.AggregatePrevote)
+
+	// empty request
+	_, err = querier.AggregatePrevote(ctx, nil)
+	require.Error(t, err)
 
 	// validator 1 address params
 	res, err = querier.AggregatePrevote(ctx, &types.QueryAggregatePrevoteRequest{
@@ -153,6 +185,10 @@ func TestQueryAggregateVote(t *testing.T) {
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[0], vote1)
 	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Denom: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[1], vote2)
+
+	// empty request
+	_, err := querier.AggregateVote(ctx, nil)
+	require.Error(t, err)
 
 	// validator 0 address params
 	res, err := querier.AggregateVote(ctx, &types.QueryAggregateVoteRequest{
@@ -242,6 +278,10 @@ func TestQueryTobinTax(t *testing.T) {
 
 	denom := types.Denom{Name: core.MicroKRWDenom, TobinTax: sdk.OneDec()}
 	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
+
+	// empty request
+	_, err := querier.TobinTax(ctx, nil)
+	require.Error(t, err)
 
 	res, err := querier.TobinTax(ctx, &types.QueryTobinTaxRequest{
 		Denom: core.MicroKRWDenom,
