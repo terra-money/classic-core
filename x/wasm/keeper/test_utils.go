@@ -16,9 +16,6 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/cosmos/ibc-go/modules/apps/transfer"
-	ibc "github.com/cosmos/ibc-go/modules/core"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -75,8 +72,6 @@ var ModuleBasics = module.NewBasicManager(
 	customparams.AppModuleBasic{},
 	oracle.AppModuleBasic{},
 	market.AppModuleBasic{},
-	ibc.AppModuleBasic{},
-	transfer.AppModuleBasic{},
 	capability.AppModuleBasic{},
 )
 

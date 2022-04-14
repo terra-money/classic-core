@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ibc.core.channel.v1;
 
-option go_package = "github.com/cosmos/ibc-go/modules/core/04-channel/types";
+option go_package = "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types";
 
 import "gogoproto/gogo.proto";
 import "ibc/core/client/v1/client.proto";
@@ -132,13 +132,27 @@ message PacketState {
   bytes data = 4;
 }
 
+// PacketId is an identifer for a unique Packet
+// Source chains refer to packets by source port/channel
+// Destination chains refer to packets by destination port/channel
+message PacketId {
+  option (gogoproto.goproto_getters) = false;
+
+  // channel port identifier
+  string port_id = 1 [(gogoproto.moretags) = "yaml:\"port_id\""];
+  // channel unique identifier
+  string channel_id = 2 [(gogoproto.moretags) = "yaml:\"channel_id\""];
+  // packet sequence
+  uint64 sequence = 3;
+}
+
 // Acknowledgement is the recommended acknowledgement format to be used by
 // app-specific protocols.
 // NOTE: The field numbers 21 and 22 were explicitly chosen to avoid accidental
 // conflicts with other protobuf message formats used for acknowledgements.
 // The first byte of any message with this format will be the non-ASCII values
 // `0xaa` (result) or `0xb2` (error). Implemented as defined by ICS:
-// https://github.com/cosmos/ics/tree/master/spec/ics-004-channel-and-packet-semantics#acknowledgement-envelope
+// https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#acknowledgement-envelope
 message Acknowledgement {
   // response contains either a result or an error and must be non-empty
   oneof response {

@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package ibc.applications.fee.v1;
+
+option go_package = "github.com/cosmos/ibc-go/v3/modules/apps/29-fee/types";
+
+import "gogoproto/gogo.proto";
+import "ibc/applications/fee/v1/fee.proto";
+import "ibc/core/channel/v1/channel.proto";
+
+// GenesisState defines the ICS29 fee middleware genesis state
+message GenesisState {
+  // list of identified packet fees
+  repeated IdentifiedPacketFees identified_fees = 1
+      [(gogoproto.moretags) = "yaml:\"identified_fees\"", (gogoproto.nullable) = false];
+  // list of fee enabled channels
+  repeated FeeEnabledChannel fee_enabled_channels = 2
+      [(gogoproto.moretags) = "yaml:\"fee_enabled_channels\"", (gogoproto.nullable) = false];
+  // list of registered relayer addresses
+  repeated RegisteredRelayerAddress registered_relayers = 3
+      [(gogoproto.moretags) = "yaml:\"registered_relayers\"", (gogoproto.nullable) = false];
+  // list of forward relayer addresses
+  repeated ForwardRelayerAddress forward_relayers = 4
+      [(gogoproto.moretags) = "yaml:\"forward_relayers\"", (gogoproto.nullable) = false];
+}
+
+// FeeEnabledChannel contains the PortID & ChannelID for a fee enabled channel
+message FeeEnabledChannel {
+  // unique port identifier
+  string port_id = 1 [(gogoproto.moretags) = "yaml:\"port_id\""];
+  // unique channel identifier
+  string channel_id = 2 [(gogoproto.moretags) = "yaml:\"channel_id\""];
+}
+
+// RegisteredRelayerAddress contains the address and counterparty address for a specific relayer (for distributing fees)
+message RegisteredRelayerAddress {
+  // the relayer address
+  string address = 1;
+  // the counterparty relayer address
+  string counterparty_address = 2 [(gogoproto.moretags) = "yaml:\"counterparty_address\""];
+  // unique channel identifier
+  string channel_id = 3 [(gogoproto.moretags) = "yaml:\"channel_id\""];
+}
+
+// ForwardRelayerAddress contains the forward relayer address and PacketId used for async acknowledgements
+message ForwardRelayerAddress {
+  // the forward relayer address
+  string address = 1;
+  // unique packet identifer comprised of the channel ID, port ID and sequence
+  ibc.core.channel.v1.PacketId packet_id = 2
+      [(gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"packet_id\""];
+}
