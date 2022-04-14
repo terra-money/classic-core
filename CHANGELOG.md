@@ -1,19 +1,16 @@
 ## v0.5.18
+This release contains a wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
+To avoid possible sync delays due to the runtime rebuilding overhead, it is highly recommended that node operators rebuild their wasm cache with the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
 
-This release contains wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
-For mitigating possible sync delay due to the runtime rebuilding overhead, the node operators are highly recommended to rebuild wasm cache with [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
+**Node upgrade instructions**
+1. Rebuild your wasm cache using the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder). This rebuilder can be run simultaneously without killing a running terrad process.
+2. You can ignore the _file already open_ error. If other errors occur (no disk space, etc), it is safe to run the rebuilder multiple times.
+3. When the rebuilder is finished, update terrad to v0.5.18 and restart.
+4. The rebuilder creates a `$TERRA_HOME/data/wasm/cache/modules/v3-wasmer1` directory. The `$TERRA_HOME/data/wasm/cache/modules/v1` can be deleted after updating terrad to v0.5.18.
 
-News! :tada: Wasmer v2.2 supports much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means node can be run on any arm64 system such as Apple Silicon and AWS Graviton2 Arm64
-
----
-**_NOTE for cosmwasm-cache-rebuilder:_** 
-* It can be run simultaneously without killing running terrad process. Please restart terrad v0.5.18 after rebuilding process is finished.
-* You may ignore _file already open_ error
-* It is safe to run multiple times in case of other errors (no disk space, and etc.)
-* It will create $TERRA_HOME/data/wasm/cache/modules/v3-wasmer1 directory and $TERRA_HOME/data/wasm/cache/modules/v1 can be deleted after updating terrad to v0.5.18
----
-
-- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order
+**Additional notes**
+- :tada: Wasmer v2.2 supports the much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means nodes can be run on any arm64 system, such as Apple Silicon machines and AWS Graviton2 Arm64.
+- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order. (edited) 
 
 ## v0.5.17
 
