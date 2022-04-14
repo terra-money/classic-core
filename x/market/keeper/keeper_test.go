@@ -6,8 +6,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-money/core/types"
+	"github.com/terra-money/core/x/market/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func TestTerraPoolDeltaUpdate(t *testing.T) {
@@ -54,4 +56,25 @@ func TestReplenishPools(t *testing.T) {
 	replenishAmt = diff.QuoInt64((int64)(input.MarketKeeper.PoolRecoveryPeriod(input.Ctx)))
 	expectedDelta = diff.Sub(replenishAmt)
 	require.Equal(t, expectedDelta, terraPoolDelta)
+}
+
+func TestGetSetSeigniorageRoutes(t *testing.T) {
+	input := CreateTestInput(t)
+
+	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	routes := []types.SeigniorageRoute{
+		{
+			Address: types.AlternateCommunityPoolAddress,
+			Weight:  sdk.NewDecWithPrec(2, 1),
+		},
+		{
+			Address: feeCollectorAddr.String(),
+			Weight:  sdk.NewDecWithPrec(1, 1),
+		},
+	}
+
+	input.MarketKeeper.SetSeigniorageRoutes(input.Ctx, routes)
+	retrievedRoutes := input.MarketKeeper.GetSeigniorageRoutes(input.Ctx)
+
+	require.Equal(t, routes, retrievedRoutes)
 }

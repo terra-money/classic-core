@@ -14,6 +14,7 @@ import (
 func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
 	keeper.SetTerraPoolDelta(ctx, data.TerraPoolDelta)
+	keeper.SetSeigniorageRoutes(ctx, data.Routes)
 
 	// check if the module account exists
 	moduleAcc := keeper.GetMarketAccount(ctx)
@@ -34,6 +35,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) (data *types.GenesisState) {
 	params := keeper.GetParams(ctx)
 	terraPoolDelta := keeper.GetTerraPoolDelta(ctx)
+	routes := keeper.GetSeigniorageRoutes(ctx)
 
-	return types.NewGenesisState(terraPoolDelta, params)
+	return types.NewGenesisState(terraPoolDelta, routes, params)
 }

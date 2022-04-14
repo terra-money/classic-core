@@ -26,6 +26,7 @@ func GetQueryCmd() *cobra.Command {
 	marketQueryCmd.AddCommand(
 		GetCmdQuerySwap(),
 		GetCmdQueryTerraPoolDelta(),
+		GetCmdQuerySeigniorageRoutes(),
 		GetCmdQueryParams(),
 	)
 
@@ -94,6 +95,39 @@ $ terrad query market terra-pool-delta
 
 			res, err := queryClient.TerraPoolDelta(context.Background(),
 				&types.QueryTerraPoolDeltaRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQuerySeigniorageRoutes implements the query seigniorage routes command.
+func GetCmdQuerySeigniorageRoutes() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "seigniorage-routes",
+		Args:  cobra.NoArgs,
+		Short: "Query seigniorage routes",
+		Long: `Query seigniorage routes, which defines the wallet address with its weight
+to which seigniorage will be routed.
+
+$ terrad query market seigniorage-routes
+	`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.SeigniorageRoutes(context.Background(),
+				&types.QuerySeigniorageRoutesRequest{},
 			)
 			if err != nil {
 				return err

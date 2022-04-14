@@ -12,6 +12,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Burn all coins from the burn module account
 	k.BurnCoinsFromBurnAccount(ctx)
 
+	// Settle seigniorage to the registered recipients
+	// and burn all left coins
+	k.SettleSeigniorage(ctx)
+
 	// Replenishes each pools towards equilibrium
 	k.ReplenishPools(ctx)
 }

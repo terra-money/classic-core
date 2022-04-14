@@ -15,7 +15,7 @@ func testProposal(routes ...types.SeigniorageRoute) *types.SeigniorageRouteChang
 }
 
 func TestProposalHandler(t *testing.T) {
-	input, _ := setup(t)
+	input := keeper.CreateTestInput(t)
 
 	validAddr := keeper.Addrs[0]
 

@@ -7,6 +7,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	core "github.com/terra-money/core/types"
 	"github.com/terra-money/core/x/market/types"
@@ -135,4 +136,35 @@ func TestLegacyQueryMintPool(t *testing.T) {
 	err := input.Cdc.UnmarshalJSON(res, &retPool)
 	require.NoError(t, err)
 	require.Equal(t, poolDelta, retPool)
+}
+
+func TestLegacyQuerySeigniorageRoutes(t *testing.T) {
+	input := CreateTestInput(t)
+
+	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	routes := []types.SeigniorageRoute{
+		{
+			Address: types.AlternateCommunityPoolAddress,
+			Weight:  sdk.NewDecWithPrec(2, 1),
+		},
+		{
+			Address: feeCollectorAddr.String(),
+			Weight:  sdk.NewDecWithPrec(1, 1),
+		},
+	}
+	input.MarketKeeper.SetSeigniorageRoutes(input.Ctx, routes)
+
+	querier := NewLegacyQuerier(input.MarketKeeper, input.Cdc)
+	query := abci.RequestQuery{
+		Path: "",
+		Data: nil,
+	}
+
+	res, errRes := querier(input.Ctx, []string{types.QuerySeigniorageRoutes}, query)
+	require.NoError(t, errRes)
+
+	var retRoutes []types.SeigniorageRoute
+	err := input.Cdc.UnmarshalJSON(res, &retRoutes)
+	require.NoError(t, err)
+	require.Equal(t, routes, retRoutes)
 }

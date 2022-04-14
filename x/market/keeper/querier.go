@@ -60,3 +60,10 @@ func (q querier) TerraPoolDelta(c context.Context, req *types.QueryTerraPoolDelt
 	terraPoolDelta := q.GetTerraPoolDelta(ctx)
 	return &types.QueryTerraPoolDeltaResponse{TerraPoolDelta: terraPoolDelta}, nil
 }
+
+// SeigniorageRoutes queries seigniorage routes
+func (q querier) SeigniorageRoutes(c context.Context, req *types.QuerySeigniorageRoutesRequest) (*types.QuerySeigniorageRoutesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	routes := q.GetSeigniorageRoutes(ctx)
+	return &types.QuerySeigniorageRoutesResponse{Routes: routes}, nil
+}

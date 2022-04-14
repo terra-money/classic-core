@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	customgovtypes "github.com/terra-money/core/custom/gov/types"
@@ -46,7 +45,7 @@ func (pcp *SeigniorageRouteChangeProposal) ValidateBasic() error {
 		return err
 	}
 
-	return ValidateChanges(pcp.Routes)
+	return SeigniorageRoutes{Routes: pcp.Routes}.ValidateRoutes()
 }
 
 // String implements the Stringer interface.
@@ -67,40 +66,4 @@ func (pcp SeigniorageRouteChangeProposal) String() string {
 	}
 
 	return b.String()
-}
-
-// ValidateChanges performs basic validation checks over a set of SeigniorageRoute. It
-// returns an error if any SeigniorageRoute is invalid.
-func ValidateChanges(changes []SeigniorageRoute) error {
-	if len(changes) == 0 {
-		return ErrEmptyChanges
-	}
-
-	weightSum := sdk.ZeroDec()
-	addrMap := map[string]bool{}
-	for _, pc := range changes {
-		if len(pc.Address) == 0 {
-			return ErrEmptyAddress
-		}
-
-		// each weight must be bigger than zero
-		if pc.Weight.IsZero() {
-			return ErrZeroWeight
-		}
-
-		// check duplicated address
-		if _, exists := addrMap[pc.Address]; exists {
-			return ErrDuplicateRoute
-		}
-
-		weightSum = weightSum.Add(pc.Weight)
-		addrMap[pc.Address] = true
-	}
-
-	// the sum of weights must be smaller than one
-	if weightSum.GTE(sdk.OneDec()) {
-		return ErrInvalidWeightSum
-	}
-
-	return nil
 }

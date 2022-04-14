@@ -8,9 +8,10 @@ import (
 )
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(terraPoolDelta sdk.Dec, params Params) *GenesisState {
+func NewGenesisState(terraPoolDelta sdk.Dec, routes []SeigniorageRoute, params Params) *GenesisState {
 	return &GenesisState{
 		TerraPoolDelta: terraPoolDelta,
+		Routes:         routes,
 		Params:         params,
 	}
 }
@@ -19,12 +20,18 @@ func NewGenesisState(terraPoolDelta sdk.Dec, params Params) *GenesisState {
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		TerraPoolDelta: sdk.ZeroDec(),
+		Routes:         []SeigniorageRoute{},
 		Params:         DefaultParams(),
 	}
 }
 
 // ValidateGenesis validates the provided market genesis state
 func ValidateGenesis(data *GenesisState) error {
+	err := SeigniorageRoutes{Routes: data.Routes}.ValidateRoutes()
+	if err != nil {
+		return err
+	}
+
 	return data.Params.Validate()
 }
 

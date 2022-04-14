@@ -120,11 +120,22 @@ type TestInput struct {
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    bankkeeper.Keeper
 	OracleKeeper  types.OracleKeeper
+	DistrKeeper   types.DistributionKeeper
 	MarketKeeper  Keeper
 }
 
 // CreateTestInput nolint
 func CreateTestInput(t *testing.T) TestInput {
+	// change prefix to terra
+	sdkConfig := sdk.GetConfig()
+	sdkConfig.SetCoinType(core.CoinType)
+	sdkConfig.SetFullFundraiserPath(core.FullFundraiserPath)
+	sdkConfig.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
+	sdkConfig.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
+	sdkConfig.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
+	sdkConfig.SetAddressVerifier(core.AddressVerifier)
+	// sdkConfig.Seal()
+
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
@@ -255,10 +266,11 @@ func CreateTestInput(t *testing.T) TestInput {
 		accountKeeper,
 		bankKeeper,
 		oracleKeeper,
+		distrKeeper,
 	)
 	keeper.SetParams(ctx, types.DefaultParams())
 
-	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, oracleKeeper, keeper}
+	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, oracleKeeper, distrKeeper, keeper}
 }
 
 // FundAccount is a utility function that funds an account by minting and

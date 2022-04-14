@@ -9,6 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/terra-money/core/x/market/types"
 )
@@ -56,8 +57,16 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { minStabilitySpread = GenMinSpread(r) },
 	)
 
+	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+
 	marketGenesis := types.NewGenesisState(
 		sdk.ZeroDec(),
+		[]types.SeigniorageRoute{
+			{
+				Address: feeCollectorAddr.String(),
+				Weight:  sdk.NewDecWithPrec(1, 1),
+			},
+		},
 		types.Params{
 			BasePool:           basePool,
 			PoolRecoveryPeriod: poolRecoveryPeriod,

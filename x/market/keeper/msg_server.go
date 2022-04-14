@@ -57,6 +57,7 @@ func (k msgServer) SwapSend(goCtx context.Context, msg *types.MsgSwapSend) (*typ
 // handleMsgSwap handles the logic of a MsgSwap
 // This function does not repeat checks that have already been performed in msg.ValidateBasic()
 // Ex) assert(offerCoin.Denom != askDenom)
+// NOTE: moved burn operation to end blocker to save gas consumpion
 func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	trader sdk.AccAddress, receiver sdk.AccAddress,
 	offerCoin sdk.Coin, askDenom string) (*types.MsgSwapResponse, error) {
@@ -87,12 +88,6 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	// Send offer coins to module account
 	offerCoins := sdk.NewCoins(offerCoin)
 	err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.ModuleName, offerCoins)
-	if err != nil {
-		return nil, err
-	}
-
-	// Burn offered coins and subtract from the trader's account
-	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, offerCoins)
 	if err != nil {
 		return nil, err
 	}

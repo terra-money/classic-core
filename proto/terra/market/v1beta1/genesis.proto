@@ -14,4 +14,8 @@ message GenesisState {
   // the gap between the TerraPool and the BasePool
   bytes terra_pool_delta = 2
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+
+  // routes defines the wallet address with its weight
+  // to which seigniorage will be routed.
+  repeated SeigniorageRoute routes      = 3 [(gogoproto.nullable) = false];
 }

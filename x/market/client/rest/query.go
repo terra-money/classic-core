@@ -17,6 +17,7 @@ import (
 func registerQueryRoutes(clientCtx client.Context, rtr *mux.Router) {
 	rtr.HandleFunc("/market/swap", querySwapHandlerFunction(clientCtx)).Methods("GET")
 	rtr.HandleFunc("/market/terra_pool_delta", queryTerraPoolDeltaHandlerFunction(clientCtx)).Methods("GET")
+	rtr.HandleFunc("/market/seigniorage_routes", querySeigniorageRoutesHandlerFunction(clientCtx)).Methods("GET")
 	rtr.HandleFunc("/market/parameters", queryParamsHandlerFunction(clientCtx)).Methods("GET")
 }
 
@@ -73,6 +74,23 @@ func queryTerraPoolDeltaHandlerFunction(clientCtx client.Context) http.HandlerFu
 		}
 
 		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTerraPoolDelta), nil)
+		if rest.CheckInternalServerError(w, err) {
+			return
+		}
+
+		clientCtx = clientCtx.WithHeight(height)
+		rest.PostProcessResponse(w, clientCtx, res)
+	}
+}
+
+func querySeigniorageRoutesHandlerFunction(clientCtx client.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		clientCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, clientCtx, r)
+		if !ok {
+			return
+		}
+
+		res, height, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySeigniorageRoutes), nil)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}

@@ -910,6 +910,8 @@
 - [terra/market/v1beta1/query.proto](#terra/market/v1beta1/query.proto)
     - [QueryParamsRequest](#terra.market.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#terra.market.v1beta1.QueryParamsResponse)
+    - [QuerySeigniorageRoutesRequest](#terra.market.v1beta1.QuerySeigniorageRoutesRequest)
+    - [QuerySeigniorageRoutesResponse](#terra.market.v1beta1.QuerySeigniorageRoutesResponse)
     - [QuerySwapRequest](#terra.market.v1beta1.QuerySwapRequest)
     - [QuerySwapResponse](#terra.market.v1beta1.QuerySwapResponse)
     - [QueryTerraPoolDeltaRequest](#terra.market.v1beta1.QueryTerraPoolDeltaRequest)
@@ -13316,6 +13318,7 @@ GenesisState defines the market module's genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#terra.market.v1beta1.Params) |  | params defines all the paramaters of the module. |
 | `terra_pool_delta` | [bytes](#bytes) |  | the gap between the TerraPool and the BasePool |
+| `routes` | [SeigniorageRoute](#terra.market.v1beta1.SeigniorageRoute) | repeated | routes defines the wallet address with its weight to which seigniorage will be routed. |
 
 
 
@@ -13396,6 +13399,31 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 
 
 
+<a name="terra.market.v1beta1.QuerySeigniorageRoutesRequest"></a>
+
+### QuerySeigniorageRoutesRequest
+QuerySeigniorageRoutesRequest is the request type for the Query/SeigniorageRoutes RPC method.
+
+
+
+
+
+
+<a name="terra.market.v1beta1.QuerySeigniorageRoutesResponse"></a>
+
+### QuerySeigniorageRoutesResponse
+QuerySeigniorageRoutesResponse is the response type for the Query/SeigniorageRoutes RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `routes` | [SeigniorageRoute](#terra.market.v1beta1.SeigniorageRoute) | repeated | routes defines the wallet address with its weight to which seigniorage will be routed. |
+
+
+
+
+
+
 <a name="terra.market.v1beta1.QuerySwapRequest"></a>
 
 ### QuerySwapRequest
@@ -13467,6 +13495,7 @@ Query defines the gRPC querier service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Swap` | [QuerySwapRequest](#terra.market.v1beta1.QuerySwapRequest) | [QuerySwapResponse](#terra.market.v1beta1.QuerySwapResponse) | Swap returns simulated swap amount. | GET|/terra/market/v1beta1/swap|
 | `TerraPoolDelta` | [QueryTerraPoolDeltaRequest](#terra.market.v1beta1.QueryTerraPoolDeltaRequest) | [QueryTerraPoolDeltaResponse](#terra.market.v1beta1.QueryTerraPoolDeltaResponse) | TerraPoolDelta returns terra_pool_delta amount. | GET|/terra/market/v1beta1/terra_pool_delta|
+| `SeigniorageRoutes` | [QuerySeigniorageRoutesRequest](#terra.market.v1beta1.QuerySeigniorageRoutesRequest) | [QuerySeigniorageRoutesResponse](#terra.market.v1beta1.QuerySeigniorageRoutesResponse) | SeigniorageRoutes return seigniorage_routes. | GET|/terra/market/v1beta1/seigniorage_routes|
 | `Params` | [QueryParamsRequest](#terra.market.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.market.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/market/v1beta1/params|
 
  <!-- end services -->

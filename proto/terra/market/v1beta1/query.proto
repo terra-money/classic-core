@@ -20,6 +20,11 @@ service Query {
     option (google.api.http).get = "/terra/market/v1beta1/terra_pool_delta";
   }
 
+  // SeigniorageRoutes return seigniorage_routes.
+  rpc SeigniorageRoutes(QuerySeigniorageRoutesRequest)  returns (QuerySeigniorageRoutesResponse) {
+    option (google.api.http).get = "/terra/market/v1beta1/seigniorage_routes";
+  }
+
   // Params queries all parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/terra/market/v1beta1/params";
@@ -51,6 +56,16 @@ message QueryTerraPoolDeltaResponse {
   // terra_pool_delta defines the gap between the TerraPool and the TerraBasePool
   bytes terra_pool_delta = 1
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QuerySeigniorageRoutesRequest is the request type for the Query/SeigniorageRoutes RPC method.
+message QuerySeigniorageRoutesRequest {}
+
+// QuerySeigniorageRoutesResponse is the response type for the Query/SeigniorageRoutes RPC method.
+message QuerySeigniorageRoutesResponse {
+  // routes defines the wallet address with its weight
+  // to which seigniorage will be routed.
+  repeated SeigniorageRoute routes = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

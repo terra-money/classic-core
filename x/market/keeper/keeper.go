@@ -18,9 +18,10 @@ type Keeper struct {
 	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
-	AccountKeeper types.AccountKeeper
-	BankKeeper    types.BankKeeper
-	OracleKeeper  types.OracleKeeper
+	AccountKeeper      types.AccountKeeper
+	BankKeeper         types.BankKeeper
+	OracleKeeper       types.OracleKeeper
+	DistributionKeeper types.DistributionKeeper
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -31,6 +32,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	oracleKeeper types.OracleKeeper,
+	distributionKeeper types.DistributionKeeper,
 ) Keeper {
 
 	// ensure market module account is set
@@ -44,12 +46,13 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		paramSpace:    paramstore,
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		OracleKeeper:  oracleKeeper,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		paramSpace:         paramstore,
+		AccountKeeper:      accountKeeper,
+		BankKeeper:         bankKeeper,
+		OracleKeeper:       oracleKeeper,
+		DistributionKeeper: distributionKeeper,
 	}
 }
 

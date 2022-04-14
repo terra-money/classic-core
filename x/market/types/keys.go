@@ -16,6 +16,15 @@ const (
 	// BurnModuleName is special purpose module name to perform burn coins
 	// burn address = terra1sk06e3dyexuq4shw77y3dsv480xv42mq73anxu
 	BurnModuleName = "burn"
+
+	// AlternateCommunityPoolAddress is intended to replace the community pool.
+	// Since the community pool does not have its own address, an alternate
+	// address is needed to register as a seigniorage route.
+	// - https://github.com/cosmos/cosmos-sdk/issues/10811
+	//
+	// The alternate address is the bech32 encoded form of
+	// 0x0000000000000000000000000000000000000000 with terra prefix
+	AlternateCommunityPoolAddress = "terra1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq486l9a"
 )
 
 // Keys for market store

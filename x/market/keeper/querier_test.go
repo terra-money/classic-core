@@ -4,8 +4,10 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/stretchr/testify/require"
+
 	core "github.com/terra-money/core/types"
 	"github.com/terra-money/core/x/market/types"
 )
@@ -76,4 +78,29 @@ func TestQueryMintPoolDelta(t *testing.T) {
 	require.NoError(t, errRes)
 
 	require.Equal(t, poolDelta, res.TerraPoolDelta)
+}
+
+func TestQuerySeigniorageRoutes(t *testing.T) {
+
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+	querier := NewQuerier(input.MarketKeeper)
+
+	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	routes := []types.SeigniorageRoute{
+		{
+			Address: types.AlternateCommunityPoolAddress,
+			Weight:  sdk.NewDecWithPrec(2, 1),
+		},
+		{
+			Address: feeCollectorAddr.String(),
+			Weight:  sdk.NewDecWithPrec(1, 1),
+		},
+	}
+	input.MarketKeeper.SetSeigniorageRoutes(input.Ctx, routes)
+
+	res, errRes := querier.SeigniorageRoutes(ctx, &types.QuerySeigniorageRoutesRequest{})
+	require.NoError(t, errRes)
+
+	require.Equal(t, routes, res.Routes)
 }

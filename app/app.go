@@ -473,7 +473,7 @@ func NewTerraApp(
 	app.MarketKeeper = marketkeeper.NewKeeper(
 		appCodec, keys[markettypes.StoreKey],
 		app.GetSubspace(markettypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.DistrKeeper,
 	)
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -703,6 +703,9 @@ func NewTerraApp(
 	app.UpgradeKeeper.SetUpgradeHandler(
 		upgradeName,
 		func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			// need store upgrades
+			fromVM[markettypes.ModuleName] = 1
+
 			// no module upgrades - put current versions to skip migrations
 			fromVM[authtypes.ModuleName] = app.mm.Modules[authtypes.ModuleName].ConsensusVersion()
 			fromVM[authz.ModuleName] = app.mm.Modules[authz.ModuleName].ConsensusVersion()
@@ -720,7 +723,6 @@ func NewTerraApp(
 			fromVM[paramstypes.ModuleName] = app.mm.Modules[paramstypes.ModuleName].ConsensusVersion()
 			fromVM[upgradetypes.ModuleName] = app.mm.Modules[upgradetypes.ModuleName].ConsensusVersion()
 			fromVM[vestingtypes.ModuleName] = app.mm.Modules[vestingtypes.ModuleName].ConsensusVersion()
-			fromVM[markettypes.ModuleName] = app.mm.Modules[markettypes.ModuleName].ConsensusVersion()
 			fromVM[oracletypes.ModuleName] = app.mm.Modules[oracletypes.ModuleName].ConsensusVersion()
 			fromVM[wasmtypes.ModuleName] = app.mm.Modules[wasmtypes.ModuleName].ConsensusVersion()
 

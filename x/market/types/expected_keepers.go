@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
 // AccountKeeper is expected keeper for auth module
@@ -14,6 +15,7 @@ type AccountKeeper interface {
 
 // BankKeeper defines expected supply keeper
 type BankKeeper interface {
+	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
@@ -37,4 +39,10 @@ type OracleKeeper interface {
 	IterateLunaExchangeRates(ctx sdk.Context, handler func(denom string, exchangeRate sdk.Dec) (stop bool))
 	SetLunaExchangeRate(ctx sdk.Context, denom string, exchangeRate sdk.Dec)
 	SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec)
+}
+
+// DistributionKeeper defines expected distribution keeper
+type DistributionKeeper interface {
+	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
+	GetFeePool(ctx sdk.Context) (feePool distrtypes.FeePool)
 }

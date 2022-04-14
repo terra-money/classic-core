@@ -272,7 +272,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	marketKeeper := marketkeeper.NewKeeper(
 		appCodec,
 		keyMarket, paramsKeeper.Subspace(markettypes.ModuleName),
-		accountKeeper, bankKeeper, oracleKeeper,
+		accountKeeper, bankKeeper, oracleKeeper, distrKeeper,
 	)
 	marketKeeper.SetParams(ctx, markettypes.DefaultParams())
 
