@@ -126,16 +126,6 @@ type TestInput struct {
 
 // CreateTestInput nolint
 func CreateTestInput(t *testing.T) TestInput {
-	// change prefix to terra
-	sdkConfig := sdk.GetConfig()
-	sdkConfig.SetCoinType(core.CoinType)
-	sdkConfig.SetFullFundraiserPath(core.FullFundraiserPath)
-	sdkConfig.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
-	sdkConfig.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
-	sdkConfig.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
-	sdkConfig.SetAddressVerifier(core.AddressVerifier)
-	// sdkConfig.Seal()
-
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)

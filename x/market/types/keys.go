@@ -1,5 +1,9 @@
 package types
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 const (
 	// ModuleName is the name of the market module
 	ModuleName = "market"
@@ -16,15 +20,6 @@ const (
 	// BurnModuleName is special purpose module name to perform burn coins
 	// burn address = terra1sk06e3dyexuq4shw77y3dsv480xv42mq73anxu
 	BurnModuleName = "burn"
-
-	// AlternateCommunityPoolAddress is intended to replace the community pool.
-	// Since the community pool does not have its own address, an alternate
-	// address is needed to register as a seigniorage route.
-	// - https://github.com/cosmos/cosmos-sdk/issues/10811
-	//
-	// The alternate address is the bech32 encoded form of
-	// 0x0000000000000000000000000000000000000000 with terra prefix
-	AlternateCommunityPoolAddress = "terra1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq486l9a"
 )
 
 // Keys for market store
@@ -37,4 +32,13 @@ var (
 	// Keys for store prefixed
 	TerraPoolDeltaKey    = []byte{0x01} // key for terra pool delta which gap between MintPool from BasePool
 	SeigniorageRoutesKey = []byte{0x02} // key for SeigniorageRoutes which seigniorage will be routed
+
+	// AlternateCommunityPoolAddress is intended to replace the community pool.
+	// Since the community pool does not have its own address, an alternate
+	// address is needed to register as a seigniorage route.
+	// - https://github.com/cosmos/cosmos-sdk/issues/10811
+	//
+	// The bech32 encoded form of the alternate address is
+	// terra1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq486l9a
+	AlternateCommunityPoolAddress = sdk.AccAddress([]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 )

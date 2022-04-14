@@ -23,7 +23,7 @@ func TestMigrate1to2(t *testing.T) {
 	routes = input.MarketKeeper.GetSeigniorageRoutes(input.Ctx)
 	require.Equal(t, []types.SeigniorageRoute{
 		{
-			Address: authtypes.NewModuleAddress(types.AlternateCommunityPoolAddress).String(),
+			Address: types.AlternateCommunityPoolAddress.String(),
 			Weight:  sdk.NewDecWithPrec(2, 1),
 		},
 		{

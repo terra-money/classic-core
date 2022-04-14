@@ -81,7 +81,6 @@ func TestQueryMintPoolDelta(t *testing.T) {
 }
 
 func TestQuerySeigniorageRoutes(t *testing.T) {
-
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.MarketKeeper)
@@ -89,7 +88,7 @@ func TestQuerySeigniorageRoutes(t *testing.T) {
 	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	routes := []types.SeigniorageRoute{
 		{
-			Address: types.AlternateCommunityPoolAddress,
+			Address: types.AlternateCommunityPoolAddress.String(),
 			Weight:  sdk.NewDecWithPrec(2, 1),
 		},
 		{

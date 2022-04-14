@@ -25,7 +25,7 @@ func NewMigrator(keeper Keeper) Migrator {
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	m.keeper.SetSeigniorageRoutes(ctx, []types.SeigniorageRoute{
 		{
-			Address: authtypes.NewModuleAddress(types.AlternateCommunityPoolAddress).String(),
+			Address: types.AlternateCommunityPoolAddress.String(),
 			Weight:  sdk.NewDecWithPrec(2, 1),
 		},
 		{

@@ -31,7 +31,7 @@ func TestSettleSeigniorage(t *testing.T) {
 	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	input.MarketKeeper.SetSeigniorageRoutes(input.Ctx, []types.SeigniorageRoute{
 		{
-			Address: types.AlternateCommunityPoolAddress,
+			Address: types.AlternateCommunityPoolAddress.String(),
 			Weight:  sdk.NewDecWithPrec(2, 1),
 		},
 		{

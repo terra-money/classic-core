@@ -28,7 +28,7 @@ func (k Keeper) SettleSeigniorage(ctx sdk.Context) {
 			}
 
 			// transfer weight * seigniorage amount LUNA token to the recipient address
-			if route.Address == types.AlternateCommunityPoolAddress {
+			if recipient.Equals(types.AlternateCommunityPoolAddress) {
 				// If the given address is the predefined alternate address,
 				// fund community pool because community pool does not have
 				// its own address,
