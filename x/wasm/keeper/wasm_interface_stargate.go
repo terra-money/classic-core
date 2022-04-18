@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -60,19 +59,117 @@ func NewStargateWasmQuerier(keeper Keeper) StargateWasmQuerier {
 	return StargateWasmQuerier{keeper}
 }
 
-var queryBlackList = []string{
-	"/cosmos.tx",
-	"/cosmos.base.tendermint",
+var queryWhiteList = []string{
+	"/cosmos.auth.v1beta1.Query/Account",
+	"/cosmos.auth.v1beta1.Query/Accounts",
+	"/cosmos.auth.v1beta1.Query/Params",
+
+	"/cosmos.authz.v1beta1.Query/Grants",
+
+	"/cosmos.bank.v1beta1.Query/Balance",
+	"/cosmos.bank.v1beta1.Query/AllBalances",
+	"/cosmos.bank.v1beta1.Query/TotalSupply",
+	"/cosmos.bank.v1beta1.Query/SupplyOf",
+	"/cosmos.bank.v1beta1.Query/Params",
+	"/cosmos.bank.v1beta1.Query/DenomMetadata",
+	"/cosmos.bank.v1beta1.Query/DenomsMetadata",
+
+	"/cosmos.distribution.v1beta1.Query/Params",
+	"/cosmos.distribution.v1beta1.Query/ValidatorOutstandingRewards",
+	"/cosmos.distribution.v1beta1.Query/ValidatorCommission",
+	"/cosmos.distribution.v1beta1.Query/ValidatorSlashes",
+	"/cosmos.distribution.v1beta1.Query/DelegationRewards",
+	"/cosmos.distribution.v1beta1.Query/DelegationTotalRewards",
+	"/cosmos.distribution.v1beta1.Query/DelegatorWithdrawAddress",
+	"/cosmos.distribution.v1beta1.Query/CommunityPool",
+
+	"/cosmos.evidence.v1beta1.Query/Evidence",
+	"/cosmos.evidence.v1beta1.Query/AllEvidence",
+
+	"/cosmos.feegrant.v1beta1.Query/Allowance",
+	"/cosmos.feegrant.v1beta1.Query/Allowances",
+
+	"/cosmos.gov.v1beta1.Query/Proposal",
+	"/cosmos.gov.v1beta1.Query/Proposals",
+	"/cosmos.gov.v1beta1.Query/Vote",
+	"/cosmos.gov.v1beta1.Query/Votes",
+	"/cosmos.gov.v1beta1.Query/Params",
+	"/cosmos.gov.v1beta1.Query/Deposit",
+	"/cosmos.gov.v1beta1.Query/Deposits",
+	"/cosmos.gov.v1beta1.Query/TallyResult",
+
+	"/cosmos.params.v1beta1.Query/Params",
+
+	"/cosmos.slashing.v1beta1.Query/Params",
+	"/cosmos.slashing.v1beta1.Query/SigningInfo",
+	"/cosmos.slashing.v1beta1.Query/SigningInfos",
+
+	"/cosmos.staking.v1beta1.Query/Validator",
+	"/cosmos.staking.v1beta1.Query/Validators",
+	"/cosmos.staking.v1beta1.Query/ValidatorDelegations",
+	"/cosmos.staking.v1beta1.Query/ValidatorUnbondingDelegations",
+	"/cosmos.staking.v1beta1.Query/Delegation",
+	"/cosmos.staking.v1beta1.Query/UnbondingDelegation",
+	"/cosmos.staking.v1beta1.Query/DelegatorDelegations",
+	"/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations",
+	"/cosmos.staking.v1beta1.Query/Redelegations",
+	"/cosmos.staking.v1beta1.Query/DelegatorValidator",
+	"/cosmos.staking.v1beta1.Query/DelegatorValidators",
+	"/cosmos.staking.v1beta1.Query/HistoricalInfo",
+	"/cosmos.staking.v1beta1.Query/Pool",
+	"/cosmos.staking.v1beta1.Query/Params",
+
+	"/cosmos.upgrade.v1beta1.Query/CurrentPlan",
+	"/cosmos.upgrade.v1beta1.Query/AppliedPlan",
+	"/cosmos.upgrade.v1beta1.Query/UpgradedConsensusState",
+	"/cosmos.upgrade.v1beta1.Query/ModuleVersions",
+
+	"/terra.market.v1beta1.Query/Swap",
+	"/terra.market.v1beta1.Query/TerraPoolDelta",
+	"/terra.market.v1beta1.Query/Params",
+
+	"/terra.oracle.v1beta1.Query/ExchangeRate",
+	"/terra.oracle.v1beta1.Query/ExchangeRates",
+	"/terra.oracle.v1beta1.Query/TobinTax",
+	"/terra.oracle.v1beta1.Query/TobinTaxes",
+	"/terra.oracle.v1beta1.Query/Actives",
+	"/terra.oracle.v1beta1.Query/VoteTargets",
+	"/terra.oracle.v1beta1.Query/FeederDelegation",
+	"/terra.oracle.v1beta1.Query/MissCounter",
+	"/terra.oracle.v1beta1.Query/AggregatePrevote",
+	"/terra.oracle.v1beta1.Query/AggregatePrevotes",
+	"/terra.oracle.v1beta1.Query/AggregateVote",
+	"/terra.oracle.v1beta1.Query/AggregateVotes",
+	"/terra.oracle.v1beta1.Query/Params",
+
+	"/terra.wasm.v1beta1.Query/CodeInfo",
+	"/terra.wasm.v1beta1.Query/ByteCode",
+	"/terra.wasm.v1beta1.Query/ContractInfo",
+	"/terra.wasm.v1beta1.Query/ContractStore",
+	"/terra.wasm.v1beta1.Query/RawStore",
+	"/terra.wasm.v1beta1.Query/Params",
+
+	"/terra.wasm.v1beta2.Query/CodeInfo",
+	"/terra.wasm.v1beta2.Query/ByteCode",
+	"/terra.wasm.v1beta2.Query/ContractInfo",
+	"/terra.wasm.v1beta2.Query/ContractStore",
+	"/terra.wasm.v1beta2.Query/RawStore",
+	"/terra.wasm.v1beta2.Query/Params",
 }
 
 // Query - implement query function
 func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
-	for _, b := range queryBlackList {
-		if strings.Contains(request.Stargate.Path, b) {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
+	var whiteListChecked bool = false
+	for _, b := range queryWhiteList {
+		if request.Stargate.Path == b {
+			whiteListChecked = true
+			break
 		}
 	}
 
+	if !whiteListChecked {
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
+	}
 	// handle legacy queriers
 	if bz, err := legacytreasury.QueryLegacyTreasury(request.Stargate.Path); bz != nil || err != nil {
 		return bz, err
