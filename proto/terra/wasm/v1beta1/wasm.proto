@@ -4,16 +4,16 @@ package terra.wasm.v1beta1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/terra-money/core/x/wasm/legacy/v05";
+option go_package = "github.com/terra-money/core/x/wasm/types";
 
 // Params defines the parameters for the wasm module.
 message Params {
   option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = false;
 
-  uint64 max_contract_size     = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
-  uint64 max_contract_gas      = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
-  uint64 max_contract_msg_size = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
+  uint64 max_contract_size      = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
+  uint64 max_contract_gas       = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
+  uint64 max_contract_msg_size  = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
 }
 
 // CodeInfo is data for the uploaded contract WASM code
@@ -40,4 +40,6 @@ message ContractInfo {
   uint64 code_id = 4 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // InitMsg is the raw message used when instantiating a contract
   bytes init_msg = 5 [(gogoproto.moretags) = "yaml:\"init_msg\"", (gogoproto.casttype) = "encoding/json.RawMessage"];
+  // IBCPortID is the assigned IBC port ID only can be used in a contract
+  string ibc_port_id = 6 [(gogoproto.moretags) = "yaml:\"ibc_port_id\"", (gogoproto.customname) = "IBCPortID" ];
 }

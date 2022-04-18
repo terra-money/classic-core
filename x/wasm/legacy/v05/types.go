@@ -13,30 +13,14 @@ const (
 
 	// StoreKey is the string store representation
 	StoreKey = ModuleName
-
-	defaultMaxContractSize    = uint64(600 * 1024) // 600 KB
-	defaultMaxContractGas     = uint64(20_000_000) // 20,000,000
-	defaultMaxContractMsgSize = uint64(4 * 1024)   // 4KB
 )
 
 // Keys for wasm store
 // Items are stored with the following key: values
 //
-// - 0x01: uint64
-//
-// - 0x02: uint64
-//
-// - 0x03<uint64>: CodeInfo
-//
 // - 0x04<accAddress_Bytes>: ContractInfo
-//
-// - 0x05<accAddress_Bytes>: KVStore for contract
 var (
-	LastCodeIDKey     = []byte{0x01}
-	LastInstanceIDKey = []byte{0x02}
-	CodeKey           = []byte{0x03}
-	ContractInfoKey   = []byte{0x04}
-	ContractStoreKey  = []byte{0x05}
+	ContractInfoKey = []byte{0x04}
 )
 
 // String implements fmt.Stringer interface
