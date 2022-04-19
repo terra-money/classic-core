@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/terra-money/core/x/market/types"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
@@ -115,12 +116,28 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 		return nil, err
 	}
 
-	// Send swap fee to oracle account
+	// Spend swap fee as validator rewards
 	if feeCoin.IsPositive() {
-		feeCoins := sdk.NewCoins(feeCoin)
-		err = k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, oracletypes.ModuleName, feeCoins)
-		if err != nil {
-			return nil, err
+		// Split feeCoin 50:50 between oracle voting rewards and block validation rewards
+		blockValidationReward := feeCoin.Amount.QuoRaw(2)
+		oracleVotesReward := feeCoin.Amount.Sub(blockValidationReward)
+
+		// Send half to fee collector account
+		if !blockValidationReward.IsZero() {
+			blockValidationRewardCoins := sdk.Coins{{Amount: blockValidationReward, Denom: feeCoin.Denom}}
+			err = k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, authtypes.FeeCollectorName, blockValidationRewardCoins)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Send left half to oracle account
+		if !oracleVotesReward.IsZero() {
+			oracleVotesRewardCoins := sdk.Coins{{Amount: oracleVotesReward, Denom: feeCoin.Denom}}
+			err = k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, oracletypes.ModuleName, oracleVotesRewardCoins)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
