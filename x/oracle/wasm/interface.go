@@ -12,20 +12,20 @@ import (
 	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
+var _ wasm.WasmQuerierInterface = Querier{}
 
-// WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
+// Querier - staking query interface for wasm contract
+type Querier struct {
 	keeper keeper.Keeper
 }
 
 // NewWasmQuerier return bank wasm query interface
-func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
-	return WasmQuerier{keeper}
+func NewWasmQuerier(keeper keeper.Keeper) Querier {
+	return Querier{keeper}
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+func (Querier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
 	return nil, nil
 }
 
@@ -53,7 +53,7 @@ type ExchangeRatesQueryResponse struct {
 }
 
 // QueryCustom implements custom query interface
-func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+func (querier Querier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	var params CosmosQuery
 	err := json.Unmarshal(data, &params)
 

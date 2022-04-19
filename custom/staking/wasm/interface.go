@@ -15,19 +15,19 @@ import (
 	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
-var _ wasm.WasmMsgParserInterface = WasmMsgParser{}
+var _ wasm.WasmQuerierInterface = Querier{}
+var _ wasm.WasmMsgParserInterface = MsgParser{}
 
-// WasmMsgParser - wasm msg parser for staking msgs
-type WasmMsgParser struct{}
+// MsgParser - wasm msg parser for staking msgs
+type MsgParser struct{}
 
 // NewWasmMsgParser returns staking wasm msg parser
-func NewWasmMsgParser() WasmMsgParser {
-	return WasmMsgParser{}
+func NewWasmMsgParser() MsgParser {
+	return MsgParser{}
 }
 
 // Parse implements wasm staking msg parser
-func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (msgs sdk.Msg, err error) {
+func (parser MsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (msgs sdk.Msg, err error) {
 	msg := wasmMsg.Staking
 
 	if msg.Delegate != nil {
@@ -102,23 +102,23 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 }
 
 // ParseCustom implements custom parser
-func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
+func (parser MsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	return nil, nil
 }
 
-// WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
+// Querier - staking query interface for wasm contract
+type Querier struct {
 	stakingKeeper stakingkeeper.Keeper
 	distrKeeper   distrkeeper.Keeper
 }
 
 // NewWasmQuerier returns staking wasm querier
-func NewWasmQuerier(stakingKeeper stakingkeeper.Keeper, distrKeeper distrkeeper.Keeper) WasmQuerier {
-	return WasmQuerier{stakingKeeper, distrKeeper}
+func NewWasmQuerier(stakingKeeper stakingkeeper.Keeper, distrKeeper distrkeeper.Keeper) Querier {
+	return Querier{stakingKeeper, distrKeeper}
 }
 
 // Query - implement query function
-func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
+func (querier Querier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 	if request.Staking.BondedDenom != nil {
 		res := wasmvmtypes.BondedDenomResponse{
 			Denom: querier.stakingKeeper.BondDenom(ctx),
@@ -218,12 +218,12 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 }
 
 // QueryCustom implements custom query interface
-func (WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+func (Querier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	return nil, nil
 }
 
 // encdoe cosmos delegations to wasm delegations
-func (querier WasmQuerier) encodeDelegations(ctx sdk.Context, delegations stakingtypes.Delegations) (wasmvmtypes.Delegations, error) {
+func (querier Querier) encodeDelegations(ctx sdk.Context, delegations stakingtypes.Delegations) (wasmvmtypes.Delegations, error) {
 	bondDenom := querier.stakingKeeper.BondDenom(ctx)
 
 	var responseDelegations wasmvmtypes.Delegations
@@ -250,7 +250,7 @@ func (querier WasmQuerier) encodeDelegations(ctx sdk.Context, delegations stakin
 }
 
 // encode cosmos staking to wasm delegation
-func (querier WasmQuerier) encodeDelegation(ctx sdk.Context, del stakingtypes.Delegation) (*wasmvmtypes.FullDelegation, error) {
+func (querier Querier) encodeDelegation(ctx sdk.Context, del stakingtypes.Delegation) (*wasmvmtypes.FullDelegation, error) {
 	delAddr, err := sdk.AccAddressFromBech32(del.DelegatorAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
@@ -291,7 +291,7 @@ func (querier WasmQuerier) encodeDelegation(ctx sdk.Context, del stakingtypes.De
 	}, nil
 }
 
-func (querier WasmQuerier) getAccumulatedRewards(ctx sdk.Context, delegation stakingtypes.Delegation) (wasmvmtypes.Coins, error) {
+func (querier Querier) getAccumulatedRewards(ctx sdk.Context, delegation stakingtypes.Delegation) (wasmvmtypes.Coins, error) {
 	// Try to get *delegator* reward info!
 	params := distrtypes.QueryDelegationRewardsRequest{
 		DelegatorAddress: delegation.DelegatorAddress,

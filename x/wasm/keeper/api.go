@@ -10,7 +10,7 @@ import (
 	"github.com/terra-money/core/x/wasm/types"
 )
 
-func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {
+func (k Keeper) getCosmWasmAPI() cosmwasm.GoAPI {
 	return cosmwasm.GoAPI{
 		HumanAddress: func(canon []byte) (humanAddr string, usedGas uint64, err error) {
 			err = sdk.VerifyAddressFormat(canon)

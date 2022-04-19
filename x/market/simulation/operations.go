@@ -21,7 +21,8 @@ import (
 
 // Simulation operation weights constants
 const (
-	OpWeightMsgSwap = "op_weight_msg_swap" // nolint
+	// nolint:gosec
+	OpWeightMsgSwap = "op_weight_msg_swap"
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights

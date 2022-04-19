@@ -118,6 +118,4 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if core.IsPeriodLastBlock(ctx, params.SlashWindow) {
 		k.SlashAndResetMissCounters(ctx)
 	}
-
-	return
 }

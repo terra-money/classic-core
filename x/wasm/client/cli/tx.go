@@ -20,8 +20,6 @@ import (
 )
 
 const (
-	flagTo            = "to"
-	flagAmount        = "amount"
 	flagAdmin         = "admin"
 	flagMigrateCodeID = "migrate-code-id"
 )

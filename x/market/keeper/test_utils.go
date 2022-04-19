@@ -89,6 +89,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 // Test Account
 var (
+	// nolint:deadcode,unused
 	valPubKeys = simapp.CreateTestPubKeys(5)
 
 	PubKeys = []crypto.PubKey{

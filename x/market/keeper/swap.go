@@ -128,7 +128,7 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 		spread = minSpread
 	}
 
-	return
+	return retDecCoin, spread, nil
 }
 
 // ComputeInternalSwap returns the amount of asked DecCoin should be returned for a given offerCoin at the effective

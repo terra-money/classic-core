@@ -141,8 +141,7 @@ func queryContractStore(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacy
 	}()
 
 	bz, err = k.queryToContract(ctx, params.ContractAddress, params.Msg)
-
-	return
+	return bz, err
 }
 
 func queryParameters(ctx sdk.Context, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
