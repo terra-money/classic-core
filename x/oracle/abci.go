@@ -87,11 +87,16 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		//---------------------------
 		// Do miss counting & slashing
 		voteTargetsLen := len(voteTargets)
-		for _, claim := range validatorClaimMap {
+		for key, claim := range validatorClaimMap {
 			// Skip abstain & valid voters
 			if int(claim.WinCount) == voteTargetsLen {
 				continue
 			}
+
+			// If a validator miss any single ballot,
+			// the one can't receive any reward for this voting period.
+			claim.Weight = 0
+			validatorClaimMap[key] = claim
 
 			// Increase miss counter
 			k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)

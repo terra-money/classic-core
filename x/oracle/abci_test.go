@@ -233,6 +233,9 @@ func TestOracleTallyTiming(t *testing.T) {
 func TestOracleRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, types.DefaultTobinTax)
+
 	// Account 1, SDR
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroSDRDenom, Amount: randomExchangeRate}}, 0)
 
@@ -302,6 +305,10 @@ func TestOracleRewardBand(t *testing.T) {
 func TestOracleMultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, types.DefaultTobinTax)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, types.DefaultTobinTax)
+
 	// SDR and KRW have the same voting power, but KRW has been chosen as referenceTerra by alphabetical order.
 	// Account 1, SDR, KRW
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: core.MicroSDRDenom, Amount: randomExchangeRate}, {Denom: core.MicroKRWDenom, Amount: randomExchangeRate}}, 0)
@@ -320,9 +327,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	expectedRewardAmt2 := sdk.ZeroInt() // even vote power is same KRW with SDR, KRW chosen referenceTerra because alphabetical order
-	expectedRewardAmt3 := sdk.NewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt3 := sdk.ZeroInt()
 
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
@@ -334,6 +341,11 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
+
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroUSDDenom, types.DefaultTobinTax)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, types.DefaultTobinTax)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, types.DefaultTobinTax)
 
 	krwRandomExchangeRate := sdk.NewDecWithPrec(1000000000, int64(6)).MulInt64(core.MicroUnit)
 	usdRandomExchangeRate := sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(core.MicroUnit)
@@ -355,8 +367,8 @@ func TestOracleExchangeRate(t *testing.T) {
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(4).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt2 := sdk.ZeroInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -396,6 +408,9 @@ func TestOracleEnsureSorted(t *testing.T) {
 func TestOracleExchangeRateVal5(t *testing.T) {
 	input, h := setupVal5(t)
 
+	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, types.DefaultTobinTax)
+	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroUSDDenom, types.DefaultTobinTax)
 	krwExchangeRate := sdk.NewDecWithPrec(505000, int64(6)).MulInt64(core.MicroUnit)
 	krwExchangeRateWithErr := sdk.NewDecWithPrec(500000, int64(6)).MulInt64(core.MicroUnit)
 	usdExchangeRate := sdk.NewDecWithPrec(505, int64(6)).MulInt64(core.MicroUnit)
@@ -436,8 +451,8 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	require.Equal(t, usdExchangeRate, usd)
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(6).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt2 := sdk.ZeroInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
