@@ -19,7 +19,7 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/terra-money/wasmvm/releases
-ADD https://github.com/terra-money/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+ADD https://github.com/terra-money/wasmvm/releases/download/${LIBWASMVM_VERSION}/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
 RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
