@@ -106,10 +106,8 @@ func TestToCrossRate(t *testing.T) {
 	}
 
 	baseMapBallot := pbBase.ToMap()
-	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
 
 	sort.Sort(cb)
-
 	require.Equal(t, cb, pbQuote.ToCrossRateWithSort(baseMapBallot))
 }
 
@@ -237,7 +235,6 @@ func TestPBWeightedMedian(t *testing.T) {
 		if tc.panic {
 			require.Panics(t, func() { pb.WeightedMedianWithAssertion() })
 		} else {
-			require.Equal(t, tc.median, pb.WeightedMedian())
 			require.Equal(t, tc.median, pb.WeightedMedianWithAssertion())
 		}
 	}
