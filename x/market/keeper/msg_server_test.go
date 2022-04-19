@@ -1,4 +1,4 @@
-package market
+package keeper
 
 import (
 	"testing"
@@ -10,28 +10,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/market/keeper"
 	"github.com/terra-money/core/x/market/types"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 )
 
-func TestMarketFilters(t *testing.T) {
-	input, h := setup(t)
-
-	// Case 1: non-oracle message being sent fails
-	bankMsg := banktypes.MsgSend{}
-	_, err := h(input.Ctx, &bankMsg)
-	require.Error(t, err)
-
-	// Case 2: Normal MsgSwap submission goes through
-	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(10))
-	prevoteMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
-	_, err = h(input.Ctx, prevoteMsg)
-	require.NoError(t, err)
-}
-
 func TestSwapMsg(t *testing.T) {
-	input, h := setup(t)
+	input, msgServer := setup(t)
 
 	params := input.MarketKeeper.GetParams(input.Ctx)
 	params.MinStabilitySpread = sdk.ZeroDec()
@@ -41,8 +25,8 @@ func TestSwapMsg(t *testing.T) {
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
-	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
-	_, err := h(input.Ctx, swapMsg)
+	swapMsg := types.NewMsgSwap(Addrs[0], offerCoin, core.MicroSDRDenom)
+	_, err := msgServer.Swap(sdk.WrapSDKContext(input.Ctx), swapMsg)
 	require.NoError(t, err)
 
 	afterTerraPoolDelta := input.MarketKeeper.GetTerraPoolDelta(input.Ctx)
@@ -59,22 +43,22 @@ func TestSwapMsg(t *testing.T) {
 	require.True(t, estmiatedDiff.Sub(diff.Abs()).LTE(sdk.NewDecWithPrec(1, 6)))
 
 	// invalid recursive swap
-	swapMsg = types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroLunaDenom)
+	swapMsg = types.NewMsgSwap(Addrs[0], offerCoin, core.MicroLunaDenom)
 
-	_, err = h(input.Ctx, swapMsg)
+	_, err = msgServer.Swap(sdk.WrapSDKContext(input.Ctx), swapMsg)
 	require.Error(t, err)
 
 	// valid zero tobin tax test
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroKRWDenom, sdk.ZeroDec())
 	input.OracleKeeper.SetTobinTax(input.Ctx, core.MicroSDRDenom, sdk.ZeroDec())
 	offerCoin = sdk.NewCoin(core.MicroSDRDenom, amt)
-	swapMsg = types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroKRWDenom)
-	_, err = h(input.Ctx, swapMsg)
+	swapMsg = types.NewMsgSwap(Addrs[0], offerCoin, core.MicroKRWDenom)
+	_, err = msgServer.Swap(sdk.WrapSDKContext(input.Ctx), swapMsg)
 	require.NoError(t, err)
 }
 
 func TestSwapSendMsg(t *testing.T) {
-	input, h := setup(t)
+	input, msgServer := setup(t)
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
@@ -83,16 +67,16 @@ func TestSwapSendMsg(t *testing.T) {
 
 	expectedAmt := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
 
-	swapSendMsg := types.NewMsgSwapSend(keeper.Addrs[0], keeper.Addrs[1], offerCoin, core.MicroSDRDenom)
-	_, err = h(input.Ctx, swapSendMsg)
+	swapSendMsg := types.NewMsgSwapSend(Addrs[0], Addrs[1], offerCoin, core.MicroSDRDenom)
+	_, err = msgServer.SwapSend(sdk.WrapSDKContext(input.Ctx), swapSendMsg)
 	require.NoError(t, err)
 
-	balance := input.BankKeeper.GetBalance(input.Ctx, keeper.Addrs[1], core.MicroSDRDenom)
+	balance := input.BankKeeper.GetBalance(input.Ctx, Addrs[1], core.MicroSDRDenom)
 	require.Equal(t, expectedAmt, balance.Amount)
 }
 
 func TestSpreadDistribution(t *testing.T) {
-	input, h := setup(t)
+	input, msgServer := setup(t)
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
@@ -106,8 +90,8 @@ func TestSpreadDistribution(t *testing.T) {
 	feeDecCoin = feeDecCoin.Add(decimalCoin) // add truncated decimalCoin to swapFee
 	feeCoin, _ := feeDecCoin.TruncateDecimal()
 
-	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
-	_, err = h(input.Ctx, swapMsg)
+	swapMsg := types.NewMsgSwap(Addrs[0], offerCoin, core.MicroSDRDenom)
+	_, err = msgServer.Swap(sdk.WrapSDKContext(input.Ctx), swapMsg)
 	require.NoError(t, err)
 
 	blockValidationReward := feeCoin.Amount.QuoRaw(2)
@@ -128,4 +112,23 @@ func TestSpreadDistribution(t *testing.T) {
 	balanceRes, err = input.BankKeeper.Balance(sdk.WrapSDKContext(input.Ctx), &balanceReq)
 	require.NoError(t, err)
 	require.Equal(t, balanceRes.Balance.Amount, oracleVotingReward)
+}
+
+var (
+	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
+	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+
+	randomPrice = sdk.NewDec(1700)
+)
+
+func setup(t *testing.T) (TestInput, types.MsgServer) {
+	input := CreateTestInput(t)
+
+	params := input.MarketKeeper.GetParams(input.Ctx)
+	input.MarketKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, randomPrice)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, randomPrice)
+	msgServer := NewMsgServerImpl(input.MarketKeeper)
+
+	return input, msgServer
 }
