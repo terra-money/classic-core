@@ -3,7 +3,6 @@ package oracle
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-money/core/types"
 	"github.com/terra-money/core/x/oracle/keeper"
 	"github.com/terra-money/core/x/oracle/types"
 )
@@ -12,14 +11,7 @@ import (
 // a reasonable spread from the weighted median to the store
 // CONTRACT: pb must be sorted
 func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
-	// softfork
-	if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
-		(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
-		weightedMedian = pb.WeightedMedian()
-	} else {
-		weightedMedian = pb.WeightedMedianWithAssertion()
-	}
-
+	weightedMedian = pb.WeightedMedianWithAssertion()
 	standardDeviation := pb.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
@@ -50,10 +42,10 @@ func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) (s
 	return ballotPower, !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
 }
 
-// choose Reference Terra with the highest voter turnout
+// PickReferenceTerra choose Reference Terra with the highest voter turnout
 // If the voting power of the two denominations is the same,
 // select reference Terra in alphabetical order.
-func pickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string]sdk.Dec, voteMap map[string]types.ExchangeRateBallot) string {
+func PickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string]sdk.Dec, voteMap map[string]types.ExchangeRateBallot) string {
 	largestBallotPower := int64(0)
 	referenceTerra := ""
 

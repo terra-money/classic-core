@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package ibc.applications.fee.v1;
+
+option go_package = "github.com/cosmos/ibc-go/v3/modules/apps/29-fee/types";
+
+import "gogoproto/gogo.proto";
+import "ibc/applications/fee/v1/fee.proto";
+import "ibc/core/channel/v1/channel.proto";
+
+// Msg defines the ICS29 Msg service.
+service Msg {
+  // RegisterCounterpartyAddress defines a rpc handler method for MsgRegisterCounterpartyAddress
+  // RegisterCounterpartyAddress is called by the relayer on each channelEnd and allows them to specify their
+  // counterparty address before relaying. This ensures they will be properly compensated for forward relaying since
+  // destination chain must send back relayer's source address (counterparty address) in acknowledgement. This function
+  // may be called more than once by a relayer, in which case, latest counterparty address is always used.
+  rpc RegisterCounterpartyAddress(MsgRegisterCounterpartyAddress) returns (MsgRegisterCounterpartyAddressResponse);
+
+  // PayPacketFee defines a rpc handler method for MsgPayPacketFee
+  // PayPacketFee is an open callback that may be called by any module/user that wishes to escrow funds in order to
+  // incentivize the relaying of the packet at the next sequence
+  // NOTE: This method is intended to be used within a multi msg transaction, where the subsequent msg that follows
+  // initiates the lifecycle of the incentivized packet
+  rpc PayPacketFee(MsgPayPacketFee) returns (MsgPayPacketFeeResponse);
+
+  // PayPacketFeeAsync defines a rpc handler method for MsgPayPacketFeeAsync
+  // PayPacketFeeAsync is an open callback that may be called by any module/user that wishes to escrow funds in order to
+  // incentivize the relaying of a known packet (i.e. at a particular sequence)
+  rpc PayPacketFeeAsync(MsgPayPacketFeeAsync) returns (MsgPayPacketFeeAsyncResponse);
+}
+
+// MsgRegisterCounterpartyAddress defines the request type for the RegisterCounterpartyAddress rpc
+message MsgRegisterCounterpartyAddress {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // the relayer address
+  string address = 1;
+  // the counterparty relayer address
+  string counterparty_address = 2 [(gogoproto.moretags) = "yaml:\"counterparty_address\""];
+  // unique channel identifier
+  string channel_id = 3 [(gogoproto.moretags) = "yaml:\"channel_id\""];
+}
+
+// MsgRegisterCounterpartyAddressResponse defines the response type for the RegisterCounterpartyAddress rpc
+message MsgRegisterCounterpartyAddressResponse {}
+
+// MsgPayPacketFee defines the request type for the PayPacketFee rpc
+// This Msg can be used to pay for a packet at the next sequence send & should be combined with the Msg that will be
+// paid for
+message MsgPayPacketFee {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // fee encapsulates the recv, ack and timeout fees associated with an IBC packet
+  ibc.applications.fee.v1.Fee fee = 1 [(gogoproto.nullable) = false];
+  // the source port unique identifier
+  string source_port_id = 2 [(gogoproto.moretags) = "yaml:\"source_port_id\""];
+  // the source channel unique identifer
+  string source_channel_id = 3 [(gogoproto.moretags) = "yaml:\"source_channel_id\""];
+  // account address to refund fee if necessary
+  string signer = 4;
+  // optional list of relayers permitted to the receive packet fees
+  repeated string relayers = 5;
+}
+
+// MsgPayPacketFeeResponse defines the response type for the PayPacketFee rpc
+message MsgPayPacketFeeResponse {}
+
+// MsgPayPacketFeeAsync defines the request type for the PayPacketFeeAsync rpc
+// This Msg can be used to pay for a packet at a specified sequence (instead of the next sequence send)
+message MsgPayPacketFeeAsync {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // unique packet identifier comprised of the channel ID, port ID and sequence
+  ibc.core.channel.v1.PacketId packet_id = 1
+      [(gogoproto.moretags) = "yaml:\"packet_id\"", (gogoproto.nullable) = false];
+  // the packet fee associated with a particular IBC packet
+  PacketFee packet_fee = 2 [(gogoproto.moretags) = "yaml:\"packet_fee\"", (gogoproto.nullable) = false];
+}
+
+// MsgPayPacketFeeAsyncResponse defines the response type for the PayPacketFeeAsync rpc
+message MsgPayPacketFeeAsyncResponse {}

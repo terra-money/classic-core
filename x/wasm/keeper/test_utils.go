@@ -43,10 +43,8 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/cosmos/ibc-go/modules/apps/transfer"
-	ibc "github.com/cosmos/ibc-go/modules/core"
-	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
+	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
 	customauth "github.com/terra-money/core/custom/auth"
 	custombank "github.com/terra-money/core/custom/bank"
@@ -83,8 +81,6 @@ var ModuleBasics = module.NewBasicManager(
 	customparams.AppModuleBasic{},
 	oracle.AppModuleBasic{},
 	market.AppModuleBasic{},
-	ibc.AppModuleBasic{},
-	transfer.AppModuleBasic{},
 	capability.AppModuleBasic{},
 )
 

@@ -1,25 +1,19 @@
 package ante
 
 import (
-	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
-	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	AccountKeeper    cosmosante.AccountKeeper
-	BankKeeper       types.BankKeeper
-	FeegrantKeeper   cosmosante.FeegrantKeeper
-	OracleKeeper     OracleKeeper
-	SignModeHandler  signing.SignModeHandler
-	SigGasConsumer   cosmosante.SignatureVerificationGasConsumer
-	IBCChannelKeeper channelkeeper.Keeper
+	cosmosante.HandlerOptions
+	IBCkeeper    *ibckeeper.Keeper
+	OracleKeeper OracleKeeper
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -57,11 +51,12 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		cosmosante.NewValidateMemoDecorator(options.AccountKeeper),
 		cosmosante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		cosmosante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
-		cosmosante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
+		// SetPubKeyDecorator must be called before all signature verification decorators
+		cosmosante.NewSetPubKeyDecorator(options.AccountKeeper),
 		cosmosante.NewValidateSigCountDecorator(options.AccountKeeper),
 		cosmosante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		cosmosante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		cosmosante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		ibcante.NewAnteDecorator(options.IBCChannelKeeper),
+		ibcante.NewAnteDecorator(options.IBCkeeper),
 	), nil
 }

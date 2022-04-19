@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	host "github.com/cosmos/ibc-go/modules/core/24-host"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
