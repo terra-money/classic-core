@@ -49,7 +49,7 @@ func initLegacyRecurseContract(t *testing.T) (contract sdk.AccAddress, creator s
 }
 
 func TestLegacyGasCostOnQuery(t *testing.T) {
-	GasNoWork := types.InstantiateContractCosts(0) + 3_091
+	GasNoWork := types.InstantiateContractCosts(0) + 3_184
 	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 586 // this is a little shy of 50k gas - to keep an eye on the limit
 
@@ -214,7 +214,7 @@ func TestLegacyLimitRecursiveQueryGas(t *testing.T) {
 	// This attack would allow us to use far more than the provided gas before
 	// eventually hitting an OutOfGas panic.
 
-	GasNoWork := types.InstantiateContractCosts(0) + 3_091
+	GasNoWork := types.InstantiateContractCosts(0) + 3_184
 	GasWork2k := GasNoWork + 24_509
 
 	// This is overhead for calling into a sub-contract
