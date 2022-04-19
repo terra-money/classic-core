@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package ibc.applications.fee.v1;
+
+option go_package = "github.com/cosmos/ibc-go/v3/modules/apps/29-fee/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "ibc/core/channel/v1/channel.proto";
+
+// Fee defines the ICS29 receive, acknowledgement and timeout fees
+message Fee {
+  // the packet receive fee
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1 [
+    (gogoproto.moretags)     = "yaml:\"recv_fee\"",
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // the packet acknowledgement fee
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2 [
+    (gogoproto.moretags)     = "yaml:\"ack_fee\"",
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // the packet timeout fee
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3 [
+    (gogoproto.moretags)     = "yaml:\"timeout_fee\"",
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// PacketFee contains ICS29 relayer fees, refund address and optional list of permitted relayers
+message PacketFee {
+  // fee encapsulates the recv, ack and timeout fees associated with an IBC packet
+  Fee fee = 1 [(gogoproto.nullable) = false];
+  // the refund address for unspent fees
+  string refund_address = 2 [(gogoproto.moretags) = "yaml:\"refund_address\""];
+  // optional list of relayers permitted to receive fees
+  repeated string relayers = 3;
+}
+
+// PacketFees contains a list of type PacketFee
+message PacketFees {
+  // list of packet fees
+  repeated PacketFee packet_fees = 1 [(gogoproto.moretags) = "yaml:\"packet_fees\"", (gogoproto.nullable) = false];
+}
+
+// IdentifiedPacketFees contains a list of type PacketFee and associated PacketId
+message IdentifiedPacketFees {
+  // unique packet identifier comprised of the channel ID, port ID and sequence
+  ibc.core.channel.v1.PacketId packet_id = 1
+      [(gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"packet_id\""];
+  // list of packet fees
+  repeated PacketFee packet_fees = 2 [(gogoproto.moretags) = "yaml:\"packet_fees\"", (gogoproto.nullable) = false];
+}

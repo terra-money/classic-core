@@ -33,7 +33,8 @@ buf protoc \
 --doc_opt=./docs/protodoc-markdown.tmpl,proto-docs.md \
 $(find "$(pwd)/proto" -maxdepth 5 -name '*.proto') \
 $(find "$(pwd)/third_party/proto/cosmos" -maxdepth 4 -name '*.proto') \
-$(find "$(pwd)/third_party/proto/ibc" -maxdepth 4 -name '*.proto')
+$(find "$(pwd)/third_party/proto/ibc" -maxdepth 4 -name '*.proto') \
+$(find "$(pwd)/third_party/proto/router" -maxdepth 4 -name '*.proto')
 
 # move proto files to the right places
 cp -r github.com/terra-money/core/* ./

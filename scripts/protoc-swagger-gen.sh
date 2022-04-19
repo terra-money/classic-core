@@ -3,7 +3,7 @@
 set -eo pipefail
 
 mkdir -p ./tmp-swagger-gen
-proto_dirs=$(find ./proto ./third_party/proto/cosmos ./third_party/proto/ibc -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+proto_dirs=$(find ./proto ./third_party/proto/cosmos ./third_party/proto/ibc ./third_party/proto/router -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
 
   # generate swagger files (filter query files)
