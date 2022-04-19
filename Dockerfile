@@ -23,7 +23,7 @@ RUN git clone --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdi
 ENV MIMALLOC_RESERVE_HUGE_OS_PAGES=4
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v${LIBWASMVM_VERSION}/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/${LIBWASMVM_VERSION}/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
 RUN sha256sum /lib/libwasmvm_muslc.a | grep ${LIBWASMVM_SHA256}
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
