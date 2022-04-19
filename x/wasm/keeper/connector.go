@@ -158,7 +158,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, co
 
 	// append message action attribute
 	events = events.AppendEvents(sdkEvents)
-	return
+	return events, data, nil
 }
 
 // Messenger handles SDK messages and IBC.SendPacket messages which are published to an IBC channel.
