@@ -1,6 +1,16 @@
-## [unreleased]
+## v0.5.18
+This release contains a wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
+To avoid possible sync delays due to the runtime rebuilding overhead, it is highly recommended that node operators rebuild their wasm cache with the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
 
-- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order
+**Node upgrade instructions**
+1. Rebuild your wasm cache using the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder). This rebuilder can be run simultaneously without killing a running terrad process.
+2. You can ignore the _file already open_ error. If other errors occur (no disk space, etc), it is safe to run the rebuilder multiple times.
+3. When the rebuilder is finished, update terrad to v0.5.18 and restart.
+4. The rebuilder creates a `$TERRA_HOME/data/wasm/cache/modules/v3-wasmer1` directory. The `$TERRA_HOME/data/wasm/cache/modules/v1` can be deleted after updating terrad to v0.5.18.
+
+**Additional notes**
+- :tada: Wasmer v2.2 supports the much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means nodes can be run on any arm64 system, such as Apple Silicon machines and AWS Graviton2 Arm64.
+- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order. (edited) 
 
 ## v0.5.17
 
@@ -66,19 +76,19 @@ This release contains [IAVL bugfix](https://github.com/cosmos/iavl/pull/449)
 - [\#594](https://github.com/terra-money/core/pull/594) bump SDK to v0.44.3 and Tendermint to v0.34.14
 - [\#593](https://github.com/terra-money/core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
 
-## [v0.5.9]
+## v0.5.9
 
 ### Bug Fixes
 - [\#588](https://github.com/terra-money/core/pull/588) - fix wasm external querier to use single wasmvm with context value
 
-## [v0.5.8]
+## v0.5.8
 
 ### Bug Fixes
 - [\#584](https://github.com/terra-money/core/pull/584) - security update
 - [\#586](https://github.com/terra-money/core/pull/586) - memory leak fix
 - [\#583](https://github.com/terra-money/core/pull/583) - ibc ante handler to prevent duplicated packet relaying
 
-## [v0.5.7]
+## v0.5.7
 
 This release mainly contains CosmosSDK security updates
 
@@ -87,7 +97,7 @@ This release mainly contains CosmosSDK security updates
 - [\#576](https://github.com/terra-money/core/pull/576) Change write-vm-memory-cache-size default config replace location
 - [\#573](https://github.com/terra-money/core/pull/573) Fix to distribute oracle rewards for all whitelist denoms
 
-## [v0.5.6]
+## v0.5.6
 
 This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation.
 
@@ -98,7 +108,7 @@ This release contains updates for multi-reader thread implementation with necess
 ### Improvements
 - [\#546](https://github.com/terra-money/core/pull/546) Implement read VM pool
 
-## [v0.5.5]
+## v0.5.5
 
 ### Improvements
 - [\#564](https://github.com/terra-money/core/pull/564) Legacy tx encode support
@@ -106,12 +116,12 @@ This release contains updates for multi-reader thread implementation with necess
 ### Bug Fixes
 - [\#566](https://github.com/terra-money/core/pull/566) Emit missing wasm tax events.
 
-## [v0.5.4]
+## v0.5.4
 
 ### Bug Fixes
 - [\#560](https://github.com/terra-money/core/pull/560) Fix migration bug of multisig pubkey which was in v040 auth module migration.
 
-## [v0.5.3]
+## v0.5.3
 
 ### Improvement
 - [\#551](https://github.com/terra-money/core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
@@ -120,15 +130,15 @@ This release contains updates for multi-reader thread implementation with necess
 - [\#544](https://github.com/terra-money/core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
 - [\#557](https://github.com/terra-money/core/pull/557) fix proto urls
 
-## 0.5.2
+## v0.5.2
 - [\#539](https://github.com/terra-money/core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
 
-## 0.5.1
+## v0.5.1
 
 ### Bug Fixes
 - [\#536](https://github.com/terra-money/core/pull/536) Sort migrated map array with key to generate deterministic result
 
-## 0.5.0
+## v0.5.0
 
 ### Improvements
 
