@@ -298,11 +298,11 @@ func (k Keeper) MigrateContract(
 
 	contractInfo, err := k.GetContractInfo(ctx, contractAddress)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
 
 	if contractInfo.Admin == "" {
-		return nil, types.ErrNotMigratable
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not migrate")
 	}
 
 	if contractInfo.Admin != sender.String() {
@@ -311,7 +311,7 @@ func (k Keeper) MigrateContract(
 
 	newCodeInfo, err := k.GetCodeInfo(ctx, newCodeID)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
@@ -349,6 +349,23 @@ func (k Keeper) MigrateContract(
 
 	// emit events
 	ctx.EventManager().EmitEvents(events)
+
+	// check for IBC flag
+	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
+	case err != nil:
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
+	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
+		// prevent update to non ibc contract
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
+	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
+		// add ibc port
+		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		contractInfo.IBCPortID = ibcPort
+	}
 
 	contractInfo.CodeID = newCodeID
 	k.SetContractInfo(ctx, contractAddress, contractInfo)

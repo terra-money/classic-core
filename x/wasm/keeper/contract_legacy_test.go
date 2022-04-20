@@ -462,7 +462,7 @@ func TestLegacyMigrate(t *testing.T) {
 		"prevent migration when admin was not set on instantiate": {
 			caller: creator,
 			codeID: originalCodeID,
-			expErr: types.ErrNotMigratable,
+			expErr: sdkerrors.ErrUnauthorized,
 		},
 		"prevent migration when wrong admin": {
 			caller: creator,
@@ -474,14 +474,14 @@ func TestLegacyMigrate(t *testing.T) {
 			admin:  creator,
 			caller: creator,
 			codeID: 99999,
-			expErr: types.ErrNotFound,
+			expErr: sdkerrors.ErrInvalidRequest,
 		},
 		"fail with non existing contract addr": {
 			admin:                creator,
 			caller:               creator,
 			overrideContractAddr: anyAddr,
 			codeID:               originalCodeID,
-			expErr:               types.ErrNotFound,
+			expErr:               sdkerrors.ErrInvalidRequest,
 		},
 		"fail in contract with invalid migrate msg": {
 			admin:      creator,

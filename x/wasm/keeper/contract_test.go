@@ -173,6 +173,40 @@ func TestInstantiateWithBigInitMsg(t *testing.T) {
 	require.Contains(t, err.Error(), "init msg size is too huge")
 }
 
+func TestInstantiateIBCEnabled(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
+
+	ibcWasmCode, err := ioutil.ReadFile("./testdata/ibc_reflect.wasm")
+	require.NoError(t, err)
+
+	reflectWasmCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+
+	ibcCodeID, err := keeper.StoreCode(ctx, creator, ibcWasmCode)
+	require.NoError(t, err)
+
+	reflectCodeID, err := keeper.StoreCode(ctx, creator, reflectWasmCode)
+	require.NoError(t, err)
+
+	ibcInitMsg := IBCReflectInitMsg{ReflectCodeID: reflectCodeID}
+	ibcInitMsgBz, err := json.Marshal(ibcInitMsg)
+	require.NoError(t, err)
+
+	// create with no balance is also legal
+	addr, _, err := keeper.InstantiateContract(ctx, ibcCodeID, creator, sdk.AccAddress{}, ibcInitMsgBz, nil)
+	require.NoError(t, err)
+	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+
+	cInfo, err := keeper.GetContractInfo(ctx, addr)
+	require.NoError(t, err)
+	assert.Equal(t, ibcCodeID, cInfo.CodeID)
+	assert.Equal(t, cInfo.IBCPortID, types.PortIDForContract(addr))
+}
+
 func TestExecute(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
@@ -408,11 +442,24 @@ func TestMigrate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
+	ibcWasmCode, err := ioutil.ReadFile("./testdata/ibc_reflect.wasm")
+	require.NoError(t, err)
+
+	reflectWasmCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+
 	originalCodeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
 	newCodeID, err := keeper.StoreCode(ctx, creator, wasmCode)
 	require.NoError(t, err)
+	ibcCodeID, err := keeper.StoreCode(ctx, creator, ibcWasmCode)
+	require.NoError(t, err)
+	reflectCodeID, err := keeper.StoreCode(ctx, creator, reflectWasmCode)
+	require.NoError(t, err)
+
 	require.NotEqual(t, originalCodeID, newCodeID)
+	require.NotEqual(t, originalCodeID, ibcCodeID)
+	require.NotEqual(t, newCodeID, ibcCodeID)
 
 	_, _, anyAddr := keyPubAddr()
 	_, _, newVerifierAddr := keyPubAddr()
@@ -421,6 +468,10 @@ func TestMigrate(t *testing.T) {
 		Beneficiary: anyAddr,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	ibcInitMsg := IBCReflectInitMsg{ReflectCodeID: reflectCodeID}
+	ibcInitMsgBz, err := json.Marshal(ibcInitMsg)
 	require.NoError(t, err)
 
 	migMsg := struct {
@@ -433,87 +484,128 @@ func TestMigrate(t *testing.T) {
 		admin                sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		codeID               uint64
+		fromCodeID           uint64
+		toCodeID             uint64
 		migrateMsg           []byte
 		expErr               *sdkerrors.Error
 		expVerifier          sdk.AccAddress
+		expIBCPort           bool
+		initMsg              []byte
 	}{
 		"all good with same code id": {
 			admin:       creator,
 			caller:      creator,
-			codeID:      originalCodeID,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    originalCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"all good with different code id": {
 			admin:       creator,
 			caller:      creator,
-			codeID:      newCodeID,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    newCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"all good with admin set": {
 			admin:       fred,
 			caller:      fred,
-			codeID:      newCodeID,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    newCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
-		"prevent migration when admin was not set on instantiate": {
-			caller: creator,
-			codeID: originalCodeID,
-			expErr: types.ErrNotMigratable,
+		"adds IBC port for IBC enabled contracts": {
+			admin:       fred,
+			caller:      fred,
+			initMsg:     initMsgBz,
+			fromCodeID:  originalCodeID,
+			toCodeID:    ibcCodeID,
+			migrateMsg:  []byte(`{}`),
+			expIBCPort:  true,
+			expVerifier: fred, // not updated
 		},
-		"prevent migration when wrong admin": {
-			caller: creator,
-			admin:  fred,
-			codeID: originalCodeID,
-			expErr: sdkerrors.ErrUnauthorized,
+		"prevent migration when admin was not set on instantiate": {
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   originalCodeID,
+			expErr:     sdkerrors.ErrUnauthorized,
+		},
+		"prevent migration when not sent by admin": {
+			caller:     creator,
+			admin:      fred,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   originalCodeID,
+			expErr:     sdkerrors.ErrUnauthorized,
 		},
 		"fail with non existing code id": {
-			admin:  creator,
-			caller: creator,
-			codeID: 99999,
-			expErr: types.ErrNotFound,
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   99999,
+			expErr:     sdkerrors.ErrInvalidRequest,
 		},
 		"fail with non existing contract addr": {
 			admin:                creator,
 			caller:               creator,
+			initMsg:              initMsgBz,
 			overrideContractAddr: anyAddr,
-			codeID:               originalCodeID,
-			expErr:               types.ErrNotFound,
+			fromCodeID:           originalCodeID,
+			toCodeID:             originalCodeID,
+			expErr:               sdkerrors.ErrInvalidRequest,
 		},
 		"fail in contract with invalid migrate msg": {
 			admin:      creator,
 			caller:     creator,
-			codeID:     originalCodeID,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   originalCodeID,
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
 			expErr:     types.ErrMigrationFailed,
 		},
 		"fail in contract without migrate msg": {
-			admin:  creator,
-			caller: creator,
-			codeID: originalCodeID,
-			expErr: types.ErrMigrationFailed,
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   originalCodeID,
+			expErr:     types.ErrMigrationFailed,
+		},
+		"fail when no IBC callbacks": {
+			admin:      fred,
+			caller:     fred,
+			initMsg:    ibcInitMsgBz,
+			fromCodeID: ibcCodeID,
+			toCodeID:   newCodeID,
+			migrateMsg: migMsgBz,
+			expErr:     types.ErrMigrationFailed,
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-			addr, _, err := keeper.InstantiateContract(ctx, originalCodeID, creator, spec.admin, initMsgBz, nil)
+			addr, _, err := keeper.InstantiateContract(ctx, spec.fromCodeID, creator, spec.admin, spec.initMsg, nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
 				addr = spec.overrideContractAddr
 			}
-			_, err = keeper.MigrateContract(ctx, addr, spec.caller, spec.codeID, spec.migrateMsg)
+			_, err = keeper.MigrateContract(ctx, addr, spec.caller, spec.toCodeID, spec.migrateMsg)
 			require.True(t, spec.expErr.Is(err), "expected %v but got %+v", spec.expErr, err)
 			if spec.expErr != nil {
 				return
 			}
 			cInfo, err := keeper.GetContractInfo(ctx, addr)
 			require.NoError(t, err)
-			assert.Equal(t, spec.codeID, cInfo.CodeID)
+			assert.Equal(t, spec.toCodeID, cInfo.CodeID)
+			assert.Equal(t, spec.expIBCPort, cInfo.IBCPortID != "", cInfo.IBCPortID)
 
 			m := keeper.queryToStore(ctx, addr, []byte("config"))
 			var stored map[string]string

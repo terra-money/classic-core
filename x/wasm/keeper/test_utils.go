@@ -417,3 +417,8 @@ type HackatomExampleInitMsg struct {
 	Verifier    sdk.AccAddress `json:"verifier"`
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
+
+// IBCReflectInitMsg nolint
+type IBCReflectInitMsg struct {
+	ReflectCodeID uint64 `json:"reflect_code_id"`
+}
