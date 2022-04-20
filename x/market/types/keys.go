@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 const (
@@ -39,6 +39,6 @@ var (
 	// - https://github.com/cosmos/cosmos-sdk/issues/10811
 	//
 	// The bech32 encoded form of the alternate address is
-	// terra1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq486l9a
-	AlternateCommunityPoolAddress = sdk.AccAddress([]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+	// terra1pf89qgchfytxmd0fvdn3zfdshja4fqtevepu93
+	AlternateCommunityPoolAddress = authtypes.NewModuleAddress("community_pool_placeholder")
 )
