@@ -18,8 +18,6 @@ import (
 	"github.com/terra-money/core/x/wasm/types"
 )
 
-const flagRaw = "raw"
-
 // GetQueryCmd returns the cli query commands for wasm   module
 func GetQueryCmd() *cobra.Command {
 	queryCmd := &cobra.Command{

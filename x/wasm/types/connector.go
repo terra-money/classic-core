@@ -29,27 +29,19 @@ func ParseEvents(
 	var sdkEvents sdk.Events
 
 	if len(attributes) != 0 {
-		sdkEvent, err := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
-		if err != nil {
-			return nil, err
-		}
-
-		sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
-
-		// Deprecated: from_contract
-		sdkEvent.Type = EventTypeFromContract
+		sdkEvent := buildEvent(EventTypeWasmPrefix, contractAddr, attributes)
 		if sdkEvent != nil {
+			sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
+
+			// Deprecated: from_contract
+			sdkEvent.Type = EventTypeFromContract
 			sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
 		}
 	}
 
 	// append wasm prefix for the events
 	for _, event := range events {
-		sdkEvent, err := buildEvent(fmt.Sprintf("%s-%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
-		if err != nil {
-			return nil, err
-		}
-
+		sdkEvent := buildEvent(fmt.Sprintf("%s-%s", EventTypeWasmPrefix, event.Type), contractAddr, event.Attributes)
 		if sdkEvent != nil {
 			sdkEvents = sdkEvents.AppendEvent(*sdkEvent)
 		}
@@ -62,9 +54,9 @@ func buildEvent(
 	eventType string,
 	contractAddr sdk.AccAddress,
 	attributes wasmvmtypes.EventAttributes,
-) (*sdk.Event, error) {
+) *sdk.Event {
 	if len(attributes) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	// we always tag with the contract address issuing this event
@@ -78,7 +70,7 @@ func buildEvent(
 	}
 
 	event := sdk.NewEvent(eventType, attrs...)
-	return &event, nil
+	return &event
 }
 
 // ParseToCoin converts wasm coin to sdk.Coin

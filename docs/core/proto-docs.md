@@ -896,6 +896,16 @@
     - [Header](#ibc.lightclients.tendermint.v1.Header)
     - [Misbehaviour](#ibc.lightclients.tendermint.v1.Misbehaviour)
   
+- [router/v1/genesis.proto](#router/v1/genesis.proto)
+    - [GenesisState](#router.v1.GenesisState)
+    - [Params](#router.v1.Params)
+  
+- [router/v1/query.proto](#router/v1/query.proto)
+    - [QueryParamsRequest](#router.v1.QueryParamsRequest)
+    - [QueryParamsResponse](#router.v1.QueryParamsResponse)
+  
+    - [Query](#router.v1.Query)
+  
 - [terra/market/v1beta1/market.proto](#terra/market/v1beta1/market.proto)
     - [Params](#terra.market.v1beta1.Params)
   
@@ -13224,6 +13234,103 @@ that implements Misbehaviour interface expected by ICS-02
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="router/v1/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## router/v1/genesis.proto
+
+
+
+<a name="router.v1.GenesisState"></a>
+
+### GenesisState
+GenesisState defines the router genesis state
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#router.v1.Params) |  |  |
+
+
+
+
+
+
+<a name="router.v1.Params"></a>
+
+### Params
+Params defines the set of IBC router parameters.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fee_percentage` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="router/v1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## router/v1/query.proto
+
+
+
+<a name="router.v1.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest is the request type for the Query/Params RPC method.
+
+
+
+
+
+
+<a name="router.v1.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse is the response type for the Query/Params RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#router.v1.Params) |  | params defines the parameters of the module. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="router.v1.Query"></a>
+
+### Query
+Query provides defines the gRPC querier service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Params` | [QueryParamsRequest](#router.v1.QueryParamsRequest) | [QueryParamsResponse](#router.v1.QueryParamsResponse) | Params queries all parameters of the router module. | GET|/ibc/apps/router/v1/params|
 
  <!-- end services -->
 

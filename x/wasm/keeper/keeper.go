@@ -27,7 +27,6 @@ type Keeper struct {
 
 	accountKeeper    types.AccountKeeper
 	bankKeeper       types.BankKeeper
-	treasuryKeeper   types.TreasuryKeeper
 	portKeeper       types.PortKeeper
 	capabilityKeeper types.CapabilityKeeper
 

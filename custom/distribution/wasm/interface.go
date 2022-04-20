@@ -12,18 +12,18 @@ import (
 	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
-var _ wasm.WasmMsgParserInterface = WasmMsgParser{}
+var _ wasm.WasmMsgParserInterface = MsgParser{}
 
-// WasmMsgParser - wasm msg parser for staking msgs
-type WasmMsgParser struct{}
+// MsgParser - wasm msg parser for staking msgs
+type MsgParser struct{}
 
 // NewWasmMsgParser returns staking wasm msg parser
-func NewWasmMsgParser() WasmMsgParser {
-	return WasmMsgParser{}
+func NewWasmMsgParser() MsgParser {
+	return MsgParser{}
 }
 
 // Parse implements wasm staking msg parser
-func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (msgs sdk.Msg, err error) {
+func (parser MsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (msgs sdk.Msg, err error) {
 	msg := wasmMsg.Distribution
 
 	if msg.SetWithdrawAddress != nil {
@@ -58,6 +58,6 @@ func (parser WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtyp
 }
 
 // ParseCustom implements custom parser
-func (parser WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
+func (parser MsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	return nil, nil
 }

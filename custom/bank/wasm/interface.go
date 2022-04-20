@@ -13,19 +13,19 @@ import (
 	wasm "github.com/terra-money/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
-var _ wasm.WasmMsgParserInterface = WasmMsgParser{}
+var _ wasm.WasmQuerierInterface = Querier{}
+var _ wasm.WasmMsgParserInterface = MsgParser{}
 
-// WasmMsgParser - wasm msg parser for staking msgs
-type WasmMsgParser struct{}
+// MsgParser - wasm msg parser for staking msgs
+type MsgParser struct{}
 
 // NewWasmMsgParser returns bank wasm msg parser
-func NewWasmMsgParser() WasmMsgParser {
-	return WasmMsgParser{}
+func NewWasmMsgParser() MsgParser {
+	return MsgParser{}
 }
 
 // Parse implements wasm staking msg parser
-func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
+func (MsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	msg := wasmMsg.Bank
 
 	if msg.Send == nil {
@@ -47,22 +47,22 @@ func (WasmMsgParser) Parse(contractAddr sdk.AccAddress, wasmMsg wasmvmtypes.Cosm
 }
 
 // ParseCustom implements custom parser
-func (WasmMsgParser) ParseCustom(_ sdk.AccAddress, _ json.RawMessage) (sdk.Msg, error) {
+func (MsgParser) ParseCustom(_ sdk.AccAddress, _ json.RawMessage) (sdk.Msg, error) {
 	return nil, nil
 }
 
-// WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
+// Querier - staking query interface for wasm contract
+type Querier struct {
 	keeper keeper.Keeper
 }
 
 // NewWasmQuerier return bank wasm query interface
-func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
-	return WasmQuerier{keeper}
+func NewWasmQuerier(keeper keeper.Keeper) Querier {
+	return Querier{keeper}
 }
 
 // Query - implement query function
-func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
+func (querier Querier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 	if request.Bank.AllBalances != nil {
 		addr, err := sdk.AccAddressFromBech32(request.Bank.AllBalances.Address)
 		if err != nil {
@@ -90,6 +90,6 @@ func (querier WasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryReque
 }
 
 // QueryCustom implements custom query interface
-func (WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+func (Querier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	return nil, nil
 }

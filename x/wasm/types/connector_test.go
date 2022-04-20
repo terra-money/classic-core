@@ -117,12 +117,11 @@ func TestParseEventsWithoutAttributes(t *testing.T) {
 func TestBuildEvent(t *testing.T) {
 	_, _, addr := keyPubAddr()
 
-	event, err := buildEvent(EventTypeFromContract, addr, wasmvmtypes.EventAttributes{
+	event := buildEvent(EventTypeFromContract, addr, wasmvmtypes.EventAttributes{
 		{Key: "key1", Value: "value1"},
 		{Key: "key2", Value: "value2"},
 		{Key: "key3", Value: "value3"},
 	})
-	require.NoError(t, err)
 	require.Equal(t, sdk.NewEvent(
 		EventTypeFromContract,
 		[]sdk.Attribute{

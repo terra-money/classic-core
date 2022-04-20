@@ -113,6 +113,7 @@ func WeightedOperations(
 	}
 }
 
+// nolint:deadcode,unused
 func mustLoad(path string) []byte {
 	bz, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -123,7 +124,7 @@ func mustLoad(path string) []byte {
 
 var testContract []byte
 
-// nolint: funlen
+// nolint:funlen
 func SimulateMsgStoreCode(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
@@ -179,6 +180,7 @@ type initMsg struct {
 	Beneficiary string `json:"beneficiary"`
 }
 
+// nolint:unused,deadcode
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
@@ -186,7 +188,7 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	return key, pub, addr
 }
 
-// nolint: funlen
+// nolint:funlen
 func SimulateMsgInstantiateContract(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
@@ -347,7 +349,8 @@ func SimulateMsgMigrateContract(
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgMigrateContract, "unable to generate fee"), nil, err
 		}
 
-		spendableCoins = spendableCoins.Sub(fees)
+		// never used more
+		// spendableCoins = spendableCoins.Sub(fees)
 
 		migData := map[string]interface{}{
 			"verifier": info.Creator,

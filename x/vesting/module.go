@@ -20,9 +20,7 @@ var (
 )
 
 // AppModuleBasic defines the basic application module used by the oracle module.
-type AppModuleBasic struct {
-	cdc codec.Codec
-}
+type AppModuleBasic struct{}
 
 // Name returns the module's name
 func (AppModuleBasic) Name() string {
