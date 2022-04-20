@@ -114,6 +114,17 @@ func TestSpreadDistribution(t *testing.T) {
 	require.Equal(t, balanceRes.Balance.Amount, oracleVotingReward)
 }
 
+func TestSwapMsg_OfferCoinLeftInModuleAccount(t *testing.T) {
+	input, msgServer := setup(t)
+
+	offerCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(1000000))
+	swapMsg := types.NewMsgSwap(Addrs[0], offerCoin, core.MicroSDRDenom)
+	_, err := msgServer.Swap(sdk.WrapSDKContext(input.Ctx), swapMsg)
+	require.NoError(t, err)
+
+	checkBalance(t, input, authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(offerCoin))
+}
+
 var (
 	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
 	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
