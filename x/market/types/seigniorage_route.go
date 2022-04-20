@@ -29,8 +29,9 @@ func (s SeigniorageRoutes) ValidateRoutes() error {
 	weightsSum := sdk.ZeroDec()
 	addrMap := map[string]bool{}
 	for _, pc := range routes {
-		if len(pc.Address) == 0 {
-			return ErrEmptyAddress
+		_, err := sdk.AccAddressFromBech32(pc.Address)
+		if err != nil {
+			return ErrInvalidAddress
 		}
 
 		// each weight must be bigger than zero
