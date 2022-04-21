@@ -10,8 +10,8 @@ import (
 )
 
 // RewardBallotWinners implements
-// at the end of every VotePeriod, we give out portion of seigniorage reward(reward-weight) to the
-// oracle voters that voted faithfully.
+// at the end of every VotePeriod, give out a portion of spread fees collected in the oracle reward pool
+//  to the oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	votePeriod int64,
@@ -45,7 +45,8 @@ func (k Keeper) RewardBallotWinners(
 	if ballotPowerSum == 0 {
 		return
 	}
-
+	
+	// The Reward distributionRatio = votePeriod/rewardDistributionWindow
 	distributionRatio := sdk.NewDec(votePeriod).QuoInt64(rewardDistributionWindow)
 
 	var periodRewards sdk.DecCoins
