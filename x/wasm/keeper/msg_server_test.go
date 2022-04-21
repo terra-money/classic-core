@@ -115,7 +115,7 @@ func TestMigrateExceedMaxGas(t *testing.T) {
 	})
 }
 
-func TestMsgServerStoreCode(t *testing.T) {
+func TestStoreCodeMsgServer(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
@@ -139,7 +139,7 @@ func TestMsgServerStoreCode(t *testing.T) {
 	require.Equal(t, wasmCode, storedCode)
 }
 
-func TestServerMigrateCode(t *testing.T) {
+func TestMigrateCodeMsgServer(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
