@@ -18,7 +18,7 @@ import (
 	"github.com/terra-money/core/x/oracle/types"
 )
 
-func TestOracleThreshold(t *testing.T) {
+func TestOracleEndBlocker_TallyThreshold(t *testing.T) {
 	input, h := setup(t)
 	exchangeRateStr := randomExchangeRate.String() + core.MicroSDRDenom
 
@@ -108,7 +108,7 @@ func TestOracleThreshold(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestOracleDrop(t *testing.T) {
+func TestOracleEndBlocker_ExchangeRateDrop(t *testing.T) {
 	input, h := setup(t)
 
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, randomExchangeRate)
@@ -123,7 +123,7 @@ func TestOracleDrop(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestOracleTally(t *testing.T) {
+func TestOracleEndBlocker_Tally(t *testing.T) {
 	input, _ := setup(t)
 
 	ballot := types.ExchangeRateBallot{}
@@ -206,7 +206,7 @@ func TestOracleTally(t *testing.T) {
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
 }
 
-func TestOracleTallyTiming(t *testing.T) {
+func TestOracleEndBlocker_TallyTiming(t *testing.T) {
 	input, h := setup(t)
 
 	// all the keeper.Addrs vote for the block ... not last period block yet, so tally fails
@@ -230,7 +230,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestOracleRewardDistribution(t *testing.T) {
+func TestOracleEndBlocker_RewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
@@ -256,7 +256,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-func TestOracleRewardBand(t *testing.T) {
+func TestOracleEndBlocker_RewardBand(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax}}
@@ -299,10 +299,9 @@ func TestOracleRewardBand(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
-
 }
 
-func TestOracleMultiRewardDistribution(t *testing.T) {
+func TestOracleEndBlocker_MultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
@@ -339,7 +338,7 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	require.Equal(t, expectedRewardAmt3, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-func TestOracleExchangeRate(t *testing.T) {
+func TestOracleEndBlocker_ExchangeRate(t *testing.T) {
 	input, h := setup(t)
 
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
@@ -377,7 +376,7 @@ func TestOracleExchangeRate(t *testing.T) {
 	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-func TestOracleEnsureSorted(t *testing.T) {
+func TestOracleEndBlocker_EnsureSorted(t *testing.T) {
 	input, h := setup(t)
 
 	for i := 0; i < 100; i++ {
@@ -405,7 +404,7 @@ func TestOracleEnsureSorted(t *testing.T) {
 	}
 }
 
-func TestOracleExchangeRateVal5(t *testing.T) {
+func TestOracleEndBlocker_ExchangeRateVal5(t *testing.T) {
 	input, h := setupVal5(t)
 
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
@@ -465,7 +464,7 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	require.Equal(t, expectedRewardAmt, rewards4.Rewards.AmountOf(core.MicroLunaDenom).TruncateInt())
 }
 
-func TestInvalidVotesSlashing(t *testing.T) {
+func TestOracleEndBlocker_SlashingWrongExchangeRateVotes(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax}}
@@ -511,7 +510,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
 }
 
-func TestWhitelistSlashing(t *testing.T) {
+func TestOracleEndBlocker_SlashingNoVote(t *testing.T) {
 	input, h := setup(t)
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
@@ -546,7 +545,7 @@ func TestWhitelistSlashing(t *testing.T) {
 	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
 }
 
-func TestNotPassedBallotSlashing(t *testing.T) {
+func TestOracleEndBlocker_NoSlashingPassedBallot(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax}}
@@ -567,7 +566,7 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 }
 
-func TestAbstainSlashing(t *testing.T) {
+func TestOracleEndBlocker_NoSlashingAbstain(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax}}
@@ -600,7 +599,7 @@ func TestAbstainSlashing(t *testing.T) {
 	require.Equal(t, stakingAmt, validator.GetBondedTokens())
 }
 
-func TestVoteTargets(t *testing.T) {
+func TestOracleEndBlocker_VoteTargetsUpdate(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.DenomList{{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax}, {Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax}}
@@ -672,7 +671,7 @@ func TestVoteTargets(t *testing.T) {
 	require.True(t, sdk.ZeroDec().Equal(tobinTax))
 }
 
-func TestAbstainWithSmallStakingPower(t *testing.T) {
+func TestOracleEndBlocker_AbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
