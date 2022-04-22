@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewGenesisState(t *testing.T) {
+	genState := DefaultGenesisState()
+	require.Equal(t, genState, NewGenesisState(DefaultParams(), 0, 0, []Code{}, []Contract{}))
+}
+
 func TestGenesisValidation(t *testing.T) {
 	genState := DefaultGenesisState()
 	require.NoError(t, ValidateGenesis(genState))

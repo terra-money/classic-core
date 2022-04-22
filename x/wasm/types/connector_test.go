@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	core "github.com/terra-money/core/types"
 )
 
 func TestParseEvents(t *testing.T) {
@@ -131,6 +132,20 @@ func TestBuildEvent(t *testing.T) {
 			{Key: "key3", Value: "value3"},
 		}...,
 	), *event)
+}
+
+func TestParseToCoins(t *testing.T) {
+	coins := wasmvmtypes.Coins{wasmvmtypes.NewCoin(1234, core.MicroLunaDenom)}
+	_, err := ParseToCoins(coins)
+	require.NoError(t, err)
+}
+
+func TestEncodeSdkCoins(t *testing.T) {
+	sdkCoin := sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(15000))
+	encodedCoin := EncodeSdkCoin(sdkCoin)
+	sdkCoins := sdk.NewCoins(sdkCoin)
+	encodedCoins := EncodeSdkCoins(sdkCoins)
+	require.Equal(t, encodedCoin, encodedCoins[0])
 }
 
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
