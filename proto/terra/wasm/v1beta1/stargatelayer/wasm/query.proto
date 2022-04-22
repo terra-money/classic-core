@@ -1,0 +1,47 @@
+syntax = "proto3";
+package terra.wasm.v1beta1.stargatelayer.wasm;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "terra/wasm/v1beta1/wasm.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/stargatelayer/wasm";
+
+
+// QueryCodeInfoResponse is response type for the
+// QueryyCodeInfo RPC method.
+message QueryCodeInfoResponse {
+  CodeInfo code_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryByteCodeResponse is response type for the
+// QueryyByteCode RPC method.
+message QueryByteCodeResponse {
+  bytes byte_code = 1;
+}
+
+// QueryContractInfoResponse is response type for the
+// Query/ContractInfo RPC method.
+message QueryContractInfoResponse {
+  ContractInfo contract_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryContractStoreResponse is response type for the
+// Query/ContractStore RPC method.
+message QueryContractStoreResponse {
+  bytes query_result = 1 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+}
+
+// QueryRawStoreResponse is response type for the
+// Query/RawStore RPC method.
+message QueryRawStoreResponse {
+  // Data contains the raw store data
+  bytes data = 1;
+}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}

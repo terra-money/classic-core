@@ -12,6 +12,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	legacytreasury "github.com/terra-money/core/x/wasm/legacyqueriers/treasury"
+	"github.com/terra-money/core/x/wasm/stargatelayer"
 	"github.com/terra-money/core/x/wasm/types"
 )
 
@@ -63,7 +64,8 @@ func NewStargateWasmQuerier(queryRouter types.GRPCQueryRouter) StargateWasmQueri
 func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.QueryRequest) ([]byte, error) {
 
 	// check the query path is whitelisted or not
-	if _, ok := types.StargateQueryWhitelist.Load(request.Stargate.Path); !ok {
+	binding, whitelisted := stargatelayer.StargateLayerBindings.Load(request.Stargate.Path)
+	if !whitelisted {
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Stargate.Path)}
 	}
 
@@ -86,5 +88,11 @@ func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.Qu
 		return nil, err
 	}
 
-	return res.Value, nil
+	// normalize response to ensure backward compatibility
+	bz, err := stargatelayer.NormalizeResponse(binding, res.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return bz, nil
 }

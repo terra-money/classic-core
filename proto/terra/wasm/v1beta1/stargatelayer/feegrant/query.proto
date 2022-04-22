@@ -1,0 +1,24 @@
+// Since: cosmos-sdk 0.43
+syntax = "proto3";
+package terra.wasm.v1beta1.stargatelayer.feegrant;
+
+import "cosmos/feegrant/v1beta1/feegrant.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/stargatelayer/feegrant";
+
+// QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
+message QueryAllowanceResponse {
+  // allowance is a allowance granted for grantee by granter.
+  cosmos.feegrant.v1beta1.Grant allowance = 1;
+}
+
+// QueryAllowancesResponse is the response type for the Query/Allowances RPC method.
+message QueryAllowancesResponse {
+  // allowances are allowance's granted for grantee by granter.
+  repeated cosmos.feegrant.v1beta1.Grant allowances = 1;
+
+  // pagination defines an pagination for the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

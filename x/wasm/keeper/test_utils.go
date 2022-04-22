@@ -143,6 +143,7 @@ var (
 type TestInput struct {
 	Ctx                sdk.Context
 	Cdc                *codec.LegacyAmino
+	InterfaceRegistry  codectypes.InterfaceRegistry
 	AccKeeper          authkeeper.AccountKeeper
 	BankKeeper         bankkeeper.Keeper
 	StakingKeeper      stakingkeeper.Keeper
@@ -312,6 +313,7 @@ func CreateTestInput(t *testing.T) TestInput {
 
 	router := baseapp.NewMsgServiceRouter()
 	querier := baseapp.NewGRPCQueryRouter()
+	authtypes.RegisterQueryServer(querier, accountKeeper)
 	banktypes.RegisterQueryServer(querier, bankKeeper)
 	stakingtypes.RegisterQueryServer(querier, stakingkeeper.Querier{Keeper: stakingKeeper})
 	distrtypes.RegisterQueryServer(querier, distrKeeper)
@@ -368,6 +370,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	return TestInput{
 		ctx.WithGasMeter(sdk.NewGasMeter(keeper.MaxContractGas(ctx))),
 		legacyAmino,
+		encodingConfig.InterfaceRegistry,
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,

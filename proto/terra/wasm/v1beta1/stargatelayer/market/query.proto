@@ -1,0 +1,28 @@
+syntax = "proto3";
+package terra.wasm.v1beta1.stargatelayer.market;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "terra/market/v1beta1/market.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/stargatelayer/market";
+
+// QuerySwapResponse is the response type for the Query/Swap RPC method.
+message QuerySwapResponse {
+  // return_coin defines the coin returned as a result of the swap simulation.
+  cosmos.base.v1beta1.Coin return_coin = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryTerraPoolDeltaResponse is the response type for the Query/TerraPoolDelta RPC method.
+message QueryTerraPoolDeltaResponse {
+  // terra_pool_delta defines the gap between the TerraPool and the TerraBasePool
+  bytes terra_pool_delta = 1
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  terra.market.v1beta1.Params params = 1 [(gogoproto.nullable) = false];
+}
