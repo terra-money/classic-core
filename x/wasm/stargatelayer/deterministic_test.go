@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/terra-money/core/x/wasm/stargatelayer"
+	stargateauth "github.com/terra-money/core/x/wasm/stargatelayer/auth"
 	stargatebank "github.com/terra-money/core/x/wasm/stargatelayer/bank"
 )
 
@@ -76,8 +77,55 @@ func TestDeterministic_AllBalances(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedResponseBz, normalizedBz)
 
-	// should be clear
+	// should be cleared
 	data := binding.(*stargatebank.QueryAllBalancesResponse)
 	require.Empty(t, data.Balances)
 	require.Empty(t, data.Pagination)
+}
+
+/**
+ *
+ * Origin Response
+ * 0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f7331346c3268686a6e676c3939367772703935673867646a6871653038326375367a7732706c686b
+ *
+ * Updated Response
+ * 0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f7331646a783375676866736d6b6135386676673076616a6e6533766c72776b7a6a346e6377747271122d636f736d6f7331646a783375676866736d6b6135386676673076616a6e6533766c72776b7a6a346e6377747271
+
+// Origin proto
+message QueryAccountResponse {
+  // account defines the account of the corresponding address.
+  google.protobuf.Any account = 1 [(cosmos_proto.accepts_interface) = "AccountI"];
+}
+
+// Updated proto
+message QueryAccountResponse {
+  // account defines the account of the corresponding address.
+  google.protobuf.Any account = 1 [(cosmos_proto.accepts_interface) = "AccountI"];
+
+  // address is the address to query for.
+	string address = 2;
+}
+
+*/
+
+func TestDeterministic_Account(t *testing.T) {
+	originVersionBz, err := hex.DecodeString("0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679")
+	require.NoError(t, err)
+
+	newVersionBz, err := hex.DecodeString("0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679122d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679")
+	require.NoError(t, err)
+
+	binding, ok := stargatelayer.StargateLayerBindings.Load("/cosmos.auth.v1beta1.Query/Account")
+	require.True(t, ok)
+
+	// new version response should be changed into origin version response
+	normalizedBz, err := stargatelayer.NormalizeResponse(binding, newVersionBz)
+	require.NoError(t, err)
+
+	require.Equal(t, originVersionBz, normalizedBz)
+	require.NotEqual(t, newVersionBz, normalizedBz)
+
+	// should be cleared
+	data := binding.(*stargateauth.QueryAccountResponse)
+	require.Empty(t, data.Account)
 }
