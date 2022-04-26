@@ -21,6 +21,11 @@ func TestOverflow_ToWasmVM(t *testing.T) {
 	})
 }
 
+func TestFromWasmVMGas(t *testing.T) {
+	res := FromWasmVMGas(uint64(0xff_ff_ff_ff))
+	require.Equal(t, uint64(0xff_ff_ff_ff)/GasMultiplier, res)
+}
+
 func TestCompileCosts(t *testing.T) {
 	bzLength := 10
 

@@ -60,6 +60,10 @@ func TestQueryContractState(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []byte(`{"count":8}`), res.Data)
 
+	// invalid argurment
+	_, err = querier.RawStore(goCtx, &types.QueryRawStoreRequest{ContractAddress: ``, Key: []byte{0x0, 0x1}})
+	require.Error(t, err)
+
 	// query contract []byte(`{"verifier":{}}`)
 	res2, err := querier.ContractStore(goCtx, &types.QueryContractStoreRequest{ContractAddress: addr.String(), QueryMsg: []byte(`{"verifier":{}}`)})
 	require.NoError(t, err)
@@ -68,6 +72,18 @@ func TestQueryContractState(t *testing.T) {
 	// query contract []byte(`{"raw":{"key":"config"}}`
 	_, err = querier.ContractStore(goCtx, &types.QueryContractStoreRequest{ContractAddress: addr.String(), QueryMsg: []byte(`{"raw":{"key":"config"}}`)})
 	require.Error(t, err)
+
+	// invalid arguemnt
+	_, err = querier.ContractStore(goCtx, &types.QueryContractStoreRequest{ContractAddress: ``, QueryMsg: []byte(`{"raw":{"key":"config"}}`)})
+	require.Error(t, err)
+
+	// out-of-gas panic
+	keeper.wasmConfig.ContractQueryGasLimit = 0
+	querier = NewQuerier(keeper)
+
+	_, err = querier.ContractStore(goCtx, &types.QueryContractStoreRequest{ContractAddress: addr.String(), QueryMsg: []byte(`{"verifier":{}}`)})
+	require.Error(t, err)
+
 }
 
 func TestQueryParams(t *testing.T) {

@@ -27,6 +27,8 @@ func TestMsgStoreCode(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgStoreCode(tc.sender, tc.wasmByteCode)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgStoreCode, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -54,6 +56,8 @@ func TestMsgMigrateCode(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgMigrateCode(tc.codeID, tc.sender, tc.wasmByteCode)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgMigrateCode, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -84,6 +88,8 @@ func TestMsgInstantiateCode(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgInstantiateContract(tc.creator, tc.admin, tc.codeID, tc.initMsg, tc.initCoins)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgInstantiateContract, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -115,6 +121,8 @@ func TestMsgExecuteContract(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgExecuteContract(tc.sender, tc.contract, tc.msg, tc.coins)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgExecuteContract, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -146,6 +154,8 @@ func TestMsgMigrateContract(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgMigrateContract(tc.admin, tc.contract, tc.codeID, tc.msg)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgMigrateContract, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -175,6 +185,8 @@ func TestMsgUpdateContractAdmin(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgUpdateContractAdmin(tc.admin, tc.newAdmin, tc.contract)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgUpdateContractAdmin, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -202,6 +214,8 @@ func TestMsgClearContractMigratable(t *testing.T) {
 
 	for i, tc := range tests {
 		msg := NewMsgClearContractAdmin(tc.admin, tc.contract)
+		require.Equal(t, RouterKey, msg.Route())
+		require.Equal(t, TypeMsgClearContractAdmin, msg.Type())
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
