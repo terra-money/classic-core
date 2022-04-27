@@ -1,4 +1,4 @@
-package app_test
+package app
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	terraapp "github.com/terra-money/core/app"
 	"github.com/terra-money/core/app/helpers"
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
 
@@ -42,9 +41,9 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
-	app := terraapp.NewTerraApp(
+	app := NewTerraApp(
 		logger, db, nil, true, map[int64]bool{},
-		terraapp.DefaultNodeHome, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+		DefaultNodeHome, simapp.FlagPeriodValue, MakeEncodingConfig(),
 		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 	// Run randomized simulation:w
@@ -110,9 +109,9 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			app := terraapp.NewTerraApp(
-				logger, db, nil, true, map[int64]bool{}, terraapp.DefaultNodeHome,
-				simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+			app := NewTerraApp(
+				logger, db, nil, true, map[int64]bool{}, DefaultNodeHome,
+				simapp.FlagPeriodValue, MakeEncodingConfig(),
 				simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 			fmt.Printf(

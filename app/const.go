@@ -2,7 +2,7 @@ package app
 
 const (
 	appName     = "TerraApp"
-	upgradeName = "columbus-6"
+	upgradeName = "ReserveUpgrade"
 
 	authzMsgExec                          = "/cosmos.authz.v1beta1.MsgExec"
 	authzMsgGrant                         = "/cosmos.authz.v1beta1.MsgGrant"
