@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/terra-money/core/custom/auth/ante"
+	"github.com/terra-money/core/x/oracle/ante"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 )
 

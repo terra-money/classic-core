@@ -106,8 +106,8 @@ import (
 
 	terraappparams "github.com/terra-money/core/app/params"
 
+	customante "github.com/terra-money/core/app/ante"
 	customauth "github.com/terra-money/core/custom/auth"
-	customante "github.com/terra-money/core/custom/auth/ante"
 	customauthsim "github.com/terra-money/core/custom/auth/simulation"
 	customauthz "github.com/terra-money/core/custom/authz"
 	custombank "github.com/terra-money/core/custom/bank"
@@ -692,8 +692,9 @@ func NewTerraApp(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
-			OracleKeeper: app.OracleKeeper,
-			IBCkeeper:    app.IBCKeeper,
+			OracleKeeper:      app.OracleKeeper,
+			IBCkeeper:         app.IBCKeeper,
+			TXCounterStoreKey: keys[wasmtypes.StoreKey],
 		},
 	)
 	if err != nil {

@@ -2,10 +2,13 @@ package types
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 var (
@@ -33,4 +36,16 @@ func TestNewContractInfo(t *testing.T) {
 		InitMsg: []byte{},
 	}
 	require.Equal(t, contractInfo, NewContractInfo(1, contractAddr, creatorAddr, creatorAddr, []byte{}))
+}
+
+func TestNewEnv(t *testing.T) {
+	ctx := sdk.NewContext(nil, tmproto.Header{
+		Height: 100,
+		Time:   time.Now(),
+	}, false, nil)
+
+	require.NotPanics(t, func() {
+		_ = NewEnv(ctx, sdk.AccAddress{})
+		_ = NewEnv(WithTXCounter(ctx, 100), sdk.AccAddress{})
+	})
 }
