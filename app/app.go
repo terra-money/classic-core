@@ -692,8 +692,9 @@ func NewTerraApp(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
-			OracleKeeper: app.OracleKeeper,
-			IBCkeeper:    app.IBCKeeper,
+			OracleKeeper:      app.OracleKeeper,
+			IBCkeeper:         app.IBCKeeper,
+			TXCounterStoreKey: keys[wasmtypes.StoreKey],
 		},
 	)
 	if err != nil {
