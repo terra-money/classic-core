@@ -9,13 +9,15 @@ import (
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	oracleante "github.com/terra-money/core/x/oracle/ante"
+	wasmante "github.com/terra-money/core/x/wasm/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
 	cosmosante.HandlerOptions
-	IBCkeeper    *ibckeeper.Keeper
-	OracleKeeper OracleKeeper
+	IBCkeeper         *ibckeeper.Keeper
+	OracleKeeper      OracleKeeper
+	TXCounterStoreKey sdk.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -38,6 +40,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
+	if options.TXCounterStoreKey == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+	}
+
 	var sigGasConsumer = options.SigGasConsumer
 	if sigGasConsumer == nil {
 		sigGasConsumer = cosmosante.DefaultSigVerificationGasConsumer
@@ -47,6 +53,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		cosmosante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		cosmosante.NewRejectExtensionOptionsDecorator(),
 		oracleante.NewSpammingPreventionDecorator(options.OracleKeeper), // spamming prevention
+		wasmante.NewCountTXDecorator(options.TXCounterStoreKey),         // store tx index in a block
 		cosmosante.NewMempoolFeeDecorator(),                             // mempool gas fee validation
 		cosmosante.NewValidateBasicDecorator(),
 		cosmosante.NewTxTimeoutHeightDecorator(),

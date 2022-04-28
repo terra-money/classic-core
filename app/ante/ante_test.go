@@ -53,6 +53,17 @@ func TestNewAnteHandler(t *testing.T) {
 		},
 		OracleKeeper: dummyOracleKeeper{},
 	})
+	require.Error(t, err)
+
+	_, err = ante.NewAnteHandler(ante.HandlerOptions{
+		HandlerOptions: cosmosante.HandlerOptions{
+			AccountKeeper:   dummyAccountKeeper{},
+			BankKeeper:      dummyBankKeeper{},
+			SignModeHandler: signModeHandler,
+		},
+		OracleKeeper:      dummyOracleKeeper{},
+		TXCounterStoreKey: sdk.NewKVStoreKey("wasm"),
+	})
 	require.NoError(t, err)
 
 }
