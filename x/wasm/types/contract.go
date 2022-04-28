@@ -36,15 +36,6 @@ func NewContractInfo(codeID uint64, address, creator, admin sdk.AccAddress, init
 
 // NewEnv initializes the environment for a contract instance
 func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
-	// safety checks before casting below
-	if ctx.BlockHeight() < 0 {
-		panic("Block height must never be negative")
-	}
-	nano := ctx.BlockTime().UnixNano()
-	if nano < 0 {
-		panic("Block (unix) time must never be negative ")
-	}
-
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
 			Height:  uint64(ctx.BlockHeight()),

@@ -48,12 +48,4 @@ func TestNewEnv(t *testing.T) {
 		_ = NewEnv(ctx, sdk.AccAddress{})
 		_ = NewEnv(WithTXCounter(ctx, 100), sdk.AccAddress{})
 	})
-
-	require.Panics(t, func() {
-		_ = NewEnv(ctx.WithBlockHeight(-1), sdk.AccAddress{})
-	})
-
-	require.Panics(t, func() {
-		_ = NewEnv(ctx.WithBlockTime(time.Unix(0, -1)), sdk.AccAddress{})
-	})
 }
