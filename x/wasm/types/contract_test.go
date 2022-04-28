@@ -54,6 +54,6 @@ func TestNewEnv(t *testing.T) {
 	})
 
 	require.Panics(t, func() {
-		_ = NewEnv(ctx.WithBlockTime(time.Unix(0, 0)), sdk.AccAddress{})
+		_ = NewEnv(ctx.WithBlockTime(time.Unix(0, -1)), sdk.AccAddress{})
 	})
 }
