@@ -45,6 +45,7 @@ var (
 	CodeKey           = []byte{0x03}
 	ContractInfoKey   = []byte{0x04}
 	ContractStoreKey  = []byte{0x05}
+	TXCounterKey      = []byte{0x06}
 )
 
 // GetCodeInfoKey constructs the key of the WASM code info for the ID

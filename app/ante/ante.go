@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	oracleante "github.com/terra-money/core/x/oracle/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -44,8 +46,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	return sdk.ChainAnteDecorators(
 		cosmosante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		cosmosante.NewRejectExtensionOptionsDecorator(),
-		NewSpammingPreventionDecorator(options.OracleKeeper), // spamming prevention
-		cosmosante.NewMempoolFeeDecorator(),                  // mempool gas fee validation
+		oracleante.NewSpammingPreventionDecorator(options.OracleKeeper), // spamming prevention
+		cosmosante.NewMempoolFeeDecorator(),                             // mempool gas fee validation
 		cosmosante.NewValidateBasicDecorator(),
 		cosmosante.NewTxTimeoutHeightDecorator(),
 		cosmosante.NewValidateMemoDecorator(options.AccountKeeper),
