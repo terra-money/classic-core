@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"fmt"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -8,13 +9,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/golang/protobuf/proto"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	bankwasm "github.com/terra-money/core/custom/bank/wasm"
 	distrwasm "github.com/terra-money/core/custom/distribution/wasm"
 	govwasm "github.com/terra-money/core/custom/gov/wasm"
 	stakingwasm "github.com/terra-money/core/custom/staking/wasm"
 	core "github.com/terra-money/core/types"
+	markettypes "github.com/terra-money/core/x/market/types"
 	marketwasm "github.com/terra-money/core/x/market/wasm"
 	test_util "github.com/terra-money/core/x/wasm/keeper"
 	"github.com/terra-money/core/x/wasm/keeper/wasmtesting"
@@ -33,6 +38,10 @@ func TestParse(t *testing.T) {
 	}
 
 	invalidAddr := "xrnd1d02kd90n38qvr3qb9qof83fn2d2"
+
+	bankMsg := banktypes.NewMsgSend(test_util.Addrs[0], test_util.Addrs[1], sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 10000)))
+	bankMsgBin, err := proto.Marshal(bankMsg)
+	require.NoError(t, err)
 
 	cases := map[string]struct {
 		sender sdk.AccAddress
@@ -180,6 +189,41 @@ func TestParse(t *testing.T) {
 			input:   wasmvmtypes.CosmosMsg{},
 			isError: true, // can't open channel in test
 		},
+		"CustomMsg : invalid msg": {
+			sender: addrs[0],
+			input: wasmvmtypes.CosmosMsg{
+				Custom: []byte(""),
+			},
+			isError: true,
+		},
+		"CustomMsg : no registered route": {
+			sender: addrs[0],
+			input: wasmvmtypes.CosmosMsg{
+				Custom: []byte(`{"route":"treasury", "msg_data":{"swap":{"trader":"cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5","offer_coin":{"denom":"uluna","amount":"10000"},"ask_denom":"uusd"}}}`),
+			},
+			isError: true,
+		},
+		"CustomMsg : valid msg": {
+			sender: addrs[0],
+			input: wasmvmtypes.CosmosMsg{
+				Custom: []byte(fmt.Sprintf(`{"route":"market", "msg_data":{"swap":{"trader":"%s","offer_coin":{"denom":"uluna","amount":"10000"},"ask_denom":"uusd"}}}`, addrs[0])),
+			},
+			output: &markettypes.MsgSwap{
+				Trader:    addrs[0].String(),
+				OfferCoin: sdk.NewInt64Coin(core.MicroLunaDenom, 10000),
+				AskDenom:  core.MicroUSDDenom,
+			},
+		},
+		"StargateMsg : valid msg": {
+			sender: addrs[0],
+			input: wasmvmtypes.CosmosMsg{
+				Stargate: &wasmvmtypes.StargateMsg{
+					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
+					Value:   bankMsgBin,
+				},
+			},
+			output: bankMsg,
+		},
 	}
 
 	parser := types.NewWasmMsgParser()
@@ -201,7 +245,7 @@ func TestParse(t *testing.T) {
 	parser.Parsers[types.WasmMsgParserRouteDistribution] = distrwasm.NewWasmMsgParser()
 	parser.Parsers[types.WasmMsgParserRouteGov] = govwasm.NewWasmMsgParser()
 	parser.Parsers[types.WasmMsgParserRouteWasm] = test_util.NewWasmMsgParser()
-	parser.StargateParser = test_util.NewStargateWasmMsgParser(encodingConfig.Amino)
+	parser.StargateParser = test_util.NewStargateWasmMsgParser(encodingConfig.Marshaler)
 	parser.IBCParser = test_util.NewIBCMsgParser(wasmtesting.MockIBCTransferKeeper{})
 
 	for name, tc := range cases {

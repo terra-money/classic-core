@@ -120,18 +120,18 @@ func EncodeSdkCoins(coins sdk.Coins) wasmvmtypes.Coins {
 
 // EncodeSdkEvents - encode sdk events to wasm events
 // Deprecated `from_contract` will be excluded from the events
-func EncodeSdkEvents(events []sdk.Event) []wasmvmtypes.Event {
-	res := make([]wasmvmtypes.Event, len(events))
-	for i, ev := range events {
+func EncodeSdkEvents(events []sdk.Event) wasmvmtypes.Events {
+	var res wasmvmtypes.Events
+	for _, ev := range events {
 		// Deprecated: from_contract
 		if ev.Type == EventTypeFromContract {
 			continue
 		}
 
-		res[i] = wasmvmtypes.Event{
+		res = append(res, wasmvmtypes.Event{
 			Type:       ev.Type,
 			Attributes: encodeSdkAttributes(ev.Attributes),
-		}
+		})
 	}
 	return res
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/terra-money/core/app"
+	"github.com/terra-money/core/app/params"
 	"github.com/terra-money/core/x/oracle/types"
 )
 
@@ -18,7 +18,7 @@ func TestGenesisValidation(t *testing.T) {
 }
 
 func TestGetGenesisStateFromAppState(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Marshaler
+	cdc := params.MakeEncodingConfig().Marshaler
 	appState := make(map[string]json.RawMessage)
 
 	defaultGenesisState := types.DefaultGenesisState()

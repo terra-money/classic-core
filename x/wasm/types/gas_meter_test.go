@@ -11,6 +11,10 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
 
+func TestRegisterGasCost(t *testing.T) {
+	require.Equal(t, registerCost, RegisterContractCosts())
+}
+
 func TestOverflow_ToWasmVM(t *testing.T) {
 	require.Panics(t,
 		func() { ToWasmVMGas(uint64(0xff_ff_ff_ff_ff_ff_ff_ff)) },
@@ -83,6 +87,14 @@ func TestReplyCosts(t *testing.T) {
 			(typeLength*eventsNum+dataLength)*contractMessageDataCostPerByte+
 			((keyLength+valueLength)*eventAttributeDataCostPerByte+eventAttributeCost)*totalAttributesNum,
 		cost)
+}
+
+func TestEmptyEventCost(t *testing.T) {
+	require.Equal(t, sdk.Gas(0), eventTypeCosts(""))
+}
+
+func TestEmptyAttributeCosts(t *testing.T) {
+	require.Equal(t, sdk.Gas(0), eventAttributeCosts([]wasmvmtypes.EventAttribute{}))
 }
 
 func TestEventCosts(t *testing.T) {

@@ -29,6 +29,14 @@ func TestMsgStoreCode(t *testing.T) {
 		msg := NewMsgStoreCode(tc.sender, tc.wasmByteCode)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgStoreCode, msg.Type())
+		if !tc.sender.Empty() {
+			require.Equal(t, tc.sender, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -58,6 +66,14 @@ func TestMsgMigrateCode(t *testing.T) {
 		msg := NewMsgMigrateCode(tc.codeID, tc.sender, tc.wasmByteCode)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgMigrateCode, msg.Type())
+		if !tc.sender.Empty() {
+			require.Equal(t, tc.sender, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -90,6 +106,14 @@ func TestMsgInstantiateCode(t *testing.T) {
 		msg := NewMsgInstantiateContract(tc.creator, tc.admin, tc.codeID, tc.initMsg, tc.initCoins)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgInstantiateContract, msg.Type())
+		if !tc.creator.Empty() {
+			require.Equal(t, tc.creator, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -123,6 +147,14 @@ func TestMsgExecuteContract(t *testing.T) {
 		msg := NewMsgExecuteContract(tc.sender, tc.contract, tc.msg, tc.coins)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgExecuteContract, msg.Type())
+		if !tc.sender.Empty() {
+			require.Equal(t, tc.sender, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -156,6 +188,14 @@ func TestMsgMigrateContract(t *testing.T) {
 		msg := NewMsgMigrateContract(tc.admin, tc.contract, tc.codeID, tc.msg)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgMigrateContract, msg.Type())
+		if !tc.admin.Empty() {
+			require.Equal(t, tc.admin, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -187,6 +227,14 @@ func TestMsgUpdateContractAdmin(t *testing.T) {
 		msg := NewMsgUpdateContractAdmin(tc.admin, tc.newAdmin, tc.contract)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgUpdateContractAdmin, msg.Type())
+		if !tc.admin.Empty() {
+			require.Equal(t, tc.admin, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
@@ -216,6 +264,14 @@ func TestMsgClearContractMigratable(t *testing.T) {
 		msg := NewMsgClearContractAdmin(tc.admin, tc.contract)
 		require.Equal(t, RouterKey, msg.Route())
 		require.Equal(t, TypeMsgClearContractAdmin, msg.Type())
+		if !tc.admin.Empty() {
+			require.Equal(t, tc.admin, msg.GetSigners()[0])
+		} else {
+			require.Panics(t, func() {
+				msg.GetSigners()
+			})
+		}
+
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {

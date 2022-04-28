@@ -360,7 +360,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteWasm:         NewWasmMsgParser(),
-	}, NewStargateWasmMsgParser(legacyAmino), NewIBCMsgParser(wasmtesting.MockIBCTransferKeeper{}))
+	}, NewStargateWasmMsgParser(encodingConfig.Marshaler), NewIBCMsgParser(wasmtesting.MockIBCTransferKeeper{}))
 
 	keeper.SetLastCodeID(ctx, 0)
 	keeper.SetLastInstanceID(ctx, 0)
