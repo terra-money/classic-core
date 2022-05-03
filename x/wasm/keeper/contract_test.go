@@ -18,7 +18,6 @@ import (
 )
 
 func TestStoreCode(t *testing.T) {
-
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 

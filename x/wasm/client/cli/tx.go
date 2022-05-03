@@ -193,7 +193,6 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 				// estimate tax and gas
 				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
 				if err != nil {
 					return err
 				}
@@ -269,7 +268,6 @@ func ExecuteContractCmd() *cobra.Command {
 			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 				// estimate tax and gas
 				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
 				if err != nil {
 					return err
 				}

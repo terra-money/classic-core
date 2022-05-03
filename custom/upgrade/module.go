@@ -8,9 +8,7 @@ import (
 	customtypes "github.com/terra-money/core/custom/upgrade/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the upgrade module.
 type AppModuleBasic struct {

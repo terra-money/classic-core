@@ -38,7 +38,6 @@ func GetQueryCmd() *cobra.Command {
 	)
 
 	return oracleQueryCmd
-
 }
 
 // GetCmdQueryTaxRate implements the query tax-rate command.

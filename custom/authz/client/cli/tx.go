@@ -52,7 +52,6 @@ Example:
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -78,7 +77,6 @@ Example:
 			if !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 				// estimate tax and gas
 				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), &msg)
-
 				if err != nil {
 					return err
 				}

@@ -82,7 +82,6 @@ func TestUncompress(t *testing.T) {
 			assert.Equal(t, spec.expResult, r)
 		})
 	}
-
 }
 
 func asGzip(src string) []byte {

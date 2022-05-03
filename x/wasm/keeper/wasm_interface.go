@@ -11,8 +11,10 @@ import (
 	"github.com/terra-money/core/x/wasm/types"
 )
 
-var _ types.WasmQuerierInterface = WasmQuerier{}
-var _ types.WasmMsgParserInterface = WasmMsgParser{}
+var (
+	_ types.WasmQuerierInterface   = WasmQuerier{}
+	_ types.WasmMsgParserInterface = WasmMsgParser{}
+)
 
 // WasmMsgParser - wasm msg parser for wasm msgs
 type WasmMsgParser struct{}
@@ -166,7 +168,6 @@ type ContractInfoQueryResponse struct {
 func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	var params CosmosQuery
 	err := json.Unmarshal(data, &params)
-
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
@@ -188,7 +189,6 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 			Admin:   contractInfo.Admin,
 			CodeID:  contractInfo.CodeID,
 		})
-
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 		}

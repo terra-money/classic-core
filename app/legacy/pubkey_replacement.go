@@ -22,7 +22,6 @@ import (
 type replacementConfigs []replacementConfig
 
 func (r *replacementConfigs) isReplacedValidator(validatorAddress string) (int, replacementConfig) {
-
 	for i, replacement := range *r {
 		if replacement.ValidatorAddress == validatorAddress {
 			return i, replacement
@@ -118,5 +117,4 @@ func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genD
 		log.Fatal("Could not marshal App State")
 	}
 	return genDoc
-
 }

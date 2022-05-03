@@ -230,7 +230,6 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesMultiSend() {
 }
 
 func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContract() {
-
 	suite.SetupTest(true) // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
@@ -282,7 +281,6 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContract() {
 }
 
 func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContract() {
-
 	suite.SetupTest(true) // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
@@ -334,7 +332,6 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContract() {
 }
 
 func (suite *AnteTestSuite) TestEnsureMempoolFeesExec() {
-
 	suite.SetupTest(true) // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 

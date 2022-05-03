@@ -126,7 +126,6 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 		Key:   "module",
 		Value: "bank",
 	}, module.Attributes[0])
-
 }
 
 func TestDispatchSubMsgErrorHandling(t *testing.T) {

@@ -9,9 +9,7 @@ import (
 	customtypes "github.com/terra-money/core/custom/distribution/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the distribution module.
 type AppModuleBasic struct {

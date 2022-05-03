@@ -364,7 +364,8 @@ func CreateTestInput(t *testing.T) TestInput {
 		oracleKeeper,
 		marketKeeper,
 		treasuryKeeper,
-		keeper}
+		keeper,
+	}
 }
 
 // FundAccount is a utility function that funds an account by minting and
