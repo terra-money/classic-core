@@ -16,5 +16,6 @@ const (
 	AttributeKeyOperator      = "operator"
 	AttributeKeyFeeder        = "feeder"
 
-	AttributeValueCategory = ModuleName
+	AttributeValueCategory          = ModuleName
+	AttributeValueMissingOracleVote = "missing_oracle_vote"
 )
