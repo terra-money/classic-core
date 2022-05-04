@@ -27,6 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -35,9 +36,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
 	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
@@ -76,6 +79,9 @@ func TestSimAppExportAndBlockedAddrs(t *testing.T) {
 	// Making a new app object with the db, so that initchain hasn't been called
 	app2 := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
 	_, err = app2.ExportAppStateAndValidators(false, []string{})
+	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
+
+	_, err = app2.ExportAppStateAndValidators(true, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
@@ -287,52 +293,77 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	}
 }
 
-// func TestRunReserveUpgrade(t *testing.T) {
-// 	encCfg := MakeEncodingConfig()
-// 	db := dbm.NewMemDB()
-// 	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
-// 	genesisState := NewDefaultGenesisState()
-// 	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
-// 	require.NoError(t, err)
+func TestRunReserveUpgrade(t *testing.T) {
+	encCfg := MakeEncodingConfig()
+	db := dbm.NewMemDB()
+	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
+	genesisState := NewDefaultGenesisState()
+	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
+	require.NoError(t, err)
 
-// 	// Initialize the chain
-// 	app.InitChain(
-// 		abci.RequestInitChain{
-// 			Validators:    []abci.ValidatorUpdate{},
-// 			AppStateBytes: stateBytes,
-// 		},
-// 	)
+	// Initialize the chain
+	app.InitChain(
+		abci.RequestInitChain{
+			Validators:    []abci.ValidatorUpdate{},
+			AppStateBytes: stateBytes,
+		},
+	)
 
-// 	// make sure the upgrade keeper has version map in state
-// 	ctx := app.NewContext(false, tmproto.Header{})
+	// make sure the upgrade keeper has version map in state
+	ctx := app.NewContext(false, tmproto.Header{})
 
-// 	for height := int64(1); height < int64(100); height++ {
-// 		app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
-// 		app.Commit()
-// 	}
+	for height := int64(1); height < int64(100); height++ {
+		app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
+		if height == 99 {
+			ctx := app.GetContextForDeliverTx([]byte{})
+			app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradetypes.Plan{
+				Name:   upgradeName,
+				Height: 100,
+				Info:   "Reserve Upgrade",
+			})
+		}
+		app.Commit()
+	}
 
-// 	app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradetypes.Plan{
-// 		Name:   upgradeName,
-// 		Height: 100,
-// 		Info:   "Reserve Upgrade",
-// 	})
+	// use new app after upgrade registration
+	app = NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
 
-// 	// use new app after upgrade registration
-// 	app = NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
-// 	app.InitChain(
-// 		abci.RequestInitChain{
-// 			Validators:    []abci.ValidatorUpdate{},
-// 			AppStateBytes: stateBytes,
-// 			InitialHeight: 100,
-// 		},
-// 	)
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 100}})
 
-// 	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 100}})
-// 	app.Commit()
+	ctx = app.NewContext(false, tmproto.Header{})
+	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+	for v, i := range app.mm.Modules {
+		require.Equal(t, vm[v], i.ConsensusVersion())
+	}
+}
 
-// 	ctx = app.NewContext(false, tmproto.Header{})
-// 	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-// 	for v, i := range app.mm.Modules {
-// 		require.Equal(t, vm[v], i.ConsensusVersion())
-// 	}
-// }
+func TestLegacyAmino(t *testing.T) {
+	encCfg := MakeEncodingConfig()
+	db := dbm.NewMemDB()
+	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
+	require.Equal(t, encCfg.Amino, app.LegacyAmino())
+}
+
+func TestAppCodec(t *testing.T) {
+	encCfg := MakeEncodingConfig()
+	db := dbm.NewMemDB()
+	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
+	require.Equal(t, encCfg.Marshaler, app.AppCodec())
+}
+
+func TestInterfaceRegistry(t *testing.T) {
+	encCfg := MakeEncodingConfig()
+	db := dbm.NewMemDB()
+	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
+	require.Equal(t, encCfg.InterfaceRegistry, app.InterfaceRegistry())
+}
+
+func TestGetKey(t *testing.T) {
+	encCfg := MakeEncodingConfig()
+	db := dbm.NewMemDB()
+	app := NewTerraApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig())
+
+	require.NotEmpty(t, app.GetKey(banktypes.StoreKey))
+	require.NotEmpty(t, app.GetTKey(paramstypes.TStoreKey))
+	require.NotEmpty(t, app.GetMemKey(capabilitytypes.MemStoreKey))
+}
