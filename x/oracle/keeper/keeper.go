@@ -350,11 +350,9 @@ func (k Keeper) ClearTobinTaxes(ctx sdk.Context) {
 
 // ValidateFeeder return the given feeder is allowed to feed the message or not
 func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
-	if !feederAddr.Equals(validatorAddr) {
-		delegate := k.GetFeederDelegation(ctx, validatorAddr)
-		if !delegate.Equals(feederAddr) {
-			return sdkerrors.Wrap(types.ErrNoVotingPermission, feederAddr.String())
-		}
+	delegate := k.GetFeederDelegation(ctx, validatorAddr)
+	if !delegate.Equals(feederAddr) {
+		return sdkerrors.Wrap(types.ErrNoVotingPermission, feederAddr.String())
 	}
 
 	// Check that the given validator exists
