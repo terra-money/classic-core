@@ -1,0 +1,108 @@
+syntax = "proto3";
+package terra.wasm.v1beta1.stargatelayer.oracle;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "terra/oracle/v1beta1/oracle.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/stargatelayer/oracle";
+
+// QueryExchangeRateResponse is response type for the
+// Query/ExchangeRate RPC method.
+message QueryExchangeRateResponse {
+  // exchange_rate defines the exchange rate of Luna denominated in various Terra
+  string exchange_rate = 1
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QueryExchangeRatesResponse is response type for the
+// Query/ExchangeRates RPC method.
+message QueryExchangeRatesResponse {
+  // exchange_rates defines a list of the exchange rate for all whitelisted denoms.
+  repeated cosmos.base.v1beta1.DecCoin exchange_rates = 1
+      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins", (gogoproto.nullable) = false];
+}
+
+// QueryTobinTaxResponse is response type for the
+// Query/TobinTax RPC method.
+message QueryTobinTaxResponse {
+  // tobin_taxe defines the tobin tax of a denom
+  string tobin_tax = 1
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
+// QueryTobinTaxesResponse is response type for the
+// Query/TobinTaxes RPC method.
+message QueryTobinTaxesResponse {
+  // tobin_taxes defines a list of the tobin tax of all whitelisted denoms
+  repeated terra.oracle.v1beta1.Denom tobin_taxes = 1 [
+    (gogoproto.moretags)     = "yaml:\"tobin_taxes\"",
+    (gogoproto.castrepeated) = "github.com/terra-money/core/x/oracle/types.DenomList",
+    (gogoproto.nullable)     = false
+  ];
+}
+
+// QueryActivesResponse is response type for the
+// Query/Actives RPC method.
+message QueryActivesResponse {
+  // actives defines a list of the denomination which oracle prices aggreed upon.
+  repeated string actives = 1;
+}
+
+// QueryVoteTargetsResponse is response type for the
+// Query/VoteTargets RPC method.
+message QueryVoteTargetsResponse {
+  // vote_targets defines a list of the denomination in which everyone
+  // should vote in the current vote period.
+  repeated string vote_targets = 1;
+}
+
+// QueryFeederDelegationResponse is response type for the
+// Query/FeederDelegation RPC method.
+message QueryFeederDelegationResponse {
+  // feeder_addr defines the feeder delegation of a validator
+  string feeder_addr = 1;
+}
+
+// QueryMissCounterResponse is response type for the
+// Query/MissCounter RPC method.
+message QueryMissCounterResponse {
+  // miss_counter defines the oracle miss counter of a validator
+  uint64 miss_counter = 1;
+}
+
+// QueryAggregatePrevoteResponse is response type for the
+// Query/AggregatePrevote RPC method.
+message QueryAggregatePrevoteResponse {
+  // aggregate_prevote defines oracle aggregate prevote submitted by a validator in the current vote period
+  terra.oracle.v1beta1.AggregateExchangeRatePrevote aggregate_prevote = 1 [(gogoproto.nullable) = false];
+  ;
+}
+
+// QueryAggregatePrevotesResponse is response type for the
+// Query/AggregatePrevotes RPC method.
+message QueryAggregatePrevotesResponse {
+  // aggregate_prevotes defines all oracle aggregate prevotes submitted in the current vote period
+  repeated terra.oracle.v1beta1.AggregateExchangeRatePrevote aggregate_prevotes = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryAggregateVoteResponse is response type for the
+// Query/AggregateVote RPC method.
+message QueryAggregateVoteResponse {
+  // aggregate_vote defines oracle aggregate vote submitted by a validator in the current vote period
+  terra.oracle.v1beta1.AggregateExchangeRateVote aggregate_vote = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryAggregateVotesResponse is response type for the
+// Query/AggregateVotes RPC method.
+message QueryAggregateVotesResponse {
+  // aggregate_votes defines all oracle aggregate votes submitted in the current vote period
+  repeated terra.oracle.v1beta1.AggregateExchangeRateVote aggregate_votes = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  terra.oracle.v1beta1.Params params = 1 [(gogoproto.nullable) = false];
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	core "github.com/terra-money/core/types"
+	stargateauth "github.com/terra-money/core/x/wasm/stargatelayer/auth"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
@@ -18,6 +19,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -165,7 +167,7 @@ func TestReflectReflectContractSend(t *testing.T) {
 
 }
 
-func TestReflectStargateQuery(t *testing.T) {
+func TestReflectStargateQuery_AllBalance(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx, accKeeper, keeper, bankKeeper := input.Ctx, input.AccKeeper, input.WasmKeeper, input.BankKeeper
 
@@ -235,6 +237,59 @@ func TestReflectStargateQuery(t *testing.T) {
 	err = proto.Unmarshal(protoChain.Data, &protoResult)
 	require.NoError(t, err)
 	assert.Equal(t, expectedBalance, protoResult.Balances)
+}
+
+func TestReflectStargateQuery_Account(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx, accKeeper, keeper, bankKeeper := input.Ctx, input.AccKeeper, input.WasmKeeper, input.BankKeeper
+
+	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, funds)
+
+	// upload code
+	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, []byte("{}"), contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// now, try to build a protobuf query
+	protoQuery := authtypes.QueryAccountRequest{
+		Address: creator.String(),
+	}
+	protoQueryBin, err := proto.Marshal(&protoQuery)
+	protoRequest := wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.auth.v1beta1.Query/Account",
+			Data: protoQueryBin,
+		},
+	}
+	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain
+	protoRes, err := keeper.queryToContract(ctx, contractAddr, protoQueryBz)
+	require.NoError(t, err)
+	var protoChain ChainResponse
+	mustParse(t, protoRes, &protoChain)
+
+	// unmarshal raw protobuf response
+	var protoResult stargateauth.QueryAccountResponse
+	err = proto.Unmarshal(protoChain.Data, &protoResult)
+	require.NoError(t, err)
+
+	var account authtypes.AccountI
+	err = input.InterfaceRegistry.UnpackAny(protoResult.GetAccount(), &account)
+	require.NoError(t, err)
+	assert.Equal(t, creator, account.GetAddress())
 }
 
 type reflectState struct {

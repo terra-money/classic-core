@@ -1,0 +1,33 @@
+// Since: cosmos-sdk 0.43
+syntax = "proto3";
+package terra.wasm.v1beta1.stargatelayer.authz;
+
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/authz/v1beta1/authz.proto";
+
+option go_package = "github.com/terra-money/core/x/wasm/stargatelayer/authz";
+
+// QueryGrantsResponse is the response type for the Query/Authorizations RPC method.
+message QueryGrantsResponse {
+  // authorizations is a list of grants granted for grantee by granter.
+  repeated cosmos.authz.v1beta1.Grant grants = 1;
+  // pagination defines an pagination for the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGranterGrantsResponse is the response type for the Query/GranterGrants RPC method.
+message QueryGranterGrantsResponse {
+  // grants is a list of grants granted by the granter.
+  repeated cosmos.authz.v1beta1.GrantAuthorization grants = 1;
+  // pagination defines an pagination for the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGranteeGrantsResponse is the response type for the Query/GranteeGrants RPC method.
+message QueryGranteeGrantsResponse {
+  // grants is a list of grants granted to the grantee.
+  repeated cosmos.authz.v1beta1.GrantAuthorization grants = 1;
+  // pagination defines an pagination for the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
