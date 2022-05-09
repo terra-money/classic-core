@@ -3,7 +3,7 @@ go 1.17
 module github.com/terra-money/core
 
 require (
-	github.com/CosmWasm/wasmvm v1.0.0-beta10
+	github.com/CosmWasm/wasmvm v1.0.0-rc.0
 	github.com/cosmos/cosmos-sdk v0.45.1
 	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/gogo/protobuf v1.3.3
@@ -17,7 +17,7 @@ require (
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.3.0
 	github.com/strangelove-ventures/packet-forward-middleware/v2 v2.1.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/tendermint/tendermint v0.34.16
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb
@@ -123,7 +123,7 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
-	github.com/CosmWasm/wasmvm => github.com/terra-money/wasmvm v1.0.0-beta10
+	github.com/CosmWasm/wasmvm => github.com/terra-money/wasmvm v1.0.0-rc.0
 	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.45.2-terra.1
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
