@@ -112,6 +112,7 @@ import (
 	customslashing "github.com/terra-money/core/custom/slashing"
 	customstaking "github.com/terra-money/core/custom/staking"
 	customupgrade "github.com/terra-money/core/custom/upgrade"
+	core "github.com/terra-money/core/types"
 
 	"github.com/terra-money/core/x/market"
 	marketkeeper "github.com/terra-money/core/x/market/keeper"
@@ -584,6 +585,14 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
+	// Make min spread to one to disable swap
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
+		params := app.MarketKeeper.GetParams(ctx)
+		params.MinStabilitySpread = sdk.OneDec()
+		app.MarketKeeper.SetParams(ctx, params)
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
