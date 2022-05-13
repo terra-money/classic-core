@@ -28,6 +28,22 @@ func TestMarketFilters(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestSwapMsg_FailZeroReturn(t *testing.T) {
+	input, h := setup(t)
+
+	params := input.MarketKeeper.GetParams(input.Ctx)
+	params.MinStabilitySpread = sdk.OneDec()
+	input.MarketKeeper.SetParams(input.Ctx, params)
+
+	input.Ctx = input.Ctx.WithChainID(core.ColumbusChainID).WithBlockHeight(core.SwapDisableForkHeight)
+
+	amt := sdk.NewInt(10)
+	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)
+	swapMsg := types.NewMsgSwap(keeper.Addrs[0], offerCoin, core.MicroSDRDenom)
+	_, err := h(input.Ctx, swapMsg)
+	require.Error(t, err)
+}
+
 func TestSwapMsg(t *testing.T) {
 	input, h := setup(t)
 
