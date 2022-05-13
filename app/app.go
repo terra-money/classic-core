@@ -16,6 +16,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
+	core "github.com/terra-money/core/types"
 
 	transfer "github.com/cosmos/ibc-go/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/modules/apps/transfer/keeper"
@@ -24,6 +25,7 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
@@ -584,6 +586,27 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
+	// Disable IBC Channel 1 to Osmosis
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
+		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, "channel-1")
+		if !found {
+			panic("channel-1 not found")
+		}
+		channel.State = ibcchanneltypes.CLOSED
+		app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, "channel-1", channel)
+	}
+
+	// Disable IBC Channel 49 to Crescent
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
+		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, "channel-49")
+		if !found {
+			panic("channel-49 not found")
+		}
+		channel.State = ibcchanneltypes.CLOSED
+		app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, "channel-49", channel)
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
