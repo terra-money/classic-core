@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	stdlog "log"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
@@ -586,11 +588,27 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
-	// Make min spread to one to disable swap
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
+		// Make min spread to one to disable swap
 		params := app.MarketKeeper.GetParams(ctx)
 		params.MinStabilitySpread = sdk.OneDec()
 		app.MarketKeeper.SetParams(ctx, params)
+
+		// Disable IBC Channels
+		channelIDs := []string{
+			"channel-1",  // Osmosis
+			"channel-49", // Crescent
+			"channel-20", // Juno
+		}
+		for _, channelID := range channelIDs {
+			channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, channelID)
+			if !found {
+				panic(fmt.Sprintf("%s not found", channelID))
+			}
+
+			channel.State = ibcchanneltypes.CLOSED
+			app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, channelID, channel)
+		}
 	}
 
 	return app.mm.BeginBlock(ctx, req)
