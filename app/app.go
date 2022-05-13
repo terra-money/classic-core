@@ -589,20 +589,22 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 
 	// Disable IBC Channel 1 to Osmosis
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
-		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, "transfer", "channel-1")
+		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, "channel-1")
 		if !found {
 			panic("channel-1 not found")
 		}
 		channel.State = ibcchanneltypes.CLOSED
+		app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, "channel-1", channel)
 	}
 
 	// Disable IBC Channel 49 to Crescent
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
-		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, "transfer", "channel-49")
+		channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, "channel-49")
 		if !found {
 			panic("channel-49 not found")
 		}
 		channel.State = ibcchanneltypes.CLOSED
+		app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, "channel-49", channel)
 	}
 
 	return app.mm.BeginBlock(ctx, req)
