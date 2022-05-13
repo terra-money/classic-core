@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	core "github.com/terra-money/core/types"
 	"github.com/terra-money/core/x/market/types"
 	oracletypes "github.com/terra-money/core/x/oracle/types"
 )
@@ -99,6 +100,14 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 
 	// Mint asked coins and credit Trader's account
 	swapCoin, decimalCoin := swapDecCoin.TruncateDecimal()
+
+	// Ensure to fail the swap tx when zero swap coin
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() >= core.SwapDisableForkHeight {
+		if !swapCoin.IsPositive() {
+			return nil, types.ErrZeroSwapCoin
+		}
+	}
+
 	feeDecCoin = feeDecCoin.Add(decimalCoin) // add truncated decimalCoin to swapFee
 	feeCoin, _ := feeDecCoin.TruncateDecimal()
 
