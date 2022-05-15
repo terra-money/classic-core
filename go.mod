@@ -129,7 +129,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.44.6-0.20220512154111-515df8b16c89
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-terra.3
+	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-performance.2
 	github.com/tendermint/tm-db => github.com/terra-money/tm-db v0.6.7-performance.3
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
