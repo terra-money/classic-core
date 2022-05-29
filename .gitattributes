@@ -1,2 +1,5 @@
 client/lcd/* linguist-vendored=true
 docs/* linguist-documentation=true
+
+# Set the default behavior, in case people don't have core.autocrlf set.
+text eol=lf
