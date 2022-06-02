@@ -123,11 +123,8 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 
-	// Commit 515df8b16c89 points the release/v0.44.x branch with the following
-	// security patches:
-	//
-	// - https://github.com/terra-money/cosmos-sdk/pull/63
-	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.44.6-0.20220512154111-515df8b16c89
+	// Revert to previous version of cosmos SDK with no height-gated disabling of MsgDelegate and MsgCreateValidator
+	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.44.5-terra.2
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tecbot/gorocksdb => github.com/cosmos/gorocksdb v1.2.0
