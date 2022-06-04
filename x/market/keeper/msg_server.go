@@ -101,6 +101,7 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	// Mint asked coins and credit Trader's account
 	swapCoin, decimalCoin := swapDecCoin.TruncateDecimal()
 
+	//TODO: Refactor this logic once market keeper is fixed
 	// Ensure to fail the swap tx when zero swap coin
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() >= core.SwapDisableForkHeight {
 		if !swapCoin.IsPositive() {

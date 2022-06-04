@@ -593,6 +593,8 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
+	//TODO: Re-open IBC chains once market keeper is fixed
+	//TODO: Reset spread to appropriate value once market keeper is fixed
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
 		// Make min spread to one to disable swap
 		params := app.MarketKeeper.GetParams(ctx)

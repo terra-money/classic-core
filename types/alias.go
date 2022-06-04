@@ -39,6 +39,8 @@ const (
 	ColumbusChainID       = "columbus-5"
 	BombayChainID         = "bombay-12"
 	SwapDisableForkHeight = fork.SwapDisableForkHeight
+	//TODO: Enable once market keeper is fixed
+	//SwapFixedForkHeight   = fork.SwapFixedForkHeight
 )
 
 // functions aliases
