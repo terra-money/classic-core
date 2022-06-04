@@ -38,6 +38,10 @@ import (
 	wasmconfig "github.com/terra-money/core/x/wasm/config"
 )
 
+const flagTracking = "tracking"
+
+var tracking bool
+
 // NewRootCmd creates a new root command for terrad. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
@@ -124,6 +128,15 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 
 	// add rosetta commands
 	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
+
+	cmds := rootCmd.Commands()
+	for _, cmd := range cmds {
+		if cmd.Name() == "start" {
+			cmd.Flags().Bool(flagTracking,
+				false, "Specify flag if you want to left tracking data to /tmp/tracking* /tmp/vesting*")
+			break
+		}
+	}
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
@@ -225,6 +238,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
+		cast.ToBool(appOpts.Get(flagTracking)),
 		a.encodingConfig,
 		appOpts,
 		wasmconfig.GetConfig(appOpts),
@@ -254,13 +268,13 @@ func (a appCreator) appExport(
 
 	var terraApp *terraapp.TerraApp
 	if height != -1 {
-		terraApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), cast.ToBool(appOpts.Get(flagTracking)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
 
 		if err := terraApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		terraApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), cast.ToBool(appOpts.Get(flagTracking)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
 	}
 
 	return terraApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

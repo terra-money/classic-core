@@ -44,7 +44,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 
 	app := terraapp.NewTerraApp(
 		logger, db, nil, true, map[int64]bool{},
-		terraapp.DefaultNodeHome, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+		terraapp.DefaultNodeHome, simapp.FlagPeriodValue, false, terraapp.MakeEncodingConfig(),
 		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 	// Run randomized simulation:w
@@ -112,7 +112,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			db := dbm.NewMemDB()
 			app := terraapp.NewTerraApp(
 				logger, db, nil, true, map[int64]bool{}, terraapp.DefaultNodeHome,
-				simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
+				simapp.FlagPeriodValue, false, terraapp.MakeEncodingConfig(),
 				simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
 
 			fmt.Printf(

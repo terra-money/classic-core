@@ -20,7 +20,7 @@ require (
 	github.com/tendermint/tendermint v0.34.14
 	github.com/tendermint/tm-db v0.6.6
 	google.golang.org/genproto v0.0.0-20210828152312-66f60bf46e71
-	google.golang.org/grpc v1.42.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -40,6 +40,7 @@ require (
 	github.com/confio/ics23/go v0.6.6 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
+	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.17.3 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
@@ -57,7 +58,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
-	github.com/golang/snappy v0.0.3 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
@@ -102,8 +103,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.8.1 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca // indirect
-	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
@@ -122,15 +122,14 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
-
 	// Commit 515df8b16c89 points the release/v0.44.x branch with the following
 	// security patches:
 	//
 	// - https://github.com/terra-money/cosmos-sdk/pull/63
-	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.44.6-0.20220512154111-515df8b16c89
+	github.com/cosmos/cosmos-sdk => github.com/terra-money/cosmos-sdk v0.44.5-public.3
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	github.com/tecbot/gorocksdb => github.com/cosmos/gorocksdb v1.2.0
-	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-terra.2
+	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-performance.2
+	github.com/tendermint/tm-db => github.com/terra-money/tm-db v0.6.7-performance.3
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )

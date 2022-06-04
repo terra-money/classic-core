@@ -1,6 +1,6 @@
-ARG version=v0.5.9-oracle
+ARG version=latest
 
-FROM terramoney/core:${version}
+FROM toban/classic-core:${version}
 
 ARG chainid=columbus-5
 
@@ -18,8 +18,6 @@ RUN if [ "$chainid" = "columbus-5" ] ; then wget -O ~/.terra/config/addrbook.jso
 
 RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/genesis.json https://raw.githubusercontent.com/terra-money/classic-testnet/master/bombay-12/genesis.json; fi
 RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/addrbook.json https://raw.githubusercontent.com/terra-money/classic-testnet/master/bombay-12/addrbook.json; fi
-
-USER root
 
 RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils
 
