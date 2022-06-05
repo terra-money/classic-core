@@ -101,8 +101,8 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	// Mint asked coins and credit Trader's account
 	swapCoin, decimalCoin := swapDecCoin.TruncateDecimal()
 
-	// Ensure to fail the swap tx when zero swap coin
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() >= core.SwapDisableForkHeight {
+	// Ensure to fail the swap tx when zero swap coin if tx happens between 1st and 2nd fork
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() >= core.SwapDisableForkHeight && ctx.BlockHeight() < core.SwapEnableForkHeight {
 		if !swapCoin.IsPositive() {
 			return nil, types.ErrZeroSwapCoin
 		}
