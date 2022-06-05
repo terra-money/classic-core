@@ -588,13 +588,13 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
-		// Make min spread to one to disable swap
+	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapEnableForkHeight {
+		// Make min spread to 75% to enable swap
 		params := app.MarketKeeper.GetParams(ctx)
-		params.MinStabilitySpread = sdk.OneDec()
+		params.MinStabilitySpread = sdk.NewDecWithPrec(75, 2)
 		app.MarketKeeper.SetParams(ctx, params)
 
-		// Disable IBC Channels
+		// Enable IBC Channels
 		channelIDs := []string{
 			"channel-1",  // Osmosis
 			"channel-49", // Crescent
@@ -606,7 +606,7 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 				panic(fmt.Sprintf("%s not found", channelID))
 			}
 
-			channel.State = ibcchanneltypes.CLOSED
+			channel.State = ibcchanneltypes.OPEN
 			app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, channelID, channel)
 		}
 	}
