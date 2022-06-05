@@ -14,14 +14,6 @@ type ConstrainedPool struct {
 	MaxSize sdk.Dec
 }
 
-func (cp ConstrainedPool) IsMaxOverflow(amount sdk.Dec) bool {
-	if cp.Pool.Add(amount).GT(cp.MaxSize) {
-		return true
-	}
-
-	return false
-}
-
 // ApplySwapToPool updates each pool with offerCoin and askCoin taken from swap operation,
 // OfferPool = OfferPool + offerAmt (Fills the swap pool with offerAmt)
 // AskPool = AskPool - askAmt       (Uses askAmt from the swap pool)
