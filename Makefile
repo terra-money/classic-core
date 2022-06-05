@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
-HTTPS_GIT := https://github.com/terra-money/core.git
+HTTPS_GIT := https://github.com/terra-rebels/classic-core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
@@ -115,15 +115,15 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --no-cache --tag terramoney/core ./
-	docker create --name temp terramoney/core:latest
+	docker build --no-cache --tag toban/classic-core ./
+	docker create --name temp toban/classic-core:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
 
 build-linux-with-shared-library:
 	mkdir -p $(BUILDDIR)
-	docker build --tag terramoney/core-shared ./ -f ./shared.Dockerfile
-	docker create --name temp terramoney/core-shared:latest
+	docker build --tag toban/classic-core-shared ./ -f ./shared.Dockerfile
+	docker create --name temp toban/classic-core-shared:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
