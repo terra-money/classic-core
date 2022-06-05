@@ -1,4 +1,4 @@
-ARG version=v0.5.9-oracle
+ARG version=v0.5.11-oracle
 
 FROM toban/classic-core:${version}
 
