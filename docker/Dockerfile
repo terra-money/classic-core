@@ -1,6 +1,6 @@
 ARG version=v0.5.11-oracle
 
-FROM toban/classic-core:${version}
+FROM terramoney/core:${version}
 
 ARG chainid=columbus-5
 
