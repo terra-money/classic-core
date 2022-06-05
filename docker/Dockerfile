@@ -16,8 +16,8 @@ RUN mv ~/.terra/config/app.toml ~/app.toml
 RUN if [ "$chainid" = "columbus-5" ] ; then wget -O ~/.terra/config/genesis.json https://columbus-genesis.s3.ap-northeast-1.amazonaws.com/columbus-5-genesis.json; fi
 RUN if [ "$chainid" = "columbus-5" ] ; then wget -O ~/.terra/config/addrbook.json https://networks.mcontrol.ml/columbus/addrbook.json; fi
 
-RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/genesis.json https://raw.githubusercontent.com/terra-money/testnet/master/bombay-12/genesis.json; fi
-RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/addrbook.json https://raw.githubusercontent.com/terra-money/testnet/master/bombay-12/addrbook.json; fi
+RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/genesis.json https://raw.githubusercontent.com/terra-money/classic-testnet/master/bombay-12/genesis.json; fi
+RUN if [ "$chainid" = "bombay-12" ] ; then wget -O ~/.terra/config/addrbook.json https://raw.githubusercontent.com/terra-money/classic-testnet/master/bombay-12/addrbook.json; fi
 
 RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils
 
