@@ -589,9 +589,9 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapEnableForkHeight {
-		// Make min spread to 75% to enable swap
+		// Make min spread to 98% to enable swap
 		params := app.MarketKeeper.GetParams(ctx)
-		params.MinStabilitySpread = sdk.NewDecWithPrec(75, 2)
+		params.MinStabilitySpread = sdk.NewDecWithPrec(98, 2)
 		app.MarketKeeper.SetParams(ctx, params)
 
 		// Enable IBC Channels
