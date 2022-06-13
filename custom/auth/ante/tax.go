@@ -45,11 +45,13 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	feeCoins := feeTx.GetFee()
 	gas := feeTx.GetGas()
 	msgs := feeTx.GetMsgs()
+	ctx.Logger().Info(fmt.Sprintf("Gas cost estimate %s  Fee provided %s", gas, feeCoins))
 
 	if !simulate {
 		// Compute taxes
 		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, msgs...)
 
+		ctx.Logger().Info(fmt.Sprintf("Taxes cost here %s ", taxes))
 		// Mempool fee validation
 		// No fee validation for oracle txs
 		if ctx.IsCheckTx() &&
@@ -66,7 +68,9 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 		// Record tax proceeds
 		if !taxes.IsZero() {
-			tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
+			// No Need to record tax proceeds per epoch as they are immediately burned
+			// Burn in new BurnTaxFeeDecorator AnteHandler
+			//tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
 		}
 	}
 
@@ -144,14 +148,19 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 
 // computes the stability tax according to tax-rate and tax-cap
 func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coins {
-	taxRate := tk.GetTaxRate(ctx)
+	//taxRate := tk.GetTaxRate(ctx)
+	taxRate, _ := sdk.NewDecFromStr("0.012") 
+	rr := core.MicroLunaDenom
+	ctx.Logger().Info(fmt.Sprintf("Taxes rates here %s %s", taxRate, rr))
 	if taxRate.Equal(sdk.ZeroDec()) {
 		return sdk.Coins{}
 	}
 
 	taxes := sdk.Coins{}
 	for _, coin := range principal {
-		if coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom {
+		//Originally only a stability tax on UST.  Changed to tax Luna as well.
+		//if coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom {
+		if coin.Denom == sdk.DefaultBondDenom {
 			continue
 		}
 
@@ -160,6 +169,7 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 		// If tax due is greater than the tax cap, cap!
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)
 		if taxDue.GT(taxCap) {
+			ctx.Logger().Info(fmt.Sprintf("Taxes due %s is greater than taxcap %s", taxDue, taxCap))
 			taxDue = taxCap
 		}
 
@@ -167,6 +177,7 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 			continue
 		}
 
+		ctx.Logger().Info(fmt.Sprintf("Adding Taxes here %s", taxDue))
 		taxes = taxes.Add(sdk.NewCoin(coin.Denom, taxDue))
 	}
 
