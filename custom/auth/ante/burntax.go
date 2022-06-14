@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	treasury "github.com/terra-money/core/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -41,12 +42,10 @@ func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 		// Record tax proceeds
 		if !taxes.IsZero() {
 			ctx.Logger().Info(fmt.Sprintf("Burning the Tax %s", taxes))
-			burnacc, _ := sdk.AccAddressFromBech32("terra1sk06e3dyexuq4shw77y3dsv480xv42mq73anxu")
-			btfd.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.FeeCollectorName, burnacc, taxes)
+			btfd.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeCollectorName, treasury.BurnModuleName, taxes)
 			if err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 			}
-			//tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
 		}
 	}
 

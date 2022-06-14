@@ -29,6 +29,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Compute & Update internal indicators for the current epoch
 	k.UpdateIndicators(ctx)
 
+
 	// Check probation period
 	if ctx.BlockHeight() < int64(core.BlocksPerWeek*k.WindowProbation(ctx)) {
 		return

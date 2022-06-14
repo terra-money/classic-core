@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -44,6 +45,7 @@ func (k Keeper) UpdateTaxPolicy(ctx sdk.Context) (newTaxRate sdk.Dec) {
 	}
 
 	newTaxRate = params.TaxPolicy.Clamp(oldTaxRate, newTaxRate)
+	ctx.Logger().Info(fmt.Sprintf("Tax Rate update  %d", newTaxRate))
 
 	// Set the new tax rate to the store
 	k.SetTaxRate(ctx, newTaxRate)

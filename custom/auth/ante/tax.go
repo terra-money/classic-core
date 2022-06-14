@@ -8,7 +8,6 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/terra-money/core/types"
 	marketexported "github.com/terra-money/core/x/market/exported"
 	oracleexported "github.com/terra-money/core/x/oracle/exported"
 	wasmexported "github.com/terra-money/core/x/wasm/exported"
@@ -68,9 +67,10 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 		// Record tax proceeds
 		if !taxes.IsZero() {
-			// No Need to record tax proceeds per epoch as they are immediately burned
+			// Taxes can be recorded but they are immediately burned after every block 
 			// Burn in new BurnTaxFeeDecorator AnteHandler
-			//tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
+			// TaxRate should be clamped by rate_min and rate_max to the same amount so stays constant 
+			tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
 		}
 	}
 
@@ -148,10 +148,8 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 
 // computes the stability tax according to tax-rate and tax-cap
 func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coins {
-	//taxRate := tk.GetTaxRate(ctx)
-	taxRate, _ := sdk.NewDecFromStr("0.012") 
-	rr := core.MicroLunaDenom
-	ctx.Logger().Info(fmt.Sprintf("Taxes rates here %s %s", taxRate, rr))
+	taxRate := tk.GetTaxRate(ctx)
+	ctx.Logger().Info(fmt.Sprintf("Taxes system rates here %s %s", taxRate))
 	if taxRate.Equal(sdk.ZeroDec()) {
 		return sdk.Coins{}
 	}
@@ -169,7 +167,6 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 		// If tax due is greater than the tax cap, cap!
 		taxCap := tk.GetTaxCap(ctx, coin.Denom)
 		if taxDue.GT(taxCap) {
-			ctx.Logger().Info(fmt.Sprintf("Taxes due %s is greater than taxcap %s", taxDue, taxCap))
 			taxDue = taxCap
 		}
 
