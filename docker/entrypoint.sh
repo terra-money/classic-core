@@ -43,4 +43,6 @@ if [ "$CHAINID" = "columbus-5" ] && [[ ! -z "$SNAPSHOT_NAME" ]] ; then
   fi
 fi
 
+terrad unsafe-reset-all
+
 exec "$@" --db_dir $DATADIR
