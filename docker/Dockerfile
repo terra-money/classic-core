@@ -25,6 +25,9 @@ ENV VALIDATOR_MIN_SELF_DELEGATION ${validator_min_self_delegation}
 # Moniker will be updated by entrypoint.
 RUN terrad init --chain-id $chainid moniker
 
+#Reset node
+RUN terrad unsafe-reset-all
+
 # Backup for templating
 RUN mv ~/.terra/config/config.toml ~/config.toml
 RUN mv ~/.terra/config/app.toml ~/app.toml
@@ -38,4 +41,4 @@ RUN if [ "$chainid" = "rebel-1" ] ; then wget -O ~/.terra/config/addrbook.json h
 COPY ./entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-CMD ["/usr/local/bin/terrad", "start"]
+CMD ["terrad", "start"]
