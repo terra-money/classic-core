@@ -38,5 +38,4 @@ RUN if [ "$chainid" = "rebel-1" ] ; then wget -O ~/.terra/config/addrbook.json h
 COPY ./entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-CMD ash
-#CMD ["/usr/local/bin/terrad", "start"]
+CMD ["/usr/local/bin/terrad", "start"]
