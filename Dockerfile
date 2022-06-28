@@ -31,15 +31,16 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-linkmode=external -extldflag
 
 FROM alpine:3.15.4
 
-#TODO: Disable when akp issue in derived images is fixed
-#RUN addgroup terra && adduser -G terra -D -h /terra terra
+RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils
+
+RUN addgroup terra \
+    && adduser -G terra -D -h /terra terra
 
 WORKDIR /terra
 
 COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
 
-#TODO: Disable when akp issue in derived images is fixed
-#USER terra
+USER terra
 
 # rest server
 EXPOSE 1317

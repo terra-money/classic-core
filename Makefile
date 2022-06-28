@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
-HTTPS_GIT := https://github.com/terra-rebels/classic-core.git
+HTTPS_GIT := https://github.com/terra-tebels/classic-core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
@@ -115,15 +115,15 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --no-cache --tag toban/classic-core ./
-	docker create --name temp toban/classic-core:latest
+	docker build --no-cache --tag terrarebels/core ./
+	docker create --name temp terrarebels/core:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
 
 build-linux-with-shared-library:
 	mkdir -p $(BUILDDIR)
-	docker build --tag toban/classic-core-shared ./ -f ./shared.Dockerfile
-	docker create --name temp toban/classic-core-shared:latest
+	docker build --tag terrarebels/core-shared ./ -f ./shared.Dockerfile
+	docker create --name temp terrarebels/core-shared:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
@@ -216,7 +216,7 @@ proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen sh ./scripts/protocgen.sh
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.3 sh ./scripts/protocgen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"
