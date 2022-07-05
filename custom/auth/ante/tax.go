@@ -36,6 +36,8 @@ func NewTaxFeeDecorator(treasuryKeeper TreasuryKeeper) TaxFeeDecorator {
 
 // AnteHandle handles msg tax fee checking
 func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	type isTaxKey string
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
@@ -72,6 +74,8 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			// TaxRate should be clamped by rate_min and rate_max to the same amount so stays constant 
 			tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
 		}
+		k := isTaxKey("tax")
+		ctx = sdk.Context.WithValue(ctx, k, !taxes.IsZero())
 	}
 
 	return next(ctx, tx, simulate)

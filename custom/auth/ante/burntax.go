@@ -25,6 +25,9 @@ func NewBurnTaxFeeDecorator(treasuryKeeper TreasuryKeeper, bankKeeper BankKeeper
 
 // AnteHandle handles msg tax fee checking
 func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	type isTaxKey string
+	k := isTaxKey("tax")
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
@@ -37,14 +40,18 @@ func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 
 	if !simulate {
 		// Compute taxes again.  Slightly redundant
-		taxes := FilterMsgAndComputeTax(ctx, btfd.treasuryKeeper, msgs...)
+		ctx.Logger().Info(fmt.Sprintf("Value of tax param is %s", ctx.Value("tax")))
+		if ctx.Value(k) == true {
+			taxes := FilterMsgAndComputeTax(ctx, btfd.treasuryKeeper, msgs...)
 
-		// Record tax proceeds
-		if !taxes.IsZero() {
 			ctx.Logger().Info(fmt.Sprintf("Burning the Tax %s", taxes))
-			btfd.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeCollectorName, treasury.BurnModuleName, taxes)
-			if err != nil {
-				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+			// Record tax proceeds
+			if !taxes.IsZero() {
+				ctx.Logger().Info(fmt.Sprintf("Burning the Tax %s", taxes))
+				btfd.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeCollectorName, treasury.BurnModuleName, taxes)
+				if err != nil {
+					return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+				}
 			}
 		}
 	}
