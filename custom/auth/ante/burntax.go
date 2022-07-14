@@ -9,6 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
+// TaxPowerUpgradeHeight is when taxes are allowed to go into effect
+// This will still need a parameter change proposal, but can be activated
+// anytime after this height
+const TaxPowerUpgradeHeight = 7684490
+
 // BurnTaxFeeDecorator will immediately burn the collected Tax
 type BurnTaxFeeDecorator struct {
 	treasuryKeeper TreasuryKeeper
@@ -25,8 +30,11 @@ func NewBurnTaxFeeDecorator(treasuryKeeper TreasuryKeeper, bankKeeper BankKeeper
 
 // AnteHandle handles msg tax fee checking
 func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	type isTaxKey string
-	k := isTaxKey("tax")
+	// Do not proceed if you are below this block height
+	currHeight := ctx.BlockHeight()
+	if currHeight < TaxPowerUpgradeHeight {
+		return next(ctx, tx, simulate)
+	}
 
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
@@ -35,23 +43,19 @@ func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 
 	msgs := feeTx.GetMsgs()
 
-	//At this point we have already run the DeductFees AnteHandler and taken the fees from the sending account
-	//Now we remove the taxes from the gas reward and immediately burn it
+	// At this point we have already run the DeductFees AnteHandler and taken the fees from the sending account
+	// Now we remove the taxes from the gas reward and immediately burn it
 
 	if !simulate {
-		// Compute taxes again.  Slightly redundant
-		ctx.Logger().Info(fmt.Sprintf("Value of tax param is %s", ctx.Value("tax")))
-		if ctx.Value(k) == true {
-			taxes := FilterMsgAndComputeTax(ctx, btfd.treasuryKeeper, msgs...)
+		// Compute taxes again.  
+		taxes := FilterMsgAndComputeTax(ctx, btfd.treasuryKeeper, msgs...)
 
+		// Record tax proceeds
+		if !taxes.IsZero() {
 			ctx.Logger().Info(fmt.Sprintf("Burning the Tax %s", taxes))
-			// Record tax proceeds
-			if !taxes.IsZero() {
-				ctx.Logger().Info(fmt.Sprintf("Burning the Tax %s", taxes))
-				btfd.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeCollectorName, treasury.BurnModuleName, taxes)
-				if err != nil {
-					return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
-				}
+			btfd.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeCollectorName, treasury.BurnModuleName, taxes)
+			if err != nil {
+				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 			}
 		}
 	}

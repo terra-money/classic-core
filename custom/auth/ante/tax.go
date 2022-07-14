@@ -8,6 +8,7 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	core "github.com/terra-money/core/types"
 	marketexported "github.com/terra-money/core/x/market/exported"
 	oracleexported "github.com/terra-money/core/x/oracle/exported"
 	wasmexported "github.com/terra-money/core/x/wasm/exported"
@@ -36,8 +37,6 @@ func NewTaxFeeDecorator(treasuryKeeper TreasuryKeeper) TaxFeeDecorator {
 
 // AnteHandle handles msg tax fee checking
 func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	type isTaxKey string
-
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
@@ -46,13 +45,11 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	feeCoins := feeTx.GetFee()
 	gas := feeTx.GetGas()
 	msgs := feeTx.GetMsgs()
-	ctx.Logger().Info(fmt.Sprintf("Gas cost estimate %s  Fee provided %s", gas, feeCoins))
 
 	if !simulate {
 		// Compute taxes
 		taxes := FilterMsgAndComputeTax(ctx, tfd.treasuryKeeper, msgs...)
 
-		ctx.Logger().Info(fmt.Sprintf("Taxes cost here %s ", taxes))
 		// Mempool fee validation
 		// No fee validation for oracle txs
 		if ctx.IsCheckTx() &&
@@ -74,8 +71,6 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			// TaxRate should be clamped by rate_min and rate_max to the same amount so stays constant 
 			tfd.treasuryKeeper.RecordEpochTaxProceeds(ctx, taxes)
 		}
-		k := isTaxKey("tax")
-		ctx = sdk.Context.WithValue(ctx, k, !taxes.IsZero())
 	}
 
 	return next(ctx, tx, simulate)
@@ -152,16 +147,18 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 
 // computes the stability tax according to tax-rate and tax-cap
 func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coins {
+	currHeight := ctx.BlockHeight()
 	taxRate := tk.GetTaxRate(ctx)
-	ctx.Logger().Info(fmt.Sprintf("Taxes system rates here %s %s", taxRate))
 	if taxRate.Equal(sdk.ZeroDec()) {
 		return sdk.Coins{}
 	}
 
 	taxes := sdk.Coins{}
 	for _, coin := range principal {
-		//Originally only a stability tax on UST.  Changed to tax Luna as well.
-		//if coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom {
+		// Originally only a stability tax on UST.  Changed to tax Luna as well after TaxPowerUpgradeHeight
+		if (coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom) && currHeight < TaxPowerUpgradeHeight {
+			continue
+		}
 		if coin.Denom == sdk.DefaultBondDenom {
 			continue
 		}
