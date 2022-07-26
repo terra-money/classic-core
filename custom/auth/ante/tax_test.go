@@ -384,3 +384,359 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExec() {
 	_, err = antehandler(suite.ctx, tx, false)
 	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
 }
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesSendLunaTax() {
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
+	msg := banktypes.NewMsgSend(addr1, addr1, sendCoins)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// must pass with tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesSwapSendLunaTax() {
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoin := sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount)
+	msg := markettypes.NewMsgSwapSend(addr1, addr1, sendCoin, core.MicroKRWDenom)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// must pass with tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesMultiSendLunaTax() {
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
+	msg := banktypes.NewMsgMultiSend(
+		[]banktypes.Input{
+			banktypes.NewInput(addr1, sendCoins),
+			banktypes.NewInput(addr1, sendCoins),
+		},
+		[]banktypes.Output{
+			banktypes.NewOutput(addr1, sendCoins.Add(sendCoins...)),
+		},
+	)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	// must pass with tax
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax.Add(expectedTax))))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContractLunaTax() {
+
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
+	msg := wasmtypes.NewMsgInstantiateContract(addr1, addr1, 0, []byte{}, sendCoins)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// must pass with tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContractLunaTax() {
+
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
+	msg := wasmtypes.NewMsgExecuteContract(addr1, addr1, []byte{}, sendCoins)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// must pass with tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+func (suite *AnteTestSuite) TestEnsureMempoolFeesExecLunaTax() {
+
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1000000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
+	msg := authz.NewMsgExec(addr1, []sdk.Msg{banktypes.NewMsgSend(addr1, addr1, sendCoins)})
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(&msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// Luna must pass with tax before the specified tax block height
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored when block height is 1")
+
+	// Set the blockheight past the tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// antehandler errors with insufficient fees due to tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().Error(err, "Decorator should errored on low fee for local gasPrice + tax")
+
+	tk := suite.app.TreasuryKeeper
+	expectedTax := tk.GetTaxRate(suite.ctx).MulInt64(sendAmount).TruncateInt()
+	if taxCap := tk.GetTaxCap(suite.ctx, core.MicroLunaDenom); expectedTax.GT(taxCap) {
+		expectedTax = taxCap
+	}
+
+	// set tax amount
+	suite.txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, expectedTax)))
+	tx, err = suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// must pass with tax
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
