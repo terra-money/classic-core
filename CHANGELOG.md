@@ -1,3 +1,20 @@
+## v0.5.22
+* Move validator voting restrictions from Msg handler to Keeper by @edk208 in https://github.com/terra-money/cosmos-sdk/pull/104
+
+## v0.5.21
+* Fix typo by @BrodaNoel in https://github.com/terra-money/classic-core/pull/758
+* feat: Burn Tax via utilization of existing Stability Tax code by @edk208 in https://github.com/terra-money/classic-core/pull/784
+
+## v0.5.20
+* Make min spread to 100% to disable swap by @YunSuk-Yeo in https://github.com/terra-money/core/pull/760
+* Close three channel 
+  * "channel-1",  // Osmosis
+  * "channel-49", // Crescent
+  * "channel-20", // Juno
+
+## v0.5.19
+Disable staking power change for protecting the network
+
 ## v0.5.18
 This release contains a wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
 To avoid possible sync delays due to the runtime rebuilding overhead, it is highly recommended that node operators rebuild their wasm cache with the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
