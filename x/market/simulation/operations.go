@@ -21,7 +21,7 @@ import (
 
 // Simulation operation weights constants
 const (
-	OpWeightMsgSwap = "op_weight_msg_swap"
+	OpWeightMsgSwap = "op_weight_msg_swap" //#nosec
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights

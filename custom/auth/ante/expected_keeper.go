@@ -15,3 +15,9 @@ type TreasuryKeeper interface {
 type OracleKeeper interface {
 	ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error
 }
+
+// BankKeeper defines the contract needed for supply related APIs (noalias)
+type BankKeeper interface {
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
+}

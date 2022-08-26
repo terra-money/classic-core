@@ -21,9 +21,9 @@ import (
 
 // Simulation operation weights constants
 const (
-	OpWeightMsgAggregateExchangeRatePrevote = "op_weight_msg_exchange_rate_aggregate_prevote"
-	OpWeightMsgAggregateExchangeRateVote    = "op_weight_msg_exchange_rate_aggregate_vote"
-	OpWeightMsgDelegateFeedConsent          = "op_weight_msg_exchange_feed_consent"
+	OpWeightMsgAggregateExchangeRatePrevote = "op_weight_msg_exchange_rate_aggregate_prevote" //#nosec
+	OpWeightMsgAggregateExchangeRateVote    = "op_weight_msg_exchange_rate_aggregate_vote"    //#nosec
+	OpWeightMsgDelegateFeedConsent          = "op_weight_msg_exchange_feed_consent"           //#nosec
 
 	salt = "1234"
 )

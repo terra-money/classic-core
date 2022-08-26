@@ -48,7 +48,7 @@ var (
 	RewardWeightKey         = []byte{0x02} // a key for a reward-weight
 	TaxCapKey               = []byte{0x03} // prefix for each key to a tax-cap
 	TaxProceedsKey          = []byte{0x04} // a key for a tax-proceeds
-	EpochInitialIssuanceKey = []byte{0x05} // a key for a initial epoch issuance
+	EpochInitialIssuanceKey = []byte{0x05} // a key for an initial epoch issuance
 	CumulativeHeightKey     = []byte{0x09} // a key for a cumulated height
 
 	// Keys for store prefixes of internal purpose variables

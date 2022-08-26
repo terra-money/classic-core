@@ -25,12 +25,12 @@ import (
 )
 
 const (
-	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
-	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
-	OpWeightMsgExecuteContract     = "op_weight_msg_execute_contract"
-	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"
-	OpWeightMsgUpdateContractAdmin = "op_weight_msg_update_contract_admin"
-	OpWeightMsgClearContractAdmin  = "op_weight_msg_update_contract_admin"
+	OpWeightMsgStoreCode           = "op_weight_msg_store_code"            //#nosec
+	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"  //#nosec
+	OpWeightMsgExecuteContract     = "op_weight_msg_execute_contract"      //#nosec
+	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"      //#nosec
+	OpWeightMsgUpdateContractAdmin = "op_weight_msg_update_contract_admin" //#nosec
+	OpWeightMsgClearContractAdmin  = "op_weight_msg_update_contract_admin" //#nosec
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
