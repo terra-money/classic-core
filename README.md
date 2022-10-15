@@ -18,7 +18,7 @@ The easiest way to get started is by downloading a pre-built binary for your ope
 
 **Step 1. Install Golang**
 
-Go v1.17+ or higher is required for Terra Core.
+Go v1.19+ or higher is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
@@ -330,15 +330,3 @@ If you are interested in contributing to Terra Core source, please review our [c
 ## License
 
 This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
-
-© 2022 Terraform Labs, PTE LTD
-
-<hr/>
-
-<p>&nbsp;</p>
-<p align="center">
-    <a href="https://terra.money/"><img src="https://assets.website-files.com/611153e7af981472d8da199c/61794f2b6b1c7a1cb9444489_symbol-terra-blue.svg" align="center" width=200/></a>
-</p>
-<div align="center">
-  <sub><em>Powering the innovation of money.</em></sub>
-</div>
