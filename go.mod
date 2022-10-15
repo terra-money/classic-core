@@ -43,7 +43,6 @@ require (
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.3 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
-	github.com/cosmos/ledger-go v0.9.2 // indirect
 	github.com/danieljoos/wincred v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -111,6 +110,7 @@ require (
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/zondax/hid v0.9.0 // indirect
+	github.com/zondax/ledger-go v0.12.2 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
@@ -129,7 +129,7 @@ replace (
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 
 	github.com/cosmos/cosmos-sdk => github.com/terra-rebels/cosmos-sdk v0.45.9-lunc
-	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
+	github.com/cosmos/ledger-cosmos-go => github.com/terra-rebels/ledger-terra-go v0.0.0-20221015041623-e74f85b65773
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-terra.2
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
