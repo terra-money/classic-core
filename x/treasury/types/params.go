@@ -73,7 +73,7 @@ func (p Params) String() string {
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // pairs of treasury module's parameters.
-// nolint
+
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyTaxPolicy, &p.TaxPolicy, validateTaxPolicy),

@@ -32,7 +32,6 @@ func DefaultGenesisState() *GenesisState {
 // ValidateGenesis performs basic validation of wasm genesis data returning an
 // error for any failed validation criteria.
 func ValidateGenesis(data *GenesisState) error {
-
 	if uint64(len(data.Codes)) != data.LastCodeID {
 		return sdkerrors.Wrap(ErrInvalidGenesis, "the number of codes is not met with LastCodeID")
 	}

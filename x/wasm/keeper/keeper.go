@@ -53,8 +53,8 @@ func NewKeeper(
 	queryRouter types.GRPCQueryRouter,
 	supportedFeatures string,
 	homePath string,
-	wasmConfig *config.Config) Keeper {
-
+	wasmConfig *config.Config,
+) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramspace.HasKeyTable() {
 		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
@@ -72,7 +72,6 @@ func NewKeeper(
 		wasmConfig.ContractDebugMode,
 		wasmConfig.ContractMemoryCacheSize,
 	)
-
 	if err != nil {
 		panic(err)
 	}

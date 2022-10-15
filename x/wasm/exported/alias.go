@@ -1,4 +1,4 @@
-// nolint
+
 package exported
 
 import "github.com/terra-money/core/x/wasm/types"

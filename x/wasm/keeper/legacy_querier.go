@@ -38,7 +38,6 @@ func NewLegacyQuerier(k Keeper, legacyQuerierCdc *codec.LegacyAmino) sdk.Querier
 func queryByteCode(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
 	var params types.QueryCodeIDParams
 	err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params)
-
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
@@ -58,7 +57,6 @@ func queryByteCode(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQueri
 func queryCodeInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
 	var params types.QueryCodeIDParams
 	err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params)
-
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
@@ -78,7 +76,6 @@ func queryCodeInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQueri
 func queryContractInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
 	var params types.QueryContractAddressParams
 	err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params)
-
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}

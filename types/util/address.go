@@ -17,13 +17,11 @@ const (
 	Bech32PrefixConsPub = "terravalconspub"
 )
 
-var (
-	// AddressVerifier terra address verifier
-	AddressVerifier = func(bz []byte) error {
-		if n := len(bz); n != 20 {
-			return fmt.Errorf("incorrect address length %d", n)
-		}
-
-		return nil
+// AddressVerifier terra address verifier
+var AddressVerifier = func(bz []byte) error {
+	if n := len(bz); n != 20 {
+		return fmt.Errorf("incorrect address length %d", n)
 	}
-)
+
+	return nil
+}

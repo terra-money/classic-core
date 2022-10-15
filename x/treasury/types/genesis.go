@@ -11,7 +11,8 @@ import (
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(params Params, taxRate sdk.Dec, rewardWeight sdk.Dec,
 	taxCaps []TaxCap, taxProceeds sdk.Coins, epochInitialIssuance sdk.Coins,
-	epochStates []EpochState) *GenesisState {
+	epochStates []EpochState,
+) *GenesisState {
 	return &GenesisState{
 		Params:               params,
 		TaxRate:              taxRate,
@@ -39,7 +40,6 @@ func DefaultGenesisState() *GenesisState {
 // ValidateGenesis validates the provided oracle genesis state to ensure the
 // expected invariants holds. (i.e. params in correct bounds, no duplicate validators)
 func ValidateGenesis(data *GenesisState) error {
-
 	if data.TaxRate.LT(data.Params.TaxPolicy.RateMin) || data.TaxRate.GT(data.Params.TaxPolicy.RateMax) {
 		return fmt.Errorf("tax_rate must less than RateMax(%s) and bigger than RateMin(%s)", data.Params.TaxPolicy.RateMax, data.Params.TaxPolicy.RateMin)
 	}
