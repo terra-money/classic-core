@@ -545,6 +545,8 @@ func NewTerraApp(
 		treasurytypes.ModuleName,
 		wasmtypes.ModuleName,
 		authz.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchost.ModuleName,
