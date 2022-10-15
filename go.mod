@@ -125,12 +125,18 @@ require (
 )
 
 replace (
+	// cosmos keyring, matching the version used in v0.45.9
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
+	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
-
+	// cosmos-sdk v0.45.9-lunc (cosmos sdk v0.45.9 with terra patches)
 	github.com/cosmos/cosmos-sdk => github.com/terra-rebels/cosmos-sdk v0.45.9-lunc
+	// ledger app using 44' 330' 0' 0' 0' for terra
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-rebels/ledger-terra-go v0.0.0-20221015041623-e74f85b65773
+	// cosmos flavored protocol buffers
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	// tendermint with terra oracole support
 	github.com/tendermint/tendermint => github.com/terra-money/tendermint v0.34.14-terra.2
+	// enforce the use of grpc v1.33.2, which is compatible with the cosmos flavored protocol buffers
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
