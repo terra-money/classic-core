@@ -258,7 +258,7 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 		}
 	}
 
-	return
+	return taxes, nil
 }
 
 // computes the stability tax according to tax-rate and tax-cap

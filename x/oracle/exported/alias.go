@@ -1,6 +1,5 @@
 // DONTCOVER
 //
-//nolint:deadcode,unused
 
 package exported
 

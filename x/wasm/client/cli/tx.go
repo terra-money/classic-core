@@ -94,7 +94,7 @@ $ terrad tx store ./path-to-binary --migrate-code-id 3
 			}
 
 			var msg sdk.Msg
-			if codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID); err != nil {
+			if codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID); err != nil { //nolint:gocritic
 				return err
 			} else if codeID != 0 {
 				msg = types.NewMsgMigrateCode(codeID, fromAddr, wasmBytes)

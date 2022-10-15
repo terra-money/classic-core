@@ -25,7 +25,7 @@ type AppModuleBasic struct {
 // RegisterLegacyAminoCodec registers the auth module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc 
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }
 
 // ____________________________________________________________________________

@@ -1,7 +1,5 @@
 package simulation
 
-
-
 import (
 	"encoding/json"
 	"fmt"

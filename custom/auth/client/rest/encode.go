@@ -86,7 +86,7 @@ func EncodeTxRequest(clientCtx client.Context) http.HandlerFunc {
 
 		// check the sequence nubmer is equal with the signature nubmer
 		if len(signatures) != len(req.Sequences) {
-			rest.CheckBadRequestError(w, errors.New("Must provide each signers's sequence number"))
+			rest.CheckBadRequestError(w, errors.New("must provide each signers's sequence number"))
 			return
 		}
 

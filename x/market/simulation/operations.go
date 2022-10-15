@@ -1,7 +1,5 @@
 package simulation
 
-
-
 import (
 	"math/rand"
 	"strings"
