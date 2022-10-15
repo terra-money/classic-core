@@ -37,7 +37,7 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i.bak "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
           done
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt # optional
           fail_ci_if_error: true
