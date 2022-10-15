@@ -496,6 +496,9 @@ func NewTerraApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		treasurytypes.ModuleName,
+		markettypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
 
@@ -517,6 +520,9 @@ func NewTerraApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		treasurytypes.ModuleName,
+		markettypes.ModuleName,
 		wasmtypes.ModuleName,
 	)
 
