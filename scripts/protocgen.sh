@@ -21,7 +21,7 @@ for dir in $proto_dirs; do
   --gocosmos_out=plugins=interfacetype+grpc,\
 Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:. \
   --grpc-gateway_out=logtostderr=true:. \
-  $(find "${dir}" -maxdepth 1 -name '*.proto')
+  "$(find "${dir}" -maxdepth 1 -name '*.proto')"
 
 done
 
@@ -31,9 +31,9 @@ buf protoc \
 -I "third_party/proto" \
 --doc_out=./docs/core \
 --doc_opt=./docs/protodoc-markdown.tmpl,proto-docs.md \
-$(find "$(pwd)/proto" -maxdepth 5 -name '*.proto') \
-$(find "$(pwd)/third_party/proto/cosmos" -maxdepth 4 -name '*.proto') \
-$(find "$(pwd)/third_party/proto/ibc" -maxdepth 4 -name '*.proto')
+"$(find "$(pwd)/proto" -maxdepth 5 -name '*.proto')" \
+"$(find "$(pwd)/third_party/proto/cosmos" -maxdepth 4 -name '*.proto')" \
+"$(find "$(pwd)/third_party/proto/ibc" -maxdepth 4 -name '*.proto')"
 
 # move proto files to the right places
 cp -r github.com/terra-money/core/* ./
