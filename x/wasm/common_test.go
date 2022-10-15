@@ -2,7 +2,7 @@ package wasm_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +39,7 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 }
 
 func mustLoad(path string) []byte {
-	bz, err := ioutil.ReadFile(path)
+	bz, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +63,8 @@ func createFakeFundedAccount(
 	ctx sdk.Context,
 	am authkeeper.AccountKeeper,
 	bk bankkeeper.Keeper,
-	coins sdk.Coins) sdk.AccAddress {
+	coins sdk.Coins,
+) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	baseAcct := authtypes.NewBaseAccountWithAddress(addr)
 	am.SetAccount(ctx, baseAcct)

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -72,7 +72,7 @@ $ terrad tx store ./path-to-binary --migrate-code-id 3
 			}
 
 			// parse coins trying to be sent
-			wasmBytes, err := ioutil.ReadFile(args[0])
+			wasmBytes, err := os.ReadFile(args[0])
 			if err != nil {
 				return err
 			}
@@ -193,7 +193,6 @@ $ terrad instantiate 1 '{"arbiter": "terra~~"}' "1000000uluna"
 			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 				// estimate tax and gas
 				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
 				if err != nil {
 					return err
 				}
@@ -269,7 +268,6 @@ func ExecuteContractCmd() *cobra.Command {
 			if len(args) == 3 && !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 				// estimate tax and gas
 				stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
 				if err != nil {
 					return err
 				}

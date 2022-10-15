@@ -94,7 +94,8 @@ func (k Keeper) InstantiateContract(
 	creator sdk.AccAddress,
 	admin sdk.AccAddress,
 	initMsg []byte,
-	deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
+	deposit sdk.Coins,
+) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 	ctx.GasMeter().ConsumeGas(types.RegisterContractCosts(), "Registering contract to the store")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(initMsg)), "Loading CosmWasm module: init")
@@ -201,7 +202,8 @@ func (k Keeper) ExecuteContract(
 	contractAddress sdk.AccAddress,
 	sender sdk.AccAddress,
 	execMsg []byte,
-	coins sdk.Coins) ([]byte, error) {
+	coins sdk.Coins,
+) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(execMsg)), "Loading CosmWasm module: execute")
 
@@ -272,7 +274,8 @@ func (k Keeper) MigrateContract(
 	contractAddress sdk.AccAddress,
 	sender sdk.AccAddress,
 	newCodeID uint64,
-	migrateMsg []byte) ([]byte, error) {
+	migrateMsg []byte,
+) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
 	ctx.GasMeter().ConsumeGas(types.InstantiateContractCosts(len(migrateMsg)), "Loading CosmWasm module: migrate")
 
@@ -353,7 +356,8 @@ func (k Keeper) MigrateContract(
 func (k Keeper) reply(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
-	reply wasmvmtypes.Reply) ([]byte, error) {
+	reply wasmvmtypes.Reply,
+) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "reply")
 	ctx.GasMeter().ConsumeGas(types.ReplyCosts(reply), "Loading CosmWasm module: reply")
 
@@ -467,7 +471,7 @@ func assertAndIncreaseQueryDepth(ctx sdk.Context) (sdk.Context, error) {
 	}
 
 	// set next query depth
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.WasmVMQueryDepthContextKey, queryDepth+1))
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.WasmVMQueryDepthContextKey, queryDepth+1)) // nolint:staticcheck
 
 	return ctx, nil
 }

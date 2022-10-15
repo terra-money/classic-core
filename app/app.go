@@ -277,8 +277,8 @@ func init() {
 func NewTerraApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig terraappparams.EncodingConfig, appOpts servertypes.AppOptions,
-	wasmConfig *wasmconfig.Config, baseAppOptions ...func(*baseapp.BaseApp)) *TerraApp {
-
+	wasmConfig *wasmconfig.Config, baseAppOptions ...func(*baseapp.BaseApp),
+) *TerraApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -299,7 +299,7 @@ func NewTerraApp(
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
-	var app = &TerraApp{
+	app := &TerraApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -415,7 +415,7 @@ func NewTerraApp(
 	// register wasm msg parser & querier
 	app.WasmKeeper.RegisterMsgParsers(map[string]wasmtypes.WasmMsgParserInterface{
 		wasmtypes.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
+		wasmtypes.WasmMsgParserRouteStaking:      stakingwasm.NewMsgParser(),
 		wasmtypes.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteWasm:         wasmkeeper.NewWasmMsgParser(),
 		wasmtypes.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
@@ -423,8 +423,8 @@ func NewTerraApp(
 	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
 	app.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
 		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(app.BankKeeper),
-		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(app.StakingKeeper, app.DistrKeeper),
-		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(app.MarketKeeper),
+		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewQuerier(app.StakingKeeper, app.DistrKeeper),
+		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewQuerier(app.MarketKeeper),
 		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(app.OracleKeeper),
 		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(app.TreasuryKeeper),
 		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(app.WasmKeeper),
@@ -443,7 +443,7 @@ func NewTerraApp(
 	)
 
 	/****  Module Options ****/
-	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -587,7 +587,6 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-
 	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight {
 		// Make min spread to one to disable swap
 		params := app.MarketKeeper.GetParams(ctx)

@@ -3,7 +3,7 @@ package keeper
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -18,14 +18,13 @@ import (
 )
 
 func TestStoreCode(t *testing.T) {
-
 	input := CreateTestInput(t)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	// Create contract
@@ -54,7 +53,7 @@ func TestMigrateCode(t *testing.T) {
 		Creator:  creator.String(),
 	})
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	err = keeper.MigrateCode(ctx, codeID, fakeAccount, wasmCode)
@@ -93,7 +92,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
 	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -102,7 +101,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	// and verify content
 	storedCode, err := keeper.GetByteCode(ctx, contractID)
 	require.NoError(t, err)
-	rawCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	rawCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	require.Equal(t, rawCode, storedCode)
 }
@@ -114,7 +113,7 @@ func TestInstantiate(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -160,7 +159,7 @@ func TestInstantiateWithBigInitMsg(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -182,7 +181,7 @@ func TestExecute(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -269,7 +268,7 @@ func TestExecuteWithHugeMsg(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -302,7 +301,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -333,7 +332,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -369,7 +368,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	contractID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -405,7 +404,7 @@ func TestMigrate(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, sdk.NewCoins(sdk.NewInt64Coin("denom", 5000)))
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	originalCodeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -533,9 +532,9 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(ctx, accKeeper, bankKeeper, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000)))
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	burnerCode, err := ioutil.ReadFile("./testdata/burner.wasm")
+	burnerCode, err := os.ReadFile("./testdata/burner.wasm")
 	require.NoError(t, err)
 
 	originalContractID, err := keeper.StoreCode(ctx, creator, wasmCode)

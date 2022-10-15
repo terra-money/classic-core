@@ -1,6 +1,6 @@
 package simulation
 
-//DONTCOVER
+// DONTCOVER
 
 import (
 	"math/rand"
@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	whitelist                     = []string{core.MicroKRWDenom, core.MicroUSDDenom, core.MicroSDRDenom}
-	voteHashMap map[string]string = make(map[string]string)
+	whitelist   = []string{core.MicroKRWDenom, core.MicroUSDDenom, core.MicroSDRDenom}
+	voteHashMap = make(map[string]string)
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
@@ -39,7 +39,8 @@ func WeightedOperations(
 	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simulation.WeightedOperations {
+	k keeper.Keeper,
+) simulation.WeightedOperations {
 	var (
 		weightMsgAggregateExchangeRatePrevote int
 		weightMsgAggregateExchangeRateVote    int
@@ -85,7 +86,6 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		address := sdk.ValAddress(simAccount.Address)
 
@@ -149,7 +149,6 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		address := sdk.ValAddress(simAccount.Address)
 
@@ -199,7 +198,6 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			[]uint64{feederAccount.GetSequence()},
 			feederSimAccount.PrivKey,
 		)
-
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
@@ -219,7 +217,6 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		delegateAccount, _ := simtypes.RandomAcc(r, accs)
 		valAddress := sdk.ValAddress(simAccount.Address)
@@ -257,7 +254,6 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}

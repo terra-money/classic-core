@@ -12,11 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
-const (
-	flagDenom = "denom"
-	flagEpoch = "epoch"
-)
-
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	oracleQueryCmd := &cobra.Command{
@@ -38,7 +33,6 @@ func GetQueryCmd() *cobra.Command {
 	)
 
 	return oracleQueryCmd
-
 }
 
 // GetCmdQueryTaxRate implements the query tax-rate command.

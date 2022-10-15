@@ -81,7 +81,7 @@ func TestEncoding(t *testing.T) {
 		},
 	}
 
-	parser := NewWasmMsgParser()
+	parser := NewMsgParser()
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
