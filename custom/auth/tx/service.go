@@ -39,7 +39,7 @@ func (ts txServer) ComputeTax(c context.Context, req *ComputeTaxRequest) (*Compu
 	}
 
 	var msgs []sdk.Msg
-	if len(req.TxBytes) != 0 {
+	if len(req.TxBytes) != 0 { //nolint:gocritic
 		tx, err := ts.clientCtx.TxConfig.TxDecoder()(req.TxBytes)
 		if err != nil {
 			return nil, err

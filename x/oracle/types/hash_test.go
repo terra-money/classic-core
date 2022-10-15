@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"encoding/hex"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -9,8 +10,6 @@ import (
 	"github.com/terra-money/core/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"testing"
 )
 
 func TestAggregateVoteHash(t *testing.T) {

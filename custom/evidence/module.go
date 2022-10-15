@@ -9,9 +9,7 @@ import (
 	customtypes "github.com/terra-money/core/custom/evidence/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the gov module.
 type AppModuleBasic struct {
@@ -21,5 +19,5 @@ type AppModuleBasic struct {
 // RegisterLegacyAminoCodec registers the evidence module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }

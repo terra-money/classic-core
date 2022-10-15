@@ -122,7 +122,7 @@ func TestQuerySwap(t *testing.T) {
 	price := sdk.NewDecWithPrec(17, 1)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, price)
 
-	querier := NewWasmQuerier(input.MarketKeeper)
+	querier := NewQuerier(input.MarketKeeper)
 	var err error
 
 	// empty data will occur error

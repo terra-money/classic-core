@@ -36,7 +36,6 @@ func GetQueryCmd() *cobra.Command {
 	)
 
 	return oracleQueryCmd
-
 }
 
 // GetCmdQueryExchangeRates implements the query rate command.
@@ -81,7 +80,6 @@ $ terrad query oracle exchange-rates ukrw
 			}
 
 			return clientCtx.PrintProto(res)
-
 		},
 	}
 
@@ -174,7 +172,6 @@ $ terrad query oracle feeder terravaloper...
 				context.Background(),
 				&types.QueryFeederDelegationRequest{ValidatorAddr: validator.String()},
 			)
-
 			if err != nil {
 				return err
 			}

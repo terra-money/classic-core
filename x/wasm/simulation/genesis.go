@@ -1,7 +1,5 @@
 package simulation
 
-//DONTCOVER
-
 import (
 	"encoding/json"
 	"fmt"
@@ -43,7 +41,6 @@ func GenMaxContractDataSize(r *rand.Rand) uint64 {
 
 // RandomizedGenState generates a random GenesisState for wasm
 func RandomizedGenState(simState *module.SimulationState) {
-
 	var maxContractSize uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, maxContractSizeKey, &maxContractSize, simState.Rand,

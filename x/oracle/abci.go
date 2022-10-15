@@ -77,7 +77,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 				// Convert ballot to cross exchange rates
 				if denom != referenceTerra {
-
 					// softfork
 					if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
 						(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
@@ -134,6 +133,4 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if core.IsPeriodLastBlock(ctx, params.SlashWindow) {
 		k.SlashAndResetMissCounters(ctx)
 	}
-
-	return
 }

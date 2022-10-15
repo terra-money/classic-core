@@ -1,7 +1,5 @@
 package simulation
 
-//DONTCOVER
-
 import (
 	"encoding/json"
 	"fmt"
@@ -72,7 +70,6 @@ func GenWindowProbation(r *rand.Rand) uint64 {
 
 // RandomizedGenState generates a random GenesisState for gov
 func RandomizedGenState(simState *module.SimulationState) {
-
 	var taxPolicy types.PolicyConstraints
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, taxPolicyKey, &taxPolicy, simState.Rand,

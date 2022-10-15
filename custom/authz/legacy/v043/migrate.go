@@ -23,7 +23,7 @@ func migrateAuthorization(oldAuthorization v04msgauth.Authorization) *codectypes
 	case v04msgauth.GenericAuthorization:
 		{
 			var msgTypeURL string
-			if oldAuthorization.GrantMsgType == "swap" {
+			if oldAuthorization.GrantMsgType == "swap" { //nolint:gocritic
 				msgTypeURL = sdk.MsgTypeURL(&v05market.MsgSwap{})
 			} else if oldAuthorization.GrantMsgType == "vote" {
 				msgTypeURL = sdk.MsgTypeURL(&v043gov.MsgVote{})

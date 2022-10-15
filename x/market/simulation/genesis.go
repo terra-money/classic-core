@@ -1,7 +1,5 @@
 package simulation
 
-//DONTCOVER
-
 import (
 	"encoding/json"
 	"fmt"
@@ -37,7 +35,6 @@ func GenMinSpread(r *rand.Rand) sdk.Dec {
 
 // RandomizedGenState generates a random GenesisState for gov
 func RandomizedGenState(simState *module.SimulationState) {
-
 	var basePool sdk.Dec
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, basePoolKey, &basePool, simState.Rand,

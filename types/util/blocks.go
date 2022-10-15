@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// nolint
 const (
 	BlocksPerMinute = uint64(10)
 	BlocksPerHour   = BlocksPerMinute * 60

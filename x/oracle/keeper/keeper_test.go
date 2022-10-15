@@ -84,7 +84,6 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 		}
 		return false
 	})
-
 }
 
 func TestRewardPool(t *testing.T) {

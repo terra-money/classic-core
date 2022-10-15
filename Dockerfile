@@ -1,6 +1,6 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.17.8-alpine3.15 AS go-builder
+FROM golang:1.19-alpine AS go-builder
 
 # See https://github.com/CosmWasm/wasmvm/releases
 ENV LIBWASMVM_VERSION=0.16.6

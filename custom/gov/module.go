@@ -13,9 +13,7 @@ import (
 	core "github.com/terra-money/core/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the gov module.
 type AppModuleBasic struct {
@@ -30,7 +28,7 @@ func NewAppModuleBasic(proposalHandlers ...govclient.ProposalHandler) AppModuleB
 // RegisterLegacyAminoCodec registers the gov module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the gov

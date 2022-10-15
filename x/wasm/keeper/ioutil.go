@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 
 	"github.com/terra-money/core/x/wasm/types"
 )
@@ -34,7 +33,7 @@ func (k Keeper) uncompress(src []byte, maxContractSize uint64) ([]byte, error) {
 	zr.Multistream(false)
 	defer zr.Close()
 
-	return ioutil.ReadAll(LimitReader(zr, int64(maxContractSize)))
+	return io.ReadAll(LimitReader(zr, int64(maxContractSize)))
 }
 
 // LimitReader returns LimitedReader

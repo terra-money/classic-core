@@ -11,9 +11,7 @@ import (
 	core "github.com/terra-money/core/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the staking module.
 type AppModuleBasic struct {

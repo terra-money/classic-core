@@ -33,8 +33,10 @@ type vestingAccountYAML struct {
 
 // LazyGradedVestingAccount implements the LazyGradedVestingAccount interface. It vests all
 // coins according to a predefined schedule.
-var _ vestexported.VestingAccount = (*LazyGradedVestingAccount)(nil)
-var _ authtypes.GenesisAccount = (*LazyGradedVestingAccount)(nil)
+var (
+	_ vestexported.VestingAccount = (*LazyGradedVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*LazyGradedVestingAccount)(nil)
+)
 
 // NewLazyGradedVestingAccountRaw creates a new LazyGradedVestingAccount object from BaseVestingAccount
 func NewLazyGradedVestingAccountRaw(baseVestingAcc *vesttypes.BaseVestingAccount, lazyVestingSchedules VestingSchedules) *LazyGradedVestingAccount {

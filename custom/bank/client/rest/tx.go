@@ -64,7 +64,6 @@ func sendRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 
 		if req.BaseReq.Fees.IsZero() {
 			stdFee, err := feeutils.ComputeFeesWithBaseReq(clientCtx, req.BaseReq, msg)
-
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				return

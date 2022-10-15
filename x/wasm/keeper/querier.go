@@ -89,7 +89,6 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 
 	// recover from out-of-gas panic
 	defer func() {
-
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us
@@ -123,7 +122,7 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 		QueryResult: bz,
 	}
 
-	return
+	return res, nil
 }
 
 // RawStore return single key from the raw store data of a contract

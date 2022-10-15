@@ -22,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -112,8 +111,6 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 // Test Account
 var (
-	valPubKeys = simapp.CreateTestPubKeys(5)
-
 	PubKeys = []crypto.PubKey{
 		secp256k1.GenPrivKey().PubKey(),
 		secp256k1.GenPrivKey().PubKey(),
@@ -336,15 +333,15 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.SetParams(ctx, types.DefaultParams())
 	keeper.RegisterQueriers(map[string]types.WasmQuerierInterface{
 		types.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(bankKeeper),
-		types.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(stakingKeeper, distrKeeper),
-		types.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(marketKeeper),
+		types.WasmQueryRouteStaking:  stakingwasm.NewQuerier(stakingKeeper, distrKeeper),
+		types.WasmQueryRouteMarket:   marketwasm.NewQuerier(marketKeeper),
 		types.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(treasuryKeeper),
 		types.WasmQueryRouteWasm:     NewWasmQuerier(keeper),
 		types.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(oracleKeeper),
 	}, NewStargateWasmQuerier(keeper))
 	keeper.RegisterMsgParsers(map[string]types.WasmMsgParserInterface{
 		types.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
-		types.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
+		types.WasmMsgParserRouteStaking:      stakingwasm.NewMsgParser(),
 		types.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
 		types.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
@@ -364,7 +361,8 @@ func CreateTestInput(t *testing.T) TestInput {
 		oracleKeeper,
 		marketKeeper,
 		treasuryKeeper,
-		keeper}
+		keeper,
+	}
 }
 
 // FundAccount is a utility function that funds an account by minting and
@@ -378,7 +376,7 @@ func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error 
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func createFakeFundedAccount(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
+func createFakeFundedAccount(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress { //nolint:unused // this is used in tests.
 	_, _, addr := keyPubAddr()
 	ak.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
 
@@ -392,7 +390,7 @@ func createFakeFundedAccount(ctx sdk.Context, ak authkeeper.AccountKeeper, bk ba
 	return addr
 }
 
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { //nolint:unused // keyPubAddr is used in createFakeFundedAccount, which is used in tests.
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())

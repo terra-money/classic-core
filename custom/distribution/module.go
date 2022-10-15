@@ -9,9 +9,7 @@ import (
 	customtypes "github.com/terra-money/core/custom/distribution/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the distribution module.
 type AppModuleBasic struct {
@@ -21,5 +19,5 @@ type AppModuleBasic struct {
 // RegisterLegacyAminoCodec registers the distribution module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }

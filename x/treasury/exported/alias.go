@@ -1,14 +1,13 @@
-//nolint:deadcode,unused
-//DONTCOVER
+// DONTCOVER
+//
+
 package exported
 
 import (
 	"github.com/terra-money/core/x/treasury/types"
 )
 
-var (
-	NewQueryClient = types.NewQueryClient
-)
+var NewQueryClient = types.NewQueryClient
 
 type (
 	QueryTaxRateRequest = types.QueryTaxRateRequest

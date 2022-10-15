@@ -15,13 +15,11 @@ import (
 	"github.com/terra-money/core/x/vesting/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the oracle module.
 type AppModuleBasic struct {
-	cdc codec.Codec
+	cdc codec.Codec //nolint:unused
 }
 
 // Name returns the module's name

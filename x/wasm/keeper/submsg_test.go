@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 
@@ -33,7 +33,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)
@@ -126,7 +126,6 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 		Key:   "module",
 		Value: "bank",
 	}, module.Attributes[0])
-
 }
 
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
@@ -145,13 +144,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	uploader := createFakeFundedAccount(ctx, accKeeper, bankKeeper, contractStart.Add(contractStart...))
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	reflectID, err := keeper.StoreCode(ctx, uploader, reflectCode)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
-	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	hackatomCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	hackatomID, err := keeper.StoreCode(ctx, uploader, hackatomCode)
 	require.NoError(t, err)
@@ -274,7 +273,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			submsgID: 5,
 			msg:      validBankSend,
 			// note we charge another 40k for the reply call
-			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 136000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 139260)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -294,7 +293,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 136000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 139340)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -401,7 +400,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)

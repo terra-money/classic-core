@@ -44,8 +44,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	oracleKeeper types.OracleKeeper,
 	stakingKeeper types.StakingKeeper,
 	distrKeeper types.DistributionKeeper,
-	distributionModuleName string) Keeper {
-
+	distributionModuleName string,
+) Keeper {
 	// ensure treasury module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
@@ -162,8 +162,6 @@ func (k Keeper) IterateTaxCap(ctx sdk.Context, handler func(denom string, taxCap
 			break
 		}
 	}
-
-	return
 }
 
 // RecordEpochTaxProceeds adds tax proceeds that have been added this epoch
@@ -266,10 +264,10 @@ func (k Keeper) GetTR(ctx sdk.Context, epoch int64) sdk.Dec {
 }
 
 // SetTR stores the tax rewards for the epoch
-func (k Keeper) SetTR(ctx sdk.Context, epoch int64, TR sdk.Dec) {
+func (k Keeper) SetTR(ctx sdk.Context, epoch int64, tr sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: TR})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: tr})
 	store.Set(types.GetTRKey(epoch), bz)
 }
 
@@ -300,10 +298,10 @@ func (k Keeper) GetSR(ctx sdk.Context, epoch int64) sdk.Dec {
 }
 
 // SetSR stores the seigniorage rewards for the epoch
-func (k Keeper) SetSR(ctx sdk.Context, epoch int64, SR sdk.Dec) {
+func (k Keeper) SetSR(ctx sdk.Context, epoch int64, sr sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: SR})
+	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: sr})
 	store.Set(types.GetSRKey(epoch), bz)
 }
 
@@ -334,10 +332,10 @@ func (k Keeper) GetTSL(ctx sdk.Context, epoch int64) sdk.Int {
 }
 
 // SetTSL stores the total staked luna for the epoch
-func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, TSL sdk.Int) {
+func (k Keeper) SetTSL(ctx sdk.Context, epoch int64, tsl sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: TSL})
+	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: tsl})
 	store.Set(types.GetTSLKey(epoch), bz)
 }
 

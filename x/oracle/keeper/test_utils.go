@@ -1,8 +1,8 @@
-//nolint
 package keeper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	customauth "github.com/terra-money/core/custom/auth"
@@ -12,8 +12,6 @@ import (
 	customstaking "github.com/terra-money/core/custom/staking"
 	core "github.com/terra-money/core/types"
 	"github.com/terra-money/core/x/oracle/types"
-
-	"time"
 
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
