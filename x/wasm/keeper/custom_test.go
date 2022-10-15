@@ -101,6 +101,7 @@ type (
 		Denom string `json:"denom"`
 	}
 )
+
 type exchangeRatesQueryMsg struct {
 	BaseDenom   string   `json:"base_denom"`
 	QuoteDenoms []string `json:"quote_denoms"`

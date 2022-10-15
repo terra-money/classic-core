@@ -109,5 +109,4 @@ func TestEncoding(t *testing.T) {
 			}
 		})
 	}
-
 }
