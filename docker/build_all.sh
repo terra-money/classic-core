@@ -1,14 +1,16 @@
 #!/bin/bash
 
-VERSION="${1:-v0.5.11-oracle}"
+VERSION="${1:-a8bc017fcb10cf0cc55e4b0036e7a1bf7ef0ad1b}"
 
 pushd .. 
 
 git checkout $VERSION
-docker build -t terramoney/core:$VERSION .
+docker build -t terrarebels/terraclassic.terrad-binary:$VERSION .
 git checkout -
 
 popd
 
-docker build --build-arg version=$VERSION --build-arg chainid=columbus-5 -t terramoney/core-node:$VERSION .
-docker build --build-arg version=$VERSION --build-arg chainid=bombay-12 -t terramoney/core-node:$VERSION-testnet .
+docker build --build-arg version=$VERSION --build-arg chainid=columbus-5 -t terrarebels/terraclassic.terrad-node:$VERSION-columbus-5 .
+docker build --build-arg version=$VERSION --build-arg chainid=rebel-1    -t terrarebels/terraclassic.terrad-node:$VERSION-rebel-1    .
+docker build --build-arg version=$VERSION --build-arg chainid=rebel-2    -t terrarebels/terraclassic.terrad-node:$VERSION-rebel-2    .
+

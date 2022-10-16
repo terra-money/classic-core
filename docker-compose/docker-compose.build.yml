@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+   core:     
+     image: terraclassic.terrad-binary
+     build: 
+      context: ../
+      dockerfile: Dockerfile.terraclassic.terrad-binary
+      labels:
+        - "terraclassic.terrad-binary.description=Contains the terrad binary"
+   node:
+     image: terraclassic.terrad-node
+     build: 
+       context: ../docker
+       dockerfile: Dockerfile      
+       args:
+         base_image: terraclassic.terrad-binary
+       labels:
+        - "terraclassic.terrad-node.description=Contains everything to run a full node"

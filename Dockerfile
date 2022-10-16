@@ -31,6 +31,8 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-linkmode=external -extldflag
 
 FROM alpine:3.15.4
 
+RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils
+
 RUN addgroup terra \
     && adduser -G terra -D -h /terra terra
 

@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
-HTTPS_GIT := https://github.com/terra-money/core.git
+HTTPS_GIT := https://github.com/terra-rebels/classic-core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
@@ -115,22 +115,23 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --no-cache --tag terramoney/core ./
-	docker create --name temp terramoney/core:latest
+	docker build --no-cache --tag terrarebels/classic ./
+	docker create --name temp terrarebels/classic:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
 
 build-linux-with-shared-library:
 	mkdir -p $(BUILDDIR)
-	docker build --tag terramoney/core-shared ./ -f ./shared.Dockerfile
-	docker create --name temp terramoney/core-shared:latest
+	docker build --tag terrarebels/classic-shared ./ -f ./shared.Dockerfile
+	docker create --name temp terrarebels/classic-shared:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
 
-install: go.sum 
+install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 
+#TODO: Fix broken statik tooling
 update-swagger-docs: statik
 	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
@@ -155,7 +156,7 @@ go.sum: go.mod
 
 draw-deps:
 	@# requires brew install graphviz or apt-get install graphviz
-	go install github.com/RobotsAndPencils/goviz@latest
+	go get github.com/RobotsAndPencils/goviz
 	@goviz -i ./cmd/terrad -d 2 | dot -Tpng -o dependency-graph.png
 
 distclean: clean tools-clean
@@ -196,7 +197,7 @@ benchmark:
 ###############################################################################
 
 lint:
-	golangci-lint run --out-format=tab
+	sudo golangci-lint run --out-format=tab
 
 lint-fix:
 	golangci-lint run --fix --out-format=tab --issues-exit-code=0
@@ -216,7 +217,7 @@ proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen sh ./scripts/protocgen.sh
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.3 sh ./scripts/protocgen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"
@@ -234,7 +235,7 @@ proto-lint:
 proto-check-breaking:
 	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=master
 
-.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking 
+.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking
 
 ###############################################################################
 ###                                Localnet                                 ###
@@ -255,4 +256,17 @@ localnet-start: build-linux localnet-stop
 localnet-stop:
 	docker-compose down
 
-.PHONY: localnet-start localnet-stop
+localnet-rebel2-build:
+	docker-compose -f ./docker-compose/docker-compose.yml -f ./docker-compose/docker-compose.build.yml build core
+	docker-compose -f ./docker-compose/docker-compose.yml -f ./docker-compose/docker-compose.build.yml build node
+
+localnet-rebel2-start:
+	docker-compose -f ./docker-compose/docker-compose.yml up
+
+localnet-rebel2-stop:
+	docker-compose -f ./docker-compose/docker-compose.yml stop
+
+localnet-rebel2-clean:
+	docker-compose -f ./docker-compose/docker-compose.yml down
+
+.PHONY: localnet-start localnet-stop localnet-rebel2-start localnet-rebel2-stop localnet-rebel2-build localnet-rebel2-clean
