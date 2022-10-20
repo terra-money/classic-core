@@ -6,11 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/terra-money/core/custom/auth/ante"
+	core "github.com/terra-money/core/types"
+
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/terra-money/core/custom/auth/ante"
-	core "github.com/terra-money/core/types"
 )
 
 func (suite *AnteTestSuite) TestEnsureBurnTaxModule() {
