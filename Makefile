@@ -197,7 +197,7 @@ benchmark:
 ###############################################################################
 
 lint:
-	sudo golangci-lint run --out-format=tab
+	golangci-lint run --out-format=tab
 
 lint-fix:
 	golangci-lint run --fix --out-format=tab --issues-exit-code=0
