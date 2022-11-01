@@ -1,4 +1,4 @@
-Terra Rebels Roadmap
+# Rebel Roadmap
 
 Historical releases of this chain, before the rebel takeover, can be found at https://github.com/terra-money/classic-core
 
