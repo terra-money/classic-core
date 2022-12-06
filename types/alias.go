@@ -39,6 +39,7 @@ const (
 	ColumbusChainID       = "columbus-5"
 	BombayChainID         = "bombay-12"
 	SwapDisableForkHeight = fork.SwapDisableForkHeight
+	SwapEnableForkHeight  = fork.SwapEnableForkHeight
 )
 
 // functions aliases
