@@ -15,9 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 
-	ante "github.com/terra-money/core/custom/auth/ante"
-	core "github.com/terra-money/core/types"
-
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	marketexported "github.com/terra-money/core/x/market/exported"
@@ -265,10 +262,6 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 func computeTax(clientCtx client.Context, taxRate sdk.Dec, principal sdk.Coins) (taxes sdk.Coins, err error) {
 
 	for _, coin := range principal {
-
-		if coin.Denom == core.MicroLunaDenom && clientCtx.Height < ante.TaxPowerUpgradeHeight {
-			continue
-		}
 
 		taxCap, err := queryTaxCap(clientCtx, coin.Denom)
 		if err != nil {
