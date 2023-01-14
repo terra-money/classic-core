@@ -626,6 +626,12 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 		}
 	}
 
+	// check if version map in upgrade keeper is nil
+	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+	if len(vm) == 0 {
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -640,7 +646,6 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
