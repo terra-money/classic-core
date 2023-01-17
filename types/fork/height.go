@@ -4,3 +4,5 @@ package fork
 const SwapDisableForkHeight = 7607790
 // SwapEnableForkHeight - renable IBC only, block height is approximately December 5th, 2022
 const SwapEnableForkHeight = 10542500
+// VersionMapEnableHeight - set the version map to enable software upgrades, approximately February 14, 2023
+const VersionMapEnableHeight = 11543150

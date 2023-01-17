@@ -626,9 +626,8 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 		}
 	}
 
-	// check if version map in upgrade keeper is nil
-	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-	if len(vm) == 0 {
+	// trigger SetModuleVersionMap in upgrade keeper at the VersionMapEnableHeight
+	if ctx.BlockHeight() == core.VersionMapEnableHeight {
 		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	}
 
