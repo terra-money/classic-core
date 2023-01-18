@@ -11,7 +11,7 @@
 
 # Build
 bin
-build
+_build
 vendor
 .vendor-new
 build
