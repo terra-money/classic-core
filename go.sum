@@ -165,6 +165,8 @@ github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMn
 github.com/cilium/ebpf v0.6.2/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJXRs=
 github.com/circonus-labs/circonus-gometrics v2.3.1+incompatible/go.mod h1:nmEj6Dob7S7YxXgwXpfOuvO54S+tGdZdw9fuRZt25Ag=
 github.com/circonus-labs/circonusllhist v0.1.3/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
+github.com/classic-terra/cosmos-sdk v0.44.6-0.20221016182956-c5c6f52d0a59 h1:aEO8kp0lD+AIqZlyJxA5w6WHg/qMTZnzG7c2BGN1Od0=
+github.com/classic-terra/cosmos-sdk v0.44.6-0.20221016182956-c5c6f52d0a59/go.mod h1:pTH1UR4ZKkchlqIeNIc4U2v9aB36Jdl28iui7pZsluU=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/cloudflare/cloudflare-go v0.10.2-0.20190916151808-a80f83b9add9/go.mod h1:1MxXX1Ux4x6mqPmjkUgTP1CdXIBXKX7T+Jk9Gxrmx+U=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
@@ -865,10 +867,8 @@ github.com/tendermint/tm-db v0.6.6 h1:EzhaOfR0bdKyATqcd5PNeyeq8r+V4bRPHBfyFdD9kG
 github.com/tendermint/tm-db v0.6.6/go.mod h1:wP8d49A85B7/erz/r4YbKssKw6ylsO/hKtFk7E1aWZI=
 github.com/terra-money/ledger-terra-go v0.11.2 h1:BVXZl+OhJOri6vFNjjVaTabRLApw9MuG7mxWL4V718c=
 github.com/terra-money/ledger-terra-go v0.11.2/go.mod h1:ClJ2XMj1ptcnONzKH+GhVPi7Y8pXIT+UzJ0TNt0tfZE=
-github.com/terra-money/tendermint v0.34.14-terra.2 h1:UYDDCI001ZNhs+aX09HjKVldUcz084q3RwLHUOSSZQU=
-github.com/terra-money/tendermint v0.34.14-terra.2/go.mod h1:FrwVm3TvsVicI9Z7FlucHV6Znfd5KBc/Lpp69cCwtk0=
-github.com/terra-rebels/cosmos-sdk v0.44.6-0.20221016182956-c5c6f52d0a59 h1:62KT/h2dpx3wM3Tev3srYaUnVfMqsXuFg/cYtfS3mA4=
-github.com/terra-rebels/cosmos-sdk v0.44.6-0.20221016182956-c5c6f52d0a59/go.mod h1:pTH1UR4ZKkchlqIeNIc4U2v9aB36Jdl28iui7pZsluU=
+github.com/terra-money/tendermint v0.34.14-terra.3 h1:6ZKViOBESN3/2csQ8jWHmALdeGMUp7citxh7drtBicI=
+github.com/terra-money/tendermint v0.34.14-terra.3/go.mod h1:FrwVm3TvsVicI9Z7FlucHV6Znfd5KBc/Lpp69cCwtk0=
 github.com/tidwall/gjson v1.6.7/go.mod h1:zeFuBCIqD4sN/gmqBzZ4j7Jd6UcA2Fc56x7QFsv+8fI=
 github.com/tidwall/match v1.0.3/go.mod h1:eRSPERbgtNPcGhD8UCthc6PmLEQXEWd3PRB5JTxsfmM=
 github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
