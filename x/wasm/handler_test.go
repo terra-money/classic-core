@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/classic-terra/core/x/wasm"
+	"github.com/classic-terra/core/x/wasm/keeper"
+	"github.com/classic-terra/core/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-money/core/x/wasm"
-	"github.com/terra-money/core/x/wasm/keeper"
-	"github.com/terra-money/core/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-money/core/types"
+	core "github.com/classic-terra/core/types"
 )
 
 func TestHandleStore(t *testing.T) {

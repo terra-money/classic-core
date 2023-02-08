@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/terra-money/core/x/market/types"
+	"github.com/classic-terra/core/x/market/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

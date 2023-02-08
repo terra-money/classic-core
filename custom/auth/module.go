@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	customsim "github.com/terra-money/core/custom/auth/simulation"
-	customtypes "github.com/terra-money/core/custom/auth/types"
+	customsim "github.com/classic-terra/core/custom/auth/simulation"
+	customtypes "github.com/classic-terra/core/custom/auth/types"
 )
 
 var (

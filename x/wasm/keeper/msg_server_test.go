@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"testing"
 
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/wasm/types"
 	"github.com/stretchr/testify/require"
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/treasury/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/treasury/types"
 )
 
 // Simulation parameter constants

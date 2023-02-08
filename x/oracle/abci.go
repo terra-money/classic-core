@@ -3,9 +3,9 @@ package oracle
 import (
 	"time"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/oracle/keeper"
-	"github.com/terra-money/core/x/oracle/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/oracle/keeper"
+	"github.com/classic-terra/core/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

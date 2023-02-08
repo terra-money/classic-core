@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/classic-terra/core/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-money/core/x/wasm/types"
 )
 
 func TestUncompress(t *testing.T) {

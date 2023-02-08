@@ -1,7 +1,7 @@
 // nolint
 package exported
 
-import "github.com/terra-money/core/x/wasm/types"
+import "github.com/classic-terra/core/x/wasm/types"
 
 var (
 	EncodeSdkCoin  = types.EncodeSdkCoin

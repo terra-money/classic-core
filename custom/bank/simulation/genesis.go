@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/simulation"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/terra-money/core/types"
+	core "github.com/classic-terra/core/types"
 )
 
 // RandomGenesisBalances returns a slice of account balances. Each account has

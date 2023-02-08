@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	"github.com/cosmos/cosmos-sdk/x/evidence/types"
 
-	customtypes "github.com/terra-money/core/custom/evidence/types"
+	customtypes "github.com/classic-terra/core/custom/evidence/types"
 )
 
 var (

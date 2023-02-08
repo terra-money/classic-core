@@ -6,7 +6,7 @@
 * feat: Burn Tax via utilization of existing Stability Tax code by @edk208 in https://github.com/terra-money/classic-core/pull/784
 
 ## v0.5.20
-* Make min spread to 100% to disable swap by @YunSuk-Yeo in https://github.com/terra-money/core/pull/760
+* Make min spread to 100% to disable swap by @YunSuk-Yeo in https://github.com/terra-money/classic-core/pull/760
 * Close three channel 
   * "channel-1",  // Osmosis
   * "channel-49", // Crescent
@@ -27,7 +27,7 @@ To avoid possible sync delays due to the runtime rebuilding overhead, it is high
 
 **Additional notes**
 - :tada: Wasmer v2.2 supports the much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means nodes can be run on any arm64 system, such as Apple Silicon machines and AWS Graviton2 Arm64.
-- [\#690](https://github.com/terra-money/core/pull/690) Fix wasm memory leak and module drop order. (edited) 
+- [\#690](https://github.com/terra-money/classic-core/pull/690) Fix wasm memory leak and module drop order. (edited) 
 
 ## v0.5.17
 
@@ -39,7 +39,7 @@ Details will be shared after checking the status of the validator update.
 
 This release contains security update
 
-- [\#674](https://github.com/terra-money/core/pull/674) fix to charge gas cost for the key length in wasm execution
+- [\#674](https://github.com/terra-money/classic-core/pull/674) fix to charge gas cost for the key length in wasm execution
 
 ### Softfork Schedule
 
@@ -52,15 +52,15 @@ This release contains security update
 
 This release contains mainly overflow checking enhancement including custom dependency updates.
 
-- [\#670](https://github.com/terra-money/core/pull/670) audit fix (overflow check)
-- [\#658](https://github.com/terra-money/core/pull/658) cosmos-sdk proto update
-- [\#655](https://github.com/terra-money/core/pull/655) use custom dependency for cosmos-sdk and tendermint
+- [\#670](https://github.com/terra-money/classic-core/pull/670) audit fix (overflow check)
+- [\#658](https://github.com/terra-money/classic-core/pull/658) cosmos-sdk proto update
+- [\#655](https://github.com/terra-money/classic-core/pull/655) use custom dependency for cosmos-sdk and tendermint
 
 ## v0.5.14
 
 This release contains wasmvm bugfix to prevent non-deterministic error messages comes out from wasmvm.
 
-- [\#635](https://github.com/terra-money/core/pull/635) bump wasmvm to v0.16.3
+- [\#635](https://github.com/terra-money/classic-core/pull/635) bump wasmvm to v0.16.3
 
 ## v0.5.13
 
@@ -68,51 +68,51 @@ This release contains oracle tally bugfix, which was not sorting cross rate ball
 
 This update will sort cross rate ballot before computing weighted median value.
 
-- [b073fb1](https://github.com/terra-money/core/commit/b073fb18e5107caee077f214b5fad4de53b055f5) sort cross rate ballot and enforce sorted before computing weighted median
+- [b073fb1](https://github.com/terra-money/classic-core/commit/b073fb18e5107caee077f214b5fad4de53b055f5) sort cross rate ballot and enforce sorted before computing weighted median
 
 ## v0.5.12
 
 This release contains [IAVL bugfix](https://github.com/cosmos/iavl/pull/449)
 
 ### Improvements
-- [\#620](https://github.com/terra-money/core/pull/620) bump SDK to v0.44.5
+- [\#620](https://github.com/terra-money/classic-core/pull/620) bump SDK to v0.44.5
 
 ### Bug Fixes
-- [\#621](https://github.com/terra-money/core/pull/621) fix iterator key on export for zero height
-- [\#607](https://github.com/terra-money/core/pull/607) skip GetBytes when exporting not migrated code
+- [\#621](https://github.com/terra-money/classic-core/pull/621) fix iterator key on export for zero height
+- [\#607](https://github.com/terra-money/classic-core/pull/607) skip GetBytes when exporting not migrated code
 
 ## v0.5.11
 
 ### Bug Fixes
-- [\#603](https://github.com/terra-money/core/pull/603) bump CosmWasm/wasmvm to v0.16.2 to fix cache position error
+- [\#603](https://github.com/terra-money/classic-core/pull/603) bump CosmWasm/wasmvm to v0.16.2 to fix cache position error
 
 ## v0.5.10
 
 ### Improvements
-- [\#601](https://github.com/terra-money/core/pull/601) revert readvm-pool feature
-- [\#594](https://github.com/terra-money/core/pull/594) bump SDK to v0.44.3 and Tendermint to v0.34.14
-- [\#593](https://github.com/terra-money/core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
+- [\#601](https://github.com/terra-money/classic-core/pull/601) revert readvm-pool feature
+- [\#594](https://github.com/terra-money/classic-core/pull/594) bump SDK to v0.44.3 and Tendermint to v0.34.14
+- [\#593](https://github.com/terra-money/classic-core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
 
 ## v0.5.9
 
 ### Bug Fixes
-- [\#588](https://github.com/terra-money/core/pull/588) - fix wasm external querier to use single wasmvm with context value
+- [\#588](https://github.com/terra-money/classic-core/pull/588) - fix wasm external querier to use single wasmvm with context value
 
 ## v0.5.8
 
 ### Bug Fixes
-- [\#584](https://github.com/terra-money/core/pull/584) - security update
-- [\#586](https://github.com/terra-money/core/pull/586) - memory leak fix
-- [\#583](https://github.com/terra-money/core/pull/583) - ibc ante handler to prevent duplicated packet relaying
+- [\#584](https://github.com/terra-money/classic-core/pull/584) - security update
+- [\#586](https://github.com/terra-money/classic-core/pull/586) - memory leak fix
+- [\#583](https://github.com/terra-money/classic-core/pull/583) - ibc ante handler to prevent duplicated packet relaying
 
 ## v0.5.7
 
 This release mainly contains CosmosSDK security updates
 
 ### Bug Fixes
-- [\#578](https://github.com/terra-money/core/pull/578) Bump CosmosSDK to v0.44.2
-- [\#576](https://github.com/terra-money/core/pull/576) Change write-vm-memory-cache-size default config replace location
-- [\#573](https://github.com/terra-money/core/pull/573) Fix to distribute oracle rewards for all whitelist denoms
+- [\#578](https://github.com/terra-money/classic-core/pull/578) Bump CosmosSDK to v0.44.2
+- [\#576](https://github.com/terra-money/classic-core/pull/576) Change write-vm-memory-cache-size default config replace location
+- [\#573](https://github.com/terra-money/classic-core/pull/573) Fix to distribute oracle rewards for all whitelist denoms
 
 ## v0.5.6
 
@@ -123,58 +123,58 @@ This release contains updates for multi-reader thread implementation with necess
 * Bump CosmWasm to [v0.16.2](https://github.com/CosmWasm/cosmwasm/releases/tag/v0.16.2)
 
 ### Improvements
-- [\#546](https://github.com/terra-money/core/pull/546) Implement read VM pool
+- [\#546](https://github.com/terra-money/classic-core/pull/546) Implement read VM pool
 
 ## v0.5.5
 
 ### Improvements
-- [\#564](https://github.com/terra-money/core/pull/564) Legacy tx encode support
+- [\#564](https://github.com/terra-money/classic-core/pull/564) Legacy tx encode support
 
 ### Bug Fixes
-- [\#566](https://github.com/terra-money/core/pull/566) Emit missing wasm tax events.
+- [\#566](https://github.com/terra-money/classic-core/pull/566) Emit missing wasm tax events.
 
 ## v0.5.4
 
 ### Bug Fixes
-- [\#560](https://github.com/terra-money/core/pull/560) Fix migration bug of multisig pubkey which was in v040 auth module migration.
+- [\#560](https://github.com/terra-money/classic-core/pull/560) Fix migration bug of multisig pubkey which was in v040 auth module migration.
 
 ## v0.5.3
 
 ### Improvement
-- [\#551](https://github.com/terra-money/core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
+- [\#551](https://github.com/terra-money/classic-core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
 
 ### Bug Fixes
-- [\#544](https://github.com/terra-money/core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
-- [\#557](https://github.com/terra-money/core/pull/557) fix proto urls
+- [\#544](https://github.com/terra-money/classic-core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
+- [\#557](https://github.com/terra-money/classic-core/pull/557) fix proto urls
 
 ## v0.5.2
-- [\#539](https://github.com/terra-money/core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
+- [\#539](https://github.com/terra-money/classic-core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
 
 ## v0.5.1
 
 ### Bug Fixes
-- [\#536](https://github.com/terra-money/core/pull/536) Sort migrated map array with key to generate deterministic result
+- [\#536](https://github.com/terra-money/classic-core/pull/536) Sort migrated map array with key to generate deterministic result
 
 ## v0.5.0
 
 ### Improvements
 
-- [\#529](https://github.com/terra-money/core/pull/529) Bump CosmosSDK to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0)
-- [\#523](https://github.com/terra-money/core/pull/526) Bump CosmosSDK to [v0.43.0-rc3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc3) and CosmWasm to [v0.16.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.16.0)
-- [\#520](https://github.com/terra-money/core/pull/520) Implement ContractInfo wasm query interface for the contracts
-- [\#518](https://github.com/terra-money/core/pull/518) Rollback market base pool split
-- [\#507](https://github.com/terra-money/core/pull/507) Bump SDK to [v0.43.0-rc0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc0).
-- [\#507](https://github.com/terra-money/core/pull/507) Bump Tendermint to [v0.34.11](https://github.com/tendermint/tendermint/releases/tag/v0.34.11).
-- [\#509](https://github.com/terra-money/core/pull/509) Bump cosmwasm to [v0.15.1](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.1).
-- [\#467](https://github.com/terra-money/core/pull/467) Split market base pool into mint & burn base pool
-- [\#465](https://github.com/terra-money/core/pull/465) [\#472](https://github.com/terra-money/core/pull/472)  Bump cosmwasm to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
-- [\#477](https://github.com/terra-money/core/pull/477) Burn `reward_weight` ratio of seigniorage instead of redirecting to oracle rewards
-- [260b41a](https://github.com/terra-money/core/blob/471cd878b11b21f10511e272621b850a690eb6f3/x/market/keeper/msg_server.go#L121-L127) Redirect swap fees to oracle rewards (distributed over 3 years)
+- [\#529](https://github.com/terra-money/classic-core/pull/529) Bump CosmosSDK to [v0.43.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0)
+- [\#523](https://github.com/terra-money/classic-core/pull/526) Bump CosmosSDK to [v0.43.0-rc3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc3) and CosmWasm to [v0.16.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.16.0)
+- [\#520](https://github.com/terra-money/classic-core/pull/520) Implement ContractInfo wasm query interface for the contracts
+- [\#518](https://github.com/terra-money/classic-core/pull/518) Rollback market base pool split
+- [\#507](https://github.com/terra-money/classic-core/pull/507) Bump SDK to [v0.43.0-rc0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.43.0-rc0).
+- [\#507](https://github.com/terra-money/classic-core/pull/507) Bump Tendermint to [v0.34.11](https://github.com/tendermint/tendermint/releases/tag/v0.34.11).
+- [\#509](https://github.com/terra-money/classic-core/pull/509) Bump cosmwasm to [v0.15.1](https://github.com/CosmWasm/cosmwasm/release/tag/v0.15.1).
+- [\#467](https://github.com/terra-money/classic-core/pull/467) Split market base pool into mint & burn base pool
+- [\#465](https://github.com/terra-money/classic-core/pull/465) [\#472](https://github.com/terra-money/classic-core/pull/472)  Bump cosmwasm to [v0.14.0](https://github.com/CosmWasm/cosmwasm/release/tag/v0.14.0).
+- [\#477](https://github.com/terra-money/classic-core/pull/477) Burn `reward_weight` ratio of seigniorage instead of redirecting to oracle rewards
+- [260b41a](https://github.com/terra-money/classic-core/blob/471cd878b11b21f10511e272621b850a690eb6f3/x/market/keeper/msg_server.go#L121-L127) Redirect swap fees to oracle rewards (distributed over 3 years)
 - Bump golang prerequisite from 1.15 to 1.16.
 
 ### Bug Fixes
-- [\#497](https://github.com/terra-money/core/pull/497) Fix wasm oracle querier to return Base/Quote exchange rate
-- [\#529](https://github.com/terra-money/core/pull/529) Fix keyring kwallet backend when using with empty wallet.
+- [\#497](https://github.com/terra-money/classic-core/pull/497) Fix wasm oracle querier to return Base/Quote exchange rate
+- [\#529](https://github.com/terra-money/classic-core/pull/529) Fix keyring kwallet backend when using with empty wallet.
 
 ## 0.4.5
 This release is a hotfix for two high-severity issues.
@@ -308,25 +308,25 @@ $ make install
 
 ### Improvements
 
-* [\#407](https://github.com/terra-money/core/pull/407) Allow `gov/MsgVote` to be grantable
-* [\#405](https://github.com/terra-money/core/pull/405) CosmWasm oracle exchange rates query interface
-* [\#388](https://github.com/terra-money/core/pull/388) Bump CosmWasm to v0.10.1
-* [\#383](https://github.com/terra-money/core/pull/383) Bump SDK version to v0.39.1
-* [\#374](https://github.com/terra-money/core/pull/374) Bump SDK version to v0.39 and CosmWasm to v0.9.4
-* [\#357](https://github.com/terra-money/core/pull/357) Bump CosmWasm to v0.9
-* [\#352](https://github.com/terra-money/core/pull/352) MsgAuthorization module to allow subkey feature
-* [\#349](https://github.com/terra-money/core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
-* [\#348](https://github.com/terra-money/core/pull/348) MsgSwapSend to allow sending all swap coin
-* [\#347](https://github.com/terra-money/core/pull/347) CosmWasm custom msg & querier handler
-* [\#343](https://github.com/terra-money/core/pull/343) Burn Address
-* [\#335](https://github.com/terra-money/core/pull/335) CosmWasm integration
-* [\#325](https://github.com/terra-money/core/pull/325) New oracle msgs for vote process optimization
-* [\#324](https://github.com/terra-money/core/pull/324) Update to emit events at proposal handler
-* [\#323](https://github.com/terra-money/core/pull/323) Bump SDK version to v0.38.x
+* [\#407](https://github.com/terra-money/classic-core/pull/407) Allow `gov/MsgVote` to be grantable
+* [\#405](https://github.com/terra-money/classic-core/pull/405) CosmWasm oracle exchange rates query interface
+* [\#388](https://github.com/terra-money/classic-core/pull/388) Bump CosmWasm to v0.10.1
+* [\#383](https://github.com/terra-money/classic-core/pull/383) Bump SDK version to v0.39.1
+* [\#374](https://github.com/terra-money/classic-core/pull/374) Bump SDK version to v0.39 and CosmWasm to v0.9.4
+* [\#357](https://github.com/terra-money/classic-core/pull/357) Bump CosmWasm to v0.9
+* [\#352](https://github.com/terra-money/classic-core/pull/352) MsgAuthorization module to allow subkey feature
+* [\#349](https://github.com/terra-money/classic-core/pull/349) Add `--old-hd-path` flag to support 118 coin type users
+* [\#348](https://github.com/terra-money/classic-core/pull/348) MsgSwapSend to allow sending all swap coin
+* [\#347](https://github.com/terra-money/classic-core/pull/347) CosmWasm custom msg & querier handler
+* [\#343](https://github.com/terra-money/classic-core/pull/343) Burn Address
+* [\#335](https://github.com/terra-money/classic-core/pull/335) CosmWasm integration
+* [\#325](https://github.com/terra-money/classic-core/pull/325) New oracle msgs for vote process optimization
+* [\#324](https://github.com/terra-money/classic-core/pull/324) Update to emit events at proposal handler
+* [\#323](https://github.com/terra-money/classic-core/pull/323) Bump SDK version to v0.38.x
 
 ### Bug Fixes
-* [\#360](https://github.com/terra-money/core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
-* [\#336](https://github.com/terra-money/core/pull/336) Allow zero tobin tax rate
+* [\#360](https://github.com/terra-money/classic-core/pull/360) Fix market module pool adjustment to apply delta with actual minted amount
+* [\#336](https://github.com/terra-money/classic-core/pull/336) Allow zero tobin tax rate
 
 ### Breaking Changes
 
@@ -359,49 +359,49 @@ respectively, and the latter defines the height interval in which versions are d
 ## 0.3.6
 
 ### Improvements
-#### [99581ba](https://github.com/terra-money/core/commit/99581baf89a838cf09a25d47adc2fd2cc97ab4a2) Ledger update(custom ledger library) & Bump SDK to v0.37.13
+#### [99581ba](https://github.com/terra-money/classic-core/commit/99581baf89a838cf09a25d47adc2fd2cc97ab4a2) Ledger update(custom ledger library) & Bump SDK to v0.37.13
 
 ## 0.3.5
 
 ### Improvements
-#### [654b5cb](https://github.com/terra-money/core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11
+#### [654b5cb](https://github.com/terra-money/classic-core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11
 
 ### Bug Fixes
-#### [7a3d01c](https://github.com/terra-money/core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
+#### [7a3d01c](https://github.com/terra-money/classic-core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
 
 ## 0.3.4
 
 ### Improvements
-#### [\#338](https://github.com/terra-money/core/pull/338) Bump SDK to v0.37.9 for Tendermint security patch
+#### [\#338](https://github.com/terra-money/classic-core/pull/338) Bump SDK to v0.37.9 for Tendermint security patch
 
 ## 0.3.3
 
 ### Improvements
-#### [\#319](https://github.com/terra-money/core/pull/319) Bump SDK to v0.37.6
-#### [\#321](https://github.com/terra-money/core/pull/321) Revert to distribute zero oracle rewards
+#### [\#319](https://github.com/terra-money/classic-core/pull/319) Bump SDK to v0.37.6
+#### [\#321](https://github.com/terra-money/classic-core/pull/321) Revert to distribute zero oracle rewards
 
 ## 0.3.2
 
 ### Improvements
-#### [\#313](https://github.com/terra-money/core/pull/313) upgrade SDK
+#### [\#313](https://github.com/terra-money/classic-core/pull/313) upgrade SDK
 * Bump SDK version to [v0.37.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.5)
 * Tendermint version to [v0.32.8](https://github.com/tendermint/tendermint/releases/tag/v0.32.8)
-#### [\#312](https://github.com/terra-money/core/pull/312) upgrade golangci-lint version to v1.22.2
+#### [\#312](https://github.com/terra-money/classic-core/pull/312) upgrade golangci-lint version to v1.22.2
 
 ## 0.3.1
 
 ### Bug Fixes
-#### [\#303](https://github.com/terra-money/core/pull/303) fix estimate fee endpoint for multiple signature tx
-#### [\#304](https://github.com/terra-money/core/pull/304) genesis scrpit update
+#### [\#303](https://github.com/terra-money/classic-core/pull/303) fix estimate fee endpoint for multiple signature tx
+#### [\#304](https://github.com/terra-money/classic-core/pull/304) genesis scrpit update
 
 ### Improvements
-#### [\#301](https://github.com/terra-money/core/pull/301) README update
-#### [\#305](https://github.com/terra-money/core/pull/305) swagger update
-#### [\#306](https://github.com/terra-money/core/pull/306) circleci update for goreleaser
+#### [\#301](https://github.com/terra-money/classic-core/pull/301) README update
+#### [\#305](https://github.com/terra-money/classic-core/pull/305) swagger update
+#### [\#306](https://github.com/terra-money/classic-core/pull/306) circleci update for goreleaser
 
 ## 0.3.0
 ### Breaking Changes
-#### [\#265](https://github.com/terra-money/core/pull/265) Oracle refactor & Oracle slashing
+#### [\#265](https://github.com/terra-money/classic-core/pull/265) Oracle refactor & Oracle slashing
 ##### Slashing
 A validator get slashed `SlashFraction`% if the one perform any of the following violations in `SlashWindow - minValidPerWindow` voteperiods over a window of `SlashWindow` voteperiods:
 
@@ -430,7 +430,7 @@ has been changed to
 ExchangeRate sdk.Dec `json:"exchange_rate"`
 ```
 
-#### [\#256](https://github.com/terra-money/core/pull/256) Oracle endpoints improvement
+#### [\#256](https://github.com/terra-money/classic-core/pull/256) Oracle endpoints improvement
 ##### New EndPoints
 ```
 /oracle/voters/{validator}/votes
@@ -438,12 +438,12 @@ ExchangeRate sdk.Dec `json:"exchange_rate"`
 /oracle/denoms/prices
 ```
 
-#### [\#250](https://github.com/terra-money/core/pull/250) Oracle whitelist & Reward distribution update
+#### [\#250](https://github.com/terra-money/classic-core/pull/250) Oracle whitelist & Reward distribution update
 * Create a whitelist param that stores an array of denoms that are whitelisted by the protocol.
 * Edit the oracle `Reward Pool of a VotePeriod = oracle module account / (n vote periods)`.
 * Oracle module account is whitelisted in the bank module such that users can donate funds to the oracle module account
 
-#### [\#234](https://github.com/terra-money/core/pull/234) Adopt gov module
+#### [\#234](https://github.com/terra-money/classic-core/pull/234) Adopt gov module
 `distribution` module already contains `community-pool-spend` proposal suitable for `budget` so budget module is removed. There are two custom governance proposals from `treasury` module; `tax-rate-update` & `reward-weight-update` proposals.
 
 ##### New EndPoints
@@ -465,7 +465,7 @@ ExchangeRate sdk.Dec `json:"exchange_rate"`
 (POST)/gov/proposals/community_pool_spend
 ```
 
-#### [\#233](https://github.com/terra-money/core/pull/233) Swap constant product
+#### [\#233](https://github.com/terra-money/classic-core/pull/233) Swap constant product
 As proposed [here](https://agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature.
 
 ##### Compute Pools
@@ -508,7 +508,7 @@ Apply only fixed tobin-tax without computing and changing pools
 /market/terra_pool_delta
 ```
 
-#### [\#231](https://github.com/terra-money/core/pull/231) Bump SDK to v0.37.x
+#### [\#231](https://github.com/terra-money/classic-core/pull/231) Bump SDK to v0.37.x
 ##### REST end points, which are changed
 All REST responses now wrap the original resource/result. The response
 will contain two fields: height and result.
@@ -573,15 +573,15 @@ pay/MsgMultiSend => bank/MsgMultiSend
 
 ## 0.2.4
 ### Bug fixes
-#### [\#196](https://github.com/terra-money/core/pull/196) peek epoch seigniorage
+#### [\#196](https://github.com/terra-money/classic-core/pull/196) peek epoch seigniorage
 Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuance from previous issuance
 
-#### [\#198](https://github.com/terra-money/core/pull/198) Use next block for treasury tax and reward update
+#### [\#198](https://github.com/terra-money/classic-core/pull/198) Use next block for treasury tax and reward update
 updateTaxPolicy and updateRewardPolicy are updating new tax-rate and reward-weight with current ctx. The ctx height is the last block of current epoch, but treasury should update next epoch's tax-rate and reward-weight at the last block of current epoch.
 In updateTaxPolicy and updateRewardPolicy, change ctx input of keeper setter to ctx with next epoch height.
 
 ### Features
-#### [\#193](https://github.com/terra-money/core/pull/193) Recover old hd path
+#### [\#193](https://github.com/terra-money/classic-core/pull/193) Recover old hd path
 Added `--old-hd-path` option to `$terracli keys add` command for recovering old bip44 path(for atom)
 ##### Example
 ```
@@ -596,10 +596,10 @@ tmp   local	terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs	terrapub1addwnpepqv6tse
 ```
 
 ## 0.2.3
-- [\#187](https://github.com/terra-money/core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
+- [\#187](https://github.com/terra-money/classic-core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
 
 ### Changes
-#### [\#187](https://github.com/terra-money/core/pull/187) Bugfix/fix-time-zone
+#### [\#187](https://github.com/terra-money/classic-core/pull/187) Bugfix/fix-time-zone
 In update_230000.go, we change genesis time derivation from
 ```
 genesisTime := time.Unix(genesisUnixTime, 0)
@@ -611,60 +611,60 @@ genesisTime := time.Unix(genesisUnixTime, 0).UTC()
 
 ## 0.2.2
 
-- [\#185](https://github.com/terra-money/core/pull/185): Improve oracle specs
-- [\#184](https://github.com/terra-money/core/pull/184): Fix `terracli` docs
-- [\#183](https://github.com/terra-money/core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
-- [\#179](https://github.com/terra-money/core/pull/179): Conform querier responses to be returned in JSON format
-- [\#178](https://github.com/terra-money/core/pull/178): Change BIP44 PATH to 330
+- [\#185](https://github.com/terra-money/classic-core/pull/185): Improve oracle specs
+- [\#184](https://github.com/terra-money/classic-core/pull/184): Fix `terracli` docs
+- [\#183](https://github.com/terra-money/classic-core/pull/183): Change all GradedVestingAccounts to LazyGradedVestingAccounts.
+- [\#179](https://github.com/terra-money/classic-core/pull/179): Conform querier responses to be returned in JSON format
+- [\#178](https://github.com/terra-money/classic-core/pull/178): Change BIP44 PATH to 330
 
 ### Changes
-#### [\#185](https://github.com/terra-money/core/pull/185) Oracle `MsgFeederDelegatePermission` specs
+#### [\#185](https://github.com/terra-money/classic-core/pull/185) Oracle `MsgFeederDelegatePermission` specs
 Added docs for using `MsgFeederDelegatePermission` to oracle specs
 
-#### [\#185](https://github.com/terra-money/core/pull/185) Oracle price vote denom error fix
+#### [\#185](https://github.com/terra-money/classic-core/pull/185) Oracle price vote denom error fix
 Oracle specs now specify micro units `uluna` and `uusd` for correct denominations for price prevotes and votes
 
-#### [\#184](https://github.com/terra-money/core/pull/184) Minor terracli fix
+#### [\#184](https://github.com/terra-money/classic-core/pull/184) Minor terracli fix
 
-#### [\#183](https://github.com/terra-money/core/pull/183) Oracle param update
+#### [\#183](https://github.com/terra-money/classic-core/pull/183) Oracle param update
 ```
 OracleRewardBand: 1% => 2%
 ```
 
-#### [\#183](https://github.com/terra-money/core/pull/183) Market param update
+#### [\#183](https://github.com/terra-money/classic-core/pull/183) Market param update
 ```
 DailyLunaDeltaCap: 0.5% => 0.1%
 ```
 
-#### [\#183](https://github.com/terra-money/core/pull/183) LazyGradedVestingAccount
+#### [\#183](https://github.com/terra-money/classic-core/pull/183) LazyGradedVestingAccount
 
-* Spread out the cliffs for presale investors, with varying degrees of severity (details [\#180](https://github.com/terra-money/core/issues/180))
+* Spread out the cliffs for presale investors, with varying degrees of severity (details [\#180](https://github.com/terra-money/classic-core/issues/180))
 
-#### [\#179](https://github.com/terra-money/core/pull/179) Align Querier responses to JSON
+#### [\#179](https://github.com/terra-money/classic-core/pull/179) Align Querier responses to JSON
 
 * Querier was returning misaligned formats for return values, now aligned to JSON format
 
-#### [\#178](https://github.com/terra-money/core/pull/178) Correctly use 330 as the coin type field in BIP 44 PATH
+#### [\#178](https://github.com/terra-money/classic-core/pull/178) Correctly use 330 as the coin type field in BIP 44 PATH
 
 * We were previously using the Cosmos coin type field for the BIP44 path. Changed to Terra's own 330.
 
 
 ## 0.2.1
 
-- [\#166](https://github.com/terra-money/core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed.
+- [\#166](https://github.com/terra-money/classic-core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed.
 
 ## 0.2.0
 
 ### Bug Fixes
 
-* [\#140](https://github.com/terra-money/core/pull/140) Fix export bug.
+* [\#140](https://github.com/terra-money/classic-core/pull/140) Fix export bug.
 
-* [\#140](https://github.com/terra-money/core/pull/140) Client querier bug fix (distr outstanding rewards)
+* [\#140](https://github.com/terra-money/classic-core/pull/140) Client querier bug fix (distr outstanding rewards)
 
-* [\#140](https://github.com/terra-money/core/pull/140) Fix budget module to delete all votes when submitter withdraws the program and to use DeleteVotesForProgram to delete all votes for a program.
+* [\#140](https://github.com/terra-money/classic-core/pull/140) Fix budget module to delete all votes when submitter withdraws the program and to use DeleteVotesForProgram to delete all votes for a program.
 
 ### Improvements
-#### [\#140](https://github.com/terra-money/core/pull/140) Msg Types
+#### [\#140](https://github.com/terra-money/classic-core/pull/140) Msg Types
 
 ```
 cosmos-sdk/MsgSend => pay/MsgSend
@@ -683,7 +683,7 @@ cosmos-sdk/MsgModifyWithdrawAddress => distribution/MsgModifyWithdrawAddress
 cosmos-sdk/MsgUnjail => slashing/MsgUnjail
 ```
 
-#### [\#140](https://github.com/terra-money/core/pull/140) Oracle updates prevoting/voting
+#### [\#140](https://github.com/terra-money/classic-core/pull/140) Oracle updates prevoting/voting
 MsgPriceFeed is split into ```MsgPricePrevote``` and ```MsgPriceVote```
 ```
 Period  |  P1 |  P2 |  P3 |  ...    |
@@ -695,10 +695,10 @@ In prevote stage, a validator should submit the hash of the part of real vote ms
 
 The submission order has to be kept in (vote -> prevote) order. If an prevote comes early, it will replace previous prevote so next vote, which reveals the proof for previous prevote, will be failed.
 
-#### [\#148](https://github.com/terra-money/core/pull/148) Oracle voting right delegation
+#### [\#148](https://github.com/terra-money/classic-core/pull/148) Oracle voting right delegation
 By using the oracle/MsgDelegateFeederPermission a validator can assign the right to vote to another account at any time. The validator account will preserve its right to vote at any time.
 
-#### [\#140](https://github.com/terra-money/core/pull/140) & [\#148](https://github.com/terra-money/core/pull/148) Rest Interface Update
+#### [\#140](https://github.com/terra-money/classic-core/pull/140) & [\#148](https://github.com/terra-money/classic-core/pull/148) Rest Interface Update
 ##### Change rest interface url
 ```
 "/distribution/parameters" => "/distribution/params"
@@ -730,7 +730,7 @@ type SendReq struct {
 (GET/POST) "/market/params"
 ```
 
-#### [\#140](https://github.com/terra-money/core/pull/140) Add transaction logs for tax and swap amount
+#### [\#140](https://github.com/terra-money/classic-core/pull/140) Add transaction logs for tax and swap amount
 ##### Send Tx
 Add **tax** log to send transaction for recording real amount which a transaction pay.
 Ex) txs/B515331BF9EA9A92AD59A85D593E5A2B170E3D297C59E85DDA9FA6FF33790E9B
@@ -760,7 +760,7 @@ Add **swap_coin** log to swap transaction for recording the amount of swapped co
 }
 ```
 
-#### [\#150](https://github.com/terra-money/core/pull/150) Market Swap protections
+#### [\#150](https://github.com/terra-money/classic-core/pull/150) Market Swap protections
 
 ##### Add bidirectional Luna supply change cap on market swaps.
 A daily trading cap (luna supply change cap) protects excessive luna volatility. Capping Luna deflation prevents divesting attacks (attacker swaps large amount into terra to avoid slippage) and consensus attacks by limiting access to staking tokens. Early parameters are 2% - 10% on both sides of the trade.
@@ -777,6 +777,6 @@ Previously we facilitated swaps for 10 VotePeriods after the last valid oracle b
 
 ### Parameter Changes
 
-#### [\#150](https://github.com/terra-money/core/pull/150) Change MiningRewardWeight.Max from 20% to 90%. This is to reduce volatility in fees at network infancy.
+#### [\#150](https://github.com/terra-money/classic-core/pull/150) Change MiningRewardWeight.Max from 20% to 90%. This is to reduce volatility in fees at network infancy.
 
 #### Changed BlocksPerMinute from 12 to 5 to more accurately reflect Columbus block times.

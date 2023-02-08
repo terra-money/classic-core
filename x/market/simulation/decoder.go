@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/terra-money/core/x/market/types"
+	"github.com/classic-terra/core/x/market/types"
 )
 
 // NewDecodeStore returns a decoder function closure that unmarshals the KVPair's

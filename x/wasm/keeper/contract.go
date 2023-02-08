@@ -6,7 +6,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/terra-money/core/x/wasm/types"
+	"github.com/classic-terra/core/x/wasm/types"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/telemetry"

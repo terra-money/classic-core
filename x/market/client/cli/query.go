@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-money/core/x/market/types"
+	"github.com/classic-terra/core/x/market/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

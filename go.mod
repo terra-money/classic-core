@@ -1,6 +1,6 @@
 go 1.18
 
-module github.com/terra-money/core
+module github.com/classic-terra/core
 
 require (
 	github.com/CosmWasm/wasmvm v0.16.6

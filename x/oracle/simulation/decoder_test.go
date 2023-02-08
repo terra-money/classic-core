@@ -12,10 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/oracle/keeper"
-	sim "github.com/terra-money/core/x/oracle/simulation"
-	"github.com/terra-money/core/x/oracle/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/oracle/keeper"
+	sim "github.com/classic-terra/core/x/oracle/simulation"
+	"github.com/classic-terra/core/x/oracle/types"
 )
 
 var (

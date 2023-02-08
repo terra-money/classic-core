@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 
-	customtypes "github.com/terra-money/core/custom/upgrade/types"
+	customtypes "github.com/classic-terra/core/custom/upgrade/types"
 )
 
 var (

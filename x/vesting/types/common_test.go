@@ -3,10 +3,10 @@ package types_test
 import (
 	"testing"
 
+	"github.com/classic-terra/core/custom/auth"
+	"github.com/classic-terra/core/x/vesting/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/terra-money/core/custom/auth"
-	"github.com/terra-money/core/x/vesting/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

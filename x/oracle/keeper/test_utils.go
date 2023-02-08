@@ -4,14 +4,14 @@ package keeper
 import (
 	"testing"
 
+	customauth "github.com/classic-terra/core/custom/auth"
+	custombank "github.com/classic-terra/core/custom/bank"
+	customdistr "github.com/classic-terra/core/custom/distribution"
+	customparams "github.com/classic-terra/core/custom/params"
+	customstaking "github.com/classic-terra/core/custom/staking"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	customauth "github.com/terra-money/core/custom/auth"
-	custombank "github.com/terra-money/core/custom/bank"
-	customdistr "github.com/terra-money/core/custom/distribution"
-	customparams "github.com/terra-money/core/custom/params"
-	customstaking "github.com/terra-money/core/custom/staking"
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/oracle/types"
 
 	"time"
 

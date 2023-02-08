@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
+	"github.com/classic-terra/core/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-money/core/x/oracle/types"
 )
 
 func TestParseExchangeRateTuples(t *testing.T) {

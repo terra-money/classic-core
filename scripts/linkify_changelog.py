@@ -11,5 +11,5 @@ import re
 #
 # $ python ./scripts/linkify_changelog.py CHANGELOG.md
 for line in fileinput.input(inplace=1):
-    line = re.sub(r"\s\\#([0-9]+)", r" [\\#\1](https://github.com/terra-money/core/issues/\1)", line.rstrip())
+    line = re.sub(r"\s\\#([0-9]+)", r" [\\#\1](https://github.com/classic-terra/core/issues/\1)", line.rstrip())
     print(line)

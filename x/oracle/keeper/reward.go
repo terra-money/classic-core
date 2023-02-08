@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/oracle/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/oracle/types"
 )
 
 // RewardBallotWinners implements
@@ -45,7 +45,7 @@ func (k Keeper) RewardBallotWinners(
 	if ballotPowerSum == 0 {
 		return
 	}
-	
+
 	// The Reward distributionRatio = votePeriod/rewardDistributionWindow
 	distributionRatio := sdk.NewDec(votePeriod).QuoInt64(rewardDistributionWindow)
 

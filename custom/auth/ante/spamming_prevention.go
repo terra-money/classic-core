@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	oracleexported "github.com/terra-money/core/x/oracle/exported"
+	oracleexported "github.com/classic-terra/core/x/oracle/exported"
 )
 
 // SpammingPreventionDecorator will check if the transaction's gas is smaller than

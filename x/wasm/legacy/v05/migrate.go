@@ -1,8 +1,8 @@
 package v05
 
 import (
-	v04wasm "github.com/terra-money/core/x/wasm/legacy/v04"
-	v05wasm "github.com/terra-money/core/x/wasm/types"
+	v04wasm "github.com/classic-terra/core/x/wasm/legacy/v04"
+	v05wasm "github.com/classic-terra/core/x/wasm/types"
 )
 
 // Migrate accepts exported v0.4 x/wasm and

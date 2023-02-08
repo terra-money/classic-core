@@ -23,9 +23,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	terraapp "github.com/terra-money/core/app"
-	treasurytypes "github.com/terra-money/core/x/treasury/types"
-	wasmconfig "github.com/terra-money/core/x/wasm/config"
+	terraapp "github.com/classic-terra/core/app"
+	treasurytypes "github.com/classic-terra/core/x/treasury/types"
+	wasmconfig "github.com/classic-terra/core/x/wasm/config"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.

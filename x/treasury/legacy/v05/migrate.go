@@ -3,8 +3,8 @@ package v05
 import (
 	"sort"
 
-	v04treasury "github.com/terra-money/core/x/treasury/legacy/v04"
-	v05treasury "github.com/terra-money/core/x/treasury/types"
+	v04treasury "github.com/classic-terra/core/x/treasury/legacy/v04"
+	v05treasury "github.com/classic-terra/core/x/treasury/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

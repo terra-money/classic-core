@@ -3,8 +3,8 @@ package market
 import (
 	"testing"
 
+	"github.com/classic-terra/core/x/market/keeper"
 	"github.com/stretchr/testify/require"
-	"github.com/terra-money/core/x/market/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	customtypes "github.com/terra-money/core/custom/staking/types"
-	core "github.com/terra-money/core/types"
+	customtypes "github.com/classic-terra/core/custom/staking/types"
+	core "github.com/classic-terra/core/types"
 )
 
 var (

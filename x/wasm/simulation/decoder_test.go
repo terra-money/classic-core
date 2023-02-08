@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/terra-money/core/x/wasm/keeper"
-	"github.com/terra-money/core/x/wasm/types"
+	"github.com/classic-terra/core/x/wasm/keeper"
+	"github.com/classic-terra/core/x/wasm/types"
 )
 
 var (

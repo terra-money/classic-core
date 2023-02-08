@@ -9,8 +9,8 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	"github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	customtypes "github.com/terra-money/core/custom/gov/types"
-	core "github.com/terra-money/core/types"
+	customtypes "github.com/classic-terra/core/custom/gov/types"
+	core "github.com/classic-terra/core/types"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 
-	customtypes "github.com/terra-money/core/custom/params/types"
+	customtypes "github.com/classic-terra/core/custom/params/types"
 )
 
 var (

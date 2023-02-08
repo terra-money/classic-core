@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/terra-money/core/x/oracle/types"
+	"github.com/classic-terra/core/x/oracle/types"
 )
 
 type msgServer struct {

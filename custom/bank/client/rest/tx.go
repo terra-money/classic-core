@@ -14,7 +14,7 @@ import (
 	bankrest "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
 )
 
 // RegisterRoutes registers bank-related REST handlers to a router

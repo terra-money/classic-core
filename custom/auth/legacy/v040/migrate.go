@@ -11,9 +11,9 @@ import (
 	v040authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	v40mint "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
-	v40treasury "github.com/terra-money/core/x/treasury/types"
-	v040vesting "github.com/terra-money/core/x/vesting/types"
+	v039authcustom "github.com/classic-terra/core/custom/auth/legacy/v039"
+	v40treasury "github.com/classic-terra/core/x/treasury/types"
+	v040vesting "github.com/classic-terra/core/x/vesting/types"
 )
 
 // convertBaseAccount converts a 0.39 BaseAccount to a 0.40 BaseAccount.

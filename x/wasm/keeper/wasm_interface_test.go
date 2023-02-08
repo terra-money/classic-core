@@ -13,8 +13,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/wasm/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/wasm/types"
 )
 
 func TestEcoding(t *testing.T) {

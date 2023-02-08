@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/oracle/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"

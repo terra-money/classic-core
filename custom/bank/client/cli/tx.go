@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
 )
 
 // GetTxCmd returns the transaction commands for this module

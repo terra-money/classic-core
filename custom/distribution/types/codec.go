@@ -5,7 +5,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	govtypes "github.com/terra-money/core/custom/gov/types"
+	govtypes "github.com/classic-terra/core/custom/gov/types"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/distribution interfaces and concrete types

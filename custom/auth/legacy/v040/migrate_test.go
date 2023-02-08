@@ -3,8 +3,8 @@ package v040
 import (
 	"testing"
 
+	v039authcustom "github.com/classic-terra/core/custom/auth/legacy/v039"
 	"github.com/stretchr/testify/require"
-	v039authcustom "github.com/terra-money/core/custom/auth/legacy/v039"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"

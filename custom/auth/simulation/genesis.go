@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	core "github.com/terra-money/core/types"
-	customvestingtypes "github.com/terra-money/core/x/vesting/types"
+	core "github.com/classic-terra/core/types"
+	customvestingtypes "github.com/classic-terra/core/x/vesting/types"
 )
 
 // Simulation parameter constants

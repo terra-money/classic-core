@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/market/types"
 	"github.com/stretchr/testify/require"
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/market/types"
 )
 
 func TestQueryParams(t *testing.T) {

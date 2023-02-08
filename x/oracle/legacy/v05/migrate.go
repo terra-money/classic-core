@@ -3,8 +3,8 @@ package v05
 import (
 	"sort"
 
-	v04oracle "github.com/terra-money/core/x/oracle/legacy/v04"
-	v05oracle "github.com/terra-money/core/x/oracle/types"
+	v04oracle "github.com/classic-terra/core/x/oracle/legacy/v04"
+	v05oracle "github.com/classic-terra/core/x/oracle/types"
 )
 
 // Migrate accepts exported v0.4 x/oracle and

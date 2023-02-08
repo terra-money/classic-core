@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
+	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
 )
 
 // EstimateTxFeeRequestHandlerFn returns estimated tx fee. In particular,

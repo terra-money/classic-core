@@ -11,8 +11,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
-	"github.com/terra-money/core/x/market/types"
+	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
+	"github.com/classic-terra/core/x/market/types"
 )
 
 func registerTxHandlers(clientCtx client.Context, rtr *mux.Router) {

@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/terra-money/core/x/oracle/types"
+	"github.com/classic-terra/core/x/oracle/types"
 )
 
 // GetOracleAccount returns oracle ModuleAccount

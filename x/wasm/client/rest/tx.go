@@ -13,9 +13,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
-	feeutils "github.com/terra-money/core/custom/auth/client/utils"
-	wasmUtils "github.com/terra-money/core/x/wasm/client/utils"
-	"github.com/terra-money/core/x/wasm/types"
+	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
+	wasmUtils "github.com/classic-terra/core/x/wasm/client/utils"
+	"github.com/classic-terra/core/x/wasm/types"
 )
 
 func registerTxRoutes(clientCtx client.Context, r *mux.Router) {

@@ -8,10 +8,10 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/terra-money/core/types"
-	marketexported "github.com/terra-money/core/x/market/exported"
-	oracleexported "github.com/terra-money/core/x/oracle/exported"
-	wasmexported "github.com/terra-money/core/x/wasm/exported"
+	core "github.com/classic-terra/core/types"
+	marketexported "github.com/classic-terra/core/x/market/exported"
+	oracleexported "github.com/classic-terra/core/x/oracle/exported"
+	wasmexported "github.com/classic-terra/core/x/wasm/exported"
 )
 
 // MaxOracleMsgGasUsage is constant expected oracle msg gas cost

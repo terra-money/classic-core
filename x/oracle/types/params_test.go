@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/terra-money/core/x/oracle/types"
+	"github.com/classic-terra/core/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/terra-money/core/x/oracle/keeper"
-	"github.com/terra-money/core/x/oracle/types"
+	"github.com/classic-terra/core/x/oracle/keeper"
+	"github.com/classic-terra/core/x/oracle/types"
 )
 
 // InitGenesis initialize default parameters

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/terra-money/core/types"
+	core "github.com/classic-terra/core/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

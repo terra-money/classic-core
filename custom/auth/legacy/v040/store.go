@@ -1,6 +1,6 @@
 // Package v040 creates in-place store migrations for fixing
 // multisig pubkey migration problem
-// ref: https://github.com/terra-money/core/issues/562
+// ref: https://github.com/terra-money/classic-core/issues/562
 package v040
 
 import (
@@ -20,7 +20,7 @@ func migrateMultiSigAccount(account types.AccountI) (types.AccountI, error) {
 }
 
 // MigrateAccount migrates multisig account's PubKey as nil to restore mistakenly set PubKey
-// References: https://github.com/terra-money/core/issues/562
+// References: https://github.com/terra-money/classic-core/issues/562
 //
 func MigrateAccount(account types.AccountI) (types.AccountI, error) {
 	return migrateMultiSigAccount(account)

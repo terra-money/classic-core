@@ -20,11 +20,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/terra-money/core/x/market/client/cli"
-	"github.com/terra-money/core/x/market/client/rest"
-	"github.com/terra-money/core/x/market/keeper"
-	"github.com/terra-money/core/x/market/simulation"
-	"github.com/terra-money/core/x/market/types"
+	"github.com/classic-terra/core/x/market/client/cli"
+	"github.com/classic-terra/core/x/market/client/rest"
+	"github.com/classic-terra/core/x/market/keeper"
+	"github.com/classic-terra/core/x/market/simulation"
+	"github.com/classic-terra/core/x/market/types"
 )
 
 var (

@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	core "github.com/terra-money/core/types"
+	core "github.com/classic-terra/core/types"
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/terra-money/core/x/treasury/types"
+	"github.com/classic-terra/core/x/treasury/types"
 )
 
 // TaxPowerUpgradeHeight is when taxes are allowed to go into effect

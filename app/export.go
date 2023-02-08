@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	oracletypes "github.com/terra-money/core/x/oracle/types"
+	oracletypes "github.com/classic-terra/core/x/oracle/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis

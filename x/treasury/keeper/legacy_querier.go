@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	core "github.com/terra-money/core/types"
-	"github.com/terra-money/core/x/treasury/types"
+	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/treasury/types"
 )
 
 // NewLegacyQuerier is the module level router for state queries
