@@ -51,8 +51,8 @@ func (m EstimateFeeReq) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 
 // ComputeFeesWithBaseReq returns fee amount with given stdTx.
 func ComputeFeesWithBaseReq(
-	clientCtx client.Context, br rest.BaseReq, msgs ...sdk.Msg) (*legacytx.StdFee, error) {
-
+	clientCtx client.Context, br rest.BaseReq, msgs ...sdk.Msg,
+) (*legacytx.StdFee, error) {
 	gasSetting, err := flags.ParseGasSetting(br.Gas)
 	if err != nil {
 		return nil, err
@@ -142,7 +142,8 @@ type ComputeReqParams struct {
 
 // ComputeFeesWithCmd returns fee amount with cli options.
 func ComputeFeesWithCmd(
-	clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg) (*legacytx.StdFee, error) {
+	clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg,
+) (*legacytx.StdFee, error) {
 	txf := tx.NewFactoryCLI(clientCtx, flagSet)
 
 	gas := txf.Gas()
@@ -260,7 +261,6 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 
 // computes the stability tax according to tax-rate and tax-cap
 func computeTax(clientCtx client.Context, taxRate sdk.Dec, principal sdk.Coins) (taxes sdk.Coins, err error) {
-
 	for _, coin := range principal {
 
 		taxCap, err := queryTaxCap(clientCtx, coin.Denom)
@@ -289,6 +289,9 @@ func queryTaxRate(clientCtx client.Context) (sdk.Dec, error) {
 	queryClient := treasuryexported.NewQueryClient(clientCtx)
 
 	res, err := queryClient.TaxRate(context.Background(), &treasuryexported.QueryTaxRateRequest{})
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
 	return res.TaxRate, err
 }
 
@@ -296,6 +299,9 @@ func queryTaxCap(clientCtx client.Context, denom string) (sdk.Int, error) {
 	queryClient := treasuryexported.NewQueryClient(clientCtx)
 
 	res, err := queryClient.TaxCap(context.Background(), &treasuryexported.QueryTaxCapRequest{Denom: denom})
+	if err != nil {
+		return sdk.NewInt(0), err
+	}
 	return res.TaxCap, err
 }
 
