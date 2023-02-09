@@ -1,21 +1,85 @@
-## v0.5.22
-* Move validator voting restrictions from Msg handler to Keeper by @edk208 in https://github.com/terra-money/cosmos-sdk/pull/104
+<!--
+Guiding Principles:
 
-## v0.5.21
-* Fix typo by @BrodaNoel in https://github.com/terra-money/classic-core/pull/758
-* feat: Burn Tax via utilization of existing Stability Tax code by @edk208 in https://github.com/terra-money/classic-core/pull/784
+Changelogs are for humans, not machines.
+There should be an entry for every single version.
+The same types of changes should be grouped.
+Versions and sections should be linkable.
+The latest version comes first.
+The release date of each version is displayed.
+Mention whether you follow Semantic Versioning.
 
-## v0.5.20
-* Make min spread to 100% to disable swap by @YunSuk-Yeo in https://github.com/terra-money/classic-core/pull/760
-* Close three channel 
-  * "channel-1",  // Osmosis
-  * "channel-49", // Crescent
-  * "channel-20", // Juno
+Change log entries are to be added to the Unreleased section under the
+appropriate stanza (see below). Each entry should ideally include a tag and
+the Github issue reference in the following format:
 
-## v0.5.19
-Disable staking power change for protecting the network
+* (<tag>) \#<issue-number> message
 
-## v0.5.18
+The issue numbers will later be link-ified during the release process so you do
+not have to worry about including a link manually, but you can if you wish.
+
+Types of changes (Stanzas):
+
+"Features" for new features.
+"Improvements" for changes in existing functionality.
+"Deprecated" for soon-to-be removed features.
+"Bug Fixes" for any bug fixes.
+"Client Breaking" for breaking Protobuf, gRPC and REST routes used by end-users.
+"CLI Breaking" for breaking CLI commands.
+"API Breaking" for breaking exported APIs used by developers building on SDK.
+"State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
+Ref: https://keepachangelog.com/en/1.0.0/
+-->
+# Changelog
+
+## [Unreleased]
+
+## [v1.0.5-full-archive](https://github.com/classic-terra/core/releases/tag/v1.0.5-full-archive) - 2023-02-03
+
+### Bug Fixes
+* (app) [9c2c556](https://github.com/classic-terra/core/commit/9c2c5566dddf4459ff599d3a9ffd4ab96a2df1d0) Fix indexing bug and sync from columbus-5 genesis
+
+## [v1.0.5](https://github.com/classic-terra/core/releases/tag/v1.0.5) - 2023-01-18
+
+### State Machine Breaking
+* (app) [#44](https://github.com/classic-terra/core/pull/44/files) Move version map register to begin block
+
+### Bug Fixes
+* (x/auth) [ebba05](https://github.com/classic-terra/core/commit/ebba0521fec4fc5655d90c0b3fdb2dbb2ec8d11f) Added Z's fix for the feeutils.go
+* (x/auth) [7fe446](https://github.com/classic-terra/core/commit/7fe4468fab7a767b8779e093d671a69f26b19781) allow uluna to be taxed
+
+## [v1.0.4](https://github.com/terra-money/classic-core/releases/tag/v0.5.23) - 2022-12-07
+
+### State Machine Breaking
+* [#800](https://github.com/terra-money/classic-core/pull/800) Tax and Burn
+* [#800](https://github.com/terra-money/classic-core/pull/800) Re-enable IBC
+
+### Bug Fixes
+* Dragonberry upgrade to v0.44.5-patch and ics23 replace
+
+## [v0.5.22](https://github.com/terra-money/classic-core/releases/tag/v0.5.22) - 2022-08-17
+
+### State Machine Breaking
+* (x/staking) [#104](https://github.com/terra-money/cosmos-sdk/pull/104) Move validator voting restrictions from Msg handler to Keeper by @edk208
+
+## [v0.5.21](https://github.com/terra-money/classic-core/releases/tag/v0.5.21) - 2022-08-10
+
+### State Machine Breaking
+* [#784](https://github.com/terra-money/classic-core/pull/784) Burn Tax via utilization of existing Stability Tax code by @edk208
+
+## [v0.5.20](https://github.com/terra-money/classic-core/releases/tag/v0.5.20) - 2022-05-13
+
+### State Machine Breaking
+
+* [#760](https://github.com/terra-money/classic-core/pull/760) Make min spread to 100% to disable swap
+* [#760](https://github.com/terra-money/classic-core/pull/760) Disable IBC channels for Osmosis, Crecent and Juno
+
+## [v0.5.19](https://github.com/terra-money/classic-core/releases/tag/v0.5.19) - 2022-05-13
+
+### State Machine Breaking
+* Disable staking power change for protecting the network
+
+## [v0.5.18](https://github.com/terra-money/classic-core/releases/tag/v0.5.18) - 2022-04-14
 This release contains a wasmer version bump from v2.0.0 to v2.2.1. The wasm caches of these two versions are not compatible, thus rebuilding is required.
 To avoid possible sync delays due to the runtime rebuilding overhead, it is highly recommended that node operators rebuild their wasm cache with the [cosmwasm-cache-rebuilder](https://github.com/terra-money/cosmwasm-cache-rebuilder) before replacing terrad runtime to v0.5.18.
 
@@ -29,26 +93,25 @@ To avoid possible sync delays due to the runtime rebuilding overhead, it is high
 - :tada: Wasmer v2.2 supports the much anticipated Apple M1 processor! (See: https://wasmer.io/posts/wasmer-2.2) This means nodes can be run on any arm64 system, such as Apple Silicon machines and AWS Graviton2 Arm64.
 - [\#690](https://github.com/terra-money/classic-core/pull/690) Fix wasm memory leak and module drop order. (edited) 
 
-## v0.5.17
+## [v0.5.17](https://github.com/terra-money/classic-core/releases/tag/v0.5.17) - 2022-02-22
 
 This release contains security update.
 
 Details will be shared after checking the status of the validator update.
 
-## v0.5.16
+## [v0.5.16](https://github.com/terra-money/classic-core/releases/tag/v0.5.16) - 2022-02-06
 
-This release contains security update
-
+### State Machine Breaking
 - [\#674](https://github.com/terra-money/classic-core/pull/674) fix to charge gas cost for the key length in wasm execution
 
-### Softfork Schedule
+#### Softfork Schedule
 
 |               | columbus-5                | bombay-12                 |
 | ------------- | ------------------------- | ------------------------- |
 | Height        | 6,470,000                 | 7,800,000                 |
 | Expected Time | 2022-02-13T15:00:00 (UTC) | 2022-02-11T15:00:00 (UTC) |
 
-## v0.5.15
+## [v0.5.15](https://github.com/terra-money/classic-core/releases/tag/v0.5.15) - 2022-02-03
 
 This release contains mainly overflow checking enhancement including custom dependency updates.
 
@@ -56,13 +119,13 @@ This release contains mainly overflow checking enhancement including custom depe
 - [\#658](https://github.com/terra-money/classic-core/pull/658) cosmos-sdk proto update
 - [\#655](https://github.com/terra-money/classic-core/pull/655) use custom dependency for cosmos-sdk and tendermint
 
-## v0.5.14
+## [v0.5.14](https://github.com/terra-money/classic-core/releases/tag/v0.5.14) - 2021-12-23
 
 This release contains wasmvm bugfix to prevent non-deterministic error messages comes out from wasmvm.
 
 - [\#635](https://github.com/terra-money/classic-core/pull/635) bump wasmvm to v0.16.3
 
-## v0.5.13
+## [v0.5.13](https://github.com/terra-money/classic-core/releases/tag/v0.5.13) - 2021-12-17
 
 This release contains oracle tally bugfix, which was not sorting cross rate ballot before computing weighted median. It makes the cross rate selected quite randomly...
 
@@ -70,7 +133,7 @@ This update will sort cross rate ballot before computing weighted median value.
 
 - [b073fb1](https://github.com/terra-money/classic-core/commit/b073fb18e5107caee077f214b5fad4de53b055f5) sort cross rate ballot and enforce sorted before computing weighted median
 
-## v0.5.12
+## [v0.5.12](https://github.com/terra-money/classic-core/releases/tag/v0.5.12) - 2021-12-06
 
 This release contains [IAVL bugfix](https://github.com/cosmos/iavl/pull/449)
 
@@ -81,31 +144,31 @@ This release contains [IAVL bugfix](https://github.com/cosmos/iavl/pull/449)
 - [\#621](https://github.com/terra-money/classic-core/pull/621) fix iterator key on export for zero height
 - [\#607](https://github.com/terra-money/classic-core/pull/607) skip GetBytes when exporting not migrated code
 
-## v0.5.11
+## [v0.5.11](https://github.com/terra-money/classic-core/releases/tag/v0.5.11) - 2021-11-10
 
 ### Bug Fixes
 - [\#603](https://github.com/terra-money/classic-core/pull/603) bump CosmWasm/wasmvm to v0.16.2 to fix cache position error
 
-## v0.5.10
+## [v0.5.10](https://github.com/terra-money/classic-core/releases/tag/v0.5.10) - 2021-11-03
 
 ### Improvements
 - [\#601](https://github.com/terra-money/classic-core/pull/601) revert readvm-pool feature
 - [\#594](https://github.com/terra-money/classic-core/pull/594) bump SDK to v0.44.3 and Tendermint to v0.34.14
 - [\#593](https://github.com/terra-money/classic-core/pull/593) revert jemalloc integration from wasmvm & add troubleshoot section to docs
 
-## v0.5.9
+## [v0.5.9](https://github.com/terra-money/classic-core/releases/tag/v0.5.9) - 2021-10-22
 
 ### Bug Fixes
 - [\#588](https://github.com/terra-money/classic-core/pull/588) - fix wasm external querier to use single wasmvm with context value
 
-## v0.5.8
+## [v0.5.8](https://github.com/terra-money/classic-core/releases/tag/v0.5.8) - 2021-10-21
 
 ### Bug Fixes
 - [\#584](https://github.com/terra-money/classic-core/pull/584) - security update
 - [\#586](https://github.com/terra-money/classic-core/pull/586) - memory leak fix
 - [\#583](https://github.com/terra-money/classic-core/pull/583) - ibc ante handler to prevent duplicated packet relaying
 
-## v0.5.7
+## [v0.5.7](https://github.com/terra-money/classic-core/releases/tag/v0.5.7) - 2021-10-13
 
 This release mainly contains CosmosSDK security updates
 
@@ -114,7 +177,7 @@ This release mainly contains CosmosSDK security updates
 - [\#576](https://github.com/terra-money/classic-core/pull/576) Change write-vm-memory-cache-size default config replace location
 - [\#573](https://github.com/terra-money/classic-core/pull/573) Fix to distribute oracle rewards for all whitelist denoms
 
-## v0.5.6
+## [v0.5.6](https://github.com/terra-money/classic-core/releases/tag/v0.5.6) - 2021-10-06
 
 This release contains updates for multi-reader thread implementation with necessary dependency updates for multi-reader thread implementation.
 
@@ -125,7 +188,7 @@ This release contains updates for multi-reader thread implementation with necess
 ### Improvements
 - [\#546](https://github.com/terra-money/classic-core/pull/546) Implement read VM pool
 
-## v0.5.5
+## [v0.5.5](https://github.com/terra-money/classic-core/releases/tag/v0.5.5) - 2021-09-27
 
 ### Improvements
 - [\#564](https://github.com/terra-money/classic-core/pull/564) Legacy tx encode support
@@ -133,12 +196,12 @@ This release contains updates for multi-reader thread implementation with necess
 ### Bug Fixes
 - [\#566](https://github.com/terra-money/classic-core/pull/566) Emit missing wasm tax events.
 
-## v0.5.4
+## [v0.5.4](https://github.com/terra-money/classic-core/releases/tag/v0.5.4) - 2021-09-24
 
 ### Bug Fixes
 - [\#560](https://github.com/terra-money/classic-core/pull/560) Fix migration bug of multisig pubkey which was in v040 auth module migration.
 
-## v0.5.3
+## [v0.5.3](https://github.com/terra-money/classic-core/releases/tag/v0.5.3) - 2021-09-20
 
 ### Improvement
 - [\#551](https://github.com/terra-money/classic-core/pull/551) Bump CosmosSDK to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0) and IBC-GO to [v1.1.0](https://github.com/cosmos/ibc-go/releases/tag/v1.1.0) both for security patch
@@ -147,15 +210,15 @@ This release contains updates for multi-reader thread implementation with necess
 - [\#544](https://github.com/terra-money/classic-core/pull/544) update rest&cli interface to receive base64 key for wasm raw querier
 - [\#557](https://github.com/terra-money/classic-core/pull/557) fix proto urls
 
-## v0.5.2
+## [v0.5.2](https://github.com/terra-money/classic-core/releases/tag/v0.5.2) - 2021-08-26
 - [\#539](https://github.com/terra-money/classic-core/pull/539) Bump ibc-go version to v1.0.1 to fix security vulnerability
 
-## v0.5.1
+## [v0.5.1](https://github.com/terra-money/classic-core/releases/tag/v0.5.1) - 2021-08-18
 
 ### Bug Fixes
 - [\#536](https://github.com/terra-money/classic-core/pull/536) Sort migrated map array with key to generate deterministic result
 
-## v0.5.0
+## [v0.5.0](https://github.com/terra-money/classic-core/releases/tag/v0.5.0) - 2021-08-11
 
 ### Improvements
 
@@ -176,10 +239,10 @@ This release contains updates for multi-reader thread implementation with necess
 - [\#497](https://github.com/terra-money/classic-core/pull/497) Fix wasm oracle querier to return Base/Quote exchange rate
 - [\#529](https://github.com/terra-money/classic-core/pull/529) Fix keyring kwallet backend when using with empty wallet.
 
-## 0.4.5
+## v0.4.5
 This release is a hotfix for two high-severity issues.
 
-[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
+[Upgrade Instructions](https://github.com/terra-money/classic-mainnet/wiki/Columbus-4-Softfork-Instructions)
 
 ```
 $ git fetch --all --tags
@@ -208,36 +271,36 @@ Tue Mar 25 2021 18:00:00 GMT+0900 (KST)
 ```
 
 ### Improvements
-* [\#463](https://github.com/terra-project/core/pull/463) Lower oracle feeder cost.
-* [\#462](https://github.com/terra-project/core/pull/462) Softfork to cap the max tx limit with ConsensusParam update.
+* [\#463](https://github.com/terra-money/classic-core/pull/463) Lower oracle feeder cost.
+* [\#462](https://github.com/terra-money/classic-core/pull/462) Softfork to cap the max tx limit with ConsensusParam update.
 
-## 0.4.4
+## v0.4.4
 
 ### Bug Fixes
-* [\#461](https://github.com/terra-project/core/pull/461) Update Dockerfile script to use proper libgo_cosmwasm_musla.a file
+* [\#461](https://github.com/terra-money/classic-core/pull/461) Update Dockerfile script to use proper libgo_cosmwasm_musla.a file
 
-## 0.4.3
+## v0.4.3
 
 ### Improvements
-* [\#460](https://github.com/terra-project/core/pull/460) Add `tx-gas-hard-limit` flag to filter out tx with abnormally huge gas
+* [\#460](https://github.com/terra-money/classic-core/pull/460) Add `tx-gas-hard-limit` flag to filter out tx with abnormally huge gas
 
 ### Bug Fixes
-* [\#456](https://github.com/terra-project/core/pull/456) `RewardWeightUpdateProposal` CLI parse error
-* [\#454](https://github.com/terra-project/core/pull/454) `MsgSwapSend` rest interface parse error
+* [\#456](https://github.com/terra-money/classic-core/pull/456) `RewardWeightUpdateProposal` CLI parse error
+* [\#454](https://github.com/terra-money/classic-core/pull/454) `MsgSwapSend` rest interface parse error
 
-## 0.4.2
+## v0.4.2
 
 ### Release Note
 
 This release is a hotfix for two high-severity issues in the currently live Terra Core@0.4.1.
-* [\#440](https://github.com/terra-project/core/pull/440) go-cosmwasm iterator memory leak
-* [\#445](https://github.com/terra-project/core/pull/445) treasury division by zero protection
+* [\#440](https://github.com/terra-money/classic-core/pull/440) go-cosmwasm iterator memory leak
+* [\#445](https://github.com/terra-money/classic-core/pull/445) treasury division by zero protection
 
 
 ### How to Upgrade
 You can stop, update and restart terrad anytime before the upgrade time.
 
-[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Hotfix-Instructions)
+[Upgrade Instructions](https://github.com/terra-money/classic-mainnet/wiki/Columbus-4-Hotfix-(v0.4.2)-Instructions)
 
 ```
 $ git fetch --all --tags
@@ -254,14 +317,14 @@ Tue Feb 23 2021 11:27:50 GMT+0900 (KST)
 Mon Feb 22 2021 18:27:50 GMT-0800 (PST)
 ```
 
-## 0.4.1
+## v0.4.1
 
 ### Release Notes
 **This upgrade contains softfork**
 Please understand the details and apply it before the target height.
 
-[Upgrade Details](https://agora.terra.money/t/terra-core-v0-4-1-soft-fork-upgrade-recommendation/262)
-[Upgrade Instructions](https://github.com/terra-project/mainnet/wiki/Columbus-4-Softfork-Instructions)
+[Upgrade Details](https://classic-agora.terra.money/t/terra-core-v0-4-1-soft-fork-upgrade-recommendation/262)
+[Upgrade Instructions](https://github.com/terra-money/mainnet/wiki/Columbus-4-Softfork-Instructions)
 
 ### How to Upgrade
 It is softfork, so you can update terrad anytime before the upgrade time.
@@ -289,16 +352,16 @@ $ make install
 ```
 
 ### Improvements
-* [\#426](https://github.com/terra-project/core/pull/426) CosmWasm Cache Implementation (100x faster than before)
-* [\#413](https://github.com/terra-project/core/pull/413) CosmWasm Logging Whitelist
+* [\#426](https://github.com/terra-money/classic-core/pull/426) CosmWasm Cache Implementation (100x faster than before)
+* [\#413](https://github.com/terra-money/classic-core/pull/413) CosmWasm Logging Whitelist
 
 ### Bug Fixes
-* [\#427](https://github.com/terra-project/core/pull/427) CosmWasm Staking Query
+* [\#427](https://github.com/terra-money/classic-core/pull/427) CosmWasm Staking Query
 
 ### Param Changes
-* [\#433](https://github.com/terra-project/core/pull/433) Increase ExecuteMsgSize limit to 4096 from 1024
+* [\#433](https://github.com/terra-money/classic-core/pull/433) Increase ExecuteMsgSize limit to 4096 from 1024
 
-## 0.4.0
+## v0.4.0
 
 ### Release Notes
 - [Cosmos-SDK v0.38 Release Notes](https://github.com/cosmos/cosmos-sdk/wiki/v0.38-Release-Notes)
@@ -356,12 +419,12 @@ respectively, and the latter defines the height interval in which versions are d
 * The `block_meta` field has been removed from `/blocks/{block_height}` becasuse it was redandunt data with `block_header`.
 * The `whitelist` of`/oracle/parameters` response has been changed from `[]string` to `[]{ name: string; tobin_tax: string; }`
 
-## 0.3.6
+## v0.3.6
 
 ### Improvements
 #### [99581ba](https://github.com/terra-money/classic-core/commit/99581baf89a838cf09a25d47adc2fd2cc97ab4a2) Ledger update(custom ledger library) & Bump SDK to v0.37.13
 
-## 0.3.5
+## v0.3.5
 
 ### Improvements
 #### [654b5cb](https://github.com/terra-money/classic-core/commit/654b5cb66a9152dcf6e53f73e7935522251a1ede) Bump SDK to v0.37.11
@@ -369,18 +432,18 @@ respectively, and the latter defines the height interval in which versions are d
 ### Bug Fixes
 #### [7a3d01c](https://github.com/terra-money/classic-core/commit/7a3d01c9198cfdcc67d90593c92ce5cb465e4516) Oracle slashing unbonding state check
 
-## 0.3.4
+## v0.3.4
 
 ### Improvements
 #### [\#338](https://github.com/terra-money/classic-core/pull/338) Bump SDK to v0.37.9 for Tendermint security patch
 
-## 0.3.3
+## v0.3.3
 
 ### Improvements
 #### [\#319](https://github.com/terra-money/classic-core/pull/319) Bump SDK to v0.37.6
 #### [\#321](https://github.com/terra-money/classic-core/pull/321) Revert to distribute zero oracle rewards
 
-## 0.3.2
+## v0.3.2
 
 ### Improvements
 #### [\#313](https://github.com/terra-money/classic-core/pull/313) upgrade SDK
@@ -388,7 +451,7 @@ respectively, and the latter defines the height interval in which versions are d
 * Tendermint version to [v0.32.8](https://github.com/tendermint/tendermint/releases/tag/v0.32.8)
 #### [\#312](https://github.com/terra-money/classic-core/pull/312) upgrade golangci-lint version to v1.22.2
 
-## 0.3.1
+## v0.3.1
 
 ### Bug Fixes
 #### [\#303](https://github.com/terra-money/classic-core/pull/303) fix estimate fee endpoint for multiple signature tx
@@ -399,7 +462,7 @@ respectively, and the latter defines the height interval in which versions are d
 #### [\#305](https://github.com/terra-money/classic-core/pull/305) swagger update
 #### [\#306](https://github.com/terra-money/classic-core/pull/306) circleci update for goreleaser
 
-## 0.3.0
+## v0.3.0
 ### Breaking Changes
 #### [\#265](https://github.com/terra-money/classic-core/pull/265) Oracle refactor & Oracle slashing
 ##### Slashing
@@ -466,7 +529,7 @@ ExchangeRate sdk.Dec `json:"exchange_rate"`
 ```
 
 #### [\#233](https://github.com/terra-money/classic-core/pull/233) Swap constant product
-As proposed [here](https://agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature.
+As proposed [here](https://classic-agora.terra.money/uploads/short-url/92QHxFtEmWUEwf9kWTminuobwpM.pdf), apply constant product to swap feature.
 
 ##### Compute Pools
 ```
@@ -571,7 +634,7 @@ pay/MsgMultiSend => bank/MsgMultiSend
   2. Use `/txs/estimate_fee` to estimate fees of StdTX, and replace StdTx.Fee.Amount to estimated fee
   3. Compute tax with `/treasury/tax_rate` & `/treasury/tax_cap` add computed tax with original gas fee
 
-## 0.2.4
+## v0.2.4
 ### Bug fixes
 #### [\#196](https://github.com/terra-money/classic-core/pull/196) peek epoch seigniorage
 Change PeekEpochSeigniorage to compute seigniorage by subtracting current issuance from previous issuance
@@ -595,7 +658,7 @@ NAME:	TYPE:	ADDRESS:					PUBKEY:
 tmp   local	terra1gaczd45crhwfa4x05k9747cuxwfmnduvmtyefs	terrapub1addwnpepqv6tse2pyag9ts5vy6dk4h3qh7xc9qhat4jx449n6nrfve3jhzldz3f3l7p
 ```
 
-## 0.2.3
+## v0.2.3
 - [\#187](https://github.com/terra-money/classic-core/pull/187): Change all time instance timezone to UTC to remove gap in time calculation
 
 ### Changes
@@ -609,7 +672,7 @@ to
 genesisTime := time.Unix(genesisUnixTime, 0).UTC()
 ```
 
-## 0.2.2
+## v0.2.2
 
 - [\#185](https://github.com/terra-money/classic-core/pull/185): Improve oracle specs
 - [\#184](https://github.com/terra-money/classic-core/pull/184): Fix `terracli` docs
@@ -649,11 +712,11 @@ DailyLunaDeltaCap: 0.5% => 0.1%
 * We were previously using the Cosmos coin type field for the BIP44 path. Changed to Terra's own 330.
 
 
-## 0.2.1
+## v0.2.1
 
 - [\#166](https://github.com/terra-money/classic-core/pull/166): Newly added parameters were not being added to the columbus-2 genesis.json file. Fixed.
 
-## 0.2.0
+## v0.2.0
 
 ### Bug Fixes
 
