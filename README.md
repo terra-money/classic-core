@@ -26,7 +26,7 @@ If you haven't already, install Golang by following the [official docs](https://
 Use `git` to retrieve Terra Core from the [official repo](https://github.com/terra-money/core/) and checkout the `main` branch. This branch contains the latest stable release, which will install the `terrad` binary.
 
 ```bash
-git clone https://github.com/terra-money/core/
+git clone https://github.com/classic-terra/core/
 cd core
 git checkout main
 ```
@@ -128,3 +128,286 @@ wget -O ~/.terra/config/genesis.json https://cloudflare-ipfs.com/ipfs/QmZAMcdu85
 curl https://network.terra.dev/addrbook.json > ~/.terrad/config/addrbook.json
 terrad start
 ```
+
+### Join a testnet
+
+Several testnets might exist simultaneously. Ensure that your version of `terrad` is compatible with the network you want to join.
+
+To set up a node on the latest testnet, visit [the testnet repo](https://github.com/terra-money/testnet).
+
+### Run a local testnet
+
+The easiest way to set up a local testing environment is to run [LocalTerra](https://github.com/terra-money/LocalTerra), which automatically orchestrates a complete testing environment suited for development with zero configuration.
+
+### Run a single node testnet
+
+You can also run a local testnet using a single node. On a local testnet, you will be the sole validator signing blocks.
+
+
+**Step 1. Create network and account**
+
+First, initialize your genesis file to bootstrap your network. Create a name for your local testnet and provide a moniker to refer to your node:
+
+```bash
+terrad init --chain-id=<testnet_name> <node_moniker>
+```
+
+Next, create a Terra account by running the following command:
+
+```bash
+terrad keys add <account_name>
+```
+
+**Step 2. Add account to genesis**
+
+Next, add your account to genesis and set an initial balance to start. Run the following commands to add your account and set the initial balance:
+
+```bash
+terrad add-genesis-account $(terrad keys show <account_name> -a) 100000000uluna,1000usd
+terrad gentx <account_name> 10000000uluna --chain-id=<testnet_name>
+terrad collect-gentxs
+```
+
+**Step 3. Run Terra daemon**
+
+Now you can start your private Terra network:
+
+```bash
+terrad start
+```
+
+Your `terrad` node will be running a node on `tcp://localhost:26656`, listening for incoming transactions and signing blocks.
+
+Congratulations, you've successfully set up your local Terra network!
+
+## Set up a production environment
+
+**NOTE**: This guide only covers general settings for a production-level full node. You can find further details on considerations for operating a validator node by visiting the [Terra validator guide](https://docs.terra.money/docs/full-node/manage-a-terra-validator/README.html).
+
+This guide has been tested against Linux distributions only. To ensure you successfully set up your production environment, consider setting it up on an Linux system.
+
+### Increase maximum open files
+
+`terrad` can't open more than 1024 files (the default maximum) concurrently.
+
+You can increase this limit by modifying `/etc/security/limits.conf` and raising the `nofile` capability.
+
+```
+*                soft    nofile          65535
+*                hard    nofile          65535
+```
+
+### Create a dedicated user
+
+It is recommended that you run `terrad` as a normal user. Super-user accounts are only recommended during setup to create and modify files.
+
+### Port configuration
+
+`terrad` uses several TCP ports for different purposes.
+
+- `26656`: The default port for the P2P protocol. Use this port to communicate with other nodes. While this port must be open to join a network, it does not have to be open to the public. Validator nodes should configure `persistent_peers` and close this port to the public.
+
+- `26657`: The default port for the RPC protocol. This port is used for querying / sending transactions and must be open to serve queries from `terrad`. **DO NOT** open this port to the public unless you are planning to run a public node.
+
+- `1317`: The default port for [Lite Client Daemon](https://docs.terra.money/docs/develop/how-to/start-lcd.html) (LCD), which can be enabled in `~/.terra/config/app.toml`. The LCD provides an HTTP RESTful API layer to allow applications and services to interact with your `terrad` instance through RPC. Check the [Terra REST API](https://lcd.terra.dev/swagger/#/) for usage examples. Don't open this port unless you need to use the LCD.
+
+- `26660`: The default port for interacting with the [Prometheus](https://prometheus.io) database. You can use Promethues to monitor an environment. This port is closed by default.
+
+### Run the server as a daemon
+
+**Important**:
+
+Keep `terrad` running at all times. The simplest solution is to register `terrad` as a `systemd` service so that it automatically starts after system reboots and other events.
+
+
+### Register terrad as a service
+
+First, create a service definition file in `/etc/systemd/system`.
+
+**Sample file: `/etc/systemd/system/terrad.service`**
+
+```
+[Unit]
+Description=Terra Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=terra
+ExecStart=/data/terra/go/bin/terrad start
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+LimitNOFILE=65535
+```
+
+Modify the `Service` section from the given sample above to suit your settings.
+Note that even if you raised the number of open files for a process, you still need to include `LimitNOFILE`.
+
+After creating a service definition file, you should execute `systemctl daemon-reload`.
+
+### Start, stop, or restart service
+
+Use `systemctl` to control (start, stop, restart)
+
+```bash
+# Start
+systemctl start terrad
+# Stop
+systemctl stop terrad
+# Restart
+systemctl restart terrad
+```
+
+### Access logs
+
+```bash
+# Entire log
+journalctl -t terrad
+# Entire log reversed
+journalctl -t terrad -r
+# Latest and continuous
+journalctl -t terrad -f
+```
+
+## Using `docker-compose`
+
+1. Install Docker
+
+	- [Docker Install documentation](https://docs.docker.com/install/)
+	- [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
+
+2. Create a new folder on your local machine and copy docker-compose\docker-compose.yml
+
+3. Review the docker-compose.yml contents
+
+4. Bring up your stack by running
+
+	```bash
+	docker-compose up -d
+	```
+
+5. Add your wallet
+    ```bash
+	docker-compose exec node sh /keys-add.sh
+	```
+
+6. Copy your terra wallet address and go to the terra faucet here -> http://45.79.139.229:3000/ Put your address in and give yourself luna coins.
+
+7. Start the validator
+	```bash
+	docker-compose exec node sh /create-validator.sh
+	```
+
+### Cheat Sheet:
+
+#### Start
+
+```bash
+docker-compose up -d
+```
+
+#### Stop
+
+```bash
+docker-compose down
+```
+
+#### View Logs
+
+```bash
+docker-compose logs -f
+```
+
+#### Run Terrad Commands Example
+
+```bash
+docker-compose exec node terrad status
+```
+
+#### Upgrade
+
+```bash
+docker-compose down
+docker-compose pull
+docker-compose up -d
+```
+
+#### Build from source
+Its possible to use docker-compose to build the images from the go source code by running the following commands in sequence:
+
+1) docker-compose -f docker-compose.node.yml -f docker-compose.build.yml build core --no-cache
+2) docker-compose -f docker-compose.node.yml -f docker-compose.build.yml build node --no-cache
+
+
+## Resources
+
+- Developer Tools
+
+  - Terra developer documentation(https://docs.terra.money)
+  - [TerraWiki.org](https://terrawiki.org) - The Terra community wiki.
+  - SDKs
+    - [Terra.js](https://www.github.com/terra-money/terra.js) for JavaScript
+    - [terra-sdk-python](https://www.github.com/terra-money/terra-sdk-python) for Python
+  - [Faucet](https://faucet.terra.money) can be used to get tokens for testnets
+  - [LocalTerra](https://www.github.com/terra-money/LocalTerra) can be used to set up a private local testnet with configurable world state
+
+- Developer Forums
+  - [Terra Developer Discord](https://discord.com/channels/464241079042965516/591812948867940362)
+  - [Terra DEveloper Telegram room](https://t.me/+gCxCPohmVBkyNDRl)
+
+
+- Block Explorers
+
+  - [Terra Finder](https://finder.terra.money) - Terra's basic block explorer.
+  - [Terrascope](https://terrascope.info/) - A community-run block explorer with extra features.
+  - [Stake ID](https://terra.stake.id) - A block explorer made by Staking Fund
+  - [Hubble](https://hubble.figment.network/terra/chains/columbus-5) - by Figment
+
+- Wallets
+
+  - [Terra Station](https://station.terra.money) - The official Terra wallet.
+  - Terra Station Mobile
+    - [iOS](https://apps.apple.com/us/app/terra-station/id1548434735)
+    - [Android](https://play.google.com/store/apps/details?id=money.terra.station&hl=en_US&gl=US)
+    
+  - [Falcon Wallet](https://falconwallet.app/)
+  - [Leap Wallet](https://chrome.google.com/webstore/detail/leap-wallet/aijcbedoijmgnlmjeegjaglmepbmpkpi/?utm_source=Leap&utm_medium=Bio&utm_campaign=Leap)
+  - [XDeFi](https://chrome.google.com/webstore/detail/xdefi-wallet/hmeobnfnfcmdkdcmlblgagmfpfboieaf)
+  - [Liquality](https://liquality.io/)
+
+- Research
+
+  - [Agora](https://agora.terra.money) - Research forum
+  - [White Paper](https://assets.website-files.com/611153e7af981472d8da199c/618b02d13e938ae1f8ad1e45_Terra_White_paper.pdf)
+
+## Community
+
+- [Offical Website](https://terra.money)
+- [Discord](https://discord.gg/e29HWwC2Mz)
+- [Telegram](https://t.me/terra_announcements)
+- [Twitter](https://twitter.com/terra_money)
+- [YouTube](https://goo.gl/3G4T1z)
+
+## Contributing
+
+If you are interested in contributing to Terra Core source, please review our [code of conduct](./CODE_OF_CONDUCT.md).
+
+## License
+
+This software is licensed under the Apache 2.0 license. Read more about it [here](LICENSE).
+
+© 2022 Terraform Labs, PTE LTD
+
+<hr/>
+
+<p>&nbsp;</p>
+<p align="center">
+    <a href="https://terra.money/"><img src="https://assets.website-files.com/611153e7af981472d8da199c/61794f2b6b1c7a1cb9444489_symbol-terra-blue.svg" align="center" width=200/></a>
+</p>
+<div align="center">
+  <sub><em>Powering the innovation of money.</em></sub>
+</div>

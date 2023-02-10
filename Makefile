@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
-HTTPS_GIT := https://github.com/terra-money/classic-core.git
+HTTPS_GIT := https://github.com/classic-terra/core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
@@ -115,20 +115,20 @@ endif
 
 build-linux:
 	mkdir -p $(BUILDDIR)
-	docker build --no-cache --tag terramoney/core ./
-	docker create --name temp terramoney/core:latest
+	docker build --no-cache --tag classic-terra/core ./
+	docker create --name temp classic-terra/core:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker rm temp
 
 build-linux-with-shared-library:
 	mkdir -p $(BUILDDIR)
-	docker build --tag terramoney/core-shared ./ -f ./shared.Dockerfile
-	docker create --name temp terramoney/core-shared:latest
+	docker build --tag classic-terra/core-shared ./ -f ./shared.Dockerfile
+	docker create --name temp classic-terra/core-shared:latest
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
 
-install: go.sum 
+install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 
 update-swagger-docs: statik
@@ -196,10 +196,10 @@ benchmark:
 ###############################################################################
 
 lint:
-	golangci-lint run --out-format=tab
+	sudo golangci-lint run --out-format=tab
 
 lint-fix:
-	golangci-lint run --fix --out-format=tab --issues-exit-code=0
+	sudo golangci-lint run --fix --out-format=tab --issues-exit-code=0
 .PHONY: lint lint-fix
 
 format:

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+   node:
+     container_name: node
+     image: terraclassic.terrad-node
+     environment:
+       - CHAINID=columbus-5
+       - ENABLE_LCD=true       
+       - ENABLE_UNSAFE_CORS=false
+       - CORS_ALLOWED_ORIGINS=[]
+       - CORS_ALLOWED_METHODS=["HEAD", "GET", "POST"]
+       - CORS_ALLOWED_HEADERS=["Origin", "Accept", "Content-Type", "X-Requested-With", "X-Server-Time"]
+       - TERRAD_STARTUP_PARAMETERS=--x-crisis-skip-assert-invariants
+       - MINIMUM_GAS_PRICES=0.05uluna,0.104938usdr,0.15uusd,170.0ukrw
+       - MONIKER=rebel-docker-node
+       - VALIDATOR_KEYNAME=local
+       - VALIDATOR_PASSPHRASE=12345678
+       - VALIDATOR_MNENOMIC=torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author
+       - VALIDATOR_AMOUNT=10000000uluna
+       - VALIDATOR_COMMISSION_RATE=0.1
+       - VALIDATOR_COMMISSION_RATE_MAX=0.2
+       - VALIDATOR_COMMISSION_RATE_MAX_CHANGE=0.01
+       - VALIDATOR_MIN_SELF_DELEGATION=1
+       - VALIDATOR_GAS=auto
+       - VALIDATOR_GAS_ADJUSTMENT=1.4
+       - VALIDATOR_FEES=120000uluna
+       #Do not make 1 if you don’t know EXACTLY what you are doing 
+       - VALIDATOR_AUTO_CONFIG=0
+     restart: always
+     ports:     
+       - "1317:1317"
+       - "9090:9090"
+       - "26656:26656"
+       - "26657:26657"
+     volumes:
+       - terra:/terra       
+     networks:
+       - terra-classic
+     ulimits:
+        nproc: 65535
+        nofile:
+          soft: 65535
+          hard: 65535
+volumes:
+  terra:
+
+networks:
+  terra-classic:
+    driver: bridge
