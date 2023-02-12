@@ -20,6 +20,7 @@ var (
 	KeyWindowShort             = []byte("WindowShort")
 	KeyWindowLong              = []byte("WindowLong")
 	KeyWindowProbation         = []byte("WindowProbation")
+	KeyBurnTaxSplit            = []byte("BurnTaxSplit")
 )
 
 // Default parameter values
@@ -43,6 +44,7 @@ var (
 	DefaultWindowProbation         = uint64(12)                 // 3 month
 	DefaultTaxRate                 = sdk.NewDecWithPrec(1, 3)   // 0.1%
 	DefaultRewardWeight            = sdk.NewDecWithPrec(5, 2)   // 5%
+	DefaultBurnTaxSplit            = sdk.NewDecWithPrec(5, 1)   // 50%
 )
 
 var _ paramstypes.ParamSet = &Params{}
@@ -57,6 +59,7 @@ func DefaultParams() Params {
 		WindowShort:             DefaultWindowShort,
 		WindowLong:              DefaultWindowLong,
 		WindowProbation:         DefaultWindowProbation,
+		BurnTaxSplit:            DefaultBurnTaxSplit,
 	}
 }
 
@@ -83,6 +86,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeyWindowShort, &p.WindowShort, validateWindowShort),
 		paramstypes.NewParamSetPair(KeyWindowLong, &p.WindowLong, validateWindowLong),
 		paramstypes.NewParamSetPair(KeyWindowProbation, &p.WindowProbation, validateWindowProbation),
+		paramstypes.NewParamSetPair(KeyBurnTaxSplit, &p.BurnTaxSplit, validateBurnTaxSplit),
 	}
 }
 
@@ -227,6 +231,19 @@ func validateWindowProbation(i interface{}) error {
 	_, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return nil
+}
+
+func validateBurnTaxSplit(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("burn tax split must be positive: %s", v)
 	}
 
 	return nil

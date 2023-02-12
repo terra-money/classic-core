@@ -59,6 +59,7 @@ func Migrate(
 		TaxProceeds:          treasuryGenState.TaxProceed,
 		TaxRate:              treasuryGenState.TaxRate,
 		Params: v05treasury.Params{
+			BurnTaxSplit: v05treasury.DefaultBurnTaxSplit,
 			TaxPolicy: v05treasury.PolicyConstraints{
 				RateMin:       treasuryGenState.Params.TaxPolicy.RateMin,
 				RateMax:       treasuryGenState.Params.TaxPolicy.RateMax,

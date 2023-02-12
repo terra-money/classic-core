@@ -130,6 +130,7 @@ func TestMigrate(t *testing.T) {
 		}
 	],
 	"params": {
+		"burn_tax_split": "0.500000000000000000",
 		"mining_increment": "1.070000000000000000",
 		"reward_policy": {
 			"cap": {

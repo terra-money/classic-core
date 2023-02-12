@@ -96,6 +96,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	terraappparams "github.com/classic-terra/core/app/params"
+	v2 "github.com/classic-terra/core/app/upgrades/v2"
 
 	customauth "github.com/classic-terra/core/custom/auth"
 	customante "github.com/classic-terra/core/custom/auth/ante"
@@ -514,6 +515,7 @@ func NewTerraApp(
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+	app.setupUpgradeHandlers()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -805,4 +807,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper
+}
+
+func (app *TerraApp) setupUpgradeHandlers() {
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v2.UpgradeName,
+		v2.CreateV2UpgradeHandler(app.mm, app.configurator),
+	)
 }

@@ -26,6 +26,11 @@ message Params {
   uint64 window_short     = 5 [(gogoproto.moretags) = "yaml:\"window_short\""];
   uint64 window_long      = 6 [(gogoproto.moretags) = "yaml:\"window_long\""];
   uint64 window_probation = 7 [(gogoproto.moretags) = "yaml:\"window_probation\""];
+  string burn_tax_split = 8 [
+    (gogoproto.moretags)   = "yaml:\"burn_tax_split\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // PolicyConstraints - defines policy constraints can be applied in tax & reward policies

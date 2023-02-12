@@ -13022,6 +13022,7 @@ Params defines the parameters for the oracle module.
 | `window_short` | [uint64](#uint64) |  |  |
 | `window_long` | [uint64](#uint64) |  |  |
 | `window_probation` | [uint64](#uint64) |  |  |
+| `burn_tax_split` | [string](#string) |  |  |
 
 
 
