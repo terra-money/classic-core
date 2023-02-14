@@ -34,6 +34,20 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+### Features
+* (ante) [#103](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
+* (ante) [#107](https://github.com/classic-terra/core/pull/107) Burn Tax Whitelist
+
+### Improvements
+* (build) [#93](https://github.com/classic-terra/core/pull/93) Use golang 1.18 and fix ad-hoc security vulnerabilities
+* (build) [#97](https://github.com/classic-terra/core/pull/97) Change module path to classic-terra/core
+* (build) [#102](https://github.com/classic-terra/core/pull/102) Snyk secops patches
+* (build) [#105](https://github.com/classic-terra/core/pull/105) Update docker assets
+
+### Bug Fixes
+* (auth/client) [#106](https://github.com/classic-terra/core/pull/106) fix ungraceful error on failed client tax query
+* (ante) [#113](https://github.com/classic-terra/core/pull/113) Fix burn tax split bug
+
 ## [v1.0.5-full-archive](https://github.com/classic-terra/core/releases/tag/v1.0.5-full-archive) - 2023-02-03
 
 ### Bug Fixes
