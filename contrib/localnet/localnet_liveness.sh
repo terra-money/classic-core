@@ -42,7 +42,7 @@ while [ ${CNT} -lt $ITER ]; do
 
   # Emulate network chaos:
   #
-  # Every 10 blocks, pick a random container and restart it.
+  # Every 10th iteration, pick a random container and restart it.
   if ! ((${CNT} % 10)); then
     rand_container=${docker_containers["$[RANDOM % ${#docker_containers[@]}]"]};
     echo "Restarting random docker container ${rand_container}"

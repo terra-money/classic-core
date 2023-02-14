@@ -11,8 +11,8 @@ USER ${UID}:${GID}
 VOLUME /terrad
 WORKDIR /terrad
 EXPOSE 26656 26657
-ENTRYPOINT ["/usr/bin/wrapper.sh"]
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]
 CMD ["start", "--log_format", "plain"]
 STOPSIGNAL SIGTERM
 
-COPY wrapper.sh /usr/bin/wrapper.sh
+COPY entrypoint.sh /usr/bin/entrypoint.sh

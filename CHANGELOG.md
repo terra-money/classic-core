@@ -33,6 +33,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 # Changelog
 
 ## [Unreleased]
+### Features
+* (build) [#118](https://github.com/classic-terra/core/pull/118) localnet for Apple Silicon
 
 ### Features
 * (ante) [#103](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
