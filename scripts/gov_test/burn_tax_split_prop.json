@@ -1,0 +1,12 @@
+{
+    "title": "Update BurnTaxSplit",
+    "description": "Update BurnTaxSplit",
+    "changes": [
+      {
+        "subspace": "treasury",
+        "key": "BurnTaxSplit",
+        "value": "0.3"
+      }
+    ],
+    "deposit": "1000uluna"
+}
