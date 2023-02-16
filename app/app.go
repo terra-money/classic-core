@@ -626,6 +626,11 @@ func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) a
 		}
 	}
 
+	// trigger SetModuleVersionMap in upgrade keeper at the VersionMapEnableHeight
+	if ctx.BlockHeight() == core.VersionMapEnableHeight {
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -640,7 +645,6 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
