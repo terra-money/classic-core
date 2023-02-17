@@ -1,6 +1,7 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
 FROM golang:1.18-alpine3.17 AS go-builder
+ARG source=.
 
 # See https://github.com/CosmWasm/wasmvm/releases
 ENV LIBWASMVM_VERSION=0.16.6
@@ -16,7 +17,7 @@ RUN apk add git cmake
 # RUN apk add libusb-dev linux-headers
 
 WORKDIR /code
-COPY . /code/
+COPY ${source} /code/
 
 # Install mimalloc
 RUN git clone --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdir build; cd build; cmake ..; make -j$(nproc); make install

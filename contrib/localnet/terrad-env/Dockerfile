@@ -6,6 +6,7 @@ RUN apt-get update && \
 
 ARG UID=1000
 ARG GID=1000
+ARG entrypoint=entrypoint.sh
 
 USER ${UID}:${GID}
 VOLUME /terrad
@@ -15,4 +16,4 @@ ENTRYPOINT ["/usr/bin/entrypoint.sh"]
 CMD ["start", "--log_format", "plain"]
 STOPSIGNAL SIGTERM
 
-COPY entrypoint.sh /usr/bin/entrypoint.sh
+COPY ${entrypoint} /usr/bin/entrypoint.sh

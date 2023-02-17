@@ -52,3 +52,27 @@ jobs:
         run: |
           ./contrib/localnet/localnet_liveness.sh 100 3 30 localhost
         if: env.GIT_DIFF
+  upgrade-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3.5.0
+        with:
+          go-version: 1.18
+      - uses: technote-space/get-diff-action@v4
+        id: git_diff
+        with:
+          PATTERNS: |
+            app/upgrades/**/*.go
+      - name: echo diff
+        run: echo '${{ env.GIT_DIFF }}'
+      - name: start localnet
+        run: |
+          make clean localnet-start-upgrade
+        if: env.GIT_DIFF
+      - name: test upgrade
+        run: |
+          chmod +x -R ./contrib/updates
+          ./contrib/updates/upgrade-test.sh
+        if: env.GIT_DIFF

@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+  terradnode0:
+    container_name: terradnode0
+    image: "classic-terra/terrad-upgrade-env"
+    ports:
+      - "9090:9090"
+      - "26656-26657:26656-26657"
+    environment:
+      - ID=0
+      - LOG=$${LOG:-terrad.log}
+      - DAEMON_HOME=/terrad/node0/terrad
+      - DAEMON_NAME=terrad
+      - DAEMON_RESTART_AFTER_UPGRADE=true
+    volumes:
+      - ../../build:/terrad:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.2
+
+  terradnode1:
+    container_name: terradnode1
+    image: "classic-terra/terrad-upgrade-env"
+    ports:
+      - "9091:9090"
+      - "26659-26660:26656-26657"
+    environment:
+      - ID=1
+      - LOG=$${LOG:-terrad.log}
+      - DAEMON_HOME=/terrad/node1/terrad
+      - DAEMON_NAME=terrad
+      - DAEMON_RESTART_AFTER_UPGRADE=true
+    volumes:
+      - ../../build:/terrad:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.3
+
+  terradnode2:
+    container_name: terradnode2
+    image: "classic-terra/terrad-upgrade-env"
+    environment:
+      - ID=2
+      - LOG=$${LOG:-terrad.log}
+      - DAEMON_HOME=/terrad/node2/terrad
+      - DAEMON_NAME=terrad
+      - DAEMON_RESTART_AFTER_UPGRADE=true
+    ports:
+      - "9092:9090"
+      - "26661-26662:26656-26657"
+    volumes:
+      - ../../build:/terrad:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.4
+
+  terradnode3:
+    container_name: terradnode3
+    image: "classic-terra/terrad-upgrade-env"
+    environment:
+      - ID=3
+      - LOG=$${LOG:-terrad.log}
+      - DAEMON_HOME=/terrad/node3/terrad
+      - DAEMON_NAME=terrad
+      - DAEMON_RESTART_AFTER_UPGRADE=true
+    ports:
+      - "9093:9090"
+      - "26663-26664:26656-26657"
+    volumes:
+      - ../../build:/terrad:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 192.168.10.0/16

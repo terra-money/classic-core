@@ -1,0 +1,8 @@
+FROM golang:1.18-alpine3.17
+
+RUN set -eux; apk add --no-cache ca-certificates build-base;
+
+# make cosmovisor statically linked
+RUN go install -ldflags '-w -s -linkmode=external -extldflags "-Wl,-z,muldefs -static"' -trimpath cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest
+
+ENTRYPOINT [ "/bin/sh" ]

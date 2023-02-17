@@ -1,11 +1,12 @@
 #!/bin/bash
 
-OLD_VERSION=1.0.5
+# $(curl --silent "https://api.github.com/repos/classic-terra/core/releases/latest" | jq -r '.tag_name')
+OLD_VERSION=v1.0.5
 UPGRADE_HEIGHT=20
 HOME=mytestnet
 ROOT=$(pwd)
 DENOM=uluna
-SOFTWARE_UPGRADE_NAME=v2
+SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/* | head -n 1 | cut -d'/' -f4)
 
 # underscore so that go tool will not take gocache into account
 mkdir -p _build/gocache
@@ -15,16 +16,16 @@ export GOMODCACHE=$ROOT/_build/gocache
 if ! command -v _build/old/terrad &> /dev/null
 then
     mkdir -p _build/old
-    wget -c "https://github.com/classic-terra/core/archive/refs/tags/v${OLD_VERSION}.zip" -O _build/v${OLD_VERSION}.zip
-    unzip _build/v${OLD_VERSION}.zip -d _build
-    cd ./_build/core-${OLD_VERSION}
+    wget -c "https://github.com/classic-terra/core/archive/refs/tags/${OLD_VERSION}.zip" -O _build/${OLD_VERSION}.zip
+    unzip _build/${OLD_VERSION}.zip -d _build
+    cd ./_build/core-${OLD_VERSION:1}
     GOBIN="$ROOT/_build/old" go install -mod=readonly ./...
     cd ../..
 fi
 
 # reinstall old binary
 if [ $# -eq 1 ] && [ $1 == "--reinstall-old" ]; then
-    cd ./_build/core-${OLD_VERSION}
+    cd ./_build/core-${OLD_VERSION:1}
     GOBIN="$ROOT/_build/old" go install -mod=readonly ./...
     cd ../..
 fi
