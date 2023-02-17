@@ -38,6 +38,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (ante) [#103](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
 * (ante) [#107](https://github.com/classic-terra/core/pull/107) Burn Tax Whitelist
 * (build) [#118](https://github.com/classic-terra/core/pull/118) localnet for Apple Silicon
+* (app) [#128](https://github.com/classic-terra/core/pull/128) Panic at InitChainer for the Columbus mainnet
 
 ### Improvements
 * (build) [#93](https://github.com/classic-terra/core/pull/93) Use golang 1.18 and fix ad-hoc security vulnerabilities
