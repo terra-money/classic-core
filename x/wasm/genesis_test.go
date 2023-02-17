@@ -8,6 +8,7 @@ import (
 
 	core "github.com/classic-terra/core/types"
 	"github.com/classic-terra/core/x/wasm"
+	"github.com/classic-terra/core/x/wasm/config"
 	"github.com/classic-terra/core/x/wasm/keeper"
 	"github.com/classic-terra/core/x/wasm/types"
 
@@ -17,7 +18,7 @@ import (
 func TestInitGenesis(t *testing.T) {
 	loadContracts()
 
-	input := keeper.CreateTestInput(t)
+	input := keeper.CreateTestInput(t, config.DefaultConfig())
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 5000))
@@ -100,7 +101,7 @@ func TestInitGenesis(t *testing.T) {
 	genState := wasm.ExportGenesis(input.Ctx, input.WasmKeeper)
 
 	// create new app to import genstate into
-	newInput := keeper.CreateTestInput(t)
+	newInput := keeper.CreateTestInput(t, config.DefaultConfig())
 
 	// initialize new app with genstate
 	wasm.InitGenesis(newInput.Ctx, newInput.WasmKeeper, genState)

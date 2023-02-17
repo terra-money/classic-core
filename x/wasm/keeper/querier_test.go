@@ -9,20 +9,21 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/classic-terra/core/x/wasm/config"
 	"github.com/classic-terra/core/x/wasm/types"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryContractState(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 	goCtx := sdk.WrapSDKContext(input.Ctx)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
+	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	_, anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -71,7 +72,7 @@ func TestQueryContractState(t *testing.T) {
 }
 
 func TestQueryParams(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 	goCtx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.WasmKeeper)
 	res, err := querier.Params(goCtx, &types.QueryParamsRequest{})
@@ -80,14 +81,14 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryMultipleGoroutines(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 	goCtx := sdk.WrapSDKContext(input.Ctx)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
+	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	_, anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -131,14 +132,14 @@ func TestQueryMultipleGoroutines(t *testing.T) {
 }
 
 func TestQueryCodeAndContractInfo(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 	goCtx := sdk.WrapSDKContext(input.Ctx)
 	ctx, accKeeper, bankKeeper, keeper := input.Ctx, input.AccKeeper, input.BankKeeper, input.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
+	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	_, anyAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)

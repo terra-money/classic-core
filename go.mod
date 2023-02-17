@@ -3,7 +3,7 @@ go 1.18
 module github.com/classic-terra/core
 
 require (
-	github.com/CosmWasm/wasmvm v0.16.6
+	github.com/CosmWasm/wasmvm v0.16.7
 	github.com/cosmos/cosmos-sdk v0.44.8
 	github.com/cosmos/ibc-go v1.3.1
 	github.com/gogo/protobuf v1.3.3

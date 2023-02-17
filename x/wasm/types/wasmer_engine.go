@@ -122,4 +122,9 @@ type WasmerEngine interface {
 
 	// Cleanup should be called when no longer using this to free resources on the rust-side
 	Cleanup()
+
+	// Pin pins a code to an in-memory cache, such that is
+	// always loaded quickly when executed.
+	// Pin is idempotent.
+	Pin(checksum wasmvm.Checksum) error
 }

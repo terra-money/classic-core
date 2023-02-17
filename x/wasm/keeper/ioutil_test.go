@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/classic-terra/core/x/wasm/config"
 	"github.com/classic-terra/core/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestUncompress(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 	ctx, keeper := input.Ctx, input.WasmKeeper
 
 	wasmRaw, err := ioutil.ReadFile("./testdata/hackatom.wasm")

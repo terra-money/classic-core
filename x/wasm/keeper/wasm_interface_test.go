@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/x/wasm/config"
 	"github.com/classic-terra/core/x/wasm/types"
 )
 
@@ -174,7 +175,7 @@ func TestEcoding(t *testing.T) {
 }
 
 func TestQueryRaw(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 
 	input.WasmKeeper.SetContractStore(input.Ctx, Addrs[0], []types.Model{
 		{
@@ -210,7 +211,7 @@ func TestQueryRaw(t *testing.T) {
 }
 
 func TestQueryContractInfo(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestInput(t, config.DefaultConfig())
 
 	input.WasmKeeper.SetContractInfo(input.Ctx, Addrs[0], types.NewContractInfo(1, Addrs[0], Addrs[1], sdk.AccAddress{}, []byte{}))
 

@@ -60,8 +60,8 @@ func NewKeeper(
 		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
 	}
 
-	// prevent zero write vm cache
-	if wasmConfig.ContractMemoryCacheSize == 0 {
+	// prevent zero write vm cache if not in contract debug mode
+	if wasmConfig.ContractMemoryCacheSize == 0 && !wasmConfig.ContractDebugMode {
 		wasmConfig.ContractMemoryCacheSize = config.DefaultContractMemoryCacheSize
 	}
 
