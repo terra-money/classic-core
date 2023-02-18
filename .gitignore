@@ -33,6 +33,7 @@ mytestnet
 coverage.txt
 profile.out
 sim_log_file
+screenlog.*
 
 # Vagrant
 .vagrant/

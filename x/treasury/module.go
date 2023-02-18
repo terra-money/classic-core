@@ -45,10 +45,12 @@ func (AppModuleBasic) Name() string {
 
 // RegisterLegacyAminoCodec registers the module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterLegacyAminoCodec(cdc)
 }
 
 // RegisterInterfaces registers the module's interface types
 func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the treasury

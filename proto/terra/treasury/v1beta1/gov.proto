@@ -1,0 +1,28 @@
+syntax = "proto3";
+package terra.treasury.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/classic-terra/core/x/treasury/types";
+
+// proposal request structure for adding burn tax exemption address(es)
+message AddBurnTaxExemptionAddressProposal {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  string          title       = 1;
+  string          description = 2;
+  repeated string addresses   = 3 [(gogoproto.moretags) = "yaml:\"addresses\""];
+}
+
+// proposal request structure for removing burn tax exemption address(es)
+message RemoveBurnTaxExemptionAddressProposal {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  string          title       = 1;
+  string          description = 2;
+  repeated string addresses   = 3 [(gogoproto.moretags) = "yaml:\"addresses\""];
+}

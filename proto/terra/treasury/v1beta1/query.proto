@@ -3,6 +3,7 @@ package terra.treasury.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "terra/treasury/v1beta1/treasury.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
@@ -43,6 +44,11 @@ service Query {
   // Indicators return the current trl informations
   rpc Indicators(QueryIndicatorsRequest) returns (QueryIndicatorsResponse) {
     option (google.api.http).get = "/terra/treasury/v1beta1/indicators";
+  }
+
+  // BurnTaxExemptionList returns all registered burn tax exemption addresses
+  rpc BurnTaxExemptionList(QueryBurnTaxExemptionListRequest) returns (QueryBurnTaxExemptionListResponse) {
+    option (google.api.http).get = "/terra/treasury/v1beta1/burn_tax_exemption_list";
   }
 
   // Params queries all parameters.
@@ -149,4 +155,16 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params defines the parameters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryBurnTaxExemptionListRequest is the request type for the Query/BurnTaxExemptionList RPC method.
+message QueryBurnTaxExemptionListRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryBurnTaxExemptionListResponse is response type for the Query/BurnTaxExemptionList RPC method.
+message QueryBurnTaxExemptionListResponse {
+  repeated string addresses = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

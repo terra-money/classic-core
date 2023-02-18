@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package keeper
 
 import (
@@ -128,6 +128,8 @@ type TestInput struct {
 
 // CreateTestInput nolint
 func CreateTestInput(t *testing.T) TestInput {
+	sdk.GetConfig().SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
+
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)

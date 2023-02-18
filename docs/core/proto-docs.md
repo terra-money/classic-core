@@ -900,7 +900,13 @@
     - [GenesisState](#terra.treasury.v1beta1.GenesisState)
     - [TaxCap](#terra.treasury.v1beta1.TaxCap)
   
+- [terra/treasury/v1beta1/gov.proto](#terra/treasury/v1beta1/gov.proto)
+    - [AddBurnTaxExemptionAddressProposal](#terra.treasury.v1beta1.AddBurnTaxExemptionAddressProposal)
+    - [RemoveBurnTaxExemptionAddressProposal](#terra.treasury.v1beta1.RemoveBurnTaxExemptionAddressProposal)
+  
 - [terra/treasury/v1beta1/query.proto](#terra/treasury/v1beta1/query.proto)
+    - [QueryBurnTaxExemptionListRequest](#terra.treasury.v1beta1.QueryBurnTaxExemptionListRequest)
+    - [QueryBurnTaxExemptionListResponse](#terra.treasury.v1beta1.QueryBurnTaxExemptionListResponse)
     - [QueryIndicatorsRequest](#terra.treasury.v1beta1.QueryIndicatorsRequest)
     - [QueryIndicatorsResponse](#terra.treasury.v1beta1.QueryIndicatorsResponse)
     - [QueryParamsRequest](#terra.treasury.v1beta1.QueryParamsRequest)
@@ -13127,10 +13133,91 @@ TaxCap is the max tax amount can be charged for the given denom
 
 
 
+<a name="terra/treasury/v1beta1/gov.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## terra/treasury/v1beta1/gov.proto
+
+
+
+<a name="terra.treasury.v1beta1.AddBurnTaxExemptionAddressProposal"></a>
+
+### AddBurnTaxExemptionAddressProposal
+proposal request structure for adding burn tax exemption address(es)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  |  |
+| `description` | [string](#string) |  |  |
+| `addresses` | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="terra.treasury.v1beta1.RemoveBurnTaxExemptionAddressProposal"></a>
+
+### RemoveBurnTaxExemptionAddressProposal
+proposal request structure for removing burn tax exemption address(es)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  |  |
+| `description` | [string](#string) |  |  |
+| `addresses` | [string](#string) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="terra/treasury/v1beta1/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
 ## terra/treasury/v1beta1/query.proto
+
+
+
+<a name="terra.treasury.v1beta1.QueryBurnTaxExemptionListRequest"></a>
+
+### QueryBurnTaxExemptionListRequest
+QueryBurnTaxExemptionListRequest is the request type for the Query/BurnTaxExemptionList RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  |  |
+
+
+
+
+
+
+<a name="terra.treasury.v1beta1.QueryBurnTaxExemptionListResponse"></a>
+
+### QueryBurnTaxExemptionListResponse
+QueryBurnTaxExemptionListResponse is response type for the Query/BurnTaxExemptionList RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `addresses` | [string](#string) | repeated |  |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  |  |
+
+
+
 
 
 
@@ -13384,6 +13471,7 @@ Query defines the gRPC querier service.
 | `SeigniorageProceeds` | [QuerySeigniorageProceedsRequest](#terra.treasury.v1beta1.QuerySeigniorageProceedsRequest) | [QuerySeigniorageProceedsResponse](#terra.treasury.v1beta1.QuerySeigniorageProceedsResponse) | SeigniorageProceeds return the current seigniorage proceeds | GET|/terra/treasury/v1beta1/seigniorage_proceeds|
 | `TaxProceeds` | [QueryTaxProceedsRequest](#terra.treasury.v1beta1.QueryTaxProceedsRequest) | [QueryTaxProceedsResponse](#terra.treasury.v1beta1.QueryTaxProceedsResponse) | TaxProceeds return the current tax proceeds | GET|/terra/treasury/v1beta1/tax_proceeds|
 | `Indicators` | [QueryIndicatorsRequest](#terra.treasury.v1beta1.QueryIndicatorsRequest) | [QueryIndicatorsResponse](#terra.treasury.v1beta1.QueryIndicatorsResponse) | Indicators return the current trl informations | GET|/terra/treasury/v1beta1/indicators|
+| `BurnTaxExemptionList` | [QueryBurnTaxExemptionListRequest](#terra.treasury.v1beta1.QueryBurnTaxExemptionListRequest) | [QueryBurnTaxExemptionListResponse](#terra.treasury.v1beta1.QueryBurnTaxExemptionListResponse) | BurnTaxExemptionList returns all registered burn tax exemption addresses | GET|/terra/treasury/v1beta1/burn_tax_exemption_list|
 | `Params` | [QueryParamsRequest](#terra.treasury.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#terra.treasury.v1beta1.QueryParamsResponse) | Params queries all parameters. | GET|/terra/treasury/v1beta1/params|
 
  <!-- end services -->

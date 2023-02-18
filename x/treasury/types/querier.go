@@ -8,14 +8,15 @@ import (
 
 // query endpoints supported by the auth Querier
 const (
-	QueryTaxRate             = "taxRate"
-	QueryTaxCap              = "taxCap"
-	QueryTaxCaps             = "taxCaps"
-	QueryRewardWeight        = "rewardWeight"
-	QuerySeigniorageProceeds = "seigniorageProceeds"
-	QueryTaxProceeds         = "taxProceeds"
-	QueryParameters          = "parameters"
-	QueryIndicators          = "indicators"
+	QueryTaxRate              = "taxRate"
+	QueryTaxCap               = "taxCap"
+	QueryTaxCaps              = "taxCaps"
+	QueryRewardWeight         = "rewardWeight"
+	QuerySeigniorageProceeds  = "seigniorageProceeds"
+	QueryTaxProceeds          = "taxProceeds"
+	QueryParameters           = "parameters"
+	QueryIndicators           = "indicators"
+	QueryBurnTaxExemptionList = "burnTaxExemptionList"
 )
 
 // QueryTaxCapParams for query
@@ -53,4 +54,12 @@ func (res IndicatorQueryResponse) String() string {
   TRL Month     : %s
 
   `, res.TRLYear, res.TRLMonth)
+}
+
+type QueryBurnTaxExemptionListParams struct {
+	Page, Limit int
+}
+
+func NewQueryBurnTaxExemptionListParams(page, limit int) QueryBurnTaxExemptionListParams {
+	return QueryBurnTaxExemptionListParams{page, limit}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -352,11 +353,32 @@ func (k Keeper) ClearTSLs(ctx sdk.Context) {
 	}
 }
 
-func (k Keeper) GetBurnSplitRate(ctx sdk.Context) sdk.Dec {
-	params := k.GetParams(ctx)
-	return params.BurnTaxSplit
+// Burn tax exemption list
+func (k Keeper) AddBurnTaxExemptionAddress(ctx sdk.Context, address string) {
+	if _, err := sdk.AccAddressFromBech32(address); err != nil {
+		panic(err)
+	}
+
+	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
+	sub.Set([]byte(address), []byte{0x01})
 }
 
-func (k Keeper) SetBurnSplitRate(ctx sdk.Context, burnTaxSplit sdk.Dec) {
-	k.paramSpace.Set(ctx, types.KeyBurnTaxSplit, burnTaxSplit)
+func (k Keeper) RemoveBurnTaxExemptionAddress(ctx sdk.Context, address string) error {
+	if _, err := sdk.AccAddressFromBech32(address); err != nil {
+		panic(err)
+	}
+
+	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
+
+	if !sub.Has([]byte(address)) {
+		return types.ErrNoSuchBurnTaxExemptionAddress.Wrapf("address = %s", address)
+	}
+
+	sub.Delete([]byte(address))
+	return nil
+}
+
+func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, address string) bool {
+	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
+	return sub.Has([]byte(address))
 }
