@@ -66,6 +66,7 @@ services:
         ipv4_address: 192.168.10.5
 
   terradnode4:
+    platform: linux/amd64
     container_name: terradnode4
     image: classic-terra/terrad-env
     environment:
@@ -81,6 +82,7 @@ services:
         ipv4_address: 192.168.10.6
 
   terradnode5:
+    platform: linux/amd64
     container_name: terradnode5
     image: classic-terra/terrad-env
     environment:

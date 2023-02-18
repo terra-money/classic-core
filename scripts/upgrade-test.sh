@@ -36,8 +36,12 @@ then
     GOBIN="$ROOT/_build/new" go install -mod=readonly ./...
 fi
 
-# start old node
-screen -L -Logfile mytestnet/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/old/terrad $DENOM
+# spin up mytestnet
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    screen -L -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
+else
+    screen -L -Logfile mytestnet/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
+fi
 
 sleep 20
 

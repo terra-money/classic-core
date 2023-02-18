@@ -5,6 +5,7 @@ module github.com/classic-terra/core
 require (
 	github.com/CosmWasm/wasmvm v0.16.7
 	github.com/cosmos/cosmos-sdk v0.44.8
+	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/ibc-go v1.3.1
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
@@ -19,8 +20,8 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.6
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
-	google.golang.org/grpc v1.45.0
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
+	google.golang.org/grpc v1.52.3
 	gopkg.in/yaml.v2 v2.4.0
 )
 

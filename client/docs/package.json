@@ -1,0 +1,12 @@
+{
+    "name": "docs",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+      "combine": "swagger-combine ./config.json -o ./swagger-ui/swagger.yaml -f yaml --continueOnConflictingPaths --includeDefinitions"
+    },
+    "dependencies": {
+      "swagger-combine": "^1.4.0"
+    }
+}
