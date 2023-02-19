@@ -44,7 +44,7 @@ var (
 	DefaultWindowProbation         = uint64(12)                 // 3 month
 	DefaultTaxRate                 = sdk.NewDecWithPrec(1, 3)   // 0.1%
 	DefaultRewardWeight            = sdk.NewDecWithPrec(5, 2)   // 5%
-	DefaultBurnTaxSplit            = sdk.NewDecWithPrec(5, 1)   // 50%
+	DefaultBurnTaxSplit            = sdk.NewDecWithPrec(1, 1)   // 10% goes to community pool, 90% burn
 )
 
 var _ paramstypes.ParamSet = &Params{}

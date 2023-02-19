@@ -69,6 +69,12 @@ func (suite *AnteTestSuite) runBurnTaxFee(burnSplitRate sdk.Dec) {
 	require.Equal(amountFeeBefore, taxes)
 
 	totalSupplyBefore, _, err := bk.GetPaginatedTotalSupply(suite.ctx, &query.PageRequest{})
+	fmt.Printf(
+		"Before: TotalSupply %v, Community %v, FeeCollector %v\n",
+		totalSupplyBefore,
+		dk.GetFeePool(suite.ctx).CommunityPool,
+		amountFeeBefore,
+	)
 
 	// send tx to BurnTaxFeeDecorator antehandler
 	_, err = antehandler(suite.ctx, tx, false)
@@ -84,6 +90,8 @@ func (suite *AnteTestSuite) runBurnTaxFee(burnSplitRate sdk.Dec) {
 	// burn the burn account
 	tk.BurnCoinsFromBurnAccount(suite.ctx)
 
+	fmt.Printf("BurnSplitRate %v, splitTaxes %v\n", burnSplitRate, splitTaxesDecCoins)
+
 	// expected: total supply = tax - split tax
 	totalSupplyAfter, _, err := bk.GetPaginatedTotalSupply(suite.ctx, &query.PageRequest{})
 	burnTax := taxDecCoins.Sub(splitTaxesDecCoins)
@@ -98,6 +106,13 @@ func (suite *AnteTestSuite) runBurnTaxFee(burnSplitRate sdk.Dec) {
 	// expected: fee collector = 0
 	amountFeeAfter := bk.GetAllBalances(suite.ctx, feeCollector.GetAddress())
 	require.True(amountFeeAfter.Empty())
+
+	fmt.Printf(
+		"After: TotalSupply %v, Community %v, FeeCollector %v\n",
+		totalSupplyAfter,
+		communityPoolAfter,
+		amountFeeAfter,
+	)
 }
 
 func (suite *AnteTestSuite) DeductFees(sendAmount int64) sdk.Coins {

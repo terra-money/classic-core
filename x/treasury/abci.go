@@ -35,7 +35,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	}
 
 	// Settle seigniorage to oracle & distribution(community-pool) module-account
-	k.SettleSeigniorage(ctx)
+	// TODO: need to consider whether to remove this commenting when the swap enables
+	// k.SettleSeigniorage(ctx)
 
 	// Update tax-rate and reward-weight of next epoch
 	taxRate := k.UpdateTaxPolicy(ctx)
