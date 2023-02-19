@@ -32,7 +32,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 -->
 # Changelog
 
-## [Unreleased]
+## [v1.1.0-rc.1](https://github.com/classic-terra/core/releases/tag/v1.1.0-rc.1) - 2023-02-19
 ### Features
 * (build) [#101](https://github.com/classic-terra/core/pull/101) Upgrade test
 * (ante) [#103](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
