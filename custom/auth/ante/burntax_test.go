@@ -19,13 +19,14 @@ import (
 
 // go test -v -run ^TestAnteTestSuite/TestSplitTax$ github.com/classic-terra/core/custom/auth/ante
 func (suite *AnteTestSuite) TestSplitTax() {
-	suite.runBurnTaxFee(sdk.NewDecWithPrec(1, 0)) // 100%
-	suite.runBurnTaxFee(sdk.NewDecWithPrec(1, 1)) // 10%
-	suite.runBurnTaxFee(sdk.NewDecWithPrec(1, 2)) // 0.1%
-	suite.runBurnTaxFee(sdk.NewDecWithPrec(0, 0)) // 0% burn all taxes (old burn tax behavior)
+	suite.runSplitTaxTest(sdk.NewDecWithPrec(1, 0))  // 100%
+	suite.runSplitTaxTest(sdk.NewDecWithPrec(1, 1))  // 10%
+	suite.runSplitTaxTest(sdk.NewDecWithPrec(1, 2))  // 0.1%
+	suite.runSplitTaxTest(sdk.NewDecWithPrec(0, 0))  // 0% burn all taxes (old burn tax behavior)
+	suite.runSplitTaxTest(sdk.NewDecWithPrec(-1, 1)) // -10% invalid rate
 }
 
-func (suite *AnteTestSuite) runBurnTaxFee(burnSplitRate sdk.Dec) {
+func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 	suite.SetupTest(true) // setup
 	require := suite.Require()
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
@@ -80,31 +81,34 @@ func (suite *AnteTestSuite) runBurnTaxFee(burnSplitRate sdk.Dec) {
 	_, err = antehandler(suite.ctx, tx, false)
 	require.NoError(err)
 
-	taxDecCoins := sdk.NewDecCoinsFromCoins(taxes...)
-	splitTaxesDecCoins := taxDecCoins.MulDec(burnSplitRate)
-
-	// expected: community pool 50%
 	communityPoolAfter := dk.GetFeePool(suite.ctx).CommunityPool
-	require.Equal(communityPoolAfter, splitTaxesDecCoins)
+	burnTax := sdk.NewDecCoinsFromCoins(taxes...)
+
+	if burnSplitRate.IsPositive() {
+		splitTaxesDecCoins := burnTax.MulDec(burnSplitRate)
+
+		// expected: community pool 50%
+		require.Equal(communityPoolAfter, splitTaxesDecCoins)
+
+		fmt.Printf("BurnSplitRate %v, splitTaxes %v\n", burnSplitRate, splitTaxesDecCoins)
+		burnTax = burnTax.Sub(splitTaxesDecCoins)
+	}
 
 	// burn the burn account
 	tk.BurnCoinsFromBurnAccount(suite.ctx)
 
-	fmt.Printf("BurnSplitRate %v, splitTaxes %v\n", burnSplitRate, splitTaxesDecCoins)
-
-	// expected: total supply = tax - split tax
 	totalSupplyAfter, _, err := bk.GetPaginatedTotalSupply(suite.ctx, &query.PageRequest{})
-	burnTax := taxDecCoins.Sub(splitTaxesDecCoins)
 
 	if !burnTax.Empty() {
+		// expected: total supply = tax - split tax
 		require.Equal(
 			sdk.NewDecCoinsFromCoins(totalSupplyBefore.Sub(totalSupplyAfter)...),
 			burnTax,
 		)
 	}
 
-	// expected: fee collector = 0
 	amountFeeAfter := bk.GetAllBalances(suite.ctx, feeCollector.GetAddress())
+	// expected: fee collector = 0
 	require.True(amountFeeAfter.Empty())
 
 	fmt.Printf(

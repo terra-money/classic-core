@@ -120,15 +120,12 @@ func (btfd BurnTaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 			if burnSplitRate.IsPositive() {
 				communityDeltaCoins := sdk.NewCoins()
 
-				for i, taxCoin := range taxes {
+				for _, taxCoin := range taxes {
 					splitcoinAmount := burnSplitRate.MulInt(taxCoin.Amount).RoundInt()
-					splitCoin := sdk.NewCoin(taxCoin.Denom, splitcoinAmount)
-					taxes[i] = taxCoin.Sub(splitCoin)
-
-					if splitcoinAmount.IsPositive() {
-						communityDeltaCoins = communityDeltaCoins.Add(splitCoin)
-					}
+					communityDeltaCoins = communityDeltaCoins.Add(sdk.NewCoin(taxCoin.Denom, splitcoinAmount))
 				}
+
+				taxes = taxes.Sub(communityDeltaCoins)
 
 				if err = btfd.distrKeeper.FundCommunityPool(
 					ctx,
