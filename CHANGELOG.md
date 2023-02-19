@@ -45,6 +45,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (build) [#97](https://github.com/classic-terra/core/pull/97) Change module path to classic-terra/core
 * (build) [#102](https://github.com/classic-terra/core/pull/102) Snyk secops patches
 * (build) [#105](https://github.com/classic-terra/core/pull/105) Update docker assets
+* [#102](https://github.com/classic-terra/core/pull/112) Upgrade SDK proto to v0.7
 
 ### Bug Fixes
 * (auth/client) [#106](https://github.com/classic-terra/core/pull/106) fix ungraceful error on failed client tax query
