@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/std"
 
@@ -11,6 +13,7 @@ var legacyCodecRegistered = false
 
 // MakeEncodingConfig creates an EncodingConfig for testing
 func MakeEncodingConfig() params.EncodingConfig {
+	fmt.Println("Invoke codeql")
 	encodingConfig := params.MakeEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
