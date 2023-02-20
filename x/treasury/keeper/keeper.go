@@ -378,7 +378,14 @@ func (k Keeper) RemoveBurnTaxExemptionAddress(ctx sdk.Context, address string) e
 	return nil
 }
 
-func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, address string) bool {
+func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, addresses ...string) bool {
 	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
-	return sub.Has([]byte(address))
+
+	for _, address := range addresses {
+		if !sub.Has([]byte(address)) {
+			return false
+		}
+	}
+
+	return true
 }

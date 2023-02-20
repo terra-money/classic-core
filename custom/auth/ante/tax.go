@@ -110,14 +110,33 @@ func EnsureSufficientMempoolFees(ctx sdk.Context, gas uint64, feeCoins sdk.Coins
 // FilterMsgAndComputeTax computes the stability tax on MsgSend and MsgMultiSend.
 func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg) sdk.Coins {
 	taxes := sdk.Coins{}
+
 	for _, msg := range msgs {
 		switch msg := msg.(type) {
 		case *banktypes.MsgSend:
-			taxes = taxes.Add(computeTax(ctx, tk, msg.Amount)...)
+			if !tk.HasBurnTaxExemptionAddress(ctx, msg.FromAddress, msg.ToAddress) {
+				taxes = taxes.Add(computeTax(ctx, tk, msg.Amount)...)
+			}
 
 		case *banktypes.MsgMultiSend:
+			tainted := 0
+
 			for _, input := range msg.Inputs {
-				taxes = taxes.Add(computeTax(ctx, tk, input.Coins)...)
+				if tk.HasBurnTaxExemptionAddress(ctx, input.Address) {
+					tainted += 1
+				}
+			}
+
+			for _, output := range msg.Outputs {
+				if tk.HasBurnTaxExemptionAddress(ctx, output.Address) {
+					tainted += 1
+				}
+			}
+
+			if tainted != len(msg.Inputs)+len(msg.Outputs) {
+				for _, input := range msg.Inputs {
+					taxes = taxes.Add(computeTax(ctx, tk, input.Coins)...)
+				}
 			}
 
 		case *marketexported.MsgSwapSend:

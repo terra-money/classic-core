@@ -1,11 +1,16 @@
 package ante_test
 
 import (
+	"fmt"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/classic-terra/core/custom/auth/ante"
 	core "github.com/classic-terra/core/types"
@@ -186,7 +191,8 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesMultiSend() {
 			banktypes.NewInput(addr1, sendCoins),
 		},
 		[]banktypes.Output{
-			banktypes.NewOutput(addr1, sendCoins.Add(sendCoins...)),
+			banktypes.NewOutput(addr1, sendCoins),
+			banktypes.NewOutput(addr1, sendCoins),
 		},
 	)
 
@@ -518,7 +524,8 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesMultiSendLunaTax() {
 			banktypes.NewInput(addr1, sendCoins),
 		},
 		[]banktypes.Output{
-			banktypes.NewOutput(addr1, sendCoins.Add(sendCoins...)),
+			banktypes.NewOutput(addr1, sendCoins),
+			banktypes.NewOutput(addr1, sendCoins),
 		},
 	)
 
@@ -739,4 +746,161 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecLunaTax() {
 	// must pass with tax
 	_, err = antehandler(suite.ctx, tx, false)
 	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
+}
+
+// go test -v -run ^TestAnteTestSuite/TestTaxExemption$ github.com/classic-terra/core/custom/auth/ante
+func (suite *AnteTestSuite) TestTaxExemption() {
+	// keys and addresses
+	var privs []cryptotypes.PrivKey
+	var addrs []sdk.AccAddress
+
+	// 0, 1: exemption
+	// 2, 3: normal
+	for i := 0; i < 4; i++ {
+		priv, _, addr := testdata.KeyTestPubAddr()
+		privs = append(privs, priv)
+		addrs = append(addrs, addr)
+	}
+
+	// set send amount
+	sendAmt := int64(1000000)
+	sendCoin := sdk.NewInt64Coin(core.MicroSDRDenom, sendAmt)
+	feeAmt := int64(1000)
+
+	cases := []struct {
+		name              string
+		msgSigner         cryptotypes.PrivKey
+		msgCreator        func() []sdk.Msg
+		expectedFeeAmount int64
+	}{
+		{
+			name:      "MsgSend(exemption -> exemption)",
+			msgSigner: privs[0],
+			msgCreator: func() []sdk.Msg {
+				var msgs []sdk.Msg
+
+				msg1 := banktypes.NewMsgSend(addrs[0], addrs[1], sdk.NewCoins(sendCoin))
+				msgs = append(msgs, msg1)
+
+				return msgs
+			},
+			expectedFeeAmount: 0,
+		}, {
+			name:      "MsgSend(normal -> normal)",
+			msgSigner: privs[2],
+			msgCreator: func() []sdk.Msg {
+				var msgs []sdk.Msg
+
+				msg1 := banktypes.NewMsgSend(addrs[2], addrs[3], sdk.NewCoins(sendCoin))
+				msgs = append(msgs, msg1)
+
+				return msgs
+			},
+			// tax this one hence burn amount is fee amount
+			expectedFeeAmount: feeAmt,
+		}, {
+			name:      "MsgSend(exemption -> normal), MsgSend(exemption -> exemption)",
+			msgSigner: privs[0],
+			msgCreator: func() []sdk.Msg {
+				var msgs []sdk.Msg
+
+				msg1 := banktypes.NewMsgSend(addrs[0], addrs[2], sdk.NewCoins(sendCoin))
+				msgs = append(msgs, msg1)
+				msg2 := banktypes.NewMsgSend(addrs[0], addrs[1], sdk.NewCoins(sendCoin))
+				msgs = append(msgs, msg2)
+
+				return msgs
+			},
+			// tax this one hence burn amount is fee amount
+			expectedFeeAmount: feeAmt,
+		}, {
+			name:      "MsgSend(exemption -> exemption), MsgMultiSend(exemption -> normal, exemption -> exemption)",
+			msgSigner: privs[0],
+			msgCreator: func() []sdk.Msg {
+				var msgs []sdk.Msg
+
+				msg1 := banktypes.NewMsgSend(addrs[0], addrs[1], sdk.NewCoins(sendCoin))
+				msgs = append(msgs, msg1)
+				msg2 := banktypes.NewMsgMultiSend(
+					[]banktypes.Input{
+						{
+							Address: addrs[0].String(),
+							Coins:   sdk.NewCoins(sendCoin),
+						},
+						{
+							Address: addrs[0].String(),
+							Coins:   sdk.NewCoins(sendCoin),
+						},
+					},
+					[]banktypes.Output{
+						{
+							Address: addrs[2].String(),
+							Coins:   sdk.NewCoins(sendCoin),
+						},
+						{
+							Address: addrs[1].String(),
+							Coins:   sdk.NewCoins(sendCoin),
+						},
+					},
+				)
+				msgs = append(msgs, msg2)
+
+				return msgs
+			},
+			expectedFeeAmount: feeAmt * 2,
+		},
+	}
+
+	// there should be no coin in burn module
+	for _, c := range cases {
+		suite.SetupTest(true) // setup
+		require := suite.Require()
+		tk := suite.app.TreasuryKeeper
+		ak := suite.app.AccountKeeper
+		bk := suite.app.BankKeeper
+
+		// Set burn split rate to 50%
+		tk.SetBurnSplitRate(suite.ctx, sdk.NewDecWithPrec(5, 1))
+
+		fmt.Printf("CASE = %s \n", c.name)
+		suite.ctx = suite.ctx.WithBlockHeight(ante.TaxPowerUpgradeHeight)
+		suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[0].String())
+		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[1].String())
+
+		mfd := ante.NewTaxFeeDecorator(suite.app.TreasuryKeeper)
+		antehandler := sdk.ChainAnteDecorators(
+			mfd,
+			cosmosante.NewDeductFeeDecorator(ak, bk, suite.app.FeeGrantKeeper),
+		)
+
+		for i := 0; i < 4; i++ {
+			fundCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, 1000000000))
+			acc := ak.NewAccountWithAddress(suite.ctx, addrs[i])
+			ak.SetAccount(suite.ctx, acc)
+			bk.MintCoins(suite.ctx, minttypes.ModuleName, fundCoins)
+			bk.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addrs[i], fundCoins)
+		}
+
+		// msg and signatures
+		feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, c.expectedFeeAmount))
+		gasLimit := testdata.NewTestGasLimit()
+		require.NoError(suite.txBuilder.SetMsgs(c.msgCreator()...))
+		suite.txBuilder.SetFeeAmount(feeAmount)
+		suite.txBuilder.SetGasLimit(gasLimit)
+
+		privs, accNums, accSeqs := []cryptotypes.PrivKey{c.msgSigner}, []uint64{0}, []uint64{0}
+		tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+		require.NoError(err)
+
+		_, err = antehandler(suite.ctx, tx, false)
+		require.NoError(err)
+
+		// check fee collector
+		feeCollector := ak.GetModuleAccount(suite.ctx, types.FeeCollectorName)
+		amountFee := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+
+		require.Equal(amountFee, sdk.NewCoin("usdr", sdk.NewInt(c.expectedFeeAmount)))
+	}
 }

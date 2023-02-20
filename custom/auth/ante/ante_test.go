@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -63,13 +64,19 @@ func (suite *AnteTestSuite) SetupTest(isCheckTx bool) {
 	suite.ctx = suite.ctx.WithBlockHeight(1)
 
 	// Set up TxConfig.
+	encodingConfig := suite.SetupEncoding()
+
+	suite.clientCtx = client.Context{}.
+		WithTxConfig(encodingConfig.TxConfig)
+}
+
+func (suite *AnteTestSuite) SetupEncoding() simappparams.EncodingConfig {
 	encodingConfig := simapp.MakeTestEncodingConfig()
 	// We're using TestMsg encoding in some tests, so register it here.
 	encodingConfig.Amino.RegisterConcrete(&testdata.TestMsg{}, "testdata.TestMsg", nil)
 	testdata.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
-	suite.clientCtx = client.Context{}.
-		WithTxConfig(encodingConfig.TxConfig)
+	return encodingConfig
 }
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
