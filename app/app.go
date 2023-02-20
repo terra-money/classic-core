@@ -560,14 +560,15 @@ func NewTerraApp(
 
 	anteHandler, err := customante.NewAnteHandler(
 		customante.HandlerOptions{
-			AccountKeeper:    app.AccountKeeper,
-			BankKeeper:       app.BankKeeper,
-			FeegrantKeeper:   app.FeeGrantKeeper,
-			OracleKeeper:     app.OracleKeeper,
-			TreasuryKeeper:   app.TreasuryKeeper,
-			SigGasConsumer:   ante.DefaultSigVerificationGasConsumer,
-			SignModeHandler:  encodingConfig.TxConfig.SignModeHandler(),
-			IBCChannelKeeper: app.IBCKeeper.ChannelKeeper,
+			AccountKeeper:      app.AccountKeeper,
+			BankKeeper:         app.BankKeeper,
+			FeegrantKeeper:     app.FeeGrantKeeper,
+			OracleKeeper:       app.OracleKeeper,
+			TreasuryKeeper:     app.TreasuryKeeper,
+			SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
+			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
+			IBCChannelKeeper:   app.IBCKeeper.ChannelKeeper,
+			DistributionKeeper: app.DistrKeeper,
 		},
 	)
 	if err != nil {
