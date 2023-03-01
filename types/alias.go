@@ -40,7 +40,7 @@ const (
 	BombayChainID          = "bombay-12"
 	SwapDisableForkHeight  = fork.SwapDisableForkHeight
 	SwapEnableForkHeight   = fork.SwapEnableForkHeight
-	VersionMapEnableHeight = fork.VersionMapEnableHeight
+	// VersionMapEnableHeight = fork.VersionMapEnableHeight
 )
 
 // functions aliases
