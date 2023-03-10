@@ -89,7 +89,6 @@ func (q querier) ContractStore(c context.Context, req *types.QueryContractStoreR
 
 	// recover from out-of-gas panic
 	defer func() {
-
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			// TODO: Use ErrOutOfGas instead of ErrorOutOfGas which would allow us

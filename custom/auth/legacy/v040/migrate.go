@@ -68,7 +68,7 @@ func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
 	treasuryModuleAddress := v040auth.NewModuleAddress(v40treasury.ModuleName)
 
 	// Convert v0.39 accounts to v0.40 ones.
-	var v040Accounts = make([]v040auth.GenesisAccount, len(authGenState.Accounts))
+	v040Accounts := make([]v040auth.GenesisAccount, len(authGenState.Accounts))
 	for i, v039Account := range authGenState.Accounts {
 		switch v039Account := v039Account.(type) {
 		case *v039auth.BaseAccount:
@@ -140,7 +140,6 @@ func Migrate(authGenState v039auth.GenesisState) *v040auth.GenesisState {
 		default:
 			panic(sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "got invalid type %T", v039Account))
 		}
-
 	}
 
 	// Convert v0.40 accounts into Anys.

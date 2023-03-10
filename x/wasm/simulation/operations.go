@@ -1,6 +1,6 @@
 package simulation
 
-//DONTCOVER
+// DONTCOVER
 
 import (
 	"encoding/json"
@@ -126,7 +126,8 @@ var testContract []byte
 func SimulateMsgStoreCode(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simtypes.Operation {
+	k keeper.Keeper,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -190,11 +191,11 @@ func SimulateMsgInstantiateContract(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
-	protoCdc *codec.ProtoCodec) simtypes.Operation {
+	protoCdc *codec.ProtoCodec,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		bobAcc, _ := simtypes.RandomAcc(r, accs)
 		fredAcc, _ := simtypes.RandomAcc(r, accs)
 
@@ -250,11 +251,11 @@ func SimulateMsgExecuteContract(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
-	protoCdc *codec.ProtoCodec) simtypes.Operation {
+	protoCdc *codec.ProtoCodec,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 		info, err := k.GetContractInfo(ctx, contractAddr)
 		if err != nil {
@@ -316,7 +317,8 @@ func SimulateMsgMigrateContract(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
-	protoCdc *codec.ProtoCodec) simtypes.Operation {
+	protoCdc *codec.ProtoCodec,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -386,7 +388,8 @@ func SimulateMsgMigrateContract(
 func SimulateMsgUpdateContractAdmin(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simtypes.Operation {
+	k keeper.Keeper,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -445,7 +448,8 @@ func SimulateMsgUpdateContractAdmin(
 func SimulateMsgClearContractAdmin(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simtypes.Operation {
+	k keeper.Keeper,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {

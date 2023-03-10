@@ -23,7 +23,7 @@ type (
 		GrantMsgType string `json:"grant_msg_type"`
 	}
 
-	//SendAuthorization grants the permission to execute send transaction
+	// SendAuthorization grants the permission to execute send transaction
 	SendAuthorization struct {
 		// SpendLimit specifies the maximum amount of tokens that can be spent
 		// by this authorization and will be updated as tokens are spent. If it is

@@ -79,7 +79,6 @@ $ terrad market swap "1000ukrw" "uusd" "terra1..."
 				if !clientCtx.GenerateOnly && txf.Fees().IsZero() {
 					// estimate tax and gas
 					stdFee, err := feeutils.ComputeFeesWithCmd(clientCtx, cmd.Flags(), msg)
-
 					if err != nil {
 						return err
 					}

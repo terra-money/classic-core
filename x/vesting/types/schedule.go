@@ -35,7 +35,6 @@ func (s Schedule) GetRatio() sdk.Dec {
 
 // Validate checks that the lazy schedule is valid.
 func (s Schedule) Validate() error {
-
 	startTime := s.GetStartTime()
 	endTime := s.GetEndTime()
 	ratio := s.GetRatio()

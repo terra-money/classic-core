@@ -50,5 +50,4 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			sdk.NewAttribute(types.AttributeKeyTaxCap, taxCap.String()),
 		),
 	)
-
 }

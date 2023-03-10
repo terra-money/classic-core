@@ -27,13 +27,11 @@ const (
 	CanonicalizeWasmGasCost = canonicalizeCost * GasMultiplier
 )
 
-var (
-	// JSONDeserializationWasmGasCost json deserialization cost in wasm gas unit
-	JSONDeserializationWasmGasCost = wasmvmtypes.UFraction{
-		Numerator:   deserializationCostPerByte * GasMultiplier,
-		Denominator: 1,
-	}
-)
+// JSONDeserializationWasmGasCost json deserialization cost in wasm gas unit
+var JSONDeserializationWasmGasCost = wasmvmtypes.UFraction{
+	Numerator:   deserializationCostPerByte * GasMultiplier,
+	Denominator: 1,
+}
 
 // CompileCosts costs to persist and "compile" a new wasm contract
 func CompileCosts(byteLength int) sdk.Gas {

@@ -14,7 +14,6 @@ func NewGenesisState(
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
 	TobinTaxes []TobinTax,
 ) *GenesisState {
-
 	return &GenesisState{
 		Params:                        params,
 		ExchangeRates:                 rates,

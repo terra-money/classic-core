@@ -13,8 +13,10 @@ import (
 	wasm "github.com/classic-terra/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
-var _ wasm.WasmMsgParserInterface = WasmMsgParser{}
+var (
+	_ wasm.WasmQuerierInterface   = WasmQuerier{}
+	_ wasm.WasmMsgParserInterface = WasmMsgParser{}
+)
 
 // WasmMsgParser - wasm msg parser for staking msgs
 type WasmMsgParser struct{}
@@ -83,7 +85,6 @@ type SwapQueryResponse struct {
 func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	var params CosmosQuery
 	err := json.Unmarshal(data, &params)
-
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}

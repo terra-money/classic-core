@@ -36,7 +36,6 @@ func TestFuzz_Tally(t *testing.T) {
 			}
 		},
 		func(e *types.ExchangeRateBallot, c fuzz.Continue) {
-
 			ballot := types.ExchangeRateBallot{}
 			for addr, power := range validators {
 				addr, _ := sdk.ValAddressFromBech32(addr)

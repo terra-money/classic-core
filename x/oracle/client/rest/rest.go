@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//nolint
+// nolint
 const (
 	RestDenom = "denom"
 	RestVoter = "voter"

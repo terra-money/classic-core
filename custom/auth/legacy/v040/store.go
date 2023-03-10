@@ -21,7 +21,6 @@ func migrateMultiSigAccount(account types.AccountI) (types.AccountI, error) {
 
 // MigrateAccount migrates multisig account's PubKey as nil to restore mistakenly set PubKey
 // References: https://github.com/terra-money/classic-core/issues/562
-//
 func MigrateAccount(account types.AccountI) (types.AccountI, error) {
 	return migrateMultiSigAccount(account)
 }

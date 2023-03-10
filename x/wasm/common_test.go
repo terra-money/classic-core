@@ -63,7 +63,8 @@ func createFakeFundedAccount(
 	ctx sdk.Context,
 	am authkeeper.AccountKeeper,
 	bk bankkeeper.Keeper,
-	coins sdk.Coins) sdk.AccAddress {
+	coins sdk.Coins,
+) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	baseAcct := authtypes.NewBaseAccountWithAddress(addr)
 	am.SetAccount(ctx, baseAcct)

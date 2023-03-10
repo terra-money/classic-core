@@ -96,10 +96,13 @@ type swapQueryMsg struct {
 	OfferCoin wasmvmtypes.Coin `json:"offer_coin"`
 	AskDenom  string           `json:"ask_denom"`
 }
-type taxRateQueryMsg struct{}
-type taxCapQueryMsg struct {
-	Denom string `json:"denom"`
-}
+type (
+	taxRateQueryMsg struct{}
+	taxCapQueryMsg  struct {
+		Denom string `json:"denom"`
+	}
+)
+
 type exchangeRatesQueryMsg struct {
 	BaseDenom   string   `json:"base_denom"`
 	QuoteDenoms []string `json:"quote_denoms"`

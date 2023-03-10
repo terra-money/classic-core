@@ -81,8 +81,10 @@ type (
 	}
 )
 
-var _ v036gov.Content = TaxRateUpdateProposal{}
-var _ v036gov.Content = RewardWeightUpdateProposal{}
+var (
+	_ v036gov.Content = TaxRateUpdateProposal{}
+	_ v036gov.Content = RewardWeightUpdateProposal{}
+)
 
 // GetTitle returns the title of an TaxRateUpdateProposal.
 func (p TaxRateUpdateProposal) GetTitle() string { return p.Title }

@@ -15,8 +15,10 @@ import (
 	"github.com/classic-terra/core/x/wasm/types"
 )
 
-var _ types.StargateWasmQuerierInterface = StargateWasmQuerier{}
-var _ types.StargateWasmMsgParserInterface = StargateWasmMsgParser{}
+var (
+	_ types.StargateWasmQuerierInterface   = StargateWasmQuerier{}
+	_ types.StargateWasmMsgParserInterface = StargateWasmMsgParser{}
+)
 
 // StargateWasmMsgParser - wasm msg parser for stargate msgs
 type StargateWasmMsgParser struct {
@@ -81,7 +83,6 @@ func (querier StargateWasmQuerier) Query(ctx sdk.Context, request wasmvmtypes.Qu
 		Data: request.Stargate.Data,
 		Path: request.Stargate.Path,
 	})
-
 	if err != nil {
 		return nil, err
 	}

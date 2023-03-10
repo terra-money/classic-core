@@ -92,7 +92,8 @@ func MR(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec {
 // sumIndicator returns the sum of the indicator over several epochs.
 // If current epoch < epochs, we return the best we can and return sumIndicator(currentEpoch)
 func (k Keeper) sumIndicator(ctx sdk.Context, epochs int64,
-	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
+	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec,
+) sdk.Dec {
 	sum := sdk.ZeroDec()
 	curEpoch := k.GetEpoch(ctx)
 
@@ -107,7 +108,8 @@ func (k Keeper) sumIndicator(ctx sdk.Context, epochs int64,
 // rollingAverageIndicator returns the rolling average of the indicator over several epochs.
 // If current epoch < epochs, we return the best we can and return rollingAverageIndicator(currentEpoch)
 func (k Keeper) rollingAverageIndicator(ctx sdk.Context, epochs int64,
-	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec) sdk.Dec {
+	indicator func(ctx sdk.Context, epoch int64, k Keeper) sdk.Dec,
+) sdk.Dec {
 	sum := sdk.ZeroDec()
 	curEpoch := k.GetEpoch(ctx)
 

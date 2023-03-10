@@ -11,7 +11,8 @@ import (
 
 // RewardBallotWinners implements
 // at the end of every VotePeriod, give out a portion of spread fees collected in the oracle reward pool
-//  to the oracle voters that voted faithfully.
+//
+//	to the oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	votePeriod int64,
@@ -84,7 +85,6 @@ func (k Keeper) RewardBallotWinners(
 	if err != nil {
 		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
 	}
-
 }
 
 // RewardBallotWinnersLegacy implements
@@ -94,7 +94,8 @@ func (k Keeper) RewardBallotWinnersLegacy(
 	ctx sdk.Context,
 	votePeriod int64,
 	rewardDistributionWindow int64,
-	ballotWinners map[string]types.Claim) {
+	ballotWinners map[string]types.Claim,
+) {
 	// Sum weight of the claims
 	ballotPowerSum := int64(0)
 	for _, winner := range ballotWinners {
@@ -139,5 +140,4 @@ func (k Keeper) RewardBallotWinnersLegacy(
 	if err != nil {
 		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
 	}
-
 }

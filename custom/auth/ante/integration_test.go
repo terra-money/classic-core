@@ -123,7 +123,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 
 		// Set burn split rate to 50%
 		// fee amount should be 500, 50% of 10000
-		tk.SetBurnSplitRate(suite.ctx, sdk.NewDecWithPrec(5, 1)) //50%
+		tk.SetBurnSplitRate(suite.ctx, sdk.NewDecWithPrec(5, 1)) // 50%
 
 		feeCollector := ak.GetModuleAccount(suite.ctx, types.FeeCollectorName)
 		burnModule := ak.GetModuleAccount(suite.ctx, treasurytypes.BurnModuleName)

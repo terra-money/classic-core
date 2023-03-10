@@ -13,8 +13,10 @@ import (
 	wasm "github.com/classic-terra/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
-var _ wasm.WasmMsgParserInterface = WasmMsgParser{}
+var (
+	_ wasm.WasmQuerierInterface   = WasmQuerier{}
+	_ wasm.WasmMsgParserInterface = WasmMsgParser{}
+)
 
 // WasmMsgParser - wasm msg parser for staking msgs
 type WasmMsgParser struct{}

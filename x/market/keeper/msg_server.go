@@ -60,8 +60,8 @@ func (k msgServer) SwapSend(goCtx context.Context, msg *types.MsgSwapSend) (*typ
 // Ex) assert(offerCoin.Denom != askDenom)
 func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	trader sdk.AccAddress, receiver sdk.AccAddress,
-	offerCoin sdk.Coin, askDenom string) (*types.MsgSwapResponse, error) {
-
+	offerCoin sdk.Coin, askDenom string,
+) (*types.MsgSwapResponse, error) {
 	// Compute exchange rates between the ask and offer
 	swapDecCoin, spread, err := k.ComputeSwap(ctx, offerCoin, askDenom)
 	if err != nil {

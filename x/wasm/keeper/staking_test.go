@@ -576,7 +576,8 @@ func addValidator(
 	ctx sdk.Context,
 	stakingKeeper stakingkeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
-	bankKeeper bankkeeper.Keeper, value sdk.Coin) sdk.ValAddress {
+	bankKeeper bankkeeper.Keeper, value sdk.Coin,
+) sdk.ValAddress {
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
 	addr := sdk.ValAddress(pubKey.Address())
@@ -625,8 +626,8 @@ func setValidatorRewards(
 	bankKeeper bankkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 	distKeeper distrkeeper.Keeper,
-	valAddr sdk.ValAddress, rewards ...sdk.Coin) {
-
+	valAddr sdk.ValAddress, rewards ...sdk.Coin,
+) {
 	// allocate some rewards
 	validator := stakingKeeper.Validator(ctx, valAddr)
 	payout := sdk.NewDecCoinsFromCoins(rewards...)

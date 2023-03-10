@@ -65,7 +65,6 @@ func TestIterateTaxCap(t *testing.T) {
 
 		return false
 	})
-
 }
 
 func TestTaxProceeds(t *testing.T) {

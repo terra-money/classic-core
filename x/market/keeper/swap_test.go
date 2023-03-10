@@ -43,6 +43,7 @@ func TestApplySwapToPool(t *testing.T) {
 	sdrDiff = newSDRPoolDelta.Sub(oldSDRPoolDelta)
 	require.Equal(t, sdk.NewDec(0), sdrDiff)
 }
+
 func TestComputeSwap(t *testing.T) {
 	input := CreateTestInput(t)
 

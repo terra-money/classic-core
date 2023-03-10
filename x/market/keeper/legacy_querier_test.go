@@ -116,7 +116,6 @@ func TestLegacyQuerySwap(t *testing.T) {
 }
 
 func TestLegacyQueryMintPool(t *testing.T) {
-
 	input := CreateTestInput(t)
 
 	poolDelta := sdk.NewDecWithPrec(17, 1)

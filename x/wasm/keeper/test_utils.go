@@ -366,7 +366,8 @@ func CreateTestInput(t testing.TB, wasmConfig *config.Config) TestInput {
 		oracleKeeper,
 		marketKeeper,
 		treasuryKeeper,
-		keeper}
+		keeper,
+	}
 }
 
 // FundAccount is a utility function that funds an account by minting and

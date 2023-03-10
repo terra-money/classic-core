@@ -78,6 +78,7 @@ func TestHandleStore(t *testing.T) {
 		})
 	}
 }
+
 func TestHandleInstantiate(t *testing.T) {
 	loadContracts()
 

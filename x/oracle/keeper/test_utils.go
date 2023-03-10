@@ -1,8 +1,9 @@
-//nolint
+// nolint
 package keeper
 
 import (
 	"testing"
+	"time"
 
 	customauth "github.com/classic-terra/core/custom/auth"
 	custombank "github.com/classic-terra/core/custom/bank"
@@ -12,8 +13,6 @@ import (
 	core "github.com/classic-terra/core/types"
 	"github.com/classic-terra/core/x/oracle/types"
 	"github.com/stretchr/testify/require"
-
-	"time"
 
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"

@@ -64,7 +64,6 @@ func TestQuerySwap(t *testing.T) {
 }
 
 func TestQueryMintPoolDelta(t *testing.T) {
-
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.MarketKeeper)
