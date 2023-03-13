@@ -19,6 +19,16 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 0
+      
+      - name: Capture
+        run: |
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
+          echo "DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Reveal
+        run: |
+          echo $DOCKER_USERNAME
+          echo $DOCKERHUB_TOKEN
 
       - name: Prepare
         id: prep
