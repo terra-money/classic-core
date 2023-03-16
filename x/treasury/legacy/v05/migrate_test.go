@@ -153,7 +153,8 @@ func TestMigrate(t *testing.T) {
 		},
 		"window_long": "52",
 		"window_probation": "18",
-		"window_short": "4"
+		"window_short": "4",
+		"min_initial_deposit_ratio": "0"
 	},
 	"reward_weight": "1.000000000000000000",
 	"tax_caps": [

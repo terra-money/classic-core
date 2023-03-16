@@ -57,6 +57,15 @@ func (k Keeper) SetBurnSplitRate(ctx sdk.Context, burnTaxSplit sdk.Dec) {
 	k.paramSpace.Set(ctx, types.KeyBurnTaxSplit, burnTaxSplit)
 }
 
+func (k Keeper) GetMinInitialDepositRatio(ctx sdk.Context) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, types.KeyMinInitialDepositRatio, &res)
+	return
+}
+
+func (k Keeper) SetMinInitialDepositRatio(ctx sdk.Context, minInitialDepositRatio sdk.Dec) {
+	k.paramSpace.Set(ctx, types.KeyMinInitialDepositRatio, minInitialDepositRatio)
+}
+
 // GetParams returns the total set of treasury parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
