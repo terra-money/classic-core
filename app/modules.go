@@ -33,6 +33,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -207,20 +208,46 @@ func orderBeginBlockers() []string {
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		govtypes.ModuleName,
+		crisistypes.ModuleName,
+		oracletypes.ModuleName,
+		genutiltypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		paramstypes.ModuleName,
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		treasurytypes.ModuleName,
+		markettypes.ModuleName,
+		wasmtypes.ModuleName,
 	}
 }
 
 func orderEndBlockers() []string {
 	return []string{
-		crisistypes.ModuleName,
+		upgradetypes.ModuleName,
+		capabilitytypes.ModuleName,
+		minttypes.ModuleName,
+		distrtypes.ModuleName,
+		slashingtypes.ModuleName,
+		evidencetypes.ModuleName,
+		stakingtypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
 		govtypes.ModuleName,
+		crisistypes.ModuleName,
 		oracletypes.ModuleName,
-		markettypes.ModuleName,
-		treasurytypes.ModuleName,
+		genutiltypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
-		stakingtypes.ModuleName,
+		paramstypes.ModuleName,
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		treasurytypes.ModuleName,
+		markettypes.ModuleName,
+		wasmtypes.ModuleName,
 	}
 }
 
@@ -238,6 +265,8 @@ func orderInitGenesis() []string {
 		treasurytypes.ModuleName,
 		wasmtypes.ModuleName,
 		authz.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchost.ModuleName,

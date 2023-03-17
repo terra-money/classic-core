@@ -129,6 +129,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	}, module.Attributes[0])
 }
 
+// go test -v -run ^TestDispatchSubMsgErrorHandling$ github.com/classic-terra/core/x/wasm/keeper
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	fundedDenom := core.MicroLunaDenom
 	fundedAmount := 1_000_000
@@ -274,14 +275,14 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			submsgID: 5,
 			msg:      validBankSend,
 			// note we charge another 40k for the reply call
-			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 137000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(138000, 141000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(100000, 101500), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(100300, 101800), assertErrorString("insufficient funds")},
 		},
 		"out of gas panic with no gas limit": {
 			submsgID:        7,
@@ -294,7 +295,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(134000, 137000)},
+			resultAssertions: []assertion{assertReturnedEvents(5), assertGasUsed(138000, 141000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -302,7 +303,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertGasUsed(100000, 101500), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(100400, 101900), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,

@@ -95,8 +95,9 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	return contractAddr, creator, ctx, keeper, cdc
 }
 
+// go test -v -run ^TestGasCostOnQuery$ github.com/classic-terra/core/x/wasm/keeper
 func TestGasCostOnQuery(t *testing.T) {
-	GasNoWork := types.InstantiateContractCosts(0) + 3_509
+	GasNoWork := types.InstantiateContractCosts(0) + 3_602
 	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
 	GasWork50 := GasNoWork + 5_662 // this is a little shy of 50k gas - to keep an eye on the limit
 
@@ -253,6 +254,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 	}
 }
 
+// go test -v -run ^TestLimitRecursiveQueryGas$ github.com/classic-terra/core/x/wasm/keeper
 func TestLimitRecursiveQueryGas(t *testing.T) {
 	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
 	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)
@@ -262,7 +264,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	// eventually hitting an OutOfGas panic.
 
 	GasNoWork := types.InstantiateContractCosts(0) + 3_509
-	GasWork2k := GasNoWork + 228_931
+	GasWork2k := GasNoWork + 229_024
 
 	// This is overhead for calling into a sub-contract
 	const GasReturnHashed uint64 = 176
