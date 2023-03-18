@@ -337,11 +337,10 @@ docker-compose up -d
 ```
 
 #### Build from source
-Its possible to use docker-compose to build the images from the go source code by running the following commands in sequence:
 
-1) docker-compose -f docker-compose.node.yml -f docker-compose.build.yml build core --no-cache
-2) docker-compose -f docker-compose.node.yml -f docker-compose.build.yml build node --no-cache
-
+```sh
+make build-all -f contrib/terra-operator/Makefile
+```
 
 ## Resources
 

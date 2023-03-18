@@ -275,3 +275,18 @@ localnet-stop:
 	docker-compose down
 
 .PHONY: localnet-start localnet-stop
+
+###############################################################################
+###                                Images                                   ###
+###############################################################################
+
+build-operator-img-all: build-operator-img-core build-operator-img-node
+
+build-operator-img-core:
+	docker-compose -f contrib/terra-operator/docker-compose.build.yml build core --no-cache
+
+build-operator-img-node:
+	@if ! docker image inspect public.ecr.aws/p5q2r9h7/core:alpine3.17 &>/dev/null ; then make build-operator-img-core ; fi
+	docker-compose -f contrib/terra-operator/docker-compose.build.yml build node --no-cache
+
+.PHONY: build-operator-img-all build-operator-img-core build-operator-img-node

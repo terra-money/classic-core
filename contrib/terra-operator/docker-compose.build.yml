@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+   core:
+     image: public.ecr.aws/p5q2r9h7/core:alpine3.17
+     build:
+      context: ../..
+      dockerfile: Dockerfile
+      platforms:
+        - "linux/amd64"
+      labels:
+        - "description=Contains the terrad binary"
+   node:
+     image: public.ecr.aws/p5q2r9h7/node:alpine3.17
+     build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        base_image: public.ecr.aws/p5q2r9h7/core
+        version: alpine3.17
+      platforms:
+        - "linux/amd64"
+      labels:
+        - "description=Contains everything to run a full node"

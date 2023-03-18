@@ -1,0 +1,24 @@
+{
+  "keys": [
+    {
+      "keyring-keyname": "test",
+      "address": "terra1r9xyz4qgkktf4kycqnjj3tpsluaqxhzzqzke6x",
+      "mnemonic": "vintage emotion risk gun gadget siren quit weapon work dignity pudding lamp huge tube govern mosquito diary rookie card risk leg bridge velvet stick"
+    },
+    {
+      "keyring-keyname": "test1",
+      "address": "terra1ryyltrt8zvap3cgmv9mly7g87xgl99k3hnq6tv",
+      "mnemonic": "flat color utility today rent lake client hair victory pause text more connect lonely menu hope cup music armor critic license casino panic mirror"
+    },
+    {
+      "keyring-keyname": "test2",
+      "address": "terra1z2j9rsptplwap79k8t4dy05xhe9c3p0jqlseag",
+      "mnemonic": "mixed tourist quit copper robot panic rather record scare learn wing bicycle latin tape proud upper rocket scare tobacco thunder neither flat isolate humor"
+    },
+    {
+      "keyring-keyname": "test3",
+      "address": "terra15dpwzefn4zsktnnu0zl058p4kklsj4p05x560w",
+      "mnemonic": "permit lava scene secret ball lava iron result reunion purpose sea badge focus rug cradle human plastic rough stand swarm pipe diagram deliver faculty"
+    }
+  ]
+}

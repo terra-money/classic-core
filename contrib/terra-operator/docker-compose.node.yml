@@ -3,14 +3,12 @@ version: '3.8'
 services:
    node:
      container_name: node
-     image: terraclassic.terrad-node
+     image: public.ecr.aws/p5q2r9h7/node:alpine3.17
+     platform: linux/amd64
      environment:
-       - CHAINID=columbus-5
-       - ENABLE_LCD=true       
-       - ENABLE_UNSAFE_CORS=false
-       - CORS_ALLOWED_ORIGINS=[]
-       - CORS_ALLOWED_METHODS=["HEAD", "GET", "POST"]
-       - CORS_ALLOWED_HEADERS=["Origin", "Accept", "Content-Type", "X-Requested-With", "X-Server-Time"]
+       - CHAINID=test
+       - NEW_NETWORK=true
+       - ENABLE_LCD=true
        - TERRAD_STARTUP_PARAMETERS=--x-crisis-skip-assert-invariants
        - MINIMUM_GAS_PRICES=0.05uluna,0.104938usdr,0.15uusd,170.0ukrw
        - MONIKER=rebel-docker-node
