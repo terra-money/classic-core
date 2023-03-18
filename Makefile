@@ -14,6 +14,7 @@ DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bu
 #TESTNET PARAMETERS
 TESTNET_NVAL := $(if $(TESTNET_NVAL),$(TESTNET_NVAL),4)
 TESTNET_CHAINID := $(if $(TESTNET_CHAINID),$(TESTNET_CHAINID),localnet-1)
+TESTNET_VOTING_PERIOD := $(if $(TESTNET_VOTING_PERIOD),$(TESTNET_VOTING_PERIOD),86400s)
 
 ifneq ($(OS),Windows_NT)
   UNAME_S = $(shell uname -s)
@@ -259,7 +260,13 @@ localnet-start: localnet-stop build-linux
 		-v /etc/group:/etc/group:ro \
 		-v /etc/passwd:/etc/passwd:ro \
 		-v /etc/shadow:/etc/shadow:ro \
-		classic-terra/terrad-env testnet --chain-id ${TESTNET_CHAINID} --v ${TESTNET_NVAL} -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; fi
+		classic-terra/terrad-env testnet --chain-id ${TESTNET_CHAINID} --v ${TESTNET_NVAL} -o . --starting-ip-address 192.168.10.2 --keyring-backend=test; \
+	fi
+	for i in $$(seq 0 5); do \
+		echo $$i; \
+		jq '.app_state.gov.voting_params.voting_period = "${TESTNET_VOTING_PERIOD}"' build/node$$i/terrad/config/genesis.json > build/node$$i/terrad/config/genesis.json.tmp; \
+		mv build/node$$i/terrad/config/genesis.json.tmp build/node$$i/terrad/config/genesis.json; \
+	done
 	docker-compose up -d
 
 localnet-start-upgrade: localnet-upgrade-stop build-linux
