@@ -159,7 +159,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contractAddr sdk.AccAddress, ms
 	// append message action attribute
 	events = append(events, sdkEvents...)
 
-	return
+	return events, data, nil
 }
 
 func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.AccAddress, msg sdk.Msg) (*sdk.Result, error) {

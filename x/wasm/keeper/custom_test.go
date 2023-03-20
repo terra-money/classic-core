@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -55,11 +55,6 @@ type MakerQueryMsg struct {
 
 type simulateQuery struct {
 	OfferCoin wasmvmtypes.Coin `json:"offer"`
-}
-
-type simulateResponse struct {
-	SellCoin wasmvmtypes.Coin `json:"sell"`
-	BuyCoin  wasmvmtypes.Coin `json:"buy"`
 }
 
 // MakerTreasuryQuerymsg nolint
@@ -121,7 +116,7 @@ func TestInstantiateMaker(t *testing.T) {
 	_, _, creatorAddr := keyPubAddr()
 
 	// upload staking derivatives code
-	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
+	makingCode, err := os.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
 	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
 	require.NoError(t, err)
@@ -134,6 +129,7 @@ func TestInstantiateMaker(t *testing.T) {
 	}
 
 	initBz, err := json.Marshal(&initMsg)
+	require.NoError(t, err)
 	makerAddr, _, err := keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
@@ -159,6 +155,7 @@ func TestMarketQuerier(t *testing.T) {
 	}
 
 	retCoin, spread, err := marketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	require.NoError(t, err)
 	retAmount := retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()
 
 	bz, err := json.Marshal(swapQueryMsg)
@@ -287,6 +284,7 @@ func TestBuyMsg(t *testing.T) {
 	ctx, keeper, accKeeper, bankKeeper := input.Ctx, input.WasmKeeper, input.AccKeeper, input.BankKeeper
 
 	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	require.NoError(t, err)
 	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
 
 	// buy without limit
@@ -295,6 +293,7 @@ func TestBuyMsg(t *testing.T) {
 	}
 
 	bz, err := json.Marshal(&buyMsg)
+	require.NoError(t, err)
 
 	// normal buy
 	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
@@ -316,6 +315,7 @@ func TestBuyAndSendMsg(t *testing.T) {
 	treasuryKeeper.SetTaxRate(ctx, sdk.ZeroDec())
 
 	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
+	require.NoError(t, err)
 	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
 
 	// buy without limit
@@ -326,6 +326,7 @@ func TestBuyAndSendMsg(t *testing.T) {
 	}
 
 	bz, err := json.Marshal(&buyMsg)
+	require.NoError(t, err)
 
 	// normal buy
 	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(offerCoin))
@@ -346,6 +347,7 @@ func TestSellMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	retCoin, spread, err := input.MarketKeeper.ComputeSwap(input.Ctx, sellCoin, core.MicroSDRDenom)
+	require.NoError(t, err)
 	expectedRetCoins := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, retCoin.Amount.Mul(sdk.OneDec().Sub(spread)).TruncateInt()))
 
 	// sell without limit
@@ -354,6 +356,7 @@ func TestSellMsg(t *testing.T) {
 	}
 
 	bz, err := json.Marshal(&sellMsg)
+	require.NoError(t, err)
 
 	// normal sell
 	_, err = keeper.ExecuteContract(ctx, makerAddr, creatorAddr, bz, sdk.NewCoins(sellCoin))
@@ -384,6 +387,7 @@ func TestSendMsg(t *testing.T) {
 	}
 
 	bz, err := json.Marshal(&sendMsg)
+	require.NoError(t, err)
 
 	expectedTaxAmount := taxRate.MulInt(offerCoin.Amount).TruncateInt()
 	if expectedTaxAmount.GT(taxCap) {
@@ -410,7 +414,7 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	_, creatorAddr = createFakeFundedAccount(ctx, accKeeper, bankKeeper, sdk.NewCoins(initCoin))
 
 	// upload staking derivatives code
-	makingCode, err := ioutil.ReadFile("./testdata/maker.wasm")
+	makingCode, err := os.ReadFile("./testdata/maker.wasm")
 	require.NoError(t, err)
 	makerID, err := keeper.StoreCode(ctx, creatorAddr, makingCode)
 	require.NoError(t, err)
@@ -422,11 +426,12 @@ func setupMakerContract(t *testing.T) (input TestInput, creatorAddr, makerAddr s
 	}
 
 	initBz, err := json.Marshal(&initMsg)
+	require.NoError(t, err)
 	makerAddr, _, err = keeper.InstantiateContract(input.Ctx, makerID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, makerAddr)
 
-	return
+	return input, creatorAddr, makerAddr, initCoin
 }
 
 func setupBindingsTesterContract(t *testing.T) (input TestInput, creatorAddr, bindingsTesterAddr sdk.AccAddress, initCoin sdk.Coin) {
@@ -447,7 +452,7 @@ func setupBindingsTesterContract(t *testing.T) (input TestInput, creatorAddr, bi
 	_, creatorAddr = createFakeFundedAccount(ctx, accKeeper, bankKeeper, sdk.NewCoins(initCoin))
 
 	// upload binding_tester contract codes
-	bindingsTCode, err := ioutil.ReadFile("./testdata/bindings_tester.wasm")
+	bindingsTCode, err := os.ReadFile("./testdata/bindings_tester.wasm")
 	require.NoError(t, err)
 	bindingsTesterID, err := keeper.StoreCode(ctx, creatorAddr, bindingsTCode)
 	require.NoError(t, err)
@@ -455,9 +460,10 @@ func setupBindingsTesterContract(t *testing.T) (input TestInput, creatorAddr, bi
 
 	type EmptyStruct struct{}
 	initBz, err := json.Marshal(&EmptyStruct{})
+	require.NoError(t, err)
 	bindingsTesterAddr, _, err = keeper.InstantiateContract(input.Ctx, bindingsTesterID, creatorAddr, sdk.AccAddress{}, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, bindingsTesterAddr)
 
-	return
+	return input, creatorAddr, bindingsTesterAddr, initCoin
 }

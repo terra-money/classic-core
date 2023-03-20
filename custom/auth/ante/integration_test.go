@@ -3,7 +3,6 @@ package ante_test
 import (
 	"fmt"
 
-	"github.com/classic-terra/core/custom/auth/ante"
 	customante "github.com/classic-terra/core/custom/auth/ante"
 	core "github.com/classic-terra/core/types"
 	treasurytypes "github.com/classic-terra/core/x/treasury/types"
@@ -136,7 +135,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 				FeegrantKeeper:     suite.app.FeeGrantKeeper,
 				OracleKeeper:       suite.app.OracleKeeper,
 				TreasuryKeeper:     suite.app.TreasuryKeeper,
-				SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:     customante.DefaultSigVerificationGasConsumer,
 				SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
 				IBCChannelKeeper:   suite.app.IBCKeeper.ChannelKeeper,
 				DistributionKeeper: dk,
@@ -145,7 +144,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 		suite.Require().NoError(err)
 
 		fmt.Printf("CASE = %s \n", c.name)
-		suite.ctx = suite.ctx.WithBlockHeight(ante.TaxPowerUpgradeHeight)
+		suite.ctx = suite.ctx.WithBlockHeight(customante.TaxPowerUpgradeHeight)
 		suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
 		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[0].String())

@@ -32,7 +32,7 @@ type AppModuleBasic struct {
 // RegisterLegacyAminoCodec registers the bank module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }
 
 // RegisterRESTRoutes registers the REST routes for the market module.

@@ -14,20 +14,20 @@ import (
 )
 
 var (
-	_ wasm.WasmQuerierInterface   = WasmQuerier{}
-	_ wasm.WasmMsgParserInterface = WasmMsgParser{}
+	_ wasm.WasmQuerierInterface   = Querier{}
+	_ wasm.WasmMsgParserInterface = MsgParser{}
 )
 
 // WasmMsgParser - wasm msg parser for staking msgs
-type WasmMsgParser struct{}
+type MsgParser struct{}
 
 // NewWasmMsgParser returns bank wasm msg parser
-func NewWasmMsgParser() WasmMsgParser {
-	return WasmMsgParser{}
+func NewWasmMsgParser() MsgParser {
+	return MsgParser{}
 }
 
 // Parse implements wasm staking msg parser
-func (WasmMsgParser) Parse(_ sdk.AccAddress, _ wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
+func (MsgParser) Parse(_ sdk.AccAddress, _ wasmvmtypes.CosmosMsg) (sdk.Msg, error) {
 	return nil, nil
 }
 
@@ -38,7 +38,7 @@ type CosmosMsg struct {
 }
 
 // ParseCustom implements custom parser
-func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
+func (MsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessage) (sdk.Msg, error) {
 	var sdkMsg CosmosMsg
 	err := json.Unmarshal(data, &sdkMsg)
 	if err != nil {
@@ -57,17 +57,17 @@ func (WasmMsgParser) ParseCustom(contractAddr sdk.AccAddress, data json.RawMessa
 }
 
 // WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
+type Querier struct {
 	keeper keeper.Keeper
 }
 
 // NewWasmQuerier return bank wasm query interface
-func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
-	return WasmQuerier{keeper}
+func NewWasmQuerier(keeper keeper.Keeper) Querier {
+	return Querier{keeper}
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+func (Querier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
 	return nil, nil
 }
 
@@ -82,7 +82,7 @@ type SwapQueryResponse struct {
 }
 
 // QueryCustom implements custom query interface
-func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+func (querier Querier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	var params CosmosQuery
 	err := json.Unmarshal(data, &params)
 	if err != nil {

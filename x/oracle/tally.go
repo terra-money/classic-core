@@ -41,7 +41,7 @@ func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, val
 		}
 	}
 
-	return
+	return weightedMedian
 }
 
 // ballot for the asset is passing the threshold amount of voting power

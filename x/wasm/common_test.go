@@ -2,7 +2,7 @@ package wasm_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	key1, pub1, addr1 = keyPubAddr()
+	_, _, addr1       = keyPubAddr()
 	testContract      []byte
 	reflectContract   []byte
 	oldEscrowContract []byte
@@ -39,7 +39,7 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 }
 
 func mustLoad(path string) []byte {
-	bz, err := ioutil.ReadFile(path)
+	bz, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}

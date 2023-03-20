@@ -9,12 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
-	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-
-	randomPrice = sdk.NewDec(1700)
-)
+var randomPrice = sdk.NewDec(1700)
 
 func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input := keeper.CreateTestInput(t)

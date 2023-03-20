@@ -61,7 +61,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	res, err = querier.QueryCustom(input.Ctx, bz)
+	_, err = querier.QueryCustom(input.Ctx, bz)
 	require.Error(t, err)
 
 	// valid query luna exchange rates

@@ -3,7 +3,7 @@ package rest
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -36,7 +36,7 @@ func BroadcastTxRequest(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req BroadcastReq
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if rest.CheckBadRequestError(w, err) {
 			return
 		}
@@ -89,7 +89,7 @@ func BroadcastTxRequest(clientCtx client.Context) http.HandlerFunc {
 
 		// check the sequence nubmer is equal with the signature nubmer
 		if len(signatures) != len(req.Sequences) {
-			rest.CheckBadRequestError(w, errors.New("Must provide each signers's sequence number"))
+			rest.CheckBadRequestError(w, errors.New("must provide each signers's sequence number"))
 			return
 		}
 

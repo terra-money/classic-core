@@ -22,7 +22,7 @@ type AppModuleBasic struct {
 // RegisterLegacyAminoCodec registers the staking module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
-	*types.ModuleCdc = *customtypes.ModuleCdc // nolint
+	*types.ModuleCdc = *customtypes.ModuleCdc
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the gov

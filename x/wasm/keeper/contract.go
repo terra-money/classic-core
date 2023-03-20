@@ -471,7 +471,7 @@ func assertAndIncreaseQueryDepth(ctx sdk.Context) (sdk.Context, error) {
 	}
 
 	// set next query depth
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.WasmVMQueryDepthContextKey, queryDepth+1))
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), types.WasmVMQueryDepthContextKey, queryDepth+1)) //nolint:staticcheck
 
 	return ctx, nil
 }

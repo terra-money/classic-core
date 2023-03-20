@@ -129,6 +129,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	require.NoError(t, err)
 	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
@@ -195,6 +196,7 @@ func TestHandleExecute(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	require.NoError(t, err)
 	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
@@ -291,6 +293,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.False(t, contractAddr.Empty())
 
 	contractInfo, err := input.WasmKeeper.GetContractInfo(input.Ctx, contractAddr)
+	require.NoError(t, err)
 	expectedContractInfo := types.NewContractInfo(1, contractAddr, creator, sdk.AccAddress{}, initMsgBz)
 	require.Equal(t, expectedContractInfo, contractInfo)
 
@@ -303,7 +306,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 
 	execCmd := types.NewMsgExecuteContract(fred, contractAddr, handleMsgBz, topUp)
 
-	res, err = h(input.Ctx, execCmd)
+	_, err = h(input.Ctx, execCmd)
 	require.NoError(t, err)
 
 	// ensure bob now exists and got both payments released

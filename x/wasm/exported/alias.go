@@ -1,4 +1,3 @@
-// nolint
 package exported
 
 import "github.com/classic-terra/core/x/wasm/types"

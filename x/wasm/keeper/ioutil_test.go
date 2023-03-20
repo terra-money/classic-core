@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -19,10 +19,10 @@ func TestUncompress(t *testing.T) {
 	input := CreateTestInput(t, config.DefaultConfig())
 	ctx, keeper := input.Ctx, input.WasmKeeper
 
-	wasmRaw, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmRaw, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmGzipped, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
+	wasmGzipped, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
 	specs := map[string]struct {

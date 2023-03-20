@@ -29,7 +29,7 @@ const (
 	BlocksPerMonth         = util.BlocksPerMonth
 	BlocksPerYear          = util.BlocksPerYear
 	CoinType               = util.CoinType
-	FullFundraiserPath     = util.FullFundraiserPath
+	Purpose                = util.Purpose
 	Bech32PrefixAccAddr    = util.Bech32PrefixAccAddr
 	Bech32PrefixAccPub     = util.Bech32PrefixAccPub
 	Bech32PrefixValAddr    = util.Bech32PrefixValAddr

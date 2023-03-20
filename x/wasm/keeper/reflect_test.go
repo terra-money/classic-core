@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // cosmos proto currently uses this
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,10 +15,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -94,14 +92,14 @@ func TestReflectReflectContractSend(t *testing.T) {
 	_, _, bob := keyPubAddr()
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	reflectID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
 	// upload hackatom escrow code
-	escrowCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	escrowCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, err := keeper.StoreCode(ctx, creator, escrowCode)
 	require.NoError(t, err)
@@ -175,7 +173,7 @@ func TestReflectStargateQuery(t *testing.T) {
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, funds)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)
@@ -213,6 +211,7 @@ func TestReflectStargateQuery(t *testing.T) {
 		Address: creator.String(),
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
+	require.NoError(t, err)
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
@@ -249,7 +248,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	reflectID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)
@@ -321,7 +320,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	reflectID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)
@@ -375,35 +374,6 @@ func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKee
 	}
 }
 
-/**** Code to support custom messages *****/
-type reflectCustomMsg struct {
-	Debug string `json:"debug,omitempty"`
-	Raw   []byte `json:"raw,omitempty"`
-}
-
-// toMaskRawMsg encodes an sdk msg using amino json encoding.
-// Then wraps it as an opaque message
-func toMaskRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, err
-	}
-	rawBz, err := cdc.MarshalJSON(any)
-	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	customMsg, err := json.Marshal(reflectCustomMsg{Raw: rawBz})
-	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	res := wasmvmtypes.CosmosMsg{
-		Custom: customMsg,
-	}
-	return res, nil
-}
-
 func TestReflectInvalidStargateQuery(t *testing.T) {
 	input := CreateTestInput(t, config.DefaultConfig())
 	ctx, accKeeper, keeper, bankKeeper := input.Ctx, input.AccKeeper, input.WasmKeeper, input.BankKeeper
@@ -413,7 +383,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, funds)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.StoreCode(ctx, creator, reflectCode)
 	require.NoError(t, err)

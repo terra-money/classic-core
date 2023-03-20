@@ -2,6 +2,7 @@ package ante
 
 import (
 	"fmt"
+
 	core "github.com/classic-terra/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -33,7 +34,7 @@ func IsMsgSubmitProposal(msg sdk.Msg) bool {
 func HandleCheckMinInitialDeposit(ctx sdk.Context, msg sdk.Msg, govKeeper govkeeper.Keeper, treasuryKeeper TreasuryKeeper) (err error) {
 	submitPropMsg, ok := msg.(*govtypes.MsgSubmitProposal)
 	if !ok {
-		return fmt.Errorf("Could not dereference msg as MsgSubmitProposal")
+		return fmt.Errorf("could not dereference msg as MsgSubmitProposal")
 	}
 
 	minDeposit := govKeeper.GetDepositParams(ctx).MinDeposit
@@ -45,7 +46,7 @@ func HandleCheckMinInitialDeposit(ctx sdk.Context, msg sdk.Msg, govKeeper govkee
 	initialDepositCoins := submitPropMsg.GetInitialDeposit()
 
 	if !initialDepositCoins.IsAllGTE(requiredDepositCoins) {
-		return fmt.Errorf("Not enough initial deposit provided. Expected %q; got %q", requiredDepositCoins, initialDepositCoins)
+		return fmt.Errorf("not enough initial deposit provided. Expected %q; got %q", requiredDepositCoins, initialDepositCoins)
 	}
 
 	return nil

@@ -23,11 +23,12 @@ func migrateAuthorization(oldAuthorization v04msgauth.Authorization) *codectypes
 	case v04msgauth.GenericAuthorization:
 		{
 			var msgTypeURL string
-			if oldAuthorization.GrantMsgType == "swap" {
+			switch oldAuthorization.GrantMsgType {
+			case "swap":
 				msgTypeURL = sdk.MsgTypeURL(&v05market.MsgSwap{})
-			} else if oldAuthorization.GrantMsgType == "vote" {
+			case "vote":
 				msgTypeURL = sdk.MsgTypeURL(&v043gov.MsgVote{})
-			} else {
+			default:
 				panic(fmt.Errorf("%T is not a valid generic authorization msg type", oldAuthorization.GrantMsgType))
 			}
 

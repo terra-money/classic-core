@@ -60,6 +60,9 @@ func queryBurnTaxExemptionList(ctx sdk.Context, req abci.RequestQuery, k Keeper,
 
 		return true, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	burnTaxExemptionListRes := &types.QueryBurnTaxExemptionListResponse{
 		Addresses:  addresses,

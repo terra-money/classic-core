@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -72,7 +72,7 @@ $ terrad tx store ./path-to-binary --migrate-code-id 3
 			}
 
 			// parse coins trying to be sent
-			wasmBytes, err := ioutil.ReadFile(args[0])
+			wasmBytes, err := os.ReadFile(args[0])
 			if err != nil {
 				return err
 			}
@@ -94,11 +94,14 @@ $ terrad tx store ./path-to-binary --migrate-code-id 3
 			}
 
 			var msg sdk.Msg
-			if codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID); err != nil {
+			codeID, err := cmd.Flags().GetUint64(flagMigrateCodeID)
+
+			switch {
+			case err != nil:
 				return err
-			} else if codeID != 0 {
+			case codeID != 0:
 				msg = types.NewMsgMigrateCode(codeID, fromAddr, wasmBytes)
-			} else {
+			default:
 				msg = types.NewMsgStoreCode(fromAddr, wasmBytes)
 			}
 

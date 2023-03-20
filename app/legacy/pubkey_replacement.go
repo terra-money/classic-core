@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/pkg/errors"
 	cryptocodec "github.com/tendermint/tendermint/crypto/encoding"
@@ -38,7 +38,7 @@ type replacementConfig struct {
 }
 
 func loadKeydataFromFile(clientCtx client.Context, replacementrJSON string, genDoc *tmtypes.GenesisDoc) *tmtypes.GenesisDoc {
-	jsonReplacementBlob, err := ioutil.ReadFile(replacementrJSON)
+	jsonReplacementBlob, err := os.ReadFile(replacementrJSON)
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "failed to read replacement keys from file %s", replacementrJSON))
 	}

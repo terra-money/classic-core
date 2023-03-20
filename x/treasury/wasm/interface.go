@@ -13,20 +13,20 @@ import (
 	wasm "github.com/classic-terra/core/x/wasm/exported"
 )
 
-var _ wasm.WasmQuerierInterface = WasmQuerier{}
+var _ wasm.WasmQuerierInterface = Querier{}
 
-// WasmQuerier - staking query interface for wasm contract
-type WasmQuerier struct {
+// Querier - staking query interface for wasm contract
+type Querier struct {
 	keeper keeper.Keeper
 }
 
-// NewWasmQuerier return bank wasm query interface
-func NewWasmQuerier(keeper keeper.Keeper) WasmQuerier {
-	return WasmQuerier{keeper}
+// NewQuerier return bank wasm query interface
+func NewWasmQuerier(keeper keeper.Keeper) Querier {
+	return Querier{keeper}
 }
 
 // Query - implement query function
-func (WasmQuerier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
+func (Querier) Query(_ sdk.Context, _ wasmvmtypes.QueryRequest) ([]byte, error) {
 	return nil, nil
 }
 
@@ -49,7 +49,7 @@ type TaxCapQueryResponse struct {
 }
 
 // QueryCustom implements custom query interface
-func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
+func (querier Querier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([]byte, error) {
 	var query CosmosQuery
 	err := json.Unmarshal(data, &query)
 	if err != nil {
@@ -58,13 +58,14 @@ func (querier WasmQuerier) QueryCustom(ctx sdk.Context, data json.RawMessage) ([
 
 	var bz []byte
 
-	if query.TaxRate != nil {
+	switch {
+	case query.TaxRate != nil:
 		rate := querier.keeper.GetTaxRate(ctx)
 		bz, err = json.Marshal(TaxRateQueryResponse{Rate: rate.String()})
-	} else if query.TaxCap != nil {
+	case query.TaxCap != nil:
 		cap := querier.keeper.GetTaxCap(ctx, query.TaxCap.Denom)
 		bz, err = json.Marshal(TaxCapQueryResponse{Cap: cap.String()})
-	} else {
+	default:
 		return nil, sdkerrors.ErrInvalidRequest
 	}
 

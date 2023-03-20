@@ -46,7 +46,7 @@ var (
 	DefaultTaxRate                 = sdk.NewDecWithPrec(1, 3)   // 0.1%
 	DefaultRewardWeight            = sdk.NewDecWithPrec(5, 2)   // 5%
 	DefaultBurnTaxSplit            = sdk.NewDecWithPrec(1, 1)   // 10% goes to community pool, 90% burn
-	DefaultMinInitialDepositRatio  = sdk.ZeroDec()				// 0% min initial deposit
+	DefaultMinInitialDepositRatio  = sdk.ZeroDec()              // 0% min initial deposit
 )
 
 var _ paramstypes.ParamSet = &Params{}
@@ -79,7 +79,6 @@ func (p Params) String() string {
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // pairs of treasury module's parameters.
-// nolint
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyTaxPolicy, &p.TaxPolicy, validateTaxPolicy),
@@ -254,7 +253,6 @@ func validateBurnTaxSplit(i interface{}) error {
 }
 
 func validateMinInitialDepositRatio(i interface{}) error {
-
 	v, ok := i.(sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid paramater type: %T", i)
@@ -269,5 +267,4 @@ func validateMinInitialDepositRatio(i interface{}) error {
 	}
 
 	return nil
-
 }

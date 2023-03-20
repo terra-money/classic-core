@@ -219,7 +219,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			}
 
 			vote := types.NewVoteForTally(
-				sdk.NewDec(int64(input)),
+				sdk.NewDec(input),
 				core.MicroSDRDenom,
 				valAddr,
 				power,

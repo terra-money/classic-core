@@ -1,6 +1,4 @@
 // DONTCOVER
-//
-//nolint:deadcode,unused
 package exported
 
 import "github.com/classic-terra/core/x/market/types"

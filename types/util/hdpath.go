@@ -1,8 +1,10 @@
 package util
 
 const (
+	// https://github.com/cosmos/cosmos-sdk/pull/8629
+	// https://github.com/cosmos/cosmos-sdk/blob/main/types/config.go#L218
 	// CoinType defines LUNA bip44 coin type
 	CoinType = uint32(330)
-	// FullFundraiserPath defines full fundraiser path for LUNA coin type
-	FullFundraiserPath = "44'/330'/0'/0/0"
+	// Purpose defines LUNA bip44 purpose
+	Purpose = uint32(44)
 )

@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	core "github.com/classic-terra/core/types"
@@ -20,7 +20,7 @@ func TestInstantiateExceedMaxGas(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -53,7 +53,7 @@ func TestExecuteExceedMaxGas(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -71,6 +71,7 @@ func TestExecuteExceedMaxGas(t *testing.T) {
 	require.NoError(t, err)
 
 	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, nil)
+	require.NoError(t, err)
 
 	// must panic
 	require.Panics(t, func() {
@@ -88,7 +89,7 @@ func TestMigrateExceedMaxGas(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 100000))
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keeper.StoreCode(ctx, creator, wasmCode)
@@ -106,6 +107,7 @@ func TestMigrateExceedMaxGas(t *testing.T) {
 	require.NoError(t, err)
 
 	addr, _, err := keeper.InstantiateContract(ctx, codeID, creator, sdk.AccAddress{}, initMsgBz, nil)
+	require.NoError(t, err)
 
 	// must panic
 	require.Panics(t, func() {

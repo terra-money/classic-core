@@ -46,8 +46,8 @@ import (
 
 	// upgrades
 	"github.com/classic-terra/core/app/upgrades"
-	"github.com/classic-terra/core/app/upgrades/v2"
-	"github.com/classic-terra/core/app/upgrades/v3"
+	v2 "github.com/classic-terra/core/app/upgrades/v2"
+	v3 "github.com/classic-terra/core/app/upgrades/v3"
 
 	customante "github.com/classic-terra/core/custom/auth/ante"
 	customauthrest "github.com/classic-terra/core/custom/auth/client/rest"
@@ -79,7 +79,7 @@ var (
 // TerraApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
-type TerraApp struct { // nolint: golint
+type TerraApp struct {
 	*baseapp.BaseApp
 	keepers.AppKeepers
 

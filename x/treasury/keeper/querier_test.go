@@ -161,5 +161,6 @@ func TestQueryIndicators(t *testing.T) {
 	// Change context to next epoch
 	input.Ctx = input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek))
 	res, err = querier.Indicators(ctx, &types.QueryIndicatorsRequest{})
+	require.NoError(t, err)
 	require.Equal(t, targetIndicators, res)
 }

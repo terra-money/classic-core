@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/classic-terra/core/types"
 	"github.com/classic-terra/core/x/oracle"
 	"github.com/classic-terra/core/x/oracle/keeper"
 
@@ -14,11 +13,9 @@ import (
 )
 
 var (
-	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
 	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
-	randomExchangeRate        = sdk.NewDec(1700)
-	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
+	randomExchangeRate = sdk.NewDec(1700)
 )
 
 func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, sdk.Handler) {

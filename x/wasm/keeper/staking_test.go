@@ -2,13 +2,12 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -110,7 +109,7 @@ func TestInitializeStaking(t *testing.T) {
 	_, creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload staking derivative code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
 	require.NoError(t, err)
@@ -178,7 +177,7 @@ func initializeStaking(t *testing.T, input TestInput) InitInfo {
 	_, creatorAddr := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload staking derivative code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.StoreCode(ctx, creatorAddr, stakingCode)
 	require.NoError(t, err)
@@ -432,7 +431,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	_, creator := createFakeFundedAccount(ctx, accKeeper, bankKeeper, deposit)
 
 	// upload mask code
-	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	maskCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	maskID, err := keeper.StoreCode(ctx, creator, maskCode)
 	require.NoError(t, err)
@@ -582,7 +581,7 @@ func addValidator(
 	pubKey := privKey.PubKey()
 	addr := sdk.ValAddress(pubKey.Address())
 
-	pkAny, _ := codectypes.NewAnyWithValue(cryptotypes.PubKey(simapp.CreateTestPubKeys(1)[0]))
+	pkAny, _ := codectypes.NewAnyWithValue(simapp.CreateTestPubKeys(1)[0])
 	_, owner := createFakeFundedAccount(ctx, accountKeeper, bankKeeper, sdk.Coins{value})
 
 	msg := stakingtypes.MsgCreateValidator{

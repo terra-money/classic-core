@@ -138,7 +138,7 @@ func TestQuerySwap(t *testing.T) {
 
 	require.NoError(t, err)
 
-	res, err := querier.QueryCustom(input.Ctx, bz)
+	_, err = querier.QueryCustom(input.Ctx, bz)
 	require.Error(t, err)
 
 	// overflow query
@@ -160,7 +160,7 @@ func TestQuerySwap(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	res, err = querier.QueryCustom(input.Ctx, bz)
+	res, err := querier.QueryCustom(input.Ctx, bz)
 	require.NoError(t, err)
 
 	var swapResponse SwapQueryResponse

@@ -39,16 +39,16 @@ func (ts txServer) ComputeTax(c context.Context, req *ComputeTaxRequest) (*Compu
 	}
 
 	var msgs []sdk.Msg
-	if len(req.TxBytes) != 0 {
+	switch {
+	case len(req.TxBytes) != 0:
 		tx, err := ts.clientCtx.TxConfig.TxDecoder()(req.TxBytes)
 		if err != nil {
 			return nil, err
 		}
-
 		msgs = tx.GetMsgs()
-	} else if req.Tx != nil {
+	case req.Tx != nil:
 		msgs = req.Tx.GetMsgs()
-	} else {
+	default:
 		return nil, status.Errorf(codes.InvalidArgument, "empty txBytes is not allowed")
 	}
 

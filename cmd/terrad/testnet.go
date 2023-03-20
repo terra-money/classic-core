@@ -25,6 +25,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -138,7 +139,7 @@ func InitTestnet(
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
 	// generate private keys, node IDs, and initial transactions
-	
+
 	// can have 6 validators at most
 	// but need to go through all nodes to initialize config and such
 	for i := 0; i < 6; i++ {
@@ -148,7 +149,7 @@ func InitTestnet(
 
 		nodeConfig.SetRoot(nodeDir)
 		nodeConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
-	
+
 		// 1.) create testnet config dirs
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)
@@ -172,7 +173,6 @@ func InitTestnet(
 			return err
 		}
 
-		
 		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
 		genFiles = append(genFiles, nodeConfig.GenesisFile())
 
@@ -187,7 +187,7 @@ func InitTestnet(
 			return err
 		}
 
-		addr, secret, err := server.GenerateSaveCoinKey(kb, nodeDirName, true, algo)
+		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -204,14 +204,13 @@ func InitTestnet(
 		if err := writeFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
 			return err
 		}
-		
+
 		// create account Tokens for node
 		accTokens := sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)
-		
+
 		// create staking tokens for node
 		accStakingTokens := sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction)
-		
-		
+
 		coins := sdk.Coins{
 			sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), accTokens),
 			sdk.NewCoin(core.MicroLunaDenom, accStakingTokens),
@@ -220,7 +219,7 @@ func InitTestnet(
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-		
+
 		// create gentxs only for numValidators
 		if i < numValidators {
 			// create the validator for node i
@@ -235,7 +234,7 @@ func InitTestnet(
 			if err != nil {
 				return err
 			}
-		
+
 			// create gentx (create validator) and write to file
 			txBuilder := clientCtx.TxConfig.NewTxBuilder()
 			if err := txBuilder.SetMsgs(createValMsg); err != nil {
@@ -259,7 +258,7 @@ func InitTestnet(
 				return err
 			}
 		}
-		
+
 		// write config file app.toml
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), terraappConfig)
 	}
@@ -396,7 +395,7 @@ func calculateIP(ip string, i int) (string, error) {
 }
 
 func writeFile(name string, dir string, contents []byte) error {
-	writePath := filepath.Join(dir)
+	writePath := dir
 	file := filepath.Join(writePath, name)
 
 	err := tmos.EnsureDir(writePath, 0o755)

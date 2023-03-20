@@ -1,6 +1,5 @@
 package assets
 
-// nolint
 const (
 	MicroLunaDenom = "uluna"
 	MicroUSDDenom  = "uusd"

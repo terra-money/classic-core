@@ -148,10 +148,6 @@ func TestLoadIndicatorByEpoch(t *testing.T) {
 	require.Equal(t, sdk.ZeroDec(), MR(input.Ctx, 5, input.TreasuryKeeper))
 }
 
-func linearFn(_ sdk.Context, _ Keeper, epoch int64) sdk.Dec {
-	return sdk.NewDec(epoch)
-}
-
 func TestSumIndicator(t *testing.T) {
 	input := CreateTestInput(t)
 

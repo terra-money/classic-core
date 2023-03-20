@@ -123,13 +123,13 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 
 			for _, input := range msg.Inputs {
 				if tk.HasBurnTaxExemptionAddress(ctx, input.Address) {
-					tainted += 1
+					tainted++
 				}
 			}
 
 			for _, output := range msg.Outputs {
 				if tk.HasBurnTaxExemptionAddress(ctx, output.Address) {
-					tainted += 1
+					tainted++
 				}
 			}
 
