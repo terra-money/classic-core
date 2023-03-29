@@ -38,6 +38,8 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	feesharekeeper "github.com/classic-terra/core/x/feeshare/keeper"
+	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
 	marketkeeper "github.com/classic-terra/core/x/market/keeper"
 	markettypes "github.com/classic-terra/core/x/market/types"
 	oraclekeeper "github.com/classic-terra/core/x/oracle/keeper"
@@ -84,6 +86,7 @@ type AppKeepers struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	TransferKeeper   ibctransferkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
+	FeeShareKeeper   feesharekeeper.Keeper
 	MarketKeeper     marketkeeper.Keeper
 	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
@@ -200,6 +203,15 @@ func NewAppKeepers(
 		appKeepers.StakingKeeper, appKeepers.DistrKeeper,
 		distrtypes.ModuleName)
 
+	appKeepers.FeeShareKeeper = feesharekeeper.NewKeeper(
+		appKeepers.keys[feesharetypes.StoreKey],
+		appCodec,
+		appKeepers.GetSubspace(feesharetypes.ModuleName),
+		appKeepers.BankKeeper,
+		appKeepers.WasmKeeper,
+		authtypes.FeeCollectorName,
+	)
+
 	appKeepers.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		appKeepers.keys[wasmtypes.StoreKey],
@@ -263,6 +275,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	paramsKeeper.Subspace(feesharetypes.ModuleName)
 
 	return paramsKeeper
 }

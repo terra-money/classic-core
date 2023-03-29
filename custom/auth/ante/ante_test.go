@@ -25,6 +25,7 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	terraapp "github.com/classic-terra/core/app"
+	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
 	treasurytypes "github.com/classic-terra/core/x/treasury/types"
 	wasmconfig "github.com/classic-terra/core/x/wasm/config"
 )
@@ -52,6 +53,7 @@ func createTestApp(isCheckTx bool, tempDir string) (*terraapp.TerraApp, sdk.Cont
 	app.TreasuryKeeper.SetParams(ctx, treasurytypes.DefaultParams())
 	app.DistrKeeper.SetParams(ctx, distributiontypes.DefaultParams())
 	app.DistrKeeper.SetFeePool(ctx, distributiontypes.InitialFeePool())
+	app.FeeShareKeeper.SetParams(ctx, feesharetypes.DefaultParams())
 
 	return app, ctx
 }

@@ -202,6 +202,7 @@ func NewTerraApp(
 			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
 			IBCChannelKeeper:   app.IBCKeeper.ChannelKeeper,
 			DistributionKeeper: app.DistrKeeper,
+			FeeShareKeeper:     app.FeeShareKeeper,
 			GovKeeper:          app.GovKeeper,
 		},
 	)
