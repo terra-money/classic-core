@@ -3,7 +3,7 @@ version: '3.8'
 services:
    node:
      container_name: node
-     image: public.ecr.aws/p5q2r9h7/node:alpine3.17
+     image: public.ecr.aws/classic-terra/node:alpine3.17
      platform: linux/amd64
      environment:
        - CHAINID=test

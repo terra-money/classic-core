@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -32,6 +33,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	core "github.com/classic-terra/core/types"
@@ -119,8 +121,8 @@ func InitTestnet(
 		chainID = "chain-" + tmrand.NewRand().Str(6)
 	}
 
-	nodeIDs := make([]string, 6)
-	valPubKeys := make([]cryptotypes.PubKey, 6)
+	nodeIDs := make([]string, numValidators)
+	valPubKeys := make([]cryptotypes.PubKey, numValidators)
 
 	_, appConfig := initAppConfig()
 	terraappConfig := appConfig.(TerraAppConfig)
@@ -140,9 +142,7 @@ func InitTestnet(
 	inBuf := bufio.NewReader(cmd.InOrStdin())
 	// generate private keys, node IDs, and initial transactions
 
-	// can have 6 validators at most
-	// but need to go through all nodes to initialize config and such
-	for i := 0; i < 6; i++ {
+	for i := 0; i < numValidators; i++ {
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
 		nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 		gentxsDir := filepath.Join(outputDir, "gentxs")
@@ -220,43 +220,40 @@ func InitTestnet(
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 
-		// create gentxs only for numValidators
-		if i < numValidators {
-			// create the validator for node i
-			createValMsg, err := stakingtypes.NewMsgCreateValidator(
-				sdk.ValAddress(addr),
-				valPubKeys[i],
-				sdk.NewCoin(core.MicroLunaDenom, valTokens),
-				stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-				stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
-				sdk.OneInt(),
-			)
-			if err != nil {
-				return err
-			}
+		// create the validator for node i
+		createValMsg, err := stakingtypes.NewMsgCreateValidator(
+			sdk.ValAddress(addr),
+			valPubKeys[i],
+			sdk.NewCoin(core.MicroLunaDenom, valTokens),
+			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
+			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
+			sdk.OneInt(),
+		)
+		if err != nil {
+			return err
+		}
 
-			// create gentx (create validator) and write to file
-			txBuilder := clientCtx.TxConfig.NewTxBuilder()
-			if err := txBuilder.SetMsgs(createValMsg); err != nil {
-				return err
-			}
-			txBuilder.SetMemo(memo)
-			txFactory := tx.Factory{}
-			txFactory = txFactory.
-				WithChainID(chainID).
-				WithMemo(memo).
-				WithKeybase(kb).
-				WithTxConfig(clientCtx.TxConfig)
-			if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
-				return err
-			}
-			txBz, err := clientCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-			if err != nil {
-				return err
-			}
-			if err := writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
-				return err
-			}
+		// create gentx (create validator) and write to file
+		txBuilder := clientCtx.TxConfig.NewTxBuilder()
+		if err := txBuilder.SetMsgs(createValMsg); err != nil {
+			return err
+		}
+		txBuilder.SetMemo(memo)
+		txFactory := tx.Factory{}
+		txFactory = txFactory.
+			WithChainID(chainID).
+			WithMemo(memo).
+			WithKeybase(kb).
+			WithTxConfig(clientCtx.TxConfig)
+		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+			return err
+		}
+		txBz, err := clientCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
+		if err != nil {
+			return err
+		}
+		if err := writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
+			return err
 		}
 
 		// write config file app.toml
@@ -303,7 +300,18 @@ func initGenFiles(
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[banktypes.ModuleName], &bankGenState)
 
 	bankGenState.Balances = genBalances
+	totalSupply := sdk.NewCoins()
+	for _, balance := range bankGenState.Balances {
+		totalSupply = totalSupply.Add(balance.Coins...)
+	}
+	bankGenState.Supply = totalSupply
 	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
+
+	// set gov in the genesis state
+	var govGenState govtypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
+	govGenState.VotingParams.VotingPeriod = time.Second * 30
+	appGenState[govtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&govGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
@@ -317,7 +325,7 @@ func initGenFiles(
 	}
 
 	// generate empty genesis files for each validator and save
-	for i := 0; i < 6; i++ {
+	for i := 0; i < numValidators; i++ {
 		if err := genDoc.SaveAs(genFiles[i]); err != nil {
 			return err
 		}
@@ -333,7 +341,7 @@ func collectGenFiles(
 	var appState json.RawMessage
 	genTime := tmtime.Now()
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < numValidators; i++ {
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
 		nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 		gentxsDir := filepath.Join(outputDir, "gentxs")

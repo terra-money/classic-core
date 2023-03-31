@@ -4,6 +4,7 @@
 SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/* | head -n 1 | cut -d'/' -f4)
 NODE1_HOME=node1/terrad
 BINARY_OLD="docker exec terradnode1 ./terrad"
+TESTNET_NVAL=${1:-7}
 
 # sleep to wait for localnet to come up
 sleep 10
@@ -21,8 +22,8 @@ $BINARY_OLD tx gov deposit 1 "20000000uluna" --from node1 --keyring-backend test
 
 sleep 5
 
-# loop from 0 to 3
-for i in {0..3}; do
+# loop from 0 to TESTNET_NVAL
+for (( i=0; i<$TESTNET_NVAL; i++ )); do
     # check if docker for node i is running
     if [[ $(docker ps -a | grep terradnode$i | wc -l) -eq 1 ]]; then
         $BINARY_OLD tx gov vote 1 yes --from node$i --keyring-backend test --chain-id $CHAIN_ID --home "node$i/terrad" -y
@@ -44,18 +45,20 @@ while true; do
     fi
 done
 
-sleep 10
+sleep 40
 
 # check all nodes are online after upgrade
-for i in {0..3}; do
+for (( i=0; i<$TESTNET_NVAL; i++ )); do
     if [[ $(docker ps -a | grep terradnode$i | wc -l) -eq 1 ]]; then
         docker exec terradnode$i ./terrad status --home "node$i/terrad"
         if [[ "${PIPESTATUS[0]}" != "0" ]]; then
             echo "node$i is not online"
+            docker logs terradnode$i
             exit 1
         fi
     else
         echo "terradnode$i is not running"
+        docker logs terradnode$i
         exit 1
     fi
 done

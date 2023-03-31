@@ -16,7 +16,7 @@ WORKDIR /code
 COPY ${source} /code/
 
 # Install mimalloc
-RUN git clone --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdir build; cd build; cmake ..; make -j$(nproc); make install
+RUN git clone -b v2.0.0 --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdir build; cd build; cmake ..; make -j$(nproc); make install
 ENV MIMALLOC_RESERVE_HUGE_OS_PAGES=4
 
 # Cosmwasm - download correct libwasmvm version and verify checksum

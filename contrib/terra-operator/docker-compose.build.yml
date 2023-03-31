@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
    core:
-     image: public.ecr.aws/p5q2r9h7/core:alpine3.17
+     image: public.ecr.aws/classic-terra/core:alpine3.17
      build:
       context: ../..
       dockerfile: Dockerfile
@@ -11,12 +11,12 @@ services:
       labels:
         - "description=Contains the terrad binary"
    node:
-     image: public.ecr.aws/p5q2r9h7/node:alpine3.17
+     image: public.ecr.aws/classic-terra/node:alpine3.17
      build: 
       context: .
       dockerfile: Dockerfile
       args:
-        base_image: public.ecr.aws/p5q2r9h7/core
+        base_image: public.ecr.aws/classic-terra/core
         version: alpine3.17
       platforms:
         - "linux/amd64"
