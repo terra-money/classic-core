@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # $(curl --silent "https://api.github.com/repos/classic-terra/core/releases/latest" | jq -r '.tag_name')
-OLD_VERSION=v1.0.5
+OLD_VERSION=v1.1.0
 UPGRADE_HEIGHT=20
 HOME=mytestnet
 ROOT=$(pwd)

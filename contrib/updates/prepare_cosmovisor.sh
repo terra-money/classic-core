@@ -5,9 +5,11 @@
 
 # These fields should be fetched automatically in the future
 # Need to do more upgrade to see upgrade patterns
-OLD_VERSION=v1.0.5
+OLD_VERSION=v1.1.0
 SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/* | head -n 1 | cut -d'/' -f4)
 BUILDDIR=$1
+TESTNET_NVAL=$2
+TESTNET_CHAINID=$3
 
 # check if BUILDDIR is set
 if [ -z "$BUILDDIR" ]; then
@@ -33,7 +35,7 @@ if [ ! -f "$BUILDDIR/old/terrad" ]; then
     docker rm old-temp
 fi
 
-# prepare cosmovisor config in four nodes
+# prepare cosmovisor config in TESTNET_NVAL nodes
 if [ ! -f "$BUILDDIR/node0/terrad/config/genesis.json" ]; then docker run --rm \
     --user $(id -u):$(id -g) \
     -v $BUILDDIR:/terrad:Z \
@@ -41,10 +43,11 @@ if [ ! -f "$BUILDDIR/node0/terrad/config/genesis.json" ]; then docker run --rm \
     -v /etc/passwd:/etc/passwd:ro \
     -v /etc/shadow:/etc/shadow:ro \
     --entrypoint /terrad/old/terrad \
-    classic-terra/terrad-upgrade-env testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test --home /terrad; 
+    --platform linux/amd64 \
+    classic-terra/terrad-upgrade-env testnet --v $TESTNET_NVAL --chain-id $TESTNET_CHAINID -o . --starting-ip-address 192.168.10.2 --keyring-backend=test --home=temp; \
 fi
 
-for i in {0..3}; do
+for (( i=0; i<$TESTNET_NVAL; i++ )); do
     CURRENT=$BUILDDIR/node$i/terrad
 
     # change gov params voting_period
@@ -60,6 +63,7 @@ for i in {0..3}; do
         -e DAEMON_NAME=terrad \
         -e DAEMON_RESTART_AFTER_UPGRADE=true \
         --entrypoint /terrad/cosmovisor \
+        --platform linux/amd64 \
         classic-terra/terrad-upgrade-env init /terrad/old/terrad
     mkdir -p $CURRENT/cosmovisor/upgrades/$SOFTWARE_UPGRADE_NAME/bin
     cp $BUILDDIR/terrad $CURRENT/cosmovisor/upgrades/$SOFTWARE_UPGRADE_NAME/bin

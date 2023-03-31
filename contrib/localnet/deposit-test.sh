@@ -2,7 +2,7 @@
 
 #
 # start network
-TESTNET_NVAL=6 TESTNET_VOTING_PERIOD=40s make clean localnet-start
+make clean localnet-start
 
 #
 # convenience

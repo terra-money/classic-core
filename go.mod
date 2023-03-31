@@ -4,7 +4,7 @@ module github.com/classic-terra/core
 
 require (
 	github.com/CosmWasm/wasmvm v0.16.7
-	github.com/cosmos/cosmos-sdk v0.44.8
+	github.com/cosmos/cosmos-sdk v0.45.13
 	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/ibc-go v1.3.1
 	github.com/gogo/protobuf v1.3.3

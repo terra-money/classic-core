@@ -6,11 +6,12 @@ services:
     container_name: terradnode0
     image: classic-terra/terrad-env
     ports:
+      - "1317:1317"
       - "9090:9090"
       - "26656-26657:26656-26657"
     environment:
       - ID=0
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     volumes:
       - ./build:/terrad:Z
     networks:
@@ -22,11 +23,12 @@ services:
     container_name: terradnode1
     image: classic-terra/terrad-env
     ports:
+      - "1318:1317"
       - "9091:9090"
       - "26659-26660:26656-26657"
     environment:
       - ID=1
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     volumes:
       - ./build:/terrad:Z
     networks:
@@ -39,8 +41,9 @@ services:
     image: classic-terra/terrad-env
     environment:
       - ID=2
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     ports:
+      - "1319:1317"
       - "9092:9090"
       - "26661-26662:26656-26657"
     volumes:
@@ -55,8 +58,9 @@ services:
     image: classic-terra/terrad-env
     environment:
       - ID=3
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     ports:
+      - "1320:1317"
       - "9093:9090"
       - "26663-26664:26656-26657"
     volumes:
@@ -71,8 +75,9 @@ services:
     image: classic-terra/terrad-env
     environment:
       - ID=4
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     ports:
+      - "1321:1317"
       - "9094:9090"
       - "26665-26666:26656-26657"
     volumes:
@@ -87,8 +92,9 @@ services:
     image: classic-terra/terrad-env
     environment:
       - ID=5
-      - LOG=$${LOG:-terrad.log}
+      - LOG=terrad.log
     ports:
+      - "1322:1317"
       - "9095:9090"
       - "26667-26668:26656-26657"
     volumes:
@@ -96,6 +102,23 @@ services:
     networks:
       localnet:
         ipv4_address: 192.168.10.7
+
+  terradnode6:
+    platform: linux/amd64
+    container_name: terradnode6
+    image: classic-terra/terrad-env
+    environment:
+      - ID=6
+      - LOG=terrad.log
+    ports:
+      - "1323:1317"
+      - "9096:9090"
+      - "26669-26670:26656-26657"
+    volumes:
+      - ./build:/terrad:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.8
 
 networks:
   localnet:
