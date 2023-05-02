@@ -5,6 +5,7 @@ services:
     platform: linux/amd64
     container_name: terradnode0
     image: classic-terra/terrad-env
+    restart: always
     ports:
       - "1317:1317"
       - "9090:9090"
@@ -22,6 +23,7 @@ services:
     platform: linux/amd64
     container_name: terradnode1
     image: classic-terra/terrad-env
+    restart: always
     ports:
       - "1318:1317"
       - "9091:9090"
@@ -39,6 +41,7 @@ services:
     platform: linux/amd64
     container_name: terradnode2
     image: classic-terra/terrad-env
+    restart: always
     environment:
       - ID=2
       - LOG=terrad.log
@@ -56,6 +59,7 @@ services:
     platform: linux/amd64
     container_name: terradnode3
     image: classic-terra/terrad-env
+    restart: always
     environment:
       - ID=3
       - LOG=terrad.log
@@ -73,6 +77,7 @@ services:
     platform: linux/amd64
     container_name: terradnode4
     image: classic-terra/terrad-env
+    restart: always
     environment:
       - ID=4
       - LOG=terrad.log
@@ -90,6 +95,7 @@ services:
     platform: linux/amd64
     container_name: terradnode5
     image: classic-terra/terrad-env
+    restart: always
     environment:
       - ID=5
       - LOG=terrad.log
@@ -107,6 +113,7 @@ services:
     platform: linux/amd64
     container_name: terradnode6
     image: classic-terra/terrad-env
+    restart: always
     environment:
       - ID=6
       - LOG=terrad.log
