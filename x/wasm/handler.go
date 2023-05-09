@@ -8,8 +8,8 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/classic-terra/core/x/wasm/keeper"
-	"github.com/classic-terra/core/x/wasm/types"
+	"github.com/classic-terra/core/v2/x/wasm/keeper"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 // NewHandler returns a handler for "wasm" type messages.

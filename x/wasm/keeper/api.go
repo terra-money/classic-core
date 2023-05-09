@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/classic-terra/core/x/wasm/types"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 func (k Keeper) getCosmWasmAPI(ctx sdk.Context) cosmwasm.GoAPI {

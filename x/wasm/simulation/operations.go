@@ -15,9 +15,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/wasm/keeper"
-	"github.com/classic-terra/core/x/wasm/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/wasm/keeper"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 const (

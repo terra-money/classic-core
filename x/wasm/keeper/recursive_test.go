@@ -15,8 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerror "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/classic-terra/core/x/wasm/config"
-	"github.com/classic-terra/core/x/wasm/types"
+	"github.com/classic-terra/core/v2/x/wasm/config"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 type Recurse struct {
@@ -95,7 +95,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	return contractAddr, creator, ctx, keeper, cdc
 }
 
-// go test -v -run ^TestGasCostOnQuery$ github.com/classic-terra/core/x/wasm/keeper
+// go test -v -run ^TestGasCostOnQuery$ github.com/classic-terra/core/v2/x/wasm/keeper
 func TestGasCostOnQuery(t *testing.T) {
 	GasNoWork := types.InstantiateContractCosts(0) + 3_602
 	// Note: about 100 SDK gas (10k wasmVM gas) for each round of sha256
@@ -254,7 +254,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 	}
 }
 
-// go test -v -run ^TestLimitRecursiveQueryGas$ github.com/classic-terra/core/x/wasm/keeper
+// go test -v -run ^TestLimitRecursiveQueryGas$ github.com/classic-terra/core/v2/x/wasm/keeper
 func TestLimitRecursiveQueryGas(t *testing.T) {
 	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
 	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)

@@ -9,8 +9,8 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	"github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	customtypes "github.com/classic-terra/core/custom/gov/types"
-	core "github.com/classic-terra/core/types"
+	customtypes "github.com/classic-terra/core/v2/custom/gov/types"
+	core "github.com/classic-terra/core/v2/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

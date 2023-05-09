@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/classic-terra/core/x/wasm/config"
+	"github.com/classic-terra/core/v2/x/wasm/config"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 // Just this function is copied from
 // https://github.com/cosmos/cosmos-sdk/blob/90e9370bd80d9a3d41f7203ddb71166865561569/crypto/keys/internal/benchmarking/bench.go#L48-L62
 // And thus under the GO license (BSD style)
-// go test -benchmem -run=^$ -bench ^BenchmarkGasNormalization$ github.com/classic-terra/core/x/wasm/keeper
+// go test -benchmem -run=^$ -bench ^BenchmarkGasNormalization$ github.com/classic-terra/core/v2/x/wasm/keeper
 func BenchmarkGasNormalization(b *testing.B) {
 	priv := secp256k1.GenPrivKey()
 	pub := priv.PubKey()
@@ -35,7 +35,7 @@ func BenchmarkGasNormalization(b *testing.B) {
 // By comparing the timing for queries on pinned vs unpinned, the difference gives us the overhead of
 // instantiating an unpinned contract. That value can be used to determine a reasonable gas price
 // for the InstantiationCost
-// go test -benchmem -run=^$ -bench ^BenchmarkInstantiationOverhead$ github.com/classic-terra/core/x/wasm/keeper
+// go test -benchmem -run=^$ -bench ^BenchmarkInstantiationOverhead$ github.com/classic-terra/core/v2/x/wasm/keeper
 func BenchmarkInstantiationOverhead(b *testing.B) {
 	specs := map[string]struct {
 		pinned bool
@@ -71,7 +71,7 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 
 // Calculate the time it takes to compile some wasm code the first time.
 // This will help us adjust pricing for StoreCode
-// go test -benchmem -run=^$ -bench ^BenchmarkCompilation$ github.com/classic-terra/core/x/wasm/keeper
+// go test -benchmem -run=^$ -bench ^BenchmarkCompilation$ github.com/classic-terra/core/v2/x/wasm/keeper
 // run stat -f%z x/wasm/keeper/testdata/hackatom.wasm to get byte size of wasm file
 func BenchmarkCompilation(b *testing.B) {
 	specs := map[string]struct {

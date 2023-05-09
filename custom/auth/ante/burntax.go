@@ -1,7 +1,7 @@
 package ante
 
 import (
-	treasury "github.com/classic-terra/core/x/treasury/types"
+	treasury "github.com/classic-terra/core/v2/x/treasury/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"

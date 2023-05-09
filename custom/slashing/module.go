@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	customtypes "github.com/classic-terra/core/custom/slashing/types"
+	customtypes "github.com/classic-terra/core/v2/custom/slashing/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

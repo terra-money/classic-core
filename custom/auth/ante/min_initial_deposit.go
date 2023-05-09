@@ -3,7 +3,7 @@ package ante
 import (
 	"fmt"
 
-	core "github.com/classic-terra/core/types"
+	core "github.com/classic-terra/core/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"

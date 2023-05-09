@@ -23,8 +23,8 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/wasm/config"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/wasm/config"
 )
 
 type StakingInitMsg struct {

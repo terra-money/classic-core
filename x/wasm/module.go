@@ -20,11 +20,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/classic-terra/core/x/wasm/client/cli"
-	"github.com/classic-terra/core/x/wasm/client/rest"
-	"github.com/classic-terra/core/x/wasm/keeper"
-	"github.com/classic-terra/core/x/wasm/simulation"
-	"github.com/classic-terra/core/x/wasm/types"
+	"github.com/classic-terra/core/v2/x/wasm/client/cli"
+	"github.com/classic-terra/core/v2/x/wasm/client/rest"
+	"github.com/classic-terra/core/v2/x/wasm/keeper"
+	"github.com/classic-terra/core/v2/x/wasm/simulation"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 var (

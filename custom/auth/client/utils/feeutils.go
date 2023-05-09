@@ -17,9 +17,9 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	marketexported "github.com/classic-terra/core/x/market/exported"
-	treasuryexported "github.com/classic-terra/core/x/treasury/exported"
-	wasmexported "github.com/classic-terra/core/x/wasm/exported"
+	marketexported "github.com/classic-terra/core/v2/x/market/exported"
+	treasuryexported "github.com/classic-terra/core/v2/x/treasury/exported"
+	wasmexported "github.com/classic-terra/core/v2/x/wasm/exported"
 )
 
 type (

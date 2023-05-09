@@ -17,7 +17,7 @@ import (
 	v038upgrade "github.com/cosmos/cosmos-sdk/x/upgrade/legacy/v038"
 	v040upgrade "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	v04treasury "github.com/classic-terra/core/x/treasury/legacy/v04"
+	v04treasury "github.com/classic-terra/core/v2/x/treasury/legacy/v04"
 )
 
 func migrateVoteOption(oldVoteOption v034gov.VoteOption) v043gov.VoteOption {

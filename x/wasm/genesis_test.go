@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/wasm"
-	"github.com/classic-terra/core/x/wasm/config"
-	"github.com/classic-terra/core/x/wasm/keeper"
-	"github.com/classic-terra/core/x/wasm/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/wasm"
+	"github.com/classic-terra/core/v2/x/wasm/config"
+	"github.com/classic-terra/core/v2/x/wasm/keeper"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

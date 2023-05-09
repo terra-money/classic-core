@@ -38,26 +38,26 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	marketkeeper "github.com/classic-terra/core/x/market/keeper"
-	markettypes "github.com/classic-terra/core/x/market/types"
-	oraclekeeper "github.com/classic-terra/core/x/oracle/keeper"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
-	treasurykeeper "github.com/classic-terra/core/x/treasury/keeper"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
-	wasmkeeper "github.com/classic-terra/core/x/wasm/keeper"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
+	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
+	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
+	treasurykeeper "github.com/classic-terra/core/v2/x/treasury/keeper"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
+	wasmconfig "github.com/classic-terra/core/v2/x/wasm/config"
+	wasmkeeper "github.com/classic-terra/core/v2/x/wasm/keeper"
+	wasmtypes "github.com/classic-terra/core/v2/x/wasm/types"
 
-	bankwasm "github.com/classic-terra/core/custom/bank/wasm"
-	distrwasm "github.com/classic-terra/core/custom/distribution/wasm"
-	govwasm "github.com/classic-terra/core/custom/gov/wasm"
-	stakingwasm "github.com/classic-terra/core/custom/staking/wasm"
-	marketwasm "github.com/classic-terra/core/x/market/wasm"
-	oraclewasm "github.com/classic-terra/core/x/oracle/wasm"
-	treasurywasm "github.com/classic-terra/core/x/treasury/wasm"
+	bankwasm "github.com/classic-terra/core/v2/custom/bank/wasm"
+	distrwasm "github.com/classic-terra/core/v2/custom/distribution/wasm"
+	govwasm "github.com/classic-terra/core/v2/custom/gov/wasm"
+	stakingwasm "github.com/classic-terra/core/v2/custom/staking/wasm"
+	marketwasm "github.com/classic-terra/core/v2/x/market/wasm"
+	oraclewasm "github.com/classic-terra/core/v2/x/oracle/wasm"
+	treasurywasm "github.com/classic-terra/core/v2/x/treasury/wasm"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/client/docs/statik"
+	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 type AppKeepers struct {

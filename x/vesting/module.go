@@ -12,7 +12,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/classic-terra/core/x/vesting/types"
+	"github.com/classic-terra/core/v2/x/vesting/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

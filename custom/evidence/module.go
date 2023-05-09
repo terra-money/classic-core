@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	"github.com/cosmos/cosmos-sdk/x/evidence/types"
 
-	customtypes "github.com/classic-terra/core/custom/evidence/types"
+	customtypes "github.com/classic-terra/core/v2/custom/evidence/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/classic-terra/core/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 
 	"github.com/gorilla/mux"
 

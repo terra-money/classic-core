@@ -3,9 +3,9 @@ package ante_test
 import (
 	"fmt"
 
-	customante "github.com/classic-terra/core/custom/auth/ante"
-	core "github.com/classic-terra/core/types"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	core "github.com/classic-terra/core/v2/types"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +14,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
-// go test -v -run ^TestAnteTestSuite/TestIntegrationTaxExemption$ github.com/classic-terra/core/custom/auth/ante
+// go test -v -run ^TestAnteTestSuite/TestIntegrationTaxExemption$ github.com/classic-terra/core/v2/custom/auth/ante
 func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 	// keys and addresses
 	var privs []cryptotypes.PrivKey

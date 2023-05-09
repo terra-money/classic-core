@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	customante "github.com/classic-terra/core/custom/auth/ante"
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

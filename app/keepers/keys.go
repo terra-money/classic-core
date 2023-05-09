@@ -20,13 +20,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	markettypes "github.com/classic-terra/core/x/market/types"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
+	wasmtypes "github.com/classic-terra/core/v2/x/wasm/types"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/client/docs/statik"
+	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 func (appKeepers *AppKeepers) GenerateKeys() {

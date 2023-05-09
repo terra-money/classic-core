@@ -14,9 +14,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/wasm/config"
-	"github.com/classic-terra/core/x/wasm/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/wasm/config"
+	"github.com/classic-terra/core/v2/x/wasm/types"
 )
 
 // test handing of submessages, very closely related to the reflect_test
@@ -129,7 +129,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	}, module.Attributes[0])
 }
 
-// go test -v -run ^TestDispatchSubMsgErrorHandling$ github.com/classic-terra/core/x/wasm/keeper
+// go test -v -run ^TestDispatchSubMsgErrorHandling$ github.com/classic-terra/core/v2/x/wasm/keeper
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	fundedDenom := core.MicroLunaDenom
 	fundedAmount := 1_000_000

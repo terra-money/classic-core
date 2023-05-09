@@ -11,8 +11,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/treasury/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 // NewLegacyQuerier is the module level router for state queries

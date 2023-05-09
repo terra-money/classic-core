@@ -11,10 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/classic-terra/core/app"
-	core "github.com/classic-terra/core/types"
-	v04wasm "github.com/classic-terra/core/x/wasm/legacy/v04"
-	v05wasm "github.com/classic-terra/core/x/wasm/legacy/v05"
+	"github.com/classic-terra/core/v2/app"
+	core "github.com/classic-terra/core/v2/types"
+	v04wasm "github.com/classic-terra/core/v2/x/wasm/legacy/v04"
+	v05wasm "github.com/classic-terra/core/v2/x/wasm/legacy/v05"
 )
 
 func TestMigrate(t *testing.T) {

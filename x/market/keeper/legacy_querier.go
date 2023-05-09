@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/classic-terra/core/x/market/types"
+	"github.com/classic-terra/core/v2/x/market/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"

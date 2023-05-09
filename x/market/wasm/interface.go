@@ -8,9 +8,9 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/classic-terra/core/x/market/keeper"
-	"github.com/classic-terra/core/x/market/types"
-	wasm "github.com/classic-terra/core/x/wasm/exported"
+	"github.com/classic-terra/core/v2/x/market/keeper"
+	"github.com/classic-terra/core/v2/x/market/types"
+	wasm "github.com/classic-terra/core/v2/x/wasm/exported"
 )
 
 var (

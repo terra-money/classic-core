@@ -3,7 +3,7 @@ package client
 import (
 	"net/http"
 
-	"github.com/classic-terra/core/x/treasury/client/cli"
+	"github.com/classic-terra/core/v2/x/treasury/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"

@@ -1,6 +1,6 @@
 go 1.18
 
-module github.com/classic-terra/core
+module github.com/classic-terra/core/v2
 
 require (
 	github.com/CosmWasm/wasmvm v0.16.7
@@ -57,7 +57,8 @@ require (
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/gobwas/ws v1.1.0 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -125,6 +126,7 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
+	github.com/CosmWasm/wasmvm => github.com/classic-terra/wasmvm v0.16.8-beta5
 	github.com/aws/aws-sdk-go v1.25.48 => github.com/aws/aws-sdk-go v1.33.0
 	github.com/aws/aws-sdk-go v1.27.0 => github.com/aws/aws-sdk-go v1.33.0
 	github.com/cosmos/cosmos-sdk => github.com/classic-terra/cosmos-sdk v0.45.13-classic
