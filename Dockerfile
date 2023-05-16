@@ -1,54 +1,123 @@
-# docker build . -t cosmwasm/wasmd:latest
-# docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.18-alpine3.17 AS go-builder
-ARG source=.
+# syntax=docker/dockerfile:1
 
-# this comes from standard alpine nightly file
-#  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
-# with some changes to support our toolchain, etc
-RUN set -eux; apk add --no-cache ca-certificates build-base;
+ARG GO_VERSION="1.18"
+ARG ALPINE_VERSION="3.17"
+ARG BUILDPLATFORM=linux/amd64
+ARG BASE_IMAGE="golang:${GO_VERSION}-alpine${ALPINE_VERSION}"
+FROM --platform=${BUILDPLATFORM} ${BASE_IMAGE} as base
 
-RUN apk add git cmake
-# NOTE: add these to run with LEDGER_ENABLED=true
-# RUN apk add libusb-dev linux-headers
+###############################################################################
+# Builder
+###############################################################################
 
-WORKDIR /code
-COPY ${source} /code/
+FROM base as builder-stage-1
 
-# Install mimalloc
-RUN git clone -b v2.0.0 --depth 1 https://github.com/microsoft/mimalloc; cd mimalloc; mkdir build; cd build; cmake ..; make -j$(nproc); make install
-ENV MIMALLOC_RESERVE_HUGE_OS_PAGES=4
+ARG GIT_COMMIT
+ARG GIT_VERSION
+ARG BUILDPLATFORM
+ARG GOOS=linux \
+    GOARCH=amd64
 
-# Cosmwasm - download correct libwasmvm version and verify checksum
-RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt \
-    && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+ENV GOOS=$GOOS \ 
+    GOARCH=$GOARCH
 
-# force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LDFLAGS="-linkmode=external -extldflags \"-L/code/mimalloc/build -lmimalloc -Wl,-z,muldefs -static\"" make build
+# NOTE: add libusb-dev to run with LEDGER_ENABLED=true
+RUN set -eux &&\
+    apk update &&\
+    apk add --no-cache \
+    ca-certificates \
+    linux-headers \
+    build-base \
+    cmake \
+    git
 
-FROM alpine:3.17
+# install mimalloc for musl
+WORKDIR ${GOPATH}/src/mimalloc
+RUN set -eux &&\
+    git clone --depth 1 --branch v2.0.9 \
+        https://github.com/microsoft/mimalloc . &&\
+    mkdir -p build &&\
+    cd build &&\
+    cmake .. &&\
+    make -j$(nproc) &&\
+    make install
 
-RUN apk add wget lz4 aria2 curl jq gawk coreutils "zlib>1.2.12-r2" "libssl1.1>1.1.1q-r0" && apk update
+# download dependencies to cache as layer
+WORKDIR ${GOPATH}/src/app
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/go/pkg/mod \
+    go mod download -x
 
-RUN addgroup terra \
-    && adduser -G terra -D -h /terra terra
+# Cosmwasm - Download correct libwasmvm version and verify checksum
+RUN set -eux &&\
+    WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
+    WASMVM_DOWNLOADS="https://github.com/CosmWasm/wasmvm/releases/download/${WASMVM_VERSION}"; \
+    wget ${WASMVM_DOWNLOADS}/checksums.txt -O /tmp/checksums.txt; \
+    if [ ${BUILDPLATFORM} = "linux/amd64" ]; then \
+        WASMVM_URL="${WASMVM_DOWNLOADS}/libwasmvm_muslc.x86_64.a"; \
+    elif [ ${BUILDPLATFORM} = "linux/arm64" ]; then \
+        WASMVM_URL="${WASMVM_DOWNLOADS}/libwasmvm_muslc.aarch64.a"; \      
+    else \
+        echo "Unsupported Build Platfrom ${BUILDPLATFORM}"; \
+        exit 1; \
+    fi; \
+    wget ${WASMVM_URL} -O /lib/libwasmvm_muslc.a; \
+    CHECKSUM=`sha256sum /lib/libwasmvm_muslc.a | cut -d" " -f1`; \
+    grep ${CHECKSUM} /tmp/checksums.txt; \
+    rm /tmp/checksums.txt
 
-WORKDIR /terra
+###############################################################################
 
-COPY --from=go-builder /code/build/terrad /usr/local/bin/terrad
+FROM builder-stage-1 as builder-stage-2
 
-USER terra
+ARG GOOS=linux \
+    GOARCH=amd64
+
+ENV GOOS=$GOOS \ 
+    GOARCH=$GOARCH
+
+# Copy the remaining files
+COPY . .
+
+# Build app binary
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/go/pkg/mod \
+    go install \
+        -mod=readonly \
+        -tags "netgo,muslc" \
+        -ldflags " \
+            -w -s -linkmode=external -extldflags \
+            '-L/go/src/mimalloc/build -lmimalloc -Wl,-z,muldefs -static' \
+            -X github.com/cosmos/cosmos-sdk/version.Name='terra' \
+            -X github.com/cosmos/cosmos-sdk/version.AppName='terrad' \
+            -X github.com/cosmos/cosmos-sdk/version.Version=${GIT_VERSION} \
+            -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT} \
+            -X github.com/cosmos/cosmos-sdk/version.BuildTags='netgo,muslc' \
+        " \
+        -trimpath \
+        ./...
+
+################################################################################
+
+FROM alpine:${ALPINE_VERSION} as terra-core
+
+RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils "zlib>1.2.12-r2" "libssl1.1>1.1.1q-r0"
+
+COPY --from=builder-stage-2 /go/bin/terrad /usr/local/bin/terrad
+
+RUN addgroup -g 1000 terra && \
+    adduser -u 1000 -G terra -D -h /app terra
 
 # rest server
 EXPOSE 1317
-# grpc
+# grpc server
 EXPOSE 9090
 # tendermint p2p
 EXPOSE 26656
 # tendermint rpc
 EXPOSE 26657
 
-CMD ["/usr/local/bin/terrad", "version"]
+WORKDIR /app
+
+CMD ["terrad", "version"]
