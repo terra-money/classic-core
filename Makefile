@@ -10,6 +10,7 @@ SIMAPP = ./app
 HTTPS_GIT := https://github.com/classic-terra/core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+GO_VERSION := $(shell cat go.mod | grep -E 'go [0-9].[0-9]+' | cut -d ' ' -f 2)
 
 #TESTNET PARAMETERS
 TESTNET_NVAL := $(if $(TESTNET_NVAL),$(TESTNET_NVAL),7)
@@ -134,6 +135,50 @@ build-linux-with-shared-library:
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
+
+build-release: build-release-amd64 build-release-arm64
+
+build-release-amd64: go.sum
+	mkdir -p $(BUILDDIR)/release
+	$(DOCKER) buildx create --name core-builder || true
+	$(DOCKER) buildx use core-builder
+	$(DOCKER) buildx build \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+    --build-arg BUILDPLATFORM=linux/amd64 \
+    --build-arg GOOS=linux \
+    --build-arg GOARCH=amd64 \
+		-t core:local-amd64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f core-builder || true
+	$(DOCKER) create -ti --name core-builder core:local-amd64
+	$(DOCKER) cp core-builder:/usr/local/bin/terrad $(BUILDDIR)/release/terrad
+	tar -czvf $(BUILDDIR)/release/terra_$(VERSION)_Linux_x86_64.tar.gz -C $(BUILDDIR)/release/ terrad
+	rm $(BUILDDIR)/release/terrad
+	$(DOCKER) rm -f core-builder
+
+build-release-arm64: go.sum
+	mkdir -p $(BUILDDIR)/release
+	$(DOCKER) buildx create --name core-builder || true
+	$(DOCKER) buildx use core-builder 
+	$(DOCKER) buildx build \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+    --build-arg BUILDPLATFORM=linux/arm64 \
+    --build-arg GOOS=linux \
+    --build-arg GOARCH=arm64 \
+		-t core:local-arm64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f core-builder || true
+	$(DOCKER) create -ti --name core-builder core:local-arm64
+	$(DOCKER) cp core-builder:/usr/local/bin/terrad $(BUILDDIR)/release/terrad 
+	tar -czvf $(BUILDDIR)/release/terra_$(VERSION)_Linux_arm64.tar.gz -C $(BUILDDIR)/release/ terrad 
+	rm $(BUILDDIR)/release/terrad
+	$(DOCKER) rm -f core-builder
 
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
