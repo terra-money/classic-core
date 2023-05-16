@@ -24,7 +24,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        build_type: ['build-linux']
+        build_type: ['build-release-amd64']
     steps:
       - name: Checkout
         uses: actions/checkout@v3

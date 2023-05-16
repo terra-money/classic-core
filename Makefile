@@ -10,6 +10,7 @@ SIMAPP = ./app
 HTTPS_GIT := https://github.com/classic-terra/core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+GO_VERSION ?= "1.20"
 
 #TESTNET PARAMETERS
 TESTNET_NVAL := $(if $(TESTNET_NVAL),$(TESTNET_NVAL),7)
@@ -134,6 +135,22 @@ build-linux-with-shared-library:
 	docker cp temp:/usr/local/bin/terrad $(BUILDDIR)/
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
+
+build-release-amd64: go.sum $(BUILDDIR)/
+	$(DOCKER) buildx create --name core-builder || true
+	$(DOCKER) buildx use core-builder
+	$(DOCKER) buildx build \
+		--platform linux/amd64 \
+		-t core:local-amd64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f core-builder || true
+	$(DOCKER) create -ti --name core-builder core:local-amd64
+	mkdir -p build/release
+	$(DOCKER) cp core-builder:/usr/local/bin/terrad $(BUILDDIR)/release/terrad
+	tar -czvf $(BUILDDIR)/release/terra_$(VERSION)_Linux_x86_64.tar.gz -C $(BUILDDIR)/release/ terrad
+	rm $(BUILDDIR)/release/terrad
+	$(DOCKER) rm -f core-builder
 
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
