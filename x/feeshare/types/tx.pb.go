@@ -6,6 +6,10 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -13,15 +17,14 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -47,9 +50,11 @@ func (*MsgRegisterFeeShare) ProtoMessage()    {}
 func (*MsgRegisterFeeShare) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{0}
 }
+
 func (m *MsgRegisterFeeShare) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgRegisterFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgRegisterFeeShare.Marshal(b, m, deterministic)
@@ -62,12 +67,15 @@ func (m *MsgRegisterFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *MsgRegisterFeeShare) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgRegisterFeeShare.Merge(m, src)
 }
+
 func (m *MsgRegisterFeeShare) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgRegisterFeeShare) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgRegisterFeeShare.DiscardUnknown(m)
 }
@@ -96,8 +104,7 @@ func (m *MsgRegisterFeeShare) GetWithdrawerAddress() string {
 }
 
 // MsgRegisterFeeShareResponse defines the MsgRegisterFeeShare response type
-type MsgRegisterFeeShareResponse struct {
-}
+type MsgRegisterFeeShareResponse struct{}
 
 func (m *MsgRegisterFeeShareResponse) Reset()         { *m = MsgRegisterFeeShareResponse{} }
 func (m *MsgRegisterFeeShareResponse) String() string { return proto.CompactTextString(m) }
@@ -105,9 +112,11 @@ func (*MsgRegisterFeeShareResponse) ProtoMessage()    {}
 func (*MsgRegisterFeeShareResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{1}
 }
+
 func (m *MsgRegisterFeeShareResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgRegisterFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgRegisterFeeShareResponse.Marshal(b, m, deterministic)
@@ -120,12 +129,15 @@ func (m *MsgRegisterFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
+
 func (m *MsgRegisterFeeShareResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgRegisterFeeShareResponse.Merge(m, src)
 }
+
 func (m *MsgRegisterFeeShareResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgRegisterFeeShareResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgRegisterFeeShareResponse.DiscardUnknown(m)
 }
@@ -151,9 +163,11 @@ func (*MsgUpdateFeeShare) ProtoMessage()    {}
 func (*MsgUpdateFeeShare) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{2}
 }
+
 func (m *MsgUpdateFeeShare) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgUpdateFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgUpdateFeeShare.Marshal(b, m, deterministic)
@@ -166,12 +180,15 @@ func (m *MsgUpdateFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *MsgUpdateFeeShare) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgUpdateFeeShare.Merge(m, src)
 }
+
 func (m *MsgUpdateFeeShare) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgUpdateFeeShare) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgUpdateFeeShare.DiscardUnknown(m)
 }
@@ -200,8 +217,7 @@ func (m *MsgUpdateFeeShare) GetWithdrawerAddress() string {
 }
 
 // MsgUpdateFeeShareResponse defines the MsgUpdateFeeShare response type
-type MsgUpdateFeeShareResponse struct {
-}
+type MsgUpdateFeeShareResponse struct{}
 
 func (m *MsgUpdateFeeShareResponse) Reset()         { *m = MsgUpdateFeeShareResponse{} }
 func (m *MsgUpdateFeeShareResponse) String() string { return proto.CompactTextString(m) }
@@ -209,9 +225,11 @@ func (*MsgUpdateFeeShareResponse) ProtoMessage()    {}
 func (*MsgUpdateFeeShareResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{3}
 }
+
 func (m *MsgUpdateFeeShareResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgUpdateFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgUpdateFeeShareResponse.Marshal(b, m, deterministic)
@@ -224,12 +242,15 @@ func (m *MsgUpdateFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
+
 func (m *MsgUpdateFeeShareResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgUpdateFeeShareResponse.Merge(m, src)
 }
+
 func (m *MsgUpdateFeeShareResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgUpdateFeeShareResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgUpdateFeeShareResponse.DiscardUnknown(m)
 }
@@ -251,9 +272,11 @@ func (*MsgCancelFeeShare) ProtoMessage()    {}
 func (*MsgCancelFeeShare) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{4}
 }
+
 func (m *MsgCancelFeeShare) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgCancelFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgCancelFeeShare.Marshal(b, m, deterministic)
@@ -266,12 +289,15 @@ func (m *MsgCancelFeeShare) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *MsgCancelFeeShare) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgCancelFeeShare.Merge(m, src)
 }
+
 func (m *MsgCancelFeeShare) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgCancelFeeShare) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgCancelFeeShare.DiscardUnknown(m)
 }
@@ -293,8 +319,7 @@ func (m *MsgCancelFeeShare) GetDeployerAddress() string {
 }
 
 // MsgCancelFeeShareResponse defines the MsgCancelFeeShare response type
-type MsgCancelFeeShareResponse struct {
-}
+type MsgCancelFeeShareResponse struct{}
 
 func (m *MsgCancelFeeShareResponse) Reset()         { *m = MsgCancelFeeShareResponse{} }
 func (m *MsgCancelFeeShareResponse) String() string { return proto.CompactTextString(m) }
@@ -302,9 +327,11 @@ func (*MsgCancelFeeShareResponse) ProtoMessage()    {}
 func (*MsgCancelFeeShareResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_84f7f11948541b86, []int{5}
 }
+
 func (m *MsgCancelFeeShareResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MsgCancelFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgCancelFeeShareResponse.Marshal(b, m, deterministic)
@@ -317,12 +344,15 @@ func (m *MsgCancelFeeShareResponse) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
+
 func (m *MsgCancelFeeShareResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgCancelFeeShareResponse.Merge(m, src)
 }
+
 func (m *MsgCancelFeeShareResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MsgCancelFeeShareResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgCancelFeeShareResponse.DiscardUnknown(m)
 }
@@ -372,8 +402,10 @@ var fileDescriptor_84f7f11948541b86 = []byte{
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
+var (
+	_ context.Context
+	_ grpc.ClientConn
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
@@ -439,15 +471,16 @@ type MsgServer interface {
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
-type UnimplementedMsgServer struct {
-}
+type UnimplementedMsgServer struct{}
 
 func (*UnimplementedMsgServer) RegisterFeeShare(ctx context.Context, req *MsgRegisterFeeShare) (*MsgRegisterFeeShareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterFeeShare not implemented")
 }
+
 func (*UnimplementedMsgServer) UpdateFeeShare(ctx context.Context, req *MsgUpdateFeeShare) (*MsgUpdateFeeShareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateFeeShare not implemented")
 }
+
 func (*UnimplementedMsgServer) CancelFeeShare(ctx context.Context, req *MsgCancelFeeShare) (*MsgCancelFeeShareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelFeeShare not implemented")
 }
@@ -736,6 +769,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *MsgRegisterFeeShare) Size() (n int) {
 	if m == nil {
 		return 0
@@ -825,9 +859,11 @@ func (m *MsgCancelFeeShareResponse) Size() (n int) {
 func sovTx(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *MsgRegisterFeeShare) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -974,6 +1010,7 @@ func (m *MsgRegisterFeeShare) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgRegisterFeeShareResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1024,6 +1061,7 @@ func (m *MsgRegisterFeeShareResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgUpdateFeeShare) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1170,6 +1208,7 @@ func (m *MsgUpdateFeeShare) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgUpdateFeeShareResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1220,6 +1259,7 @@ func (m *MsgUpdateFeeShareResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgCancelFeeShare) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1334,6 +1374,7 @@ func (m *MsgCancelFeeShare) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MsgCancelFeeShareResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1384,6 +1425,7 @@ func (m *MsgCancelFeeShareResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTx(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
