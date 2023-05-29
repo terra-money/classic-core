@@ -172,12 +172,17 @@ func ComputeFeesWithCmd(
 
 	if !gasPrices.IsZero() {
 		glDec := sdk.NewDec(int64(gas))
+		adjustment := sdk.NewDecWithPrec(int64(txf.GasAdjustment()*100), 2)
+
+		if adjustment.LT(sdk.OneDec()) {
+			adjustment = sdk.OneDec()
+		}
 
 		// Derive the fees based on the provided gas prices, where
 		// fee = ceil(gasPrice * gasLimit).
 		gasFees := make(sdk.Coins, len(gasPrices))
 		for i, gp := range gasPrices {
-			fee := gp.Amount.Mul(glDec)
+			fee := gp.Amount.Mul(glDec).Mul(adjustment)
 			gasFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
 		}
 
