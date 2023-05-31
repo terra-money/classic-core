@@ -1,9 +1,11 @@
 package ante
 
 import (
-	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
-	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v4/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -21,9 +23,11 @@ type HandlerOptions struct {
 	TreasuryKeeper     TreasuryKeeper
 	SignModeHandler    signing.SignModeHandler
 	SigGasConsumer     cosmosante.SignatureVerificationGasConsumer
-	IBCChannelKeeper   channelkeeper.Keeper
+	IBCKeeper          ibckeeper.Keeper
 	DistributionKeeper distributionkeeper.Keeper
 	GovKeeper          govkeeper.Keeper
+	WasmConfig         *wasmtypes.WasmConfig
+	TXCounterStoreKey  sdk.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -50,6 +54,13 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
+	if options.WasmConfig == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "wasm config is required for ante builder")
+	}
+	if options.TXCounterStoreKey == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+	}
+
 	sigGasConsumer := options.SigGasConsumer
 	if sigGasConsumer == nil {
 		sigGasConsumer = cosmosante.DefaultSigVerificationGasConsumer
@@ -57,6 +68,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	return sdk.ChainAnteDecorators(
 		cosmosante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
+		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreKey),
 		cosmosante.NewRejectExtensionOptionsDecorator(),
 		NewSpammingPreventionDecorator(options.OracleKeeper), // spamming prevention
 		cosmosante.NewValidateBasicDecorator(),
@@ -71,7 +84,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		cosmosante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		cosmosante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		ibcante.NewAnteDecorator(options.IBCChannelKeeper),
+		ibcante.NewAnteDecorator(&options.IBCKeeper),
 		NewMinInitialDepositDecorator(options.GovKeeper, options.TreasuryKeeper),
 	), nil
 }

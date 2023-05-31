@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 
+ARG source=./
 ARG GO_VERSION="1.18"
 ARG ALPINE_VERSION="3.17"
 ARG BUILDPLATFORM=linux/amd64
@@ -12,6 +13,7 @@ FROM --platform=${BUILDPLATFORM} ${BASE_IMAGE} as base
 
 FROM base as builder-stage-1
 
+ARG source
 ARG GIT_COMMIT
 ARG GIT_VERSION
 ARG BUILDPLATFORM
@@ -44,7 +46,7 @@ RUN set -eux &&\
 
 # download dependencies to cache as layer
 WORKDIR ${GOPATH}/src/app
-COPY go.mod go.sum ./
+COPY ${source}go.mod ${source}go.sum ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download -x
@@ -71,6 +73,7 @@ RUN set -eux &&\
 
 FROM builder-stage-1 as builder-stage-2
 
+ARG source
 ARG GOOS=linux \
     GOARCH=amd64
 
@@ -78,7 +81,7 @@ ENV GOOS=$GOOS \
     GOARCH=$GOARCH
 
 # Copy the remaining files
-COPY . .
+COPY ${source} .
 
 # Build app binary
 RUN --mount=type=cache,target=/root/.cache/go-build \
