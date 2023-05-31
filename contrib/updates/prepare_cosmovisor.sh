@@ -5,7 +5,7 @@
 
 # These fields should be fetched automatically in the future
 # Need to do more upgrade to see upgrade patterns
-OLD_VERSION=v1.1.0
+OLD_VERSION=v2.0.1
 SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/* | head -n 1 | cut -d'/' -f4)
 BUILDDIR=$1
 TESTNET_NVAL=$2

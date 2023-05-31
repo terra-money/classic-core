@@ -43,8 +43,6 @@ import (
 	v05oracle "github.com/classic-terra/core/x/oracle/legacy/v05"
 	v04treasury "github.com/classic-terra/core/x/treasury/legacy/v04"
 	v05treasury "github.com/classic-terra/core/x/treasury/legacy/v05"
-	v04wasm "github.com/classic-terra/core/x/wasm/legacy/v04"
-	v05wasm "github.com/classic-terra/core/x/wasm/legacy/v05"
 )
 
 func migrateGenutil(oldGenState v039genutil.GenesisState) *types.GenesisState {
@@ -282,18 +280,20 @@ func Migrate(appState types.AppMap, clientCtx client.Context) types.AppMap {
 		appState[v05treasury.ModuleName] = v05Codec.MustMarshalJSON(v05treasury.Migrate(treasuryGenState))
 	}
 
-	if appState[v04wasm.ModuleName] != nil {
-		// unmarshal relative source genesis application state
-		var wasmGenState v04wasm.GenesisState
-		v04Codec.MustUnmarshalJSON(appState[v04wasm.ModuleName], &wasmGenState)
+	/*
+		if appState[v04wasm.ModuleName] != nil {
+			// unmarshal relative source genesis application state
+			var wasmGenState v04wasm.GenesisState
+			v04Codec.MustUnmarshalJSON(appState[v04wasm.ModuleName], &wasmGenState)
 
-		// delete deprecated x/wasm genesis state
-		delete(appState, v04wasm.ModuleName)
+			// delete deprecated x/wasm genesis state
+			delete(appState, v04wasm.ModuleName)
 
-		// Migrate relative source genesis application state and marshal it into
-		// the respective key.
-		appState[v05wasm.ModuleName] = v05Codec.MustMarshalJSON(v05wasm.Migrate(wasmGenState))
-	}
+			// Migrate relative source genesis application state and marshal it into
+			// the respective key.
+			appState[v05wasm.ModuleName] = v05Codec.MustMarshalJSON(v05wasm.Migrate(wasmGenState))
+		}
+	*/
 
 	return appState
 }

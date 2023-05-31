@@ -21,8 +21,8 @@ func (k Keeper) GetContractAdminOrCreatorAddress(ctx sdk.Context, contract sdk.A
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid deployer address %s", deployer)
 	}
 
-	info, err := k.wasmKeeper.GetContractInfo(ctx, contract)
-	if err != nil {
+	info := k.wasmKeeper.GetContractInfo(ctx, contract)
+	if info == nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "contract not found %s", contract)
 	}
 

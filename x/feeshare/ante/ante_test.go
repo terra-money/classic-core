@@ -25,11 +25,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
 	treasurytypes "github.com/classic-terra/core/x/treasury/types"
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
 )
+
+var emptyWasmOpts []wasm.Option
 
 type AnteTestSuite struct {
 	suite.Suite
@@ -45,7 +47,7 @@ func createTestApp(isCheckTx bool, tempDir string) (*terraapp.TerraApp, sdk.Cont
 	app := terraapp.NewTerraApp(
 		log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{},
 		tempDir, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
-		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(),
+		simapp.EmptyAppOptions{}, emptyWasmOpts,
 	)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
@@ -245,10 +247,10 @@ func (suite *AnteTestSuite) TestFeeSharePayout() {
 
 	// Create msg for tx
 	msg := &wasmtypes.MsgExecuteContract{
-		Sender:     addr1.String(),
-		Contract:   addr1.String(),
-		ExecuteMsg: []byte(`{"send":{}}`),
-		Coins:      sdk.NewCoins(sdk.NewCoin("utoken", sdk.NewInt(100))),
+		Sender:   addr1.String(),
+		Contract: addr1.String(),
+		Msg:      []byte(`{"send":{}}`),
+		Funds:    sdk.NewCoins(sdk.NewCoin("utoken", sdk.NewInt(100))),
 	}
 
 	require.NoError(suite.txBuilder.SetMsgs(msg))

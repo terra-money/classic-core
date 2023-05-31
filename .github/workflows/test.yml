@@ -44,6 +44,10 @@ jobs:
             **/**.go
             go.mod
             go.sum
+      # Enable BuildKit
+      - name: Set BuildKit environment variable
+        run: |
+          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
       - name: start localnet
         run: |
           make clean localnet-start
@@ -67,6 +71,10 @@ jobs:
             app/upgrades/**/*.go
       - name: echo diff
         run: echo '${{ env.GIT_DIFF }}'
+      # Enable BuildKit
+      - name: Set BuildKit environment variable
+        run: |
+          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
       - name: start localnet
         run: |
           make clean localnet-start-upgrade

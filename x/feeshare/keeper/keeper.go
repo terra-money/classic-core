@@ -9,8 +9,8 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	revtypes "github.com/classic-terra/core/x/feeshare/types"
-	wasmkeeper "github.com/classic-terra/core/x/wasm/keeper"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 

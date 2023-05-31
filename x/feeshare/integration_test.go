@@ -3,7 +3,6 @@ package feeshare_test
 import (
 	"encoding/json"
 
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -14,7 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
+
+var emptyWasmOpts []wasm.Option
 
 // returns context and an app with updated mint keeper
 func CreateTestApp(isCheckTx bool) (*app.TerraApp, sdk.Context) {
@@ -62,7 +65,7 @@ func GenApp(withGenesis bool, invCheckPeriod uint) (*app.TerraApp, app.GenesisSt
 		invCheckPeriod,
 		encCdc,
 		simapp.EmptyAppOptions{},
-		wasmconfig.DefaultConfig(),
+		emptyWasmOpts,
 	)
 
 	if withGenesis {

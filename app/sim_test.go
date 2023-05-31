@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	terraapp "github.com/classic-terra/core/app"
-	"github.com/classic-terra/core/app/helpers"
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
+	helpers "github.com/classic-terra/core/app/testing"
+	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
@@ -18,9 +20,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulation2 "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
+
+// interBlockCacheOpt returns a BaseApp option function that sets the persistent
+// inter-block write-through cache.
+func interBlockCacheOpt() func(*baseapp.BaseApp) {
+	return baseapp.SetInterBlockCache(store.NewCommitKVStoreCacheManager())
+}
+
+// fauxMerkleModeOpt is a BaseApp option function to enable faux Merkle Tree mode for faster sim speed
+func fauxMerkleModeOpt() func(*baseapp.BaseApp) {
+	return func(app *baseapp.BaseApp) { app.SetFauxMerkleMode() }
+}
 
 func init() {
 	simapp.GetSimulatorFlags()
@@ -42,10 +57,12 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
+	var emptyWasmOpts []wasm.Option
+
 	app := terraapp.NewTerraApp(
 		logger, db, nil, true, map[int64]bool{},
 		terraapp.DefaultNodeHome, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
-		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
+		simapp.EmptyAppOptions{}, emptyWasmOpts, interBlockCacheOpt(), fauxMerkleModeOpt())
 
 	// Run randomized simulation:w
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -72,12 +89,6 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	if config.Commit {
 		simapp.PrintStats(db)
 	}
-}
-
-// interBlockCacheOpt returns a BaseApp option function that sets the persistent
-// inter-block write-through cache.
-func interBlockCacheOpt() func(*baseapp.BaseApp) {
-	return baseapp.SetInterBlockCache(store.NewCommitKVStoreCacheManager())
 }
 
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
@@ -110,10 +121,12 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
+			var emptyWasmOpts []wasm.Option
 			app := terraapp.NewTerraApp(
 				logger, db, nil, true, map[int64]bool{}, terraapp.DefaultNodeHome,
 				simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
-				simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(), interBlockCacheOpt())
+				simapp.EmptyAppOptions{}, emptyWasmOpts, interBlockCacheOpt(), fauxMerkleModeOpt(),
+			)
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -124,7 +137,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				t,
 				os.Stdout,
 				app.BaseApp,
-				simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+				AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simulation2.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 				simapp.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
@@ -148,4 +161,16 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 		}
 	}
+}
+
+// AppStateFn returns the initial application state using a genesis or the simulation parameters.
+// It panics if the user provides files for both of them.
+// If a file is not given for the genesis or the sim params, it creates a randomized one.
+func AppStateFn(codec codec.Codec, manager *module.SimulationManager) simtypes.AppStateFn {
+	// quick hack to setup app state genesis with our app modules
+	simapp.ModuleBasics = terraapp.ModuleBasics
+	if simapp.FlagGenesisTimeValue == 0 { // always set to have a block time
+		simapp.FlagGenesisTimeValue = time.Now().Unix()
+	}
+	return simapp.AppStateFn(codec, manager)
 }

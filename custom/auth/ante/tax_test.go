@@ -12,10 +12,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/classic-terra/core/custom/auth/ante"
 	core "github.com/classic-terra/core/types"
 	markettypes "github.com/classic-terra/core/x/market/types"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
 )
 
 func (suite *AnteTestSuite) TestEnsureMempoolFeesGas() {
@@ -250,7 +250,13 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContract() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
-	msg := wasmtypes.NewMsgInstantiateContract(addr1, addr1, 0, []byte{}, sendCoins)
+	msg := &wasmtypes.MsgInstantiateContract{
+		Sender: addr1.String(),
+		Admin:  addr1.String(),
+		CodeID: 0,
+		Msg:    []byte{},
+		Funds:  sendCoins,
+	}
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()
@@ -301,7 +307,12 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContract() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
-	msg := wasmtypes.NewMsgExecuteContract(addr1, addr1, []byte{}, sendCoins)
+	msg := &wasmtypes.MsgExecuteContract{
+		Sender:   addr1.String(),
+		Contract: addr1.String(),
+		Msg:      []byte{},
+		Funds:    sendCoins,
+	}
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()
@@ -588,7 +599,13 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesInstantiateContractLunaTax() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
-	msg := wasmtypes.NewMsgInstantiateContract(addr1, addr1, 0, []byte{}, sendCoins)
+	msg := &wasmtypes.MsgInstantiateContract{
+		Sender: addr1.String(),
+		Admin:  addr1.String(),
+		CodeID: 0,
+		Msg:    []byte{},
+		Funds:  sendCoins,
+	}
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()
@@ -645,7 +662,12 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecuteContractLunaTax() {
 	// msg and signatures
 	sendAmount := int64(1000000)
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, sendAmount))
-	msg := wasmtypes.NewMsgExecuteContract(addr1, addr1, []byte{}, sendCoins)
+	msg := &wasmtypes.MsgExecuteContract{
+		Sender:   addr1.String(),
+		Contract: addr1.String(),
+		Msg:      []byte{},
+		Funds:    sendCoins,
+	}
 
 	feeAmount := testdata.NewTestFeeAmount()
 	gasLimit := testdata.NewTestGasLimit()

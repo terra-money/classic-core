@@ -3,6 +3,7 @@ package ante_test
 import (
 	"fmt"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	customante "github.com/classic-terra/core/custom/auth/ante"
 	core "github.com/classic-terra/core/types"
 	treasurytypes "github.com/classic-terra/core/x/treasury/types"
@@ -129,6 +130,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 		burnModule := ak.GetModuleAccount(suite.ctx, treasurytypes.BurnModuleName)
 
 		encodingConfig := suite.SetupEncoding()
+		wasmConfig := wasmtypes.DefaultWasmConfig()
 		antehandler, err := customante.NewAnteHandler(
 			customante.HandlerOptions{
 				AccountKeeper:      ak,
@@ -138,14 +140,15 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 				TreasuryKeeper:     suite.app.TreasuryKeeper,
 				SigGasConsumer:     customante.DefaultSigVerificationGasConsumer,
 				SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
-				IBCChannelKeeper:   suite.app.IBCKeeper.ChannelKeeper,
+				IBCKeeper:          *suite.app.IBCKeeper,
 				DistributionKeeper: dk,
 				FeeShareKeeper:     fsk,
+				WasmConfig:         &wasmConfig,
+				TXCounterStoreKey:  suite.app.GetKey(wasmtypes.StoreKey),
 			},
 		)
 		suite.Require().NoError(err)
 
-		fmt.Printf("CASE = %s \n", c.name)
 		suite.ctx = suite.ctx.WithBlockHeight(customante.TaxPowerUpgradeHeight)
 		suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
@@ -161,51 +164,53 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 			bk.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addrs[i], fundCoins)
 		}
 
-		// case 1 provides zero fee so not enough fee
-		// case 2 provides enough fee
-		feeCases := []int64{0, feeAmt}
-		for i := 0; i < 1; i++ {
-			feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, feeCases[i]))
-			gasLimit := testdata.NewTestGasLimit()
-			suite.Require().NoError(suite.txBuilder.SetMsgs(c.msgCreator()...))
-			suite.txBuilder.SetFeeAmount(feeAmount)
-			suite.txBuilder.SetGasLimit(gasLimit)
+		suite.Run(c.name, func() {
+			// case 1 provides zero fee so not enough fee
+			// case 2 provides enough fee
+			feeCases := []int64{0, feeAmt}
+			for i := 0; i < 1; i++ {
+				feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, feeCases[i]))
+				gasLimit := testdata.NewTestGasLimit()
+				suite.Require().NoError(suite.txBuilder.SetMsgs(c.msgCreator()...))
+				suite.txBuilder.SetFeeAmount(feeAmount)
+				suite.txBuilder.SetGasLimit(gasLimit)
 
-			privs, accNums, accSeqs := []cryptotypes.PrivKey{privs[c.msgSigner]}, []uint64{uint64(c.msgSigner)}, []uint64{uint64(i)}
-			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
-			suite.Require().NoError(err)
-
-			feeCollectorBefore := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
-			burnBefore := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
-			communityBefore := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
-			supplyBefore := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
-
-			_, err = antehandler(suite.ctx, tx, false)
-			if i == 0 && c.expectedFeeAmount != 0 {
-				suite.Require().EqualError(err, fmt.Sprintf("insufficient fees; got: \"\", required: \"%dusdr\" = \"\"(gas) +\"%dusdr\"(stability): insufficient fee", c.expectedFeeAmount, c.expectedFeeAmount))
-			} else {
+				privs, accNums, accSeqs := []cryptotypes.PrivKey{privs[c.msgSigner]}, []uint64{uint64(c.msgSigner)}, []uint64{uint64(i)}
+				tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
 				suite.Require().NoError(err)
-			}
 
-			feeCollectorAfter := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
-			burnAfter := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
-			communityAfter := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
-			supplyAfter := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
+				feeCollectorBefore := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+				burnBefore := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
+				communityBefore := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
+				supplyBefore := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
 
-			if i == 0 {
-				suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
-				suite.Require().Equal(burnBefore, burnAfter)
-				suite.Require().Equal(communityBefore, communityAfter)
-				suite.Require().Equal(supplyBefore, supplyAfter)
-			}
+				_, err = antehandler(suite.ctx, tx, false)
+				if i == 0 && c.expectedFeeAmount != 0 {
+					suite.Require().EqualError(err, fmt.Sprintf("insufficient fees; got: \"\", required: \"%dusdr\" = \"\"(gas) +\"%dusdr\"(stability): insufficient fee", c.expectedFeeAmount, c.expectedFeeAmount))
+				} else {
+					suite.Require().NoError(err)
+				}
 
-			if i == 1 {
-				suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
-				splitAmount := sdk.NewInt(int64(float64(c.expectedFeeAmount) * 0.5))
-				suite.Require().Equal(burnBefore, burnAfter.AddAmount(splitAmount))
-				suite.Require().Equal(communityBefore, communityAfter.Add(sdk.NewDecFromInt(splitAmount)))
-				suite.Require().Equal(supplyBefore, supplyAfter.SubAmount(splitAmount))
+				feeCollectorAfter := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+				burnAfter := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
+				communityAfter := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
+				supplyAfter := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
+
+				if i == 0 {
+					suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
+					suite.Require().Equal(burnBefore, burnAfter)
+					suite.Require().Equal(communityBefore, communityAfter)
+					suite.Require().Equal(supplyBefore, supplyAfter)
+				}
+
+				if i == 1 {
+					suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
+					splitAmount := sdk.NewInt(int64(float64(c.expectedFeeAmount) * 0.5))
+					suite.Require().Equal(burnBefore, burnAfter.AddAmount(splitAmount))
+					suite.Require().Equal(communityBefore, communityAfter.Add(sdk.NewDecFromInt(splitAmount)))
+					suite.Require().Equal(supplyBefore, supplyAfter.SubAmount(splitAmount))
+				}
 			}
-		}
+		})
 	}
 }

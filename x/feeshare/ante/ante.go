@@ -5,8 +5,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	feeshare "github.com/classic-terra/core/x/feeshare/types"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
 )
 
 // FeeSharePayoutDecorator Run his after we already deduct the fee from the account with

@@ -248,10 +248,10 @@ benchmark:
 ###############################################################################
 
 lint:
-	sudo golangci-lint run --out-format=tab
+	golangci-lint run --out-format=tab
 
 lint-fix:
-	sudo golangci-lint run --fix --out-format=tab --issues-exit-code=0
+	golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
 lint-strict:
 	find . -path './_build' -prune -o -type f -name '*.go' -exec gofumpt -w -l {} +
