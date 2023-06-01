@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	appparams "github.com/classic-terra/core/app/params"
+	appparams "github.com/classic-terra/core/v2/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/require"

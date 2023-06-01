@@ -9,7 +9,7 @@ import (
 
 	// banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/classic-terra/core/custom/auth/ante"
+	"github.com/classic-terra/core/v2/custom/auth/ante"
 	// core "github.com/terra-money/core/types"
 	// treasury "github.com/terra-money/core/x/treasury/types"
 

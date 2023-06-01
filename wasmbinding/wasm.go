@@ -7,9 +7,9 @@ import (
 	//	"github.com/cosmos/cosmos-sdk/baseapp"
 	//	"github.com/cosmos/cosmos-sdk/codec"
 
-	marketkeeper "github.com/classic-terra/core/x/market/keeper"
-	oraclekeeper "github.com/classic-terra/core/x/oracle/keeper"
-	treasurykeeper "github.com/classic-terra/core/x/treasury/keeper"
+	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
+	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
+	treasurykeeper "github.com/classic-terra/core/v2/x/treasury/keeper"
 	// tokenfactorykeeper "github.com/osmosis-labs/osmosis/v15/x/tokenfactory/keeper"
 )
 

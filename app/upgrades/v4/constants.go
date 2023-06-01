@@ -1,8 +1,8 @@
 package v3
 
 import (
-	"github.com/classic-terra/core/app/upgrades"
-	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
+	"github.com/classic-terra/core/v2/app/upgrades"
+	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	icahosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
 )

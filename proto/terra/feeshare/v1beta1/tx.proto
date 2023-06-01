@@ -4,7 +4,7 @@ package terra.feeshare.v1beta1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/classic-terra/core/x/feeshare/types";
+option go_package = "github.com/classic-terra/core/v2/x/feeshare/types";
 
 // Msg defines the fees Msg service.
 service Msg {

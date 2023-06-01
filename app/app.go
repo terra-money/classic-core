@@ -43,24 +43,24 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/classic-terra/core/app/keepers"
-	terraappparams "github.com/classic-terra/core/app/params"
+	"github.com/classic-terra/core/v2/app/keepers"
+	terraappparams "github.com/classic-terra/core/v2/app/params"
 
 	// upgrades
-	"github.com/classic-terra/core/app/upgrades"
-	v2 "github.com/classic-terra/core/app/upgrades/v2"
-	v3 "github.com/classic-terra/core/app/upgrades/v3"
-	v4 "github.com/classic-terra/core/app/upgrades/v4"
+	"github.com/classic-terra/core/v2/app/upgrades"
+	v2 "github.com/classic-terra/core/v2/app/upgrades/v2"
+	v3 "github.com/classic-terra/core/v2/app/upgrades/v3"
+	v4 "github.com/classic-terra/core/v2/app/upgrades/v4"
 
-	customante "github.com/classic-terra/core/custom/auth/ante"
-	customauthrest "github.com/classic-terra/core/custom/auth/client/rest"
-	customauthtx "github.com/classic-terra/core/custom/auth/tx"
-	core "github.com/classic-terra/core/types"
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	customauthrest "github.com/classic-terra/core/v2/custom/auth/client/rest"
+	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
+	core "github.com/classic-terra/core/v2/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/client/docs/statik"
+	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 const appName = "TerraApp"
@@ -303,7 +303,7 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 		panic(err)
 	}
 	if ctx.ChainID() == core.ColumbusChainID {
-		panic("Must use v1.0.x for importing the columbus genesis (https://github.com/classic-terra/core/releases/)")
+		panic("Must use v1.0.x for importing the columbus genesis (https://github.com/classic-terra/core/v2/releases/)")
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)

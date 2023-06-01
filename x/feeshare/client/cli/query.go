@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/classic-terra/core/x/feeshare/types"
+	"github.com/classic-terra/core/v2/x/feeshare/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

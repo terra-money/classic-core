@@ -1,7 +1,7 @@
 syntax = "proto3";
 package terra.feeshare.v1beta1;
 
-option go_package = "github.com/classic-terra/core/x/feeshare/types";
+option go_package = "github.com/classic-terra/core/v2/x/feeshare/types";
 
 // FeeShare defines an instance that organizes fee distribution conditions for
 // the owner of a given smart contract

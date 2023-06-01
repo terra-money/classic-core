@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/stretchr/testify/suite"
 
-	terraapp "github.com/classic-terra/core/app"
-	appparams "github.com/classic-terra/core/app/params"
-	ante "github.com/classic-terra/core/x/feeshare/ante"
+	terraapp "github.com/classic-terra/core/v2/app"
+	appparams "github.com/classic-terra/core/v2/app/params"
+	ante "github.com/classic-terra/core/v2/x/feeshare/ante"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
@@ -27,8 +27,8 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
+	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 var emptyWasmOpts []wasm.Option

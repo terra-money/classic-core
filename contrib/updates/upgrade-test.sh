@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # should make this auto fetch upgrade name from app upgrades once many upgrades have been done
-# this command will fetch the latest upgrade folder by time modified. So, there could be case that v1 is later modified than v2 which will cause error
-SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/*/ | head -n 1 | xargs basename)
+# this command will retrieve the folder with the largest number in format v<number>
+SOFTWARE_UPGRADE_NAME=$(ls -d -- ./app/upgrades/v* | sort -Vr | head -n 1 | xargs basename)
 NODE1_HOME=node1/terrad
 BINARY_OLD="docker exec terradnode1 ./old/terrad"
 TESTNET_NVAL=${1:-7}

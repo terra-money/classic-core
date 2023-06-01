@@ -12,10 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	customcli "github.com/classic-terra/core/custom/bank/client/cli"
-	customrest "github.com/classic-terra/core/custom/bank/client/rest"
-	customsim "github.com/classic-terra/core/custom/bank/simulation"
-	customtypes "github.com/classic-terra/core/custom/bank/types"
+	customcli "github.com/classic-terra/core/v2/custom/bank/client/cli"
+	customrest "github.com/classic-terra/core/v2/custom/bank/client/rest"
+	customsim "github.com/classic-terra/core/v2/custom/bank/simulation"
+	customtypes "github.com/classic-terra/core/v2/custom/bank/types"
 )
 
 var (

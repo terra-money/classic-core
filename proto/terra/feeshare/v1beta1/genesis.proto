@@ -4,7 +4,7 @@ package terra.feeshare.v1beta1;
 import "gogoproto/gogo.proto";
 import "terra/feeshare/v1beta1/feeshare.proto";
 
-option go_package = "github.com/classic-terra/core/x/feeshare/types";
+option go_package = "github.com/classic-terra/core/v2/x/feeshare/types";
 
 // Params defines the feeshare module params
 message Params {

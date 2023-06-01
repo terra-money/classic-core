@@ -5,20 +5,17 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-
-	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var (
-	_ = proto.Marshal
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -38,11 +35,9 @@ func (*AddBurnTaxExemptionAddressProposal) ProtoMessage() {}
 func (*AddBurnTaxExemptionAddressProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a71b37663a441645, []int{0}
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AddBurnTaxExemptionAddressProposal.Marshal(b, m, deterministic)
@@ -55,15 +50,12 @@ func (m *AddBurnTaxExemptionAddressProposal) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AddBurnTaxExemptionAddressProposal.Merge(m, src)
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_AddBurnTaxExemptionAddressProposal.DiscardUnknown(m)
 }
@@ -82,11 +74,9 @@ func (*RemoveBurnTaxExemptionAddressProposal) ProtoMessage() {}
 func (*RemoveBurnTaxExemptionAddressProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a71b37663a441645, []int{1}
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_RemoveBurnTaxExemptionAddressProposal.Marshal(b, m, deterministic)
@@ -99,15 +89,12 @@ func (m *RemoveBurnTaxExemptionAddressProposal) XXX_Marshal(b []byte, determinis
 		return b[:n], nil
 	}
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_RemoveBurnTaxExemptionAddressProposal.Merge(m, src)
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_RemoveBurnTaxExemptionAddressProposal.DiscardUnknown(m)
 }
@@ -122,7 +109,7 @@ func init() {
 func init() { proto.RegisterFile("terra/treasury/v1beta1/gov.proto", fileDescriptor_a71b37663a441645) }
 
 var fileDescriptor_a71b37663a441645 = []byte{
-	// 287 bytes of a gzipped FileDescriptorProto
+	// 290 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x28, 0x49, 0x2d, 0x2a,
 	0x4a, 0xd4, 0x2f, 0x29, 0x4a, 0x4d, 0x2c, 0x2e, 0x2d, 0xaa, 0xd4, 0x2f, 0x33, 0x4c, 0x4a, 0x2d,
 	0x49, 0x34, 0xd4, 0x4f, 0xcf, 0x2f, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x03, 0xab,
@@ -135,12 +122,13 @@ var fileDescriptor_a71b37663a441645 = []byte{
 	0x2e, 0xce, 0x44, 0x88, 0x51, 0xa9, 0xc5, 0x12, 0xcc, 0x0a, 0xcc, 0x1a, 0x9c, 0x4e, 0x22, 0x9f,
 	0xee, 0xc9, 0x0b, 0x54, 0x26, 0xe6, 0xe6, 0x58, 0x29, 0xc1, 0xa5, 0x94, 0x82, 0x10, 0xca, 0xac,
 	0x78, 0x3a, 0x16, 0xc8, 0x33, 0xcc, 0x58, 0x20, 0xcf, 0xf0, 0x62, 0x81, 0x3c, 0xa3, 0xd2, 0x42,
-	0x46, 0x2e, 0xd5, 0xa0, 0xd4, 0xdc, 0xfc, 0xb2, 0xd4, 0x41, 0xeb, 0x46, 0x27, 0x8f, 0x13, 0x8f,
+	0x46, 0x2e, 0xd5, 0xa0, 0xd4, 0xdc, 0xfc, 0xb2, 0xd4, 0x41, 0xeb, 0x46, 0x27, 0xef, 0x13, 0x8f,
 	0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b,
-	0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0xd2, 0x4b, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2,
+	0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x4c, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2,
 	0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xce, 0x49, 0x2c, 0x2e, 0xce, 0x4c, 0xd6, 0x85, 0xc4, 0x60, 0x72,
-	0x7e, 0x51, 0xaa, 0x7e, 0x05, 0x22, 0x22, 0x4b, 0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0xb1,
-	0x62, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xa7, 0x80, 0xc3, 0x34, 0xe7, 0x01, 0x00, 0x00,
+	0x7e, 0x51, 0xaa, 0x7e, 0x99, 0x91, 0x7e, 0x05, 0x22, 0x2e, 0x4b, 0x2a, 0x0b, 0x52, 0x8b, 0x93,
+	0xd8, 0xc0, 0x11, 0x63, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x60, 0x19, 0x26, 0x3f, 0xea, 0x01,
+	0x00, 0x00,
 }
 
 func (this *AddBurnTaxExemptionAddressProposal) Equal(that interface{}) bool {
@@ -178,7 +166,6 @@ func (this *AddBurnTaxExemptionAddressProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *RemoveBurnTaxExemptionAddressProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -214,7 +201,6 @@ func (this *RemoveBurnTaxExemptionAddressProposal) Equal(that interface{}) bool 
 	}
 	return true
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -318,7 +304,6 @@ func encodeVarintGov(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -368,11 +353,9 @@ func (m *RemoveBurnTaxExemptionAddressProposal) Size() (n int) {
 func sovGov(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozGov(x uint64) (n int) {
 	return sovGov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *AddBurnTaxExemptionAddressProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -519,7 +502,6 @@ func (m *AddBurnTaxExemptionAddressProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *RemoveBurnTaxExemptionAddressProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -666,7 +648,6 @@ func (m *RemoveBurnTaxExemptionAddressProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipGov(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

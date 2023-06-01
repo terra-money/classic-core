@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	terraapp "github.com/classic-terra/core/app"
-	helpers "github.com/classic-terra/core/app/testing"
+	terraapp "github.com/classic-terra/core/v2/app"
+	helpers "github.com/classic-terra/core/v2/app/testing"
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/stretchr/testify/require"

@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	revtypes "github.com/classic-terra/core/x/feeshare/types"
+	revtypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 

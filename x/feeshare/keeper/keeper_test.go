@@ -11,11 +11,11 @@ package keeper_test
 // 	tmrand "github.com/tendermint/tendermint/libs/rand"
 // 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-// 	"github.com/classic-terra/core/app"
-// 	apphelpers "github.com/classic-terra/core/app/helpers"
-// 	"github.com/classic-terra/core/x/feeshare/keeper"
-// 	"github.com/classic-terra/core/x/feeshare/types"
-// 	wasmtypes "github.com/classic-terra/core/x/wasm/types"
+// 	"github.com/classic-terra/core/v2/app"
+// 	apphelpers "github.com/classic-terra/core/v2/app/helpers"
+// 	"github.com/classic-terra/core/v2/x/feeshare/keeper"
+// 	"github.com/classic-terra/core/v2/x/feeshare/types"
+// 	wasmtypes "github.com/classic-terra/core/v2/x/wasm/types"
 // 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 // )
 

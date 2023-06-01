@@ -7,8 +7,8 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
-	v05market "github.com/classic-terra/core/x/market/types"
-	v04msgauth "github.com/classic-terra/core/x/msgauth/legacy/v04"
+	v05market "github.com/classic-terra/core/v2/x/market/types"
+	v04msgauth "github.com/classic-terra/core/v2/x/msgauth/legacy/v04"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	v043authz "github.com/cosmos/cosmos-sdk/x/authz"

@@ -1,10 +1,10 @@
 go 1.18
 
-module github.com/classic-terra/core
+module github.com/classic-terra/core/v2
 
 require (
 	github.com/CosmWasm/wasmd v0.30.0
-	github.com/CosmWasm/wasmvm v1.1.1
+	github.com/CosmWasm/wasmvm v1.1.2
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/ibc-go/v4 v4.3.1

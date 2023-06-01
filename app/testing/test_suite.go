@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	"github.com/classic-terra/core/app"
-	appparams "github.com/classic-terra/core/app/params"
+	"github.com/classic-terra/core/v2/app"
+	appparams "github.com/classic-terra/core/v2/app/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"

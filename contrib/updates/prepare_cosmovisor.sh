@@ -6,7 +6,8 @@
 # These fields should be fetched automatically in the future
 # Need to do more upgrade to see upgrade patterns
 OLD_VERSION=v2.0.1
-SOFTWARE_UPGRADE_NAME=$(ls -td -- ./app/upgrades/* | head -n 1 | cut -d'/' -f4)
+# this command will retrieve the folder with the largest number in format v<number>
+SOFTWARE_UPGRADE_NAME=$(ls -d -- ./app/upgrades/v* | sort -Vr | head -n 1 | xargs basename)
 BUILDDIR=$1
 TESTNET_NVAL=$2
 TESTNET_CHAINID=$3

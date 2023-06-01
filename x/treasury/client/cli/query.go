@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/classic-terra/core/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 
 	"github.com/spf13/cobra"
 

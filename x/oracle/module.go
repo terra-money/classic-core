@@ -19,11 +19,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/classic-terra/core/x/oracle/client/cli"
-	"github.com/classic-terra/core/x/oracle/client/rest"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/simulation"
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/client/cli"
+	"github.com/classic-terra/core/v2/x/oracle/client/rest"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/simulation"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 var (

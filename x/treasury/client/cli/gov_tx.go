@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/classic-terra/core/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"

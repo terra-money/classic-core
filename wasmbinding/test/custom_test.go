@@ -1,7 +1,7 @@
 package wasmbinding_test
 
 import (
-	"github.com/classic-terra/core/wasmbinding/bindings"
+	"github.com/classic-terra/core/v2/wasmbinding/bindings"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -10,7 +10,7 @@ const (
 	TERRA_RENOVATED_BINDINGS_DIR = "../testdata/old/bindings_tester.wasm"
 )
 
-// go test -v -run ^TestWasmTestSuite/TestBindingsAll$ github.com/classic-terra/core/wasmbinding/test
+// go test -v -run ^TestWasmTestSuite/TestBindingsAll$ github.com/classic-terra/core/v2/wasmbinding/test
 func (s *WasmTestSuite) TestBindingsAll() {
 	cases := []struct {
 		name        string

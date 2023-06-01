@@ -18,10 +18,10 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/classic-terra/core/x/feeshare/client/cli"
-	"github.com/classic-terra/core/x/feeshare/keeper"
-	"github.com/classic-terra/core/x/feeshare/simulation"
-	"github.com/classic-terra/core/x/feeshare/types"
+	"github.com/classic-terra/core/v2/x/feeshare/client/cli"
+	"github.com/classic-terra/core/v2/x/feeshare/keeper"
+	"github.com/classic-terra/core/v2/x/feeshare/simulation"
+	"github.com/classic-terra/core/v2/x/feeshare/types"
 )
 
 // type check to ensure the interface is properly implemented

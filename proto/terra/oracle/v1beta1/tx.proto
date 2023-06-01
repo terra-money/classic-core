@@ -3,7 +3,7 @@ package terra.oracle.v1beta1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/classic-terra/core/x/oracle/types";
+option go_package = "github.com/classic-terra/core/v2/x/oracle/types";
 
 // Msg defines the oracle Msg service.
 service Msg {

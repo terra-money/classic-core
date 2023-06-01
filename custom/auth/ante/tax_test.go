@@ -13,9 +13,9 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/classic-terra/core/custom/auth/ante"
-	core "github.com/classic-terra/core/types"
-	markettypes "github.com/classic-terra/core/x/market/types"
+	"github.com/classic-terra/core/v2/custom/auth/ante"
+	core "github.com/classic-terra/core/v2/types"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
 )
 
 func (suite *AnteTestSuite) TestEnsureMempoolFeesGas() {
@@ -768,7 +768,7 @@ func (suite *AnteTestSuite) TestEnsureMempoolFeesExecLunaTax() {
 	suite.Require().NoError(err, "Decorator should not have errored on fee higher than local gasPrice")
 }
 
-// go test -v -run ^TestAnteTestSuite/TestTaxExemption$ github.com/classic-terra/core/custom/auth/ante
+// go test -v -run ^TestAnteTestSuite/TestTaxExemption$ github.com/classic-terra/core/v2/custom/auth/ante
 func (suite *AnteTestSuite) TestTaxExemption() {
 	// keys and addresses
 	var privs []cryptotypes.PrivKey

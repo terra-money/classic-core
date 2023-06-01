@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/classic-terra/core/x/treasury/keeper"
-	"github.com/classic-terra/core/x/treasury/simulation"
+	"github.com/classic-terra/core/v2/x/treasury/keeper"
+	"github.com/classic-terra/core/v2/x/treasury/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	"github.com/gorilla/mux"
@@ -22,9 +22,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/classic-terra/core/x/treasury/client/cli"
-	"github.com/classic-terra/core/x/treasury/client/rest"
-	"github.com/classic-terra/core/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/treasury/client/cli"
+	"github.com/classic-terra/core/v2/x/treasury/client/rest"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 var (

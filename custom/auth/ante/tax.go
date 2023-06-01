@@ -9,9 +9,9 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/classic-terra/core/types"
-	marketexported "github.com/classic-terra/core/x/market/exported"
-	oracleexported "github.com/classic-terra/core/x/oracle/exported"
+	core "github.com/classic-terra/core/v2/types"
+	marketexported "github.com/classic-terra/core/v2/x/market/exported"
+	oracleexported "github.com/classic-terra/core/v2/x/oracle/exported"
 )
 
 // MaxOracleMsgGasUsage is constant expected oracle msg gas cost

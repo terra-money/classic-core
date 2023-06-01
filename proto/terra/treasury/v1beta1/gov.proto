@@ -3,7 +3,7 @@ package terra.treasury.v1beta1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/classic-terra/core/x/treasury/types";
+option go_package = "github.com/classic-terra/core/v2/x/treasury/types";
 
 // proposal request structure for adding burn tax exemption address(es)
 message AddBurnTaxExemptionAddressProposal {

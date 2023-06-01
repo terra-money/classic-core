@@ -30,11 +30,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	terraapp "github.com/classic-terra/core/app"
-	terralegacy "github.com/classic-terra/core/app/legacy"
-	"github.com/classic-terra/core/app/params"
-	authcustomcli "github.com/classic-terra/core/custom/auth/client/cli"
-	core "github.com/classic-terra/core/types"
+	terraapp "github.com/classic-terra/core/v2/app"
+	terralegacy "github.com/classic-terra/core/v2/app/legacy"
+	"github.com/classic-terra/core/v2/app/params"
+	authcustomcli "github.com/classic-terra/core/v2/custom/auth/client/cli"
+	core "github.com/classic-terra/core/v2/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"

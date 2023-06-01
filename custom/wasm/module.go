@@ -10,7 +10,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
-	customcli "github.com/classic-terra/core/custom/wasm/client/cli"
+	customcli "github.com/classic-terra/core/v2/custom/wasm/client/cli"
 )
 
 var (

@@ -4,7 +4,7 @@ package terra.market.v1beta1;
 import "gogoproto/gogo.proto";
 import "terra/market/v1beta1/market.proto";
 
-option go_package = "github.com/classic-terra/core/x/market/types";
+option go_package = "github.com/classic-terra/core/v2/x/market/types";
 
 // GenesisState defines the market module's genesis state.
 message GenesisState {

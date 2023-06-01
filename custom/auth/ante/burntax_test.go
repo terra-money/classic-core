@@ -8,14 +8,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/classic-terra/core/custom/auth/ante"
-	core "github.com/classic-terra/core/types"
+	"github.com/classic-terra/core/v2/custom/auth/ante"
+	core "github.com/classic-terra/core/v2/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
-// go test -v -run ^TestAnteTestSuite/TestSplitTax$ github.com/classic-terra/core/custom/auth/ante
+// go test -v -run ^TestAnteTestSuite/TestSplitTax$ github.com/classic-terra/core/v2/custom/auth/ante
 func (suite *AnteTestSuite) TestSplitTax() {
 	suite.runSplitTaxTest(sdk.NewDecWithPrec(1, 0))  // 100%
 	suite.runSplitTaxTest(sdk.NewDecWithPrec(1, 1))  // 10%

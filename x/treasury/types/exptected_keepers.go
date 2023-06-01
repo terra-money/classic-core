@@ -5,7 +5,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // AccountKeeper expected account keeper

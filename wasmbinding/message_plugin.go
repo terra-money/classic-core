@@ -10,9 +10,9 @@ import (
 
 	//	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	"github.com/classic-terra/core/wasmbinding/bindings"
-	marketkeeper "github.com/classic-terra/core/x/market/keeper"
-	markettypes "github.com/classic-terra/core/x/market/types"
+	"github.com/classic-terra/core/v2/wasmbinding/bindings"
+	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
 )
 
 // CustomMessageDecorator returns decorator for custom CosmWasm bindings messages

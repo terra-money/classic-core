@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 
 	"github.com/stretchr/testify/require"
 

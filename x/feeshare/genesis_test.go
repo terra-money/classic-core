@@ -8,10 +8,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/classic-terra/core/app"
-	appparams "github.com/classic-terra/core/app/params"
-	"github.com/classic-terra/core/x/feeshare"
-	"github.com/classic-terra/core/x/feeshare/types"
+	"github.com/classic-terra/core/v2/app"
+	appparams "github.com/classic-terra/core/v2/app/params"
+	"github.com/classic-terra/core/v2/x/feeshare"
+	"github.com/classic-terra/core/v2/x/feeshare/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 

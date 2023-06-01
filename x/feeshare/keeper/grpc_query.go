@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/classic-terra/core/x/feeshare/types"
+	"github.com/classic-terra/core/v2/x/feeshare/types"
 )
 
 var _ types.QueryServer = Querier{}

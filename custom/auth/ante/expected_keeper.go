@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	feesharettypes "github.com/classic-terra/core/x/feeshare/types"
+	feesharettypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 

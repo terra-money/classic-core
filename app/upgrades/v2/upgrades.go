@@ -1,13 +1,13 @@
 package v2
 
 import (
-	"github.com/classic-terra/core/app/keepers"
-	"github.com/classic-terra/core/app/upgrades"
+	"github.com/classic-terra/core/v2/app/keepers"
+	"github.com/classic-terra/core/v2/app/upgrades"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
+	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
 )
 
 func CreateV2UpgradeHandler(

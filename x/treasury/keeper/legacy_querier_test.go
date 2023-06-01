@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/treasury/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -328,7 +328,7 @@ func TestLegacyQueryIndicators(t *testing.T) {
 	require.Equal(t, targetIndicators, queriedIndicators)
 }
 
-// go test -v -run ^TestLegacyQueryBurnTaxExemptionList$ github.com/classic-terra/core/x/treasury/keeper
+// go test -v -run ^TestLegacyQueryBurnTaxExemptionList$ github.com/classic-terra/core/v2/x/treasury/keeper
 func TestLegacyQueryBurnTaxExemptionList(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.TreasuryKeeper, input.Cdc)

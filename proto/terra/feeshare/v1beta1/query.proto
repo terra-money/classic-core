@@ -7,7 +7,7 @@ import "terra/feeshare/v1beta1/feeshare.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/classic-terra/core/x/feeshare/types";
+option go_package = "github.com/classic-terra/core/v2/x/feeshare/types";
 
 // Query defines the gRPC querier service.
 service Query {

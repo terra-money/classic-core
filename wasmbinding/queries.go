@@ -5,10 +5,10 @@ import (
 
 	//	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	//	"github.com/classic-terra/core/wasmbinding/bindings"
-	marketkeeper "github.com/classic-terra/core/x/market/keeper"
-	oraclekeeper "github.com/classic-terra/core/x/oracle/keeper"
-	treasurykeeper "github.com/classic-terra/core/x/treasury/keeper"
+	//	"github.com/classic-terra/core/v2/wasmbinding/bindings"
+	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
+	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
+	treasurykeeper "github.com/classic-terra/core/v2/x/treasury/keeper"
 )
 
 type QueryPlugin struct {

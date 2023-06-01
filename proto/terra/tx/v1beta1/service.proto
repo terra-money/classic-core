@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/tx/v1beta1/tx.proto";
 
 option (gogoproto.goproto_registration) = true;
-option go_package                       = "github.com/classic-terra/core/custom/auth/tx";
+option go_package                       = "github.com/classic-terra/core/v2/custom/auth/tx";
 
 // Service defines a gRPC service for interacting with transactions.
 service Service {

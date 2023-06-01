@@ -44,17 +44,17 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	customwasmkeeper "github.com/classic-terra/core/custom/wasm/keeper"
-	terrawasm "github.com/classic-terra/core/wasmbinding"
+	customwasmkeeper "github.com/classic-terra/core/v2/custom/wasm/keeper"
+	terrawasm "github.com/classic-terra/core/v2/wasmbinding"
 
-	feesharekeeper "github.com/classic-terra/core/x/feeshare/keeper"
-	feesharetypes "github.com/classic-terra/core/x/feeshare/types"
-	marketkeeper "github.com/classic-terra/core/x/market/keeper"
-	markettypes "github.com/classic-terra/core/x/market/types"
-	oraclekeeper "github.com/classic-terra/core/x/oracle/keeper"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
-	treasurykeeper "github.com/classic-terra/core/x/treasury/keeper"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
+	feesharekeeper "github.com/classic-terra/core/v2/x/feeshare/keeper"
+	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
+	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
+	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
+	treasurykeeper "github.com/classic-terra/core/v2/x/treasury/keeper"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 type AppKeepers struct {

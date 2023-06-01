@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "terra/market/v1beta1/market.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/classic-terra/core/x/market/types";
+option go_package = "github.com/classic-terra/core/v2/x/market/types";
 
 // Query defines the gRPC querier service.
 service Query {
