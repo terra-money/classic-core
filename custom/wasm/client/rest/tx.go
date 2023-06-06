@@ -12,6 +12,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	feeutils "github.com/classic-terra/core/v2/custom/auth/client/utils"
 )
 
 func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
@@ -112,6 +113,18 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
+		if req.BaseReq.Fees.IsZero() {
+			stdFee, err := feeutils.ComputeFeesWithBaseReq(cliCtx, req.BaseReq, &msg)
+			if rest.CheckBadRequestError(w, err) {
+				return
+			}
+
+			// override gas and fees
+			req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
+			req.BaseReq.Fees = stdFee.Amount
+			req.BaseReq.GasPrices = sdk.DecCoins{}
+		}
+
 		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, &msg)
 	}
 }
@@ -140,6 +153,18 @@ func executeContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		if req.BaseReq.Fees.IsZero() {
+			stdFee, err := feeutils.ComputeFeesWithBaseReq(cliCtx, req.BaseReq, &msg)
+			if rest.CheckBadRequestError(w, err) {
+				return
+			}
+
+			// override gas and fees
+			req.BaseReq.Gas = strconv.FormatUint(stdFee.Gas, 10)
+			req.BaseReq.Fees = stdFee.Amount
+			req.BaseReq.GasPrices = sdk.DecCoins{}
 		}
 
 		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, &msg)

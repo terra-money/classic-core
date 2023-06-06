@@ -54,7 +54,7 @@ func (s *WasmTestSuite) storeReflectCode(addr sdk.AccAddress, contractDir string
 func (s *WasmTestSuite) instantiateContract(funder sdk.AccAddress, codeId uint64) sdk.AccAddress {
 	initMsgBz := []byte("{}")
 	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(s.App.WasmKeeper)
-	addr, _, err := contractKeeper.Instantiate(s.Ctx, codeId, funder, funder, initMsgBz, nil)
+	addr, _, err := contractKeeper.Instantiate(s.Ctx, codeId, funder, funder, initMsgBz, "label", nil)
 	s.Require().NoError(err)
 
 	return addr

@@ -162,8 +162,8 @@ github.com/classic-terra/cosmos-sdk v0.45.14-classic h1:R3WBEoqnBDGef3LCCq0uTWEq
 github.com/classic-terra/cosmos-sdk v0.45.14-classic/go.mod h1:KaUwQKijD7mOiKnPa/7JOJoGfDt4Mq+1CGlODMHPmfM=
 github.com/classic-terra/tendermint v0.34.24-terra.0 h1:ZGaJpmKfxjlmmLO80t03jlK2SBQfJKlLsF+ItDbXtko=
 github.com/classic-terra/tendermint v0.34.24-terra.0/go.mod h1:rXVrl4OYzmIa1I91av3iLv2HS0fGSiucyW9J4aMTpKI=
-github.com/classic-terra/wasmd v0.30.0-terra.1 h1:Qc3zlrMpzFUd/wUAQ4fceiVbV+uCXRyT3QhUt/wMPKM=
-github.com/classic-terra/wasmd v0.30.0-terra.1/go.mod h1:PXUm4fMuYYs09M9cmKvjBfzP3eNSp5AYlMTF8NtMnvU=
+github.com/classic-terra/wasmd v0.30.0-terra.2 h1:qaZx4mloPU6xaJP7TAd3CNzN4iziJ47ClOEkJV5de/Q=
+github.com/classic-terra/wasmd v0.30.0-terra.2/go.mod h1:PXUm4fMuYYs09M9cmKvjBfzP3eNSp5AYlMTF8NtMnvU=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/cloudflare/cloudflare-go v0.14.0/go.mod h1:EnwdgGMaFOruiPZRFSgn+TsQ3hQ7C/YWzIGLeu5c304=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=

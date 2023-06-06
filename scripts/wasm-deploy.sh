@@ -4,7 +4,7 @@ BINARY=_build/old/terrad
 CONTRACTPATH="contrib/localnet/simulation/misc/cw721_base.wasm"
 KEYRING_BACKEND="test"
 HOME=mytestnet
-CHAIN_ID=test
+CHAIN_ID=localterra
 
 echo "SETTING UP SMART CONTRACT INTERACTION"
 

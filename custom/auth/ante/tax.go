@@ -145,6 +145,9 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 		case *wasm.MsgInstantiateContract:
 			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
 
+		case *wasm.MsgInstantiateContract2:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
+
 		case *wasm.MsgExecuteContract:
 			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
 
