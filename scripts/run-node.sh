@@ -26,8 +26,8 @@ if [ -z "$BINARY" ]; then
     BINARY=build/terrad
 fi
 
-HOME_DIR=mytestnet
-CHAIN_ID="test"
+HOME=mytestnet
+CHAIN_ID="localterra"
 KEYRING="test"
 KEY="test0"
 KEY1="test1"

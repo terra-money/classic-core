@@ -6,6 +6,7 @@ UPGRADE_WAIT=20
 HOME=mytestnet
 ROOT=$(pwd)
 DENOM=uluna
+CHAIN_ID=localterra
 SOFTWARE_UPGRADE_NAME="v4"
 ADDITIONAL_SCRIPTS=${ADDITIONAL_SCRIPTS:-""}
 
@@ -65,19 +66,19 @@ fi
 STATUS_INFO=($(./_build/old/terrad status --home $HOME | jq -r '.NodeInfo.network,.SyncInfo.latest_block_height'))
 UPGRADE_HEIGHT=$((STATUS_INFO[1] + 20))
 
-./_build/old/terrad tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id test --home $HOME -y
+./_build/old/terrad tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
 sleep 5
 
-./_build/old/terrad tx gov deposit 1 "20000000${DENOM}" --from test1 --keyring-backend test --chain-id test --home $HOME -y
+./_build/old/terrad tx gov deposit 1 "20000000${DENOM}" --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
 sleep 5
 
-./_build/old/terrad tx gov vote 1 yes --from test0 --keyring-backend test --chain-id test --home $HOME -y
+./_build/old/terrad tx gov vote 1 yes --from test0 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
 sleep 5
 
-./_build/old/terrad tx gov vote 1 yes --from test1 --keyring-backend test --chain-id test --home $HOME -y
+./_build/old/terrad tx gov vote 1 yes --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
 sleep 5
 
