@@ -183,8 +183,11 @@ build-release-arm64: go.sum
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 
-update-swagger-docs: statik
-	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
+docs:
+	@./scripts/protoc-swagger-gen.sh
+
+	@rm -f client/docs/statik/statik.go
+	@statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
         echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
         exit 1;\
@@ -192,7 +195,7 @@ update-swagger-docs: statik
         echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
 
-.PHONY: build build-linux install update-swagger-docs
+.PHONY: build build-linux install docs
 
 ########################################
 ### Tools & dependencies
@@ -282,17 +285,14 @@ proto-format:
 	@echo "Formatting Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_PROTO_FMT}$$"; then docker start -a $(CONTAINER_PROTO_FMT); else docker run --name $(CONTAINER_PROTO_FMT) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
 		find ./proto -name "*.proto" -exec clang-format -i {} \; ; fi
-
-proto-swagger-gen:
-	@./scripts/protoc-swagger-gen.sh
-
+	
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
 proto-check-breaking:
 	@$(DOCKER_BUF) breaking --against '$(HTTPS_GIT)#branch=main'
 
-.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking 
+.PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking 
 
 ###############################################################################
 ###                                Localnet                                 ###
