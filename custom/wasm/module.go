@@ -12,9 +12,7 @@ import (
 	customrest "github.com/classic-terra/core/v2/custom/wasm/client/rest"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the wasm module.
 type AppModuleBasic struct {

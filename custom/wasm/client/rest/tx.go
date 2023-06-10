@@ -28,6 +28,7 @@ type storeCodeReq struct {
 
 type instantiateContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Label   string       `json:"label" yaml:"label"`
 	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
 	Admin   string       `json:"admin,omitempty" yaml:"admin"`
 	Msg     []byte       `json:"msg" yaml:"msg"`
@@ -103,6 +104,7 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		msg := types.MsgInstantiateContract{
 			Sender: req.BaseReq.From,
 			CodeID: codeID,
+			Label:  req.Label,
 			Funds:  req.Deposit,
 			Msg:    req.Msg,
 			Admin:  req.Admin,
