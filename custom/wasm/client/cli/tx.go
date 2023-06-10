@@ -26,6 +26,7 @@ const (
 	flagAdmin   = "admin"
 	flagNoAdmin = "no-admin"
 	flagFixMsg  = "fix-msg"
+	flagLabel   = "label"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -103,7 +104,7 @@ func ExecuteContractCmd() *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --admin [address,optional] --amount [coins,optional] ",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional] ",
 		Short: "Instantiate a wasm contract",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
 Each contract instance has a unique address assigned.
@@ -150,6 +151,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "Human readable contract label in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	flags.AddTxFlagsToCmd(cmd)
@@ -160,7 +162,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 func InstantiateContract2Cmd() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use: "instantiate2 [code_id_int64] [json_encoded_init_args] [salt] --admin [address,optional] --amount [coins,optional] " +
+		Use: "instantiate2 [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
 			"--fix-msg [bool,optional]",
 		Short: "Instantiate a wasm contract with predictable address",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
@@ -197,6 +199,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 				CodeID: data.CodeID,
 				Msg:    data.Msg,
 				Funds:  data.Funds,
+				Label:  data.Label,
 				Salt:   salt,
 				FixMsg: fixMsg,
 			}
@@ -228,6 +231,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "Human readable contract label in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
@@ -270,6 +274,13 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 	if err != nil {
 		return nil, fmt.Errorf("amount: %s", err)
 	}
+	label, err := flags.GetString(flagLabel)
+	if err != nil {
+		return nil, fmt.Errorf("label: %s", err)
+	}
+	if label == "" {
+		return nil, errors.New("label is required on all contracts")
+	}
 	adminStr, err := flags.GetString(flagAdmin)
 	if err != nil {
 		return nil, fmt.Errorf("admin: %s", err)
@@ -294,6 +305,7 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 		Funds:  amount,
 		Msg:    []byte(initMsg),
 		Admin:  adminStr,
+		Label:  label,
 	}
 	return &msg, nil
 }
