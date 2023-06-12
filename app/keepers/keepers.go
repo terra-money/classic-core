@@ -1,10 +1,14 @@
 package keepers
 
 import (
-	ibctransferkeeper "github.com/cosmos/ibc-go/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
+	"path/filepath"
+
+	icahostkeeper "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -38,26 +42,17 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	customwasmkeeper "github.com/classic-terra/core/v2/custom/wasm/keeper"
+	terrawasm "github.com/classic-terra/core/v2/wasmbinding"
+
 	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
 	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 	treasurykeeper "github.com/classic-terra/core/v2/x/treasury/keeper"
 	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
-	wasmconfig "github.com/classic-terra/core/v2/x/wasm/config"
-	wasmkeeper "github.com/classic-terra/core/v2/x/wasm/keeper"
-	wasmtypes "github.com/classic-terra/core/v2/x/wasm/types"
-
-	bankwasm "github.com/classic-terra/core/v2/custom/bank/wasm"
-	distrwasm "github.com/classic-terra/core/v2/custom/distribution/wasm"
-	govwasm "github.com/classic-terra/core/v2/custom/gov/wasm"
-	stakingwasm "github.com/classic-terra/core/v2/custom/staking/wasm"
-	marketwasm "github.com/classic-terra/core/v2/x/market/wasm"
-	oraclewasm "github.com/classic-terra/core/v2/x/oracle/wasm"
-	treasurywasm "github.com/classic-terra/core/v2/x/treasury/wasm"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 type AppKeepers struct {
@@ -88,9 +83,12 @@ type AppKeepers struct {
 	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
 
+	ICAHostKeeper icahostkeeper.Keeper
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 }
 
 func NewAppKeepers(
@@ -103,7 +101,7 @@ func NewAppKeepers(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	wasmConfig *wasmconfig.Config,
+	wasmOpts []wasm.Option,
 	appOpts servertypes.AppOptions,
 ) AppKeepers {
 	appKeepers := AppKeepers{}
@@ -119,6 +117,8 @@ func NewAppKeepers(
 	appKeepers.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, appKeepers.keys[capabilitytypes.StoreKey], appKeepers.memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := appKeepers.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := appKeepers.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedICAHostKeeper := appKeepers.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedWasmKeeper := appKeepers.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -168,12 +168,24 @@ func NewAppKeepers(
 	// Create Transfer Keepers
 	appKeepers.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, appKeepers.keys[ibctransfertypes.StoreKey], appKeepers.GetSubspace(ibctransfertypes.ModuleName),
-		appKeepers.IBCKeeper.ChannelKeeper, &appKeepers.IBCKeeper.PortKeeper,
+		appKeepers.IBCKeeper.ChannelKeeper, appKeepers.IBCKeeper.ChannelKeeper, &appKeepers.IBCKeeper.PortKeeper,
 		appKeepers.AccountKeeper, appKeepers.BankKeeper, scopedTransferKeeper,
 	)
 
+	appKeepers.ICAHostKeeper = icahostkeeper.NewKeeper(
+		appCodec,
+		appKeepers.keys[icahosttypes.StoreKey],
+		appKeepers.GetSubspace(icahosttypes.SubModuleName),
+		appKeepers.IBCKeeper.ChannelKeeper,
+		&appKeepers.IBCKeeper.PortKeeper,
+		appKeepers.AccountKeeper,
+		scopedICAHostKeeper,
+		bApp.MsgServiceRouter(),
+	)
+
 	// Create static IBC router, add transfer route, then set and seal it
-	appKeepers.setIBCRouter()
+	ibcRouter := appKeepers.getIBCRouter()
+	appKeepers.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -200,37 +212,38 @@ func NewAppKeepers(
 		appKeepers.StakingKeeper, appKeepers.DistrKeeper,
 		distrtypes.ModuleName)
 
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+	supportedFeatures := "iterator,staking,stargate,terra,cosmwasm_1_1"
+
+	wasmMsgHandler := customwasmkeeper.NewMessageHandler(bApp.MsgServiceRouter(), appKeepers.IBCKeeper.ChannelKeeper, scopedWasmKeeper, appKeepers.BankKeeper, appKeepers.TreasuryKeeper, appKeepers.AccountKeeper, appCodec, appKeepers.TransferKeeper)
+	// the first slice will replace all default msh handler with custom one
+	wasmOpts = append([]wasmkeeper.Option{wasmkeeper.WithMessageHandler(wasmMsgHandler)}, wasmOpts...)
+	// the second slice will add custom querier and message handler decorator
+	// this order must be uphold else error will be thrown
+	wasmOpts = append(wasmOpts, terrawasm.RegisterCustomPlugins(&appKeepers.MarketKeeper, &appKeepers.OracleKeeper, &appKeepers.TreasuryKeeper)...)
+
 	appKeepers.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		appKeepers.keys[wasmtypes.StoreKey],
-		appKeepers.GetSubspace(wasmtypes.ModuleName),
+		appKeepers.keys[wasm.StoreKey],
+		appKeepers.GetSubspace(wasm.ModuleName),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
-		appKeepers.TreasuryKeeper,
+		appKeepers.StakingKeeper,
+		appKeepers.DistrKeeper,
+		appKeepers.IBCKeeper.ChannelKeeper,
+		&appKeepers.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		appKeepers.TransferKeeper,
 		bApp.MsgServiceRouter(),
 		bApp.GRPCQueryRouter(),
-		wasmtypes.DefaultFeatures,
-		homePath,
+		filepath.Join(homePath, "data"),
 		wasmConfig,
+		supportedFeatures,
+		wasmOpts...,
 	)
-
-	// register wasm msg parser & querier
-	appKeepers.WasmKeeper.RegisterMsgParsers(map[string]wasmtypes.WasmMsgParserInterface{
-		wasmtypes.WasmMsgParserRouteBank:         bankwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteStaking:      stakingwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteMarket:       marketwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteWasm:         wasmkeeper.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteDistribution: distrwasm.NewWasmMsgParser(),
-		wasmtypes.WasmMsgParserRouteGov:          govwasm.NewWasmMsgParser(),
-	}, wasmkeeper.NewStargateWasmMsgParser(appCodec))
-	appKeepers.WasmKeeper.RegisterQueriers(map[string]wasmtypes.WasmQuerierInterface{
-		wasmtypes.WasmQueryRouteBank:     bankwasm.NewWasmQuerier(appKeepers.BankKeeper),
-		wasmtypes.WasmQueryRouteStaking:  stakingwasm.NewWasmQuerier(appKeepers.StakingKeeper, appKeepers.DistrKeeper),
-		wasmtypes.WasmQueryRouteMarket:   marketwasm.NewWasmQuerier(appKeepers.MarketKeeper),
-		wasmtypes.WasmQueryRouteOracle:   oraclewasm.NewWasmQuerier(appKeepers.OracleKeeper),
-		wasmtypes.WasmQueryRouteTreasury: treasurywasm.NewWasmQuerier(appKeepers.TreasuryKeeper),
-		wasmtypes.WasmQueryRouteWasm:     wasmkeeper.NewWasmQuerier(appKeepers.WasmKeeper),
-	}, wasmkeeper.NewStargateWasmQuerier(appKeepers.WasmKeeper))
 
 	// register the proposal types
 	govRouter := appKeepers.getGovRouter()
@@ -240,6 +253,7 @@ func NewAppKeepers(
 	)
 
 	appKeepers.ScopedIBCKeeper = scopedIBCKeeper
+	appKeepers.ScopedICAHostKeeper = scopedICAHostKeeper
 	appKeepers.ScopedTransferKeeper = scopedTransferKeeper
 
 	return appKeepers
@@ -259,10 +273,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(markettypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
-	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
 }

@@ -1,8 +1,9 @@
 package keepers
 
 import (
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
+	icahosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,13 +21,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
-	wasmtypes "github.com/classic-terra/core/v2/x/wasm/types"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 func (appKeepers *AppKeepers) GenerateKeys() {
@@ -40,6 +38,7 @@ func (appKeepers *AppKeepers) GenerateKeys() {
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
 		ibchost.StoreKey,
+		icahosttypes.StoreKey,
 		upgradetypes.StoreKey,
 		evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey,
@@ -47,7 +46,7 @@ func (appKeepers *AppKeepers) GenerateKeys() {
 		oracletypes.StoreKey,
 		markettypes.StoreKey,
 		treasurytypes.StoreKey,
-		wasmtypes.StoreKey,
+		wasm.StoreKey,
 		authzkeeper.StoreKey,
 		feegrant.StoreKey,
 	)

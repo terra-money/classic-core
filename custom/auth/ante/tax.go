@@ -3,6 +3,7 @@ package ante
 import (
 	"fmt"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -11,7 +12,6 @@ import (
 	core "github.com/classic-terra/core/v2/types"
 	marketexported "github.com/classic-terra/core/v2/x/market/exported"
 	oracleexported "github.com/classic-terra/core/v2/x/oracle/exported"
-	wasmexported "github.com/classic-terra/core/v2/x/wasm/exported"
 )
 
 // MaxOracleMsgGasUsage is constant expected oracle msg gas cost
@@ -142,11 +142,14 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 		case *marketexported.MsgSwapSend:
 			taxes = taxes.Add(computeTax(ctx, tk, sdk.NewCoins(msg.OfferCoin))...)
 
-		case *wasmexported.MsgInstantiateContract:
-			taxes = taxes.Add(computeTax(ctx, tk, msg.InitCoins)...)
+		case *wasm.MsgInstantiateContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
 
-		case *wasmexported.MsgExecuteContract:
-			taxes = taxes.Add(computeTax(ctx, tk, msg.Coins)...)
+		case *wasm.MsgInstantiateContract2:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
+
+		case *wasm.MsgExecuteContract:
+			taxes = taxes.Add(computeTax(ctx, tk, msg.Funds)...)
 
 		case *authz.MsgExec:
 			messages, err := msg.GetMessages()
@@ -170,6 +173,7 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	}
 
 	taxes := sdk.Coins{}
+
 	for _, coin := range principal {
 		// Originally only a stability tax on UST.  Changed to tax Luna as well after TaxPowerUpgradeHeight
 		if (coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom) && currHeight < TaxPowerUpgradeHeight {

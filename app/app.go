@@ -16,10 +16,11 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -40,6 +41,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/classic-terra/core/v2/app/keepers"
 	terraappparams "github.com/classic-terra/core/v2/app/params"
@@ -48,13 +50,14 @@ import (
 	"github.com/classic-terra/core/v2/app/upgrades"
 	v2 "github.com/classic-terra/core/v2/app/upgrades/v2"
 	v3 "github.com/classic-terra/core/v2/app/upgrades/v3"
+	v4 "github.com/classic-terra/core/v2/app/upgrades/v4"
 
 	customante "github.com/classic-terra/core/v2/custom/auth/ante"
 	customauthrest "github.com/classic-terra/core/v2/custom/auth/client/rest"
 	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
 	core "github.com/classic-terra/core/v2/types"
 
-	wasmconfig "github.com/classic-terra/core/v2/x/wasm/config"
+	"github.com/CosmWasm/wasmd/x/wasm"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/classic-terra/core/v2/client/docs/statik"
@@ -67,7 +70,7 @@ var (
 	DefaultNodeHome string
 
 	// Upgrades defines upgrades to be applied to the network
-	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade}
+	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade}
 )
 
 // Verify app interface at compile time
@@ -112,7 +115,7 @@ func init() {
 func NewTerraApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig terraappparams.EncodingConfig, appOpts servertypes.AppOptions,
-	wasmConfig *wasmconfig.Config, baseAppOptions ...func(*baseapp.BaseApp),
+	wasmOpts []wasm.Option, baseAppOptions ...func(*baseapp.BaseApp),
 ) *TerraApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -142,7 +145,7 @@ func NewTerraApp(
 		skipUpgradeHeights,
 		homePath,
 		invCheckPeriod,
-		wasmConfig,
+		wasmOpts,
 		appOpts,
 	)
 
@@ -173,6 +176,7 @@ func NewTerraApp(
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
 	app.setupUpgradeHandlers()
+	app.setupUpgradeStoreLoaders()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -191,6 +195,11 @@ func NewTerraApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
 	anteHandler, err := customante.NewAnteHandler(
 		customante.HandlerOptions{
 			AccountKeeper:      app.AccountKeeper,
@@ -200,9 +209,11 @@ func NewTerraApp(
 			TreasuryKeeper:     app.TreasuryKeeper,
 			SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
 			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
-			IBCChannelKeeper:   app.IBCKeeper.ChannelKeeper,
+			IBCKeeper:          *app.IBCKeeper,
 			DistributionKeeper: app.DistrKeeper,
 			GovKeeper:          app.GovKeeper,
+			WasmConfig:         &wasmConfig,
+			TXCounterStoreKey:  app.GetKey(wasm.StoreKey),
 		},
 	)
 	if err != nil {
@@ -215,6 +226,12 @@ func NewTerraApp(
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
 
@@ -405,6 +422,23 @@ func GetMaccPerms() map[string][]string {
 		dupMaccPerms[k] = v
 	}
 	return dupMaccPerms
+}
+
+func (app *TerraApp) setupUpgradeStoreLoaders() {
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+		}
+	}
 }
 
 func (app *TerraApp) setupUpgradeHandlers() {

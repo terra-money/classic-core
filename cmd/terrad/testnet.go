@@ -209,7 +209,7 @@ func InitTestnet(
 		accTokens := sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)
 
 		// create staking tokens for node
-		accStakingTokens := sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction)
+		accStakingTokens := sdk.TokensFromConsensusPower(50000, sdk.DefaultPowerReduction)
 
 		coins := sdk.Coins{
 			sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), accTokens),
@@ -310,7 +310,7 @@ func initGenFiles(
 	// set gov in the genesis state
 	var govGenState govtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
-	govGenState.VotingParams.VotingPeriod = time.Second * 30
+	govGenState.VotingParams.VotingPeriod = time.Minute * 3
 	appGenState[govtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&govGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")

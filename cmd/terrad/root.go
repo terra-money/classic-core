@@ -35,7 +35,9 @@ import (
 	"github.com/classic-terra/core/v2/app/params"
 	authcustomcli "github.com/classic-terra/core/v2/custom/auth/client/cli"
 	core "github.com/classic-terra/core/v2/types"
-	wasmconfig "github.com/classic-terra/core/v2/x/wasm/config"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewRootCmd creates a new root command for terrad. It is called once in the
@@ -49,7 +51,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	sdkConfig.SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
 	sdkConfig.SetBech32PrefixForValidator(core.Bech32PrefixValAddr, core.Bech32PrefixValPub)
 	sdkConfig.SetBech32PrefixForConsensusNode(core.Bech32PrefixConsAddr, core.Bech32PrefixConsPub)
-	sdkConfig.SetAddressVerifier(core.AddressVerifier)
+	sdkConfig.SetAddressVerifier(wasmtypes.VerifyAddressLen())
 	sdkConfig.Seal()
 
 	initClientCtx := client.Context{}.
@@ -128,6 +130,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	wasm.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -193,7 +196,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
 		cache = store.NewCommitKVStoreCacheManager()
-		cache.SetCacheSize(cast.ToUint(appOpts.Get(server.FlagInterBlockCacheSize)))
 	}
 
 	skipUpgradeHeights := make(map[int64]bool)
@@ -221,13 +223,16 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
+	// TODO: We want to parse legacy wasm options from app.toml in [wasm] section here or not?
+	var wasmOpts []wasm.Option
+
 	return terraapp.NewTerraApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		a.encodingConfig,
 		appOpts,
-		wasmconfig.GetConfig(appOpts),
+		wasmOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -247,6 +252,7 @@ func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 ) (servertypes.ExportedApp, error) {
+	var wasmOpts []wasm.Option
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
@@ -254,13 +260,13 @@ func (a appCreator) appExport(
 
 	var terraApp *terraapp.TerraApp
 	if height != -1 {
-		terraApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, false, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmOpts)
 
 		if err := terraApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		terraApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmconfig.DefaultConfig())
+		terraApp = terraapp.NewTerraApp(logger, db, traceStore, true, map[int64]bool{}, homePath, cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), a.encodingConfig, appOpts, wasmOpts)
 	}
 
 	return terraApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

@@ -1,0 +1,18 @@
+{
+  "bajor-1": {
+    "rpcs": [
+      "http://85.214.56.241:26657"
+    ]
+  },
+  "localterra": {
+    "rpcs": [
+      "http://localhost:26657",
+      "http://localhost:26660",
+      "http://localhost:26662",
+      "http://localhost:26664",
+      "http://localhost:26666",
+      "http://localhost:26668",
+      "http://localhost:26670"
+    ]
+  }
+}

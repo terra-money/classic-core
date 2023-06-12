@@ -1,0 +1,24 @@
+{
+    "keys": [
+      {
+        "keyring-keyname": "test0",
+        "address": "terra1pkpec0ka2ttkp448p8dla2924rs33gf4r0en63",
+        "mnemonic": "labor test wrap monster sport random friend rain paper render ridge basket lecture suffer one doctor circle clump believe parade around elite victory panther"
+      },
+      {
+        "keyring-keyname": "test1",
+        "address": "terra1ryyltrt8zvap3cgmv9mly7g87xgl99k3hnq6tv",
+        "mnemonic": "notable coach clap heart egg transfer arch mystery group boil impulse nuclear sand route distance obvious shed dignity impact stone alpha insane drop shaft"
+      },
+      {
+        "keyring-keyname": "test2",
+        "address": "terra1z2j9rsptplwap79k8t4dy05xhe9c3p0jqlseag",
+        "mnemonic": "common matrix virus length base length thank hungry loop hover weird reason ozone stem shield uniform wire subway arena drift vivid eternal recipe giant"
+      },
+      {
+        "keyring-keyname": "test3",
+        "address": "terra15dpwzefn4zsktnnu0zl058p4kklsj4p05x560w",
+        "mnemonic": "cattle hair depend hurt tip relief demand wild into wear deliver category enemy long derive awkward arm use echo immune physical symptom fade lawn"
+      }
+    ]
+}

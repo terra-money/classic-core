@@ -24,14 +24,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        build_type: ['build-release-amd64']
+        build_type: ['build-release-arm64', 'build-release-amd64']
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Set version tag
         run: echo "VERSION=$(echo ${{github.ref_name}} | sed 's/^v//')" >> $GITHUB_ENV
-      - name: Create build directory
-        run: mkdir -p build/release
       - name: Build ${{matrix.build_type}}
         run: make ${{matrix.build_type}}
       - name: Upload the artifacts to release

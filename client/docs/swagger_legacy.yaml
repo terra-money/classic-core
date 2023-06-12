@@ -1,38 +1,16 @@
 ---
 swagger: "2.0"
 info:
-  version: "3.0"
-  title: "Terra-Lite for Terra"
+  version: "2.1.0"
+  title: "Terra-Lite for Terra Classic"
   description: A REST interface for state queries, transaction generation and broadcasting.
 tags:
   - name: Transactions
     description: Search, encode, or broadcast transactions.
   - name: Tendermint RPC
     description: Tendermint APIs, such as query blocks, transactions and validatorset
-  - name: Auth
-    description: Authenticate accounts
-  - name: Bank
-    description: Create and broadcast transactions
-  - name: Staking
-    description: Stake module APIs
-  - name: Governance
-    description: Governance module APIs
-  - name: Slashing
-    description: Slashing module APIs
-  - name: Distribution
-    description: Fee distribution module APIs
-  - name: Mint
-    description: Minting module APIs
-  - name: Supply
-    description: Supply module APIs
-  - name: Market
-    description: Market modules APIs
-  - name: Oracle
-    description: Get price and voting modules APIs
-  - name: Treasury
-    description: Treasury modules APIs
-  - name: Wasm
-    description: Wasm modules APIs
+  - name: TerraWasm
+    description: Terra Wasm modules APIs
 schemes:
   - https
 host: lcd.terra.dev
@@ -450,2315 +428,141 @@ paths:
           description: The tx was malformed
         500:
           description: Server internal error
-  /bank/balances/{address}:
+  /terra/wasm/v1beta1/codes/{code_id}:
     get:
       deprecated: true
-      summary: Get the account balances
-      tags:
-        - Bank
-      produces:
-        - application/json
+      summary: CodeInfo returns the stored code info
+      operationId: CodeInfo
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryCodeInfoResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
       parameters:
-        - in: path
-          name: address
-          description: Account address in bech32 format
-          required: true
-          type: string
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      responses:
-        200:
-          description: Account balances
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        500:
-          description: Server internal error
-  /bank/accounts/{address}/transfers:
-    post:
-      deprecated: true
-      summary: Send coins from one account to another
-      tags:
-        - Bank
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address in bech32 format
-          required: true
-          type: string
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-        - in: body
-          name: account
-          description: The sender and tx information
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              coins:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        202:
-          description: Tx was successfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid request
-        500:
-          description: Server internal error
-  /bank/total:
-    get:
-      deprecated: true
-      summary: Total supply of coins in the chain
-      tags:
-        - Bank
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Supply"
-        500:
-          description: Internal Server Error
-  /bank/total/{denomination}:
-    parameters:
-      - in: path
-        name: denomination
-        description: Coin denomination
-        required: true
-        type: string
-        x-example: uluna
-    get:
-      deprecated: true
-      summary: Total supply of a single coin denomination
-      tags:
-        - Bank
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
-        400:
-          description: Invalid coin denomination
-        500:
-          description: Internal Server Error
-  /auth/accounts/{address}:
-    get:
-      deprecated: true
-      summary: Get the account information on blockchain
-      tags:
-        - Auth
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: address
-          description: Account address
-          required: true
-          type: string
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      responses:
-        200:
-          description: Account information on the blockchain
-          schema:
-            type: object
-            properties:
-              Account:
-                $ref: "#/definitions/Account"
-              LazyGradedVestingAccount:
-                $ref: "#/definitions/LazyGradedVestingAccount"
-        500:
-          description: Server internal error
-  /staking/delegators/{delegatorAddr}/delegations:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    get:
-      deprecated: true
-      summary: Get all delegations from a delegator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Delegation"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Submit delegation
-      parameters:
-        - in: body
-          name: delegation
-          description: Delegate an amount of liquid coins to a validator
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              delegator_address:
-                $ref: "#/definitions/Address"
-              validator_address:
-                $ref: "#/definitions/ValidatorAddress"
-              amount:
-                $ref: "#/definitions/Coin"
-      tags:
-        - Staking
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address or delegation request body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/delegations/{validatorAddr}:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Query the current delegation between a delegator and a validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Delegation"
-        400:
-          description: Invalid delegator address or validator address
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/unbonding_delegations:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    get:
-      deprecated: true
-      summary: Get all unbonding delegations from a delegator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/UnbondingDelegation"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Submit an unbonding delegation
-      parameters:
-        - in: body
-          name: delegation
-          description: Unbond an amount of bonded shares from a validator
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              delegator_address:
-                $ref: "#/definitions/Address"
-              validator_address:
-                $ref: "#/definitions/ValidatorAddress"
-              amount:
-                $ref: "#/definitions/Coin"
-      tags:
-        - Staking
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address or unbonding delegation request body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/unbonding_delegations/{validatorAddr}:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Query all unbonding delegations between a delegator and a validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/UnbondingDelegation"
-        400:
-          description: Invalid delegator address or validator address
-        500:
-          description: Internal Server Error
-  /staking/redelegations:
-    parameters:
-      - in: query
-        name: delegator
-        description: Bech32 AccAddress of Delegator
-        required: false
-        type: string
-      - in: query
-        name: validator_from
-        description: Bech32 ValAddress of SrcValidator
-        required: false
-        type: string
-      - in: query
-        name: validator_to
-        description: Bech32 ValAddress of DstValidator
-        required: false
-        type: string
-    get:
-      deprecated: true
-      summary: Get all redelegations (filter by query params)
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Redelegation"
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/redelegations:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    post:
-      deprecated: true
-      summary: Submit a redelegation
-      parameters:
-        - in: body
-          name: delegation
-          description: The sender and tx information
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              delegator_address:
-                $ref: "#/definitions/Address"
-              validator_src_address:
-                $ref: "#/definitions/ValidatorAddress"
-              validator_dst_address:
-                $ref: "#/definitions/ValidatorAddress"
-              amount:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      tags:
-        - Staking
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Tx was successfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address or redelegation request body
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/validators:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    get:
-      deprecated: true
-      summary: Query all validators that a delegator is bonded to
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Validator"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-  /staking/delegators/{delegatorAddr}/validators/{validatorAddr}:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      - in: path
-        name: validatorAddr
-        description: Bech32 ValAddress of Delegator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Query a validator that a delegator is bonded to
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Validator"
-        400:
-          description: Invalid delegator address or validator address
-        500:
-          description: Internal Server Error
-  /staking/validators:
-    get:
-      deprecated: true
-      summary: Get all validator candidates. By default it returns only the bonded validators.
-      parameters:
-        - in: query
-          name: status
-          type: string
-          description: The validator bond status. Must be either 'bonded', 'unbonded', or 'unbonding'.
-          x-example: bonded
-        - in: query
-          name: page
-          description: The page number.
-          type: integer
-          x-example: 1
-        - in: query
-          name: limit
-          description: The maximum number of items per page.
-          type: integer
-          x-example: 1
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Validator"
-        500:
-          description: Internal Server Error
-  /staking/validators/{validatorAddr}:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Query the information from a single validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Validator"
-        400:
-          description: Invalid validator address
-        500:
-          description: Internal Server Error
-  /staking/validators/{validatorAddr}/delegations:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Get all delegations from a validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Delegation"
-        400:
-          description: Invalid validator address
-        500:
-          description: Internal Server Error
-  /staking/validators/{validatorAddr}/unbonding_delegations:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Get all unbonding delegations from a validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/UnbondingDelegation"
-        400:
-          description: Invalid validator address
-        500:
-          description: Internal Server Error
-  /staking/pool:
-    get:
-      deprecated: true
-      summary: Get the current state of the staking pool
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              bonded_tokens:
-                type: string
-              not_bonded_tokens:
-                type: string
-        500:
-          description: Internal Server Error
-  /staking/parameters:
-    get:
-      deprecated: true
-      summary: Get the current staking parameter values
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              unbonding_time:
-                type: string
-              max_validators:
-                type: integer
-              max_entries:
-                type: integer
-              historical_entries:
-                type: integer
-              bond_denom:
-                type: string
-        500:
-          description: Internal Server Error
-  /slashing/signing_infos:
-    get:
-      deprecated: true
-      summary: Get sign info of given all validators
-      description: Get sign info of all validators
-      produces:
-        - application/json
-      tags:
-        - Slashing
-      parameters:
-        - in: query
-          name: page
-          description: Page number
-          type: integer
-          required: true
-          x-example: 1
-        - in: query
-          name: limit
-          description: Maximum number of items per page
-          type: integer
-          required: true
-          x-example: 5
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/SigningInfo"
-        400:
-          description: Invalid validator public key for one of the validators
-        500:
-          description: Internal Server Error
-  /slashing/validators/{validatorAddr}/unjail:
-    post:
-      deprecated: true
-      summary: Unjail a jailed validator
-      description: Send transaction to unjail a jailed validator
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - Slashing
-      parameters:
-        - type: string
-          description: Bech32 validator address
-          name: validatorAddr
-          required: true
+        - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
           in: path
-          x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-        - description: ""
-          name: UnjailBody
-          in: body
           required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/StdTx"
-      responses:
-        200:
-          description: Tx was successfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid validator address or base_req
-        500:
-          description: Internal Server Error
-  /slashing/parameters:
+          type: string
+          format: uint64
+      tags:
+        - TerraWasm
+  /terra/wasm/v1beta1/codes/{code_id}/byte_code:
     get:
       deprecated: true
-      summary: Get the current slashing parameters
-      tags:
-        - Slashing
-      produces:
-        - application/json
+      summary: ByteCode returns the stored byte code
+      operationId: ByteCode
       responses:
-        200:
-          description: OK
+        "200":
+          description: A successful response.
           schema:
-            type: object
-            properties:
-              signed_blocks_window:
-                type: string
-              min_signed_per_window:
-                type: string
-              downtime_jail_duration:
-                type: string
-              slash_fraction_double_sign:
-                type: string
-              slash_fraction_downtime:
-                type: string
-        500:
-          description: Internal Server Error
-  /gov/proposals:
-    post:
-      deprecated: true
-      summary: Submit a proposal
-      description: Send transaction to submit a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - Governance
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryByteCodeResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
       parameters:
-        - description: valid value of `"proposal_type"` can be `"text"`, `"parameter_change"`, `"software_upgrade"`
-          name: post_proposal_body
-          in: body
+        - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
+          in: path
           required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              title:
-                type: string
-              description:
-                type: string
-              proposal_type:
-                type: string
-                example: "text"
-              proposer:
-                $ref: "#/definitions/Address"
-              initial_deposit:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        200:
-          description: Tx was successfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid proposal body
-        500:
-          description: Internal Server Error
+          type: string
+          format: uint64
+      tags:
+        - TerraWasm
+  /terra/wasm/v1beta1/contracts/{contract_address}:
     get:
       deprecated: true
-      summary: Query proposals
-      description: Query proposals information with parameters
-      produces:
-        - application/json
-      tags:
-        - Governance
+      summary: ContractInfo returns the stored contract info
+      operationId: TerraContractInfo
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryContractInfoResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
       parameters:
-        - in: query
-          name: voter
-          description: voter address
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+      tags:
+        - TerraWasm
+  /terra/wasm/v1beta1/contracts/{contract_address}/store:
+    get:
+      deprecated: true
+      summary: ContractStore return smart query result from the contract
+      operationId: ContractStore
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryContractStoreResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: query_msg
+          in: query
           required: false
           type: string
-        - in: query
-          name: depositor
-          description: depositor address
+          format: byte
+      tags:
+        - TerraWasm
+  /terra/wasm/v1beta1/contracts/{contract_address}/store/raw:
+    get:
+      deprecated: true
+      summary: RawStore return single key from the raw store data of a contract
+      operationId: RawStore
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryRawStoreResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
+      parameters:
+        - name: contract_address
+          in: path
+          required: true
+          type: string
+        - name: key
+          in: query
           required: false
           type: string
-        - in: query
-          name: status
-          description: proposal status, valid values can be `"deposit_period"`, `"voting_period"`, `"passed"`, `"rejected"`
-          required: false
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/TextProposal"
-        400:
-          description: Invalid query parameters
-        500:
-          description: Internal Server Error
-  /gov/proposals/param_change:
-    post:
-      deprecated: true
-      summary: Generate a parameter change proposal transaction
-      description: Generate a parameter change proposal transaction
-      consumes:
-        - application/json
-      produces:
-        - application/json
+          format: byte
       tags:
-        - Governance
-      parameters:
-        - description: The parameter change proposal body that contains all parameter changes
-          name: post_proposal_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              title:
-                type: string
-                x-example: "Param Change"
-              description:
-                type: string
-                x-example: "Update max validators"
-              proposer:
-                $ref: "#/definitions/Address"
-              deposit:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-              changes:
-                type: array
-                items:
-                  $ref: "#/definitions/ParamChange"
-      responses:
-        200:
-          description: The transaction was successfully generated
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid proposal body
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}:
+        - TerraWasm
+  /terra/wasm/v1beta1/params:
     get:
       deprecated: true
-      summary: Query a proposal
-      description: Query a proposal by id
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
+      summary: Params queries all parameters.
+      operationId: TerraWasmParams
       responses:
-        200:
-          description: OK
+        "200":
+          description: A successful response.
           schema:
-            $ref: "#/definitions/TextProposal"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/proposer:
-    get:
-      deprecated: true
-      summary: Query proposer
-      description: Query for the proposer for a proposal
-      produces:
-        - application/json
+            $ref: "#/definitions/terra.wasm.v1beta1.QueryParamsResponse"
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: "#/definitions/grpc.gateway.runtime.Error"
       tags:
-        - Governance
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Proposer"
-        400:
-          description: Invalid proposal ID
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/deposits:
-    get:
-      deprecated: true
-      summary: Query deposits
-      description: Query deposits by proposalId
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Deposit"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Deposit tokens to a proposal
-      description: Send transaction to deposit tokens to a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-        - description: ""
-          name: post_deposit_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              depositor:
-                $ref: "#/definitions/Address"
-              amount:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid proposal id or deposit body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/deposits/{depositor}:
-    get:
-      deprecated: true
-      summary: Query deposit
-      description: Query deposit by proposalId and depositor address
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-        - type: string
-          description: Bech32 depositor address
-          name: depositor
-          required: true
-          in: path
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Deposit"
-        400:
-          description: Invalid proposal id or depositor address
-        404:
-          description: Found no deposit
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/votes:
-    get:
-      deprecated: true
-      summary: Query voters
-      description: Query voters information by proposalId
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Vote"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Vote a proposal
-      description: Send transaction to vote a proposal
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-        - description: valid value of `"option"` field can be `"yes"`, `"no"`, `"no_with_veto"` and `"abstain"`
-          name: post_vote_body
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              voter:
-                $ref: "#/definitions/Address"
-              option:
-                type: string
-                example: "yes"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid proposal id or vote body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/votes/{voter}:
-    get:
-      deprecated: true
-      summary: Query vote
-      description: Query vote information by proposal Id and voter address
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-        - type: string
-          description: Bech32 voter address
-          name: voter
-          required: true
-          in: path
-          x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Vote"
-        400:
-          description: Invalid proposal id or voter address
-        404:
-          description: Found no vote
-        500:
-          description: Internal Server Error
-  /gov/proposals/{proposalId}/tally:
-    get:
-      deprecated: true
-      summary: Get a proposal's tally result at the current time
-      description: Gets a proposal's tally result at the current time. If the proposal is pending deposits (i.e status 'DepositPeriod') it returns an empty tally result.
-      produces:
-        - application/json
-      tags:
-        - Governance
-      parameters:
-        - type: string
-          description: proposal id
-          name: proposalId
-          required: true
-          in: path
-          x-example: "2"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/TallyResult"
-        400:
-          description: Invalid proposal id
-        500:
-          description: Internal Server Error
-  /gov/parameters/deposit:
-    get:
-      deprecated: true
-      summary: Query governance deposit parameters
-      description: Query governance deposit parameters. The max_deposit_period units are in nanoseconds.
-      produces:
-        - application/json
-      tags:
-        - Governance
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              min_deposit:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-              max_deposit_period:
-                type: string
-                example: "86400000000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no deposit parameters
-        500:
-          description: Internal Server Error
-  /gov/parameters/tallying:
-    get:
-      deprecated: true
-      summary: Query governance tally parameters
-      description: Query governance tally parameters
-      produces:
-        - application/json
-      tags:
-        - Governance
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              threshold:
-                type: string
-                example: "0.5000000000"
-              quorum:
-                type: string
-                example: "0.3340000000"
-              veto_threshold:
-                type: string
-                example: "0.3340000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no tally parameters
-        500:
-          description: Internal Server Error
-  /gov/parameters/voting:
-    get:
-      deprecated: true
-      summary: Query governance voting parameters
-      description: Query governance voting parameters. The voting_period units are in nanoseconds.
-      produces:
-        - application/json
-      tags:
-        - Governance
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              voting_period:
-                type: string
-                example: "86400000000000"
-        400:
-          description: <other_path> is not a valid query request path
-        404:
-          description: Found no voting parameters
-        500:
-          description: Internal Server Error
-  /distribution/delegators/{delegatorAddr}/rewards:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    get:
-      deprecated: true
-      summary: Get the total rewards balance from all delegations
-      description: Get the sum of all the rewards earned by delegations by a single delegator
-      produces:
-        - application/json
-      tags:
-        - Distribution
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/DelegatorTotalRewards"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Withdraw all the delegator's delegation rewards
-      description: Withdraw all the delegator's delegation rewards
-      tags:
-        - Distribution
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Withdraw request body
-          schema:
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /distribution/delegators/{delegatorAddr}/rewards/{validatorAddr}:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Query a delegation reward
-      description: Query a single delegation reward by a delegator
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Withdraw a delegation reward
-      description: Withdraw a delegator's delegation reward from a single validator
-      tags:
-        - Distribution
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Withdraw request body
-          schema:
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator address or delegation body
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /distribution/delegators/{delegatorAddr}/withdraw_address:
-    parameters:
-      - in: path
-        name: delegatorAddr
-        description: Bech32 AccAddress of Delegator
-        required: true
-        type: string
-        x-example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
-    get:
-      deprecated: true
-      summary: Get the rewards withdrawal address
-      description: Get the delegations' rewards withdrawal address. This is the address in which the user will receive the reward funds
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Address"
-        400:
-          description: Invalid delegator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Replace the rewards withdrawal address
-      description: Replace the delegations' rewards withdrawal address for a new one.
-      tags:
-        - Distribution
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Withdraw request body
-          schema:
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-              withdraw_address:
-                $ref: "#/definitions/Address"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid delegator or withdraw address
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /distribution/validators/{validatorAddr}:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Validator distribution information
-      description: Query the distribution information of a single validator
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/ValidatorDistInfo"
-        400:
-          description: Invalid validator address
-        500:
-          description: Internal Server Error
-  /distribution/validators/{validatorAddr}/outstanding_rewards:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Fee distribution outstanding rewards of a single validator
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              rewards:
-                type: array
-                items:
-                  $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
-  /distribution/validators/{validatorAddr}/rewards:
-    parameters:
-      - in: path
-        name: validatorAddr
-        description: Bech32 OperatorAddress of validator
-        required: true
-        type: string
-        x-example: terravaloper1wg2mlrxdmnnkkykgqg4znky86nyrtc45q7a85l
-    get:
-      deprecated: true
-      summary: Commission and self-delegation rewards of a single validator
-      description: Query the commission and self-delegation rewards of validator.
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        400:
-          description: Invalid validator address
-        500:
-          description: Internal Server Error
-    post:
-      deprecated: true
-      summary: Withdraw the validator's rewards
-      description: Withdraw the validator's self-delegation and commissions rewards
-      tags:
-        - Distribution
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Withdraw request body
-          schema:
-            properties:
-              base_req:
-                $ref: "#/definitions/BaseReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Invalid validator address
-        401:
-          description: Key password is wrong
-        500:
-          description: Internal Server Error
-  /distribution/community_pool:
-    get:
-      deprecated: true
-      summary: Community pool parameters
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
-  /distribution/parameters:
-    get:
-      deprecated: true
-      summary: Fee distribution parameters
-      tags:
-        - Distribution
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              base_proposer_reward:
-                type: string
-              bonus_proposer_reward:
-                type: string
-              community_tax:
-                type: string
-        500:
-          description: Internal Server Error
-  /minting/parameters:
-    get:
-      deprecated: true
-      summary: Minting module parameters
-      tags:
-        - Mint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            properties:
-              mint_denom:
-                type: string
-              inflation_rate_change:
-                type: string
-              inflation_max:
-                type: string
-              inflation_min:
-                type: string
-              goal_bonded:
-                type: string
-              blocks_per_year:
-                type: string
-        500:
-          description: Internal Server Error
-  /minting/inflation:
-    get:
-      deprecated: true
-      summary: Current minting inflation value
-      tags:
-        - Mint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
-        500:
-          description: Internal Server Error
-  /minting/annual-provisions:
-    get:
-      deprecated: true
-      summary: Current minting annual provisions value
-      tags:
-        - Mint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
-        500:
-          description: Internal Server Error
-  /market/swap:
-    post:
-      deprecated: true
-      summary: Swap coin with another coin
-      tags:
-        - Market
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: Swap coin request body
-          schema:
-            $ref: "#/definitions/SwapReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Query swap result amount
-      tags:
-        - Market
-      produces:
-        - application/json
-      parameters:
-        - in: query
-          name: offer_coin
-          description: coin expression want to swap
-          type: string
-          required: true
-          x-example: 1000000uluna
-        - in: query
-          name: ask_denom
-          description: Then coin denom want to ask
-          type: string
-          required: true
-          x-example: usdr
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
-  /market/terra_pool_delta:
-    get:
-      deprecated: true
-      summary: Get terra pool delta, is usdr amount used for swap operation from the TerraPool.
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "10000000.00"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /market/parameters:
-    get:
-      deprecated: true
-      summary: Get market params
-      tags:
-        - Market
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/MarketParams"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/denoms/{denom}/exchange_rate:
-    get:
-      deprecated: true
-      summary: Get the current effective exchange rate in Luna for the asset
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: The coin denom to get
-          required: true
-          type: string
-      responses:
-        200:
-          description: current exchange rate of denom i.e. "1000.0"
-          schema:
-            type: number
-            example: "1872.000000000000000000"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/denoms/exchange_rates:
-    get:
-      deprecated: true
-      summary: Get all activated exchange rates
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/DecCoin"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/denoms/actives:
-    get:
-      deprecated: true
-      summary: Get all activated denoms
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              type: string
-            example: ["ukrw", "usdr"]
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voters/{validator}/feeder:
-    post:
-      deprecated: true
-      summary: Generate oracle feeder right delegation message
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: Feeder right delegator
-          required: true
-          type: string
-        - in: body
-          name: feeder right delegation request body
-          schema:
-            $ref: "#/definitions/DelegateReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Get delegated oracle feeder of a validator
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: Feeder right delegator
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Address"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voters/{validator}/miss:
-    get:
-      deprecated: true
-      summary: Get the number of vote periods missed in this oracle slash window.
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: oracle operator
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: integer
-            example: "100"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voters/{validator}/aggregate_prevote:
-    post:
-      deprecated: true
-      summary: Generate oracle aggregate exchange rate prevote message containing a hash
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: oracle operator
-          required: true
-          type: string
-        - in: body
-          name: Aggregate Prevote request body
-          schema:
-            $ref: "#/definitions/AggregatePrevoteReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Get the currently outstanding aggregate exchange rate oracle prevote of a validator
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: oracle operator
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/AggregateExchangeRatePrevote"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/voters/{validator}/aggregate_vote:
-    post:
-      deprecated: true
-      summary: Generate oracle aggregate exchange rate vote message containing exchange rates and salt to prove the aggregate prevote
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: oracle operator
-          required: true
-          type: string
-        - in: body
-          name: Aggregate Vote request body
-          schema:
-            $ref: "#/definitions/AggregateVoteReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Get the currently outstanding aggregate exchange rate oracle vote of a validator
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: validator
-          description: oracle operator
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/AggregateExchangeRateVote"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /oracle/parameters:
-    get:
-      deprecated: true
-      summary: Get oracle params
-      tags:
-        - Oracle
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/OracleParams"
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-  /treasury/tax_rate:
-    get:
-      deprecated: true
-      summary: Get current tax rate
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "0.05"
-        500:
-          description: Internal Server Error
-  /treasury/tax_cap/{denom}:
-    get:
-      deprecated: true
-      summary: Get tax cap of the denom
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: denom
-          description: Denom
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            type: integer
-            example: "100000"
-        404:
-          description: Not Found
-  /treasury/tax_caps:
-    get:
-      deprecated: true
-      summary: Get tax caps for the all whitelisted denoms
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/TaxCap"
-        404:
-          description: Not Found
-  /treasury/reward_weight:
-    get:
-      deprecated: true
-      summary: Get current reward weight
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: number
-            format: float
-            example: "0.05"
-            description: 5%
-        500:
-          description: Internal Server Error
-  /treasury/tax_proceeds:
-    get:
-      deprecated: true
-      summary: Get current tax proceeds
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-        500:
-          description: Internal Server Error
-  /treasury/seigniorage_proceeds:
-    get:
-      deprecated: true
-      summary: retrieves the size of the seigniorage pool
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: integer
-            example: "0"
-        500:
-          description: Internal Server
-  /treasury/parameters:
-    get:
-      deprecated: true
-      summary: Get treasury module params
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/TreasuryParams"
-        404:
-          description: Not Found
-  /treasury/indicators:
-    get:
-      deprecated: true
-      summary: Get the current treasury indicators
-      tags:
-        - Treasury
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Ok
-          schema:
-            properties:
-              trl_year:
-                type: string
-                description: "Tax Rewards per staked Luna over a year of rolling average"
-                example: "0.000407428004800011"
-              trl_month:
-                type: string
-                description: "Tax Rewards per staked Luna over a month of rolling average"
-                example: "0.000366833881714302"
-  /wasm/codes:
-    post:
-      deprecated: true
-      summary: Generate wasm store code message
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: store code request body
-          schema:
-            $ref: "#/definitions/StoreCodeReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-  /wasm/codes/{codeID}:
-    post:
-      deprecated: true
-      summary: Instantiate wasm contract
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: codeID
-          description: code ID you want to instantiate
-          required: true
-          type: number
-        - in: body
-          name: instantiate contract request body
-          schema:
-            $ref: "#/definitions/InstantiateContractReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Get code info of the code ID
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: codeID
-          description: code ID you want to instantiate
-          required: true
-          type: number
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/CodeInfo"
-  /wasm/codes/{codeID}/migrate:
-    post:
-      deprecated: true
-      summary: Migrate old wasm code to new wasm code
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: codeID
-          description: code ID you want to migrate
-          required: true
-          type: number
-        - in: body
-          name: migrate contract request body
-          schema:
-            $ref: "#/definitions/MigrateCodeReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-  /wasm/contracts/{contractAddress}:
-    post:
-      deprecated: true
-      summary: Execute wasm contract message
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to execute
-          required: true
-          type: string
-        - in: body
-          name: execute contract request body
-          schema:
-            $ref: "#/definitions/ExecuteContractReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-    get:
-      deprecated: true
-      summary: Get contract info of the contract Address
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to execute
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/ContractInfo"
-  /wasm/contracts/{contractAddress}/migrate:
-    post:
-      deprecated: true
-      summary: Migrate wasm contract to new code base
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to migrate
-          required: true
-          type: string
-        - in: body
-          name: migrate contract request body
-          schema:
-            $ref: "#/definitions/MigrateContractReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-  /wasm/contracts/{contractAddress}/admin/update:
-    post:
-      deprecated: true
-      summary: Update wasm contract admin to new address
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to update admin
-          required: true
-          type: string
-        - in: body
-          name: update contract admin request body
-          schema:
-            $ref: "#/definitions/UpdateContractAdminReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-  /wasm/contracts/{contractAddress}/admin/clear:
-    post:
-      deprecated: true
-      summary: Clear wasm contract admin to make the contract un-migratable
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to clear admin
-          required: true
-          type: string
-        - in: body
-          name: clear contract admin request body
-          schema:
-            $ref: "#/definitions/ClearContractAdminReq"
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/StdTx"
-        400:
-          description: Bad request
-        500:
-          description: Internal Server Error
-  /wasm/contracts/{contractAddress}/store:
-    get:
-      deprecated: true
-      summary: Get stored information with query msg
-      tags:
-        - Wasm
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to lookup
-          required: true
-          type: string
-        - in: query
-          name: query_msg
-          description: json formatted query msg
-          required: true
-          type: string
-          x-example: "{}"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
-  /wasm/contracts/{contractAddress}/store/raw:
-    get:
-      deprecated: true
-      summary: Get stored information with store key
-      tags:
-        - Wasm
-      parameters:
-        - in: path
-          name: contractAddress
-          description: contract address you want to lookup
-          required: true
-          type: string
-        - in: query
-          name: key
-          description: base64 encoded raw key to access
-          required: true
-          type: string
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
-  /wasm/parameters:
-    get:
-      deprecated: true
-      summary: Get wasm module params
-      tags:
-        - Wasm
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/WasmParams"
-        404:
-          description: Not Found
+        - TerraWasm
 definitions:
   CheckTxResult:
     type: object
@@ -3071,26 +875,6 @@ definitions:
             $ref: "#/definitions/BlockID"
       block:
         $ref: "#/definitions/Block"
-  DelegationDelegatorReward:
-    type: object
-    properties:
-      validator_address:
-        $ref: "#/definitions/ValidatorAddress"
-      reward:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-  DelegatorTotalRewards:
-    type: object
-    properties:
-      rewards:
-        type: array
-        items:
-          $ref: "#/definitions/DelegationDelegatorReward"
-      total:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
   BaseReq:
     type: object
     properties:
@@ -3137,239 +921,6 @@ definitions:
       proposer_priority:
         type: string
         example: "1000"
-  TextProposal:
-    type: object
-    properties:
-      id:
-        type: string
-        example: "1"
-      content:
-        type: object
-        properties:
-          type: 
-            type: string
-            example: "gov/TextProposal"
-          value:
-            type: object
-            properties:
-              title: 
-                type: string
-              description:
-                type: string
-      status:
-        type: number
-      final_tally_result:
-        $ref: "#/definitions/TallyResult"
-      total_deposit:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      submit_time:
-        type: string
-      deposit_end_time:
-        type: string
-      voting_start_time:
-        type: string
-      voting_end_time:
-        type: string
-  Proposer:
-    type: object
-    properties:
-      proposal_id:
-        type: string
-      proposer:
-        type: string
-  Deposit:
-    type: object
-    properties:
-      amount:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      proposal_id:
-        type: string
-      depositor:
-        $ref: "#/definitions/Address"
-  TallyResult:
-    type: object
-    properties:
-      yes:
-        type: string
-        example: "0.0000000000"
-      abstain:
-        type: string
-        example: "0.0000000000"
-      no:
-        type: string
-        example: "0.0000000000"
-      no_with_veto:
-        type: string
-        example: "0.0000000000"
-  Vote:
-    type: object
-    properties:
-      voter:
-        type: string
-      proposal_id:
-        type: string
-      options:
-        type: array
-        items:
-          type: object
-          properties:
-            option:
-              type: string
-              enum:
-                - VOTE_OPTION_UNSPECIFIED
-                - VOTE_OPTION_YES
-                - VOTE_OPTION_ABSTAIN
-                - VOTE_OPTION_NO
-                - VOTE_OPTION_NO_WITH_VETO
-              default: VOTE_OPTION_UNSPECIFIED
-              description: >-
-                VoteOption enumerates the valid vote options for a given governance
-                proposal.
-
-                - VOTE_OPTION_UNSPECIFIED: VOTE_OPTION_UNSPECIFIED defines a no-op vote option.
-                - VOTE_OPTION_YES: VOTE_OPTION_YES defines a yes vote option.
-                - VOTE_OPTION_ABSTAIN: VOTE_OPTION_ABSTAIN defines an abstain vote option.
-                - VOTE_OPTION_NO: VOTE_OPTION_NO defines a no vote option.
-                - VOTE_OPTION_NO_WITH_VETO: VOTE_OPTION_NO_WITH_VETO defines a no with veto vote option.
-            weight:
-              type: string
-  Validator:
-    type: object
-    properties:
-      operator_address:
-        $ref: "#/definitions/ValidatorAddress"
-      consensus_pubkey:
-        $ref: "#/definitions/PublicKey"
-      jailed:
-        type: boolean
-      status:
-        type: integer
-      tokens:
-        type: string
-      delegator_shares:
-        type: string
-      description:
-        type: object
-        properties:
-          moniker:
-            type: string
-          identity:
-            type: string
-          website:
-            type: string
-          security_contact:
-            type: string
-          details:
-            type: string
-      bond_height:
-        type: string
-        example: "0"
-      bond_intra_tx_counter:
-        type: integer
-        example: 0
-      unbonding_height:
-        type: string
-        example: "0"
-      unbonding_time:
-        type: string
-        example: "1970-01-01T00:00:00Z"
-      commission:
-        type: object
-        properties:
-          rate:
-            type: string
-            example: "0"
-          max_rate:
-            type: string
-            example: "0"
-          max_change_rate:
-            type: string
-            example: "0"
-          update_time:
-            type: string
-            example: "1970-01-01T00:00:00Z"
-  Delegation:
-    type: object
-    properties:
-      delegation:
-        type: object
-        properties:
-          delegator_address:
-            type: string
-          validator_address:
-            type: string
-          shares:
-            type: string
-      balance:
-        $ref: "#/definitions/Coin"
-  UnbondingDelegation:
-    type: object
-    properties:
-      delegator_address:
-        type: string
-      validator_address:
-        type: string
-      entries:
-        type: array
-        items:
-          $ref: "#/definitions/UnbondingEntry"
-  UnbondingEntry:
-    type: object
-    properties:
-      initial_balance:
-        type: string
-      balance:
-        type: string
-      creation_height:
-        type: string
-      completion_time:
-        type: string
-  Redelegation:
-    type: object
-    properties:
-      delegator_address:
-        type: string
-      validator_src_address:
-        type: string
-      validator_dst_address:
-        type: string
-      entries:
-        type: array
-        items:
-          $ref: "#/definitions/RedelegationEntry"
-  RedelegationEntry:
-    type: object
-    properties:
-      creation_height:
-        type: integer
-      completion_time:
-        type: integer
-      initial_balance:
-        type: string
-      balance:
-        type: string
-      shares_dst:
-        type: string
-  ValidatorDistInfo:
-    type: object
-    properties:
-      operator_address:
-        $ref: "#/definitions/ValidatorAddress"
-      self_bond_rewards:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      val_commission:
-        type: object
-        properties:
-          commission:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
   PublicKey:
     type: object
     properties:
@@ -3377,578 +928,182 @@ definitions:
         type: string
       value:
         type: string
-  SigningInfo:
+  terra.wasm.v1beta1.QueryCodeInfoResponse:
+    type: object
+    properties:
+      code_info:
+        $ref: "#/definitions/terra.wasm.v1beta1.CodeInfo"
+    description: |-
+      QueryCodeInfoResponse is response type for the
+      QueryyCodeInfo RPC method.
+  terra.wasm.v1beta1.CodeInfo:
+    type: object
+    properties:
+      code_id:
+        type: string
+        format: uint64
+        title: CodeID is the sequentially increasing unique identifier
+      code_hash:
+        type: string
+        format: byte
+        title: CodeHash is the unique identifier created by wasmvm
+      creator:
+        type: string
+        title: Creator address who initially stored the code
+    title: CodeInfo is data for the uploaded contract WASM code
+  grpc.gateway.runtime.Error:
+    type: object
+    properties:
+      error:
+        type: string
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          $ref: "#/definitions/google.protobuf.Any"
+  google.protobuf.Any:
+    type: object
+    properties:
+      type_url:
+        type: string
+      value:
+        type: string
+        format: byte
+  terra.wasm.v1beta1.QueryByteCodeResponse:
+    type: object
+    properties:
+      byte_code:
+        type: string
+        format: byte
+    description: |-
+      QueryByteCodeResponse is response type for the
+      QueryyByteCode RPC method.
+  terra.wasm.v1beta1.QueryContractInfoResponse:
+    type: object
+    properties:
+      contract_info:
+        $ref: "#/definitions/terra.wasm.v1beta1.ContractInfo"
+    description: |-
+      QueryContractInfoResponse is response type for the
+      Query/ContractInfo RPC method.
+  terra.wasm.v1beta1.ContractInfo:
     type: object
     properties:
       address:
         type: string
-        example: "terravalcons1qsdpq864szmfk8nh82qcg7lyle6k95w07acdqn"
-      start_height:
+        title: Address is the address of the contract
+      creator:
         type: string
-      index_offset:
+        title: Creator is the contract creator address
+      admin:
         type: string
-      jailed_until:
+        title: Admin is who can execute the contract migration
+      code_id:
         type: string
-      missed_blocks_counter:
+        format: uint64
+        title: CodeID is the reference to the stored Wasm code
+      init_msg:
         type: string
-  ParamChange:
+        format: byte
+        title: InitMsg is the raw message used when instantiating a contract
+    title: ContractInfo stores a WASM contract instance
+  terra.wasm.v1beta1.QueryContractStoreResponse:
     type: object
     properties:
-      subspace:
+      query_result:
         type: string
-        example: "staking"
-      key:
-        type: string
-        example: "MaxValidators"
-      subkey:
-        type: string
-        example: ""
-      value:
-        type: object
-  Supply:
+        format: byte
+    description: |-
+      QueryContractStoreResponse is response type for the
+      Query/ContractStore RPC method.
+  terra.wasm.v1beta1.QueryRawStoreResponse:
     type: object
     properties:
-      total:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-  BaseAccount:
+      data:
+        type: string
+        format: byte
+        title: Data contains the raw store data
+    description: |-
+      QueryRawStoreResponse is response type for the
+      Query/RawStore RPC method.
+  terra.wasm.v1beta1.QueryParamsResponse:
     type: object
     properties:
-      account_number:
-        type: string
-      address:
-        type: string
-      public_key:
-        type: string
-      sequence:
-        type: string
-  Account:
+      params:
+        $ref: "#/definitions/terra.wasm.v1beta1.Params"
+        description: params defines the parameters of the module.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  terra.wasm.v1beta1.Params:
     type: object
     properties:
-      type:
+      max_contract_size:
         type: string
-        example: "core/Account"
-      value:
-        $ref: "#/definitions/BaseAccount"
-  BaseVestingAccount:
-    type: object
-    properties:
-      BaseAccount:
-        $ref: "#/definitions/BaseAccount"
-      original_vesting:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      delegated_free:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      delegated_vesting:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      end_time:
+        format: uint64
+      max_contract_gas:
         type: string
-        example: "0"
-  Schedule:
-    type: object
-    properties:
-      start_time:
+        format: uint64
+      max_contract_msg_size:
         type: string
-        example: "1556085600"
-      end_time:
-        type: string
-        example: "1556085600"
-      ratio:
-        type: string
-        example: "0.100000000000000000"
-  VestingSchedule:
-    type: object
-    properties:
-      denom:
-        type: string
-        example: "usdr"
-      lazy_schedules:
-        type: array
-        items:
-          $ref: "#/definitions/Schedule"
-  BaseLazyGradedVestingAccount:
-    type: object
-    properties:
-      BaseVestingAccount:
-        $ref: "#/definitions/BaseVestingAccount"
-      vesting_schedules:
-        type: array
-        items:
-          $ref: "#/definitions/VestingSchedule"
-  LazyGradedVestingAccount:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "core/LazyGradedVestingAccount"
-      value:
-        $ref: "#/definitions/BaseLazyGradedVestingAccount"
-  SwapReq:
-    type: object
-    required:
-      - base_req
-      - offer_coin
-      - ask_denom
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      offer_coin:
-        $ref: "#/definitions/Coin"
-      ask_denom:
-        type: string
-        example: "uluna"
-      receiver:
-        type: string
-        description: "the `receiver` field can be skipped when the receiver is trader"
-        example: "terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv"
-  MarketParams:
-    type: object
-    properties:
-      base_pool:
-        type: number
-        example: "1000000.0"
-      pool_recovery_period:
-        type: number
-        example: "16000"
-      min_stability_spread:
-        type: number
-        example: "0.02"
-  PrevoteReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      exchange_rate:
-        type: number
-        example: "1000.0"
-        description: "exchange rate of Luna in denom currency is to make prevote hash; this field is required to submit prevote in case absence of hash"
-      salt:
-        type: string
-        example: "abcd"
-        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
-      hash:
-        type: string
-        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
-        description: "hex string; hash of next vote; empty == skip prevote"
-      validator:
-        $ref: "#/definitions/ValidatorAddress"
-  VoteReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      exchange_rate:
-        type: number
-        example: "1000.0"
-        description: "proof exchange rate of Luna in denom currency was used to make prevote hash; initial prevote does not require this field"
-      salt:
-        type: string
-        example: "abcd"
-        description: "proof salt was used to make prevote hash; initial prevote does not require this field"
-      validator:
-        $ref: "#/definitions/ValidatorAddress"
-  AggregatePrevoteReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      exchange_rates:
-        type: string
-        example: "1000.0ukrw,1.2uusd,0.99usdr"
-        description: "exchange rates of Luna in denom currencies are to make aggregate prevote hash; this field is required to submit prevote in case absence of hash"
-      salt:
-        type: string
-        example: "abcd"
-        description: "salt is to make prevote hash; this field is required to submit prevote in case  absence of hash"
-      hash:
-        type: string
-        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
-        description: "hex string; hash of next vote; empty == skip prevote"
-  AggregateVoteReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      exchange_rates:
-        type: string
-        example: "1000.0ukrw,1.2uusd,0.99usdr"
-        description: "proof exchange rates of Luna in denom currency were used to make aggregate prevote hash"
-      salt:
-        type: string
-        example: "abcd"
-        description: "proof salt was used to make prevote hash; initial prevote does not require this field"
-  DelegateReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      feeder:
-        $ref: "#/definitions/Address"
-  ExchangeRateVote:
-    type: object
-    properties:
-      exchange_rate:
-        type: number
-        example: "0.01241"
-      denom:
-        type: string
-        example: "ukrw"
-      voter:
-        $ref: "#/definitions/ValidatorAddress"
-  ExchangeRatePrevote:
-    type: object
-    properties:
-      hash:
-        type: string
-        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
-      denom:
-        type: string
-        example: "uusd"
-      voter:
-        $ref: "#/definitions/ValidatorAddress"
-      submit_block:
-        type: number
-        example: "1"
-  AggregateExchangeRatePrevote:
-    type: object
-    properties:
-      hash:
-        type: string
-        example: "061bf1e27dfff121f40c826e593c8a28ec299a02"
-      voter:
-        $ref: "#/definitions/ValidatorAddress"
-      submit_block:
-        type: number
-        example: "1"
-  AggregateExchangeRateVote:
-    type: object
-    properties:
-      exchange_rates:
-        type: array
-        items:
-          $ref: "#/definitions/DecCoin"
-      voter:
-        $ref: "#/definitions/ValidatorAddress"
-  OracleParams:
-    type: object
-    properties:
-      vote_period:
-        type: number
-        example: "900"
-      vote_threshold:
-        type: number
-        example: "0.67"
-      drop_threshold:
-        type: number
-        example: "10"
-      oracle_reward_band:
-        type: number
-        example: "0.02"
-  PolicyConstraints:
-    type: object
-    properties:
-      rate_min:
-        type: number
-        format: float
-        example: "0.0005"
-        description: "0.05%"
-      rate_max:
-        type: number
-        format: float
-        example: "0.01"
-        description: "1%"
-      cap:
-        $ref: "#/definitions/Coin"
-      change_max:
-        type: number
-        format: float
-        example: "0.00025"
-        description: "0.025%"
-  TreasuryParams:
-    type: object
-    properties:
-      tax_policy:
-        $ref: "#/definitions/PolicyConstraints"
-      reward_policy:
-        $ref: "#/definitions/PolicyConstraints"
-      seigniorage_burden_target:
-        type: number
-        format: float
-        example: "0.67"
-        description: "67%"
-      mining_increment:
-        type: number
-        format: float
-        example: "1.07"
-      window_short:
-        type: integer
-        example: "4"
-      window_long:
-        type: integer
-        example: "52"
-      window_probation:
-        type: integer
-        example: "12"
-  WasmParams:
+        format: uint64
+    description: Params defines the parameters for the wasm module.
+  TerraWasmParams:
     type: object
     properties:
       max_contract_size:
         type: number
         format: integer
-        example: "1000000"
-        description: "allowed max contract bytes size"
+        example: '1000000'
+        description: allowed max contract bytes size
       max_contract_gas:
         type: number
         format: integer
-        example: "1000000"
-        description: "allowed max gas usages per each contract execution"
+        example: '1000000'
+        description: allowed max gas usages per each contract execution
       max_contract_msg_size:
         type: number
         format: integer
-        example: "1000000"
-        description: "allowed max contract exe msg bytes size"
+        example: '1000000'
+        description: allowed max contract exe msg bytes size
       max_contract_data_size:
         type: number
         format: integer
-        example: "100"
-        description: "allowed max contract return data size"
+        example: '100'
+        description: allowed max contract return data size
       event_params:
         type: object
         properties:
           max_attribute_num:
             type: string
-            example: "128"
-            description: "allowed max # of contract attribute num"
+            example: '128'
+            description: 'allowed max # of contract attribute num'
           max_attribute_key_length:
             type: string
-            example: "128"
-            description: "allowed max length of a contract event attribute key"
+            example: '128'
+            description: allowed max length of a contract event attribute key
           max_attribute_value_length:
             type: string
-            example: "128"
-            description: "allowed max length of a contract event attribute value"
-  MultiSignPubKey:
-    type: object
-    properties:
-      threshold:
-        type: number
-        example: 1
-      pubkeys:
-        type: array
-        items:
-          type: string
-          example: terrapub1addwnpepq2l6pwj8h9fwxdjuge7lazu0sszpkck0nlhjag6q9drffrd93atywdt8ksu
-  StdSignature:
-    type: object
-    properties:
-      signature:
-        type: string
-        example: MEUCIQD02fsDPra8MtbRsyB1w7bqTM55Wu138zQbFcWx4+CFyAIge5WNPfKIuvzBZ69MyqHsqD8S1IwiEp+iUb6VSdtlpgY=
-      pub_key:
-        type: object
-        properties:
-          type:
-            type: string
-            example: "tendermint/PubKeySecp256k1"
-          value:
-            type: string
-            example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
-  EstimateFeeResp:
-    type: object
-    properties:
-      fee:
-        type: object
-        properties:
-          gas:
-            type: string
-          amount:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-  CodeInfo:
-    type: object
-    properties:
-      code_hash:
-        type: string
-      creator:
-        type: string
-  ContractInfo:
+            example: '128'
+            description: allowed max length of a contract event attribute value
+  TerraContractInfo:
     type: object
     properties:
       code_id:
         type: string
       address:
-        $ref: "#/definitions/Address"
-        description: contract address
+        type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       creator:
-        $ref: "#/definitions/Address"
-        description: contract creator address
+        type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       admin:
-        $ref: "#/definitions/Address"
-        description: admin address which has contract migration privilege; empty means not migratable
+        type: string
+        description: bech32 encoded address
+        example: terra1wg2mlrxdmnnkkykgqg4znky86nyrtc45q336yv
       init_msg:
         type: string
-  StoreCodeReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      wasm_bytes:
-        type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
-  MigrateCodeReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      wasm_bytes:
-        type: string
-        example: "Avz04VhtKJh8ACCVzlI8aTosGy0ikFXKIVHQ3jKMrosH"
-  InstantiateContractReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      init_coins:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      init_msg:
-        type: string
-        description: json formatted string
-        example: "{}"
-      admin:
-        $ref: "#/definitions/Address"
-        description: admin address which has contract migration privilege; empty means not migratable
-        example: "terra..."
-  ExecuteContractReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      coins:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-      exec_msg:
-        type: string
-        example: "{}"
-  MigrateContractReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      new_code_id:
-        type: number
-        format: integer
-        example: 10
-      migrate_msg:
-        type: string
-        example: "{}"
-  UpdateContractAdminReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      new_admin:
-        $ref: "#/definitions/Address"
-        description: new contract admin address who has contract migration privilege
-        example: "terra..."
-  ClearContractAdminReq:
-    type: object
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-  GenericAuthorization:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "msgauth/GenericAuthorization"
-      value:
-        type: object
-        properties:
-          msg_type:
-            type: string
-            example: "send"
-  SendAuthorization:
-    type: object
-    properties:
-      type:
-        type: string
-        example: "msgauth/SendAuthorization"
-      value:
-        type: object
-        properties:
-          spend_limit:
-            type: array
-            items:
-              $ref: "#/definitions/Coin"
-  GenericGrantInfo:
-    type: object
-    properties:
-      authorization:
-        $ref: "#/definitions/GenericAuthorization"
-      expiration:
-        type: string
-        example: "2021-06-24T09:33:20.012999Z"
-  SendGrantInfo:
-    type: object
-    properties:
-      authorization:
-        $ref: "#/definitions/SendAuthorization"
-      expiration:
-        type: string
-        example: "2021-06-24T09:33:20.012999Z"
-  GrantReq:
-    type: object
-    required:
-      - base_req
-      - period
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      period:
-        type: string
-        description: "nano second of time duration"
-        example: "3600000000000"
-      limit:
-        type: array
-        items:
-          $ref: "#/definitions/Coin"
-        description: "required when grant MsgType == send"
-  RevokeGrantReq:
-    type: object
-    required:
-      - base_req
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-  ExecuteGrantReq:
-    type: object
-    required:
-      - base_req
-      - msgs
-    properties:
-      base_req:
-        $ref: "#/definitions/BaseReq"
-      msgs:
-        type: array
-        items:
-          $ref: "#/definitions/Msg"
-  TaxCap:
-    type: object
-    properties:
-      denom:
-        type: string
-        example: uluna
-      tax_cap:
-        type: string
-        example: "50"

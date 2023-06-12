@@ -17,9 +17,9 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	wasmexported "github.com/CosmWasm/wasmd/x/wasm"
 	marketexported "github.com/classic-terra/core/v2/x/market/exported"
 	treasuryexported "github.com/classic-terra/core/v2/x/treasury/exported"
-	wasmexported "github.com/classic-terra/core/v2/x/wasm/exported"
 )
 
 type (
@@ -172,12 +172,17 @@ func ComputeFeesWithCmd(
 
 	if !gasPrices.IsZero() {
 		glDec := sdk.NewDec(int64(gas))
+		adjustment := sdk.NewDecWithPrec(int64(txf.GasAdjustment())*100, 2)
+
+		if adjustment.LT(sdk.OneDec()) {
+			adjustment = sdk.OneDec()
+		}
 
 		// Derive the fees based on the provided gas prices, where
 		// fee = ceil(gasPrice * gasLimit).
 		gasFees := make(sdk.Coins, len(gasPrices))
 		for i, gp := range gasPrices {
-			fee := gp.Amount.Mul(glDec)
+			fee := gp.Amount.Mul(glDec).Mul(adjustment)
 			gasFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
 		}
 
@@ -239,7 +244,15 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 			taxes = taxes.Add(tax...)
 
 		case *wasmexported.MsgInstantiateContract:
-			tax, err := computeTax(clientCtx, taxRate, msg.InitCoins)
+			tax, err := computeTax(clientCtx, taxRate, msg.Funds)
+			if err != nil {
+				return nil, err
+			}
+
+			taxes = taxes.Add(tax...)
+
+		case *wasmexported.MsgInstantiateContract2:
+			tax, err := computeTax(clientCtx, taxRate, msg.Funds)
 			if err != nil {
 				return nil, err
 			}
@@ -247,7 +260,7 @@ func FilterMsgAndComputeTax(clientCtx client.Context, msgs ...sdk.Msg) (taxes sd
 			taxes = taxes.Add(tax...)
 
 		case *wasmexported.MsgExecuteContract:
-			tax, err := computeTax(clientCtx, taxRate, msg.Coins)
+			tax, err := computeTax(clientCtx, taxRate, msg.Funds)
 			if err != nil {
 				return nil, err
 			}
