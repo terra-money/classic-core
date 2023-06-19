@@ -89,7 +89,7 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 		}
 
 		spread = tobinTax
-		return
+		return retDecCoin, spread, nil
 	}
 
 	basePool := k.BasePool(ctx)

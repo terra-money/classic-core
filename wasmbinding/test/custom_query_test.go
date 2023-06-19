@@ -16,7 +16,7 @@ import (
 // oracle rate: 1 uluna = 1.7 usdr
 // 1000 uluna from trader goes to contract
 // 1666 usdr (after 2% tax) is swapped into
-func (s *WasmTestSuite) QuerySwap(contractDir string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
+func (s *WasmTestSuite) QuerySwap(contractPath string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -24,7 +24,7 @@ func (s *WasmTestSuite) QuerySwap(contractDir string, queryFunc func(contract sd
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	// setup swap environment
@@ -52,7 +52,7 @@ func (s *WasmTestSuite) QuerySwap(contractDir string, queryFunc func(contract sd
 }
 
 // go test -v -run ^TestQueryExchangeRates$ github.com/classic-terra/core/v2/wasmbinding/test
-func (s *WasmTestSuite) QueryExchangeRates(contractDir string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
+func (s *WasmTestSuite) QueryExchangeRates(contractPath string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -60,7 +60,7 @@ func (s *WasmTestSuite) QueryExchangeRates(contractDir string, queryFunc func(co
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
@@ -80,7 +80,7 @@ func (s *WasmTestSuite) QueryExchangeRates(contractDir string, queryFunc func(co
 }
 
 // go test -v -run ^TestQueryTaxRate$ github.com/classic-terra/core/v2/wasmbinding/test
-func (s *WasmTestSuite) QueryTaxRate(contractDir string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
+func (s *WasmTestSuite) QueryTaxRate(contractPath string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -88,7 +88,7 @@ func (s *WasmTestSuite) QueryTaxRate(contractDir string, queryFunc func(contract
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	query := bindings.TerraQuery{
@@ -102,7 +102,7 @@ func (s *WasmTestSuite) QueryTaxRate(contractDir string, queryFunc func(contract
 }
 
 // go test -v -run ^TestQueryTaxCap$ github.com/classic-terra/core/v2/wasmbinding/test
-func (s *WasmTestSuite) QueryTaxCap(contractDir string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
+func (s *WasmTestSuite) QueryTaxCap(contractPath string, queryFunc func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -110,7 +110,7 @@ func (s *WasmTestSuite) QueryTaxCap(contractDir string, queryFunc func(contract 
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	query := bindings.TerraQuery{

@@ -22,7 +22,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm"
-	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
@@ -50,7 +49,6 @@ func (appKeepers *AppKeepers) GenerateKeys() {
 		wasm.StoreKey,
 		authzkeeper.StoreKey,
 		feegrant.StoreKey,
-		feesharetypes.StoreKey,
 	)
 
 	appKeepers.tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)

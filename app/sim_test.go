@@ -10,7 +10,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	terraapp "github.com/classic-terra/core/v2/app"
 	helpers "github.com/classic-terra/core/v2/app/testing"
-	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
@@ -18,11 +17,11 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	simulation2 "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
@@ -70,7 +69,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		os.Stdout,
 		app.BaseApp,
 		simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
-		simulation2.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simapp.SimulationOperations(app, app.AppCodec(), config),
 		app.ModuleAccountAddrs(),
 		config,
@@ -138,7 +137,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				os.Stdout,
 				app.BaseApp,
 				AppStateFn(app.AppCodec(), app.SimulationManager()),
-				simulation2.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 				simapp.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
 				config,

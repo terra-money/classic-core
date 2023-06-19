@@ -6,27 +6,27 @@ import (
 )
 
 const (
-	TERRA_BINDINGS_DIR           = "../testdata/terra_reflect.wasm"
-	TERRA_RENOVATED_BINDINGS_DIR = "../testdata/old/bindings_tester.wasm"
+	TerraBindingsPath          = "../testdata/terra_reflect.wasm"
+	TerraRenovatedBindingsPath = "../testdata/old/bindings_tester.wasm"
 )
 
 // go test -v -run ^TestWasmTestSuite/TestBindingsAll$ github.com/classic-terra/core/v2/wasmbinding/test
 func (s *WasmTestSuite) TestBindingsAll() {
 	cases := []struct {
 		name        string
-		dir         string
+		path        string
 		executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error
 		queryFunc   func(contract sdk.AccAddress, request bindings.TerraQuery, response interface{})
 	}{
 		{
 			name:        "Terra",
-			dir:         TERRA_BINDINGS_DIR,
+			path:        TerraBindingsPath,
 			executeFunc: s.executeCustom,
 			queryFunc:   s.queryCustom,
 		},
 		{
 			name:        "Old Terra bindings",
-			dir:         TERRA_RENOVATED_BINDINGS_DIR,
+			path:        TerraRenovatedBindingsPath,
 			executeFunc: s.executeOldBindings,
 			queryFunc:   s.queryOldBindings,
 		},
@@ -36,24 +36,24 @@ func (s *WasmTestSuite) TestBindingsAll() {
 		s.Run(tc.name, func() {
 			// Msg
 			s.Run("TestSwap", func() {
-				s.Swap(tc.dir, tc.executeFunc)
+				s.Swap(tc.path, tc.executeFunc)
 			})
 			s.Run("TestSwapSend", func() {
-				s.SwapSend(tc.dir, tc.executeFunc)
+				s.SwapSend(tc.path, tc.executeFunc)
 			})
 
 			// Query
 			s.Run("TestQuerySwap", func() {
-				s.QuerySwap(tc.dir, tc.queryFunc)
+				s.QuerySwap(tc.path, tc.queryFunc)
 			})
 			s.Run("TestQueryExchangeRates", func() {
-				s.QueryExchangeRates(tc.dir, tc.queryFunc)
+				s.QueryExchangeRates(tc.path, tc.queryFunc)
 			})
 			s.Run("TestQueryTaxRate", func() {
-				s.QueryTaxRate(tc.dir, tc.queryFunc)
+				s.QueryTaxRate(tc.path, tc.queryFunc)
 			})
 			s.Run("TestQueryTaxCap", func() {
-				s.QueryTaxCap(tc.dir, tc.queryFunc)
+				s.QueryTaxCap(tc.path, tc.queryFunc)
 			})
 		})
 	}

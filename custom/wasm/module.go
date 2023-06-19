@@ -9,11 +9,11 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/simulation"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	customcli "github.com/classic-terra/core/v2/custom/wasm/client/cli"
 	customrest "github.com/classic-terra/core/v2/custom/wasm/client/rest"
+	"github.com/classic-terra/core/v2/custom/wasm/simulation"
+	"github.com/classic-terra/core/v2/x/market/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

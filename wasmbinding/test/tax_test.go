@@ -22,7 +22,7 @@ func (s *WasmTestSuite) TestTax() {
 	s.Ctx = s.Ctx.WithBlockHeight(customante.TaxPowerUpgradeHeight + 1)
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(payer, TERRA_BINDINGS_DIR)
+	contractAddr := s.InstantiateContract(payer, TerraBindingsPath)
 	s.Require().NotEmpty(contractAddr)
 
 	// make a bank send message

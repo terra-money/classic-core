@@ -3,8 +3,6 @@ package ante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-
-	feesharettypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
@@ -27,12 +25,6 @@ type OracleKeeper interface {
 type BankKeeper interface {
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-}
-
-type FeeShareKeeper interface {
-	GetParams(ctx sdk.Context) (params feesharettypes.Params)
-	GetFeeShare(ctx sdk.Context, contract sdk.Address) (feesharettypes.FeeShare, bool)
 }
 
 type DistrKeeper interface {

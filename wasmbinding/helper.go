@@ -4,7 +4,6 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // ConvertProtoToJsonMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
@@ -47,14 +46,14 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 }
 
 // parseAddress parses address from bech32 string and verifies its format.
-func parseAddress(addr string) (sdk.AccAddress, error) {
-	parsed, err := sdk.AccAddressFromBech32(addr)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "address from bech32")
-	}
-	err = sdk.VerifyAddressFormat(parsed)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "verify address format")
-	}
-	return parsed, nil
-}
+// func parseAddress(addr string) (sdk.AccAddress, error) {
+// 	parsed, err := sdk.AccAddressFromBech32(addr)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "address from bech32")
+// 	}
+// 	err = sdk.VerifyAddressFormat(parsed)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "verify address format")
+// 	}
+// 	return parsed, nil
+// }

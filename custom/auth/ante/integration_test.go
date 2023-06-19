@@ -120,7 +120,6 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 		ak := suite.app.AccountKeeper
 		bk := suite.app.BankKeeper
 		dk := suite.app.DistrKeeper
-		fsk := suite.app.FeeShareKeeper
 
 		// Set burn split rate to 50%
 		// fee amount should be 500, 50% of 10000
@@ -142,7 +141,6 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 				SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
 				IBCKeeper:          *suite.app.IBCKeeper,
 				DistributionKeeper: dk,
-				FeeShareKeeper:     fsk,
 				WasmConfig:         &wasmConfig,
 				TXCounterStoreKey:  suite.app.GetKey(wasmtypes.StoreKey),
 			},

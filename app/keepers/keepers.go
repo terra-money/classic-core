@@ -47,8 +47,6 @@ import (
 	customwasmkeeper "github.com/classic-terra/core/v2/custom/wasm/keeper"
 	terrawasm "github.com/classic-terra/core/v2/wasmbinding"
 
-	feesharekeeper "github.com/classic-terra/core/v2/x/feeshare/keeper"
-	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	marketkeeper "github.com/classic-terra/core/v2/x/market/keeper"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	oraclekeeper "github.com/classic-terra/core/v2/x/oracle/keeper"
@@ -81,7 +79,6 @@ type AppKeepers struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	TransferKeeper   ibctransferkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
-	FeeShareKeeper   feesharekeeper.Keeper
 	MarketKeeper     marketkeeper.Keeper
 	TreasuryKeeper   treasurykeeper.Keeper
 	WasmKeeper       wasmkeeper.Keeper
@@ -215,15 +212,6 @@ func NewAppKeepers(
 		appKeepers.StakingKeeper, appKeepers.DistrKeeper,
 		distrtypes.ModuleName)
 
-	appKeepers.FeeShareKeeper = feesharekeeper.NewKeeper(
-		appKeepers.keys[feesharetypes.StoreKey],
-		appCodec,
-		appKeepers.GetSubspace(feesharetypes.ModuleName),
-		appKeepers.BankKeeper,
-		appKeepers.WasmKeeper,
-		authtypes.FeeCollectorName,
-	)
-
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic("error while reading wasm config: " + err.Error())
@@ -289,7 +277,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(markettypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(treasurytypes.ModuleName)
-	paramsKeeper.Subspace(feesharetypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper

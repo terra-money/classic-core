@@ -62,10 +62,9 @@ import (
 	customupgrade "github.com/classic-terra/core/v2/custom/upgrade"
 	customwasm "github.com/classic-terra/core/v2/custom/wasm"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/classic-terra/core/v2/x/feeshare"
-	feesharetypes "github.com/classic-terra/core/v2/x/feeshare/types"
 	"github.com/classic-terra/core/v2/x/market"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	"github.com/classic-terra/core/v2/x/oracle"
@@ -77,8 +76,6 @@ import (
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/classic-terra/core/v2/client/docs/statik"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 var (
@@ -121,7 +118,6 @@ var (
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
 		customwasm.AppModuleBasic{},
-		feeshare.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -180,7 +176,6 @@ func appModules(
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
-		feeshare.NewAppModule(app.FeeShareKeeper, app.AccountKeeper),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 	}
 }
@@ -211,14 +206,12 @@ func simulationModules(
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
-		feeshare.NewAppModule(app.FeeShareKeeper, app.AccountKeeper),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 	}
 }
 
 func orderBeginBlockers() []string {
 	return []string{
-		feesharetypes.ModuleName,
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
@@ -246,7 +239,6 @@ func orderBeginBlockers() []string {
 
 func orderEndBlockers() []string {
 	return []string{
-		feesharetypes.ModuleName,
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
@@ -274,7 +266,6 @@ func orderEndBlockers() []string {
 
 func orderInitGenesis() []string {
 	return []string{
-		feesharetypes.ModuleName,
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,

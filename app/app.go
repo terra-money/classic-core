@@ -211,7 +211,6 @@ func NewTerraApp(
 			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
 			IBCKeeper:          *app.IBCKeeper,
 			DistributionKeeper: app.DistrKeeper,
-			FeeShareKeeper:     app.FeeShareKeeper,
 			GovKeeper:          app.GovKeeper,
 			WasmConfig:         &wasmConfig,
 			TXCounterStoreKey:  app.GetKey(wasm.StoreKey),

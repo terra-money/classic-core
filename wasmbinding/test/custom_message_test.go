@@ -16,7 +16,7 @@ import (
 // oracle rate: 1 uluna = 1.7 usdr
 // 1000 uluna from trader goes to contract
 // 1666 usdr (after 2% tax) is swapped into which goes back to contract
-func (s *WasmTestSuite) Swap(contractDir string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
+func (s *WasmTestSuite) Swap(contractPath string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -24,7 +24,7 @@ func (s *WasmTestSuite) Swap(contractDir string, executeFunc func(contract sdk.A
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	// setup swap environment
@@ -64,7 +64,7 @@ func (s *WasmTestSuite) Swap(contractDir string, executeFunc func(contract sdk.A
 // 1000 uluna from trader goes to contract
 // 1666 usdr (after 2% tax) is swapped into which goes back to contract
 // 1666 usdr is sent to trader
-func (s *WasmTestSuite) SwapSend(contractDir string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
+func (s *WasmTestSuite) SwapSend(contractPath string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
 	s.SetupTest()
 	actor := s.RandomAccountAddress()
 
@@ -72,7 +72,7 @@ func (s *WasmTestSuite) SwapSend(contractDir string, executeFunc func(contract s
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
 
 	// instantiate reflect contract
-	contractAddr := s.InstantiateContract(actor, contractDir)
+	contractAddr := s.InstantiateContract(actor, contractPath)
 	s.Require().NotEmpty(contractAddr)
 
 	// setup swap environment
