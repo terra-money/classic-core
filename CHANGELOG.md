@@ -32,12 +32,39 @@ Ref: https://keepachangelog.com/en/1.0.0/
 -->
 # Changelog
 
-## [v1.1.0-rc.1](https://github.com/classic-terra/core/releases/tag/v1.1.0-rc.1) - 2023-02-19
+## [v2.1.1](https://github.com/classic-terra/core/releases/tag/v2.1.1) - Jun 10, 2023
+### State Machine Breaking
+* Wasmvm v1.1.2 (Cherry patch included)
+* Wasmd [v0.30.0-terra.2](https://github.com/classic-terra/wasmd/releases/tag/v0.30.0-terra.2)
+* IBC v4.3.1 (Huckleberry patch included)
+* Minimum 5% commission on all validators
+
+### Bug Fixes
+* Infinite feegrant bug fixed
+
+## [v2.0.1](https://github.com/classic-terra/core/releases/tag/v2.0.1) - May 9, 2023
+### State Machine Breaking
+* Apply CosmWasm security patch: Codename Cherry
+
+## [v2.0.0](https://github.com/classic-terra/core/releases/tag/v2.0.1) - May 5, 2023
+
+### State Machine Breaking
+* (app) [#176](https://github.com/classic-terra/core/pull/176) CosmosSDK v0.45.13
+* (app) [#177](https://github.com/classic-terra/core/pull/177) V3 Upgrade handler
+* (gov) [#138 #185](https://github.com/classic-terra/core/pull/138) Minimum initial deposit
+
+## Improvements
+* [#172](https://github.com/classic-terra/core/pull/172) Terra operator docker refactor
+* [#194](https://github.com/classic-terra/core/pull/194) Testnet refactor
+* [#168](https://github.com/classic-terra/core/pull/168) refactor app folder and add 'make lint-strict'
+* [#167](https://github.com/classic-terra/core/pull/167) Test framework implementation plan
+
+## [v1.1.0](https://github.com/classic-terra/core/releases/tag/v1.1.0) - Feb 27, 2023
 ### Features
+
 * (build) [#101](https://github.com/classic-terra/core/pull/101) Upgrade test
-* (ante) [#103](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
-* (ante) [#107](https://github.com/classic-terra/core/pull/107) Burn Tax Whitelist
-* (build) [#118](https://github.com/classic-terra/core/pull/118) localnet for Apple Silicon
+* (ante) [#103 #113 #134](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
+* (ante) [#107 #137 #149](https://github.com/classic-terra/core/pull/107) Burn Tax Whitelist
 * (app) [#128](https://github.com/classic-terra/core/pull/128) Panic at InitChainer for the Columbus mainnet
 
 ### Improvements
@@ -45,11 +72,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (build) [#97](https://github.com/classic-terra/core/pull/97) Change module path to classic-terra/core
 * (build) [#102](https://github.com/classic-terra/core/pull/102) Snyk secops patches
 * (build) [#105](https://github.com/classic-terra/core/pull/105) Update docker assets
+* (build) [#118](https://github.com/classic-terra/core/pull/118) localnet for Apple Silicon
 * [#102](https://github.com/classic-terra/core/pull/112) Upgrade SDK proto to v0.7
 
 ### Bug Fixes
 * (auth/client) [#106](https://github.com/classic-terra/core/pull/106) fix ungraceful error on failed client tax query
-* (ante) [#113](https://github.com/classic-terra/core/pull/113) Fix burn tax split bug
 
 ## [v1.0.5-full-archive](https://github.com/classic-terra/core/releases/tag/v1.0.5-full-archive) - 2023-02-03
 
