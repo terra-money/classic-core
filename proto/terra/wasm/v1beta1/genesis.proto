@@ -1,0 +1,25 @@
+syntax = "proto3";
+package terra.wasm.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "terra/wasm/v1beta1/wasm.proto";
+
+option go_package = "github.com/classic-terra/core/v2/custom/wasm/types/legacy";
+
+// Model is a struct that holds a KV pair
+message Model {
+  bytes key   = 1;
+  bytes value = 2;
+}
+
+// Code struct encompasses CodeInfo and CodeBytes
+message Code {
+  LegacyCodeInfo code_info  = 1 [(gogoproto.nullable) = false];
+  bytes    code_bytes = 2;
+}
+
+// Contract struct encompasses ContractAddress, ContractInfo, and ContractState
+message Contract {
+  LegacyContractInfo   contract_info  = 1 [(gogoproto.nullable) = false];
+  repeated Model contract_store = 2 [(gogoproto.nullable) = false];
+}

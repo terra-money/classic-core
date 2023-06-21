@@ -25,13 +25,15 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = descriptor.ForMessage
+	_ = metadata.Join
+)
 
 func request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryExchangeRateRequest
@@ -57,7 +59,6 @@ func request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.Marshal
 
 	msg, err := client.ExchangeRate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -84,7 +85,6 @@ func local_request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.M
 
 	msg, err := server.ExchangeRate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_ExchangeRates_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -93,7 +93,6 @@ func request_Query_ExchangeRates_0(ctx context.Context, marshaler runtime.Marsha
 
 	msg, err := client.ExchangeRates(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_ExchangeRates_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -102,7 +101,6 @@ func local_request_Query_ExchangeRates_0(ctx context.Context, marshaler runtime.
 
 	msg, err := server.ExchangeRates(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -129,7 +127,6 @@ func request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marshaler, 
 
 	msg, err := client.TobinTax(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -156,7 +153,6 @@ func local_request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marsh
 
 	msg, err := server.TobinTax(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_TobinTaxes_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -165,7 +161,6 @@ func request_Query_TobinTaxes_0(ctx context.Context, marshaler runtime.Marshaler
 
 	msg, err := client.TobinTaxes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_TobinTaxes_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -174,7 +169,6 @@ func local_request_Query_TobinTaxes_0(ctx context.Context, marshaler runtime.Mar
 
 	msg, err := server.TobinTaxes(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_Actives_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -183,7 +177,6 @@ func request_Query_Actives_0(ctx context.Context, marshaler runtime.Marshaler, c
 
 	msg, err := client.Actives(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_Actives_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -192,7 +185,6 @@ func local_request_Query_Actives_0(ctx context.Context, marshaler runtime.Marsha
 
 	msg, err := server.Actives(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_VoteTargets_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -201,7 +193,6 @@ func request_Query_VoteTargets_0(ctx context.Context, marshaler runtime.Marshale
 
 	msg, err := client.VoteTargets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_VoteTargets_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -210,7 +201,6 @@ func local_request_Query_VoteTargets_0(ctx context.Context, marshaler runtime.Ma
 
 	msg, err := server.VoteTargets(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_FeederDelegation_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -237,7 +227,6 @@ func request_Query_FeederDelegation_0(ctx context.Context, marshaler runtime.Mar
 
 	msg, err := client.FeederDelegation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_FeederDelegation_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -264,7 +253,6 @@ func local_request_Query_FeederDelegation_0(ctx context.Context, marshaler runti
 
 	msg, err := server.FeederDelegation(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_MissCounter_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -291,7 +279,6 @@ func request_Query_MissCounter_0(ctx context.Context, marshaler runtime.Marshale
 
 	msg, err := client.MissCounter(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_MissCounter_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -318,7 +305,6 @@ func local_request_Query_MissCounter_0(ctx context.Context, marshaler runtime.Ma
 
 	msg, err := server.MissCounter(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_AggregatePrevote_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -345,7 +331,6 @@ func request_Query_AggregatePrevote_0(ctx context.Context, marshaler runtime.Mar
 
 	msg, err := client.AggregatePrevote(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_AggregatePrevote_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -372,7 +357,6 @@ func local_request_Query_AggregatePrevote_0(ctx context.Context, marshaler runti
 
 	msg, err := server.AggregatePrevote(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_AggregatePrevotes_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -381,7 +365,6 @@ func request_Query_AggregatePrevotes_0(ctx context.Context, marshaler runtime.Ma
 
 	msg, err := client.AggregatePrevotes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_AggregatePrevotes_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -390,7 +373,6 @@ func local_request_Query_AggregatePrevotes_0(ctx context.Context, marshaler runt
 
 	msg, err := server.AggregatePrevotes(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_AggregateVote_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -417,7 +399,6 @@ func request_Query_AggregateVote_0(ctx context.Context, marshaler runtime.Marsha
 
 	msg, err := client.AggregateVote(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_AggregateVote_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -444,7 +425,6 @@ func local_request_Query_AggregateVote_0(ctx context.Context, marshaler runtime.
 
 	msg, err := server.AggregateVote(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_AggregateVotes_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -453,7 +433,6 @@ func request_Query_AggregateVotes_0(ctx context.Context, marshaler runtime.Marsh
 
 	msg, err := client.AggregateVotes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_AggregateVotes_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -462,7 +441,6 @@ func local_request_Query_AggregateVotes_0(ctx context.Context, marshaler runtime
 
 	msg, err := server.AggregateVotes(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Query_Params_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -471,7 +449,6 @@ func request_Query_Params_0(ctx context.Context, marshaler runtime.Marshaler, cl
 
 	msg, err := client.Params(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -480,7 +457,6 @@ func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshal
 
 	msg, err := server.Params(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 // RegisterQueryHandlerServer registers the http handlers for service Query to "mux".
@@ -488,7 +464,6 @@ func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshal
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterQueryHandlerFromEndpoint instead.
 func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, server QueryServer) error {
-
 	mux.Handle("GET", pattern_Query_ExchangeRate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -509,7 +484,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_ExchangeRate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_ExchangeRates_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -532,7 +506,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_ExchangeRates_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_TobinTax_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -555,7 +528,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_TobinTax_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_TobinTaxes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -578,7 +550,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_TobinTaxes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_Actives_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -601,7 +572,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_Actives_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_VoteTargets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -624,7 +594,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_VoteTargets_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_FeederDelegation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -647,7 +616,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_FeederDelegation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_MissCounter_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -670,7 +638,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_MissCounter_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregatePrevote_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -693,7 +660,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_AggregatePrevote_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregatePrevotes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -716,7 +682,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_AggregatePrevotes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregateVote_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -739,7 +704,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_AggregateVote_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregateVotes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -762,7 +726,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_AggregateVotes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_Params_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -785,7 +748,6 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 
 		forward_Query_Params_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -828,7 +790,6 @@ func RegisterQueryHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "QueryClient" to call the correct interceptors.
 func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, client QueryClient) error {
-
 	mux.Handle("GET", pattern_Query_ExchangeRate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -846,7 +807,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_ExchangeRate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_ExchangeRates_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -866,7 +826,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_ExchangeRates_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_TobinTax_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -886,7 +845,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_TobinTax_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_TobinTaxes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -906,7 +864,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_TobinTaxes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_Actives_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -926,7 +883,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_Actives_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_VoteTargets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -946,7 +902,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_VoteTargets_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_FeederDelegation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -966,7 +921,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_FeederDelegation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_MissCounter_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -986,7 +940,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_MissCounter_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregatePrevote_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1006,7 +959,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_AggregatePrevote_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregatePrevotes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1026,7 +978,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_AggregatePrevotes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregateVote_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1046,7 +997,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_AggregateVote_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_AggregateVotes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1066,7 +1016,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_AggregateVotes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_Query_Params_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1086,7 +1035,6 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 
 		forward_Query_Params_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil

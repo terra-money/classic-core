@@ -1,9 +1,17 @@
 #!/bin/bash
 
+BINARY=$1
+CONTINUE=${CONTINUE:-"false"}
+HOME_DIR=mytestnet
+
+if [ "$CONTINUE" == "true" ]; then
+    $BINARY start --home $HOME
+    exit 0
+fi
+
 rm -rf mytestnet
 pkill terrad
 
-BINARY=$1
 # check DENOM is set. If not, set to uluna
 DENOM=${2:-uluna}
 
@@ -29,7 +37,6 @@ if [ -z "$BINARY" ]; then
     BINARY=build/terrad
 fi
 
-HOME_DIR=mytestnet
 CHAIN_ID="localterra"
 KEYRING="test"
 KEY="test0"

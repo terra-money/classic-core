@@ -1,10 +1,12 @@
 #!/bin/sh
 
 BINARY=_build/old/terrad
-CONTRACTPATH="contrib/localnet/simulation/misc/cw721_base.wasm"
+CONTRACTPATH="scripts/wasm/old_cw721_base.wasm"
 KEYRING_BACKEND="test"
 HOME=mytestnet
 CHAIN_ID=localterra
+
+TXHASH=()
 
 echo "SETTING UP SMART CONTRACT INTERACTION"
 
@@ -25,6 +27,7 @@ for j in $(seq 0 1); do
 	fi
 	sleep 10
 	txhash=$(echo $out | jq -r '.txhash')
+	TXHASH+=($txhash)
 	id=$($BINARY q tx $txhash -o json | jq -r '.raw_log' | jq -r '.[0].events[1].attributes[1].value')
 
 	# instantiates contract
@@ -39,6 +42,7 @@ for j in $(seq 0 1); do
 	fi
 	sleep 10
 	txhash=$(echo $out | jq -r '.txhash')
+	TXHASH+=("$txhash")
 	contract_addr=$($BINARY q tx $txhash -o json | jq -r '.raw_log' | jq -r '.[0].events[0].attributes[3].value')
 
 	# mints some tokens
@@ -53,6 +57,8 @@ for j in $(seq 0 1); do
 			echo $out >&2
 			exit $code
 		fi
+		txhash=$(echo $out | jq -r '.txhash')
+		TXHASH+=("$txhash")
 
 		sleep 10
 	done
@@ -72,8 +78,14 @@ for j in $(seq 0 1); do
 			echo $out >&2
 			exit $code
 		fi
+		txhash=$(echo $out | jq -r '.txhash')
+		TXHASH+=("$txhash")
 
 		sleep 10
 	done
 
 done
+
+TXHASH_STRING="${TXHASH[*]}"
+echo "TXHASH = $TXHASH_STRING"
+export TXHASH_STRING

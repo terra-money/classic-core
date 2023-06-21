@@ -5,18 +5,21 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -41,9 +44,11 @@ func (*GenesisState) ProtoMessage()    {}
 func (*GenesisState) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7ff46fd82c752f1f, []int{0}
 }
+
 func (m *GenesisState) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
@@ -56,12 +61,15 @@ func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *GenesisState) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_GenesisState.Merge(m, src)
 }
+
 func (m *GenesisState) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *GenesisState) XXX_DiscardUnknown() {
 	xxx_messageInfo_GenesisState.DiscardUnknown(m)
 }
@@ -131,9 +139,11 @@ func (*FeederDelegation) ProtoMessage()    {}
 func (*FeederDelegation) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7ff46fd82c752f1f, []int{1}
 }
+
 func (m *FeederDelegation) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *FeederDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_FeederDelegation.Marshal(b, m, deterministic)
@@ -146,12 +156,15 @@ func (m *FeederDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
+
 func (m *FeederDelegation) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_FeederDelegation.Merge(m, src)
 }
+
 func (m *FeederDelegation) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *FeederDelegation) XXX_DiscardUnknown() {
 	xxx_messageInfo_FeederDelegation.DiscardUnknown(m)
 }
@@ -185,9 +198,11 @@ func (*MissCounter) ProtoMessage()    {}
 func (*MissCounter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7ff46fd82c752f1f, []int{2}
 }
+
 func (m *MissCounter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MissCounter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MissCounter.Marshal(b, m, deterministic)
@@ -200,12 +215,15 @@ func (m *MissCounter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
+
 func (m *MissCounter) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MissCounter.Merge(m, src)
 }
+
 func (m *MissCounter) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MissCounter) XXX_DiscardUnknown() {
 	xxx_messageInfo_MissCounter.DiscardUnknown(m)
 }
@@ -239,9 +257,11 @@ func (*TobinTax) ProtoMessage()    {}
 func (*TobinTax) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7ff46fd82c752f1f, []int{3}
 }
+
 func (m *TobinTax) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *TobinTax) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_TobinTax.Marshal(b, m, deterministic)
@@ -254,12 +274,15 @@ func (m *TobinTax) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *TobinTax) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_TobinTax.Merge(m, src)
 }
+
 func (m *TobinTax) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *TobinTax) XXX_DiscardUnknown() {
 	xxx_messageInfo_TobinTax.DiscardUnknown(m)
 }
@@ -563,6 +586,7 @@ func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *GenesisState) Size() (n int) {
 	if m == nil {
 		return 0
@@ -661,9 +685,11 @@ func (m *TobinTax) Size() (n int) {
 func sovGenesis(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozGenesis(x uint64) (n int) {
 	return sovGenesis(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *GenesisState) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -951,6 +977,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *FeederDelegation) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1065,6 +1092,7 @@ func (m *FeederDelegation) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MissCounter) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1166,6 +1194,7 @@ func (m *MissCounter) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *TobinTax) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1282,6 +1311,7 @@ func (m *TobinTax) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipGenesis(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

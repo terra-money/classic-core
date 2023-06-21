@@ -8,7 +8,8 @@ ROOT=$(pwd)
 DENOM=uluna
 CHAIN_ID=localterra
 SOFTWARE_UPGRADE_NAME="v4"
-ADDITIONAL_SCRIPTS=${ADDITIONAL_SCRIPTS:-""}
+ADDITIONAL_PRE_SCRIPTS=${ADDITIONAL_PRE_SCRIPTS:-""}
+ADDITIONAL_AFTER_SCRIPTS=${ADDITIONAL_AFTER_SCRIPTS:-""}
 
 # underscore so that go tool will not take gocache into account
 mkdir -p _build/gocache
@@ -47,14 +48,14 @@ fi
 
 sleep 20
 
-# execute additional scripts
-if [ ! -z "$ADDITIONAL_SCRIPTS" ]; then
+# execute additional pre scripts
+if [ ! -z "$ADDITIONAL_PRE_SCRIPTS" ]; then
     # slice ADDITIONAL_SCRIPTS by ,
-    SCRIPTS=($(echo "$ADDITIONAL_SCRIPTS" | tr ',' ' '))
+    SCRIPTS=($(echo "$ADDITIONAL_PRE_SCRIPTS" | tr ',' ' '))
     for SCRIPT in "${SCRIPTS[@]}"; do
          # check if SCRIPT is a file
         if [ -f "$SCRIPT" ]; then
-            echo "executing additional scripts from $SCRIPT"
+            echo "executing additional pre scripts from $SCRIPT"
             source $SCRIPT
             sleep 5
         else
@@ -100,4 +101,26 @@ done
 sleep 5
 
 # run new node
-./_build/new/terrad start --home $HOME
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CONTINUE="true" screen -L -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
+else
+    CONTINUE="true" screen -L -Logfile mytestnet/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
+fi
+
+sleep 20
+
+# execute additional after scripts
+if [ ! -z "$ADDITIONAL_AFTER_SCRIPTS" ]; then
+    # slice ADDITIONAL_SCRIPTS by ,
+    SCRIPTS=($(echo "$ADDITIONAL_AFTER_SCRIPTS" | tr ',' ' '))
+    for SCRIPT in "${SCRIPTS[@]}"; do
+         # check if SCRIPT is a file
+        if [ -f "$SCRIPT" ]; then
+            echo "executing additional after scripts from $SCRIPT"
+            source $SCRIPT
+            sleep 5
+        else
+            echo "$SCRIPT is not a file"
+        fi
+    done
+fi

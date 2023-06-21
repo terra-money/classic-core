@@ -3,17 +3,19 @@ package wasm
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/simulation"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	customcli "github.com/classic-terra/core/v2/custom/wasm/client/cli"
 	customrest "github.com/classic-terra/core/v2/custom/wasm/client/rest"
-	"github.com/classic-terra/core/v2/custom/wasm/simulation"
-	"github.com/classic-terra/core/v2/x/market/types"
+	customtypes "github.com/classic-terra/core/v2/custom/wasm/types/legacy"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}
@@ -26,6 +28,13 @@ type AppModuleBasic struct {
 // RegisterRESTRoutes registers the REST routes for the wasm module.
 func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router) {
 	customrest.RegisterRoutes(cliCtx, rtr)
+}
+
+// RegisterInterfaces implements InterfaceModule
+func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	// register canonical wasm types
+	types.RegisterInterfaces(registry)
+	customtypes.RegisterInterfaces(registry)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
