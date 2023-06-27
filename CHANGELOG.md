@@ -33,11 +33,15 @@ Ref: https://keepachangelog.com/en/1.0.0/
 # Changelog
 ## [v2.1.2](https://github.com/classic-terra/core/releases/tag/v2.1.2) 
 
+### Features
+* (app/upgrades) [#252](https://github.com/classic-terra/core/pull/252) Import Fork of Osmosis
+
 ### Bug fixes
-* (wasm) [#259](https://github.com/classic-terra/core/pull/259) add legacy wasm types
-* [#268](https://github.com/classic-terra/core/pull/268) revert "feat(feeshare): Developer Incentives (#144)"
+* (wasm) [#259](https://github.com/classic-terra/core/pull/259) Add legacy wasm types
+* [#268](https://github.com/classic-terra/core/pull/268) Revert "feat(feeshare): Developer Incentives (#144)"
 
 ## [v2.1.1](https://github.com/classic-terra/core/releases/tag/v2.1.1) - Jun 10, 2023
+
 ### State Machine Breaking
 * Wasmvm v1.1.2 (Cherry patch included)
 * Wasmd [v0.30.0-terra.2](https://github.com/classic-terra/wasmd/releases/tag/v0.30.0-terra.2)
@@ -69,7 +73,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 * (build) [#101](https://github.com/classic-terra/core/pull/101) Upgrade test
 * (ante) [#103 #113 #134](https://github.com/classic-terra/core/pull/103) Add burn tax split logic
-* (ante) [#107 #137 #149](https://github.com/classic-terra/core/pull/107) Burn Tax Whitelist
+* (ante) [#107 #137 #149](https://github.com/classic-terra/core/pull/107) Burn Tax Exemption list
 * (app) [#128](https://github.com/classic-terra/core/pull/128) Panic at InitChainer for the Columbus mainnet
 
 ### Improvements
@@ -97,7 +101,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (x/auth) [ebba05](https://github.com/classic-terra/core/commit/ebba0521fec4fc5655d90c0b3fdb2dbb2ec8d11f) Added Z's fix for the feeutils.go
 * (x/auth) [7fe446](https://github.com/classic-terra/core/commit/7fe4468fab7a767b8779e093d671a69f26b19781) allow uluna to be taxed
 
-## [v1.0.4](https://github.com/terra-money/classic-core/releases/tag/v0.5.23) - 2022-12-07
+## [v0.5.23](https://github.com/terra-money/classic-core/releases/tag/v0.5.23) - 2022-12-07
 
 ### State Machine Breaking
 * [#800](https://github.com/terra-money/classic-core/pull/800) Tax and Burn

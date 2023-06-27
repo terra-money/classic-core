@@ -5,7 +5,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	"github.com/classic-terra/core/v2/types/fork"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,7 +19,7 @@ func (s *WasmTestSuite) TestTax() {
 	toAddress := s.TestAccs[1]
 	// fund an account
 	s.FundAcc(payer, sdk.NewCoins(sdk.NewInt64Coin("uluna", 1000000000)))
-	s.Ctx = s.Ctx.WithBlockHeight(customante.TaxPowerUpgradeHeight + 1)
+	s.Ctx = s.Ctx.WithBlockHeight(fork.BurnTaxUpgradeHeight + 1)
 
 	// instantiate reflect contract
 	contractAddr := s.InstantiateContract(payer, TerraBindingsPath)

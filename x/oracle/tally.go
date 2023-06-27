@@ -3,7 +3,7 @@ package oracle
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types/fork"
 	"github.com/classic-terra/core/v2/x/oracle/keeper"
 	"github.com/classic-terra/core/v2/x/oracle/types"
 )
@@ -13,8 +13,7 @@ import (
 // CONTRACT: pb must be sorted
 func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
 	// softfork
-	if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
-		(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
+	if fork.IsBeforeOracleFixHeight(ctx) {
 		weightedMedian = pb.WeightedMedian()
 	} else {
 		weightedMedian = pb.WeightedMedianWithAssertion()

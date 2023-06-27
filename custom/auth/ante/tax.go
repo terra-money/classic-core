@@ -9,7 +9,8 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types/fork"
 	marketexported "github.com/classic-terra/core/v2/x/market/exported"
 	oracleexported "github.com/classic-terra/core/v2/x/oracle/exported"
 )
@@ -166,7 +167,6 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 
 // computes the stability tax according to tax-rate and tax-cap
 func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coins {
-	currHeight := ctx.BlockHeight()
 	taxRate := tk.GetTaxRate(ctx)
 	if taxRate.Equal(sdk.ZeroDec()) {
 		return sdk.Coins{}
@@ -175,8 +175,8 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	taxes := sdk.Coins{}
 
 	for _, coin := range principal {
-		// Originally only a stability tax on UST.  Changed to tax Luna as well after TaxPowerUpgradeHeight
-		if (coin.Denom == core.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom) && currHeight < TaxPowerUpgradeHeight {
+		// Originally only a stability tax on UST.  Changed to tax Luna as well after BurnTaxUpgradeHeight
+		if (coin.Denom == types.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom) && fork.IsBeforeBurnTaxUpgradeHeight(ctx) {
 			continue
 		}
 		if coin.Denom == sdk.DefaultBondDenom {

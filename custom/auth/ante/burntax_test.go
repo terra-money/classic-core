@@ -10,6 +10,7 @@ import (
 
 	"github.com/classic-terra/core/v2/custom/auth/ante"
 	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types/fork"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -35,8 +36,8 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 	mfd := ante.NewBurnTaxFeeDecorator(suite.app.AccountKeeper, tk, bk, dk)
 	antehandler := sdk.ChainAnteDecorators(mfd)
 
-	// Set the blockheight past the tax height block
-	suite.ctx = suite.ctx.WithBlockHeight(10000000)
+	// Set the blockheight past the burn tax height block
+	suite.ctx = suite.ctx.WithBlockHeight(fork.BurnTaxUpgradeHeight)
 
 	// Set burn split tax
 	tk.SetBurnSplitRate(suite.ctx, burnSplitRate)

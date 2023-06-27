@@ -7,40 +7,36 @@ package types
 
 import (
 	"github.com/classic-terra/core/v2/types/assets"
-	"github.com/classic-terra/core/v2/types/fork"
 	"github.com/classic-terra/core/v2/types/util"
 )
 
 const (
-	MicroLunaDenom         = assets.MicroLunaDenom
-	MicroUSDDenom          = assets.MicroUSDDenom
-	MicroKRWDenom          = assets.MicroKRWDenom
-	MicroSDRDenom          = assets.MicroSDRDenom
-	MicroCNYDenom          = assets.MicroCNYDenom
-	MicroJPYDenom          = assets.MicroJPYDenom
-	MicroEURDenom          = assets.MicroEURDenom
-	MicroGBPDenom          = assets.MicroGBPDenom
-	MicroMNTDenom          = assets.MicroMNTDenom
-	MicroUnit              = assets.MicroUnit
-	BlocksPerMinute        = util.BlocksPerMinute
-	BlocksPerHour          = util.BlocksPerHour
-	BlocksPerDay           = util.BlocksPerDay
-	BlocksPerWeek          = util.BlocksPerWeek
-	BlocksPerMonth         = util.BlocksPerMonth
-	BlocksPerYear          = util.BlocksPerYear
-	CoinType               = util.CoinType
-	Purpose                = util.Purpose
-	Bech32PrefixAccAddr    = util.Bech32PrefixAccAddr
-	Bech32PrefixAccPub     = util.Bech32PrefixAccPub
-	Bech32PrefixValAddr    = util.Bech32PrefixValAddr
-	Bech32PrefixValPub     = util.Bech32PrefixValPub
-	Bech32PrefixConsAddr   = util.Bech32PrefixConsAddr
-	Bech32PrefixConsPub    = util.Bech32PrefixConsPub
-	ColumbusChainID        = "columbus-5"
-	BombayChainID          = "bombay-12"
-	SwapDisableForkHeight  = fork.SwapDisableForkHeight
-	SwapEnableForkHeight   = fork.SwapEnableForkHeight
-	VersionMapEnableHeight = fork.VersionMapEnableHeight
+	MicroLunaDenom       = assets.MicroLunaDenom
+	MicroUSDDenom        = assets.MicroUSDDenom
+	MicroKRWDenom        = assets.MicroKRWDenom
+	MicroSDRDenom        = assets.MicroSDRDenom
+	MicroCNYDenom        = assets.MicroCNYDenom
+	MicroJPYDenom        = assets.MicroJPYDenom
+	MicroEURDenom        = assets.MicroEURDenom
+	MicroGBPDenom        = assets.MicroGBPDenom
+	MicroMNTDenom        = assets.MicroMNTDenom
+	MicroUnit            = assets.MicroUnit
+	BlocksPerMinute      = util.BlocksPerMinute
+	BlocksPerHour        = util.BlocksPerHour
+	BlocksPerDay         = util.BlocksPerDay
+	BlocksPerWeek        = util.BlocksPerWeek
+	BlocksPerMonth       = util.BlocksPerMonth
+	BlocksPerYear        = util.BlocksPerYear
+	CoinType             = util.CoinType
+	Purpose              = util.Purpose
+	Bech32PrefixAccAddr  = util.Bech32PrefixAccAddr
+	Bech32PrefixAccPub   = util.Bech32PrefixAccPub
+	Bech32PrefixValAddr  = util.Bech32PrefixValAddr
+	Bech32PrefixValPub   = util.Bech32PrefixValPub
+	Bech32PrefixConsAddr = util.Bech32PrefixConsAddr
+	Bech32PrefixConsPub  = util.Bech32PrefixConsPub
+	ColumbusChainID      = "columbus-5"
+	BombayChainID        = "bombay-12"
 )
 
 // functions aliases

@@ -9,16 +9,12 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types/fork"
 
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/classic-terra/core/v2/x/treasury/types"
 )
-
-// TaxPowerUpgradeHeight is when taxes are allowed to go into effect
-// This will still need a parameter change proposal, but can be activated
-// anytime after this height
-const TaxPowerUpgradeHeight = 9346889
 
 // Keeper of the treasury store
 type Keeper struct {
@@ -130,9 +126,8 @@ func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 
 // GetTaxCap gets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) sdk.Int {
-	currHeight := ctx.BlockHeight()
 	// Allow tax cap for uluna
-	if denom == core.MicroLunaDenom && currHeight < TaxPowerUpgradeHeight {
+	if denom == core.MicroLunaDenom && fork.IsBeforeBurnTaxUpgradeHeight(ctx) {
 		return sdk.ZeroInt()
 	}
 

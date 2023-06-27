@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/types/fork"
 	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
@@ -21,12 +22,12 @@ func (k Keeper) RewardBallotWinners(
 	ballotWinners map[string]types.Claim,
 ) {
 	// softfork for reward distribution
-	if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_100_000)) ||
-		(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(6_200_000)) {
+	if fork.IsBeforeLunaSwapFeeHeight(ctx) {
 		k.RewardBallotWinnersLegacy(ctx, votePeriod, rewardDistributionWindow, ballotWinners)
 		return
 	}
 
+	// Add Luna explicitly for oracle account balance coming from the market swap fee
 	rewardDenoms := make([]string, len(voteTargets)+1)
 	rewardDenoms[0] = core.MicroLunaDenom
 

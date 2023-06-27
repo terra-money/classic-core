@@ -126,7 +126,9 @@ func RandomizedGenState(simState *module.SimulationState) {
 		},
 		taxPolicy.RateMin,
 		rewardPolicy.RateMin,
-		[]types.TaxCap{},
+		[]types.TaxCap{
+			{Denom: core.MicroLunaDenom, TaxCap: sdk.NewInt(0)},
+		},
 		sdk.Coins{},
 		sdk.Coins{},
 		[]types.EpochState{},

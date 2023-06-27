@@ -18,8 +18,8 @@ func CreateV4UpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// to run staking store migration
 		stakingKeeper := keepers.StakingKeeper
-		stkingMigrator := keeper.NewMigrator(stakingKeeper)
-		stkingMigrator.Migrate13to14(ctx)
+		stakingMigrator := keeper.NewMigrator(stakingKeeper)
+		stakingMigrator.Migrate13to14(ctx)
 		// to run wasm store migration
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
