@@ -33,7 +33,8 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 	tk := suite.app.TreasuryKeeper
 	bk := suite.app.BankKeeper
 	dk := suite.app.DistrKeeper
-	mfd := ante.NewBurnTaxFeeDecorator(suite.app.AccountKeeper, tk, bk, dk)
+	ak := suite.app.AccountKeeper
+	mfd := ante.NewBurnTaxFeeDecorator(ak, tk, bk, dk)
 	antehandler := sdk.ChainAnteDecorators(mfd)
 
 	// Set the blockheight past the burn tax height block
@@ -62,7 +63,7 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 
 	// Send taxes to fee collector to simulate DeductFeeDecorator antehandler
 	taxes := suite.DeductFees(sendAmount)
-	feeCollector := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, types.FeeCollectorName)
+	feeCollector := ak.GetModuleAccount(suite.ctx, types.FeeCollectorName)
 
 	// expected: fee collector = taxes
 	amountFeeBefore := bk.GetAllBalances(suite.ctx, feeCollector.GetAddress())
@@ -71,9 +72,8 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 	totalSupplyBefore, _, err := bk.GetPaginatedTotalSupply(suite.ctx, &query.PageRequest{})
 	require.NoError(err)
 	fmt.Printf(
-		"Before: TotalSupply %v, Community %v, FeeCollector %v\n",
+		"Before: TotalSupply %v, FeeCollector %v\n",
 		totalSupplyBefore,
-		dk.GetFeePool(suite.ctx).CommunityPool,
 		amountFeeBefore,
 	)
 
@@ -81,21 +81,20 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 	_, err = antehandler(suite.ctx, tx, false)
 	require.NoError(err)
 
-	communityPoolAfter := dk.GetFeePool(suite.ctx).CommunityPool
+	// burn the burn account
+	tk.BurnCoinsFromBurnAccount(suite.ctx)
+
+	feeCollectorAfter := sdk.NewDecCoinsFromCoins(bk.GetAllBalances(suite.ctx, ak.GetModuleAddress(types.FeeCollectorName))...)
 	burnTax := sdk.NewDecCoinsFromCoins(taxes...)
 
 	if burnSplitRate.IsPositive() {
-		splitTaxesDecCoins := burnTax.MulDec(burnSplitRate)
+		distributionDeltaCoins := burnTax.MulDec(burnSplitRate)
 
 		// expected: community pool 50%
-		require.Equal(communityPoolAfter, splitTaxesDecCoins)
-
-		fmt.Printf("BurnSplitRate %v, splitTaxes %v\n", burnSplitRate, splitTaxesDecCoins)
-		burnTax = burnTax.Sub(splitTaxesDecCoins)
+		fmt.Printf("BurnSplitRate %v, DistributionDeltaCoins %v\n", burnSplitRate, distributionDeltaCoins)
+		require.Equal(feeCollectorAfter, distributionDeltaCoins)
+		burnTax = burnTax.Sub(distributionDeltaCoins)
 	}
-
-	// burn the burn account
-	tk.BurnCoinsFromBurnAccount(suite.ctx)
 
 	totalSupplyAfter, _, err := bk.GetPaginatedTotalSupply(suite.ctx, &query.PageRequest{})
 	require.NoError(err)
@@ -107,15 +106,10 @@ func (suite *AnteTestSuite) runSplitTaxTest(burnSplitRate sdk.Dec) {
 		)
 	}
 
-	amountFeeAfter := bk.GetAllBalances(suite.ctx, feeCollector.GetAddress())
-	// expected: fee collector = 0
-	require.True(amountFeeAfter.Empty())
-
 	fmt.Printf(
-		"After: TotalSupply %v, Community %v, FeeCollector %v\n",
+		"After: TotalSupply %v, FeeCollector %v\n",
 		totalSupplyAfter,
-		communityPoolAfter,
-		amountFeeAfter,
+		feeCollectorAfter,
 	)
 }
 

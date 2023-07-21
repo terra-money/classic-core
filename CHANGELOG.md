@@ -31,6 +31,13 @@ Types of changes (Stanzas):
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
 # Changelog
+
+## [Unreleased]
+
+### State Machine Breaking
+
+* (treasury) [#272](https://github.com/classic-terra/core/pull/272) Split the burn tax to the distribution module
+
 ## [v2.1.2](https://github.com/classic-terra/core/releases/tag/v2.1.2) 
 
 ### Features
