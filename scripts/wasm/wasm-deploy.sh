@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BINARY=_build/old/terrad
-CONTRACTPATH="scripts/wasm/old_cw721_base.wasm"
+CONTRACTPATH="scripts/wasm/contracts/old_cw721_base.wasm"
 KEYRING_BACKEND="test"
 HOME=mytestnet
 CHAIN_ID=localterra
