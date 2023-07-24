@@ -221,3 +221,13 @@ func (s *WasmTestSuite) queryOldBindings(contract sdk.AccAddress, request bindin
 	err = json.Unmarshal(resBz, response)
 	s.Require().NoError(err)
 }
+
+func (s *WasmTestSuite) queryStargate(contract sdk.AccAddress, request bindings.TerraQuery, response interface{}) {
+	queryBz, err := json.Marshal(request)
+	s.Require().NoError(err)
+
+	resBz, err := s.App.WasmKeeper.QuerySmart(s.Ctx, contract, queryBz)
+	s.Require().NoError(err)
+	err = json.Unmarshal(resBz, response)
+	s.Require().NoError(err)
+}

@@ -1,4 +1,4 @@
-go 1.18
+go 1.20
 
 module github.com/classic-terra/core/v2
 

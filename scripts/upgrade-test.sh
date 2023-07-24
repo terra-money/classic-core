@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# the upgrade is a fork, "true" otherwise
+FORK=${FORK:-"false"}
+
 # $(curl --silent "https://api.github.com/repos/classic-terra/core/releases/latest" | jq -r '.tag_name')
-OLD_VERSION=v2.0.1
-UPGRADE_WAIT=20
+OLD_VERSION=v2.1.2
+UPGRADE_WAIT=${UPGRADE_WAIT:-20}
 HOME=mytestnet
 ROOT=$(pwd)
 DENOM=uluna
@@ -10,6 +13,10 @@ CHAIN_ID=localterra
 SOFTWARE_UPGRADE_NAME="v4"
 ADDITIONAL_PRE_SCRIPTS=${ADDITIONAL_PRE_SCRIPTS:-""}
 ADDITIONAL_AFTER_SCRIPTS=${ADDITIONAL_AFTER_SCRIPTS:-""}
+
+if [[ "$FORK" == "true" ]]; then
+    export TERRAD_HALT_HEIGHT=20
+fi
 
 # underscore so that go tool will not take gocache into account
 mkdir -p _build/gocache
@@ -64,39 +71,67 @@ if [ ! -z "$ADDITIONAL_PRE_SCRIPTS" ]; then
     done
 fi
 
-STATUS_INFO=($(./_build/old/terrad status --home $HOME | jq -r '.NodeInfo.network,.SyncInfo.latest_block_height'))
-UPGRADE_HEIGHT=$((STATUS_INFO[1] + 20))
+run_fork () {
+    echo "forking"
 
-./_build/old/terrad tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+    while true; do 
+        BLOCK_HEIGHT=$(./_build/old/terrad status | jq '.SyncInfo.latest_block_height' -r)
+        # if BLOCK_HEIGHT is not empty
+        if [ ! -z "$BLOCK_HEIGHT" ]; then
+            echo "BLOCK_HEIGHT = $BLOCK_HEIGHT"
+            sleep 10
+        else
+            echo "BLOCK_HEIGHT is empty, forking"
+            break
+        fi
+    done
+}
 
-sleep 5
+run_upgrade () {
+    echo "upgrading"
 
-./_build/old/terrad tx gov deposit 1 "20000000${DENOM}" --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+    STATUS_INFO=($(./_build/old/terrad status --home $HOME | jq -r '.NodeInfo.network,.SyncInfo.latest_block_height'))
+    UPGRADE_HEIGHT=$((STATUS_INFO[1] + 20))
 
-sleep 5
+    ./_build/old/terrad tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
-./_build/old/terrad tx gov vote 1 yes --from test0 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+    sleep 5
 
-sleep 5
+    ./_build/old/terrad tx gov deposit 1 "20000000${DENOM}" --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
-./_build/old/terrad tx gov vote 1 yes --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+    sleep 5
 
-sleep 5
+    ./_build/old/terrad tx gov vote 1 yes --from test0 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
-# determine block_height to halt
-while true; do 
-    BLOCK_HEIGHT=$(./_build/old/terrad status | jq '.SyncInfo.latest_block_height' -r)
-    if [ $BLOCK_HEIGHT = "$UPGRADE_HEIGHT" ]; then
-        # assuming running only 1 terrad
-        echo "BLOCK HEIGHT = $UPGRADE_HEIGHT REACHED, KILLING OLD ONE"
-        pkill terrad
-        break
-    else
-        ./_build/old/terrad q gov proposal 1 --output=json | jq ".status"
-        echo "BLOCK_HEIGHT = $BLOCK_HEIGHT"
-        sleep 10
-    fi
-done
+    sleep 5
+
+    ./_build/old/terrad tx gov vote 1 yes --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+
+    sleep 5
+
+    # determine block_height to halt
+    while true; do 
+        BLOCK_HEIGHT=$(./_build/old/terrad status | jq '.SyncInfo.latest_block_height' -r)
+        if [ $BLOCK_HEIGHT = "$UPGRADE_HEIGHT" ]; then
+            # assuming running only 1 terrad
+            echo "BLOCK HEIGHT = $UPGRADE_HEIGHT REACHED, KILLING OLD ONE"
+            pkill terrad
+            break
+        else
+            ./_build/old/terrad q gov proposal 1 --output=json | jq ".status"
+            echo "BLOCK_HEIGHT = $BLOCK_HEIGHT"
+            sleep 10
+        fi
+    done
+}
+
+# if FORK = true
+if [[ "$FORK" == "true" ]]; then
+    run_fork
+    unset TERRAD_HALT_HEIGHT
+else
+    run_upgrade
+fi
 
 sleep 5
 

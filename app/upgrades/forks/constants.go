@@ -1,4 +1,4 @@
-package v1
+package forks
 
 import (
 	"github.com/classic-terra/core/v2/app/upgrades"

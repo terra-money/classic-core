@@ -12,7 +12,7 @@ on:
       - "**.go"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}-codeql
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,8 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: 1.18
+          go-version: "1.20"
+          check-latest: true
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2

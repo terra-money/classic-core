@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1
 
 ARG source=./
-ARG GO_VERSION="1.18"
-ARG ALPINE_VERSION="3.17"
+ARG GO_VERSION="1.20"
 ARG BUILDPLATFORM=linux/amd64
-ARG BASE_IMAGE="golang:${GO_VERSION}-alpine${ALPINE_VERSION}"
+ARG BASE_IMAGE="golang:${GO_VERSION}-alpine"
 FROM --platform=${BUILDPLATFORM} ${BASE_IMAGE} as base
 
 ###############################################################################
@@ -36,7 +35,7 @@ RUN set -eux &&\
 # install mimalloc for musl
 WORKDIR ${GOPATH}/src/mimalloc
 RUN set -eux &&\
-    git clone --depth 1 --branch v2.0.9 \
+    git clone --depth 1 --branch v2.1.2 \
         https://github.com/microsoft/mimalloc . &&\
     mkdir -p build &&\
     cd build &&\
@@ -103,7 +102,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 ################################################################################
 
-FROM alpine:${ALPINE_VERSION} as terra-core
+FROM alpine as terra-core
 
 RUN apk update && apk add wget lz4 aria2 curl jq gawk coreutils "zlib>1.2.12-r2" "libssl1.1>1.1.1q-r0"
 
