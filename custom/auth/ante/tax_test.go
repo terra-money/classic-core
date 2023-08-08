@@ -1,7 +1,10 @@
 package ante_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
@@ -12,6 +15,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/classic-terra/core/v2/custom/auth/ante"
 	core "github.com/classic-terra/core/v2/types"
@@ -813,10 +817,11 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 	feeAmt := int64(1000)
 
 	cases := []struct {
-		name              string
-		msgSigner         cryptotypes.PrivKey
-		msgCreator        func() []sdk.Msg
-		expectedFeeAmount int64
+		name           string
+		msgSigner      cryptotypes.PrivKey
+		msgCreator     func() []sdk.Msg
+		minFeeAmount   int64
+		expectProceeds int64
 	}{
 		{
 			name:      "MsgSend(exemption -> exemption)",
@@ -829,7 +834,8 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 
 				return msgs
 			},
-			expectedFeeAmount: 0,
+			minFeeAmount:   0,
+			expectProceeds: 0,
 		}, {
 			name:      "MsgSend(normal -> normal)",
 			msgSigner: privs[2],
@@ -842,7 +848,8 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 				return msgs
 			},
 			// tax this one hence burn amount is fee amount
-			expectedFeeAmount: feeAmt,
+			minFeeAmount:   feeAmt,
+			expectProceeds: feeAmt,
 		}, {
 			name:      "MsgSend(exemption -> normal), MsgSend(exemption -> exemption)",
 			msgSigner: privs[0],
@@ -857,7 +864,8 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 				return msgs
 			},
 			// tax this one hence burn amount is fee amount
-			expectedFeeAmount: feeAmt,
+			minFeeAmount:   feeAmt,
+			expectProceeds: feeAmt,
 		}, {
 			name:      "MsgSend(exemption -> exemption), MsgMultiSend(exemption -> normal, exemption -> exemption)",
 			msgSigner: privs[0],
@@ -892,7 +900,58 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 
 				return msgs
 			},
-			expectedFeeAmount: feeAmt * 2,
+			minFeeAmount:   feeAmt * 2,
+			expectProceeds: feeAmt * 2,
+		}, {
+			name:      "MsgExecuteContract(exemption), MsgExecuteContract(normal)",
+			msgSigner: privs[3],
+			msgCreator: func() []sdk.Msg {
+				sendAmount := int64(1000000)
+				sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, sendAmount))
+				// get wasm code for wasm contract create and instantiate
+				wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+				suite.Require().NoError(err)
+				per := wasmkeeper.NewDefaultPermissionKeeper(suite.app.WasmKeeper)
+				// set wasm default params
+				suite.app.WasmKeeper.SetParams(suite.ctx, wasmtypes.DefaultParams())
+				// wasm create
+				CodeID, _, err := per.Create(suite.ctx, addrs[0], wasmCode, nil)
+				suite.Require().NoError(err)
+				// params for contract init
+				r := wasmkeeper.HackatomExampleInitMsg{Verifier: addrs[0], Beneficiary: addrs[0]}
+				bz, err := json.Marshal(r)
+				suite.Require().NoError(err)
+				// change block time for contract instantiate
+				suite.ctx = suite.ctx.WithBlockTime(time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC))
+				// instantiate contract then set the contract address to tax exemption
+				addr, _, err := per.Instantiate(suite.ctx, CodeID, addrs[0], nil, bz, "my label", nil)
+				suite.Require().NoError(err)
+				suite.app.TreasuryKeeper.AddBurnTaxExemptionAddress(suite.ctx, addr.String())
+				// instantiate contract then not set to tax exemption
+				addr1, _, err := per.Instantiate(suite.ctx, CodeID, addrs[0], nil, bz, "my label", nil)
+				suite.Require().NoError(err)
+
+				var msgs []sdk.Msg
+				// msg and signatures
+				msg1 := &wasmtypes.MsgExecuteContract{
+					Sender:   addrs[0].String(),
+					Contract: addr.String(),
+					Msg:      []byte{},
+					Funds:    sendCoins,
+				}
+				msgs = append(msgs, msg1)
+
+				msg2 := &wasmtypes.MsgExecuteContract{
+					Sender:   addrs[3].String(),
+					Contract: addr1.String(),
+					Msg:      []byte{},
+					Funds:    sendCoins,
+				}
+				msgs = append(msgs, msg2)
+				return msgs
+			},
+			minFeeAmount:   feeAmt,
+			expectProceeds: feeAmt,
 		},
 	}
 
@@ -929,7 +988,7 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 		}
 
 		// msg and signatures
-		feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, c.expectedFeeAmount))
+		feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, c.minFeeAmount))
 		gasLimit := testdata.NewTestGasLimit()
 		require.NoError(suite.txBuilder.SetMsgs(c.msgCreator()...))
 		suite.txBuilder.SetFeeAmount(feeAmount)
@@ -945,7 +1004,10 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 		// check fee collector
 		feeCollector := ak.GetModuleAccount(suite.ctx, types.FeeCollectorName)
 		amountFee := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+		require.Equal(amountFee, sdk.NewCoin("usdr", sdk.NewInt(c.minFeeAmount)))
 
-		require.Equal(amountFee, sdk.NewCoin("usdr", sdk.NewInt(c.expectedFeeAmount)))
+		// check tax proceeds
+		taxProceeds := suite.app.TreasuryKeeper.PeekEpochTaxProceeds(suite.ctx)
+		require.Equal(taxProceeds, sdk.NewCoins(sdk.NewCoin("usdr", sdk.NewInt(c.expectProceeds))))
 	}
 }

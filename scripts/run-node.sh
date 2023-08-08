@@ -5,7 +5,7 @@ CONTINUE=${CONTINUE:-"false"}
 HOME_DIR=mytestnet
 
 if [ "$CONTINUE" == "true" ]; then
-    $BINARY start --home $HOME
+    $BINARY start --home $HOME_DIR
     exit 0
 fi
 

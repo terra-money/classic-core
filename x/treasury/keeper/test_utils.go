@@ -26,6 +26,9 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -40,6 +43,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -138,6 +143,11 @@ func CreateTestInput(t *testing.T) TestInput {
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
 	keyMarket := sdk.NewKVStoreKey(markettypes.StoreKey)
 	keyTreasury := sdk.NewKVStoreKey(types.StoreKey)
+	keyWasm := sdk.NewKVStoreKey(wasmtypes.StoreKey)
+	// keyIbcHost := sdk.NewKVStoreKey(ibchost.StoreKey)
+	keyCapability := sdk.NewKVStoreKey(capabilitytypes.StoreKey)
+	// keyUpgrade := sdk.NewKVStoreKey(upgradetypes.StoreKey)
+	memKeyCapability := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -242,6 +252,34 @@ func CreateTestInput(t *testing.T) TestInput {
 	err := bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, types.BurnModuleName, InitCoins)
 	require.NoError(t, err)
 
+	capabilityKeeper := capabilitykeeper.NewKeeper(
+		appCodec, keyCapability, memKeyCapability[capabilitytypes.MemStoreKey],
+	)
+
+	// mock wasm
+	scopedWasmKeeper := capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	wasmConfig := wasmtypes.DefaultWasmConfig()
+	supportedFeatures := "iterator,staking,stargate,terra,cosmwasm_1_1"
+	wasmOpts := []wasmkeeper.Option{}
+	wasmKeeper := wasmkeeper.NewKeeper(
+		appCodec, keyWasm,
+		paramsKeeper.Subspace(wasmtypes.ModuleName),
+		accountKeeper,
+		bankKeeper,
+		stakingKeeper,
+		distrKeeper,
+		nil,
+		nil,
+		scopedWasmKeeper,
+		nil,
+		nil,
+		nil,
+		"",
+		wasmConfig,
+		supportedFeatures,
+		wasmOpts...,
+	)
+
 	oracleKeeper := oraclekeeper.NewKeeper(
 		appCodec,
 		keyOracle,
@@ -277,6 +315,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		oracleKeeper,
 		stakingKeeper,
 		distrKeeper,
+		&wasmKeeper,
 		distrtypes.ModuleName,
 	)
 

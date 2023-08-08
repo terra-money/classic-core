@@ -14,6 +14,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/classic-terra/core/v2/x/treasury/types"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 // Keeper of the treasury store
@@ -28,6 +30,7 @@ type Keeper struct {
 	stakingKeeper types.StakingKeeper
 	distrKeeper   types.DistributionKeeper
 	oracleKeeper  types.OracleKeeper
+	wasmKeeper    *wasmkeeper.Keeper
 
 	distributionModuleName string
 }
@@ -41,6 +44,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	oracleKeeper types.OracleKeeper,
 	stakingKeeper types.StakingKeeper,
 	distrKeeper types.DistributionKeeper,
+	wasmKeeper *wasmkeeper.Keeper,
 	distributionModuleName string,
 ) Keeper {
 	// ensure treasury module account is set
@@ -68,6 +72,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		oracleKeeper:           oracleKeeper,
 		stakingKeeper:          stakingKeeper,
 		distrKeeper:            distrKeeper,
+		wasmKeeper:             wasmKeeper,
 		distributionModuleName: distributionModuleName,
 	}
 }
@@ -371,6 +376,8 @@ func (k Keeper) RemoveBurnTaxExemptionAddress(ctx sdk.Context, address string) e
 	return nil
 }
 
+// HasBurnTaxExemptionAddress returns true if all provided addresses are in the
+// tax exemption whitelist
 func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, addresses ...string) bool {
 	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
 
@@ -381,4 +388,20 @@ func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, addresses ...string)
 	}
 
 	return true
+}
+
+// HasBurnTaxExemptionContract returns true if a provided address is a
+// smart contract AND is in the tax exemption list
+func (k Keeper) HasBurnTaxExemptionContract(ctx sdk.Context, address string) bool {
+	contractAddr, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		return false
+	}
+
+	info := k.wasmKeeper.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return false
+	}
+
+	return k.HasBurnTaxExemptionAddress(ctx, address)
 }

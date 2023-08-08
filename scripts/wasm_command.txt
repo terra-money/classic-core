@@ -4,3 +4,4 @@ ADDITIONAL_PRE_SCRIPTS=scripts/wasm/wasm-deploy.sh ADDITIONAL_AFTER_SCRIPTS=scri
 FORK=true ADDITIONAL_AFTER_SCRIPTS=scripts/wasm/stargate-after-upgrade.sh bash scripts/upgrade-test.sh
 ./_build/new/terrad tx wasm execute terra18vd8fpwxzck93qlwghaj6arh4p7c5n896xzem5 '{"mint":{"token_id":"'4'","owner":"'terra1p20jxrllewr5meecvhtmpddexr0kkz3tdename'"}}' --from test0 --output json --gas auto --gas-adjustment 2.3 --fees 20000000uluna --chain-id test --home mytestnet --keyring-backend test -y
 ./_build/new/terrad q wasm contract-state smart terra18vd8fpwxzck93qlwghaj6arh4p7c5n896xzem5 '{"all_tokens":{}}' --chain-id test --home mytestnet
+FORK=true ADDITIONAL_AFTER_SCRIPTS=scripts/contract-tax-exemption-after-upgrade.sh bash scripts/upgrade-test.sh
