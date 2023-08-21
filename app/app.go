@@ -22,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -33,7 +32,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -45,15 +43,13 @@ import (
 
 	// upgrades
 	"github.com/classic-terra/core/v2/app/upgrades"
-	forks "github.com/classic-terra/core/v2/app/upgrades/forks"
 	v2 "github.com/classic-terra/core/v2/app/upgrades/v2"
 	v3 "github.com/classic-terra/core/v2/app/upgrades/v3"
 	v4 "github.com/classic-terra/core/v2/app/upgrades/v4"
+	v5 "github.com/classic-terra/core/v2/app/upgrades/v5"
 
 	customante "github.com/classic-terra/core/v2/custom/auth/ante"
-	customauthrest "github.com/classic-terra/core/v2/custom/auth/client/rest"
 	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
-	core "github.com/classic-terra/core/v2/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 
@@ -68,10 +64,10 @@ var (
 	DefaultNodeHome string
 
 	// Upgrades defines upgrades to be applied to the network
-	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade}
+	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade, v5.Upgrade}
 
 	// Forks defines forks to be applied to the network
-	Forks = []upgrades.Fork{forks.DisableSwapFork, forks.IbcEnableFork, forks.VersionMapEnableFork}
+	Forks = []upgrades.Fork{}
 )
 
 // Verify app interface at compile time
@@ -85,7 +81,7 @@ var (
 // capabilities aren't needed for testing.
 type TerraApp struct {
 	*baseapp.BaseApp
-	keepers.AppKeepers
+	*keepers.AppKeepers
 
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
@@ -142,7 +138,6 @@ func NewTerraApp(
 		legacyAmino,
 		maccPerms,
 		allowedReceivingModAcc,
-		app.ModuleAccountAddrs(),
 		skipUpgradeHeights,
 		homePath,
 		invCheckPeriod,
@@ -259,9 +254,6 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	if ctx.ChainID() == core.ColumbusChainID {
-		panic("Must use v1.0.x for importing the columbus genesis (https://github.com/classic-terra/core/releases/)")
-	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
@@ -329,20 +321,14 @@ func (app *TerraApp) SimulationManager() *module.SimulationManager {
 // API server.
 func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
-	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
-	// Register legacy tx routes.
-	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
-	// Register legacy custom tx routes.
-	customauthrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
+
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register custom tx routes from grpc-gateway.
 	customauthtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
 	// Register legacy and grpc-gateway routes for all modules.
-	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register swagger API from root so that other applications can override easily
@@ -359,7 +345,12 @@ func (app *TerraApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *TerraApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	tmservice.RegisterTendermintService(
+		clientCtx,
+		app.BaseApp.GRPCQueryRouter(),
+		app.interfaceRegistry,
+		app.Query,
+	)
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server
@@ -407,7 +398,7 @@ func (app *TerraApp) setupUpgradeHandlers() {
 				app.mm,
 				app.configurator,
 				app.BaseApp,
-				&app.AppKeepers,
+				app.AppKeepers,
 			),
 		)
 	}

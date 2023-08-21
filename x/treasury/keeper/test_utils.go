@@ -36,6 +36,7 @@ import (
 	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -66,17 +67,15 @@ var ModuleBasics = module.NewBasicManager(
 	market.AppModuleBasic{},
 )
 
-// MakeTestCodec nolint
 func MakeTestCodec(t *testing.T) codec.Codec {
-	return MakeEncodingConfig(t).Marshaler
+	return MakeEncodingConfig(t).Codec
 }
 
-// MakeEncodingConfig nolint
 func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
-	marshaler := codec.NewProtoCodec(interfaceRegistry)
-	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
+	codec := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	std.RegisterInterfaces(interfaceRegistry)
 	std.RegisterLegacyAminoCodec(amino)
@@ -86,7 +85,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 	return simparams.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Marshaler:         marshaler,
+		Codec:             codec,
 		TxConfig:          txCfg,
 		Amino:             amino,
 	}
@@ -117,7 +116,6 @@ var (
 	InitCoins  = sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens))
 )
 
-// TestInput nolint
 type TestInput struct {
 	Ctx            sdk.Context
 	Cdc            *codec.LegacyAmino
@@ -130,7 +128,6 @@ type TestInput struct {
 	OracleKeeper   types.OracleKeeper
 }
 
-// CreateTestInput nolint
 func CreateTestInput(t *testing.T) TestInput {
 	sdk.GetConfig().SetBech32PrefixForAccount(core.Bech32PrefixAccAddr, core.Bech32PrefixAccPub)
 
@@ -153,17 +150,17 @@ func CreateTestInput(t *testing.T) TestInput {
 	ms := store.NewCommitMultiStore(db)
 	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC()}, false, log.NewNopLogger())
 	encodingConfig := MakeEncodingConfig(t)
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
-	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyBank, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tKeyParams, sdk.StoreTypeTransient, db)
-	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyDistr, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyMarket, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyTreasury, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyAcc, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBank, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tKeyParams, storetypes.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyParams, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyOracle, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyDistr, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyMarket, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyTreasury, storetypes.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -189,7 +186,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	}
 
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tKeyParams)
-	accountKeeper := authkeeper.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms)
+	accountKeeper := authkeeper.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms, sdk.GetConfig().GetBech32AccountAddrPrefix())
 	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(core.MicroLunaDenom, InitTokens.MulRaw(int64(len(Addrs)*10))))
@@ -211,7 +208,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		appCodec,
 		keyDistr, paramsKeeper.Subspace(distrtypes.ModuleName),
 		accountKeeper, bankKeeper, stakingKeeper,
-		authtypes.FeeCollectorName, blackListAddrs)
+		authtypes.FeeCollectorName)
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
@@ -335,23 +332,23 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey cryptotypes.PubKey
 	return msg
 }
 
-func setupValidators(t *testing.T) (TestInput, sdk.Handler) {
+func setupValidators(t *testing.T) (TestInput, stakingtypes.MsgServer) {
 	input := CreateTestInput(t)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	// Create Validators
 	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
 
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
 
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
-	return input, sh
+	return input, stakingMsgSvr
 }
 
 // FundAccount is a utility function that funds an account by minting and

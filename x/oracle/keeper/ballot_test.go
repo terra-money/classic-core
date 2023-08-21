@@ -8,6 +8,7 @@ import (
 
 	core "github.com/classic-terra/core/v2/types"
 	"github.com/classic-terra/core/v2/x/oracle/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -18,15 +19,15 @@ func TestOrganizeAggregate(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	ctx := input.Ctx
 
 	// Validator created
-	_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
+	_, err := stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
+	_, err = stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
+	_, err = stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
@@ -83,15 +84,15 @@ func TestClearBallots(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	ctx := input.Ctx
 
 	// Validator created
-	_, err := sh(ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
+	_, err := stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
+	_, err = stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
+	_, err = stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 

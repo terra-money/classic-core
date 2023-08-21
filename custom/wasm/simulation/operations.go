@@ -60,37 +60,37 @@ func WeightedOperations(
 	)
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgStoreCode, &weightMsgStoreCode, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgStoreCode = params.DefaultWeightMsgStoreCode
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgExecuteContract = params.DefaultWeightMsgExecuteContract
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgUpdateAdmin = params.DefaultWeightMsgUpdateAdmin
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			wasmContractPath = ""
 		},
 	)

@@ -3,17 +3,19 @@ package ante_test
 import (
 	"fmt"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	customante "github.com/classic-terra/core/v2/custom/auth/ante"
-	core "github.com/classic-terra/core/v2/types"
-	"github.com/classic-terra/core/v2/types/fork"
-	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	core "github.com/classic-terra/core/v2/types"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 // go test -v -run ^TestAnteTestSuite/TestIntegrationTaxExemption$ github.com/classic-terra/core/v2/custom/auth/ante
@@ -138,7 +140,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 				FeegrantKeeper:     suite.app.FeeGrantKeeper,
 				OracleKeeper:       suite.app.OracleKeeper,
 				TreasuryKeeper:     suite.app.TreasuryKeeper,
-				SigGasConsumer:     customante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
 				SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
 				IBCKeeper:          *suite.app.IBCKeeper,
 				DistributionKeeper: dk,
@@ -148,7 +150,6 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 		)
 		suite.Require().NoError(err)
 
-		suite.ctx = suite.ctx.WithBlockHeight(fork.BurnTaxUpgradeHeight)
 		suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
 		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[0].String())

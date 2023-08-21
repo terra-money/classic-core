@@ -101,7 +101,7 @@ func (s *WasmTestSuite) SwapSend(contractPath string, executeFunc func(contract 
 
 	// check result after swap
 	actorAfterSwap := s.App.BankKeeper.GetAllBalances(s.Ctx, actor)
-	expectedActorAfterSwap := actorBeforeSwap.Sub(sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000)))
+	expectedActorAfterSwap := actorBeforeSwap.Sub(sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000))...)
 	expectedActorAfterSwap = expectedActorAfterSwap.Add(sdk.NewCoin(core.MicroSDRDenom, expectedSwappedSDR.TruncateInt()))
 
 	s.Require().Equal(expectedActorAfterSwap, actorAfterSwap)

@@ -34,7 +34,7 @@ func WeightedOperations(
 ) simulation.WeightedOperations {
 	var weightMsgSwap int
 	appParams.GetOrGenerate(cdc, OpWeightMsgSwap, &weightMsgSwap, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgSwap = simappparams.DefaultWeightMsgSend
 		},
 	)
@@ -95,7 +95,8 @@ func SimulateMsgSwap(
 		msg := types.NewMsgSwap(simAccount.Address, sdk.NewCoin(offerDenom, amount), askDenom)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := helpers.GenSignedMockTx(
+			r,
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
@@ -109,7 +110,7 @@ func SimulateMsgSwap(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
@@ -172,7 +173,8 @@ func SimulateMsgSwapSend(
 		msg := types.NewMsgSwapSend(simAccount.Address, receiverAccount.Address, sdk.NewCoin(offerDenom, amount), askDenom)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := helpers.GenSignedMockTx(
+			r,
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
@@ -186,7 +188,7 @@ func SimulateMsgSwapSend(
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			if strings.Contains(err.Error(), "insufficient fee") {
 				return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "ignore tax error"), nil, nil

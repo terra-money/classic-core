@@ -83,7 +83,7 @@ func PerformSwap(f *marketkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAd
 		return nil, wasmvmtypes.InvalidRequest{Err: "market swap msg was null"}
 	}
 
-	msgServer := marketkeeper.NewMsgServerImpl(*f)
+	marketMsgSvr := marketkeeper.NewMsgServerImpl(*f)
 
 	msgSwap := markettypes.NewMsgSwap(contractAddr, contractMsg.OfferCoin, contractMsg.AskDenom)
 
@@ -92,7 +92,7 @@ func PerformSwap(f *marketkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAd
 	}
 
 	// swap
-	res, err := msgServer.Swap(
+	res, err := marketMsgSvr.Swap(
 		sdk.WrapSDKContext(ctx),
 		msgSwap,
 	)
@@ -123,7 +123,7 @@ func PerformSwapSend(f *marketkeeper.Keeper, ctx sdk.Context, contractAddr sdk.A
 		return nil, wasmvmtypes.InvalidRequest{Err: "market swap send msg was null"}
 	}
 
-	msgServer := marketkeeper.NewMsgServerImpl(*f)
+	marketMsgSvr := marketkeeper.NewMsgServerImpl(*f)
 
 	toAddr, err := sdk.AccAddressFromBech32(contractMsg.ToAddress)
 	if err != nil {
@@ -137,7 +137,7 @@ func PerformSwapSend(f *marketkeeper.Keeper, ctx sdk.Context, contractAddr sdk.A
 	}
 
 	// swap
-	res, err := msgServer.SwapSend(
+	res, err := marketMsgSvr.SwapSend(
 		sdk.WrapSDKContext(ctx),
 		msgSwapSend,
 	)

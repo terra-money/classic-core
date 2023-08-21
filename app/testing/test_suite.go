@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -48,7 +49,7 @@ type KeeperTestHelper struct {
 }
 
 func (s *KeeperTestHelper) Setup(t *testing.T) {
-	s.App = SetupApp(s.T())
+	s.App = SetupApp(t)
 	s.Ctx = s.App.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "doxchain-1", Time: time.Now().UTC()})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
@@ -62,7 +63,7 @@ func (s *KeeperTestHelper) Setup(t *testing.T) {
 }
 
 // Get implements AppOptions
-func (ao EmptyBaseAppOptions) Get(o string) interface{} {
+func (ao EmptyBaseAppOptions) Get(_ string) interface{} {
 	return nil
 }
 
@@ -87,7 +88,7 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 
 type EmptyAppOptions struct{}
 
-func (EmptyAppOptions) Get(o string) interface{} { return nil }
+func (EmptyAppOptions) Get(_ string) interface{} { return nil }
 
 func SetupApp(t *testing.T) *app.TerraApp {
 	t.Helper()
@@ -264,6 +265,6 @@ func (s *KeeperTestHelper) RandomAccountAddress() sdk.AccAddress {
 
 // FundAcc funds target address with specified amount.
 func (s *KeeperTestHelper) FundAcc(acc sdk.AccAddress, amounts sdk.Coins) {
-	err := simapp.FundAccount(s.App.BankKeeper, s.Ctx, acc, amounts)
+	err := banktestutil.FundAccount(s.App.BankKeeper, s.Ctx, acc, amounts)
 	s.Require().NoError(err)
 }

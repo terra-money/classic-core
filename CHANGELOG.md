@@ -35,8 +35,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### State Machine Breaking
-
+* (app) [#319](https://github.com/classic-terra/core/pull/319) Upgrade SDKs
 * (treasury) [#272](https://github.com/classic-terra/core/pull/272) Split the burn tax to the distribution module
+
+## Features
+* (wasm) [#309](https://github.com/classic-terra/core/pull/309) Support WASM stargate queries
+* (ante) [#301](https://github.com/classic-terra/core/pull/301) Tax Exemption for smart contracts
 
 ## [v2.1.2](https://github.com/classic-terra/core/releases/tag/v2.1.2) 
 

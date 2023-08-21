@@ -10,7 +10,7 @@ HOME=mytestnet
 ROOT=$(pwd)
 DENOM=uluna
 CHAIN_ID=localterra
-SOFTWARE_UPGRADE_NAME="v4"
+SOFTWARE_UPGRADE_NAME="v5"
 ADDITIONAL_PRE_SCRIPTS=${ADDITIONAL_PRE_SCRIPTS:-""}
 ADDITIONAL_AFTER_SCRIPTS=${ADDITIONAL_AFTER_SCRIPTS:-""}
 
@@ -50,7 +50,7 @@ fi
 if [[ "$OSTYPE" == "darwin"* ]]; then
     screen -L -dmS node1 bash scripts/run-node.sh _build/old/terrad $DENOM
 else
-    screen -L -Logfile mytestnet/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/old/terrad $DENOM
+    screen -L -Logfile $HOME/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/old/terrad $DENOM
 fi
 
 sleep 20
@@ -139,7 +139,7 @@ sleep 5
 if [[ "$OSTYPE" == "darwin"* ]]; then
     CONTINUE="true" screen -L -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
 else
-    CONTINUE="true" screen -L -Logfile mytestnet/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
+    CONTINUE="true" screen -L -Logfile $HOME/log-screen.txt -dmS node1 bash scripts/run-node.sh _build/new/terrad $DENOM
 fi
 
 sleep 20

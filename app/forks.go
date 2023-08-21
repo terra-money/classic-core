@@ -8,7 +8,7 @@ import (
 func BeginBlockForks(ctx sdk.Context, app *TerraApp) {
 	for _, fork := range Forks {
 		if ctx.BlockHeight() == fork.UpgradeHeight {
-			fork.BeginForkLogic(ctx, &app.AppKeepers, app.mm)
+			fork.BeginForkLogic(ctx, app.AppKeepers, app.mm)
 			return
 		}
 	}

@@ -52,8 +52,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Cosmwasm - Download correct libwasmvm version and verify checksum
 RUN set -eux &&\
-    WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
-    WASMVM_DOWNLOADS="https://github.com/CosmWasm/wasmvm/releases/download/${WASMVM_VERSION}"; \
+    WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 5) && \
+    WASMVM_DOWNLOADS="https://github.com/classic-terra/wasmvm/releases/download/${WASMVM_VERSION}"; \
     wget ${WASMVM_DOWNLOADS}/checksums.txt -O /tmp/checksums.txt; \
     if [ ${BUILDPLATFORM} = "linux/amd64" ]; then \
         WASMVM_URL="${WASMVM_DOWNLOADS}/libwasmvm_muslc.x86_64.a"; \

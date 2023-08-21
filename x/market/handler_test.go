@@ -9,7 +9,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	core "github.com/classic-terra/core/v2/types"
-	"github.com/classic-terra/core/v2/types/fork"
 	"github.com/classic-terra/core/v2/x/market/keeper"
 	"github.com/classic-terra/core/v2/x/market/types"
 )
@@ -35,8 +34,6 @@ func TestSwapMsg_FailZeroReturn(t *testing.T) {
 	params := input.MarketKeeper.GetParams(input.Ctx)
 	params.MinStabilitySpread = sdk.OneDec()
 	input.MarketKeeper.SetParams(input.Ctx, params)
-
-	input.Ctx = input.Ctx.WithChainID(core.ColumbusChainID).WithBlockHeight(fork.SwapDisableHeight)
 
 	amt := sdk.NewInt(10)
 	offerCoin := sdk.NewCoin(core.MicroLunaDenom, amt)

@@ -25,7 +25,7 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 var _ types.QueryServer = querier{}
 
 // Params queries params of market module
-func (q querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryParamsResponse{Params: q.GetParams(ctx)}, nil
 }
@@ -55,7 +55,7 @@ func (q querier) Swap(c context.Context, req *types.QuerySwapRequest) (*types.Qu
 }
 
 // TerraPoolDelta queries terra pool delta
-func (q querier) TerraPoolDelta(c context.Context, req *types.QueryTerraPoolDeltaRequest) (*types.QueryTerraPoolDeltaResponse, error) {
+func (q querier) TerraPoolDelta(c context.Context, _ *types.QueryTerraPoolDeltaRequest) (*types.QueryTerraPoolDeltaResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	terraPoolDelta := q.GetTerraPoolDelta(ctx)
 	return &types.QueryTerraPoolDeltaResponse{TerraPoolDelta: terraPoolDelta}, nil

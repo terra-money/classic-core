@@ -9,8 +9,6 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/classic-terra/core/v2/types"
-	"github.com/classic-terra/core/v2/types/fork"
 	marketexported "github.com/classic-terra/core/v2/x/market/exported"
 	oracleexported "github.com/classic-terra/core/v2/x/oracle/exported"
 )
@@ -54,14 +52,14 @@ func (tfd TaxFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		// Mempool fee validation
 		// No fee validation for oracle txs
 		if ctx.IsCheckTx() &&
-			!(isOracleTx(ctx, msgs) && gas <= uint64(len(msgs))*MaxOracleMsgGasUsage) {
+			!(isOracleTx(msgs) && gas <= uint64(len(msgs))*MaxOracleMsgGasUsage) {
 			if err := EnsureSufficientMempoolFees(ctx, gas, feeCoins, taxes); err != nil {
 				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, err.Error())
 			}
 		}
 
 		// Ensure paid fee is enough to cover taxes
-		if _, hasNeg := feeCoins.SafeSub(taxes); hasNeg {
+		if _, hasNeg := feeCoins.SafeSub(taxes...); hasNeg {
 			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeCoins, taxes)
 		}
 
@@ -97,7 +95,7 @@ func EnsureSufficientMempoolFees(ctx sdk.Context, gas uint64, feeCoins sdk.Coins
 
 	// Before checking gas prices, remove taxed from fee
 	var hasNeg bool
-	if feeCoins, hasNeg = feeCoins.SafeSub(taxes); hasNeg {
+	if feeCoins, hasNeg = feeCoins.SafeSub(taxes...); hasNeg {
 		return fmt.Errorf("insufficient fees; got: %q, required: %q = %q(gas) +%q(stability)", feeCoins.Add(taxes...), requiredFees.Add(taxes...), requiredFees, taxes)
 	}
 
@@ -177,10 +175,6 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	taxes := sdk.Coins{}
 
 	for _, coin := range principal {
-		// Originally only a stability tax on UST.  Changed to tax Luna as well after BurnTaxUpgradeHeight
-		if (coin.Denom == types.MicroLunaDenom || coin.Denom == sdk.DefaultBondDenom) && fork.IsBeforeBurnTaxUpgradeHeight(ctx) {
-			continue
-		}
 		if coin.Denom == sdk.DefaultBondDenom {
 			continue
 		}
@@ -203,7 +197,7 @@ func computeTax(ctx sdk.Context, tk TreasuryKeeper, principal sdk.Coins) sdk.Coi
 	return taxes
 }
 
-func isOracleTx(ctx sdk.Context, msgs []sdk.Msg) bool {
+func isOracleTx(msgs []sdk.Msg) bool {
 	for _, msg := range msgs {
 		switch msg.(type) {
 		case *oracleexported.MsgAggregateExchangeRatePrevote:

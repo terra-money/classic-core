@@ -12,10 +12,10 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	ibcxfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v4/modules/core/exported"
-	ibccoretypes "github.com/cosmos/ibc-go/v4/modules/core/types"
+	ibcxfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v6/modules/core/exported"
+	ibccoretypes "github.com/cosmos/ibc-go/v6/modules/core/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,7 +26,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	legacy05 "github.com/classic-terra/core/v2/app/legacy/v05"
 	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 )
 
@@ -76,8 +75,9 @@ $ terrad migrate /path/to/genesis.json --chain-id=cosmoshub-4 --genesis-time=201
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
 			}
 
-			// Migrate Terra specific state
-			newGenState := legacy05.Migrate(initialState, clientCtx)
+			// TODO: Migrate Terra specific state
+			// newGenState := legacy05.Migrate(initialState, clientCtx)
+			newGenState := initialState
 
 			var bankGenesis banktypes.GenesisState
 

@@ -79,7 +79,7 @@ type dummyOracleKeeper struct {
 	feeders map[string]string
 }
 
-func (ok dummyOracleKeeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
+func (ok dummyOracleKeeper) ValidateFeeder(_ sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
 	if val, ok := ok.feeders[validatorAddr.String()]; ok && val == feederAddr.String() {
 		return nil
 	}

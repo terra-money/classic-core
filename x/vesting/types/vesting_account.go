@@ -82,7 +82,7 @@ func (lgva LazyGradedVestingAccount) GetVestedCoins(blockTime time.Time) sdk.Coi
 	for _, ovc := range lgva.OriginalVesting {
 		if vestingSchedule, exists := lgva.GetVestingSchedule(ovc.Denom); exists {
 			vestedRatio := vestingSchedule.GetVestedRatio(blockTime.Unix())
-			vestedAmt := ovc.Amount.ToDec().Mul(vestedRatio).RoundInt()
+			vestedAmt := sdk.NewDecFromInt(ovc.Amount).Mul(vestedRatio).RoundInt()
 			if vestedAmt.Equal(sdk.ZeroInt()) {
 				continue
 			}
@@ -98,7 +98,7 @@ func (lgva LazyGradedVestingAccount) GetVestedCoins(blockTime time.Time) sdk.Coi
 // GetVestingCoins returns the total number of vesting coins for a graded
 // vesting account.
 func (lgva LazyGradedVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coins {
-	return lgva.OriginalVesting.Sub(lgva.GetVestedCoins(blockTime))
+	return lgva.OriginalVesting.Sub(lgva.GetVestedCoins(blockTime)...)
 }
 
 // LockedCoins returns the set of coins that are not spendable (i.e. locked).

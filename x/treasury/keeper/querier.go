@@ -29,13 +29,13 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 var _ types.QueryServer = querier{}
 
 // Params queries params of distribution module
-func (q querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryParamsResponse{Params: q.GetParams(ctx)}, nil
 }
 
 // TaxRate return the current tax rate
-func (q querier) TaxRate(c context.Context, req *types.QueryTaxRateRequest) (*types.QueryTaxRateResponse, error) {
+func (q querier) TaxRate(c context.Context, _ *types.QueryTaxRateRequest) (*types.QueryTaxRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryTaxRateResponse{TaxRate: q.GetTaxRate(ctx)}, nil
 }
@@ -55,7 +55,7 @@ func (q querier) TaxCap(c context.Context, req *types.QueryTaxCapRequest) (*type
 }
 
 // TaxCaps returns the all tax caps
-func (q querier) TaxCaps(c context.Context, req *types.QueryTaxCapsRequest) (*types.QueryTaxCapsResponse, error) {
+func (q querier) TaxCaps(c context.Context, _ *types.QueryTaxCapsRequest) (*types.QueryTaxCapsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var taxCaps []types.QueryTaxCapsResponseItem
@@ -71,25 +71,25 @@ func (q querier) TaxCaps(c context.Context, req *types.QueryTaxCapsRequest) (*ty
 }
 
 // RewardWeight return the current reward weight
-func (q querier) RewardWeight(c context.Context, req *types.QueryRewardWeightRequest) (*types.QueryRewardWeightResponse, error) {
+func (q querier) RewardWeight(c context.Context, _ *types.QueryRewardWeightRequest) (*types.QueryRewardWeightResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryRewardWeightResponse{RewardWeight: q.GetRewardWeight(ctx)}, nil
 }
 
 // SeigniorageProceeds return the current seigniorage proceeds
-func (q querier) SeigniorageProceeds(c context.Context, req *types.QuerySeigniorageProceedsRequest) (*types.QuerySeigniorageProceedsResponse, error) {
+func (q querier) SeigniorageProceeds(c context.Context, _ *types.QuerySeigniorageProceedsRequest) (*types.QuerySeigniorageProceedsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QuerySeigniorageProceedsResponse{SeigniorageProceeds: q.PeekEpochSeigniorage(ctx)}, nil
 }
 
 // TaxProceeds return the current tax proceeds
-func (q querier) TaxProceeds(c context.Context, req *types.QueryTaxProceedsRequest) (*types.QueryTaxProceedsResponse, error) {
+func (q querier) TaxProceeds(c context.Context, _ *types.QueryTaxProceedsRequest) (*types.QueryTaxProceedsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryTaxProceedsResponse{TaxProceeds: q.PeekEpochTaxProceeds(ctx)}, nil
 }
 
 // Indicators return the current trl informations
-func (q querier) Indicators(c context.Context, req *types.QueryIndicatorsRequest) (*types.QueryIndicatorsResponse, error) {
+func (q querier) Indicators(c context.Context, _ *types.QueryIndicatorsRequest) (*types.QueryIndicatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Compute Total Staked Luna (TSL)

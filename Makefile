@@ -183,19 +183,21 @@ build-release-arm64: go.sum
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 
-docs:
-	@./scripts/protoc-swagger-gen.sh
+gen-swagger-docs:
+	bash scripts/protoc-swagger-gen.sh
 
-	@rm -f client/docs/statik/statik.go
-	@statik -src=client/docs/swagger-ui -dest=client/docs -f -m
+update-swagger-docs: statik
+	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
-        echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
+        echo "Swagger docs are out of sync!";\
         exit 1;\
     else \
-        echo "\033[92mSwagger docs are in sync\033[0m";\
+        echo "Swagger docs are in sync!";\
     fi
 
-.PHONY: build build-linux install docs
+apply-swagger: gen-swagger-docs update-swagger-docs
+
+.PHONY: build build-linux install update-swagger-docs apply-swagger
 
 ########################################
 ### Tools & dependencies

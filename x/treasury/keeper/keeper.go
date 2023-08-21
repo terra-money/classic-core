@@ -5,11 +5,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	core "github.com/classic-terra/core/v2/types"
-	"github.com/classic-terra/core/v2/types/fork"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -20,7 +20,7 @@ import (
 
 // Keeper of the treasury store
 type Keeper struct {
-	storeKey   sdk.StoreKey
+	storeKey   storetypes.StoreKey
 	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
@@ -36,7 +36,9 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new treasury Keeper instance
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
 	paramSpace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -131,11 +133,6 @@ func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 
 // GetTaxCap gets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) sdk.Int {
-	// Allow tax cap for uluna
-	if denom == core.MicroLunaDenom && fork.IsBeforeBurnTaxUpgradeHeight(ctx) {
-		return sdk.ZeroInt()
-	}
-
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTaxCapKey(denom))
 	if bz == nil {

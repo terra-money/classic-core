@@ -1,10 +1,8 @@
 package bank
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -13,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	customcli "github.com/classic-terra/core/v2/custom/bank/client/cli"
-	customrest "github.com/classic-terra/core/v2/custom/bank/client/rest"
 	customsim "github.com/classic-terra/core/v2/custom/bank/simulation"
 	customtypes "github.com/classic-terra/core/v2/custom/bank/types"
 )
@@ -33,11 +30,6 @@ type AppModuleBasic struct {
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	customtypes.RegisterLegacyAminoCodec(cdc)
 	*types.ModuleCdc = *customtypes.ModuleCdc
-}
-
-// RegisterRESTRoutes registers the REST routes for the market module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	customrest.RegisterRoutes(clientCtx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the bank module.

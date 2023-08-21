@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 func TestQueryParams(t *testing.T) {
@@ -126,14 +127,14 @@ func TestQueryIndicators(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	stakingAmt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr1, val1, stakingAmt))
 	require.NoError(t, err)
 
 	staking.EndBlocker(input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek)-1), input.StakingKeeper)
@@ -143,8 +144,8 @@ func TestQueryIndicators(t *testing.T) {
 	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
 
 	targetIndicators := &types.QueryIndicatorsResponse{
-		TRLYear:  proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
-		TRLMonth: proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
+		TRLYear:  sdk.NewDecFromInt(proceedsAmt).QuoInt(stakingAmt.MulRaw(2)),
+		TRLMonth: sdk.NewDecFromInt(proceedsAmt).QuoInt(stakingAmt.MulRaw(2)),
 	}
 
 	querier := NewQuerier(input.TreasuryKeeper)

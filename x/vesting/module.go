@@ -3,7 +3,6 @@ package vesting
 import (
 	"encoding/json"
 
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
@@ -18,9 +17,7 @@ import (
 var _ module.AppModuleBasic = AppModuleBasic{}
 
 // AppModuleBasic defines the basic application module used by the oracle module.
-type AppModuleBasic struct {
-	cdc codec.Codec //nolint:unused
-}
+type AppModuleBasic struct{}
 
 // Name returns the module's name
 func (AppModuleBasic) Name() string {
@@ -39,20 +36,17 @@ func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry
 
 // DefaultGenesis returns default genesis state as raw bytes for the staking
 // module.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return nil
+func (AppModuleBasic) DefaultGenesis(codec.JSONCodec) json.RawMessage {
+	return []byte("{}")
 }
 
 // ValidateGenesis performs genesis state validation for the oracle module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(codec.JSONCodec, client.TxEncodingConfig, json.RawMessage) error {
 	return nil
 }
 
-// RegisterRESTRoutes registers the REST routes for the oracle module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {}
-
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the oracle module.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux) {}
 
 // GetTxCmd returns the root tx command for the oracle module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {

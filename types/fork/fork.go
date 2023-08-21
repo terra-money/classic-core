@@ -1,10 +1,6 @@
 package fork
 
-import (
-	"github.com/classic-terra/core/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
+// NOTE: Keep soft-fork heights for the history
 const (
 	ColumbusLunaSwapFeeHeight = int64(5_100_000)
 	BombayLunaSwapFeeHeight   = int64(6_200_000)
@@ -25,17 +21,3 @@ const (
 	// VersionMapEnableHeight - set the version map to enable software upgrades, approximately February 14, 2023
 	VersionMapEnableHeight = int64(11_543_150)
 )
-
-func IsBeforeLunaSwapFeeHeight(ctx sdk.Context) bool {
-	return (ctx.ChainID() == types.ColumbusChainID && ctx.BlockHeight() < ColumbusLunaSwapFeeHeight) ||
-		(ctx.ChainID() == types.BombayChainID && ctx.BlockHeight() < BombayLunaSwapFeeHeight)
-}
-
-func IsBeforeOracleFixHeight(ctx sdk.Context) bool {
-	return (ctx.ChainID() == types.ColumbusChainID && ctx.BlockHeight() < ColumbusOracleFixHeight) ||
-		(ctx.ChainID() == types.BombayChainID && ctx.BlockHeight() < BombayOracleFixHeight)
-}
-
-func IsBeforeBurnTaxUpgradeHeight(ctx sdk.Context) bool {
-	return (ctx.ChainID() == types.ColumbusChainID && ctx.BlockHeight() < BurnTaxUpgradeHeight)
-}

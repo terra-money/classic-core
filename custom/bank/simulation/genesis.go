@@ -22,8 +22,8 @@ func RandomGenesisBalances(simState *module.SimulationState) []types.Balance {
 		genesisBalances = append(genesisBalances, types.Balance{
 			Address: acc.Address.String(),
 			Coins: sdk.NewCoins(
-				sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(simState.InitialStake)),
-				sdk.NewCoin(core.MicroLunaDenom, sdk.NewInt(simState.InitialStake)),
+				sdk.NewCoin(sdk.DefaultBondDenom, simState.InitialStake),
+				sdk.NewCoin(core.MicroLunaDenom, simState.InitialStake),
 			),
 		})
 	}
@@ -46,8 +46,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 	)
 
 	numAccs := int64(len(simState.Accounts))
-	totalSupply := sdk.NewInt(simState.InitialStake * (numAccs + simState.NumBonded))
-	totalLunaSupply := sdk.NewInt(simState.InitialStake * numAccs)
+	totalSupply := simState.InitialStake.Mul(sdk.NewInt(numAccs + simState.NumBonded))
+	totalLunaSupply := simState.InitialStake.Mul(sdk.NewInt(numAccs))
 	supply := sdk.NewCoins(
 		sdk.NewCoin(sdk.DefaultBondDenom, totalSupply),
 		sdk.NewCoin(core.MicroLunaDenom, totalLunaSupply),

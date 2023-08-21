@@ -55,8 +55,6 @@ func TestFuzz_Tally(t *testing.T) {
 	// set random denoms and validators
 	f.Fuzz(&validators)
 
-	input, _ := setup(t)
-
 	claimMap := map[string]types.Claim{}
 	f.Fuzz(&claimMap)
 
@@ -67,7 +65,7 @@ func TestFuzz_Tally(t *testing.T) {
 	f.Fuzz(&rewardBand)
 
 	require.NotPanics(t, func() {
-		oracle.Tally(input.Ctx, ballot, rewardBand, claimMap)
+		oracle.Tally(ballot, rewardBand, claimMap)
 	})
 }
 

@@ -14,11 +14,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 const custom = "custom"
 
-func getQueriedTaxRate(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, epoch int64) sdk.Dec {
+func getQueriedTaxRate(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, _ int64) sdk.Dec {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryTaxRate}, "/"),
 		Data: nil,
@@ -76,7 +77,7 @@ func getQueriedTaxCaps(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, qu
 	return response
 }
 
-func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, epoch int64) sdk.Dec {
+func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, _ int64) sdk.Dec {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryRewardWeight}, "/"),
 		Data: nil,
@@ -93,7 +94,7 @@ func getQueriedRewardWeight(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmin
 	return response
 }
 
-func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, epoch int64) sdk.Coins {
+func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, _ int64) sdk.Coins {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryTaxProceeds}, "/"),
 		Data: nil,
@@ -110,7 +111,7 @@ func getQueriedTaxProceeds(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino
 	return response
 }
 
-func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, epoch int64) sdk.Int {
+func getQueriedSeigniorageProceeds(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmino, querier sdk.Querier, _ int64) sdk.Int {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QuerySeigniorageProceeds}, "/"),
 		Data: nil,
@@ -292,14 +293,14 @@ func TestLegacyQuerySeigniorageProceeds(t *testing.T) {
 func TestLegacyQueryIndicators(t *testing.T) {
 	input := CreateTestInput(t)
 	querier := NewLegacyQuerier(input.TreasuryKeeper, input.Cdc)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	stakingAmt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr, val, stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr1, val1, stakingAmt))
 	require.NoError(t, err)
 
 	staking.EndBlocker(input.Ctx.WithBlockHeight(int64(core.BlocksPerWeek)-1), input.StakingKeeper)
@@ -309,8 +310,8 @@ func TestLegacyQueryIndicators(t *testing.T) {
 	input.TreasuryKeeper.RecordEpochTaxProceeds(input.Ctx, taxProceeds)
 
 	targetIndicators := types.IndicatorQueryResponse{
-		TRLYear:  proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
-		TRLMonth: proceedsAmt.ToDec().QuoInt(stakingAmt.MulRaw(2)),
+		TRLYear:  sdk.NewDecFromInt(proceedsAmt).QuoInt(stakingAmt.MulRaw(2)),
+		TRLMonth: sdk.NewDecFromInt(proceedsAmt).QuoInt(stakingAmt.MulRaw(2)),
 	}
 
 	queriedIndicators := getQueriedIndicators(t, input.Ctx, input.Cdc, querier)
