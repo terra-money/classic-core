@@ -2,8 +2,6 @@ name: sync to codecommit
 
 on:
   push:
-    tags:
-      - '*'
     branches:
       - '*'
 
