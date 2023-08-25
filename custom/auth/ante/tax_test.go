@@ -966,3 +966,44 @@ func (suite *AnteTestSuite) TestTaxExemption() {
 		require.Equal(taxProceeds, sdk.NewCoins(sdk.NewCoin("usdr", sdk.NewInt(c.expectProceeds))))
 	}
 }
+
+func (suite *AnteTestSuite) TestEnsureIBCUntaxed() {
+	suite.SetupTest(true) // setup
+	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
+
+	mfd := ante.NewBurnTaxFeeDecorator(
+		suite.app.AccountKeeper,
+		suite.app.TreasuryKeeper,
+		suite.app.BankKeeper,
+		suite.app.DistrKeeper,
+	)
+	antehandler := sdk.ChainAnteDecorators(mfd)
+
+	// keys and addresses
+	priv1, _, addr1 := testdata.KeyTestPubAddr()
+
+	// msg and signatures
+	sendAmount := int64(1_000_000)
+	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(core.OsmoIbcDenom, sendAmount))
+	msg := banktypes.NewMsgSend(addr1, addr1, sendCoins)
+
+	feeAmount := testdata.NewTestFeeAmount()
+	gasLimit := testdata.NewTestGasLimit()
+	suite.Require().NoError(suite.txBuilder.SetMsgs(msg))
+	suite.txBuilder.SetFeeAmount(feeAmount)
+	suite.txBuilder.SetGasLimit(gasLimit)
+
+	privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{0}, []uint64{0}
+	tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+	suite.Require().NoError(err)
+
+	// set zero gas prices
+	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+	// Set IsCheckTx to true
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
+
+	// IBC must pass without burn
+	_, err = antehandler(suite.ctx, tx, false)
+	suite.Require().NoError(err, "Decorator should not have errored on IBC denoms")
+}
