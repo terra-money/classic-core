@@ -77,13 +77,9 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		NewSpammingPreventionDecorator(options.OracleKeeper),
 		// MinInitialDepositDecorator prevents submitting governance proposal low initial deposit
 		NewMinInitialDepositDecorator(options.GovKeeper, options.TreasuryKeeper),
-		// TaxFeeDecorator does mempool gas fee validation & record tax proceeds
-		NewTaxFeeDecorator(options.TreasuryKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		// BurnTaxFeeDecorator burns part of tax, this _must_ be placed after DeductFeeDecorator
-		NewBurnTaxFeeDecorator(options.AccountKeeper, options.TreasuryKeeper, options.BankKeeper, options.DistributionKeeper), // burn tax proceeds
-		ante.NewSetPubKeyDecorator(options.AccountKeeper),                                                                     // SetPubKeyDecorator must be called before all signature verification decorators
+		NewFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TreasuryKeeper),
+		ante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),

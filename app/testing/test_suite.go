@@ -49,17 +49,14 @@ type KeeperTestHelper struct {
 }
 
 func (s *KeeperTestHelper) Setup(t *testing.T) {
-	s.App = SetupApp(t)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "doxchain-1", Time: time.Now().UTC()})
+	s.App = SetupApp(s.T())
+	s.Ctx = s.App.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "columbus-5", Time: time.Now().UTC()})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
 	}
 
-	s.TestAccs = make([]sdk.AccAddress, 3)
-	for i := range s.TestAccs {
-		s.TestAccs[i] = s.RandomAccountAddress()
-	}
+	s.TestAccs = s.RandomAccountAddresses(3)
 }
 
 // Get implements AppOptions
@@ -258,9 +255,13 @@ func (s *KeeperTestHelper) KeyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccA
 	return key, pub, addr
 }
 
-func (s *KeeperTestHelper) RandomAccountAddress() sdk.AccAddress {
-	_, _, addr := s.KeyPubAddr()
-	return addr
+func (s *KeeperTestHelper) RandomAccountAddresses(n int) []sdk.AccAddress {
+	addrsList := make([]sdk.AccAddress, n)
+	for i := 0; i < n; i++ {
+		_, _, addrs := s.KeyPubAddr()
+		addrsList[i] = addrs
+	}
+	return addrsList
 }
 
 // FundAcc funds target address with specified amount.

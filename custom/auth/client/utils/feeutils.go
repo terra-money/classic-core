@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/spf13/pflag"
 
@@ -214,17 +213,6 @@ func queryTaxCap(clientCtx client.Context, denom string) (sdk.Int, error) {
 		return sdk.NewInt(0), err
 	}
 	return res.TaxCap, err
-}
-
-// ParseFloat64 parses string to float64
-func ParseFloat64(s string, defaultIfEmpty float64) (n float64, err error) {
-	if len(s) == 0 {
-		return defaultIfEmpty, nil
-	}
-
-	n, err = strconv.ParseFloat(s, 64)
-
-	return
 }
 
 // prepareFactory ensures the account defined by ctx.GetFromAddress() exists and

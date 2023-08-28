@@ -18,7 +18,7 @@ import (
 // 1666 usdr (after 2% tax) is swapped into which goes back to contract
 func (s *WasmTestSuite) Swap(contractPath string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
 	s.SetupTest()
-	actor := s.RandomAccountAddress()
+	actor := s.RandomAccountAddresses(1)[0]
 
 	// fund
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
@@ -66,7 +66,7 @@ func (s *WasmTestSuite) Swap(contractPath string, executeFunc func(contract sdk.
 // 1666 usdr is sent to trader
 func (s *WasmTestSuite) SwapSend(contractPath string, executeFunc func(contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.TerraMsg, funds sdk.Coin) error) {
 	s.SetupTest()
-	actor := s.RandomAccountAddress()
+	actor := s.RandomAccountAddresses(1)[0]
 
 	// fund
 	s.FundAcc(actor, sdk.NewCoins(sdk.NewInt64Coin(core.MicroLunaDenom, 1000000000)))
