@@ -19,7 +19,7 @@ func isIBCDenom(denom string) bool {
 	return IBCRegexp.MatchString(strings.ToLower(denom))
 }
 
-// FilterMsgAndComputeTax computes the stability tax on MsgSend and MsgMultiSend.
+// FilterMsgAndComputeTax computes the stability tax on messages.
 func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg) sdk.Coins {
 	taxes := sdk.Coins{}
 
@@ -68,10 +68,8 @@ func FilterMsgAndComputeTax(ctx sdk.Context, tk TreasuryKeeper, msgs ...sdk.Msg)
 		case *authz.MsgExec:
 			messages, err := msg.GetMessages()
 			if err != nil {
-				panic(err)
+				taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, messages...)...)
 			}
-
-			taxes = taxes.Add(FilterMsgAndComputeTax(ctx, tk, messages...)...)
 		}
 	}
 
