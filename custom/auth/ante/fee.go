@@ -56,7 +56,7 @@ func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, nex
 		}
 	}
 
-	if err := fd.checkDeductFee(ctx, feeTx, taxes); err != nil {
+	if err := fd.checkDeductFee(ctx, feeTx, taxes, simulate); err != nil {
 		return ctx, err
 	}
 
@@ -65,7 +65,7 @@ func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, nex
 	return next(newCtx, tx, simulate)
 }
 
-func (fd FeeDecorator) checkDeductFee(ctx sdk.Context, feeTx sdk.FeeTx, taxes sdk.Coins) error {
+func (fd FeeDecorator) checkDeductFee(ctx sdk.Context, feeTx sdk.FeeTx, taxes sdk.Coins, simulate bool) error {
 	if addr := fd.accountKeeper.GetModuleAddress(types.FeeCollectorName); addr == nil {
 		return fmt.Errorf("fee collector module account (%s) has not been set", types.FeeCollectorName)
 	}
@@ -102,7 +102,7 @@ func (fd FeeDecorator) checkDeductFee(ctx sdk.Context, feeTx sdk.FeeTx, taxes sd
 			return err
 		}
 
-		if !taxes.IsZero() {
+		if !taxes.IsZero() && !simulate {
 			err := fd.BurnTaxSplit(ctx, taxes)
 			if err != nil {
 				return err
