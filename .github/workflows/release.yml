@@ -3,8 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+' # Push events to matching v*, i.e. v1.0, v20.15.10
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc*' # Push events to matching v*, i.e. v1.0-rc1, v20.15.10-rc5
+      - "v[0-9]+.[0-9]+.[0-9]+" # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "v[0-9]+.[0-9]+.[0-9]+-rc*" # Push events to matching v*, i.e. v1.0-rc1, v20.15.10-rc5
 
 jobs:
   release:
@@ -24,7 +24,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        build_type: ['build-release-arm64', 'build-release-amd64']
+        build_type: ["build-release-arm64", "build-release-amd64"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -54,3 +54,58 @@ jobs:
         run: cat build/release/checksum.txt
       - name: Upload the checksum to release
         run: gh release upload ${{github.ref_name}} build/release/checksum.txt --repo ${{github.repository}}
+
+  generate-json:
+    needs: calculate-checksums
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Create build directory
+        run: mkdir -p build/release
+      - name: Download artifacts
+        run: gh release download ${{github.ref_name}} --pattern '*.tar.gz' --dir build/release --repo ${{github.repository}}
+      - name: Generate JSON file
+        run: |
+          cd build/release
+          binaries=()
+          for file in *.tar.gz; do
+            checksum=$(sha256sum $file | awk '{print $1}')
+            url="https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/$file?checksum=sha256:$checksum"
+            declare -A TRANSLATION_MATRIX
+            TRANSLATION_MATRIX=( ["Linux_x86_64"]="linux/amd64" ["Linux_arm64"]="linux/arm64" ["Darwin_arm64"]="darwin/arm64" )
+            os_architecture_translated=""
+            for key in "${!TRANSLATION_MATRIX[@]}"; do
+              if [[ "$file" == *"$key"* ]]; then
+                os_architecture_translated="${TRANSLATION_MATRIX[$key]}"
+                break
+              fi
+            done
+            if [ -z "$os_architecture_translated" ]
+            then
+              echo "Could not translate OS and architecture information from binary name: $file"
+              exit 1
+            fi
+            binaries+=("    \"$os_architecture_translated\": \"$url\"")
+          done
+          binaries_json=$(IFS=$',\n'; echo "${binaries[*]}")
+          cat << EOF > binaries.json.raw
+          {
+            "binaries": {
+          $binaries_json
+            }
+          }
+          EOF
+
+      - name: Pretty-print JSON file using jq
+        run: |
+          cd build/release 
+          jq . < binaries.json.raw > binaries.json && rm binaries.json.raw
+
+      - name: Display JSON file
+        run: cat build/release/binaries.json
+      - name: Upload the JSON file to release
+        run: gh release upload ${{github.ref_name}} build/release/binaries.json --repo ${{github.repository}}
