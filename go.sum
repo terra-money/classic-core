@@ -335,6 +335,8 @@ github.com/classic-terra/cometbft v0.34.29-terra.0 h1:HnRGt7tijI2n5zSVrg/xh1mYYm
 github.com/classic-terra/cometbft v0.34.29-terra.0/go.mod h1:L9shMfbkZ8B+7JlwANEr+NZbBcn+hBpwdbeYvA5rLCw=
 github.com/classic-terra/cosmos-sdk v0.46.15-0.20230913080045-7da3cc5fd2e9 h1:ZqJ59QwUKe27qjjtwVWBEy94fAAGxw+pVdHxi7ey3ao=
 github.com/classic-terra/cosmos-sdk v0.46.15-0.20230913080045-7da3cc5fd2e9/go.mod h1:3VKRzlOtvuqZA29wRqdx6rPsJmYhvxjJyc3tvQWpjf4=
+github.com/classic-terra/goleveldb v0.0.0-20230914223247-2b28f6655121 h1:fjpWDB0hm225wYg9vunyDyTH8ftd5xEUgINJKidj+Tw=
+github.com/classic-terra/goleveldb v0.0.0-20230914223247-2b28f6655121/go.mod h1:q4W45IWZaF22tdD+VEXcAWRA037jwmWEB5VWYORlTpc=
 github.com/classic-terra/wasmd v0.30.0-terra.3 h1:qruhiaAIRl14UVtHzfh81pr0YmW94QE4+hqivIi9AYg=
 github.com/classic-terra/wasmd v0.30.0-terra.3/go.mod h1:Ug607EsX+EkW3/xOFaP56kZA7WklN+ZrwUEsaJ22xH0=
 github.com/classic-terra/wasmvm v1.1.1-terra.1 h1:qGozlXFlM/3ossnlABwODJr7bEHUdF/nug8Z3c1Dr84=
@@ -1102,8 +1104,6 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/subosito/gotenv v1.4.1 h1:jyEFiXpy21Wm81FBN71l9VoMMV8H8jG+qIK3GCpY6Qs=
 github.com/subosito/gotenv v1.4.1/go.mod h1:ayKnFf/c6rvx/2iiLrJUk1e6plDbT3edrFNGqEflhK0=
-github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 h1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=
-github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7/go.mod h1:q4W45IWZaF22tdD+VEXcAWRA037jwmWEB5VWYORlTpc=
 github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c h1:g+WoO5jjkqGAzHWCjJB1zZfXPIAaDpzXIEJ0eS6B5Ok=
 github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c/go.mod h1:ahpPrc7HpcfEWDQRZEmnXMzHY03mLDYMCxeDzy46i+8=
 github.com/tendermint/go-amino v0.16.0 h1:GyhmgQKvqF82e2oZeuMSp9JTN0N09emoSZlb2lyGa2E=
