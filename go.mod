@@ -58,7 +58,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
-	github.com/cosmos/iavl v0.19.6 // indirect
+	github.com/cosmos/iavl v0.19.7 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
@@ -178,15 +178,16 @@ replace (
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/jhump/protoreflect => github.com/jhump/protoreflect v1.9.0
-	// replace broken goleveldb.
-	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	// use cometbft
-	github.com/tendermint/tendermint => github.com/classic-terra/cometbft v0.34.29-terra.0
 )
 
 replace (
 	github.com/CosmWasm/wasmd => github.com/classic-terra/wasmd v0.30.0-terra.3
 	github.com/CosmWasm/wasmvm => github.com/classic-terra/wasmvm v1.1.1-terra.1
-	github.com/cosmos/cosmos-sdk => github.com/classic-terra/cosmos-sdk v0.46.14-terra.2
+	github.com/cosmos/cosmos-sdk => github.com/classic-terra/cosmos-sdk v0.46.14-terra.4
 	github.com/cosmos/ledger-cosmos-go => github.com/terra-money/ledger-terra-go v0.11.2
+	// replace goleveldb to optimized one
+	github.com/syndtr/goleveldb => github.com/classic-terra/goleveldb v0.0.0-20230914223247-2b28f6655121
+	// use cometbft
+	github.com/tendermint/tendermint => github.com/classic-terra/cometbft v0.34.29-terra.0
+	github.com/tendermint/tm-db => github.com/terra-money/tm-db v0.6.7-performance.3
 )

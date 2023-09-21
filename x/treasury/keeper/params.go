@@ -68,7 +68,7 @@ func (k Keeper) SetMinInitialDepositRatio(ctx sdk.Context, minInitialDepositRati
 
 // GetParams returns the total set of treasury parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramSpace.GetParamSet(ctx, &params)
+	k.paramSpace.GetParamSetIfExists(ctx, &params)
 	return params
 }
 

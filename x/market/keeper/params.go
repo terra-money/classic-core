@@ -27,7 +27,7 @@ func (k Keeper) PoolRecoveryPeriod(ctx sdk.Context) (res uint64) {
 
 // GetParams returns the total set of market parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramSpace.GetParamSet(ctx, &params)
+	k.paramSpace.GetParamSetIfExists(ctx, &params)
 	return params
 }
 

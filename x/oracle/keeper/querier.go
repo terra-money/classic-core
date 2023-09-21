@@ -27,10 +27,7 @@ var _ types.QueryServer = querier{}
 // Params queries params of distribution module
 func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	var params types.Params
-	q.paramSpace.GetParamSet(ctx, &params)
-
-	return &types.QueryParamsResponse{Params: params}, nil
+	return &types.QueryParamsResponse{Params: q.GetParams(ctx)}, nil
 }
 
 // ExchangeRate queries exchange rate of a denom
