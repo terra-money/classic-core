@@ -20,4 +20,7 @@ const (
 	// v1.0.5
 	// VersionMapEnableHeight - set the version map to enable software upgrades, approximately February 14, 2023
 	VersionMapEnableHeight = int64(11_543_150)
+	// Revert Min Commission slip during v2.2.0 upgrade
+	FixMinCommissionHeight      = int64(14_665_190)
+	FixMinCommissionHeightRebel = int64(16_260_000)
 )

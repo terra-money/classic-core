@@ -52,6 +52,7 @@ import (
 	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/classic-terra/core/v2/app/upgrades/forks"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/classic-terra/core/v2/client/docs/statik"
@@ -67,7 +68,7 @@ var (
 	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade, v5.Upgrade}
 
 	// Forks defines forks to be applied to the network
-	Forks = []upgrades.Fork{}
+	Forks = []upgrades.Fork{forks.FixMinCommissionFork, forks.FixMinCommissionForkRebel}
 )
 
 // Verify app interface at compile time
