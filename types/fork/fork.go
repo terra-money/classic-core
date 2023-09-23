@@ -22,5 +22,5 @@ const (
 	VersionMapEnableHeight = int64(11_543_150)
 	// Revert Min Commission slip during v2.2.0 upgrade
 	FixMinCommissionHeight      = int64(14_665_190)
-	FixMinCommissionHeightRebel = int64(16_275_000)
+	FixMinCommissionHeightRebel = int64(16_300_000)
 )

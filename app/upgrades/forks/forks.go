@@ -66,7 +66,7 @@ func runForkLogicVersionMapEnable(ctx sdk.Context, keppers *keepers.AppKeepers, 
 }
 
 func forkLogicFixMinCommission(ctx sdk.Context, keepers *keepers.AppKeepers, mm *module.Manager) {
-	MinCommissionRate := sdk.NewDecWithPrec(5, 2)
+	MinCommissionRate := sdk.NewDecWithPrec(5, 2) // 5%
 
 	space, exist := keepers.ParamsKeeper.GetSubspace(stakingtypes.StoreKey)
 	if !exist {
