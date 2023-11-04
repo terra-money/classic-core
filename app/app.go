@@ -47,8 +47,10 @@ import (
 	v3 "github.com/classic-terra/core/v2/app/upgrades/v3"
 	v4 "github.com/classic-terra/core/v2/app/upgrades/v4"
 	v5 "github.com/classic-terra/core/v2/app/upgrades/v5"
+	v6 "github.com/classic-terra/core/v2/app/upgrades/v6"
 
 	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	custompost "github.com/classic-terra/core/v2/custom/auth/post"
 	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -64,7 +66,7 @@ var (
 	DefaultNodeHome string
 
 	// Upgrades defines upgrades to be applied to the network
-	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade, v5.Upgrade}
+	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade, v5.Upgrade, v6.Upgrade}
 
 	// Forks defines forks to be applied to the network
 	Forks = []upgrades.Fork{}
@@ -210,6 +212,17 @@ func NewTerraApp(
 			GovKeeper:          app.GovKeeper,
 			WasmConfig:         &wasmConfig,
 			TXCounterStoreKey:  app.GetKey(wasm.StoreKey),
+			DyncommKeeper:      app.DyncommKeeper,
+			StakingKeeper:      app.StakingKeeper,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	postHandler, err := custompost.NewPostHandler(
+		custompost.HandlerOptions{
+			DyncommKeeper: app.DyncommKeeper,
 		},
 	)
 	if err != nil {
@@ -217,6 +230,7 @@ func NewTerraApp(
 	}
 
 	app.SetAnteHandler(anteHandler)
+	app.SetPostHandler(postHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {

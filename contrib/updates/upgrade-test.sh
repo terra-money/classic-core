@@ -17,7 +17,18 @@ CHAIN_ID=${STATUS_INFO[0]}
 UPGRADE_HEIGHT=$((STATUS_INFO[1] + 20))
 echo $UPGRADE_HEIGHT
 
-$BINARY_OLD tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from node1 --keyring-backend test --chain-id $CHAIN_ID --home $NODE1_HOME -y
+docker exec terradnode1 tar -cf ./terrad.tar -C . terrad
+SUM=$(docker exec terradnode1 sha256sum ./terrad.tar | cut -d ' ' -f1)
+DOCKER_BASE_PATH=$(docker exec terradnode1 pwd)
+echo $SUM
+UPGRADE_INFO=$(jq -n '
+{
+    "binaries": {
+        "linux/amd64": "file://'$DOCKER_BASE_PATH'/terrad.tar?checksum=sha256:'"$SUM"'",
+    }
+}')
+
+$BINARY_OLD tx gov submit-legacy-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "$UPGRADE_INFO" --title "upgrade" --description "upgrade"  --from node1 --keyring-backend test --chain-id $CHAIN_ID --home $NODE1_HOME -y
 
 sleep 5
 

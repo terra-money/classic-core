@@ -1,6 +1,9 @@
 package ante
 
 import (
+	dyncommante "github.com/classic-terra/core/v2/x/dyncomm/ante"
+	dyncommkeeper "github.com/classic-terra/core/v2/x/dyncomm/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
 
@@ -31,6 +34,8 @@ type HandlerOptions struct {
 	GovKeeper              govkeeper.Keeper
 	WasmConfig             *wasmtypes.WasmConfig
 	TXCounterStoreKey      storetypes.StoreKey
+	DyncommKeeper          dyncommkeeper.Keeper
+	StakingKeeper          stakingkeeper.Keeper
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -85,5 +90,6 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(&options.IBCKeeper),
+		dyncommante.NewDyncommDecorator(options.DyncommKeeper, options.StakingKeeper),
 	), nil
 }

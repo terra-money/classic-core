@@ -10,7 +10,7 @@ HOME=mytestnet
 ROOT=$(pwd)
 DENOM=uluna
 CHAIN_ID=localterra
-SOFTWARE_UPGRADE_NAME="v5"
+SOFTWARE_UPGRADE_NAME="v6"
 ADDITIONAL_PRE_SCRIPTS=${ADDITIONAL_PRE_SCRIPTS:-""}
 ADDITIONAL_AFTER_SCRIPTS=${ADDITIONAL_AFTER_SCRIPTS:-""}
 
@@ -22,19 +22,16 @@ fi
 mkdir -p _build/gocache
 export GOMODCACHE=$ROOT/_build/gocache
 
-# install old binary
-if ! command -v _build/old/terrad &> /dev/null
+# install old binary if not exist
+if [ ! -f "_build/$OLD_VERSION.zip" ] &> /dev/null
 then
     mkdir -p _build/old
     wget -c "https://github.com/classic-terra/core/archive/refs/tags/${OLD_VERSION}.zip" -O _build/${OLD_VERSION}.zip
     unzip _build/${OLD_VERSION}.zip -d _build
-    cd ./_build/core-${OLD_VERSION:1}
-    GOBIN="$ROOT/_build/old" go install -mod=readonly ./...
-    cd ../..
 fi
 
 # reinstall old binary
-if [ $# -eq 1 ] && [ $1 == "--reinstall-old" ]; then
+if [ $# -eq 1 ] && [ $1 == "--reinstall-old" ] || ! command -v _build/old/terrad &> /dev/null; then
     cd ./_build/core-${OLD_VERSION:1}
     GOBIN="$ROOT/_build/old" go install -mod=readonly ./...
     cd ../..
@@ -43,7 +40,9 @@ fi
 # install new binary
 if ! command -v _build/new/terrad &> /dev/null
 then
+    cd ./_build/core-${NEW_VERSION:1}
     GOBIN="$ROOT/_build/new" go install -mod=readonly ./...
+    cd ../..
 fi
 
 # run old node
@@ -93,7 +92,18 @@ run_upgrade () {
     STATUS_INFO=($(./_build/old/terrad status --home $HOME | jq -r '.NodeInfo.network,.SyncInfo.latest_block_height'))
     UPGRADE_HEIGHT=$((STATUS_INFO[1] + 20))
 
-    ./_build/old/terrad tx gov submit-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "temp" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
+    tar -cf ./_build/new/terrad.tar -C ./_build/new terrad
+    SUM=$(shasum -a 256 ./_build/new/terrad.tar | cut -d ' ' -f1)
+    UPGRADE_INFO=$(jq -n '
+    {
+        "binaries": {
+            "linux/amd64": "file://'$(pwd)'/_build/new/terrad.tar?checksum=sha256:'"$SUM"'",
+        }
+    }')
+
+    ./_build/old/terrad keys list --home $HOME --keyring-backend test
+
+    ./_build/old/terrad tx gov submit-legacy-proposal software-upgrade "$SOFTWARE_UPGRADE_NAME" --upgrade-height $UPGRADE_HEIGHT --upgrade-info "$UPGRADE_INFO" --title "upgrade" --description "upgrade"  --from test1 --keyring-backend test --chain-id $CHAIN_ID --home $HOME -y
 
     sleep 5
 

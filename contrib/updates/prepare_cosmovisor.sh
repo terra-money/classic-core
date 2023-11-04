@@ -5,7 +5,7 @@
 
 # These fields should be fetched automatically in the future
 # Need to do more upgrade to see upgrade patterns
-OLD_VERSION=v2.0.1
+OLD_VERSION=v2.2.1
 # this command will retrieve the folder with the largest number in format v<number>
 SOFTWARE_UPGRADE_NAME=$(ls -d -- ./app/upgrades/v* | sort -Vr | head -n 1 | xargs basename)
 BUILDDIR=$1
