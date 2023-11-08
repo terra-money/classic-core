@@ -15,7 +15,7 @@ service Query {
   }
 
   rpc Rate(QueryRateRequest) returns (QueryRateResponse){
-    option (google.api.http).get = "/terra/dyncomm/v1beta1/rates/{validator_addr}";
+    option (google.api.http).get = "/terra/dyncomm/v1beta1/rate/{validator_addr}";
   }
 }
 

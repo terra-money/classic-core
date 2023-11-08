@@ -138,6 +138,14 @@
       }
     },
     {
+      "url": "./tmp-swagger-gen/terra/dyncomm/v1beta1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "DyncommParams"
+        }
+      }
+    },
+    {
       "url": "./tmp-swagger-gen/cosmwasm/wasm/v1/query.swagger.json",
       "operationIds": {
         "rename": {
