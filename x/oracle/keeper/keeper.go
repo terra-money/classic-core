@@ -8,19 +8,20 @@ import (
 	gogotypes "github.com/gogo/protobuf/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // Keeper of the oracle store
 type Keeper struct {
 	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
+	storeKey   storetypes.StoreKey
 	paramSpace paramstypes.Subspace
 
 	accountKeeper types.AccountKeeper
@@ -32,10 +33,15 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
-	paramspace paramstypes.Subspace, accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
-	stakingKeeper types.StakingKeeper, distrName string,
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+	paramspace paramstypes.Subspace,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	distrKeeper types.DistributionKeeper,
+	stakingKeeper types.StakingKeeper,
+	distrName string,
 ) Keeper {
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {

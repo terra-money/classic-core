@@ -1,0 +1,41 @@
+syntax = "proto3";
+package terra.dyncomm.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "terra/dyncomm/v1beta1/dyncomm.proto";
+
+option go_package = "github.com/classic-terra/core/v2/x/dyncomm/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Params queries all parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/terra/dyncomm/v1beta1/params";
+  }
+
+  rpc Rate(QueryRateRequest) returns (QueryRateResponse){
+    option (google.api.http).get = "/terra/dyncomm/v1beta1/rate/{validator_addr}";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryRateRequest is the request type for the Query/Rate RPC method.
+message QueryRateRequest {
+  // validator_addr defines the validator address to query for.
+  string validator_addr = 1;
+}
+
+// QueryRateResponse is the response type for the Query/Rate RPC method.
+message QueryRateResponse {
+  string rate = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"];
+  string target = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"];
+}

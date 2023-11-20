@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -10,22 +11,17 @@ import (
 // RegisterLegacyAminoCodec registers the necessary x/staking interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&types.MsgCreateValidator{}, "staking/MsgCreateValidator", nil)
-	cdc.RegisterConcrete(&types.MsgEditValidator{}, "staking/MsgEditValidator", nil)
-	cdc.RegisterConcrete(&types.MsgDelegate{}, "staking/MsgDelegate", nil)
-	cdc.RegisterConcrete(&types.MsgUndelegate{}, "staking/MsgUndelegate", nil)
-	cdc.RegisterConcrete(&types.MsgBeginRedelegate{}, "staking/MsgBeginRedelegate", nil)
+	legacy.RegisterAminoMsg(cdc, &types.MsgCreateValidator{}, "staking/MsgCreateValidator")
+	legacy.RegisterAminoMsg(cdc, &types.MsgEditValidator{}, "staking/MsgEditValidator")
+	legacy.RegisterAminoMsg(cdc, &types.MsgDelegate{}, "staking/MsgDelegate")
+	legacy.RegisterAminoMsg(cdc, &types.MsgUndelegate{}, "staking/MsgUndelegate")
+	legacy.RegisterAminoMsg(cdc, &types.MsgBeginRedelegate{}, "staking/MsgBeginRedelegate")
+
+	cdc.RegisterConcrete(&types.StakeAuthorization{}, "msgauth/StakeAuthorization", nil)
 }
 
 var (
-	amino = codec.NewLegacyAmino()
-
-	// ModuleCdc references the global x/staking module codec. Note, the codec should
-	// ONLY be used in certain instances of tests and for JSON encoding as Amino is
-	// still used for that purpose.
-	//
-	// The actual codec used for serialization should be provided to x/staking and
-	// defined at the application level.
+	amino     = codec.NewLegacyAmino()
 	ModuleCdc = codec.NewAminoCodec(amino)
 )
 

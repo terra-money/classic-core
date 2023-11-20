@@ -1,11 +1,15 @@
 package app
 
 import (
-	transfer "github.com/cosmos/ibc-go/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/modules/core"
-	ibcclientclient "github.com/cosmos/ibc-go/modules/core/02-client/client"
-	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
+	ica "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v6/modules/apps/29-fee"
+	ibcfeetypes "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/types"
+	transfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v6/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v6/modules/core/02-client/client"
+	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -42,36 +46,40 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	terraappparams "github.com/classic-terra/core/app/params"
+	terraappparams "github.com/classic-terra/core/v2/app/params"
 
-	customauth "github.com/classic-terra/core/custom/auth"
-	customauthsim "github.com/classic-terra/core/custom/auth/simulation"
-	customauthz "github.com/classic-terra/core/custom/authz"
-	custombank "github.com/classic-terra/core/custom/bank"
-	customcrisis "github.com/classic-terra/core/custom/crisis"
-	customdistr "github.com/classic-terra/core/custom/distribution"
-	customevidence "github.com/classic-terra/core/custom/evidence"
-	customfeegrant "github.com/classic-terra/core/custom/feegrant"
-	customgov "github.com/classic-terra/core/custom/gov"
-	custommint "github.com/classic-terra/core/custom/mint"
-	customparams "github.com/classic-terra/core/custom/params"
-	customslashing "github.com/classic-terra/core/custom/slashing"
-	customstaking "github.com/classic-terra/core/custom/staking"
-	customupgrade "github.com/classic-terra/core/custom/upgrade"
+	customauth "github.com/classic-terra/core/v2/custom/auth"
+	customauthsim "github.com/classic-terra/core/v2/custom/auth/simulation"
+	customauthz "github.com/classic-terra/core/v2/custom/authz"
+	custombank "github.com/classic-terra/core/v2/custom/bank"
+	customcrisis "github.com/classic-terra/core/v2/custom/crisis"
+	customdistr "github.com/classic-terra/core/v2/custom/distribution"
+	customevidence "github.com/classic-terra/core/v2/custom/evidence"
+	customfeegrant "github.com/classic-terra/core/v2/custom/feegrant"
+	customgov "github.com/classic-terra/core/v2/custom/gov"
+	custommint "github.com/classic-terra/core/v2/custom/mint"
+	customparams "github.com/classic-terra/core/v2/custom/params"
+	customslashing "github.com/classic-terra/core/v2/custom/slashing"
+	customstaking "github.com/classic-terra/core/v2/custom/staking"
+	customupgrade "github.com/classic-terra/core/v2/custom/upgrade"
+	customwasm "github.com/classic-terra/core/v2/custom/wasm"
 
-	"github.com/classic-terra/core/x/market"
-	markettypes "github.com/classic-terra/core/x/market/types"
-	"github.com/classic-terra/core/x/oracle"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
-	"github.com/classic-terra/core/x/treasury"
-	treasuryclient "github.com/classic-terra/core/x/treasury/client"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
-	"github.com/classic-terra/core/x/vesting"
-	"github.com/classic-terra/core/x/wasm"
-	wasmtypes "github.com/classic-terra/core/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/classic-terra/core/v2/x/dyncomm"
+	dyncommtypes "github.com/classic-terra/core/v2/x/dyncomm/types"
+	"github.com/classic-terra/core/v2/x/market"
+	markettypes "github.com/classic-terra/core/v2/x/market/types"
+	"github.com/classic-terra/core/v2/x/oracle"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/treasury"
+	treasuryclient "github.com/classic-terra/core/v2/x/treasury/client"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/vesting"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/client/docs/statik"
+	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 var (
@@ -88,20 +96,24 @@ var (
 		custommint.AppModuleBasic{},
 		customdistr.AppModuleBasic{},
 		customgov.NewAppModuleBasic(
-			paramsclient.ProposalHandler,
-			distrclient.ProposalHandler,
-			upgradeclient.ProposalHandler,
-			upgradeclient.CancelProposalHandler,
-			ibcclientclient.UpdateClientProposalHandler,
-			ibcclientclient.UpgradeProposalHandler,
-			treasuryclient.ProposalAddBurnTaxExemptionAddressHandler,
-			treasuryclient.ProposalRemoveBurnTaxExemptionAddressHandler,
+			append(
+				wasmclient.ProposalHandlers,
+				paramsclient.ProposalHandler,
+				distrclient.ProposalHandler,
+				upgradeclient.LegacyProposalHandler,
+				upgradeclient.LegacyCancelProposalHandler,
+				ibcclientclient.UpdateClientProposalHandler,
+				ibcclientclient.UpgradeProposalHandler,
+				treasuryclient.ProposalAddBurnTaxExemptionAddressHandler,
+				treasuryclient.ProposalRemoveBurnTaxExemptionAddressHandler,
+			),
 		),
 		customparams.AppModuleBasic{},
 		customcrisis.AppModuleBasic{},
 		customslashing.AppModuleBasic{},
 		customfeegrant.AppModuleBasic{},
 		ibc.AppModuleBasic{},
+		ica.AppModuleBasic{},
 		customupgrade.AppModuleBasic{},
 		customevidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
@@ -109,7 +121,9 @@ var (
 		oracle.AppModuleBasic{},
 		market.AppModuleBasic{},
 		treasury.AppModuleBasic{},
-		wasm.AppModuleBasic{},
+		customwasm.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		dyncomm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -125,6 +139,9 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         nil,
+		icatypes.ModuleName:            nil,
+		wasm.ModuleName:                {authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -152,20 +169,23 @@ func appModules(
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
+		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
+		ibcfee.NewAppModule(app.IBCFeeKeeper),
+		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
-		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		dyncomm.NewAppModule(appCodec, app.DyncommKeeper, app.StakingKeeper),
 	}
 }
 
@@ -178,24 +198,26 @@ func simulationModules(
 
 	return []module.AppModuleSimulation{
 		customauth.NewAppModule(appCodec, app.AccountKeeper, customauthsim.RandomGenesisAccounts),
-		// TODO - uncomment when v0.43.0 fix the simulation bug
-		// authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
+		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
+		params.NewAppModule(app.ParamsKeeper),
+		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
+		ibcfee.NewAppModule(app.IBCFeeKeeper),
+		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		market.NewAppModule(appCodec, app.MarketKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		treasury.NewAppModule(appCodec, app.TreasuryKeeper),
-		wasm.NewAppModule(appCodec, app.WasmKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		dyncomm.NewAppModule(appCodec, app.DyncommKeeper, app.StakingKeeper),
 	}
 }
 
@@ -212,42 +234,52 @@ func orderBeginBlockers() []string {
 		banktypes.ModuleName,
 		govtypes.ModuleName,
 		crisistypes.ModuleName,
-		oracletypes.ModuleName,
 		genutiltypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
+		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		icatypes.ModuleName,
+		ibcfeetypes.ModuleName,
+		// Terra Classic modules
+		oracletypes.ModuleName,
 		treasurytypes.ModuleName,
 		markettypes.ModuleName,
 		wasmtypes.ModuleName,
+		dyncommtypes.ModuleName,
 	}
 }
 
 func orderEndBlockers() []string {
 	return []string{
-		upgradetypes.ModuleName,
-		capabilitytypes.ModuleName,
-		minttypes.ModuleName,
-		distrtypes.ModuleName,
-		slashingtypes.ModuleName,
-		evidencetypes.ModuleName,
+		crisistypes.ModuleName,
+		govtypes.ModuleName,
 		stakingtypes.ModuleName,
+		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
-		govtypes.ModuleName,
-		crisistypes.ModuleName,
-		oracletypes.ModuleName,
+		distrtypes.ModuleName,
+		slashingtypes.ModuleName,
+		minttypes.ModuleName,
 		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
+		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		icatypes.ModuleName,
+		ibcfeetypes.ModuleName,
+		// Terra Classic modules
+		oracletypes.ModuleName,
 		treasurytypes.ModuleName,
 		markettypes.ModuleName,
 		wasmtypes.ModuleName,
+		dyncommtypes.ModuleName,
 	}
 }
 
@@ -260,19 +292,24 @@ func orderInitGenesis() []string {
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
+		minttypes.ModuleName,
+		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
+		authz.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
+		feegrant.ModuleName,
+		// additional non simd modules
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		icatypes.ModuleName,
+		ibcfeetypes.ModuleName,
+		// Terra Classic modules
 		markettypes.ModuleName,
 		oracletypes.ModuleName,
 		treasurytypes.ModuleName,
 		wasmtypes.ModuleName,
-		authz.ModuleName,
-		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
-		minttypes.ModuleName,
-		crisistypes.ModuleName,
-		ibchost.ModuleName,
-		genutiltypes.ModuleName,
-		evidencetypes.ModuleName,
-		ibctransfertypes.ModuleName,
-		feegrant.ModuleName,
+		dyncommtypes.ModuleName,
 	}
 }

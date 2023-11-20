@@ -29,13 +29,13 @@ func WeightedOperations(
 ) simulation.WeightedOperations {
 	var weightMsgSend, weightMsgMultiSend int
 	appParams.GetOrGenerate(cdc, OpWeightMsgSend, &weightMsgSend, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgSend = simappparams.DefaultWeightMsgSend
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgMultiSend, &weightMsgMultiSend, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgMultiSend = simappparams.DefaultWeightMsgMultiSend
 		},
 	)
@@ -105,7 +105,7 @@ func sendMsgSend(
 	account := ak.GetAccount(ctx, from)
 	spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
-	coins, hasNeg := spendable.SafeSub(msg.Amount)
+	coins, hasNeg := spendable.SafeSub(msg.Amount...)
 	if !hasNeg {
 		fees, err = simtypes.RandomFees(r, ctx, coins)
 		if err != nil {
@@ -113,7 +113,8 @@ func sendMsgSend(
 		}
 	}
 	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-	tx, err := helpers.GenTx(
+	tx, err := helpers.GenSignedMockTx(
+		r,
 		txGen,
 		[]sdk.Msg{msg},
 		fees,
@@ -127,7 +128,7 @@ func sendMsgSend(
 		return err
 	}
 
-	_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+	_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 	if err != nil {
 		return err
 	}
@@ -193,7 +194,7 @@ func SimulateMsgMultiSend(ak types.AccountKeeper, bk keeper.Keeper) simtypes.Ope
 				// take random subset of remaining coins for output
 				// and update remaining coins
 				outCoins = simtypes.RandSubsetCoins(r, totalSentCoins)
-				totalSentCoins = totalSentCoins.Sub(outCoins)
+				totalSentCoins = totalSentCoins.Sub(outCoins...)
 			}
 
 			outputs[o] = types.NewOutput(outAddr.Address, outCoins)
@@ -263,7 +264,7 @@ func sendMsgMultiSend(
 	feePayer := ak.GetAccount(ctx, addr)
 	spendable := bk.SpendableCoins(ctx, feePayer.GetAddress())
 
-	coins, hasNeg := spendable.SafeSub(msg.Inputs[0].Coins)
+	coins, hasNeg := spendable.SafeSub(msg.Inputs[0].Coins...)
 	if !hasNeg {
 		fees, err = simtypes.RandomFees(r, ctx, coins)
 		if err != nil {
@@ -272,7 +273,8 @@ func sendMsgMultiSend(
 	}
 
 	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-	tx, err := helpers.GenTx(
+	tx, err := helpers.GenSignedMockTx(
+		r,
 		txGen,
 		[]sdk.Msg{msg},
 		fees,
@@ -286,7 +288,7 @@ func sendMsgMultiSend(
 		return err
 	}
 
-	_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+	_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 	if err != nil {
 		return err
 	}

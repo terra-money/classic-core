@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q
@@ -25,12 +25,9 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 var _ types.QueryServer = querier{}
 
 // Params queries params of distribution module
-func (q querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	var params types.Params
-	q.paramSpace.GetParamSet(ctx, &params)
-
-	return &types.QueryParamsResponse{Params: params}, nil
+	return &types.QueryParamsResponse{Params: q.GetParams(ctx)}, nil
 }
 
 // ExchangeRate queries exchange rate of a denom
@@ -53,7 +50,7 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 }
 
 // ExchangeRates queries exchange rates of all denoms
-func (q querier) ExchangeRates(c context.Context, req *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
+func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates sdk.DecCoins
@@ -85,7 +82,7 @@ func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*
 }
 
 // TobinTaxes queries tobin taxes of all denoms
-func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
+func (q querier) TobinTaxes(c context.Context, _ *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var tobinTaxes types.DenomList
@@ -101,7 +98,7 @@ func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest
 }
 
 // Actives queries all denoms for which exchange rates exist
-func (q querier) Actives(c context.Context, req *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
+func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	denoms := []string{}
@@ -114,7 +111,7 @@ func (q querier) Actives(c context.Context, req *types.QueryActivesRequest) (*ty
 }
 
 // VoteTargets queries the voting target list on current vote period
-func (q querier) VoteTargets(c context.Context, req *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
+func (q querier) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetVoteTargets(ctx)}, nil
 }
@@ -176,7 +173,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 }
 
 // AggregatePrevotes queries aggregate prevotes of all validators
-func (q querier) AggregatePrevotes(c context.Context, req *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
+func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var prevotes []types.AggregateExchangeRatePrevote
@@ -213,7 +210,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 }
 
 // AggregateVotes queries aggregate votes of all validators
-func (q querier) AggregateVotes(c context.Context, req *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
+func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var votes []types.AggregateExchangeRateVote

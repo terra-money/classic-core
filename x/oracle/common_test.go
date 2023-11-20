@@ -5,8 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/classic-terra/core/x/oracle"
-	"github.com/classic-terra/core/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -27,8 +28,8 @@ func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := oracle.NewHandler(input.OracleKeeper)
 
-	sh := staking.NewHandler(input.StakingKeeper)
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
 	require.NoError(t, err)
 
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
@@ -45,14 +46,14 @@ func setup(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := oracle.NewHandler(input.OracleKeeper)
 
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	// Validator created
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
@@ -68,18 +69,18 @@ func setupVal5(t *testing.T) (keeper.TestInput, sdk.Handler) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := oracle.NewHandler(input.OracleKeeper)
 
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	// Validator created
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[4], keeper.ValPubKeys[4], stakingAmt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[4], keeper.ValPubKeys[4], stakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 

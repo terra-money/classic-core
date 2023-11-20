@@ -4,7 +4,7 @@ package terra.oracle.v1beta1;
 import "gogoproto/gogo.proto";
 import "terra/oracle/v1beta1/oracle.proto";
 
-option go_package = "github.com/classic-terra/core/x/oracle/types";
+option go_package = "github.com/classic-terra/core/v2/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {

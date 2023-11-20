@@ -1,8 +1,6 @@
 package ante_test
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -13,7 +11,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
@@ -24,28 +21,31 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	terraapp "github.com/classic-terra/core/app"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
+	terraapp "github.com/classic-terra/core/v2/app"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.
 type AnteTestSuite struct {
 	suite.Suite
 
-	app         *terraapp.TerraApp
-	anteHandler sdk.AnteHandler
-	ctx         sdk.Context
-	clientCtx   client.Context
-	txBuilder   client.TxBuilder
+	app *terraapp.TerraApp
+	// anteHandler sdk.AnteHandler
+	ctx       sdk.Context
+	clientCtx client.Context
+	txBuilder client.TxBuilder
 }
 
 // returns context and app with params set on account keeper
 func createTestApp(isCheckTx bool, tempDir string) (*terraapp.TerraApp, sdk.Context) {
+	// TODO: we need to feed in custom binding here?
+	var wasmOpts []wasm.Option
 	app := terraapp.NewTerraApp(
 		log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{},
 		tempDir, simapp.FlagPeriodValue, terraapp.MakeEncodingConfig(),
-		simapp.EmptyAppOptions{}, wasmconfig.DefaultConfig(),
+		simapp.EmptyAppOptions{}, wasmOpts,
 	)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
@@ -129,39 +129,39 @@ func TestAnteTestSuite(t *testing.T) {
 	suite.Run(t, new(AnteTestSuite))
 }
 
-func generatePubKeysAndSignatures(n int, msg []byte, _ bool) (pubkeys []cryptotypes.PubKey, signatures [][]byte) {
-	pubkeys = make([]cryptotypes.PubKey, n)
-	signatures = make([][]byte, n)
-	for i := 0; i < n; i++ {
-		var privkey cryptotypes.PrivKey = secp256k1.GenPrivKey()
+// func generatePubKeysAndSignatures(n int, msg []byte, _ bool) (pubkeys []cryptotypes.PubKey, signatures [][]byte) {
+// 	pubkeys = make([]cryptotypes.PubKey, n)
+// 	signatures = make([][]byte, n)
+// 	for i := 0; i < n; i++ {
+// 		var privkey cryptotypes.PrivKey = secp256k1.GenPrivKey()
 
-		// TODO: also generate ed25519 keys as below when ed25519 keys are
-		//  actually supported, https://github.com/cosmos/cosmos-sdk/issues/4789
-		// for now this fails:
-		// if rand.Int63()%2 == 0 {
-		//	privkey = ed25519.GenPrivKey()
-		// } else {
-		//	privkey = secp256k1.GenPrivKey()
-		// }
+// 		// TODO: also generate ed25519 keys as below when ed25519 keys are
+// 		//  actually supported, https://github.com/cosmos/cosmos-sdk/issues/4789
+// 		// for now this fails:
+// 		// if rand.Int63()%2 == 0 {
+// 		//	privkey = ed25519.GenPrivKey()
+// 		// } else {
+// 		//	privkey = secp256k1.GenPrivKey()
+// 		// }
 
-		pubkeys[i] = privkey.PubKey()
-		signatures[i], _ = privkey.Sign(msg)
-	}
-	return
-}
+// 		pubkeys[i] = privkey.PubKey()
+// 		signatures[i], _ = privkey.Sign(msg)
+// 	}
+// 	return
+// }
 
-func expectedGasCostByKeys(pubkeys []cryptotypes.PubKey) uint64 {
-	cost := uint64(0)
-	for _, pubkey := range pubkeys {
-		pubkeyType := strings.ToLower(fmt.Sprintf("%T", pubkey))
-		switch {
-		case strings.Contains(pubkeyType, "ed25519"):
-			cost += authtypes.DefaultParams().SigVerifyCostED25519
-		case strings.Contains(pubkeyType, "secp256k1"):
-			cost += authtypes.DefaultParams().SigVerifyCostSecp256k1
-		default:
-			panic("unexpected key type")
-		}
-	}
-	return cost
-}
+// func expectedGasCostByKeys(pubkeys []cryptotypes.PubKey) uint64 {
+// 	cost := uint64(0)
+// 	for _, pubkey := range pubkeys {
+// 		pubkeyType := strings.ToLower(fmt.Sprintf("%T", pubkey))
+// 		switch {
+// 		case strings.Contains(pubkeyType, "ed25519"):
+// 			cost += authtypes.DefaultParams().SigVerifyCostED25519
+// 		case strings.Contains(pubkeyType, "secp256k1"):
+// 			cost += authtypes.DefaultParams().SigVerifyCostSecp256k1
+// 		default:
+// 			panic("unexpected key type")
+// 		}
+// 	}
+// 	return cost
+// }

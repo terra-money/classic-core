@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // NewDecodeStore returns a decoder function closure that unmarshals the KVPair's

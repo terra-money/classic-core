@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -62,7 +62,7 @@ func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdk.Dec) {
 
 // GetParams returns the total set of oracle parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramSpace.GetParamSet(ctx, &params)
+	k.paramSpace.GetParamSetIfExists(ctx, &params)
 	return params
 }
 

@@ -1,0 +1,36 @@
+syntax = "proto3";
+package terra.dyncomm.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/classic-terra/core/v2/x/dyncomm/types";
+
+// Params defines the parameters for the dyncomm module.
+message Params {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  string max_zero = 1 [
+    (gogoproto.moretags)   = "yaml:\"max_zero\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+
+  string slope_base = 2 [
+    (gogoproto.moretags)   = "yaml:\"slope_base\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+
+  string slope_vp_impact = 3 [
+    (gogoproto.moretags)   = "yaml:\"slope_vp_impact\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+
+  string cap = 4 [
+    (gogoproto.moretags)   = "yaml:\"cap\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}

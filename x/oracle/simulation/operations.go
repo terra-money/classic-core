@@ -14,9 +14,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // Simulation operation weights constants
@@ -47,19 +47,19 @@ func WeightedOperations(
 		weightMsgDelegateFeedConsent          int
 	)
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRatePrevote, &weightMsgAggregateExchangeRatePrevote, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgAggregateExchangeRatePrevote = simappparams.DefaultWeightMsgSend * 2
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRateVote, &weightMsgAggregateExchangeRateVote, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgAggregateExchangeRateVote = simappparams.DefaultWeightMsgSend * 2
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
-		func(_ *rand.Rand) {
+		func(*rand.Rand) {
 			weightMsgDelegateFeedConsent = simappparams.DefaultWeightMsgSetWithdrawAddress
 		},
 	)
@@ -118,7 +118,8 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		msg := types.NewMsgAggregateExchangeRatePrevote(voteHash, feederAddr, address)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := helpers.GenSignedMockTx(
+			r,
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
@@ -132,7 +133,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
@@ -188,7 +189,8 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, feederAddr, address)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := helpers.GenSignedMockTx(
+			r,
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
@@ -202,7 +204,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
@@ -244,7 +246,8 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 		msg := types.NewMsgDelegateFeedConsent(valAddress, delegateAccount.Address)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := helpers.GenSignedMockTx(
+			r,
 			txGen,
 			[]sdk.Msg{msg},
 			fees,
@@ -258,7 +261,7 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}

@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authz "github.com/cosmos/cosmos-sdk/x/authz/module"
 
-	customcli "github.com/classic-terra/core/custom/authz/client/cli"
-	customtypes "github.com/classic-terra/core/custom/authz/types"
+	customcli "github.com/classic-terra/core/v2/custom/authz/client/cli"
+	customtypes "github.com/classic-terra/core/v2/custom/authz/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

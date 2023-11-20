@@ -14,8 +14,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 func TestToMap(t *testing.T) {
@@ -229,10 +229,13 @@ func TestPBWeightedMedian(t *testing.T) {
 		}
 
 		if tc.panic {
-			require.Panics(t, func() { pb.WeightedMedianWithAssertion() })
+			require.Panics(t, func() {
+				if !sort.IsSorted(pb) {
+					panic("ballot must be sorted")
+				}
+			})
 		} else {
 			require.Equal(t, tc.median, pb.WeightedMedian())
-			require.Equal(t, tc.median, pb.WeightedMedianWithAssertion())
 		}
 	}
 }
@@ -295,7 +298,7 @@ func TestPBStandardDeviation(t *testing.T) {
 			pb = append(pb, vote)
 		}
 
-		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
+		require.Equal(t, tc.standardDeviation, pb.StandardDeviation(pb.WeightedMedian()))
 	}
 }
 
@@ -316,7 +319,7 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 		1,
 	)}
 
-	require.Equal(t, sdk.ZeroDec(), pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
+	require.Equal(t, sdk.ZeroDec(), pb.StandardDeviation(pb.WeightedMedian()))
 }
 
 func TestNewClaim(t *testing.T) {

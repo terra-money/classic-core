@@ -3,11 +3,11 @@ package ante
 import (
 	"fmt"
 
-	core "github.com/classic-terra/core/types"
+	core "github.com/classic-terra/core/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // MinInitialDeposit Decorator will check Initial Deposits for MsgSubmitProposal
@@ -26,19 +26,19 @@ func NewMinInitialDepositDecorator(govKeeper govkeeper.Keeper, treasuryKeeper Tr
 
 // IsMsgSubmitProposal checks whether the input msg is a MsgSubmitProposal
 func IsMsgSubmitProposal(msg sdk.Msg) bool {
-	_, ok := msg.(*govtypes.MsgSubmitProposal)
+	_, ok := msg.(*govv1beta1.MsgSubmitProposal)
 	return ok
 }
 
 // HandleCheckMinInitialDeposit
 func HandleCheckMinInitialDeposit(ctx sdk.Context, msg sdk.Msg, govKeeper govkeeper.Keeper, treasuryKeeper TreasuryKeeper) (err error) {
-	submitPropMsg, ok := msg.(*govtypes.MsgSubmitProposal)
+	submitPropMsg, ok := msg.(*govv1beta1.MsgSubmitProposal)
 	if !ok {
 		return fmt.Errorf("could not dereference msg as MsgSubmitProposal")
 	}
 
 	minDeposit := govKeeper.GetDepositParams(ctx).MinDeposit
-	requiredAmount := sdk.NewDecFromInt(minDeposit.AmountOf(core.MicroLunaDenom)).Mul(treasuryKeeper.GetMinInitialDepositRatio(ctx)).TruncateInt()
+	requiredAmount := sdk.NewDecFromInt(minDeposit[0].Amount).Mul(treasuryKeeper.GetMinInitialDepositRatio(ctx)).TruncateInt()
 
 	requiredDepositCoins := sdk.NewCoins(
 		sdk.NewCoin(core.MicroLunaDenom, requiredAmount),
@@ -60,7 +60,6 @@ func (midd MinInitialDepositDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 
 	msgs := tx.GetMsgs()
 	for _, msg := range msgs {
-
 		if !IsMsgSubmitProposal(msg) {
 			continue
 		}
@@ -69,7 +68,6 @@ func (midd MinInitialDepositDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 		if err != nil {
 			return ctx, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, err.Error())
 		}
-
 	}
 
 	return next(ctx, tx, simulate)

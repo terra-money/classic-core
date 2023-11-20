@@ -17,7 +17,7 @@ The easiest way to get started is by downloading a pre-built binary for your ope
 
 **Step 1. Install Golang**
 
-Go v1.18 is required for Terra Core.
+Go v1.20 is required for Terra Core.
 
 If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
@@ -53,10 +53,11 @@ If terrad is installed correctly, the following information is returned:
 ```bash
 name: terra
 server_name: terrad
-version: 1.0.5
-commit: 8bb56e9919ecf5234a3239a6a351b509451f9d5d
-build_tags: netgo,ledger
-go: go version go1.18.1 linux/amd64
+version: <version>
+commit: <git commit hash>
+..
+...
+....
 ```
 
 ## `terrad`

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/classic-terra/core/types"
+	core "github.com/classic-terra/core/v2/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

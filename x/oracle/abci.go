@@ -3,9 +3,9 @@ package oracle
 import (
 	"time"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,33 +61,18 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			// make voteMap of Reference Terra to calculate cross exchange rates
 			ballotRT := voteMap[referenceTerra]
 			voteMapRT := ballotRT.ToMap()
-
-			var exchangeRateRT sdk.Dec
-
-			// softfork
-			if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
-				(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
-				exchangeRateRT = ballotRT.WeightedMedian()
-			} else {
-				exchangeRateRT = ballotRT.WeightedMedianWithAssertion()
-			}
+			exchangeRateRT := ballotRT.WeightedMedian()
 
 			// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 			for denom, ballot := range voteMap {
 
 				// Convert ballot to cross exchange rates
 				if denom != referenceTerra {
-					// softfork
-					if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
-						(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
-						ballot = ballot.ToCrossRate(voteMapRT)
-					} else {
-						ballot = ballot.ToCrossRateWithSort(voteMapRT)
-					}
+					ballot = ballot.ToCrossRateWithSort(voteMapRT)
 				}
 
 				// Get weighted median of cross exchange rates
-				exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
+				exchangeRate := Tally(ballot, params.RewardBand, validatorClaimMap)
 
 				// Transform into the original form uluna/stablecoin
 				if denom != referenceTerra {

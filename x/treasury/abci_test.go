@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/treasury/keeper"
-	"github.com/classic-terra/core/x/treasury/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/treasury/keeper"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 func TestBurnAddress(t *testing.T) {

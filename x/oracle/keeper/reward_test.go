@@ -7,9 +7,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // Test a reward giving mechanism
@@ -19,13 +20,13 @@ func TestRewardBallotWinners(t *testing.T) {
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	ctx := input.Ctx
 
 	// Validator created
-	_, err := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	_, err = stakingMsgSvr.CreateValidator(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 

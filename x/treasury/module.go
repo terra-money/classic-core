@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/classic-terra/core/x/treasury/keeper"
-	"github.com/classic-terra/core/x/treasury/simulation"
+	"github.com/classic-terra/core/v2/x/treasury/keeper"
+	"github.com/classic-terra/core/v2/x/treasury/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -22,9 +21,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/classic-terra/core/x/treasury/client/cli"
-	"github.com/classic-terra/core/x/treasury/client/rest"
-	"github.com/classic-terra/core/x/treasury/types"
+	"github.com/classic-terra/core/v2/x/treasury/client/cli"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 var (
@@ -60,18 +58,13 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the treasury module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 
 	return types.ValidateGenesis(&data)
-}
-
-// RegisterRESTRoutes registers the REST routes for the treasury module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the treasury module.
@@ -166,7 +159,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // BeginBlock returns the begin blocker for the treasury module.
-func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the treasury module.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
@@ -200,6 +193,6 @@ func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 }
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
-func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+func (am AppModule) WeightedOperations(module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }

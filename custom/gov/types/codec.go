@@ -2,19 +2,20 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // RegisterLegacyAminoCodec registers all the necessary types and interfaces for the
 // governance module.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterInterface((*govtypes.Content)(nil), nil)
-	cdc.RegisterConcrete(&govtypes.MsgSubmitProposal{}, "gov/MsgSubmitProposal", nil)
-	cdc.RegisterConcrete(&govtypes.MsgDeposit{}, "gov/MsgDeposit", nil)
-	cdc.RegisterConcrete(&govtypes.MsgVote{}, "gov/MsgVote", nil)
-	cdc.RegisterConcrete(&govtypes.MsgVoteWeighted{}, "gov/MsgVoteWeighted", nil)
-	cdc.RegisterConcrete(&govtypes.TextProposal{}, "gov/TextProposal", nil)
+	cdc.RegisterInterface((*govv1beta1.Content)(nil), nil)
+	legacy.RegisterAminoMsg(cdc, &govv1beta1.MsgSubmitProposal{}, "gov/MsgSubmitProposal")
+	legacy.RegisterAminoMsg(cdc, &govv1beta1.MsgDeposit{}, "gov/MsgDeposit")
+	legacy.RegisterAminoMsg(cdc, &govv1beta1.MsgVote{}, "gov/MsgVote")
+	legacy.RegisterAminoMsg(cdc, &govv1beta1.MsgVoteWeighted{}, "gov/MsgVoteWeighted")
+	cdc.RegisterConcrete(&govv1beta1.TextProposal{}, "gov/TextProposal", nil)
 }
 
 // RegisterProposalTypeCodec registers an external proposal content type defined

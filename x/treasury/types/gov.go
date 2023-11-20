@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
@@ -14,20 +14,20 @@ const (
 )
 
 func init() {
-	govtypes.RegisterProposalType(ProposalTypeAddBurnTaxExemptionAddress)
-	govtypes.RegisterProposalTypeCodec(&AddBurnTaxExemptionAddressProposal{}, "treasury/AddBurnTaxExemptionAddressProposal")
-	govtypes.RegisterProposalType(ProposalTypeRemoveBurnTaxExemptionAddress)
-	govtypes.RegisterProposalTypeCodec(&RemoveBurnTaxExemptionAddressProposal{}, "treasury/RemoveBurnTaxExemptionAddressProposal")
+	govv1beta1.RegisterProposalType(ProposalTypeAddBurnTaxExemptionAddress)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&AddBurnTaxExemptionAddressProposal{}, "treasury/AddBurnTaxExemptionAddressProposal", nil)
+	govv1beta1.RegisterProposalType(ProposalTypeRemoveBurnTaxExemptionAddress)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&RemoveBurnTaxExemptionAddressProposal{}, "treasury/RemoveBurnTaxExemptionAddressProposal", nil)
 }
 
 var (
-	_ govtypes.Content = &AddBurnTaxExemptionAddressProposal{}
-	_ govtypes.Content = &RemoveBurnTaxExemptionAddressProposal{}
+	_ govv1beta1.Content = &AddBurnTaxExemptionAddressProposal{}
+	_ govv1beta1.Content = &RemoveBurnTaxExemptionAddressProposal{}
 )
 
 // ======AddBurnTaxExemptionAddressProposal======
 
-func NewAddBurnTaxExemptionAddressProposal(title, description string, addresses []string) govtypes.Content {
+func NewAddBurnTaxExemptionAddressProposal(title, description string, addresses []string) govv1beta1.Content {
 	return &AddBurnTaxExemptionAddressProposal{
 		Title:       title,
 		Description: description,
@@ -54,7 +54,7 @@ func (p AddBurnTaxExemptionAddressProposal) String() string {
 }
 
 func (p *AddBurnTaxExemptionAddressProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := govv1beta1.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (p *AddBurnTaxExemptionAddressProposal) ValidateBasic() error {
 
 // ======RemoveBurnTaxExemptionAddressProposal======
 
-func NewRemoveBurnTaxExemptionAddressProposal(title, description string, addresses []string) govtypes.Content {
+func NewRemoveBurnTaxExemptionAddressProposal(title, description string, addresses []string) govv1beta1.Content {
 	return &RemoveBurnTaxExemptionAddressProposal{
 		Title:       title,
 		Description: description,
@@ -98,7 +98,7 @@ func (p RemoveBurnTaxExemptionAddressProposal) String() string {
 }
 
 func (p *RemoveBurnTaxExemptionAddressProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := govv1beta1.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}

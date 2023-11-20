@@ -4,8 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // NewHandler returns a handler for "oracle" type messages.

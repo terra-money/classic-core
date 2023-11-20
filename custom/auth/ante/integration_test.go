@@ -3,19 +3,23 @@ package ante_test
 import (
 	"fmt"
 
-	customante "github.com/classic-terra/core/custom/auth/ante"
-	core "github.com/classic-terra/core/types"
-	treasurytypes "github.com/classic-terra/core/x/treasury/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	core "github.com/classic-terra/core/v2/types"
+	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
 )
 
-// go test -v -run ^TestAnteTestSuite/TestIntegrationTaxExemption$ github.com/classic-terra/core/custom/auth/ante
-func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
+// go test -v -run ^TestAnteTestSuite/TestIntegrationTaxExemption$ github.com/classic-terra/core/v2/custom/auth/ante
+func (s *AnteTestSuite) TestIntegrationTaxExemption() {
 	// keys and addresses
 	var privs []cryptotypes.PrivKey
 	var addrs []sdk.AccAddress
@@ -29,19 +33,19 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 	}
 
 	// set send amount
-	sendAmt := int64(1000000)
+	sendAmt := int64(1_000_000)
 	sendCoin := sdk.NewInt64Coin(core.MicroSDRDenom, sendAmt)
 	feeAmt := int64(1000)
 
 	cases := []struct {
 		name              string
-		msgSigner         int
+		msgSigner         cryptotypes.PrivKey
 		msgCreator        func() []sdk.Msg
 		expectedFeeAmount int64
 	}{
 		{
 			name:      "MsgSend(exemption -> exemption)",
-			msgSigner: 0,
+			msgSigner: privs[0],
 			msgCreator: func() []sdk.Msg {
 				var msgs []sdk.Msg
 
@@ -53,7 +57,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 			expectedFeeAmount: 0,
 		}, {
 			name:      "MsgSend(normal -> normal)",
-			msgSigner: 2,
+			msgSigner: privs[2],
 			msgCreator: func() []sdk.Msg {
 				var msgs []sdk.Msg
 
@@ -66,7 +70,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 			expectedFeeAmount: feeAmt,
 		}, {
 			name:      "MsgSend(exemption -> normal), MsgSend(exemption -> exemption)",
-			msgSigner: 0,
+			msgSigner: privs[0],
 			msgCreator: func() []sdk.Msg {
 				var msgs []sdk.Msg
 
@@ -81,7 +85,7 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 			expectedFeeAmount: feeAmt,
 		}, {
 			name:      "MsgSend(exemption -> exemption), MsgMultiSend(exemption -> normal, exemption)",
-			msgSigner: 0,
+			msgSigner: privs[0],
 			msgCreator: func() []sdk.Msg {
 				var msgs []sdk.Msg
 
@@ -114,96 +118,101 @@ func (suite *AnteTestSuite) TestIntegrationTaxExemption() {
 	}
 
 	for _, c := range cases {
-		suite.SetupTest(true) // setup
-		tk := suite.app.TreasuryKeeper
-		ak := suite.app.AccountKeeper
-		bk := suite.app.BankKeeper
-		dk := suite.app.DistrKeeper
+		s.SetupTest(true) // setup
+		tk := s.app.TreasuryKeeper
+		ak := s.app.AccountKeeper
+		bk := s.app.BankKeeper
+		dk := s.app.DistrKeeper
 
 		// Set burn split rate to 50%
 		// fee amount should be 500, 50% of 10000
-		tk.SetBurnSplitRate(suite.ctx, sdk.NewDecWithPrec(5, 1)) // 50%
+		burnSplitRate := sdk.NewDecWithPrec(5, 1)
+		tk.SetBurnSplitRate(s.ctx, burnSplitRate) // 50%
 
-		feeCollector := ak.GetModuleAccount(suite.ctx, types.FeeCollectorName)
-		burnModule := ak.GetModuleAccount(suite.ctx, treasurytypes.BurnModuleName)
+		feeCollector := ak.GetModuleAccount(s.ctx, types.FeeCollectorName)
+		burnModule := ak.GetModuleAccount(s.ctx, treasurytypes.BurnModuleName)
 
-		encodingConfig := suite.SetupEncoding()
+		encodingConfig := s.SetupEncoding()
+		wasmConfig := wasmtypes.DefaultWasmConfig()
 		antehandler, err := customante.NewAnteHandler(
 			customante.HandlerOptions{
 				AccountKeeper:      ak,
 				BankKeeper:         bk,
-				FeegrantKeeper:     suite.app.FeeGrantKeeper,
-				OracleKeeper:       suite.app.OracleKeeper,
-				TreasuryKeeper:     suite.app.TreasuryKeeper,
-				SigGasConsumer:     customante.DefaultSigVerificationGasConsumer,
+				FeegrantKeeper:     s.app.FeeGrantKeeper,
+				OracleKeeper:       s.app.OracleKeeper,
+				TreasuryKeeper:     s.app.TreasuryKeeper,
+				SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
 				SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
-				IBCChannelKeeper:   suite.app.IBCKeeper.ChannelKeeper,
+				IBCKeeper:          *s.app.IBCKeeper,
 				DistributionKeeper: dk,
+				WasmConfig:         &wasmConfig,
+				TXCounterStoreKey:  s.app.GetKey(wasmtypes.StoreKey),
 			},
 		)
-		suite.Require().NoError(err)
-
-		fmt.Printf("CASE = %s \n", c.name)
-		suite.ctx = suite.ctx.WithBlockHeight(customante.TaxPowerUpgradeHeight)
-		suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
-
-		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[0].String())
-		tk.AddBurnTaxExemptionAddress(suite.ctx, addrs[1].String())
+		s.Require().NoError(err)
 
 		for i := 0; i < 4; i++ {
-			fundCoins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, 1_000_000_000_000))
-			acc := ak.NewAccountWithAddress(suite.ctx, addrs[i])
-			suite.Require().NoError(acc.SetAccountNumber(uint64(i)))
-			ak.SetAccount(suite.ctx, acc)
-			bk.MintCoins(suite.ctx, minttypes.ModuleName, fundCoins)
-			bk.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addrs[i], fundCoins)
+			coins := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, 1_000_000))
+			testutil.FundAccount(s.app.BankKeeper, s.ctx, addrs[i], coins)
 		}
 
-		// case 1 provides zero fee so not enough fee
-		// case 2 provides enough fee
-		feeCases := []int64{0, feeAmt}
-		for i := 0; i < 1; i++ {
-			feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, feeCases[i]))
-			gasLimit := testdata.NewTestGasLimit()
-			suite.Require().NoError(suite.txBuilder.SetMsgs(c.msgCreator()...))
-			suite.txBuilder.SetFeeAmount(feeAmount)
-			suite.txBuilder.SetGasLimit(gasLimit)
+		s.txBuilder = s.clientCtx.TxConfig.NewTxBuilder()
 
-			privs, accNums, accSeqs := []cryptotypes.PrivKey{privs[c.msgSigner]}, []uint64{uint64(c.msgSigner)}, []uint64{uint64(i)}
-			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
-			suite.Require().NoError(err)
+		tk.AddBurnTaxExemptionAddress(s.ctx, addrs[0].String())
+		tk.AddBurnTaxExemptionAddress(s.ctx, addrs[1].String())
 
-			feeCollectorBefore := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
-			burnBefore := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
-			communityBefore := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
-			supplyBefore := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
+		s.Run(c.name, func() {
+			// case 1 provides zero fee so not enough fee
+			// case 2 provides enough fee
+			feeCases := []int64{0, feeAmt}
+			for i := 0; i < 1; i++ {
+				feeAmount := sdk.NewCoins(sdk.NewInt64Coin(core.MicroSDRDenom, feeCases[i]))
+				gasLimit := testdata.NewTestGasLimit()
+				s.Require().NoError(s.txBuilder.SetMsgs(c.msgCreator()...))
+				s.txBuilder.SetFeeAmount(feeAmount)
+				s.txBuilder.SetGasLimit(gasLimit)
 
-			_, err = antehandler(suite.ctx, tx, false)
-			if i == 0 && c.expectedFeeAmount != 0 {
-				suite.Require().EqualError(err, fmt.Sprintf("insufficient fees; got: \"\", required: \"%dusdr\" = \"\"(gas) +\"%dusdr\"(stability): insufficient fee", c.expectedFeeAmount, c.expectedFeeAmount))
-			} else {
-				suite.Require().NoError(err)
+				privs, accNums, accSeqs := []cryptotypes.PrivKey{c.msgSigner}, []uint64{3}, []uint64{0}
+				tx, err := s.CreateTestTx(privs, accNums, accSeqs, s.ctx.ChainID())
+				s.Require().NoError(err)
+
+				// set zero gas prices
+				s.ctx = s.ctx.WithMinGasPrices(sdk.NewDecCoins())
+
+				feeCollectorBefore := bk.GetBalance(s.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+				burnBefore := bk.GetBalance(s.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
+				communityBefore := dk.GetFeePool(s.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
+				supplyBefore := bk.GetSupply(s.ctx, core.MicroSDRDenom)
+
+				_, err = antehandler(s.ctx, tx, false)
+				if i == 0 && c.expectedFeeAmount != 0 {
+					s.Require().EqualError(err, fmt.Sprintf(
+						"insufficient fees; got: \"\", required: \"%dusdr\" = \"\"(gas) + \"%dusdr\"(stability): insufficient fee",
+						c.expectedFeeAmount, c.expectedFeeAmount))
+				} else {
+					s.Require().NoError(err)
+				}
+
+				feeCollectorAfter := bk.GetBalance(s.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
+				burnAfter := bk.GetBalance(s.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
+				communityAfter := dk.GetFeePool(s.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
+				supplyAfter := bk.GetSupply(s.ctx, core.MicroSDRDenom)
+
+				if i == 0 {
+					s.Require().Equal(feeCollectorBefore, feeCollectorAfter)
+					s.Require().Equal(burnBefore, burnAfter)
+					s.Require().Equal(communityBefore, communityAfter)
+					s.Require().Equal(supplyBefore, supplyAfter)
+				}
+
+				if i == 1 {
+					s.Require().Equal(feeCollectorBefore, feeCollectorAfter)
+					splitAmount := burnSplitRate.MulInt64(c.expectedFeeAmount).TruncateInt()
+					s.Require().Equal(burnBefore, burnAfter.AddAmount(splitAmount))
+					s.Require().Equal(communityBefore, communityAfter.Add(sdk.NewDecFromInt(splitAmount)))
+					s.Require().Equal(supplyBefore, supplyAfter.SubAmount(splitAmount))
+				}
 			}
-
-			feeCollectorAfter := bk.GetBalance(suite.ctx, feeCollector.GetAddress(), core.MicroSDRDenom)
-			burnAfter := bk.GetBalance(suite.ctx, burnModule.GetAddress(), core.MicroSDRDenom)
-			communityAfter := dk.GetFeePool(suite.ctx).CommunityPool.AmountOf(core.MicroSDRDenom)
-			supplyAfter := bk.GetSupply(suite.ctx, core.MicroSDRDenom)
-
-			if i == 0 {
-				suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
-				suite.Require().Equal(burnBefore, burnAfter)
-				suite.Require().Equal(communityBefore, communityAfter)
-				suite.Require().Equal(supplyBefore, supplyAfter)
-			}
-
-			if i == 1 {
-				suite.Require().Equal(feeCollectorBefore, feeCollectorAfter)
-				splitAmount := sdk.NewInt(int64(float64(c.expectedFeeAmount) * 0.5))
-				suite.Require().Equal(burnBefore, burnAfter.AddAmount(splitAmount))
-				suite.Require().Equal(communityBefore, communityAfter.Add(sdk.NewDecFromInt(splitAmount)))
-				suite.Require().Equal(supplyBefore, supplyAfter.SubAmount(splitAmount))
-			}
-		}
+		})
 	}
 }

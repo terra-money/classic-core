@@ -16,15 +16,12 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -35,29 +32,31 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/classic-terra/core/app/keepers"
-	terraappparams "github.com/classic-terra/core/app/params"
+	"github.com/classic-terra/core/v2/app/keepers"
+	terraappparams "github.com/classic-terra/core/v2/app/params"
 
 	// upgrades
-	"github.com/classic-terra/core/app/upgrades"
-	v2 "github.com/classic-terra/core/app/upgrades/v2"
-	v3 "github.com/classic-terra/core/app/upgrades/v3"
+	"github.com/classic-terra/core/v2/app/upgrades"
+	v2 "github.com/classic-terra/core/v2/app/upgrades/v2"
+	v3 "github.com/classic-terra/core/v2/app/upgrades/v3"
+	v4 "github.com/classic-terra/core/v2/app/upgrades/v4"
+	v5 "github.com/classic-terra/core/v2/app/upgrades/v5"
+	v6 "github.com/classic-terra/core/v2/app/upgrades/v6"
 
-	customante "github.com/classic-terra/core/custom/auth/ante"
-	customauthrest "github.com/classic-terra/core/custom/auth/client/rest"
-	customauthtx "github.com/classic-terra/core/custom/auth/tx"
-	core "github.com/classic-terra/core/types"
+	customante "github.com/classic-terra/core/v2/custom/auth/ante"
+	custompost "github.com/classic-terra/core/v2/custom/auth/post"
+	customauthtx "github.com/classic-terra/core/v2/custom/auth/tx"
 
-	wasmconfig "github.com/classic-terra/core/x/wasm/config"
+	"github.com/CosmWasm/wasmd/x/wasm"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/classic-terra/core/client/docs/statik"
+	_ "github.com/classic-terra/core/v2/client/docs/statik"
 )
 
 const appName = "TerraApp"
@@ -67,7 +66,10 @@ var (
 	DefaultNodeHome string
 
 	// Upgrades defines upgrades to be applied to the network
-	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade}
+	Upgrades = []upgrades.Upgrade{v2.Upgrade, v3.Upgrade, v4.Upgrade, v5.Upgrade, v6.Upgrade}
+
+	// Forks defines forks to be applied to the network
+	Forks = []upgrades.Fork{}
 )
 
 // Verify app interface at compile time
@@ -81,7 +83,7 @@ var (
 // capabilities aren't needed for testing.
 type TerraApp struct {
 	*baseapp.BaseApp
-	keepers.AppKeepers
+	*keepers.AppKeepers
 
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
@@ -112,7 +114,7 @@ func init() {
 func NewTerraApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig terraappparams.EncodingConfig, appOpts servertypes.AppOptions,
-	wasmConfig *wasmconfig.Config, baseAppOptions ...func(*baseapp.BaseApp),
+	wasmOpts []wasm.Option, baseAppOptions ...func(*baseapp.BaseApp),
 ) *TerraApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -138,11 +140,10 @@ func NewTerraApp(
 		legacyAmino,
 		maccPerms,
 		allowedReceivingModAcc,
-		app.ModuleAccountAddrs(),
 		skipUpgradeHeights,
 		homePath,
 		invCheckPeriod,
-		wasmConfig,
+		wasmOpts,
 		appOpts,
 	)
 
@@ -173,6 +174,7 @@ func NewTerraApp(
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
 	app.setupUpgradeHandlers()
+	app.setupUpgradeStoreLoaders()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -191,6 +193,11 @@ func NewTerraApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
 	anteHandler, err := customante.NewAnteHandler(
 		customante.HandlerOptions{
 			AccountKeeper:      app.AccountKeeper,
@@ -200,9 +207,22 @@ func NewTerraApp(
 			TreasuryKeeper:     app.TreasuryKeeper,
 			SigGasConsumer:     ante.DefaultSigVerificationGasConsumer,
 			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
-			IBCChannelKeeper:   app.IBCKeeper.ChannelKeeper,
+			IBCKeeper:          *app.IBCKeeper,
 			DistributionKeeper: app.DistrKeeper,
 			GovKeeper:          app.GovKeeper,
+			WasmConfig:         &wasmConfig,
+			TXCounterStoreKey:  app.GetKey(wasm.StoreKey),
+			DyncommKeeper:      app.DyncommKeeper,
+			StakingKeeper:      app.StakingKeeper,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	postHandler, err := custompost.NewPostHandler(
+		custompost.HandlerOptions{
+			DyncommKeeper: app.DyncommKeeper,
 		},
 	)
 	if err != nil {
@@ -210,11 +230,18 @@ func NewTerraApp(
 	}
 
 	app.SetAnteHandler(anteHandler)
+	app.SetPostHandler(postHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
 
@@ -226,50 +253,7 @@ func (app *TerraApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *TerraApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapDisableForkHeight { // Make min spread to one to disable swap
-		params := app.MarketKeeper.GetParams(ctx)
-		params.MinStabilitySpread = sdk.OneDec()
-		app.MarketKeeper.SetParams(ctx, params)
-
-		// Disable IBC Channels
-		channelIDs := []string{
-			"channel-1",  // Osmosis
-			"channel-49", // Crescent
-			"channel-20", // Juno
-		}
-		for _, channelID := range channelIDs {
-			channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, channelID)
-			if !found {
-				panic(fmt.Sprintf("%s not found", channelID))
-			}
-
-			channel.State = ibcchanneltypes.CLOSED
-			app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, channelID, channel)
-		}
-	}
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.SwapEnableForkHeight { // Re-enable IBCs
-		// Enable IBC Channels
-		channelIDs := []string{
-			"channel-1",  // Osmosis
-			"channel-49", // Crescent
-			"channel-20", // Juno
-		}
-		for _, channelID := range channelIDs {
-			channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, ibctransfertypes.PortID, channelID)
-			if !found {
-				panic(fmt.Sprintf("%s not found", channelID))
-			}
-
-			channel.State = ibcchanneltypes.OPEN
-			app.IBCKeeper.ChannelKeeper.SetChannel(ctx, ibctransfertypes.PortID, channelID, channel)
-		}
-	}
-
-	// trigger SetModuleVersionMap in upgrade keeper at the VersionMapEnableHeight
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() == core.VersionMapEnableHeight {
-		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
-	}
-
+	BeginBlockForks(ctx, app)
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -283,9 +267,6 @@ func (app *TerraApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abc
 	var genesisState GenesisState
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
-	}
-	if ctx.ChainID() == core.ColumbusChainID {
-		panic("Must use v1.0.x for importing the columbus genesis (https://github.com/classic-terra/core/releases/)")
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
@@ -354,20 +335,14 @@ func (app *TerraApp) SimulationManager() *module.SimulationManager {
 // API server.
 func (app *TerraApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
-	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
-	// Register legacy tx routes.
-	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
-	// Register legacy custom tx routes.
-	customauthrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
+
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register custom tx routes from grpc-gateway.
 	customauthtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
 	// Register legacy and grpc-gateway routes for all modules.
-	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register swagger API from root so that other applications can override easily
@@ -384,7 +359,12 @@ func (app *TerraApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *TerraApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	tmservice.RegisterTendermintService(
+		clientCtx,
+		app.BaseApp.GRPCQueryRouter(),
+		app.interfaceRegistry,
+		app.Query,
+	)
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server
@@ -407,6 +387,23 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
+func (app *TerraApp) setupUpgradeStoreLoaders() {
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+		}
+	}
+}
+
 func (app *TerraApp) setupUpgradeHandlers() {
 	for _, upgrade := range Upgrades {
 		app.UpgradeKeeper.SetUpgradeHandler(
@@ -415,7 +412,7 @@ func (app *TerraApp) setupUpgradeHandlers() {
 				app.mm,
 				app.configurator,
 				app.BaseApp,
-				&app.AppKeepers,
+				app.AppKeepers,
 			),
 		)
 	}

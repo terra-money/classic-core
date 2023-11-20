@@ -8,7 +8,6 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -20,11 +19,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/classic-terra/core/x/market/client/cli"
-	"github.com/classic-terra/core/x/market/client/rest"
-	"github.com/classic-terra/core/x/market/keeper"
-	"github.com/classic-terra/core/x/market/simulation"
-	"github.com/classic-terra/core/x/market/types"
+	"github.com/classic-terra/core/v2/x/market/client/cli"
+	"github.com/classic-terra/core/v2/x/market/keeper"
+	"github.com/classic-terra/core/v2/x/market/simulation"
+	"github.com/classic-terra/core/v2/x/market/types"
 )
 
 var (
@@ -60,18 +58,13 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the market module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 
 	return types.ValidateGenesis(&data)
-}
-
-// RegisterRESTRoutes registers the REST routes for the market module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the oracle module.
@@ -165,7 +158,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock returns the begin blocker for the market module.
-func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(sdk.Context, abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the market module.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {

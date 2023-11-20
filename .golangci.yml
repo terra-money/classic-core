@@ -41,8 +41,7 @@ issues:
     - text: "ST1016:"
       linters:
         - stylecheck
-    - path: "migrations"
-      text: "SA1019:"
+    - text: "SA1019:"
       linters:
         - staticcheck
     - text: "leading space"

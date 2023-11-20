@@ -108,8 +108,8 @@ func (vs VestingSchedule) Validate() error {
 
 	// add rounding to allow language specific calculation errors
 	const fixedPointDecimals = 1000000000
-	if !sumRatio.MulInt64(fixedPointDecimals).RoundInt().
-		ToDec().QuoInt64(fixedPointDecimals).Equal(sdk.OneDec()) {
+	if !sdk.NewDec(sumRatio.MulInt64(fixedPointDecimals).RoundInt64()).
+		QuoInt64(fixedPointDecimals).Equal(sdk.OneDec()) {
 		return errors.New("vesting total ratio must be one")
 	}
 

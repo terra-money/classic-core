@@ -11,9 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 func TestOracleFilters(t *testing.T) {

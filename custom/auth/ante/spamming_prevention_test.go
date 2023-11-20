@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/classic-terra/core/custom/auth/ante"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/custom/auth/ante"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 func (suite *AnteTestSuite) TestOracleSpamming() {
@@ -79,7 +79,7 @@ type dummyOracleKeeper struct {
 	feeders map[string]string
 }
 
-func (ok dummyOracleKeeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
+func (ok dummyOracleKeeper) ValidateFeeder(_ sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
 	if val, ok := ok.feeders[validatorAddr.String()]; ok && val == feederAddr.String() {
 		return nil
 	}

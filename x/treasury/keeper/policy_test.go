@@ -3,27 +3,28 @@ package keeper
 import (
 	"testing"
 
-	core "github.com/classic-terra/core/types"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
-	"github.com/classic-terra/core/x/treasury/types"
+	core "github.com/classic-terra/core/v2/types"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 func TestUpdateTaxRate(t *testing.T) {
 	input := CreateTestInput(t)
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	// Create Validators
 	amt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
@@ -47,15 +48,15 @@ func TestUpdateTaxRate(t *testing.T) {
 func TestUpdateRewardWeight(t *testing.T) {
 	input := CreateTestInput(t)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, sdk.OneDec())
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 
 	// Create Validators
 	amt := sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	_, err = stakingMsgSvr.CreateValidator(input.Ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 

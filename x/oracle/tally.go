@@ -3,23 +3,15 @@ package oracle
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
 // CONTRACT: pb must be sorted
-func Tally(ctx sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
-	// softfork
-	if (ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() < int64(5_701_000)) ||
-		(ctx.ChainID() == core.BombayChainID && ctx.BlockHeight() < int64(7_000_000)) {
-		weightedMedian = pb.WeightedMedian()
-	} else {
-		weightedMedian = pb.WeightedMedianWithAssertion()
-	}
-
+func Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
+	weightedMedian = pb.WeightedMedian()
 	standardDeviation := pb.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 

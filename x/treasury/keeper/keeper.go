@@ -5,24 +5,22 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	core "github.com/classic-terra/core/types"
+	core "github.com/classic-terra/core/v2/types"
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/classic-terra/core/x/treasury/types"
-)
+	"github.com/classic-terra/core/v2/x/treasury/types"
 
-// TaxPowerUpgradeHeight is when taxes are allowed to go into effect
-// This will still need a parameter change proposal, but can be activated
-// anytime after this height
-const TaxPowerUpgradeHeight = 9346889
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+)
 
 // Keeper of the treasury store
 type Keeper struct {
-	storeKey   sdk.StoreKey
+	storeKey   storetypes.StoreKey
 	cdc        codec.BinaryCodec
 	paramSpace paramstypes.Subspace
 
@@ -32,12 +30,15 @@ type Keeper struct {
 	stakingKeeper types.StakingKeeper
 	distrKeeper   types.DistributionKeeper
 	oracleKeeper  types.OracleKeeper
+	wasmKeeper    *wasmkeeper.Keeper
 
 	distributionModuleName string
 }
 
 // NewKeeper creates a new treasury Keeper instance
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
 	paramSpace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -45,6 +46,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	oracleKeeper types.OracleKeeper,
 	stakingKeeper types.StakingKeeper,
 	distrKeeper types.DistributionKeeper,
+	wasmKeeper *wasmkeeper.Keeper,
 	distributionModuleName string,
 ) Keeper {
 	// ensure treasury module account is set
@@ -72,6 +74,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		oracleKeeper:           oracleKeeper,
 		stakingKeeper:          stakingKeeper,
 		distrKeeper:            distrKeeper,
+		wasmKeeper:             wasmKeeper,
 		distributionModuleName: distributionModuleName,
 	}
 }
@@ -130,12 +133,6 @@ func (k Keeper) SetTaxCap(ctx sdk.Context, denom string, cap sdk.Int) {
 
 // GetTaxCap gets the tax cap denominated in integer units of the reference {denom}
 func (k Keeper) GetTaxCap(ctx sdk.Context, denom string) sdk.Int {
-	currHeight := ctx.BlockHeight()
-	// Allow tax cap for uluna
-	if denom == core.MicroLunaDenom && currHeight < TaxPowerUpgradeHeight {
-		return sdk.ZeroInt()
-	}
-
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTaxCapKey(denom))
 	if bz == nil {
@@ -376,6 +373,8 @@ func (k Keeper) RemoveBurnTaxExemptionAddress(ctx sdk.Context, address string) e
 	return nil
 }
 
+// HasBurnTaxExemptionAddress returns true if all provided addresses are in the
+// tax exemption whitelist
 func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, addresses ...string) bool {
 	sub := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnTaxExemptionListPrefix)
 
@@ -386,4 +385,20 @@ func (k Keeper) HasBurnTaxExemptionAddress(ctx sdk.Context, addresses ...string)
 	}
 
 	return true
+}
+
+// HasBurnTaxExemptionContract returns true if a provided address is a
+// smart contract AND is in the tax exemption list
+func (k Keeper) HasBurnTaxExemptionContract(ctx sdk.Context, address string) bool {
+	contractAddr, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		return false
+	}
+
+	info := k.wasmKeeper.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return false
+	}
+
+	return k.HasBurnTaxExemptionAddress(ctx, address)
 }

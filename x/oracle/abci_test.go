@@ -12,10 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/oracle"
-	"github.com/classic-terra/core/x/oracle/keeper"
-	"github.com/classic-terra/core/x/oracle/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/oracle"
+	"github.com/classic-terra/core/v2/x/oracle/keeper"
+	"github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 func TestOracleThreshold(t *testing.T) {
@@ -170,7 +170,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 	sort.Sort(ballot)
-	weightedMedian := ballot.WeightedMedianWithAssertion()
+	weightedMedian := ballot.WeightedMedian()
 	standardDeviation := ballot.StandardDeviation(weightedMedian)
 	maxSpread := weightedMedian.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -200,7 +200,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian := oracle.Tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx), validatorClaimMap)
+	tallyMedian := oracle.Tally(ballot, input.OracleKeeper.RewardBand(input.Ctx), validatorClaimMap)
 
 	require.Equal(t, validatorClaimMap, expectedValidatorClaimMap)
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

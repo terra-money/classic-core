@@ -3,20 +3,10 @@ package terra.wasm.v1beta1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/classic-terra/core/x/wasm/types";
-
-// Params defines the parameters for the wasm module.
-message Params {
-  option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = false;
-
-  uint64 max_contract_size     = 1 [(gogoproto.moretags) = "yaml:\"max_contract_size\""];
-  uint64 max_contract_gas      = 2 [(gogoproto.moretags) = "yaml:\"max_contract_gas\""];
-  uint64 max_contract_msg_size = 3 [(gogoproto.moretags) = "yaml:\"max_contract_msg_size\""];
-}
+option go_package = "github.com/classic-terra/core/v2/custom/wasm/types/legacy";
 
 // CodeInfo is data for the uploaded contract WASM code
-message CodeInfo {
+message LegacyCodeInfo {
   // CodeID is the sequentially increasing unique identifier
   uint64 code_id = 1 [(gogoproto.moretags) = "yaml:\"code_id\"", (gogoproto.customname) = "CodeID"];
   // CodeHash is the unique identifier created by wasmvm
@@ -26,7 +16,7 @@ message CodeInfo {
 }
 
 // ContractInfo stores a WASM contract instance
-message ContractInfo {
+message LegacyContractInfo {
   option (gogoproto.equal) = true;
 
   // Address is the address of the contract

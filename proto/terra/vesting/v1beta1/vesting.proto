@@ -4,7 +4,7 @@ package terra.vesting.v1beta1;
 import "gogoproto/gogo.proto";
 import "cosmos/vesting/v1beta1/vesting.proto";
 
-option go_package = "github.com/classic-terra/core/x/vesting/types";
+option go_package = "github.com/classic-terra/core/v2/x/vesting/types";
 
 // LazyGradedVestingAccount implements the LazyGradedVestingAccount interface. It vests all
 // coins according to a predefined schedule.

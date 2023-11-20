@@ -5,9 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/market/types"
-	oracletypes "github.com/classic-terra/core/x/oracle/types"
+	"github.com/classic-terra/core/v2/x/market/types"
+	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 )
 
 type msgServer struct {
@@ -102,10 +101,8 @@ func (k msgServer) handleSwapRequest(ctx sdk.Context,
 	swapCoin, decimalCoin := swapDecCoin.TruncateDecimal()
 
 	// Ensure to fail the swap tx when zero swap coin
-	if ctx.ChainID() == core.ColumbusChainID && ctx.BlockHeight() >= core.SwapDisableForkHeight {
-		if !swapCoin.IsPositive() {
-			return nil, types.ErrZeroSwapCoin
-		}
+	if !swapCoin.IsPositive() {
+		return nil, types.ErrZeroSwapCoin
 	}
 
 	feeDecCoin = feeDecCoin.Add(decimalCoin) // add truncated decimalCoin to swapFee

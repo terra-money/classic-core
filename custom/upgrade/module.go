@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 
-	customtypes "github.com/classic-terra/core/custom/upgrade/types"
+	customtypes "github.com/classic-terra/core/v2/custom/upgrade/types"
 )
 
 var _ module.AppModuleBasic = AppModuleBasic{}

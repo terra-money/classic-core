@@ -1,0 +1,22 @@
+syntax = "proto3";
+package terra.dyncomm.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "terra/dyncomm/v1beta1/dyncomm.proto";
+
+option go_package = "github.com/classic-terra/core/v2/x/dyncomm/types";
+
+// GenesisState defines the dyncomm module's genesis state.
+message GenesisState {
+  // params defines all the paramaters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+  repeated ValidatorCommissionRate validator_commission_rates = 2 [(gogoproto.nullable) = false];
+}
+
+// MinDynCommission defines a validator - min commission rate
+// pair to be enforced by the blockchain
+message ValidatorCommissionRate {
+  string validator_address = 1;
+  string min_commission_rate = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"];
+  string target_commission_rate = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"];
+}

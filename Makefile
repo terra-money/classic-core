@@ -10,11 +10,14 @@ SIMAPP = ./app
 HTTPS_GIT := https://github.com/classic-terra/core.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+GO_VERSION := $(shell cat go.mod | grep -E 'go [0-9].[0-9]+' | cut -d ' ' -f 2)
 
 #TESTNET PARAMETERS
-TESTNET_NVAL := $(if $(TESTNET_NVAL),$(TESTNET_NVAL),4)
-TESTNET_CHAINID := $(if $(TESTNET_CHAINID),$(TESTNET_CHAINID),localnet-1)
-TESTNET_VOTING_PERIOD := $(if $(TESTNET_VOTING_PERIOD),$(TESTNET_VOTING_PERIOD),86400s)
+TESTNET_NVAL := $(if $(TESTNET_NVAL),$(TESTNET_NVAL),7)
+TESTNET_CHAINID := $(if $(TESTNET_CHAINID),$(TESTNET_CHAINID),localterra)
+
+#OPERATOR ARGS
+NODE_VERSION := $(if $(NODE_VERSION),$(NODE_VERSION),alpine3.17)
 
 ifneq ($(OS),Windows_NT)
   UNAME_S = $(shell uname -s)
@@ -133,19 +136,68 @@ build-linux-with-shared-library:
 	docker cp temp:/lib/libwasmvm.so $(BUILDDIR)/
 	docker rm temp
 
+build-release: build-release-amd64 build-release-arm64
+
+build-release-amd64: go.sum
+	mkdir -p $(BUILDDIR)/release
+	$(DOCKER) buildx create --name core-builder || true
+	$(DOCKER) buildx use core-builder
+	$(DOCKER) buildx build \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+    --build-arg BUILDPLATFORM=linux/amd64 \
+    --build-arg GOOS=linux \
+    --build-arg GOARCH=amd64 \
+		-t core:local-amd64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f core-builder || true
+	$(DOCKER) create -ti --name core-builder core:local-amd64
+	$(DOCKER) cp core-builder:/usr/local/bin/terrad $(BUILDDIR)/release/terrad
+	tar -czvf $(BUILDDIR)/release/terra_$(VERSION)_Linux_x86_64.tar.gz -C $(BUILDDIR)/release/ terrad
+	rm $(BUILDDIR)/release/terrad
+	$(DOCKER) rm -f core-builder
+
+build-release-arm64: go.sum
+	mkdir -p $(BUILDDIR)/release
+	$(DOCKER) buildx create --name core-builder || true
+	$(DOCKER) buildx use core-builder 
+	$(DOCKER) buildx build \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+    --build-arg BUILDPLATFORM=linux/arm64 \
+    --build-arg GOOS=linux \
+    --build-arg GOARCH=arm64 \
+		-t core:local-arm64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f core-builder || true
+	$(DOCKER) create -ti --name core-builder core:local-arm64
+	$(DOCKER) cp core-builder:/usr/local/bin/terrad $(BUILDDIR)/release/terrad 
+	tar -czvf $(BUILDDIR)/release/terra_$(VERSION)_Linux_arm64.tar.gz -C $(BUILDDIR)/release/ terrad 
+	rm $(BUILDDIR)/release/terrad
+	$(DOCKER) rm -f core-builder
+
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
+
+gen-swagger-docs:
+	bash scripts/protoc-swagger-gen.sh
 
 update-swagger-docs: statik
 	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
-        echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
+        echo "Swagger docs are out of sync!";\
         exit 1;\
     else \
-        echo "\033[92mSwagger docs are in sync\033[0m";\
+        echo "Swagger docs are in sync!";\
     fi
 
-.PHONY: build build-linux install update-swagger-docs
+apply-swagger: gen-swagger-docs update-swagger-docs
+
+.PHONY: build build-linux install update-swagger-docs apply-swagger
 
 ########################################
 ### Tools & dependencies
@@ -201,10 +253,10 @@ benchmark:
 ###############################################################################
 
 lint:
-	sudo golangci-lint run --out-format=tab
+	golangci-lint run --out-format=tab
 
 lint-fix:
-	sudo golangci-lint run --fix --out-format=tab --issues-exit-code=0
+	golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
 lint-strict:
 	find . -path './_build' -prune -o -type f -name '*.go' -exec gofumpt -w -l {} +
@@ -235,23 +287,20 @@ proto-format:
 	@echo "Formatting Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_PROTO_FMT}$$"; then docker start -a $(CONTAINER_PROTO_FMT); else docker run --name $(CONTAINER_PROTO_FMT) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
 		find ./proto -name "*.proto" -exec clang-format -i {} \; ; fi
-
-proto-swagger-gen:
-	@./scripts/protoc-swagger-gen.sh
-
+	
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
 proto-check-breaking:
 	@$(DOCKER_BUF) breaking --against '$(HTTPS_GIT)#branch=main'
 
-.PHONY: proto-all proto-gen proto-swagger-gen proto-format proto-lint proto-check-breaking 
+.PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking 
 
 ###############################################################################
 ###                                Localnet                                 ###
 ###############################################################################
 
-# Run a 4-node testnet locally
+# Run a 7-node testnet locally by default
 localnet-start: localnet-stop build-linux
 	$(if $(shell $(DOCKER) inspect -f '{{ .Id }}' classic-terra/terrad-env 2>/dev/null),$(info found image classic-terra/terrad-env),$(MAKE) -C contrib/localnet terrad-env)
 	if ! [ -f build/node0/terrad/config/genesis.json ]; then $(DOCKER) run --platform linux/amd64 --rm \
@@ -262,24 +311,23 @@ localnet-start: localnet-stop build-linux
 		-v /etc/shadow:/etc/shadow:ro \
 		classic-terra/terrad-env testnet --chain-id ${TESTNET_CHAINID} --v ${TESTNET_NVAL} -o . --starting-ip-address 192.168.10.2 --keyring-backend=test; \
 	fi
-	for i in $$(seq 0 5); do \
-		echo $$i; \
-		jq '.app_state.gov.voting_params.voting_period = "${TESTNET_VOTING_PERIOD}"' build/node$$i/terrad/config/genesis.json > build/node$$i/terrad/config/genesis.json.tmp; \
-		mv build/node$$i/terrad/config/genesis.json.tmp build/node$$i/terrad/config/genesis.json; \
-	done
 	docker-compose up -d
 
 localnet-start-upgrade: localnet-upgrade-stop build-linux
 	$(MAKE) -C contrib/updates build-cosmovisor-linux BUILDDIR=$(BUILDDIR)
 	$(if $(shell $(DOCKER) inspect -f '{{ .Id }}' classic-terra/terrad-upgrade-env 2>/dev/null),$(info found image classic-terra/terrad-upgrade-env),$(MAKE) -C contrib/localnet terrad-upgrade-env)
-	bash contrib/updates/prepare_cosmovisor.sh $(BUILDDIR)
+	bash contrib/updates/prepare_cosmovisor.sh $(BUILDDIR) ${TESTNET_NVAL} ${TESTNET_CHAINID}
 	docker-compose -f ./contrib/updates/docker-compose.yml up -d
 
 localnet-upgrade-stop:
 	docker-compose -f ./contrib/updates/docker-compose.yml down
+	rm -rf build/node*
+	rm -rf build/gentxs
 
 localnet-stop:
 	docker-compose down
+	rm -rf build/node*
+	rm -rf build/gentxs
 
 .PHONY: localnet-start localnet-stop
 
@@ -293,7 +341,7 @@ build-operator-img-core:
 	docker-compose -f contrib/terra-operator/docker-compose.build.yml build core --no-cache
 
 build-operator-img-node:
-	@if ! docker image inspect public.ecr.aws/p5q2r9h7/core:alpine3.17 &>/dev/null ; then make build-operator-img-core ; fi
+	@if ! docker image inspect public.ecr.aws/classic-terra/core:${NODE_VERSION} &>/dev/null ; then make build-operator-img-core ; fi
 	docker-compose -f contrib/terra-operator/docker-compose.build.yml build node --no-cache
 
 .PHONY: build-operator-img-all build-operator-img-core build-operator-img-node

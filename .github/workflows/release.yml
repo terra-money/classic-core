@@ -24,14 +24,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        build_type: ['build-linux']
+        build_type: ['build-release-arm64', 'build-release-amd64']
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set version tag
         run: echo "VERSION=$(echo ${{github.ref_name}} | sed 's/^v//')" >> $GITHUB_ENV
-      - name: Create build directory
-        run: mkdir -p build/release
       - name: Build ${{matrix.build_type}}
         run: make ${{matrix.build_type}}
       - name: Upload the artifacts to release
@@ -55,4 +53,8 @@ jobs:
       - name: Display checksums
         run: cat build/release/checksum.txt
       - name: Upload the checksum to release
+<<<<<<< HEAD
         run: gh release upload ${{github.ref_name}} build/release/checksum.txt --repo ${{github.repository}}
+=======
+        run: gh release upload ${{github.ref_name}} build/release/checksum.txt --repo ${{github.repository}}
+>>>>>>> v2.3.0

@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/treasury/keeper"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/treasury/keeper"
 )
 
 func TestExportInitGenesis(t *testing.T) {

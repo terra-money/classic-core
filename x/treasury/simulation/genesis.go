@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	core "github.com/classic-terra/core/types"
-	"github.com/classic-terra/core/x/treasury/types"
+	core "github.com/classic-terra/core/v2/types"
+	"github.com/classic-terra/core/v2/x/treasury/types"
 )
 
 // Simulation parameter constants
@@ -126,7 +126,9 @@ func RandomizedGenState(simState *module.SimulationState) {
 		},
 		taxPolicy.RateMin,
 		rewardPolicy.RateMin,
-		[]types.TaxCap{},
+		[]types.TaxCap{
+			{Denom: core.MicroLunaDenom, TaxCap: sdk.NewInt(0)},
+		},
 		sdk.Coins{},
 		sdk.Coins{},
 		[]types.EpochState{},

@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/cosmos/cosmos-sdk/x/authz/client/cli"
 
-	feeutils "github.com/classic-terra/core/custom/auth/client/utils"
+	feeutils "github.com/classic-terra/core/v2/custom/auth/client/utils"
 )
 
 // GetTxCmd returns the transaction commands for this module
