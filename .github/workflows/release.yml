@@ -3,8 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+' # Push events to matching v*, i.e. v1.0, v20.15.10
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc*' # Push events to matching v*, i.e. v1.0-rc1, v20.15.10-rc5
+      - "v[0-9]+.[0-9]+.[0-9]+" # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "v[0-9]+.[0-9]+.[0-9]+-rc*" # Push events to matching v*, i.e. v1.0-rc1, v20.15.10-rc5
 
 jobs:
   release:
@@ -24,7 +24,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        build_type: ['build-release-arm64', 'build-release-amd64']
+        build_type: ["build-release-arm64", "build-release-amd64"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,8 +53,4 @@ jobs:
       - name: Display checksums
         run: cat build/release/checksum.txt
       - name: Upload the checksum to release
-<<<<<<< HEAD
         run: gh release upload ${{github.ref_name}} build/release/checksum.txt --repo ${{github.repository}}
-=======
-        run: gh release upload ${{github.ref_name}} build/release/checksum.txt --repo ${{github.repository}}
->>>>>>> v2.3.0
